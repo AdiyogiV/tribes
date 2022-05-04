@@ -45,9 +45,9 @@ class _MyAppState extends State<MyApp> {
             ],
             debugShowCheckedModeBanner: false,
             theme: CupertinoThemeData(
-              brightness: Brightness.light,
-              primaryColor: Colors.indigo[900],
-              scaffoldBackgroundColor: Colors.indigo[100],
+              brightness: Brightness.dark,
+              primaryColor: Colors.black,
+              scaffoldBackgroundColor: Colors.white38,
             ),
             home: TabHandler()));
   }

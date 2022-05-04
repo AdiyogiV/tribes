@@ -10,7 +10,7 @@
 		</data>
 		<key>flutter_assets/AssetManifest.json</key>
 		<data>
-		JOnhwNXpbl3H8EwBlzpFdHuVHH0=
+		EeTe7JlepR7mDDO0Ryc7kgEbVrE=
 		</data>
 		<key>flutter_assets/FontManifest.json</key>
 		<data>
@@ -19,6 +19,10 @@
 		<key>flutter_assets/NOTICES.Z</key>
 		<data>
 		DiHuw4wRXgQ8t6HZCSP1d2Z0CNk=
+		</data>
+		<key>flutter_assets/assets/images/adidaslogo.png</key>
+		<data>
+		kUifjNqbrKavtt74TkDFL63i2nU=
 		</data>
 		<key>flutter_assets/assets/images/icon.png</key>
 		<data>
@@ -54,7 +58,7 @@
 		</data>
 		<key>flutter_assets/kernel_blob.bin</key>
 		<data>
-		Zmb5a9SDF84lEksU8cqdJPI61FY=
+		CXq2BXElJ1zPNwvV6XO3hf1SrSo=
 		</data>
 		<key>flutter_assets/packages/country_code_picker/flags/ad.png</key>
 		<data>
@@ -1371,11 +1375,11 @@
 		<dict>
 			<key>hash</key>
 			<data>
-			JOnhwNXpbl3H8EwBlzpFdHuVHH0=
+			EeTe7JlepR7mDDO0Ryc7kgEbVrE=
 			</data>
 			<key>hash2</key>
 			<data>
-			QUQdNKlSeuAhlpFcozHOPIS+7jWjaxbnVVle9+au1i0=
+			8GXUvvRnMxik9k4SzvE50MsVq29m+FXYcqt4iuS9C10=
 			</data>
 		</dict>
 		<key>flutter_assets/FontManifest.json</key>
@@ -1398,6 +1402,17 @@
 			<key>hash2</key>
 			<data>
 			ZpUr47NgJG7l5ByvGM8vbeyXDuhZ79YzJ2TbuurwHdk=
+			</data>
+		</dict>
+		<key>flutter_assets/assets/images/adidaslogo.png</key>
+		<dict>
+			<key>hash</key>
+			<data>
+			kUifjNqbrKavtt74TkDFL63i2nU=
+			</data>
+			<key>hash2</key>
+			<data>
+			onAPIOsfI8hPank2P88XPOwC6C9lfLhyfqnpRuURm48=
 			</data>
 		</dict>
 		<key>flutter_assets/assets/images/icon.png</key>
@@ -1492,11 +1507,11 @@
 		<dict>
 			<key>hash</key>
 			<data>
-			Zmb5a9SDF84lEksU8cqdJPI61FY=
+			CXq2BXElJ1zPNwvV6XO3hf1SrSo=
 			</data>
 			<key>hash2</key>
 			<data>
-			AwLzqSi7RHHn/bPEmot5zQ4iEI1i4HO4k6rNRdD43KE=
+			yJsQPR+GcP2drHUYqPNy+EXgWCD+sxDwAL02LXCLYfM=
 			</data>
 		</dict>
 		<key>flutter_assets/packages/country_code_picker/flags/ad.png</key>

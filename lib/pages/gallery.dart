@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
+import 'package:yantra/pages/houseMarket.dart';
 import 'package:yantra/pages/spaces/space.dart';
 import 'package:yantra/widgets/Dailogs/spaceCreationDailog.dart';
 import 'package:yantra/widgets/previewBoxes/spacePreviewBox.dart';
@@ -22,24 +23,7 @@ class _GalleryState extends State<Gallery> {
   FocusNode focusNode = FocusNode();
   List<Widget> tribes = [];
   int selectedSpaceType = 0;
-  final Map<int, Widget> spaceTypes = <int, Widget>{
-    0: Icon(
-      Icons.blur_on,
-      size: 20,
-    ),
-    1: Icon(
-      Icons.public,
-      size: 20,
-    ),
-    2: Icon(
-      Icons.hide_source,
-      size: 20,
-    ),
-    3: Icon(
-      Icons.lock,
-      size: 20,
-    ),
-  };
+
   @override
   void initState() {
     super.initState();
@@ -76,6 +60,13 @@ class _GalleryState extends State<Gallery> {
     }
   }
 
+  getLogo() {
+    return Image.asset(
+      'assets/images/adidaslogo.png',
+      fit: BoxFit.contain,
+    );
+  }
+
   getTribes() {
     return FutureBuilder<QuerySnapshot>(
         future: userSpacesCollection
@@ -98,8 +89,8 @@ class _GalleryState extends State<Gallery> {
                       onTap: () {
                         Navigator.of(context, rootNavigator: true)
                             .push(CupertinoPageRoute(builder: (context) {
-                          return SpaceBox(
-                            rid: doc.id,
+                          return HouseMarket(
+                            house: doc.id,
                           );
                         }));
                       },
@@ -127,7 +118,7 @@ class _GalleryState extends State<Gallery> {
   Widget build(BuildContext context) {
     return Scaffold(
         extendBody: true,
-        backgroundColor: Colors.indigo[100],
+        backgroundColor: Colors.black12,
         floatingActionButton: FloatingActionButton(
           onPressed: () {
             showDialog(
@@ -147,7 +138,7 @@ class _GalleryState extends State<Gallery> {
             controller: _refreshController,
             header: WaterDropMaterialHeader(
               color: Colors.white,
-              backgroundColor: CupertinoTheme.of(context).primaryColor,
+              backgroundColor: Colors.black,
               distance: 100,
             ),
             child: CustomScrollView(
@@ -157,37 +148,14 @@ class _GalleryState extends State<Gallery> {
                       borderRadius: BorderRadius.only(
                           bottomLeft: Radius.circular(1),
                           bottomRight: Radius.circular(1))),
-                  title: Text(
-                    getTitle(),
-                    style: TextStyle(
-                      color: CupertinoTheme.of(context).primaryColor,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                  backgroundColor: Colors.transparent,
+                  title: Container(height: 30, child: getLogo()),
+                  backgroundColor: Colors.white,
                   floating: true,
                   stretch: true,
-                  expandedHeight: 110,
+                  expandedHeight: 120,
                   collapsedHeight: 100,
                   elevation: 4,
                   forceElevated: true,
-                  actions: [
-                    Padding(
-                      padding: const EdgeInsets.all(7.0),
-                      child: CupertinoSlidingSegmentedControl(
-                        padding: EdgeInsets.all(4),
-                        onValueChanged: (value) {
-                          selectedSpaceType = value;
-                          focusNode.unfocus();
-                          setState(() {});
-                        },
-                        groupValue: selectedSpaceType,
-                        children: spaceTypes,
-                        backgroundColor: Colors.black12,
-                        thumbColor: Colors.white,
-                      ),
-                    ),
-                  ],
                   flexibleSpace: Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.only(
@@ -195,19 +163,19 @@ class _GalleryState extends State<Gallery> {
                           bottomRight: Radius.circular(1)),
                       gradient: new LinearGradient(
                           colors: [
-                            Colors.white,
-                            Colors.white70,
+                            Colors.black,
+                            Colors.black54,
                           ],
                           begin: const FractionalOffset(0.0, 0.0),
                           end: const FractionalOffset(0.0, 1),
-                          stops: [0.0, 1],
+                          stops: [0.1, 1],
                           tileMode: TileMode.mirror),
                     ),
                     child: Padding(
                       padding: const EdgeInsets.only(top: 80.0),
                       child: Center(
                         child: Padding(
-                          padding: const EdgeInsets.all(7.0),
+                          padding: const EdgeInsets.all(10.0),
                           child: Material(
                             elevation: 2,
                             borderRadius: BorderRadius.circular(10),

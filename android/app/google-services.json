@@ -1,41 +1,33 @@
 {
   "project_info": {
-    "project_number": "735015361682",
-    "project_id": "ty-dev-516d7",
-    "storage_bucket": "ty-dev-516d7.appspot.com"
+    "project_number": "247386813289",
+    "project_id": "adihouse",
+    "storage_bucket": "adihouse.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:735015361682:android:853e68582a451511645a4b",
+        "mobilesdk_app_id": "1:247386813289:android:60552732b82eacf7cb43f8",
         "android_client_info": {
-          "package_name": "com.canay.yantra"
+          "package_name": "com.adidas.adihouse"
         }
       },
       "oauth_client": [
         {
-          "client_id": "735015361682-5ghlk3lgnrl6u265lrocg87nvmk65jgm.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.canay.yantra",
-            "certificate_hash": "81bcd4f63ef4702dd85895eef181b7705255f0b9"
-          }
-        },
-        {
-          "client_id": "735015361682-k2d5kai2afol1lf7fhdf62hcfcv2recg.apps.googleusercontent.com",
+          "client_id": "247386813289-5an1vavgb0o3i2gshu6qpb8ak86m4dut.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyA2IyGmDVyjJGM2JsXx3wRY-D8wVo1xC84"
+          "current_key": "AIzaSyAO1E_wJJIUn45ffRSTaL41MT9Obypa_XU"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "735015361682-k2d5kai2afol1lf7fhdf62hcfcv2recg.apps.googleusercontent.com",
+              "client_id": "247386813289-5an1vavgb0o3i2gshu6qpb8ak86m4dut.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

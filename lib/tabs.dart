@@ -52,25 +52,25 @@ class _TabHandlerState extends State<TabHandler> {
   getTabItems(String uid) {
     List<PersistentBottomNavBarItem> items = [
       PersistentBottomNavBarItem(
-          activeColorPrimary: Colors.indigo,
+          activeColorPrimary: Colors.white,
           icon: Icon(
             Icons.blur_on,
           ),
           title: 'spaces'),
       PersistentBottomNavBarItem(
-          activeColorPrimary: Colors.indigo,
+          activeColorPrimary: Colors.white,
           icon: Icon(
             Icons.search,
           ),
           title: 'discover'),
       PersistentBottomNavBarItem(
-          activeColorPrimary: Colors.indigo,
+          activeColorPrimary: Colors.white,
           icon: Icon(
             Icons.pending,
           ),
           title: 'requests'),
       PersistentBottomNavBarItem(
-          activeColorPrimary: Colors.indigo,
+          activeColorPrimary: Colors.white,
           icon: Container(
               width: 38,
               padding: EdgeInsets.all(2),
@@ -213,7 +213,7 @@ class _TabHandlerState extends State<TabHandler> {
         child: PersistentTabView(
           context,
           controller: _controller,
-          backgroundColor: Colors.white,
+          backgroundColor: Colors.black,
           items: getTabItems(auth.userId),
           screens: tripControl(auth.status, 1, auth.userId),
           navBarStyle: NavBarStyle.style5,
