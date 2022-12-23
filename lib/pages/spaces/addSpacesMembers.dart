@@ -7,11 +7,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'package:yantra/pages/spaces/editSpace.dart';
-import 'package:yantra/pages/spaces/inviteToSpace.dart';
+import 'package:adiHouse/pages/spaces/editSpace.dart';
+import 'package:adiHouse/pages/spaces/inviteToSpace.dart';
 
-import 'package:yantra/services/databaseService.dart';
-import 'package:yantra/widgets/previewBoxes/followersPreview.dart';
+import 'package:adiHouse/services/databaseService.dart';
+import 'package:adiHouse/widgets/previewBoxes/followersPreview.dart';
 
 class AddSpacesMember extends StatefulWidget {
   final String space;

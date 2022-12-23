@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:yantra/widgets/Dailogs/postDailog.dart';
-import 'package:yantra/widgets/mainPlayer.dart';
+import 'package:adiHouse/widgets/Dailogs/postDailog.dart';
+import 'package:adiHouse/widgets/mainPlayer.dart';
 
 typedef ReplyCallback = void Function(
   String post,
@@ -78,7 +78,6 @@ class _PostState extends State<Post> {
   void initState() {
     super.initState();
     getPostData();
-
   }
 
   @override
@@ -99,9 +98,9 @@ class _PostState extends State<Post> {
                       showCupertinoModalPopup(
                           context: context,
                           builder: (BuildContext context) => PostDailog(
-                            post: widget.post,
-                            author: author,
-                          ));
+                                post: widget.post,
+                                author: author,
+                              ));
                     },
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(10.0),
@@ -145,7 +144,7 @@ class MyPainter extends CustomPainter {
     final p4 = Offset(30, size.height + 100);
 
     final paint = Paint()
-      ..color = Colors.indigo[700]
+      ..color = Colors.amber[700]
       ..strokeWidth = 1;
     canvas.drawLine(p1, p4, paint);
   }

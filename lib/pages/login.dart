@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:yantra/services/authService.dart';
+import 'package:adiHouse/services/authService.dart';
 import 'package:country_code_picker/country_code_picker.dart';
 
 class LoginPage extends StatefulWidget {
@@ -47,11 +47,19 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  getLogo() {
+    return Image.asset(
+      'assets/images/adidaslogo.png',
+      fit: BoxFit.contain,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<AuthService>(
       builder: (context, auth, child) {
         return Scaffold(
+          backgroundColor: Colors.black,
           floatingActionButton: FloatingActionButton.extended(
             onPressed: () {
               codeSent
@@ -59,8 +67,11 @@ class _LoginPageState extends State<LoginPage> {
                       .signInWithOTP(smsCode, verificationId)
                   : onSendOTPPressed();
             },
-            backgroundColor: CupertinoTheme.of(context).primaryColor,
-            icon: Icon(Icons.arrow_right_alt),
+            backgroundColor: CupertinoColors.activeBlue,
+            icon: Icon(
+              Icons.arrow_right_alt,
+              color: Colors.white,
+            ),
             label: codeSent ? Text('LOGIN') : Text('SEND OTP'),
           ),
           body: Form(
@@ -71,6 +82,11 @@ class _LoginPageState extends State<LoginPage> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: <Widget>[
+                          Container(
+                            height: 200,
+                            color: Colors.transparent,
+                            child: getLogo(),
+                          ),
                           Padding(
                             padding: const EdgeInsets.all(10.0),
                             child: Text(
@@ -108,6 +124,10 @@ class _LoginPageState extends State<LoginPage> {
                   : Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
+                        Container(
+                          height: 200,
+                          child: getLogo(),
+                        ),
                         Padding(
                             padding: const EdgeInsets.only(
                                 left: 25.0, right: 25, bottom: 10),

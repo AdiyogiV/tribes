@@ -1,12 +1,14 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:yantra/pages/editUserProfile.dart';
-import 'package:yantra/services/authService.dart';
+import 'package:adiHouse/pages/editUserProfile.dart';
+import 'package:adiHouse/services/authService.dart';
 
 class ProfileOptions extends StatefulWidget {
   final String uid;
-  ProfileOptions({this.uid,});
+  ProfileOptions({
+    this.uid,
+  });
 
   @override
   _ProfileOptionsState createState() => _ProfileOptionsState();
@@ -15,7 +17,6 @@ class ProfileOptions extends StatefulWidget {
 class _ProfileOptionsState extends State<ProfileOptions> {
   @override
   Widget build(BuildContext context) {
-    
     return CupertinoActionSheet(
         actions: <Widget>[
           CupertinoActionSheetAction(
@@ -35,7 +36,6 @@ class _ProfileOptionsState extends State<ProfileOptions> {
               }));
             },
           ),
-
         ],
         cancelButton: CupertinoActionSheetAction(
           child: Text(

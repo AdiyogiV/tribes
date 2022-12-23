@@ -2,8 +2,8 @@
 // import 'package:drag_select_grid_view/drag_select_grid_view.dart';
 // import 'package:flutter/cupertino.dart';
 // import 'package:flutter/material.dart';
-// import 'package:yantra/services/databaseService.dart';
-// import 'package:yantra/widgets/selectableItem.dart';
+// import 'package:adiHouse/services/databaseService.dart';
+// import 'package:adiHouse/widgets/selectableItem.dart';
 //
 // class CreateRoom extends StatefulWidget {
 //

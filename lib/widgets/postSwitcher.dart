@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:yantra/pages/theatre.dart';
-import 'package:yantra/services/databaseService.dart';
-import 'package:yantra/widgets/orignal.dart';
-import 'package:yantra/widgets/post.dart';
+import 'package:adiHouse/pages/theatre.dart';
+import 'package:adiHouse/services/databaseService.dart';
+import 'package:adiHouse/widgets/orignal.dart';
+import 'package:adiHouse/widgets/post.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:yantra/widgets/reply.dart';
+import 'package:adiHouse/widgets/reply.dart';
 
 class PostSwitcher extends StatefulWidget {
   final String postId;

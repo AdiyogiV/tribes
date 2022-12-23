@@ -1,16 +1,11 @@
 import 'dart:io';
-import 'dart:isolate';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:video_compress/video_compress.dart';
 import 'package:video_player/video_player.dart';
-
-import 'package:yantra/services/databaseService.dart';
+import 'package:adiHouse/services/databaseService.dart';
 
 class VideoPicker extends StatefulWidget {
   final String space;
@@ -117,15 +112,6 @@ class _VideoPickerState extends State<VideoPicker> {
     });
   }
 
-  compressVideo(String _path) async {
-    final info = await VideoCompress.compressVideo(_path,
-        quality: VideoQuality.MediumQuality,
-        deleteOrigin: false,
-        includeAudio: true,
-        frameRate: 100);
-    return info.path;
-  }
-
   addToDatabase() async {
     setState(() {
       status = 0;
@@ -152,9 +138,11 @@ class _VideoPickerState extends State<VideoPicker> {
       );
     }
     if (status == 0) {
-      return Padding(
-        padding: const EdgeInsets.all(2.0),
-        child: RefreshProgressIndicator(),
+      return Container(
+        child: RefreshProgressIndicator(
+          color: Colors.white,
+          backgroundColor: Colors.green,
+        ),
       );
     }
     if (status == 1) {
@@ -226,7 +214,7 @@ class _VideoPickerState extends State<VideoPicker> {
             if (await addToDatabase()) Navigator.of(context).pop();
           }
         },
-        backgroundColor: CupertinoTheme.of(context).primaryColor,
+        backgroundColor: Colors.green,
         label: postButton(),
       ),
       body: CupertinoPageScaffold(

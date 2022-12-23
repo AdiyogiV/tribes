@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:yantra/widgets/post.dart';
-import 'package:yantra/widgets/postReplies.dart';
-import 'package:yantra/widgets/reply.dart';
+import 'package:adiHouse/widgets/post.dart';
+import 'package:adiHouse/widgets/postReplies.dart';
+import 'package:adiHouse/widgets/reply.dart';
 
 class Trial extends StatefulWidget {
   final String post;
@@ -38,27 +38,27 @@ class _TrialState extends State<Trial> {
         post: widget.post,
       ),
     );
-      top.add(
+    top.add(
       Post(
         post: widget.post,
       ),
     );
-      top.add(
+    top.add(
       Post(
         post: widget.post,
       ),
     );
-      top.add(
+    top.add(
       Post(
         post: widget.post,
       ),
     );
-      top.add(
+    top.add(
       Post(
         post: widget.post,
       ),
     );
-      top.add(
+    top.add(
       Post(
         post: widget.post,
       ),
@@ -81,7 +81,6 @@ class _TrialState extends State<Trial> {
                 center: centerKey,
                 slivers: <Widget>[
                   SliverList(
-                  
                     delegate: SliverChildBuilderDelegate(
                       (BuildContext context, int index) {
                         return top[index];

@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:yantra/pages/spaces/addSpacesMembers.dart';
+import 'package:adiHouse/pages/spaces/addSpacesMembers.dart';
 
 class CollapsingList extends StatefulWidget {
   CollapsingList({Key key}) : super(key: key);

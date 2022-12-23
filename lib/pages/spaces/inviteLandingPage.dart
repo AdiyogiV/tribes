@@ -2,13 +2,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:yantra/pages/login.dart';
-import 'package:yantra/pages/login/handleLogin.dart';
-import 'package:yantra/pages/spaces/space.dart';
-import 'package:yantra/services/authService.dart';
-import 'package:yantra/services/databaseService.dart';
-import 'package:yantra/widgets/previewBoxes/userPreviewBox.dart';
-import 'package:yantra/widgets/previewBoxes/spacePreviewBox.dart';
+import 'package:adiHouse/pages/login.dart';
+import 'package:adiHouse/pages/login/handleLogin.dart';
+import 'package:adiHouse/pages/spaces/space.dart';
+import 'package:adiHouse/services/authService.dart';
+import 'package:adiHouse/services/databaseService.dart';
+import 'package:adiHouse/widgets/previewBoxes/userPreviewBox.dart';
+import 'package:adiHouse/widgets/previewBoxes/spacePreviewBox.dart';
 
 class InviteLandingPage extends StatefulWidget {
   final String space;
@@ -98,7 +98,7 @@ class _InviteLandingPageState extends State<InviteLandingPage> {
           ),
           appBar: CupertinoNavigationBar(
             middle: Text(
-              'YANTRA',
+              'adiHouse',
               style: TextStyle(fontWeight: FontWeight.w300),
             ),
           ),

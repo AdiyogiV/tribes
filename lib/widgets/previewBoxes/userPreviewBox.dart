@@ -15,8 +15,8 @@ class UserPreview extends StatefulWidget {
 }
 
 class _UserPreviewState extends State<UserPreview> {
-  final CollectionReference spacesCollection =
-      FirebaseFirestore.instance.collection('spaces');
+  final CollectionReference usersCollection =
+      FirebaseFirestore.instance.collection('users');
   File userPicture;
   String name = '';
   String username = 'user';
@@ -28,7 +28,7 @@ class _UserPreviewState extends State<UserPreview> {
   }
 
   getData() async {
-    DocumentSnapshot authorDoc = await spacesCollection.doc(widget.uid).get();
+    DocumentSnapshot authorDoc = await usersCollection.doc(widget.uid).get();
     name = authorDoc['name'];
     username = authorDoc['nickname'];
     String authordp = authorDoc['displayPicture'];

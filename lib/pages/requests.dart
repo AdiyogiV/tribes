@@ -3,9 +3,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'package:yantra/widgets/notifications/followRequestTile.dart';
-import 'package:yantra/widgets/previewBoxes/userPicture.dart';
-import 'package:yantra/widgets/previewBoxes/userPreviewBox.dart';
+import 'package:adiHouse/widgets/notifications/followRequestTile.dart';
+import 'package:adiHouse/widgets/previewBoxes/userPicture.dart';
+import 'package:adiHouse/widgets/previewBoxes/userPreviewBox.dart';
 
 class Requests extends StatefulWidget {
   const Requests({Key key}) : super(key: key);
@@ -16,11 +16,8 @@ class Requests extends StatefulWidget {
 class _RequestsState extends State<Requests> {
   User user = FirebaseAuth.instance.currentUser;
 
-
   RefreshController _refreshController =
-  RefreshController(initialRefresh: false);
-
-
+      RefreshController(initialRefresh: false);
 
   final Map<int, Widget> spaceTypes = {
     0: Padding(
@@ -35,22 +32,17 @@ class _RequestsState extends State<Requests> {
         Icons.blur_on_rounded,
       ),
     ),
-
   };
   int gp = 0;
 
   void _onRefresh() async {
-    setState(() {
-
-    });
+    setState(() {});
     _refreshController.refreshCompleted();
   }
 
   void _onLoading() async {
     _refreshController.loadComplete();
   }
-
-
 
   String getTitle() {
     switch (gp) {
@@ -94,9 +86,7 @@ class _RequestsState extends State<Requests> {
                     GestureDetector(
                       key: UniqueKey(),
                       onTap: () {
-                        setState(() {
-
-                        });
+                        setState(() {});
                       },
                       child: Container(
                           width: MediaQuery.of(context).size.width,
@@ -119,59 +109,62 @@ class _RequestsState extends State<Requests> {
                 distance: 100,
               ),
               child: CustomScrollView(
-                  slivers: [
-                    SliverAppBar(
-                      backgroundColor: Colors.transparent,
-                      shape: ContinuousRectangleBorder(
-                          borderRadius: BorderRadius.only(
-                              bottomLeft: Radius.circular(1),
-                              bottomRight: Radius.circular(1))),
-                      title: Text(
-                        getTitle(),
-                        style: TextStyle(
-                          color: CupertinoTheme.of(context).primaryColor,
-                          fontWeight: FontWeight.w500,
-                        ),
+                slivers: [
+                  SliverAppBar(
+                    backgroundColor: Colors.transparent,
+                    shape: ContinuousRectangleBorder(
+                        borderRadius: BorderRadius.only(
+                            bottomLeft: Radius.circular(1),
+                            bottomRight: Radius.circular(1))),
+                    title: Text(
+                      getTitle(),
+                      style: TextStyle(
+                        color: CupertinoTheme.of(context).primaryColor,
+                        fontWeight: FontWeight.w500,
                       ),
-                      floating: true,
-                      stretch: true,
-                      elevation: 4,
-                      forceElevated: true,
-                      flexibleSpace: Container(
-                        decoration: BoxDecoration(
-                          gradient: new LinearGradient(
-                              colors: [
-                                Colors.white,
-                                Colors.white70,
-                              ],
-                              begin: const FractionalOffset(0.0, 0.0),
-                              end: const FractionalOffset(0.0, 1),
-                              stops: [0.0, 1],
-                              tileMode: TileMode.mirror),
-                        ),
-                      ),
-                      actions: [
-                        Padding(
-                          padding: const EdgeInsets.all(7.0),
-                          child: CupertinoSlidingSegmentedControl(
-                            padding: EdgeInsets.all(4),
-                            onValueChanged: (value) {
-                              gp = value;
-                              setState(() {});
-                            },
-                            groupValue: gp,
-                            children: spaceTypes,
-                            backgroundColor: Colors.black12,
-                            thumbColor: Colors.white,
-                          ),
-                        ),
-                      ],
-                      iconTheme: IconThemeData(color: CupertinoTheme.of(context).primaryColor),
                     ),
+                    floating: true,
+                    stretch: true,
+                    elevation: 4,
+                    forceElevated: true,
+                    flexibleSpace: Container(
+                      decoration: BoxDecoration(
+                        gradient: new LinearGradient(
+                            colors: [
+                              Colors.white,
+                              Colors.white70,
+                            ],
+                            begin: const FractionalOffset(0.0, 0.0),
+                            end: const FractionalOffset(0.0, 1),
+                            stops: [0.0, 1],
+                            tileMode: TileMode.mirror),
+                      ),
+                    ),
+                    actions: [
+                      Padding(
+                        padding: const EdgeInsets.all(7.0),
+                        child: CupertinoSlidingSegmentedControl(
+                          padding: EdgeInsets.all(4),
+                          onValueChanged: (value) {
+                            gp = value;
+                            setState(() {});
+                          },
+                          groupValue: gp,
+                          children: spaceTypes,
+                          backgroundColor: Colors.black12,
+                          thumbColor: Colors.white,
+                        ),
+                      ),
+                    ],
+                    iconTheme: IconThemeData(
+                        color: CupertinoTheme.of(context).primaryColor),
+                  ),
                   SliverToBoxAdapter(
-                    child: (gp==0)? Wrap(
-                      children: requests,
-                    ): Container(),
+                    child: (gp == 0)
+                        ? Wrap(
+                            children: requests,
+                          )
+                        : Container(),
                   ),
                 ],
               ),

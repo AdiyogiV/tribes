@@ -8,8 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:share/share.dart';
-import 'package:yantra/pages/login.dart';
-import 'package:yantra/services/databaseService.dart';
+import 'package:adiHouse/pages/login.dart';
+import 'package:adiHouse/services/databaseService.dart';
 
 class InviteToSpace extends StatefulWidget {
   final String space;
@@ -56,7 +56,7 @@ class _InviteToSpaceState extends State<InviteToSpace> {
       uriPrefix: 'https://canay.page.link',
       link: Uri.parse('https://canay.page.link/spaceInvite-$space-${user.uid}'),
       androidParameters: AndroidParameters(
-        packageName: 'com.canay.yantra',
+        packageName: 'com.canay.adiHouse',
         minimumVersion: 24,
       ),
       iosParameters: IOSParameters(
@@ -84,12 +84,12 @@ class _InviteToSpaceState extends State<InviteToSpace> {
                   [spacePicture.path],
                   text: link,
                   subject:
-                      '$userName invited to join the $spaceName space on Yantra',
+                      '$userName invited to join the $spaceName space on adiHouse',
                 )
               : Share.share(
                   link,
                   subject:
-                      '$userName invited to join the $spaceName space on Yantra',
+                      '$userName invited to join the $spaceName space on adiHouse',
                 );
         },
         backgroundColor: CupertinoTheme.of(context).primaryColor,

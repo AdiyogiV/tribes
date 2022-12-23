@@ -4,10 +4,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-import 'package:yantra/pages/theatre.dart';
-import 'package:yantra/pages/userProfile.dart';
-import 'package:yantra/services/databaseService.dart';
-import 'package:yantra/widgets/previewBoxes/userPreviewBox.dart';
+import 'package:adiHouse/pages/theatre.dart';
+import 'package:adiHouse/pages/userProfile.dart';
+import 'package:adiHouse/services/databaseService.dart';
+import 'package:adiHouse/widgets/previewBoxes/userPreviewBox.dart';
 
 class FollowRequestTile extends StatefulWidget {
   final String uid;
@@ -108,9 +108,7 @@ class _FollowRequestTileState extends State<FollowRequestTile> {
               child: GestureDetector(
                 onTap: () async {
                   await DatabaseService().rejectFollowRequest(widget.uid);
-                  setState(() {
-
-                  });
+                  setState(() {});
                 },
                 child: Icon(
                   Icons.cancel_rounded,
@@ -124,9 +122,7 @@ class _FollowRequestTileState extends State<FollowRequestTile> {
               child: GestureDetector(
                 onTap: () async {
                   await DatabaseService().approveFollower(widget.uid);
-                  setState(() {
-
-                  });
+                  setState(() {});
                 },
                 child: Icon(
                   Icons.check_circle,

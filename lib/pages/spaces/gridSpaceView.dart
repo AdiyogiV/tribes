@@ -2,8 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'package:yantra/pages/theatre.dart';
-import 'package:yantra/widgets/previewBox.dart';
+import 'package:adiHouse/pages/theatre.dart';
+import 'package:adiHouse/widgets/previewBox.dart';
 
 class GridSpaceView extends StatefulWidget {
   final String rid;
@@ -70,7 +70,8 @@ class _GridSpaceViewState extends State<GridSpaceView> {
                           // }));
                         },
                         child: Container(
-                          width: MediaQuery.of(context).size.width / 3,
+                          padding: EdgeInsets.all(5),
+                          width: MediaQuery.of(context).size.width / 2,
                           child: PreviewBox(
                             key: UniqueKey(),
                             previewUrl: doc['thumbnail'],

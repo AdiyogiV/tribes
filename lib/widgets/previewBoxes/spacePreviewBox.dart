@@ -28,32 +28,34 @@ class _SpacePreviewBoxState extends State<SpacePreviewBox> {
 
   initializePreview() async {
     DocumentSnapshot spaceDoc = await spacesCollection.doc(widget.space).get();
-    spaceName = spaceDoc['name'];
+    spaceName =
+        spaceDoc.data().toString().contains('name') ? spaceDoc['name'] : '';
     if (this.mounted) {
       setState(() {});
     }
-    if (spaceDoc['displayPicture'] != '') {
-      spacePicture =
-          await DefaultCacheManager().getSingleFile(spaceDoc['displayPicture']);
-
-      if (this.mounted) {
-        setState(() {});
-      }
+    spacePicture = spaceDoc.data().toString().contains('displayPicture')
+        ? await DefaultCacheManager().getSingleFile(spaceDoc['displayPicture'])
+        : null;
+    if (this.mounted) {
+      setState(() {});
     }
   }
 
   getSpacePicture() {
-    if (spacePicture != null) {
-      return Image.file(
-        spacePicture,
-        fit: BoxFit.cover,
-      );
-    } else {
-      return Image.asset(
-        'assets/images/space.jpg',
-        fit: BoxFit.cover,
-      );
-    }
+    return Container(
+        decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(7.0),
+            border: Border.all(
+                width: 0.5, color: CupertinoTheme.of(context).primaryColor)),
+        child: ClipRRect(
+            borderRadius: BorderRadius.circular(6.0),
+            child: Container(
+                child: AspectRatio(
+                    aspectRatio: 1,
+                    child: Image.file(
+                      spacePicture,
+                      fit: BoxFit.cover,
+                    )))));
   }
 
   getSpaceName() {
@@ -61,6 +63,7 @@ class _SpacePreviewBoxState extends State<SpacePreviewBox> {
         padding: EdgeInsets.all(10),
         child: Text(
           spaceName,
+          textAlign: TextAlign.center,
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.w400),
         ));
   }
@@ -76,20 +79,8 @@ class _SpacePreviewBoxState extends State<SpacePreviewBox> {
           padding: EdgeInsets.all(7),
           child: Row(
             children: <Widget>[
-              Container(
-                  decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(7.0),
-                      border: Border.all(
-                          width: 0.5,
-                          color: CupertinoTheme.of(context).primaryColor)),
-                  child: ClipRRect(
-                      borderRadius: BorderRadius.circular(6.0),
-                      child: Container(
-                          child: AspectRatio(
-                              aspectRatio: 1, child: getSpacePicture())))),
-              Column(
-                children: [if (spaceName != null) getSpaceName()],
-              )
+              if (spacePicture != null) getSpacePicture(),
+              if (spaceName != null) getSpaceName()
             ],
           ),
         ),

@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:yantra/pages/login.dart';
-import 'package:yantra/widgets/assets/title.dart';
+import 'package:adiHouse/pages/login.dart';
+import 'package:adiHouse/widgets/assets/title.dart';
 
 class LoginDailog extends StatefulWidget {
   const LoginDailog({Key key}) : super(key: key);
@@ -32,7 +32,10 @@ class _LoginDailogState extends State<LoginDailog> {
           Divider(),
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: Text("Login to Continue", style: TextStyle(fontWeight: FontWeight.w300, fontSize: 16),),
+            child: Text(
+              "Login to Continue",
+              style: TextStyle(fontWeight: FontWeight.w300, fontSize: 16),
+            ),
           ),
         ],
       ),

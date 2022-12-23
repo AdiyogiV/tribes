@@ -3,10 +3,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'package:yantra/pages/houseMarket.dart';
-import 'package:yantra/pages/spaces/space.dart';
-import 'package:yantra/widgets/Dailogs/spaceCreationDailog.dart';
-import 'package:yantra/widgets/previewBoxes/spacePreviewBox.dart';
+import 'package:adiHouse/pages/houseMarket.dart';
+import 'package:adiHouse/pages/spaces/space.dart';
+import 'package:adiHouse/widgets/Dailogs/spaceCreationDailog.dart';
+import 'package:adiHouse/widgets/previewBoxes/spacePreviewBox.dart';
 
 class Gallery extends StatefulWidget {
   @override
@@ -34,32 +34,6 @@ class _GalleryState extends State<Gallery> {
     _refreshController.refreshCompleted();
   }
 
-  String getTitle() {
-    switch (selectedSpaceType) {
-      case 0:
-        {
-          return 'open tribes';
-        }
-        break;
-      case 1:
-        {
-          return 'public tribes';
-        }
-        break;
-
-      case 2:
-        {
-          return 'private tribes';
-        }
-        break;
-      default:
-        {
-          return 'secret tribes';
-        }
-        break;
-    }
-  }
-
   getLogo() {
     return Image.asset(
       'assets/images/adidaslogo.png',
@@ -72,15 +46,14 @@ class _GalleryState extends State<Gallery> {
         future: userSpacesCollection
             .doc(user.uid)
             .collection('spaces')
-            .where('role', whereIn: ['member', 'owner'])
-            .where('spaceType', isEqualTo: this.selectedSpaceType)
-            .get(),
+            .where('role', whereIn: ['member', 'owner']).get(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return Center(child: CircularProgressIndicator());
           }
 
           List spaceList = snapshot.data.docs
+              .toList()
               .asMap()
               .map((index, doc) => MapEntry(
                     index,
@@ -89,14 +62,14 @@ class _GalleryState extends State<Gallery> {
                       onTap: () {
                         Navigator.of(context, rootNavigator: true)
                             .push(CupertinoPageRoute(builder: (context) {
-                          return HouseMarket(
-                            house: doc.id,
+                          return SpaceBox(
+                            rid: doc.id,
                           );
                         }));
                       },
                       child: Container(
                         height: 100,
-                        padding: EdgeInsets.only(top: 5, left: 5, right: 5),
+                        padding: EdgeInsets.only(top: 7, left: 7, right: 7),
                         child: SpacePreviewBox(
                           key: UniqueKey(),
                           space: doc.id,
@@ -118,7 +91,7 @@ class _GalleryState extends State<Gallery> {
   Widget build(BuildContext context) {
     return Scaffold(
         extendBody: true,
-        backgroundColor: Colors.black12,
+        backgroundColor: Colors.black38,
         floatingActionButton: FloatingActionButton(
           onPressed: () {
             showDialog(
@@ -148,12 +121,12 @@ class _GalleryState extends State<Gallery> {
                       borderRadius: BorderRadius.only(
                           bottomLeft: Radius.circular(1),
                           bottomRight: Radius.circular(1))),
-                  title: Container(height: 30, child: getLogo()),
-                  backgroundColor: Colors.white,
+                  title: Container(height: 90, child: getLogo()),
+                  backgroundColor: Colors.transparent,
                   floating: true,
                   stretch: true,
-                  expandedHeight: 120,
-                  collapsedHeight: 100,
+                  expandedHeight: 160,
+                  collapsedHeight: 140,
                   elevation: 4,
                   forceElevated: true,
                   flexibleSpace: Container(
@@ -172,28 +145,40 @@ class _GalleryState extends State<Gallery> {
                           tileMode: TileMode.mirror),
                     ),
                     child: Padding(
-                      padding: const EdgeInsets.only(top: 80.0),
-                      child: Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(10.0),
-                          child: Material(
-                            elevation: 2,
-                            borderRadius: BorderRadius.circular(10),
-                            child: CupertinoSearchTextField(
-                              backgroundColor: Colors.white,
-                              itemColor: Colors.black54,
-                              style: TextStyle(
-                                  color:
-                                      CupertinoTheme.of(context).primaryColor),
-                              placeholderStyle:
-                                  TextStyle(color: Colors.black54),
-                              focusNode: focusNode,
-                              onChanged: (query) {
-                                //getSuggestions(query);
-                              },
+                      padding: const EdgeInsets.only(top: 100.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Text(
+                            'own houses',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 25,
+                                fontWeight: FontWeight.w200),
+                          ),
+                          Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(10.0),
+                              child: Material(
+                                elevation: 2,
+                                borderRadius: BorderRadius.circular(10),
+                                child: CupertinoSearchTextField(
+                                  backgroundColor: Colors.white,
+                                  itemColor: Colors.black54,
+                                  style: TextStyle(
+                                      color: CupertinoTheme.of(context)
+                                          .primaryColor),
+                                  placeholderStyle:
+                                      TextStyle(color: Colors.black54),
+                                  focusNode: focusNode,
+                                  onChanged: (query) {
+                                    //getSuggestions(query);
+                                  },
+                                ),
+                              ),
                             ),
                           ),
-                        ),
+                        ],
                       ),
                     ),
                   ),

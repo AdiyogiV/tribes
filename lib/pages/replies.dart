@@ -3,8 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'package:yantra/pages/theatre.dart';
-import 'package:yantra/widgets/previewBox.dart';
+import 'package:adiHouse/pages/theatre.dart';
+import 'package:adiHouse/widgets/previewBox.dart';
 
 class Replies extends StatefulWidget {
   @override

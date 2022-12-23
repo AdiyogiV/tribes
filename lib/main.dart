@@ -3,8 +3,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:yantra/tabs.dart';
-import 'package:yantra/services/authService.dart';
+import 'package:adiHouse/tabs.dart';
+import 'package:adiHouse/services/authService.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -45,9 +45,9 @@ class _MyAppState extends State<MyApp> {
             ],
             debugShowCheckedModeBanner: false,
             theme: CupertinoThemeData(
-              brightness: Brightness.dark,
-              primaryColor: Colors.black,
-              scaffoldBackgroundColor: Colors.white38,
+              brightness: Brightness.light,
+              primaryColor: Colors.amber,
+              scaffoldBackgroundColor: Colors.blue[200],
             ),
             home: TabHandler()));
   }

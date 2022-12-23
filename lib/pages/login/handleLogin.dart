@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:yantra/pages/initUser.dart';
-import 'package:yantra/pages/login.dart';
-import 'package:yantra/pages/spaces/inviteLandingPage.dart';
-import 'package:yantra/services/authService.dart';
+import 'package:adiHouse/pages/initUser.dart';
+import 'package:adiHouse/pages/login.dart';
+import 'package:adiHouse/pages/spaces/inviteLandingPage.dart';
+import 'package:adiHouse/services/authService.dart';
 
 class HandleLogin extends StatefulWidget {
   final String space;

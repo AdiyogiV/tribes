@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'dart:math';
+import 'package:adiHouse/pages/houseMarket.dart';
+import 'package:adiHouse/widgets/Dailogs/joinHouseDailog.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
@@ -7,18 +9,18 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'package:yantra/modal/spaceTypes.dart';
-import 'package:yantra/pages/login.dart';
-import 'package:yantra/pages/recorder.dart';
-import 'package:yantra/pages/spaces/createRoom.dart';
-import 'package:yantra/pages/spaces/editSpace.dart';
-import 'package:yantra/pages/spaces/gridSpaceView.dart';
-import 'package:yantra/pages/spaces/spaceTypes/openSpace.dart';
-import 'package:yantra/pages/spaces/spaceTypes/secretSpace.dart';
-import 'package:yantra/pages/theatre.dart';
-import 'package:yantra/services/databaseService.dart';
-import 'package:yantra/widgets/Dailogs/loginDailog.dart';
-import 'package:yantra/widgets/previewBox.dart';
+import 'package:adiHouse/modal/spaceTypes.dart';
+import 'package:adiHouse/pages/login.dart';
+import 'package:adiHouse/pages/recorder.dart';
+import 'package:adiHouse/pages/spaces/createRoom.dart';
+import 'package:adiHouse/pages/spaces/editSpace.dart';
+import 'package:adiHouse/pages/spaces/gridSpaceView.dart';
+import 'package:adiHouse/pages/spaces/spaceTypes/openSpace.dart';
+import 'package:adiHouse/pages/spaces/spaceTypes/secretSpace.dart';
+import 'package:adiHouse/pages/theatre.dart';
+import 'package:adiHouse/services/databaseService.dart';
+import 'package:adiHouse/widgets/Dailogs/loginDailog.dart';
+import 'package:adiHouse/widgets/previewBox.dart';
 
 class SpaceBox extends StatefulWidget {
   final String rid;
@@ -37,10 +39,13 @@ class _SpaceBoxState extends State<SpaceBox> {
   File displayPicFile;
   String uidSelf = '';
   int personal = 0;
-  bool isPublic = false;
-  bool gridViewOn = false;
+  bool isPublic = true;
+  bool gridViewOn = true;
   int initPage = 0;
   int spaceType;
+  bool isMember = false;
+  User user = FirebaseAuth.instance.currentUser;
+  bool authorized = false;
 
   List<Widget> spacePosts = [];
 
@@ -73,11 +78,23 @@ class _SpaceBoxState extends State<SpaceBox> {
   }
 
   getSpaceBox() async {
+    isMember = await DatabaseService().isMember(widget.rid);
     DocumentSnapshot space = await DatabaseService().getSpace(widget.rid);
+    spaceType = space['spaceType'];
+    if ((isMember == false) && (spaceType == 2 || spaceType == 3)) {
+      Navigator.of(context).pop();
+      Navigator.of(context).push(CupertinoPageRoute(builder: (context) {
+        return EditSpace(
+          space: widget.rid,
+        );
+      }));
+      return;
+    }
     name = space['name'];
     displayPicture = space['displayPicture'];
-    spaceType = space['spaceType'];
-    setState(() {});
+    setState(() {
+      authorized = true;
+    });
     if (displayPicture != null) {
       displayPicFile =
           await DefaultCacheManager().getSingleFile(displayPicture);
@@ -85,105 +102,84 @@ class _SpaceBoxState extends State<SpaceBox> {
     setState(() {});
   }
 
-  // getFloatingButton() {
-  //   if (isMember) {
-  //     return FloatingActionButton(
-  //       onPressed: () {
-  //         Navigator.push(
-  //             context,
-  //             MaterialPageRoute(
-  //                 builder: (context) => Recorder(
-  //                       space: widget.rid,
-  //                     )));
-  //       },
-  //       child: Icon(Icons.add),
-  //     );
-  //   } else {
-  //     switch (spaceType) {
-  //       case 0:
-  //         return FloatingActionButton(
-  //           onPressed: () async {
-  //             await DatabaseService().addSpaceMember(widget.rid, user.uid);
-  //             //await getSpaceRole();
-  //             setState(() {});
-  //           },
-  //           backgroundColor: CupertinoTheme.of(context).primaryColor,
-  //           child: Text(
-  //             'Join',
-  //             style: TextStyle(
-  //               color: Colors.white,
-  //             ),
-  //           ),
-  //         );
-  //       case 1:
-  //         return FloatingActionButton(
-  //           onPressed: () async {
-  //             await DatabaseService().addSpaceMember(widget.rid, user.uid);
-  //             //await getSpaceRole();
-  //             setState(() {});
-  //           },
-  //           backgroundColor: CupertinoTheme.of(context).primaryColor,
-  //           child: Text(
-  //             'Follow',
-  //             style: TextStyle(color: Colors.white),
-  //           ),
-  //         );
-  //       case 2:
-  //         return FloatingActionButton(
-  //           onPressed: () async {
-  //             await DatabaseService().addSpaceMember(widget.rid, user.uid);
-  //             //await getSpaceRole();
-  //             setState(() {});
-  //           },
-  //           backgroundColor: CupertinoTheme.of(context).primaryColor,
-  //           child: Text(
-  //             'Request Access',
-  //             style: TextStyle(color: Colors.white),
-  //           ),
-  //         );
-  //         return Container();
-  //     }
-  //   }
-  // }
+  getFloatingButton() {
+    return (isMember)
+        ? Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Container(
+                padding: EdgeInsets.only(left: 30),
+                child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: FloatingActionButton(
+                      backgroundColor: Colors.blue[300],
+                      foregroundColor: Colors.amber,
+                      splashColor: Colors.redAccent,
+                      focusColor: Colors.black,
+                      hoverColor: Colors.blue,
+                      onPressed: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => Recorder(
+                                      space: widget.rid,
+                                    )));
+                      },
+                      child: Icon(
+                        Icons.add,
+                        size: 30,
+                      ),
+                    ))),
+            // Container(
+            //     padding: EdgeInsets.all(5),
+            //     child: Align(
+            //       alignment: Alignment.bottomRight,
+            //       child: FloatingActionButton.extended(
+            //         backgroundColor: Colors.black,
+            //         onPressed: () {
+            //           Navigator.of(context, rootNavigator: true)
+            //               .push(CupertinoPageRoute(builder: (context) {
+            //             return HouseMarket(
+            //               house: widget.rid,
+            //             );
+            //           }));
+            //         },
+            //         icon: Icon(Icons.arrow_forward_ios),
+            //         label: Text('Market'),
+            //       ),
+            //     )),
+          ])
+        : Container(
+            padding: EdgeInsets.only(left: 30),
+            child: Align(
+                alignment: Alignment.bottomCenter, child: getJoinButton()));
+  }
+
+  getJoinButton() {
+    return FloatingActionButton.extended(
+      onPressed: () {
+        DatabaseService().addSpaceMember(widget.rid, user.uid);
+        getSpaceBox();
+      },
+      backgroundColor: CupertinoTheme.of(context).primaryColor,
+      icon: Icon(Icons.add),
+      label: Text('Join'),
+    );
+  }
 
   setPageView(int initPage) {
     this.setState(() {
       this.initPage = initPage;
-      gridViewOn = false;
+      if (isMember) gridViewOn = false;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    switch (spaceType) {
-      case 0:
-        return OpenSpace(
-          space: widget.rid,
-        );
-      case 1:
-        return GridSpaceView(
-          rid: widget.rid,
-        );
-      case 2:
-        return GridSpaceView(
-          rid: widget.rid,
-        );
-      case 3:
-        return SecretSpace(
-          space: widget.rid,
-        );
-    }
-
-    if (spaceType == 3) {
-      return SecretSpace(
-        space: widget.rid,
-      );
-    }
+    if (!authorized) return Container();
     return Scaffold(
         backgroundColor: Colors.indigo[100],
-        //floatingActionButton: gridViewOn ? getFloatingButton() : Container(),
+        floatingActionButton: getFloatingButton(),
         body: CupertinoPageScaffold(
-            backgroundColor: Colors.indigo[100],
+            backgroundColor: Colors.white24,
             navigationBar: CupertinoNavigationBar(
               middle: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -211,19 +207,19 @@ class _SpaceBoxState extends State<SpaceBox> {
                   ),
                   GestureDetector(
                       onTap: () {
-                        gridViewOn = !gridViewOn;
+                        if (isMember) gridViewOn = !gridViewOn;
                         setState(() {});
                       },
                       child: gridViewOn
                           ? Icon(
                               Icons.grid_view_outlined,
                               size: 25,
-                              color: Colors.black87,
+                              color: CupertinoTheme.of(context).primaryColor,
                             )
                           : Icon(
                               Icons.view_carousel,
                               size: 25,
-                              color: Colors.black87,
+                              color: CupertinoTheme.of(context).primaryColor,
                             )),
                   GestureDetector(
                       onTap: () {
@@ -237,7 +233,7 @@ class _SpaceBoxState extends State<SpaceBox> {
                       child: Icon(
                         Icons.info_outline,
                         size: 25,
-                        color: Colors.black87,
+                        color: CupertinoTheme.of(context).primaryColor,
                       )),
                 ],
               ),

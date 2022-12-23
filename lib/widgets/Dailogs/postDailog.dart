@@ -2,10 +2,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:yantra/pages/editUserProfile.dart';
-import 'package:yantra/services/authService.dart';
-import 'package:yantra/services/databaseService.dart';
-import 'package:yantra/widgets/Dailogs/loginDailog.dart';
+import 'package:adiHouse/pages/editUserProfile.dart';
+import 'package:adiHouse/services/authService.dart';
+import 'package:adiHouse/services/databaseService.dart';
+import 'package:adiHouse/widgets/Dailogs/loginDailog.dart';
 
 class PostDailog extends StatefulWidget {
   final String post;
@@ -17,11 +17,10 @@ class PostDailog extends StatefulWidget {
 }
 
 class _PostDailogState extends State<PostDailog> {
-
   User user = FirebaseAuth.instance.currentUser;
 
   Widget CancelButton() {
-    if(widget.author == user.uid) {
+    if (widget.author == user.uid) {
       return CupertinoActionSheetAction(
         child: Text(
           'Delete',
@@ -44,31 +43,27 @@ class _PostDailogState extends State<PostDailog> {
     );
   }
 
-  
   @override
   Widget build(BuildContext context) {
-    if(user==null) return LoginDailog();
-    return CupertinoActionSheet(
-        actions: <Widget>[
-          CupertinoActionSheetAction(
-            child: Text(
-              "Share",
-              style: TextStyle(color: CupertinoColors.activeBlue),
-            ),
-            onPressed: () {
-              Navigator.of(context, rootNavigator: true).pop();
-              Navigator.of(
-                context,
-                rootNavigator: true,
-              ).push(CupertinoPageRoute(builder: (context) {
-                return EditProfile(
-                  uid: widget.post,
-                );
-              }));
-            },
-          ),
-
-        ],
-        cancelButton: CancelButton());
+    if (user == null) return LoginDailog();
+    return CupertinoActionSheet(actions: <Widget>[
+      CupertinoActionSheetAction(
+        child: Text(
+          "Share",
+          style: TextStyle(color: CupertinoColors.activeBlue),
+        ),
+        onPressed: () {
+          Navigator.of(context, rootNavigator: true).pop();
+          Navigator.of(
+            context,
+            rootNavigator: true,
+          ).push(CupertinoPageRoute(builder: (context) {
+            return EditProfile(
+              uid: widget.post,
+            );
+          }));
+        },
+      ),
+    ], cancelButton: CancelButton());
   }
 }

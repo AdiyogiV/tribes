@@ -5,19 +5,19 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:persistent_bottom_nav_bar/persistent-tab-view.dart';
 import 'package:provider/provider.dart';
-import 'package:yantra/pages/feed.dart';
-import 'package:yantra/pages/discovery.dart';
-import 'package:yantra/pages/flash.dart';
-import 'package:yantra/pages/gallery.dart';
-import 'package:yantra/pages/initUser.dart';
-import 'package:yantra/pages/login.dart';
-import 'package:yantra/pages/notifications.dart';
-import 'package:yantra/pages/replies.dart';
-import 'package:yantra/pages/requests.dart';
-import 'package:yantra/pages/spaces/inviteLandingPage.dart';
-import 'package:yantra/pages/userProfile.dart';
-import 'package:yantra/services/authService.dart';
-import 'package:yantra/widgets/previewBoxes/userPreviewBox.dart';
+import 'package:adiHouse/pages/feed.dart';
+import 'package:adiHouse/pages/discovery.dart';
+import 'package:adiHouse/pages/flash.dart';
+import 'package:adiHouse/pages/gallery.dart';
+import 'package:adiHouse/pages/initUser.dart';
+import 'package:adiHouse/pages/login.dart';
+import 'package:adiHouse/pages/notifications.dart';
+import 'package:adiHouse/pages/replies.dart';
+import 'package:adiHouse/pages/requests.dart';
+import 'package:adiHouse/pages/spaces/inviteLandingPage.dart';
+import 'package:adiHouse/pages/userProfile.dart';
+import 'package:adiHouse/services/authService.dart';
+import 'package:adiHouse/widgets/previewBoxes/userPreviewBox.dart';
 
 class TabHandler extends StatefulWidget {
   @override
@@ -88,7 +88,7 @@ class _TabHandlerState extends State<TabHandler> {
       [
         Container(child: LoginPage()),
         CupertinoTabView(
-          navigatorKey: thirdTabNavKey,
+          navigatorKey: firstTabNavKey,
           builder: (context) {
             return Discovery();
           },
@@ -99,25 +99,25 @@ class _TabHandlerState extends State<TabHandler> {
       ],
       [
         CupertinoTabView(
-          navigatorKey: secondTabNavKey,
+          navigatorKey: firstTabNavKey,
           builder: (context) {
             return Gallery();
           },
         ),
         CupertinoTabView(
-          navigatorKey: thirdTabNavKey,
+          navigatorKey: secondTabNavKey,
           builder: (context) {
             return Discovery();
           },
         ),
         CupertinoTabView(
-          navigatorKey: fifthTabNavKey,
+          navigatorKey: thirdTabNavKey,
           builder: (context) {
-            return Requests();
+            return Notifications();
           },
         ),
         CupertinoTabView(
-          navigatorKey: sixthTabNavKey,
+          navigatorKey: fourthTabNavKey,
           builder: (context) {
             return UserProfilePage(
               uid: userID,

@@ -7,9 +7,9 @@ import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
 import 'package:visibility_detector/visibility_detector.dart';
-import 'package:yantra/pages/theatre.dart';
-import 'package:yantra/widgets/postHeader.dart';
-import 'package:yantra/widgets/postToolbar.dart';
+import 'package:adiHouse/pages/theatre.dart';
+import 'package:adiHouse/widgets/postHeader.dart';
+import 'package:adiHouse/widgets/postToolbar.dart';
 
 class MainPlayer extends StatefulWidget {
   final String author;
@@ -70,9 +70,10 @@ class _MainPlayer extends State<MainPlayer> with WidgetsBindingObserver {
     _controller = VideoPlayerController.file(video);
     await _controller.initialize();
     await _controller.setLooping(true);
-    if (mounted) setState(() {
-      initialized = true;
-    });
+    if (mounted)
+      setState(() {
+        initialized = true;
+      });
   }
 
   toggleAudio(bool audio) {
@@ -86,18 +87,17 @@ class _MainPlayer extends State<MainPlayer> with WidgetsBindingObserver {
     if (visibility == 1.0) {
       _controller.play();
       Provider.of<PageIndexHolder>(context, listen: false)
-          .setPost(widget.postId );
-
+          .setPost(widget.postId);
     } else {
       _controller.pause();
     }
   }
 
   double getRatio() {
-    if (_controller.value.aspectRatio>1.5){
+    if (_controller.value.aspectRatio > 1.5) {
       return 1.5;
     }
-    if (_controller.value.aspectRatio<0.5){
+    if (_controller.value.aspectRatio < 0.5) {
       return 0.5;
     }
     return _controller.value.aspectRatio;
@@ -105,12 +105,15 @@ class _MainPlayer extends State<MainPlayer> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    if (_controller == null) return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(50.0),
-              child: CircularProgressIndicator(color: Colors.indigo[700],),
-            ),
-          );
+    if (_controller == null)
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(50.0),
+          child: CircularProgressIndicator(
+            color: Colors.indigo[700],
+          ),
+        ),
+      );
 
     return VisibilityDetector(
       key: UniqueKey(),
@@ -158,10 +161,6 @@ class _MainPlayer extends State<MainPlayer> with WidgetsBindingObserver {
                 ),
                 PostToolbar(
                   postId: widget.postId,
-                  upVoteCount: widget.upVoteCount,
-                  downVoteCount: widget.downVoteCount,
-                  upVotes: widget.upVotes,
-                  downVotes: widget.downVotes,
                 ),
                 VideoProgressIndicator(
                   _controller,

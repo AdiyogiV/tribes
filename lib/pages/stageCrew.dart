@@ -2,8 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flappy_search_bar/flappy_search_bar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:yantra/pages/userProfile.dart';
-import 'package:yantra/widgets/previewBoxes/userPreviewBox.dart';
+import 'package:adiHouse/pages/userProfile.dart';
+import 'package:adiHouse/widgets/previewBoxes/userPreviewBox.dart';
 
 class StageCrew extends StatefulWidget {
   final String title;
@@ -28,25 +28,25 @@ class _StageCrewState extends State<StageCrew> {
 
   getData() async {
     widget.guestList.forEach((key) async {
-        await userCollection.doc(key).get().then((snapshot) => {
-              if (snapshot.exists)
-                {
-                  data.add({
-                    'nickname' : snapshot['nickname'],
-                    'previewUrl' : snapshot['displayPicture'],
-                    'name' : snapshot['name'],
-                    'uid' : key
-                  })
-                }
-            });
-        setState(() {});
+      await userCollection.doc(key).get().then((snapshot) => {
+            if (snapshot.exists)
+              {
+                data.add({
+                  'nickname': snapshot['nickname'],
+                  'previewUrl': snapshot['displayPicture'],
+                  'name': snapshot['name'],
+                  'uid': key
+                })
+              }
+          });
+      setState(() {});
     });
   }
 
   Future<List<Post>> search(String search) async {
     List<Map> searchResult = [];
     data.forEach((element) {
-      if(element['nickname'].toLowerCase().contains(search.toLowerCase())){
+      if (element['nickname'].toLowerCase().contains(search.toLowerCase())) {
         searchResult.add(element);
       }
     });
@@ -82,12 +82,11 @@ class _StageCrewState extends State<StageCrew> {
               return Post(data[index]['previewUrl'], data[index]['nickname'],
                   data[index]['uid']);
             }),
-
             onItemFound: (Post post, int index) {
               return Padding(
                 padding: const EdgeInsets.all(1.0),
                 child: GestureDetector(
-                  onTap: (){
+                  onTap: () {
                     Navigator.of(context)
                         .push(CupertinoPageRoute(builder: (context) {
                       return UserProfilePage(uid: post.uid);

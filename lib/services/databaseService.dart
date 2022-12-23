@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:yantra/modal/SpaceRoles.dart';
+import 'package:adiHouse/modal/SpaceRoles.dart';
 
 class DatabaseService {
   String uid;
@@ -36,14 +36,7 @@ class DatabaseService {
           'name': name,
           'nickname': nickname,
           'displayPicture': value,
-        }, SetOptions(merge: true));
-
-        await spacesCollection.doc(user.uid).set({
-          'name': name,
-          'nickname': nickname,
-          'displayPicture': value,
-          'description': '',
-          'public': false,
+          "timestamp": Timestamp.fromDate(DateTime.now()),
         }, SetOptions(merge: true));
       });
       return true;
@@ -68,7 +61,8 @@ class DatabaseService {
       'name': name,
       'spaceType': spaceType,
       'displayPicture': '',
-      'description': ''
+      'description': '',
+      "timestamp": Timestamp.fromDate(DateTime.now()),
     });
     String id = space.id;
     await FirebaseFirestore.instance
@@ -76,13 +70,54 @@ class DatabaseService {
         .doc(user.uid)
         .collection('spaces')
         .doc(id)
-        .set({'spaceType': spaceType, 'role': 'owner'});
+        .set({
+      'spaceType': spaceType,
+      'role': 'owner',
+      "timestamp": Timestamp.fromDate(DateTime.now()),
+    });
     await FirebaseFirestore.instance
         .collection('spaceRoles')
         .doc(id)
         .collection('roles')
         .doc(user.uid)
-        .set({'role': 'creator'});
+        .set({
+      'role': 'creator',
+      "timestamp": Timestamp.fromDate(DateTime.now()),
+    });
+    return id;
+  }
+
+  createItem(
+    String name,
+    String price,
+    String displayPicture,
+    String space,
+  ) async {
+    CollectionReference itemCollection =
+        FirebaseFirestore.instance.collection('items');
+    var item = await itemCollection
+        .add({'name': name, 'price': price, 'image': '', space: space});
+    String id = item.id;
+    FirebaseStorage storageF = FirebaseStorage.instance;
+    Reference storageReference = storageF.ref().child('items/$id/displayPicture'
+        '.jpg');
+    await storageReference.putFile(File(displayPicture));
+    storageReference.getDownloadURL().then((value) async {
+      await itemCollection.doc(id).set({
+        'image': value,
+      }, SetOptions(merge: true));
+    });
+    await FirebaseFirestore.instance
+        .collection('spaceItems')
+        .doc(space)
+        .collection('items')
+        .doc(id)
+        .set({
+      'name': name,
+      'price': price,
+      "timestamp": Timestamp.fromDate(DateTime.now()),
+    });
+
     return id;
   }
 
@@ -106,26 +141,130 @@ class DatabaseService {
     String space,
     String member,
   ) async {
-    var role = await FirebaseFirestore.instance
-        .collection('spaceRoles')
-        .doc(space)
-        .collection('roles')
-        .doc(member)
-        .get();
-    if (role.data() != null) return true; //member
+    var role = 'requested';
+    int spaceType = await getSpaceType(space);
+    if (spaceType == 0) {
+      role = 'member';
+    }
 
     await FirebaseFirestore.instance
         .collection('spaceRoles')
         .doc(space)
         .collection('roles')
         .doc(member)
-        .set({'role': 'member'});
+        .set({
+      'role': '$role',
+      "timestamp": Timestamp.fromDate(DateTime.now()),
+    });
     await FirebaseFirestore.instance
         .collection('userSpaces')
         .doc(member)
         .collection('spaces')
         .doc(space)
-        .set({'public': false, 'role': 'member'}); //owner
+        .set({
+      'role': '$role',
+      "timestamp": Timestamp.fromDate(DateTime.now()),
+    }); //owner
+    return true;
+  }
+
+  Future<bool> removeSpaceMember(
+    String space,
+    String member,
+  ) async {
+    var role = await FirebaseFirestore.instance
+        .collection('spaceRoles')
+        .doc(space)
+        .collection('roles')
+        .doc(member)
+        .get();
+    if (role.data() == null) return true; //member
+
+    await FirebaseFirestore.instance
+        .collection('spaceRoles')
+        .doc(space)
+        .collection('roles')
+        .doc(member)
+        .delete();
+
+    await FirebaseFirestore.instance
+        .collection('userSpaces')
+        .doc(member)
+        .collection('spaces')
+        .doc(space)
+        .delete();
+
+    return true;
+  }
+
+  Future<bool> approveSpaceMember(String space, String member) async {
+    try {
+      var role = 'member';
+
+      await FirebaseFirestore.instance
+          .collection('spaceRoles')
+          .doc(space)
+          .collection('roles')
+          .doc(member)
+          .set({
+        'role': '$role',
+        "timestamp": Timestamp.fromDate(DateTime.now()),
+      });
+      await FirebaseFirestore.instance
+          .collection('userSpaces')
+          .doc(member)
+          .collection('spaces')
+          .doc(space)
+          .set({
+        'role': '$role',
+        "timestamp": Timestamp.fromDate(DateTime.now()),
+      });
+      return true;
+    } catch (e) {
+      print(e);
+      return false;
+    }
+  }
+
+  Future<bool> rejectSpaceMember(String space, String member) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('spaceRoles')
+          .doc(space)
+          .collection('roles')
+          .doc(member)
+          .delete();
+      await FirebaseFirestore.instance
+          .collection('userSpaces')
+          .doc(member)
+          .collection('spaces')
+          .doc(space)
+          .delete();
+      return true;
+    } catch (e) {
+      print(e);
+      return false;
+    }
+  }
+
+  Future<bool> addUserItem(
+    String usr,
+    String item,
+  ) async {
+    var role = await FirebaseFirestore.instance
+        .collection('userItems')
+        .doc(user.uid)
+        .collection('items')
+        .doc(item)
+        .get();
+    if (role.data() != null) return true; //member
+
+    await FirebaseFirestore.instance
+        .collection('userItems')
+        .doc(user.uid)
+        .collection('items')
+        .doc(item)
+        .set({"timestamp": Timestamp.fromDate(DateTime.now())});
     return true;
   }
 
@@ -151,6 +290,15 @@ class DatabaseService {
         .collection('spaces')
         .doc(space)
         .get();
+  }
+
+  Future<int> getSpaceType(String space) async {
+    DocumentSnapshot snap = await getSpace(space);
+    return snap['spaceType'];
+  }
+
+  Future<DocumentSnapshot> getItem(String item) async {
+    return await FirebaseFirestore.instance.collection('items').doc(item).get();
   }
 
   Future<String> getPostSpace(String post) async {
@@ -203,10 +351,7 @@ class DatabaseService {
 
   Future<QuerySnapshot> getSpaces(String search) async {
     if (search.isEmpty) {
-      return await FirebaseFirestore.instance
-          .collection('spacePosts')
-          .orderBy('updated', descending: false)
-          .get();
+      return await FirebaseFirestore.instance.collection('spaces').get();
     } else {
       return await FirebaseFirestore.instance
           .collection('spaces')
@@ -388,11 +533,11 @@ class DatabaseService {
     if (displayPicture != null) {
       FirebaseStorage storageF = FirebaseStorage.instance;
       Reference storageReference =
-          storageF.ref().child('spaces/$space/displayPicture'
+          storageF.ref().child('users/${user.uid}/displayPicture'
               '.jpg');
       await storageReference.putFile(File(displayPicture));
       storageReference.getDownloadURL().then((value) async {
-        return await spacesCollection.doc(space).set({
+        return await userCollection.doc(user.uid).set({
           'name': name,
           'description': description,
           'displayPicture': value,
@@ -400,7 +545,7 @@ class DatabaseService {
         }, SetOptions(merge: true));
       });
     } else {
-      return await spacesCollection.doc(space).set({
+      return await userCollection.doc(user.uid).set({
         'name': name,
         'description': description,
         'public': isPublic,

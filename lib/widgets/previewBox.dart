@@ -13,10 +13,10 @@ class PreviewBox extends StatefulWidget {
 
   PreviewBox(
       {this.username,
-        @required this.author,
-        @required this.previewUrl,
-        this.title,
-        Key key})
+      @required this.author,
+      @required this.previewUrl,
+      this.title,
+      Key key})
       : super(key: key);
 
   @override
@@ -26,8 +26,10 @@ class PreviewBox extends StatefulWidget {
 class _PreviewBoxState extends State<PreviewBox> {
   File preview;
   File authorPicture;
+  final CollectionReference usersCollection =
+      FirebaseFirestore.instance.collection('users');
   final CollectionReference spacesCollection =
-  FirebaseFirestore.instance.collection('spaces');
+      FirebaseFirestore.instance.collection('spaces');
 
   @override
   void initState() {
@@ -38,11 +40,12 @@ class _PreviewBoxState extends State<PreviewBox> {
   initializePreview() async {
     if (widget.author != null) {
       DocumentSnapshot authorDoc =
-      await spacesCollection.doc(widget.author).get();
-      String authordp = authorDoc['displayPicture'];
+          await usersCollection.doc(widget.author).get();
 
-      if (authordp != '')
-        authorPicture = await DefaultCacheManager().getSingleFile(authordp);
+      try {
+        authorPicture = await DefaultCacheManager()
+            .getSingleFile(authorDoc['displayPicture']);
+      } catch (e) {}
     }
     if (widget.previewUrl != '')
       preview = await DefaultCacheManager().getSingleFile(widget.previewUrl);
@@ -58,7 +61,7 @@ class _PreviewBoxState extends State<PreviewBox> {
       child: Material(
         elevation: 5,
         shadowColor: Colors.black,
-        borderRadius: BorderRadius.circular(5),
+        borderRadius: BorderRadius.circular(10),
         borderOnForeground: true,
         clipBehavior: Clip.antiAlias,
         child: Container(
@@ -70,77 +73,82 @@ class _PreviewBoxState extends State<PreviewBox> {
                     aspectRatio: 0.8,
                     child: (preview != null)
                         ? Image.file(
-                      preview,
-                      fit: BoxFit.cover,
-                    )
+                            preview,
+                            fit: BoxFit.cover,
+                          )
                         : Container(
-                      child: Image.asset(
-                        'assets/images/noise.jpg',
-                        fit: BoxFit.cover,
-                      ),
-                    ),
+                            child: Image.asset(
+                              'assets/images/noise.gif',
+                              fit: BoxFit.cover,
+                            ),
+                          ),
                   ),
                   Column(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start ,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       (authorPicture != null)
                           ? Padding(
-                        padding: const EdgeInsets.all(5.0),
-                        child: Container(
-                          decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.white,
-                              boxShadow: [
-                                BoxShadow(blurRadius: 1),
-                              ]),
-                          child: Material(
-                            shape: CircleBorder(),
-                            clipBehavior: Clip.antiAliasWithSaveLayer,
-                            child: Container(
-                              width: 30,
-                              height: 30,
-                              child: Image.file(
-                                authorPicture,
-                                fit: BoxFit.cover,
+                              padding: const EdgeInsets.all(5.0),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.white,
+                                    boxShadow: [
+                                      BoxShadow(blurRadius: 1),
+                                    ]),
+                                child: Material(
+                                  shape: CircleBorder(),
+                                  clipBehavior: Clip.antiAliasWithSaveLayer,
+                                  child: Container(
+                                    width: 30,
+                                    height: 30,
+                                    child: (authorPicture != null)
+                                        ? Image.file(
+                                            authorPicture,
+                                            fit: BoxFit.cover,
+                                          )
+                                        : Image.asset(
+                                            'assets/images/user.png',
+                                            fit: BoxFit.cover,
+                                          ),
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
-                        ),
-                      )
+                            )
                           : Container(),
                       (widget.title != null)
                           ? Container(
-                        decoration: BoxDecoration(
-                          gradient: new LinearGradient(
-                              colors: [
-                                Colors.black,
-                                Colors.transparent,
-                              ],
-                              begin: const FractionalOffset(0.0, 1.0),
-                              end: const FractionalOffset(0.0, 0.0),
-                              stops: [0.0, 1.0],
-                              tileMode: TileMode.clamp),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(5),
-                          child: Text(
-                            widget.title,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w400,
-                              color: CupertinoColors.white,
-                              shadows: [
-                                Shadow(
-                                  blurRadius: 5,
-                                  color: Colors.black,
-                                  offset: Offset(0, 0),
+                              decoration: BoxDecoration(
+                                gradient: new LinearGradient(
+                                    colors: [
+                                      Colors.black,
+                                      Colors.transparent,
+                                    ],
+                                    begin: const FractionalOffset(0.0, 1.0),
+                                    end: const FractionalOffset(0.0, 0.0),
+                                    stops: [0.0, 1.0],
+                                    tileMode: TileMode.clamp),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(5),
+                                child: Text(
+                                  widget.title,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w400,
+                                    color: CupertinoColors.white,
+                                    shadows: [
+                                      Shadow(
+                                        blurRadius: 5,
+                                        color: Colors.black,
+                                        offset: Offset(0, 0),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      )
+                              ),
+                            )
                           : Expanded(child: Container()),
                     ],
                   )

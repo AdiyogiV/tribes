@@ -6,8 +6,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import 'package:yantra/services/authService.dart';
-import 'package:yantra/services/databaseService.dart';
+import 'package:adiHouse/services/authService.dart';
+import 'package:adiHouse/services/databaseService.dart';
 
 class InitUser extends StatefulWidget {
   @override
@@ -38,10 +38,9 @@ class _InitUserState extends State<InitUser> {
         });
   }
 
-
   checkAvailability() async {
     if (_snap.exists) {
-      if (_snap[nickname] ?? false ) {
+      if (_snap[nickname] != false) {
         setState(() {
           availability = false;
         });
@@ -83,17 +82,16 @@ class _InitUserState extends State<InitUser> {
   void _onImageButtonPressed() async {
     try {
       final pickedFile =
-      await ImagePicker().getImage(source: ImageSource.gallery);
+          await ImagePicker().pickImage(source: ImageSource.gallery);
       displayPicture = File(pickedFile.path);
-      setState(() {
-      });
+      setState(() {});
     } catch (e) {}
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
+      backgroundColor: Colors.black,
       resizeToAvoidBottomInset: false,
       floatingActionButton:
           Consumer<AuthService>(builder: (context, auth, child) {
@@ -106,7 +104,7 @@ class _InitUserState extends State<InitUser> {
             }
           },
           backgroundColor: checkDetails()
-              ? CupertinoTheme.of(context).primaryColor
+              ? CupertinoColors.activeBlue
               : CupertinoColors.systemGrey,
           icon: Icon(Icons.arrow_right_alt),
           label: Text('WELCOME'),

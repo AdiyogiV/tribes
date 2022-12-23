@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:yantra/widgets/mainPlayer.dart';
-import 'package:yantra/widgets/postReplies.dart';
+import 'package:adiHouse/widgets/mainPlayer.dart';
+import 'package:adiHouse/widgets/postReplies.dart';
 
 typedef OrignalCallback = void Function(
   String postId,

@@ -6,15 +6,16 @@ import 'package:flutter/material.dart';
 import 'package:algolia/algolia.dart';
 import 'package:flutter/rendering.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'package:yantra/pages/spaces/space.dart';
-import 'package:yantra/pages/theatre.dart';
-import 'package:yantra/pages/userProfile.dart';
-import 'package:yantra/services/algoliaService.dart';
-import 'package:yantra/services/databaseService.dart';
-import 'package:yantra/widgets/previewBox.dart';
-import 'package:yantra/widgets/previewBoxes/crewPreview.dart';
-import 'package:yantra/widgets/previewBoxes/userPreviewBox.dart';
-import 'package:yantra/widgets/previewBoxes/spacePreviewBox.dart';
+import 'package:adiHouse/pages/houseMarket.dart';
+import 'package:adiHouse/pages/spaces/space.dart';
+import 'package:adiHouse/pages/theatre.dart';
+import 'package:adiHouse/pages/userProfile.dart';
+import 'package:adiHouse/services/algoliaService.dart';
+import 'package:adiHouse/services/databaseService.dart';
+import 'package:adiHouse/widgets/previewBox.dart';
+import 'package:adiHouse/widgets/previewBoxes/crewPreview.dart';
+import 'package:adiHouse/widgets/previewBoxes/userPreviewBox.dart';
+import 'package:adiHouse/widgets/previewBoxes/spacePreviewBox.dart';
 
 class Discovery extends StatefulWidget {
   @override
@@ -84,36 +85,11 @@ class _DiscoveryState extends State<Discovery> {
     }
   }
 
-  String getTitle() {
-    switch (selectedSpaceType) {
-      case 0:
-        {
-          return 'open tribes';
-        }
-        break;
-      case 1:
-        {
-          return 'public tribes';
-        }
-        break;
-
-      case 2:
-        {
-          return 'private tribes';
-        }
-        break;
-      default:
-        {
-          return 'secret tribes';
-        }
-        break;
-    }
-  }
-
   getSpaces(String input) async {
     try {
       QuerySnapshot results = await DatabaseService().getSpaces(input);
       suggestions = results.docs
+          .toList()
           .asMap()
           .map(
             (index, doc) => MapEntry(
@@ -243,10 +219,19 @@ class _DiscoveryState extends State<Discovery> {
     super.dispose();
   }
 
+  getLogo() {
+    return Container(
+        padding: EdgeInsets.all(20),
+        child: Image.asset(
+          'assets/images/icon.png',
+          fit: BoxFit.contain,
+        ));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.indigo[100],
+      backgroundColor: Colors.black38,
       extendBody: true,
       resizeToAvoidBottomInset: false,
       body: SmartRefresher(
@@ -265,38 +250,14 @@ class _DiscoveryState extends State<Discovery> {
                   borderRadius: BorderRadius.only(
                       bottomLeft: Radius.circular(1),
                       bottomRight: Radius.circular(1))),
-              title: Text(
-                getTitle(),
-                style: TextStyle(
-                  color: CupertinoTheme.of(context).primaryColor,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
+              title: Container(height: 90, child: getLogo()),
               backgroundColor: Colors.transparent,
               floating: true,
               stretch: true,
-              expandedHeight: 110,
+              expandedHeight: 120,
               collapsedHeight: 100,
               elevation: 4,
               forceElevated: true,
-              actions: [
-                Padding(
-                  padding: const EdgeInsets.all(7.0),
-                  child: CupertinoSlidingSegmentedControl(
-                    padding: EdgeInsets.all(4),
-                    onValueChanged: (value) {
-                      selectedSpaceType = value;
-                      getSuggestions(_textController.text);
-                      focusNode.unfocus();
-                      setState(() {});
-                    },
-                    groupValue: selectedSpaceType,
-                    children: spaceTypes,
-                    backgroundColor: Colors.black12,
-                    thumbColor: Colors.white,
-                  ),
-                ),
-              ],
               flexibleSpace: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.only(
@@ -304,8 +265,8 @@ class _DiscoveryState extends State<Discovery> {
                       bottomRight: Radius.circular(1)),
                   gradient: new LinearGradient(
                       colors: [
-                        Colors.white,
-                        Colors.white60,
+                        Colors.black,
+                        Colors.black54,
                       ],
                       begin: const FractionalOffset(0.0, 0.0),
                       end: const FractionalOffset(0.0, 1),
@@ -316,7 +277,7 @@ class _DiscoveryState extends State<Discovery> {
                   padding: const EdgeInsets.only(top: 80.0),
                   child: Center(
                     child: Padding(
-                      padding: const EdgeInsets.all(7.0),
+                      padding: const EdgeInsets.all(10.0),
                       child: Material(
                         elevation: 2,
                         borderRadius: BorderRadius.circular(10),

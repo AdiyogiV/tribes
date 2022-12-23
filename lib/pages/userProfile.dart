@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:adiHouse/widgets/Dailogs/tokenDialog.dart';
+import 'package:adiHouse/widgets/previewBoxes/tokenPreview.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
@@ -8,18 +10,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:provider/provider.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'package:yantra/pages/editUserProfile.dart';
-import 'package:yantra/pages/login.dart';
-import 'package:yantra/pages/recorder.dart';
-import 'package:yantra/pages/stageCrew.dart';
-import 'package:yantra/pages/theatre.dart';
-import 'package:yantra/services/authService.dart';
-import 'package:yantra/services/databaseService.dart';
-import 'package:yantra/services/functionsService.dart';
-import 'package:yantra/widgets/Dailogs/profileDailog.dart';
-import 'package:yantra/widgets/previewBox.dart';
-import 'package:yantra/widgets/previewBoxes/userPicture.dart';
-import 'package:yantra/widgets/previewBoxes/userPreviewBox.dart';
+import 'package:adiHouse/pages/editUserProfile.dart';
+import 'package:adiHouse/pages/login.dart';
+import 'package:adiHouse/pages/recorder.dart';
+import 'package:adiHouse/pages/stageCrew.dart';
+import 'package:adiHouse/pages/theatre.dart';
+import 'package:adiHouse/services/authService.dart';
+import 'package:adiHouse/services/databaseService.dart';
+import 'package:adiHouse/services/functionsService.dart';
+import 'package:adiHouse/widgets/Dailogs/profileDailog.dart';
+import 'package:adiHouse/widgets/previewBox.dart';
+import 'package:adiHouse/widgets/previewBoxes/userPicture.dart';
+import 'package:adiHouse/widgets/previewBoxes/userPreviewBox.dart';
 
 class UserProfilePage extends StatefulWidget {
   final String uid;
@@ -62,8 +64,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
   final CollectionReference userSpacesCollection =
       FirebaseFirestore.instance.collection('userSpaces');
 
-  final CollectionReference spacePostsCollection =
-      FirebaseFirestore.instance.collection('spacePosts');
+  final CollectionReference userItemsCollection =
+      FirebaseFirestore.instance.collection('userItems');
 
   RefreshController _refreshController =
       RefreshController(initialRefresh: false);
@@ -126,20 +128,11 @@ class _UserProfilePageState extends State<UserProfilePage> {
   }
 
   getProfile() async {
-    DocumentSnapshot spaceDoc = await spacesCollection.doc(widget.uid).get();
-    isPublic = spaceDoc['public'];
+    DocumentSnapshot spaceDoc = await userCollection.doc(widget.uid).get();
     name = spaceDoc['name'];
     nickname = spaceDoc['nickname'];
-    bio = spaceDoc['description'];
     displayPicture = spaceDoc['displayPicture'];
 
-    if (followingStatus == StatusEnums.follower)
-      following = (await userSpacesCollection
-              .doc(widget.uid)
-              .collection('spaces')
-              .where('role', isEqualTo: 'follower')
-              .get())
-          .docs;
     if (mounted) {
       setState(() {});
     }
@@ -158,26 +151,11 @@ class _UserProfilePageState extends State<UserProfilePage> {
     _refreshController.loadComplete();
   }
 
-  userPosts() {
+  userItems() {
     return FutureBuilder<QuerySnapshot>(
-        future: spacePostsCollection
-            .doc(widget.uid)
-            .collection('posts')
-            .orderBy('timestamp', descending: true)
-            .get(),
+        future: userItemsCollection.doc(widget.uid).collection('items').get(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
-            if (!isPublic && followingStatus != StatusEnums.follower) {
-              return Container(
-                height: 200,
-                child: Center(
-                  child: Text(
-                    '$name`s account is private. \nFollow $name to view their posts.',
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              );
-            }
             return Padding(
               padding: const EdgeInsets.all(50.0),
               child: Center(child: CircularProgressIndicator()),
@@ -190,23 +168,19 @@ class _UserProfilePageState extends State<UserProfilePage> {
                     GestureDetector(
                       key: UniqueKey(),
                       onTap: () {
-                        Navigator.of(context, rootNavigator: true)
-                            .push(CupertinoPageRoute(builder: (context) {
-                          return Theatre(
-                            initpage: index,
-                            rid: widget.uid,
-                          );
-                        }));
+                        showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return TokenDialog(
+                                item: doc.id,
+                              );
+                            });
                       },
                       child: Container(
-                        width: MediaQuery.of(context).size.width / 4,
-                        child: PreviewBox(
-                          author: null,
-                          key: UniqueKey(),
-                          previewUrl: doc['thumbnail'],
-                          title: doc['title'],
-                        ),
-                      ),
+                          width: MediaQuery.of(context).size.width / 6,
+                          child: UserToken(
+                            token: doc.id,
+                          )),
                     ),
                   ))
               .values
@@ -273,7 +247,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: getFloatingButton(),
+      backgroundColor: Colors.black,
+      //floatingActionButton: getFloatingButton(),
       body: SafeArea(
         child: SmartRefresher(
           controller: _refreshController,
@@ -290,16 +265,14 @@ class _UserProfilePageState extends State<UserProfilePage> {
                 floating: true,
                 expandedHeight: 350,
                 collapsedHeight: 300,
-                elevation: 5,
+                elevation: 1,
                 forceElevated: true,
-                backgroundColor: Colors.white,
+                backgroundColor: Colors.transparent,
                 flexibleSpace: headerSection(context),
-                iconTheme: IconThemeData(
-                    color: CupertinoTheme.of(context).primaryColor),
                 title: Text(
                   nickname,
                   style: TextStyle(
-                    fontWeight: FontWeight.w400,
+                    fontWeight: FontWeight.w200,
                     color: CupertinoTheme.of(context).primaryColor,
                   ),
                 ),
@@ -324,11 +297,19 @@ class _UserProfilePageState extends State<UserProfilePage> {
               ),
               SliverToBoxAdapter(
                 child: Container(
-                  height: 5,
+                  padding: EdgeInsets.all(20),
+                  child: Text(
+                    'Your Collection',
+                    style: TextStyle(
+                        fontSize: 25,
+                        fontWeight: FontWeight.w200,
+                        color: Colors.white),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               ),
               SliverToBoxAdapter(
-                child: userPosts(),
+                child: userItems(),
               ),
             ],
           ),
@@ -367,8 +348,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
                       Text(
                         name,
                         style: TextStyle(
-                          fontSize: 24,
-                          color: Colors.black87,
+                          fontSize: 30,
+                          color: Colors.white,
                           fontWeight: FontWeight.w300,
                         ),
                       ),
@@ -385,170 +366,170 @@ class _UserProfilePageState extends State<UserProfilePage> {
                   ),
                 )),
             Divider(),
-            Expanded(
-              flex: 1,
-              child: Padding(
-                padding: EdgeInsets.only(left: 00, right: 00),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: <Widget>[
-                          Text(
-                            spacePosts.length.toString(),
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: textColor,
-                            ),
-                          ),
-                          Text('posts',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w400,
-                                fontSize: 12,
-                                color: textColor,
-                              ))
-                        ],
-                      ),
-                    ),
-                    // Expanded(
-                    //   flex: 3,
-                    //   child: Column(
-                    //     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    //     children: <Widget>[
-                    //       Text(
-                    //         spacePosts.length.toString(),
-                    //         style: TextStyle(
-                    //           fontSize: 16,
-                    //           color: textColor,
-                    //         ),
-                    //       ),
-                    //       Text('reactions',
-                    //           style: TextStyle(
-                    //             fontWeight: FontWeight.w400,
-                    //             fontSize: 12,
-                    //             color: textColor,
-                    //           ))
-                    //     ],
-                    //   ),
-                    // ),
-                    // Expanded(
-                    //   flex: 3,
-                    //   child: Column(
-                    //     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    //     children: <Widget>[
-                    //       Text(
-                    //         '55',
-                    //         style: TextStyle(
-                    //           fontSize: 16,
-                    //           color: textColor,
-                    //         ),
-                    //       ),
-                    //       Text('upvotes',
-                    //           style: TextStyle(
-                    //             fontWeight: FontWeight.w400,
-                    //             fontSize: 12,
-                    //             color: textColor,
-                    //           ))
-                    //     ],
-                    //   ),
-                    // ),
-                    Expanded(
-                      flex: 3,
-                      child: GestureDetector(
-                        onTap: () {
-                          Navigator.of(context)
-                              .push(CupertinoPageRoute(builder: (context) {
-                            return StageCrew(
-                              title: '$nickname`s followers',
-                              guestList: followers,
-                            );
-                          }));
-                        },
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: <Widget>[
-                            Text(
-                              '${followers.length}',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: textColor,
-                              ),
-                            ),
-                            Text(
-                              'followers',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w400,
-                                fontSize: 12,
-                                color: textColor,
-                              ),
-                            )
-                          ],
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      flex: 3,
-                      child: GestureDetector(
-                        onTap: () {
-                          //   Navigator.of(context)
-                          //       .push(CupertinoPageRoute(builder: (context) {
-                          //     return StageCrew(
-                          //       title: '$nickname is following',
-                          //       guestList: following,
-                          //     );
-                          //   }));
-                        },
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: <Widget>[
-                            Text(
-                              '${following.length}',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: textColor,
-                              ),
-                            ),
-                            Text(
-                              'following',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w400,
-                                fontSize: 12,
-                                color: textColor,
-                              ),
-                            )
-                          ],
-                        ),
-                      ),
-                    ),
-                    // Expanded(
-                    //   flex: 3,
-                    //   child: Column(
-                    //     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    //     children: <Widget>[
-                    //       Text(
-                    //         spacePosts.length.toString(),
-                    //         style: TextStyle(
-                    //           fontSize: 16,
-                    //           color: textColor,
-                    //         ),
-                    //       ),
-                    //       Text('reacted',
-                    //           style: TextStyle(
-                    //             fontWeight: FontWeight.w400,
-                    //             fontSize: 12,
-                    //             color: textColor,
-                    //           ))
-                    //     ],
-                    //   ),
-                    // ),
-                  ],
-                ),
-              ),
-            )
+            //   Expanded(
+            //     flex: 1,
+            //     child: Padding(
+            //       padding: EdgeInsets.only(left: 00, right: 00),
+            //       child: Row(
+            //         mainAxisAlignment: MainAxisAlignment.spaceAround,
+            //         crossAxisAlignment: CrossAxisAlignment.center,
+            //         children: [
+            //           // Expanded(
+            //           //   flex: 3,
+            //           //   child: Column(
+            //           //     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            //           //     children: <Widget>[
+            //           //       Text(
+            //           //         spacePosts.length.toString(),
+            //           //         style: TextStyle(
+            //           //           fontSize: 16,
+            //           //           color: textColor,
+            //           //         ),
+            //           //       ),
+            //           //       Text('posts',
+            //           //           style: TextStyle(
+            //           //             fontWeight: FontWeight.w400,
+            //           //             fontSize: 12,
+            //           //             color: textColor,
+            //           //           ))
+            //           //     ],
+            //           //   ),
+            //           // ),
+            //           // // Expanded(
+            //           //   flex: 3,
+            //           //   child: Column(
+            //           //     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            //           //     children: <Widget>[
+            //           //       Text(
+            //           //         spacePosts.length.toString(),
+            //           //         style: TextStyle(
+            //           //           fontSize: 16,
+            //           //           color: textColor,
+            //           //         ),
+            //           //       ),
+            //           //       Text('reactions',
+            //           //           style: TextStyle(
+            //           //             fontWeight: FontWeight.w400,
+            //           //             fontSize: 12,
+            //           //             color: textColor,
+            //           //           ))
+            //           //     ],
+            //           //   ),
+            //           // ),
+            //           // Expanded(
+            //           //   flex: 3,
+            //           //   child: Column(
+            //           //     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            //           //     children: <Widget>[
+            //           //       Text(
+            //           //         '55',
+            //           //         style: TextStyle(
+            //           //           fontSize: 16,
+            //           //           color: textColor,
+            //           //         ),
+            //           //       ),
+            //           //       Text('upvotes',
+            //           //           style: TextStyle(
+            //           //             fontWeight: FontWeight.w400,
+            //           //             fontSize: 12,
+            //           //             color: textColor,
+            //           //           ))
+            //           //     ],
+            //           //   ),
+            //           // ),
+            //           Expanded(
+            //             flex: 3,
+            //             child: GestureDetector(
+            //               onTap: () {
+            //                 Navigator.of(context)
+            //                     .push(CupertinoPageRoute(builder: (context) {
+            //                   return StageCrew(
+            //                     title: '$nickname`s followers',
+            //                     guestList: followers,
+            //                   );
+            //                 }));
+            //               },
+            //               child: Column(
+            //                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            //                 children: <Widget>[
+            //                   Text(
+            //                     '${followers.length}',
+            //                     style: TextStyle(
+            //                       fontSize: 16,
+            //                       color: textColor,
+            //                     ),
+            //                   ),
+            //                   Text(
+            //                     'followers',
+            //                     style: TextStyle(
+            //                       fontWeight: FontWeight.w400,
+            //                       fontSize: 12,
+            //                       color: textColor,
+            //                     ),
+            //                   )
+            //                 ],
+            //               ),
+            //             ),
+            //           ),
+            //           Expanded(
+            //             flex: 3,
+            //             child: GestureDetector(
+            //               onTap: () {
+            //                 //   Navigator.of(context)
+            //                 //       .push(CupertinoPageRoute(builder: (context) {
+            //                 //     return StageCrew(
+            //                 //       title: '$nickname is following',
+            //                 //       guestList: following,
+            //                 //     );
+            //                 //   }));
+            //               },
+            //               child: Column(
+            //                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            //                 children: <Widget>[
+            //                   Text(
+            //                     '${following.length}',
+            //                     style: TextStyle(
+            //                       fontSize: 16,
+            //                       color: textColor,
+            //                     ),
+            //                   ),
+            //                   Text(
+            //                     'following',
+            //                     style: TextStyle(
+            //                       fontWeight: FontWeight.w400,
+            //                       fontSize: 12,
+            //                       color: textColor,
+            //                     ),
+            //                   )
+            //                 ],
+            //               ),
+            //             ),
+            //           ),
+            //           // Expanded(
+            //           //   flex: 3,
+            //           //   child: Column(
+            //           //     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            //           //     children: <Widget>[
+            //           //       Text(
+            //           //         spacePosts.length.toString(),
+            //           //         style: TextStyle(
+            //           //           fontSize: 16,
+            //           //           color: textColor,
+            //           //         ),
+            //           //       ),
+            //           //       Text('reacted',
+            //           //           style: TextStyle(
+            //           //             fontWeight: FontWeight.w400,
+            //           //             fontSize: 12,
+            //           //             color: textColor,
+            //           //           ))
+            //           //     ],
+            //           //   ),
+            //           // ),
+            //         ],
+            //       ),
+            //     ),
+            //   )
           ],
         ),
       ),

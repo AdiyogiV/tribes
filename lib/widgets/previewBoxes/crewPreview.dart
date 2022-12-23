@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/file.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-import 'package:yantra/pages/userProfile.dart';
+import 'package:adiHouse/pages/userProfile.dart';
 
 class CrewPreview extends StatefulWidget {
   final String user;
@@ -59,60 +59,61 @@ class _CrewPreviewState extends State<CrewPreview> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          CupertinoPageRoute(
-            builder: (context) => UserProfilePage(
-              uid: widget.user,
+        onTap: () {
+          Navigator.push(
+            context,
+            CupertinoPageRoute(
+              builder: (context) => UserProfilePage(
+                uid: widget.user,
+              ),
+            ),
+          );
+        },
+        child: Container(
+          padding: EdgeInsets.all(7),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(7.0),
+            child: Material(
+              elevation: 1,
+              color: Colors.transparent,
+              child: Container(
+                child: Row(
+                  children: <Widget>[
+                    Material(
+                        clipBehavior: Clip.antiAlias,
+                        child: Container(
+                            child: AspectRatio(
+                                aspectRatio: 1, child: getPicture()))),
+                    Padding(
+                      padding: const EdgeInsets.all(10.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          (name != null)
+                              ? Text(
+                                  name,
+                                  style: TextStyle(
+                                      fontSize: 20,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w300),
+                                )
+                              : Container(),
+                          (widget.role != null)
+                              ? Text(
+                                  widget.role,
+                                  style: TextStyle(
+                                      fontSize: 15, color: Colors.grey),
+                                )
+                              : Container()
+                        ],
+                      ),
+                    )
+                  ],
+                ),
+              ),
             ),
           ),
-        );
-      },
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(7.0),
-        child: Material(
-          elevation: 1,
-          color: Colors.white,
-          child: Container(
-            padding: EdgeInsets.all(7),
-            child: Row(
-              children: <Widget>[
-                Material(
-                    shape: CircleBorder(),
-                    clipBehavior: Clip.antiAlias,
-                    child: Container(
-                        child:
-                            AspectRatio(aspectRatio: 1, child: getPicture()))),
-                Padding(
-                  padding: const EdgeInsets.all(10.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      (name != null)
-                          ? Text(
-                              name,
-                              style: TextStyle(
-                                fontSize: 18,
-                              ),
-                            )
-                          : Container(),
-                      (widget.role != null)
-                          ? Text(
-                              widget.role,
-                              style:
-                                  TextStyle(fontSize: 15, color: Colors.grey),
-                            )
-                          : Container()
-                    ],
-                  ),
-                )
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
+        ));
   }
 }

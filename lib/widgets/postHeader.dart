@@ -1,9 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:yantra/pages/spaces/space.dart';
-import 'package:yantra/pages/userProfile.dart';
-import 'package:yantra/widgets/previewBoxes/userPreviewBox.dart';
-import 'package:yantra/widgets/previewBoxes/spacePreviewBox.dart';
+import 'package:adiHouse/pages/spaces/space.dart';
+import 'package:adiHouse/pages/userProfile.dart';
+import 'package:adiHouse/widgets/previewBoxes/userPreviewBox.dart';
+import 'package:adiHouse/widgets/previewBoxes/spacePreviewBox.dart';
 
 typedef ReplyCallback = void Function(String uid, int PN);
 

@@ -6,14 +6,14 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart' as FCM;
 import 'package:image_picker/image_picker.dart';
-import 'package:yantra/pages/spaces/addSpacesMembers.dart';
-import 'package:yantra/pages/spaces/inviteToSpace.dart';
-import 'package:yantra/pages/userProfile.dart';
-import 'package:yantra/services/databaseService.dart';
-import 'package:yantra/widgets/Dailogs/spaceMemberOptions.dart';
-import 'package:yantra/widgets/previewBoxes/crewPreview.dart';
-import 'package:yantra/widgets/previewBoxes/followersPreview.dart';
-import 'package:yantra/widgets/previewBoxes/spacePreviewBox.dart';
+import 'package:adiHouse/pages/spaces/addSpacesMembers.dart';
+import 'package:adiHouse/pages/spaces/inviteToSpace.dart';
+import 'package:adiHouse/pages/userProfile.dart';
+import 'package:adiHouse/services/databaseService.dart';
+import 'package:adiHouse/widgets/Dailogs/spaceMemberOptions.dart';
+import 'package:adiHouse/widgets/previewBoxes/crewPreview.dart';
+import 'package:adiHouse/widgets/previewBoxes/followersPreview.dart';
+import 'package:adiHouse/widgets/previewBoxes/spacePreviewBox.dart';
 
 class EditSpace extends StatefulWidget {
   final String space;
@@ -34,8 +34,8 @@ class MapScreenState extends State<EditSpace>
   String admin;
   bool isPublic = false;
   int selectedIndex;
-  var _spaceMembers;
   var file = File('file.txt');
+  bool isMember = false;
 
   TextEditingController _nameController = TextEditingController();
   TextEditingController _bioController = TextEditingController();
@@ -48,6 +48,7 @@ class MapScreenState extends State<EditSpace>
 
   getSpaceBox() async {
     isOwner = await DatabaseService().isUserSpaceOwner(widget.space);
+    isMember = await DatabaseService().isMember(widget.space);
     setState(() {});
     DocumentSnapshot spaceDoc = await DatabaseService().getSpace(widget.space);
 
@@ -81,22 +82,34 @@ class MapScreenState extends State<EditSpace>
   }
 
   getFloatingButton() {
-    if (isOwner) {
-      return FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.of(context).push(CupertinoPageRoute(
-              builder: (BuildContext context) => AddSpacesMember(
-                    space: widget.space,
-                    spaceMembers: _spaceMembers,
-                  )));
-        },
-        backgroundColor: CupertinoTheme.of(context).primaryColor,
-        icon: Icon(Icons.add),
-        label: Text('Add'),
-      );
-    }
+    if (isMember)
+      return getExitButton();
+    else
+      return getJoinButton();
+  }
 
-    return Container();
+  getExitButton() {
+    return FloatingActionButton.extended(
+      onPressed: () {
+        DatabaseService().removeSpaceMember(widget.space, user.uid);
+        getSpaceBox();
+      },
+      backgroundColor: CupertinoTheme.of(context).primaryColor,
+      icon: Icon(Icons.exit_to_app_rounded),
+      label: Text('Leave'),
+    );
+  }
+
+  getJoinButton() {
+    return FloatingActionButton.extended(
+      onPressed: () {
+        DatabaseService().addSpaceMember(widget.space, user.uid);
+        getSpaceBox();
+      },
+      backgroundColor: CupertinoTheme.of(context).primaryColor,
+      icon: Icon(Icons.add),
+      label: Text('Join'),
+    );
   }
 
   getCrew() {
@@ -171,6 +184,7 @@ class MapScreenState extends State<EditSpace>
     return Scaffold(
       resizeToAvoidBottomInset: false,
       floatingActionButton: getFloatingButton(),
+      backgroundColor: Colors.black54,
       body: CupertinoPageScaffold(
           resizeToAvoidBottomInset: false,
           navigationBar: CupertinoNavigationBar(
@@ -292,7 +306,7 @@ class MapScreenState extends State<EditSpace>
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 20,
-                            color: CupertinoTheme.of(context).primaryColor,
+                            color: Colors.white,
                             shadows: [
                               Shadow(
                                 blurRadius: 2,
@@ -305,7 +319,8 @@ class MapScreenState extends State<EditSpace>
                   ),
                   Expanded(
                       child: Padding(
-                          padding: const EdgeInsets.all(8.0), child: getCrew()))
+                          padding: const EdgeInsets.all(8.0),
+                          child: getCrew())),
                 ],
               ),
             ),

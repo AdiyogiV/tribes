@@ -3,8 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:yantra/pages/login.dart';
-import 'package:yantra/widgets/previewBox.dart';
+import 'package:adiHouse/pages/login.dart';
+import 'package:adiHouse/widgets/previewBox.dart';
 
 typedef ReplyCallback = void Function(String postId);
 

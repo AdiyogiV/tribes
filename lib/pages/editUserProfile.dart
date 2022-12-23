@@ -3,8 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:yantra/services/databaseService.dart';
-import 'package:yantra/widgets/previewBoxes/userPicture.dart';
+import 'package:adiHouse/services/databaseService.dart';
+import 'package:adiHouse/widgets/previewBoxes/userPicture.dart';
 
 class EditProfile extends StatefulWidget {
   final String uid;
@@ -21,7 +21,7 @@ class MapScreenState extends State<EditProfile> {
   String displayPicture;
   String updatedDpPath;
   bool check = true;
-  bool isPublic = false;
+  bool isPublic = true;
   TextEditingController _nameController = TextEditingController();
   TextEditingController _bioController = TextEditingController();
   final CollectionReference spacesCollection =
@@ -37,21 +37,18 @@ class MapScreenState extends State<EditProfile> {
   }
 
   getProfile() async {
-    DocumentSnapshot spaceDoc = await spacesCollection.doc(widget.uid).get();
-    isPublic = spaceDoc['public'];
+    DocumentSnapshot spaceDoc = await userCollection.doc(widget.uid).get();
     _nameController.text = spaceDoc['name'];
-    _bioController.text = spaceDoc['description'];
     displayPicture = spaceDoc['displayPicture'];
-    setState(() {
-    });
+    setState(() {});
   }
 
   void _onImageButtonPressed() async {
-    PickedFile pickedFile = await ImagePicker().getImage(source: ImageSource.gallery);
+    XFile pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
     setState(() {
-      updatedDpPath = pickedFile.path;
+      updatedDpPath = File(pickedFile.path).path;
     });
-
   }
 
   void onSavePressed() {
@@ -93,10 +90,10 @@ class MapScreenState extends State<EditProfile> {
                   clipBehavior: Clip.antiAlias,
                   child: GestureDetector(
                     onTap: () {
-                      print('okay');
                       _onImageButtonPressed();
                     },
                     child: Container(
+                        color: Colors.yellow,
                         width: MediaQuery.of(context).size.width / 2,
                         height: MediaQuery.of(context).size.width / 2,
                         child: (updatedDpPath == null)

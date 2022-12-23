@@ -3,9 +3,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'package:yantra/pages/requests.dart';
-import 'package:yantra/widgets/notifications/followTile.dart';
-import 'package:yantra/widgets/notifications/replyTile.dart';
+import 'package:adiHouse/pages/requests.dart';
+import 'package:adiHouse/widgets/notifications/followTile.dart';
+import 'package:adiHouse/widgets/notifications/replyTile.dart';
 
 class Notifications extends StatefulWidget {
   @override
@@ -22,18 +22,22 @@ class _NotificationsState extends State<Notifications> {
       RefreshController(initialRefresh: false);
   List<Widget> itemList = <Widget>[];
 
-
-
   @override
   void initState() {
     super.initState();
     getNotifications();
   }
 
+  getLogo() {
+    return Image.asset(
+      'assets/images/adidaslogo.png',
+      fit: BoxFit.contain,
+    );
+  }
+
   getNotifications() async {
     List<Widget> _itemView = <Widget>[];
     await notificationsCollection.doc(user.uid).get().then((value) => {
-          print(value),
           notifics = value['notifications'],
           count = value['count'],
           for (int i = notifics.length; i > 0; i--)
@@ -44,8 +48,8 @@ class _NotificationsState extends State<Notifications> {
                     data: notifics['$i'],
                   ))
                 }
-              else if (notifics['$i']['type'] == 'follow')
-                {_itemView.add(FollowTile())}
+              // else if (notifics['$i']['type'] == 'follow')
+              //   {_itemView.add(FollowTile())}
             },
           setState(() {
             itemList = _itemView;
@@ -65,73 +69,65 @@ class _NotificationsState extends State<Notifications> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        backgroundColor: Colors.black,
         body: SafeArea(
-      child: SmartRefresher(
-          onRefresh: _onRefresh,
-          onLoading: _onLoading,
-          enablePullDown: true,
-          controller: _refreshController,
-          header: WaterDropHeader(),
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(10.0),
-                child: GestureDetector(
-                  onTap: () {
-                    Navigator.of(context)
-                        .push(CupertinoPageRoute(builder: (context) {
-                      return Requests();
-                    }));
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(20.0),
+          child: SmartRefresher(
+            onRefresh: _onRefresh,
+            onLoading: _onLoading,
+            enablePullDown: true,
+            controller: _refreshController,
+            header: WaterDropHeader(),
+            child: CustomScrollView(
+              slivers: [
+                SliverAppBar(
+                  shape: ContinuousRectangleBorder(
+                      borderRadius: BorderRadius.only(
+                          bottomLeft: Radius.circular(1),
+                          bottomRight: Radius.circular(1))),
+                  title: Container(height: 90, child: getLogo()),
+                  backgroundColor: Colors.transparent,
+                  floating: true,
+                  stretch: true,
+                  expandedHeight: 120,
+                  collapsedHeight: 100,
+                  elevation: 4,
+                  forceElevated: true,
+                  flexibleSpace: Container(
                     decoration: BoxDecoration(
-                        shape: BoxShape.rectangle,
-                        gradient: new LinearGradient(
-                            colors: [
-                              const Color(0xFF3366FF),
-                              const Color(0xFF00CCFF),
-                            ],
-                            begin: const FractionalOffset(0.0, 0.0),
-                            end: const FractionalOffset(1.0, 0.0),
-                            stops: [0.0, 1.0],
-                            tileMode: TileMode.clamp),
-                        //color: CupertinoTheme.of(context).primaryColor,
-                        borderRadius: BorderRadius.circular(10),
-                        boxShadow: [
-                          BoxShadow(
-                              color: Colors.black,
-                              offset: Offset(0, 0),
-                              blurRadius: 2),
-                        ]),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.person_add,
-                          color: Colors.white,
-                        ),
-                        Expanded(
-                            child: Padding(
-                          padding: const EdgeInsets.all(15.0),
-                          child: Text(
-                            'Follow Requests',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        )),
-                        Icon(
-                          Icons.arrow_right_alt,
-                          color: Colors.white,
-                          size: 40,
-                        )
-                      ],
+                      borderRadius: BorderRadius.only(
+                          bottomLeft: Radius.circular(1),
+                          bottomRight: Radius.circular(1)),
+                      gradient: new LinearGradient(
+                          colors: [
+                            Colors.black,
+                            Colors.black54,
+                          ],
+                          begin: const FractionalOffset(0.0, 0.0),
+                          end: const FractionalOffset(0.0, 1),
+                          stops: [0.0, 1],
+                          tileMode: TileMode.mirror),
                     ),
+                    child: Padding(
+                        padding: EdgeInsets.only(top: 60),
+                        child: Text(
+                          'notifications',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 25,
+                              fontWeight: FontWeight.w200),
+                          textAlign: TextAlign.center,
+                        )),
                   ),
+                  iconTheme: IconThemeData(
+                      color: CupertinoTheme.of(context).primaryColor),
                 ),
-              ),
-            ],
-          )),
-    ));
+                SliverToBoxAdapter(
+                    child: Wrap(
+                  children: itemList,
+                ))
+              ],
+            ),
+          ),
+        ));
   }
 }

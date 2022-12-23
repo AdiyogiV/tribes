@@ -1,13 +1,16 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:yantra/pages/editUserProfile.dart';
-import 'package:yantra/services/authService.dart';
+import 'package:adiHouse/pages/editUserProfile.dart';
+import 'package:adiHouse/services/authService.dart';
 
 class SpaceMemberOptions extends StatefulWidget {
   final String space;
   final String uid;
-  SpaceMemberOptions({this.space, this.uid,});
+  SpaceMemberOptions({
+    this.space,
+    this.uid,
+  });
 
   @override
   _SpaceMemberOptionsState createState() => _SpaceMemberOptionsState();
@@ -16,7 +19,6 @@ class SpaceMemberOptions extends StatefulWidget {
 class _SpaceMemberOptionsState extends State<SpaceMemberOptions> {
   @override
   Widget build(BuildContext context) {
-
     return CupertinoActionSheet(
         actions: <Widget>[
           CupertinoActionSheetAction(
@@ -26,10 +28,8 @@ class _SpaceMemberOptionsState extends State<SpaceMemberOptions> {
             ),
             onPressed: () {
               Navigator.of(context, rootNavigator: true).pop();
-
             },
           ),
-
         ],
         cancelButton: CupertinoActionSheetAction(
           child: Text(

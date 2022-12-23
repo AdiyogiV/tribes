@@ -1,3 +1,6 @@
+import 'package:adiHouse/pages/login.dart';
+import 'package:adiHouse/pages/recorder.dart';
+import 'package:adiHouse/widgets/postSwitcher.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
@@ -6,9 +9,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'package:yantra/pages/login.dart';
-import 'package:yantra/pages/recorder.dart';
-import 'package:yantra/widgets/postSwitcher.dart';
+import 'package:adiHouse/pages/login.dart';
+import 'package:adiHouse/pages/recorder.dart';
+import 'package:adiHouse/widgets/postSwitcher.dart';
 
 class Theatre extends StatefulWidget {
   final String rid;
@@ -102,25 +105,6 @@ class _TheatreState extends State<Theatre> {
   Widget _buildCarousel(BuildContext context) {
     return Scaffold(
         backgroundColor: Colors.indigo[100],
-        floatingActionButton:
-            Consumer<PageIndexHolder>(builder: (context, indexHolder, child) {
-          return FloatingActionButton(
-            onPressed: () {
-              if (user == null) {
-                requestLogin();
-                return;
-              }
-              Navigator.of(context).push(CupertinoPageRoute(builder: (builder) {
-                return Recorder(
-                  space: widget.rid,
-                  replyTo: indexHolder.getPost(),
-                );
-              }));
-            },
-            backgroundColor: CupertinoTheme.of(context).primaryColor,
-            child: Icon(Icons.add),
-          );
-        }),
         body: Container(
           child: StreamBuilder<QuerySnapshot>(
               stream: spacePostsCollection

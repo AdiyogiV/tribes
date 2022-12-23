@@ -9,7 +9,7 @@ class AppTitle extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Text(
-        "Yantra",
+        "adiHouse",
         style: TextStyle(
           color: CupertinoTheme.of(context).primaryColor,
           fontSize: 20,

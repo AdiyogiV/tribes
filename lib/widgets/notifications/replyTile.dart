@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-import 'package:yantra/pages/theatre.dart';
+import 'package:adiHouse/pages/theatre.dart';
 
 class ReplyTile extends StatefulWidget {
   final Map data;
