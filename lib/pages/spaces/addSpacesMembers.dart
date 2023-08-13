@@ -7,16 +7,16 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'package:adiHouse/pages/spaces/editSpace.dart';
-import 'package:adiHouse/pages/spaces/inviteToSpace.dart';
+import 'package:tribes/pages/spaces/editSpace.dart';
+import 'package:tribes/pages/spaces/inviteToSpace.dart';
 
-import 'package:adiHouse/services/databaseService.dart';
-import 'package:adiHouse/widgets/previewBoxes/followersPreview.dart';
+import 'package:tribes/services/databaseService.dart';
+import 'package:tribes/widgets/previewBoxes/followersPreview.dart';
 
 class AddSpacesMember extends StatefulWidget {
-  final String space;
+  final String? space;
   final spaceMembers;
-  AddSpacesMember({Key key, @required this.space, this.spaceMembers})
+  AddSpacesMember({Key? key, @required this.space, this.spaceMembers})
       : super(key: key);
 
   @override
@@ -24,7 +24,7 @@ class AddSpacesMember extends StatefulWidget {
 }
 
 class _AddSpacesMemberState extends State<AddSpacesMember> {
-  User user = FirebaseAuth.instance.currentUser;
+  User? user = FirebaseAuth.instance.currentUser;
   RefreshController _refreshController =
       RefreshController(initialRefresh: false);
 
@@ -73,7 +73,7 @@ class _AddSpacesMemberState extends State<AddSpacesMember> {
       onPressed: () {
         Navigator.of(context).push(CupertinoPageRoute(
             builder: (BuildContext context) => InviteToSpace(
-                  space: widget.space,
+                  space: widget.space!,
                 )));
       },
       backgroundColor: CupertinoTheme.of(context).primaryColor,
@@ -88,7 +88,7 @@ class _AddSpacesMemberState extends State<AddSpacesMember> {
     final _header = isSelected
         ? "${controller.value.amount} Member Selected"
         : " Add Members";
-    Future _followrs = DatabaseService().getSpaceFollower(user.uid);
+    Future<QuerySnapshot<Object?>>? _followrs = DatabaseService().getSpaceFollower(user!.uid);
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -160,15 +160,15 @@ class _AddSpacesMemberState extends State<AddSpacesMember> {
       ),
       floatingActionButton: isSelected
           ? FloatingActionButton(
-              onPressed: () async {
+              onPressed: () async { 
                 setState(() {
                   _isLoading = true;
                 });
                 controller.value.selectedIndexes.forEach((element) {
                   print(widget.space);
                   print(_followerList[element].id);
-                  return DatabaseService()
-                      .addSpaceMember(widget.space, _followerList[element].id);
+                  DatabaseService()
+                      .addSpaceMember(widget.space!, _followerList[element].id);
                 });
 
                 setState(() {

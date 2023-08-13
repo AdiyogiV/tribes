@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 
 class SelectableItem extends StatefulWidget {
   const SelectableItem({
-    Key key,
+    Key? key,
     @required this.index,
     @required this.selected,
     @required this.imageUrl,
     @required this.title,
   }) : super(key: key);
 
-  final int index;
-  final bool selected;
-  final String imageUrl;
-  final String title;
+  final int? index;
+  final bool? selected;
+  final String? imageUrl;
+  final String? title;
 
   @override
   _SelectableItemState createState() => _SelectableItemState();
@@ -20,22 +20,22 @@ class SelectableItem extends StatefulWidget {
 
 class _SelectableItemState extends State<SelectableItem>
     with SingleTickerProviderStateMixin {
-  AnimationController _controller;
-  Animation<double> _scaleAnimation;
+  AnimationController? _controller;
+  Animation<double>? _scaleAnimation;
 
   @override
   void initState() {
     super.initState();
 
     _controller = AnimationController(
-      value: widget.selected ? 1 : 0,
+      value: widget.selected! ? 1 : 0,
       duration: kThemeChangeDuration,
       vsync: this,
     );
 
     _scaleAnimation = Tween<double>(begin: 1, end: 0.8).animate(
       CurvedAnimation(
-        parent: _controller,
+        parent: _controller!,
         curve: Curves.ease,
       ),
     );
@@ -45,28 +45,28 @@ class _SelectableItemState extends State<SelectableItem>
   void didUpdateWidget(SelectableItem oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.selected != widget.selected) {
-      if (widget.selected) {
-        _controller.forward();
+      if (widget.selected!) {
+        _controller!.forward();
       } else {
-        _controller.reverse();
+        _controller!.reverse();
       }
     }
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller!.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation: _scaleAnimation,
+      animation: _scaleAnimation!,
       builder: (context, child) {
         return Container(
           child: Transform.scale(
-            scale: _scaleAnimation.value,
+            scale: _scaleAnimation!.value,
             child: DecoratedBox(
               child: child,
               decoration: BoxDecoration(
@@ -79,7 +79,7 @@ class _SelectableItemState extends State<SelectableItem>
       child: Container(
         alignment: Alignment.center,
         child: Text(
-          widget.title,
+          widget.title!,
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 18, color: Colors.white),
         ),

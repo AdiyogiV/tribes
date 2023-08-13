@@ -8,15 +8,15 @@ import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 class PreviewBox extends StatefulWidget {
   final String previewUrl;
   final String author;
-  final String username;
-  final String title;
+  final String? username;
+  final String? title;
 
   PreviewBox(
       {this.username,
-      @required this.author,
-      @required this.previewUrl,
+      required this.author,
+      required this.previewUrl,
       this.title,
-      Key key})
+      Key? key})
       : super(key: key);
 
   @override
@@ -24,8 +24,8 @@ class PreviewBox extends StatefulWidget {
 }
 
 class _PreviewBoxState extends State<PreviewBox> {
-  File preview;
-  File authorPicture;
+  File? preview;
+  File? authorPicture;
   final CollectionReference usersCollection =
       FirebaseFirestore.instance.collection('users');
   final CollectionReference spacesCollection =
@@ -38,15 +38,13 @@ class _PreviewBoxState extends State<PreviewBox> {
   }
 
   initializePreview() async {
-    if (widget.author != null) {
-      DocumentSnapshot authorDoc =
-          await usersCollection.doc(widget.author).get();
+    DocumentSnapshot authordocuments =
+        await usersCollection.doc(widget.author).get();
 
-      try {
-        authorPicture = await DefaultCacheManager()
-            .getSingleFile(authorDoc['displayPicture']);
-      } catch (e) {}
-    }
+    try {
+      authorPicture = await DefaultCacheManager()
+          .getSingleFile(authordocuments['displayPicture']);
+    } catch (e) {}
     if (widget.previewUrl != '')
       preview = await DefaultCacheManager().getSingleFile(widget.previewUrl);
     if (this.mounted) {
@@ -73,7 +71,7 @@ class _PreviewBoxState extends State<PreviewBox> {
                     aspectRatio: 0.8,
                     child: (preview != null)
                         ? Image.file(
-                            preview,
+                            preview!,
                             fit: BoxFit.cover,
                           )
                         : Container(
@@ -105,7 +103,7 @@ class _PreviewBoxState extends State<PreviewBox> {
                                     height: 30,
                                     child: (authorPicture != null)
                                         ? Image.file(
-                                            authorPicture,
+                                            authorPicture!,
                                             fit: BoxFit.cover,
                                           )
                                         : Image.asset(
@@ -133,7 +131,7 @@ class _PreviewBoxState extends State<PreviewBox> {
                               child: Padding(
                                 padding: const EdgeInsets.all(5),
                                 child: Text(
-                                  widget.title,
+                                  widget.title!,
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w400,

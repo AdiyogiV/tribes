@@ -6,11 +6,15 @@
 	<dict>
 		<key>Info.plist</key>
 		<data>
-		AHYU+EalgN8Kt61JSeZ4QWXpGtU=
+		NC68iVcu4o8ebuPfGnRTgiG9qY8=
+		</data>
+		<key>flutter_assets/AssetManifest.bin</key>
+		<data>
+		GAeAyoIgvwiKcxFTkN8CkMsqLrw=
 		</data>
 		<key>flutter_assets/AssetManifest.json</key>
 		<data>
-		IAw671NO+dP2SOhT4Sn3jkXNfy4=
+		TgesBYowllrgqWqIubWKL5rLepc=
 		</data>
 		<key>flutter_assets/FontManifest.json</key>
 		<data>
@@ -18,19 +22,35 @@
 		</data>
 		<key>flutter_assets/NOTICES.Z</key>
 		<data>
-		DiHuw4wRXgQ8t6HZCSP1d2Z0CNk=
+		OWlh+hndHVVeqSxfNfbOHtQBLYY=
+		</data>
+		<key>flutter_assets/assets/images/adidaslogo.png</key>
+		<data>
+		fWSc5IESXBD2Jffxg1Gx34d7kx0=
 		</data>
 		<key>flutter_assets/assets/images/icon.png</key>
 		<data>
-		Mz4jc2H0aRTPuvSHCJtnYA9VC+I=
+		VAVP8bRB1taCIDwSNmsSCCsQkAk=
+		</data>
+		<key>flutter_assets/assets/images/noise.gif</key>
+		<data>
+		uNCj4JfuZNA31rwsGGKNTHYRkSI=
 		</data>
 		<key>flutter_assets/assets/images/noise.jpg</key>
 		<data>
-		AZm5FBCYszRXczhkNpGp6dcgkws=
+		8eReuKs0qJkXt8r4Ge/VLbR/p8Q=
 		</data>
 		<key>flutter_assets/assets/images/placeholder.jpg</key>
 		<data>
 		Jchyu7/UZj7Q3XNHH9bzimzY7EI=
+		</data>
+		<key>flutter_assets/assets/images/rangoli.png</key>
+		<data>
+		9aoPYH30jsFHcqvmz/FWGrIB2Qc=
+		</data>
+		<key>flutter_assets/assets/images/space.jpg</key>
+		<data>
+		eCIGXk8dOBGPlIuuc0S3TRqDpL0=
 		</data>
 		<key>flutter_assets/assets/images/user.png</key>
 		<data>
@@ -38,15 +58,15 @@
 		</data>
 		<key>flutter_assets/fonts/MaterialIcons-Regular.otf</key>
 		<data>
-		zg6AEuOKM55BH/RKiXqZqsORXXE=
+		/CUoTuPQqqdexfyOT9lpJhV+2MQ=
 		</data>
 		<key>flutter_assets/isolate_snapshot_data</key>
 		<data>
-		/8YINIQYa2MGeFNAjTVvMEJmvKA=
+		v838gQ8J3jZ6qbliqEDYbLiFWwY=
 		</data>
 		<key>flutter_assets/kernel_blob.bin</key>
 		<data>
-		ftn1YvMGvOxKcyG+gBdta7CZN4I=
+		d8c9u+kOQ2VsPUUFn82Y/WsbCRY=
 		</data>
 		<key>flutter_assets/packages/country_code_picker/flags/ad.png</key>
 		<data>
@@ -1072,279 +1092,279 @@
 		<data>
 		qqxkgXnDOydlBsqYTSnrCMfgdAc=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/af.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/af.json</key>
 		<data>
 		XYtOMVyz6vUgcHfhB4sZlstUn0E=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/am.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/am.json</key>
 		<data>
 		rnIgpDENzLoRDYLmUHNuPAXyqa0=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/ar.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/ar.json</key>
 		<data>
 		+ijPxnNLAxO2JBdPqPb2/mlyem0=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/az.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/az.json</key>
 		<data>
 		QQU2kvphhn2gavcKhu44vYrzg0A=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/be.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/be.json</key>
 		<data>
 		axxv2GwiSOxuZgCt/1Jd59kNcu4=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/bg.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/bg.json</key>
 		<data>
 		aThIl5gaTXk0wVGPOZYMii1NEZM=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/bn.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/bn.json</key>
 		<data>
 		L3xfNUNbkACyh89ywwtLwpaAeQE=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/bs.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/bs.json</key>
 		<data>
 		ctLnwMcWeDAnxjpfyzGcDc8fqrU=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/ca.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/ca.json</key>
 		<data>
 		vWPUaCQCEPTteL6JzKN0shKWg88=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/cs.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/cs.json</key>
 		<data>
 		WpbCcs2Fn+u+AapGXX9KJDffgkk=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/da.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/da.json</key>
 		<data>
 		lc3zOunrDTM54aoeTm34MEtRgrY=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/de.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/de.json</key>
 		<data>
 		HzbOTW5QCAIlXs3QOdkWGUgDupg=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/el.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/el.json</key>
 		<data>
 		QE/KyPglJi5a1KFfHfMH0fOyU34=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/en.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/en.json</key>
 		<data>
 		DHla/jTwfCMuiH0ULBtQ871Lj4g=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/es.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/es.json</key>
 		<data>
 		qsYpESWhkpJaQS7FGZc8/znbeqY=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/et.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/et.json</key>
 		<data>
 		wcap3zNPi2u5fbuiTiwDaH4rhKo=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/fa.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/fa.json</key>
 		<data>
 		F2PSVJubKihelDhnC8BCmwYDp+A=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/fi.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/fi.json</key>
 		<data>
 		wH0hcojmzffjzstsGgxK0TPS94g=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/fr.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/fr.json</key>
 		<data>
 		nnesaSXqAt4TXV6uouZYMvyb9FY=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/gl.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/gl.json</key>
 		<data>
 		FdrqaRzekkMZ6BYFgcItp5daVLo=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/ha.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/ha.json</key>
 		<data>
 		K2CQBWQdRSw+614x7RUlekNSnXA=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/he.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/he.json</key>
 		<data>
 		Q2Zobq2YeAFCjhSodxXTuOocSUA=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/hi.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/hi.json</key>
 		<data>
 		uzJCj4N2RPoHvzL2XTWCP3c7cGs=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/hr.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/hr.json</key>
 		<data>
 		sbGmrcHxhb005IipZKIc04DquU8=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/hu.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/hu.json</key>
 		<data>
 		qka5xCVqAmsRQnOeYptuQKxIF40=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/hy.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/hy.json</key>
 		<data>
 		+Fy+d5dmIsmUf0AyRkDoFghzexM=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/id.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/id.json</key>
 		<data>
 		OOR5FR7rl9CGwaw1wUD2dLBuenQ=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/is.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/is.json</key>
 		<data>
 		ptA3tb4xcAPGvcA1NE7JM2MZ0T8=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/it.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/it.json</key>
 		<data>
 		N+Pm3Rv1Sl5pOYV60vY9ZD9Kun0=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/ja.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/ja.json</key>
 		<data>
 		+ysBTBS6i3clVDzXuh3RKqYWcNg=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/ka.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/ka.json</key>
 		<data>
 		OSSskDLjjUfDyQOqHFAkDmZbE4I=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/kk.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/kk.json</key>
 		<data>
 		gNUcccXlc4nGoo3sOGqd9RPVzXM=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/km.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/km.json</key>
 		<data>
 		KwDDI5ynOJ3o+MJi4nQf4tgjTAU=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/ko.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/ko.json</key>
 		<data>
 		6cFgwnfewBYK6GLgLnncTWvJ1RM=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/ku.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/ku.json</key>
 		<data>
 		WGkOImr/9sxzhFkr04cHWGIXQlg=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/ky.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/ky.json</key>
 		<data>
 		0J4YvwjQEKYGn02HF8RXFZ54yB8=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/lt.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/lt.json</key>
 		<data>
 		RvbEm0pD/lF5R/+OgUHuiSpY6XQ=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/lv.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/lv.json</key>
 		<data>
 		B4FkbDoYmXe3NJUsxraItSEDCvQ=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/mk.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/mk.json</key>
 		<data>
 		Fo9g36RY5jU1x7iVkQWWUgOYq2s=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/ml.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/ml.json</key>
 		<data>
 		ALPZfZ+4qcReOwDmQza8pMNkDQ8=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/mn.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/mn.json</key>
 		<data>
 		CqmSdITocv/fZXLVa/27KDgZVmI=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/ms.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/ms.json</key>
 		<data>
 		lL+w5gvSsKZHxK/GI/MgPaonTyA=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/nb.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/nb.json</key>
 		<data>
 		5na1Jvx5aAIDGExooY1AxOT618M=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/nl.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/nl.json</key>
 		<data>
 		PFtsyAUUUNUsJgiZUMheelA9r0M=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/nn.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/nn.json</key>
 		<data>
 		rtTKFIoYTsXXwDW4TSImyt580AI=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/no.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/no.json</key>
 		<data>
 		l1aPyLlBvkbaYLJBtvHMLHfnmmA=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/pl.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/pl.json</key>
 		<data>
 		Dg9ZTXMohgNoaRPj5BHicDHCzu0=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/ps.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/ps.json</key>
 		<data>
 		I8QOCFn6gcodsmHmVGIS8rwSr/0=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/pt.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/pt.json</key>
 		<data>
 		TvVDDr79/BZNkeDfeakanQs6qsc=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/ro.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/ro.json</key>
 		<data>
 		W9CCZOho+NtCMH7hwU1EAzpTiQ0=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/ru.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/ru.json</key>
 		<data>
 		dJdQYlwoSUKBGJd7ywNUuX0hsfQ=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/sd.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/sd.json</key>
 		<data>
 		3WLinMaqIzFwod+7pES+V+1zvPg=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/sk.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/sk.json</key>
 		<data>
 		bezTnlgAtZi1i4daBvYAwdXsZGk=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/sl.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/sl.json</key>
 		<data>
 		s+p8IKmcGNLuBmZbhYPty8ZKUYY=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/so.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/so.json</key>
 		<data>
 		+1wEJ1EMChbJEyDvprOaLO1tGPM=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/sq.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/sq.json</key>
 		<data>
 		FN7twjbaS/zeUBB1/MarV5VIy08=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/sr.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/sr.json</key>
 		<data>
 		7mApCAjgjO2lFIPrg2CXc/MH9H0=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/sv.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/sv.json</key>
 		<data>
 		NVKq2l86k9VKQd8i5b9Se6LyZzc=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/ta.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/ta.json</key>
 		<data>
 		H4p0M4FanC4WaYjGaMsKH4X8Jv8=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/tg.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/tg.json</key>
 		<data>
 		RQbCOBdgAQOFul2+y4Ih6NMMUj4=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/th.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/th.json</key>
 		<data>
 		OTZtjWhGpPHgBN/vjN2anXHghnk=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/tr.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/tr.json</key>
 		<data>
 		rDeF2Zhuh0wAS4UcUxN09MUVWXg=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/tt.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/tt.json</key>
 		<data>
 		s5qKG8NSj75fBli5n18RNojI56A=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/ug.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/ug.json</key>
 		<data>
 		7e9bhzoYOYLcecYHpzeGUjpAtCw=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/uk.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/uk.json</key>
 		<data>
 		mfJUslfQCbrv4vHhVAoUlVi1p+g=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/ur.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/ur.json</key>
 		<data>
 		T82Rai2pk28bPDVxWLglvkHC9qI=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/uz.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/uz.json</key>
 		<data>
 		kqWpkawmtvNIS8cCWt6g0Jsagzk=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/vi.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/vi.json</key>
 		<data>
 		f5pgKFnlZjatcug5kai9v/IQw/E=
 		</data>
-		<key>flutter_assets/packages/country_code_picker/i18n/zh.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/zh.json</key>
 		<data>
 		H9fePxOuArtb6wGZUqFsyEthUaQ=
 		</data>
@@ -1352,18 +1372,29 @@
 		<data>
 		P7bb/oR3EhwqCIH1M6LyTuBIWYU=
 		</data>
+		<key>flutter_assets/shaders/ink_sparkle.frag</key>
+		<data>
+		KL+7f3IYR/Y9WDlxxUeDmgGoluc=
+		</data>
 		<key>flutter_assets/vm_snapshot_data</key>
 		<data>
-		kzk1wp8qHso+VmYD8lJ5+HidZCw=
+		wVCDsOQlJhUyvrMuhaM3MeqUNWk=
 		</data>
 	</dict>
 	<key>files2</key>
 	<dict>
+		<key>flutter_assets/AssetManifest.bin</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			bZLJ1hH9LFkGTQLU5BR1ofuqBB8X2h7yh1468z3OtCw=
+			</data>
+		</dict>
 		<key>flutter_assets/AssetManifest.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			MNo6pgVLfltrcz9hxZp+4FbIQSweit1uIAqWgct7q6Q=
+			ACORvvfkvRdA5c2ot6AaO2lcH85pyrGcLE3NKeXLqX0=
 			</data>
 		</dict>
 		<key>flutter_assets/FontManifest.json</key>
@@ -1377,21 +1408,35 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			ZpUr47NgJG7l5ByvGM8vbeyXDuhZ79YzJ2TbuurwHdk=
+			dQwyj2FZeD3BpDWQZb1DVMznI42LJqy0rcdo7T6Tgg8=
+			</data>
+		</dict>
+		<key>flutter_assets/assets/images/adidaslogo.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			Qx/lc/okJwygy+NId/Q9jDz5+0e+0nEI7l4J9kbi9nE=
 			</data>
 		</dict>
 		<key>flutter_assets/assets/images/icon.png</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			MoeUHyQZVYwMJzOQ7Fa6xO3QTEsCQcgYW5V5PV8Gtuc=
+			PJ/GdJU7v76fMsNeSkWyfv9CJDtSNWa+V+jEFcEJ264=
+			</data>
+		</dict>
+		<key>flutter_assets/assets/images/noise.gif</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			cphtitFVzq3CJg13dE+mpvN+ZBq7jGr7rI3unbHFTpY=
 			</data>
 		</dict>
 		<key>flutter_assets/assets/images/noise.jpg</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			kK0p9KPxWeELPdg9m4lp02UGF7ZG3II+/Xsd9xI/cKA=
+			OFwKHltGqfXmrOSXpXNgeB4Ih2lnBsEPXXFOfoiomSo=
 			</data>
 		</dict>
 		<key>flutter_assets/assets/images/placeholder.jpg</key>
@@ -1399,6 +1444,20 @@
 			<key>hash2</key>
 			<data>
 			DiWrvI7txfevpuEY8Y7liP59b2KUCgWKf05vXdj+/dE=
+			</data>
+		</dict>
+		<key>flutter_assets/assets/images/rangoli.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			zgbgLbwXPN3gu7X74MDVralasu1UwDH3wAgl9wo0F3g=
+			</data>
+		</dict>
+		<key>flutter_assets/assets/images/space.jpg</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			bSEkb6p0lNb/0TgXrSQNWhjoLIl6kVvD+m21/kXRql4=
 			</data>
 		</dict>
 		<key>flutter_assets/assets/images/user.png</key>
@@ -1412,21 +1471,21 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			TDYN86u6z4Vu7PyuO9xbDd/JyDIkfDi8ygoVQ6BE5ys=
+			2YZbZxoJ1oPROoYwidiCXg9ho3aWzl19RIvIAjqmJFM=
 			</data>
 		</dict>
 		<key>flutter_assets/isolate_snapshot_data</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			GiXyiy84iwHokWSI8cF+JQcEiNYwhXKJ6iopY39uCfo=
+			Q3MKecK2WuV9poeiw1fLKIYR/n61LLk5ZpHhUj6YMJw=
 			</data>
 		</dict>
 		<key>flutter_assets/kernel_blob.bin</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			3KQdEOy70PD/k7kd66uV2leB4I7OAdyEF0IG7g58fhg=
+			5E0yvDhmx76HX88EneLEtNbIY3AvjjJzmGuoukjCrL8=
 			</data>
 		</dict>
 		<key>flutter_assets/packages/country_code_picker/flags/ad.png</key>
@@ -3221,483 +3280,483 @@
 			Gzrmn8NvPb7fd+EZA2XLFj5X62fFZCB3KxsNt2n8l14=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/af.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/af.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			Jlq+mDt8RU1H+K+cD5dwdltRUETbC+ArhdqFPVL5FT0=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/am.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/am.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			qD3/BXtksFYe3JRngcSjBJxyPmg6uWBpAvJu9S0f7+E=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/ar.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/ar.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			5N4yR6qFpTWU3sHBQ+g6OyuXcMcFWDs1ZUQ4WDUgfp8=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/az.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/az.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			IU5fE/GTeJgUSwH/CxwdnLUJpyQuXmopBCp0hCD+tUY=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/be.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/be.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			ccbgvLa//xDT6iYSAHLCgT4VGQ5cBFZTgcdb0ZKc2gE=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/bg.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/bg.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			eq1VEkeEpUacTWkCDkUHb8jQ7vlee/oe8EiardIYhC0=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/bn.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/bn.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			YiRVujV+X/xL7ra1ustR6gdLUVTBbcjWN9XfCjA4S5E=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/bs.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/bs.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			leV61x/e9o2TEnRQfACZZzNiwViclsynd1GGmTMr8WY=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/ca.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/ca.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			lZkl8xp6HfpI2eIUWCKhizr+x4RmtkObkJsNBtiTej4=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/cs.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/cs.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			43ECtBbIbd620ME0mR73kqa3CXjakGisu/6TcO5TdPg=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/da.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/da.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			hsHOsADpa/QvxJDfEWCS3Hr+JqpNh2Fy0PG+B+rKnCU=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/de.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/de.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			+xF9HlPe7FejkRBMlcKpmU10gdolzaXXCloyYMK+pxI=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/el.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/el.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			5dObrG//TvIrkam1AaqZ9Uq3M3KegDRHSGYeI6HtWnU=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/en.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/en.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			mEn1VqJxTlLJr/OC4P8idBdUcnFiTi7iqbhGewPVwms=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/es.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/es.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			bZ+l69j8t+NzxHDHk3my4Tdiy27cfzKEsiTQ0JPekYU=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/et.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/et.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			4e+PxrN5Z3cNAT0wKyOVeJhBIMuOR5sQZPt4lFrM0dQ=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/fa.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/fa.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			sXCWMEXThAp6jRhpRKF4wuPITJlVpQWsxjgBuO9hKMw=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/fi.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/fi.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			hXIc+ZqxbKpOTiqEvqls3vlLXM7SBlUhvmAznMByQPA=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/fr.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/fr.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			ohAwaFX5hIeXu9D7PHjdqco+3gsl2+sedwlAuWx9HRg=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/gl.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/gl.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			7ylLPk/qMCPi8N7S2Ho9OKTESaIuPNfjCbBQc41/VsU=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/ha.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/ha.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			SWl1iCkVvUNkfgRosVOY4AwcPxHZOvu7nzc21tLetfA=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/he.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/he.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			JdR3OTy486TZQ5nn135IaT51jDKSh+/IMM84YNwSfeI=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/hi.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/hi.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			GwVJTyD7rDPNNJodkl++hSpKSygm8Whs/yii053wSII=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/hr.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/hr.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			5LlUXTWnMcNEMsayURf3Ye2TnImMhT33mEUE9z8VvWo=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/hu.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/hu.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			FM6lCEH/Wb1HRALmOwDa282xO7rRelCxT2TrOAPCmRM=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/hy.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/hy.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			cb9ziyW3vz4xYQWalFn9PdKNahVxyqsTNgb4hjNN33E=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/id.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/id.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			UICpik6Lpw9C9mS/SRVSAXK5J+IMgrcxUjnEerdOqmA=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/is.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/is.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			e5toh2UoY3p6DXXdaTj0sY2OC7wOO1tIDOPVMUkuXVk=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/it.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/it.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			m11XgXjOOUu5UIOVzJ3rcZ60kdk2uRGl5WXT5Pz3f7M=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/ja.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/ja.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			eBbv8086jz0PlFFddNahvTLZWoOCD391tm+Hu7DGCto=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/ka.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/ka.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			4UHkGi/5ITbzJbhMpY6CdE3gJ2EU5nvCQ63hkA1kicE=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/kk.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/kk.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			wtFQK5MThxJCjWD7EnvVmwyIGRxGxCHxbKG7dQ2ZoXk=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/km.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/km.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			F2ORMPohRHjl25Ma0S0zxVpXNgitsjPz5fPhMEPsKAM=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/ko.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/ko.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			gzNLI1OCidWiuMR5srjfxS6e3ssK67naTf92FIhvSJo=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/ku.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/ku.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			fPxvYJG9OWl/tRpWVneIYHCZ28BpOkHNZAsKMzKINFg=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/ky.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/ky.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			KMPWdCB214dwNFXKSgWL26T7x/WNd5hEwcMJ91y5Y7g=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/lt.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/lt.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			l1M627BjNsm9AXKDTHWgv0BpMcvV15CPgiIngkuImeA=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/lv.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/lv.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			YgvX22+0gtH8QLQ58KSgzd/c8Fi6rb7HPO9hlCbG9/4=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/mk.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/mk.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			xjXiWvik86OJJMOJjkeYx3xQLJ1RseOgHX/XmApCPTg=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/ml.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/ml.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			v6/3yOIa71/NcjFwoK53kkQtmwGo0nqqdwZdBfy4gRA=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/mn.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/mn.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			GvGCeAD/KRFsb59zWfWs0/W5X4UHZztajFctjRjN2BE=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/ms.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/ms.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			Nmv8DF7ShzPwHOVC6TsHEcCj0ecfExcWozko2sdA0IQ=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/nb.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/nb.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			oi6P9QMILa7kufcbCbwPlTR0b19ws32bU3gW9jwJfoQ=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/nl.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/nl.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			+sSrA4EtmdQfsbv+1BpUvtzUn3eM7vMZ2yb7HMhkthg=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/nn.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/nn.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			0m7wVvJ8bl4P/nrUtUVcW+WhWgKrPt1TUrS6kycPm/k=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/no.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/no.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			vSEvnqprP0Q7KeFlIB+XyBM5tQCywW05pxa8/VlD2xw=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/pl.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/pl.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			YkJzH6uEgXdfGDBtmNbMXx6nTaT10FZTAweZB+bMZyM=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/ps.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/ps.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			vmfNv5hWQAW9GlN61jao9Sw5yMX6ERdKpgOCuAoeOL4=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/pt.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/pt.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			NwLhlH0DOxCtDP3zf+JM7w8ius3hqnzKvqbPvhv23XQ=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/ro.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/ro.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			dfNCPlhOis8zy111Voeccj/WhV1nypDl4Nl0iG50leE=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/ru.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/ru.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			c8k39L2I5QdGKwh0dmldZp8NUUuT6N5M1l2fHsPOvEM=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/sd.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/sd.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			0LWXl0pQgGYyFRE7pDpKmxsvTr+u8ensPrer6ZmKJnk=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/sk.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/sk.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			Wysrw6+Oy/EJ/qD/FhZV2wFcLhJKHN7QuXG+8ap0iQc=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/sl.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/sl.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			xN2z9X5Qf3dmj7bBJP8mzTJ3x4L2hBAOUvl6sFbeDro=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/so.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/so.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			p3XUCWHef1yzDa26l5zSxjBbWJR5KtmXzI4uHzlNDuo=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/sq.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/sq.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			OsYTINznKSj61OyDOG4mSvCiHre6tQ07dNiaRxDnFqI=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/sr.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/sr.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			G0SmDslEnPpjWOkt7QWOsXMC8Jd6+Xb6KZMnGTpO0SY=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/sv.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/sv.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			aWdUBpTR9wF7VH75N6KS3Gq4kZuNk1ZL4HU8QCuZBeU=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/ta.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/ta.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			YRU/5RQgakxtEGoYKrz1uQtiK3+ZMKQ1pNwGlbgpsFU=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/tg.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/tg.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			pNXbcPU5OO5f3JlKkGNiwpErDzrXMRAZpk2ye2Km/qY=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/th.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/th.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			4DYM3Xn2/LjTW6ifGr2qqrO05EEagARwYb3fE7N7j08=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/tr.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/tr.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			B43M//CnEKkhdsVdx5GhHm4vwfXeUDDR11y7RCr8tpM=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/tt.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/tt.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			W8Zb/ah7heRzBO1WGdITEQAIM/qModt+VaUv1QJCR08=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/ug.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/ug.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			F52/DNRaqF6JNQqcYlcReMb0gmpRf59+Q9GnTVoCIJM=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/uk.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/uk.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			Y8B8Jjca9mQXrKeSS961cuaJiCmKJ/rGnXwiJvx4gkA=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/ur.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/ur.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			hwtKi1jSlWlP5qjiAFiDyRSI2y8kSinYYgZQSpqkH/A=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/uz.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/uz.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			wgVAo2x7m3l4N31tkIedW83HN0oI0Pfk7MzGJL7xXnE=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/vi.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/vi.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			2stj2Bk+BptjpQ4Gb588wlcbRB6pXi/fHVOiKofFfT8=
 			</data>
 		</dict>
-		<key>flutter_assets/packages/country_code_picker/i18n/zh.json</key>
+		<key>flutter_assets/packages/country_code_picker/src/i18n/zh.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
@@ -3711,11 +3770,18 @@
 			x6NX+tjyECiQtyzbbjyY8U2zoZ7GDbJtE+T+k/dzgI0=
 			</data>
 		</dict>
+		<key>flutter_assets/shaders/ink_sparkle.frag</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			v6u8YtYjslOLIIb1rrgcOW817fxVEiBaprKuV+f6FpY=
+			</data>
+		</dict>
 		<key>flutter_assets/vm_snapshot_data</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			SWudSb+UjFAbtsuvOflVVEzSQrNcWWVHTwGa+DH02Gs=
+			pKvVVo/CPIJFzUPS2fhLuWOuiKFXCBKbw9g8gmDjVXE=
 			</data>
 		</dict>
 	</dict>

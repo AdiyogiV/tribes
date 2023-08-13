@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:adiHouse/pages/theatre.dart';
-import 'package:adiHouse/services/databaseService.dart';
-import 'package:adiHouse/widgets/orignal.dart';
-import 'package:adiHouse/widgets/post.dart';
+import 'package:tribes/pages/theatre.dart';
+import 'package:tribes/services/databaseService.dart';
+import 'package:tribes/widgets/orignal.dart';
+import 'package:tribes/widgets/post.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:adiHouse/widgets/reply.dart';
+import 'package:tribes/widgets/reply.dart';
 
 class PostSwitcher extends StatefulWidget {
-  final String postId;
-  final int itemIndex;
+  final String? postId;
+  final int? itemIndex;
 
   final CollectionReference postCollection =
       FirebaseFirestore.instance.collection('posts');
@@ -23,29 +23,29 @@ class PostSwitcher extends StatefulWidget {
 }
 
 class _PostSwitcherState extends State<PostSwitcher> {
-  bool isReply;
-  int depth;
+  bool? isReply;
+  int? depth;
   var replyTo;
-  QuerySnapshot repliesDoc;
+  QuerySnapshot? repliesdocuments;
   int replyCount = 0;
 
   List<Widget> pages = <Widget>[];
   @override
   void initState() {
     super.initState();
-    getStuff(widget.postId);
+    getStuff(widget.postId!);
   }
 
   getStuff(String post) async {
     List<Widget> _pages = <Widget>[];
-    repliesDoc = null;
-    repliesDoc = await widget.postRepliesCollection
+    repliesdocuments = null;
+    repliesdocuments = await widget.postRepliesCollection
         .doc(post)
         .collection('replies')
         .orderBy('timestamp', descending: false)
         .get();
-    replyCount = repliesDoc.docs.length;
-    repliesDoc.docs.forEach((element) {
+    replyCount = repliesdocuments!.docs.length;
+    repliesdocuments!.docs.forEach((element) {
       _pages.insert(
           0,
           Reply(
@@ -55,8 +55,8 @@ class _PostSwitcherState extends State<PostSwitcher> {
     });
     _pages.add(Post(
         post: post,
-        itemIndex: widget.itemIndex,
-        itemDepth: depth,
+        itemIndex: widget.itemIndex!,
+        itemDepth: depth!,
         onReplySelected: onReplySelected,
         key: UniqueKey()));
     await getTree(post, 0, _pages);
@@ -66,9 +66,9 @@ class _PostSwitcherState extends State<PostSwitcher> {
   }
 
   getTree(String postId, int depth, List<Widget> _pages) async {
-    DocumentSnapshot postDoc = await DatabaseService().getPost(postId);
-    String replyTo = postDoc['replyTo'];
-    if (replyTo == null || replyTo.isEmpty) {
+    DocumentSnapshot postdocuments = await DatabaseService().getPost(postId);
+    String replyTo = postdocuments['replyTo'];
+    if (replyTo.isEmpty) {
       return;
     }
     _pages.add(Orignal(
@@ -77,8 +77,8 @@ class _PostSwitcherState extends State<PostSwitcher> {
     await getTree(replyTo, depth + 1, _pages);
   }
 
-  onReplySelected(String postId) async {
-    await getStuff(postId);
+  void onReplySelected(String? postId) async {
+    await getStuff(postId!);
     Provider.of<PageIndexHolder>(context, listen: false).setPost(postId);
   }
 

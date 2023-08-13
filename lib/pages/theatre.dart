@@ -1,21 +1,15 @@
-import 'package:adiHouse/pages/login.dart';
-import 'package:adiHouse/pages/recorder.dart';
-import 'package:adiHouse/widgets/postSwitcher.dart';
+import 'package:tribes/pages/login.dart';
+import 'package:tribes/widgets/postSwitcher.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'package:adiHouse/pages/login.dart';
-import 'package:adiHouse/pages/recorder.dart';
-import 'package:adiHouse/widgets/postSwitcher.dart';
 
 class Theatre extends StatefulWidget {
-  final String rid;
-  final int initpage;
+  final String? rid;
+  final int? initpage;
   Theatre({
     this.rid,
     this.initpage,
@@ -27,7 +21,7 @@ class Theatre extends StatefulWidget {
 
 class _TheatreState extends State<Theatre> {
   List<Widget> createdFeed = [];
-  User user = FirebaseAuth.instance.currentUser;
+  User? user = FirebaseAuth.instance.currentUser;
 
   final CollectionReference spacePostsCollection =
       FirebaseFirestore.instance.collection('spacePosts');
@@ -51,7 +45,7 @@ class _TheatreState extends State<Theatre> {
           return CupertinoAlertDialog(
             content: Text("Please Login to Continue"),
             actions: <Widget>[
-              FlatButton(
+              TextButton(
                   onPressed: () {
                     Navigator.of(context)
                         .push(CupertinoPageRoute(builder: (context) {
@@ -64,7 +58,7 @@ class _TheatreState extends State<Theatre> {
                         color: CupertinoColors.destructiveRed,
                         fontWeight: FontWeight.w400),
                   )),
-              FlatButton(
+              TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
@@ -117,7 +111,7 @@ class _TheatreState extends State<Theatre> {
                   return Center(child: CircularProgressIndicator());
                 }
                 List<String> feed =
-                    snapshot.data.docs.map((e) => e.id).toList();
+                    snapshot.data!.docs.map((e) => e.id).toList();
                 return SmartRefresher(
                     onRefresh: _onRefresh,
                     scrollDirection: Axis.vertical,
@@ -126,7 +120,7 @@ class _TheatreState extends State<Theatre> {
                     child: PageView(
                         scrollDirection: Axis.horizontal,
                         controller: PageController(
-                            initialPage: widget.initpage,
+                            initialPage: widget.initpage!,
                             viewportFraction: 0.8),
                         onPageChanged: (page) {
                           setState(() {
@@ -135,7 +129,8 @@ class _TheatreState extends State<Theatre> {
                           });
                         },
                         children: feed
-                            .map<Widget>((doc) => PostSwitcher(postId: doc))
+                            .map<Widget>(
+                                (documents) => PostSwitcher(postId: documents))
                             .toList()));
               }),
         ));
@@ -145,7 +140,7 @@ class _TheatreState extends State<Theatre> {
 class PageIndexHolder extends ChangeNotifier {
   bool enableAudio = true;
   int depth = 0;
-  String activePost;
+  String? activePost;
 
   void toggleAudio() {
     enableAudio = !enableAudio;
@@ -158,7 +153,7 @@ class PageIndexHolder extends ChangeNotifier {
   }
 
   String getPost() {
-    return activePost;
+    return activePost!;
   }
 
   void setDepth(int page) {

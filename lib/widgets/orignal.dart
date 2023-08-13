@@ -1,29 +1,28 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:adiHouse/widgets/mainPlayer.dart';
-import 'package:adiHouse/widgets/postReplies.dart';
+import 'package:tribes/widgets/mainPlayer.dart';
+import 'package:tribes/widgets/postReplies.dart';
 
 typedef OrignalCallback = void Function(
-  String postId,
+  String? postId,
 );
 
 class Orignal extends StatefulWidget {
-  final String post;
-  final ReplyCallback onReplySelected;
+  final String? post;
+  final ReplyCallback? onReplySelected;
 
-  Orignal({this.post, this.onReplySelected, Key key}) : super(key: key);
+  Orignal({this.post, this.onReplySelected, Key? key}) : super(key: key);
 
   @override
   _OrignalState createState() => _OrignalState();
 }
 
 class _OrignalState extends State<Orignal> {
-  String author;
-  String space;
+  String? author;
+  String? space;
   bool dataloaded = false;
-  String video;
-  String title;
+  String? video;
+  String? title;
 
   final CollectionReference postCollection =
       FirebaseFirestore.instance.collection('posts');
@@ -69,7 +68,7 @@ class _OrignalState extends State<Orignal> {
                       children: [
                         GestureDetector(
                           onTap: () {
-                            widget.onReplySelected(widget.post);
+                            widget.onReplySelected!(widget.post!);
                           },
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(10.0),
@@ -90,8 +89,8 @@ class _OrignalState extends State<Orignal> {
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(10.0),
                                   child: PostReplies(
-                                    onReplySelected: widget.onReplySelected,
-                                    post: widget.post,
+                                    onReplySelected: widget.onReplySelected!,
+                                    post: widget.post!,
                                   ),
                                 )),
                           ],
@@ -115,7 +114,7 @@ class MyPainter extends CustomPainter {
     final p1 = Offset(30, -100);
     final p2 = Offset(30, size.height + 2);
     final paint = Paint()
-      ..color = Colors.indigo[700]
+      ..color = Colors.indigo[700]!
       ..strokeWidth = 1;
     canvas.drawLine(p1, p2, paint);
   }

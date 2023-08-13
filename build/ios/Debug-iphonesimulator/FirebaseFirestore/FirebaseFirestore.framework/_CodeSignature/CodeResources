@@ -4,21 +4,33 @@
 <dict>
 	<key>files</key>
 	<dict>
+		<key>Headers/FIRAggregateQuery.h</key>
+		<data>
+		epQ/UOlma2NA0mXhHSOlZbhx8UI=
+		</data>
+		<key>Headers/FIRAggregateQuerySnapshot.h</key>
+		<data>
+		7bsIMPJcT2S9xKkhiOG28tp+1Dk=
+		</data>
+		<key>Headers/FIRAggregateSource.h</key>
+		<data>
+		UHpky1sMwcjVpcpphAlA9Wn+BBo=
+		</data>
 		<key>Headers/FIRCollectionReference.h</key>
 		<data>
-		4Y5rQ6gMkZzvwGWpYMVLDmvRmD4=
+		7Qvb+ydvgrXFKS5Jc8wRRP10AUc=
 		</data>
 		<key>Headers/FIRDocumentChange.h</key>
 		<data>
-		g8nBEkDNTjPEpMUO/P6hm6CTAPE=
+		zLgSVEwXCDlVXbnNQEm9+4sDflw=
 		</data>
 		<key>Headers/FIRDocumentReference.h</key>
 		<data>
-		L60NqMtvHKxoDHKVs6wW6UcViYc=
+		gAc3T/qc9XNkYHvqIrdGsrljIlQ=
 		</data>
 		<key>Headers/FIRDocumentSnapshot.h</key>
 		<data>
-		tJNds9OKn2rb9axCQJhto7XATgU=
+		LEvdATBd91yNRaIZDLbtNCEMyeU=
 		</data>
 		<key>Headers/FIRFieldPath.h</key>
 		<data>
@@ -26,19 +38,19 @@
 		</data>
 		<key>Headers/FIRFieldValue.h</key>
 		<data>
-		6N2/9GJESEbn6sfZpjr9nR7ZaXs=
+		ErNkviFr+lJKW7LiE11ua7nWdRI=
 		</data>
 		<key>Headers/FIRFirestore.h</key>
 		<data>
-		SXgnoyjbXCr8cONFk0tQQY+Ui34=
+		zz4lDH+h37tOkKmd1EDCpxWO3AQ=
 		</data>
 		<key>Headers/FIRFirestoreErrors.h</key>
 		<data>
-		i11A2MB0hNBX4ZjjAJqiI+dVGKA=
+		uRgq9hPsE1/igfTuu+n+FveY2TE=
 		</data>
 		<key>Headers/FIRFirestoreSettings.h</key>
 		<data>
-		0SIPlJxZeahl3Xkiem4d4u6Ea48=
+		egZ/ZWExbrsnDHLDoB15l5UIYUY=
 		</data>
 		<key>Headers/FIRFirestoreSource.h</key>
 		<data>
@@ -50,47 +62,51 @@
 		</data>
 		<key>Headers/FIRListenerRegistration.h</key>
 		<data>
-		mszZW0y1N7sAtmwfCyE19+rRevg=
+		xFzRtaBqhh/R0lWcBHUua7Da0MQ=
 		</data>
 		<key>Headers/FIRLoadBundleTask.h</key>
 		<data>
-		yh3dvzHKny00cFWBXrGyCXJHEkY=
+		7rUk4RB70DUMdU5LkQ8RIrVm2Rg=
 		</data>
 		<key>Headers/FIRQuery.h</key>
 		<data>
-		1X/nnQ1cNvFxFSVkshDrQ2d5uMM=
+		8o8Lv+D75QaKLoRPG8QBsTH2rXA=
 		</data>
 		<key>Headers/FIRQuerySnapshot.h</key>
 		<data>
-		M2/KkdaK3CUDaXrfqYn6014m69Y=
+		4hU88j5uyoj0t4/Ka608V9G+zrA=
 		</data>
 		<key>Headers/FIRSnapshotMetadata.h</key>
 		<data>
-		fK3XteRHx0HL3H9SZRUJh0mRjmI=
+		sT+RLj6Zq278VtP8pCRhx7eTpUA=
 		</data>
 		<key>Headers/FIRTimestamp.h</key>
 		<data>
-		8UX4qaDkQJwb22dLZXZuqVwedtI=
+		hP3FmCYW5wt9zBtEzEFSO/hHl4k=
 		</data>
 		<key>Headers/FIRTransaction.h</key>
 		<data>
-		yumsIiXGNQb0FoUPXTTk9Dd8Z2Y=
+		v7bkkKw+MOuK93iT2KjxWu4vCTQ=
+		</data>
+		<key>Headers/FIRTransactionOptions.h</key>
+		<data>
+		ddC+0yQSPrlRh0ZA5leQwHvLqok=
 		</data>
 		<key>Headers/FIRWriteBatch.h</key>
 		<data>
-		/BM8vmnkf1aY/5j4GMfjeC8QwHI=
+		sR91hk5jQZAYdZNc1inldcm4q40=
 		</data>
 		<key>Headers/FirebaseFirestore-umbrella.h</key>
 		<data>
-		CVMkZigtWueIuWJkK4HGrHbguwA=
+		Rvg+akMbcpvk4WlIdLe+3cKPMvc=
 		</data>
 		<key>Headers/FirebaseFirestore.h</key>
 		<data>
-		zxy48uX8XnezIbFQ4SnD+8YeWmk=
+		lUjqc5xlNa5vbuQ1L032OHchVcU=
 		</data>
 		<key>Info.plist</key>
 		<data>
-		cekvaWRiv/xg6JB0mqEqhcEtsbk=
+		/RfyxrXU8t9TbwfrNJSSh6m1VNY=
 		</data>
 		<key>Modules/module.modulemap</key>
 		<data>
@@ -99,56 +115,57 @@
 	</dict>
 	<key>files2</key>
 	<dict>
-		<key>Headers/FIRCollectionReference.h</key>
+		<key>Headers/FIRAggregateQuery.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			4Y5rQ6gMkZzvwGWpYMVLDmvRmD4=
-			</data>
 			<key>hash2</key>
 			<data>
-			ICmRt/tK+Xd8fBhFh6pzWdet21zPeyH0Y32m/x3wuag=
+			l736LUXxQrsZX5KlTf7tijKwuG5iERYGlYVOhZv18Kc=
+			</data>
+		</dict>
+		<key>Headers/FIRAggregateQuerySnapshot.h</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			j48Ovm2MwLPp8Iq2sFqK1TLet/022lp3f6+P7v4daeQ=
+			</data>
+		</dict>
+		<key>Headers/FIRAggregateSource.h</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			uOaPGk6K3jAPuTjMoowa0s9eV+y1S6KzSet1Sof2ie0=
+			</data>
+		</dict>
+		<key>Headers/FIRCollectionReference.h</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			mxRdm71mQX14Y0nD6VYk3MViIwKYgZtDXUvKRKWR93A=
 			</data>
 		</dict>
 		<key>Headers/FIRDocumentChange.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			g8nBEkDNTjPEpMUO/P6hm6CTAPE=
-			</data>
 			<key>hash2</key>
 			<data>
-			FVl0GBJKo7O08shFFtkCxCTKQGzvnCuBpwSBVLDUrOw=
+			t0JEcfIosxOI8COGzYRuD254YigjU9oUsVyN+dO7xLk=
 			</data>
 		</dict>
 		<key>Headers/FIRDocumentReference.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			L60NqMtvHKxoDHKVs6wW6UcViYc=
-			</data>
 			<key>hash2</key>
 			<data>
-			53qj3OcVEprcGaXFn4Sd6SCu7kEdZXxxeeQaw5+QwXk=
+			cf+zSqsoYmzn/B7AXBubp4mp2WPNqfQkNl+4Z2Xf/dY=
 			</data>
 		</dict>
 		<key>Headers/FIRDocumentSnapshot.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			tJNds9OKn2rb9axCQJhto7XATgU=
-			</data>
 			<key>hash2</key>
 			<data>
-			6KSUurv4ahGMJw80z3t/2r5pEfnds6/YChooFEusLgw=
+			u6h3R6qIgcvcx0K4VLjqFayM2TKC7JUObl2EX2gzx04=
 			</data>
 		</dict>
 		<key>Headers/FIRFieldPath.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			4otM/1WozqldWq9yi8t9lR94m1c=
-			</data>
 			<key>hash2</key>
 			<data>
 			E6itVJDm1ZpCd/p0us1k+lwQ9Q4aSAcb+THCI+oR2Rs=
@@ -156,54 +173,34 @@
 		</dict>
 		<key>Headers/FIRFieldValue.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			6N2/9GJESEbn6sfZpjr9nR7ZaXs=
-			</data>
 			<key>hash2</key>
 			<data>
-			nJLz6jPsggLgdRbaWI1CieWhPMMDHuU07b2l+Gaumhg=
+			HYfSV6AgC+QxW77VG3PRmT0Gc4wH0TUkvE6d2upq9nw=
 			</data>
 		</dict>
 		<key>Headers/FIRFirestore.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			SXgnoyjbXCr8cONFk0tQQY+Ui34=
-			</data>
 			<key>hash2</key>
 			<data>
-			B/KTFsuzQWgox/DR/CrO5KTYZYDz4ex4Mta6HyAfIuc=
+			Cq/FriEkWydJ+rySUjcuAoil8i20s/0PUKTzSUNQZPA=
 			</data>
 		</dict>
 		<key>Headers/FIRFirestoreErrors.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			i11A2MB0hNBX4ZjjAJqiI+dVGKA=
-			</data>
 			<key>hash2</key>
 			<data>
-			k9cZYZD3eiWNa3jopF+tdZGGmGW/KIGy4V5R1l5DkTI=
+			eQWFa0N48Y5L6Jc04YPqSVRQUIZxbGm1HFYnR1+tpVc=
 			</data>
 		</dict>
 		<key>Headers/FIRFirestoreSettings.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			0SIPlJxZeahl3Xkiem4d4u6Ea48=
-			</data>
 			<key>hash2</key>
 			<data>
-			4pUsD8qwUBj4gsZpZB5gfznSYxRFPncKaaQt0oXZ5uo=
+			ITb0agnMOR4rds8Kvgpp509p3QrB8xwMoWz1KvDt4bU=
 			</data>
 		</dict>
 		<key>Headers/FIRFirestoreSource.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			3SfVCoT0HOl7HeQwL/UezU3sBCg=
-			</data>
 			<key>hash2</key>
 			<data>
 			KwoNLisywRepcESJGK6Gf86w3RJ1cAA3OP1WBxqin/c=
@@ -211,10 +208,6 @@
 		</dict>
 		<key>Headers/FIRGeoPoint.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			v+TkvD7XC+fYx7nLt2epRGjO6WE=
-			</data>
 			<key>hash2</key>
 			<data>
 			1UlN00oboAZ1jCWfAsYGKJgbMDOEfIJN0D+HRWZF6Do=
@@ -222,120 +215,83 @@
 		</dict>
 		<key>Headers/FIRListenerRegistration.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			mszZW0y1N7sAtmwfCyE19+rRevg=
-			</data>
 			<key>hash2</key>
 			<data>
-			YtCR0aiVJ4Cx9itRMbWS7sRnbbjLObJITf9MVzwCztU=
+			uZ2bb0ma+vPyRtrsIqGq5irNxFRrxQCV1iPHgek+b6c=
 			</data>
 		</dict>
 		<key>Headers/FIRLoadBundleTask.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			yh3dvzHKny00cFWBXrGyCXJHEkY=
-			</data>
 			<key>hash2</key>
 			<data>
-			okL3bHrtkjo779DPVOs0e7Qd3WCpKhFV+dXRcHhSLP0=
+			YsXzvgtEzrq/fDft8AN7x/xruNzVNlrdrQVlZBi7Cb0=
 			</data>
 		</dict>
 		<key>Headers/FIRQuery.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			1X/nnQ1cNvFxFSVkshDrQ2d5uMM=
-			</data>
 			<key>hash2</key>
 			<data>
-			4QyrVpV46MKUmXa6+VgLfXtzJ41k3ZRbRl3HB2ctMfQ=
+			AXjxHcs58kdUxSzSlSusQ20aIf9cTqKvKd9FW8ueE/8=
 			</data>
 		</dict>
 		<key>Headers/FIRQuerySnapshot.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			M2/KkdaK3CUDaXrfqYn6014m69Y=
-			</data>
 			<key>hash2</key>
 			<data>
-			Y/zQCw8CItVz0+SqQthWmXC+GUexdHVn0mJyf+Fx92w=
+			6At8yzx2G7omO5itWiQI9h4SWoiYpX06l6H6GcTgOZ4=
 			</data>
 		</dict>
 		<key>Headers/FIRSnapshotMetadata.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			fK3XteRHx0HL3H9SZRUJh0mRjmI=
-			</data>
 			<key>hash2</key>
 			<data>
-			xlMQ/n3KLlYTFuFeCk4ATnrsevzcN0EnOb194k9iBAQ=
+			JVUsIhhwTjF7jb1hhFMgvWXdlyvrZwyrRPxXqk0TLEQ=
 			</data>
 		</dict>
 		<key>Headers/FIRTimestamp.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			8UX4qaDkQJwb22dLZXZuqVwedtI=
-			</data>
 			<key>hash2</key>
 			<data>
-			AAW4FBYRYehayHYDAqmEk/iy0TEOnBH7Tl7t7ofhNJI=
+			Dhuct3YLwSPeYF5W68HYO8JMNUATav/JIgiEF2nakb0=
 			</data>
 		</dict>
 		<key>Headers/FIRTransaction.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			yumsIiXGNQb0FoUPXTTk9Dd8Z2Y=
-			</data>
 			<key>hash2</key>
 			<data>
-			ZvypHXYkhc083K8Y789aaNs5F+ovxqvTYyhfwjcV3fU=
+			e16PQDMxtslwgkbuRtYSALlJ/tKVjyI1nKsAJ5vtNFQ=
+			</data>
+		</dict>
+		<key>Headers/FIRTransactionOptions.h</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			ms6FqxXaJFP8X/G2ars5BJf+B/h31G0dYLSEeEKBb3A=
 			</data>
 		</dict>
 		<key>Headers/FIRWriteBatch.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			/BM8vmnkf1aY/5j4GMfjeC8QwHI=
-			</data>
 			<key>hash2</key>
 			<data>
-			7kB7kgmcrIAAitL3Iq7FfWUvozQ6d5GTF97spJ4VnC4=
+			SItHcoMMHpX+1hEcfloE0l0eMGwDDB/kEMQIt2c3A44=
 			</data>
 		</dict>
 		<key>Headers/FirebaseFirestore-umbrella.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			CVMkZigtWueIuWJkK4HGrHbguwA=
-			</data>
 			<key>hash2</key>
 			<data>
-			FUYgu66KiVPBdiPLimGhmflfA1LADS3uUELoMd0pYRo=
+			LINSaTeFW32Xw56vDuwzckYfwFgGKaMPg3gPbjhXFT8=
 			</data>
 		</dict>
 		<key>Headers/FirebaseFirestore.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			zxy48uX8XnezIbFQ4SnD+8YeWmk=
-			</data>
 			<key>hash2</key>
 			<data>
-			H+WRPIkeSp+X2kO1I1vj5RrUQh4Toy/gIkPSN/5pVnI=
+			EWgZwHqlF2iCORiqFcLgpD1nuYi9CRc8koU59uq//nU=
 			</data>
 		</dict>
 		<key>Modules/module.modulemap</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			WepXeqYmPEubme4yuJRcj+0fEaY=
-			</data>
 			<key>hash2</key>
 			<data>
 			Z88Woe3JPe301oe4L/GXBcHxVV7EkX669G4djdeBSiA=

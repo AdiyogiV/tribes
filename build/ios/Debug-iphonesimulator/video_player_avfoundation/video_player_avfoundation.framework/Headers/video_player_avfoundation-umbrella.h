@@ -10,6 +10,7 @@
 #endif
 #endif
 
+#import "AVAssetTrackUtils.h"
 #import "FLTVideoPlayerPlugin.h"
 #import "messages.g.h"
 

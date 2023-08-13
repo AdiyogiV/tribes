@@ -5,13 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_compress/video_compress.dart';
 import 'package:video_player/video_player.dart';
-import 'package:adiHouse/services/databaseService.dart';
+import 'package:tribes/services/databaseService.dart';
 
 class VideoPicker extends StatefulWidget {
-  final String space;
-  final int sourceItem;
-  final String videoPath;
-  final String replyTo;
+  final String? space;
+  final int? sourceItem;
+  final String? videoPath;
+  final String? replyTo;
 
   VideoPicker({
     this.space,
@@ -24,15 +24,15 @@ class VideoPicker extends StatefulWidget {
 }
 
 class _VideoPickerState extends State<VideoPicker> {
-  File mainVideo;
+  File? mainVideo;
   final picker = ImagePicker();
-  VideoPlayerController _controller;
-  User user = FirebaseAuth.instance.currentUser;
+  VideoPlayerController? _controller;
+  User? user = FirebaseAuth.instance.currentUser;
   bool isPlaying = false;
 
-  String mainVideoPath;
-  String thumbnailPath;
-  String title;
+  String? mainVideoPath;
+  String? thumbnailPath;
+  String? title;
   bool thumbnailReady = false;
   int status = -1;
   bool addToSpaceFeed = false;
@@ -54,7 +54,7 @@ class _VideoPickerState extends State<VideoPicker> {
     if (widget.videoPath == null) {
       getItem();
     } else {
-      setItem(File(widget.videoPath));
+      setItem(File(widget.videoPath ?? ''));
     }
     getInfo();
   }
@@ -66,12 +66,10 @@ class _VideoPickerState extends State<VideoPicker> {
   }
 
   getInfo() async {
-    if (widget.replyTo != null) {
-      String space = await DatabaseService().getPostSpace(widget.replyTo);
-      canAddToSpaceFeed =
-          await DatabaseService().checkSpaceFeedPostingPermissions(space);
-      setState(() {});
-    }
+    String space = await DatabaseService().getPostSpace(widget.replyTo ?? '');
+    canAddToSpaceFeed =
+        await DatabaseService().checkSpaceFeedPostingPermissions(space);
+    setState(() {});
   }
 
   Future getItem() async {
@@ -96,7 +94,7 @@ class _VideoPickerState extends State<VideoPicker> {
         setState(() {
           mainVideo = _file;
           mainVideoPath = _file.path;
-          _controller.setLooping(true);
+          _controller?.setLooping(true);
         });
       });
   }
@@ -107,7 +105,7 @@ class _VideoPickerState extends State<VideoPicker> {
         position: -1 // default(-1)
         );
     setState(() {
-      thumbnailPath = thumbnailFile.path;
+      thumbnailPath = thumbnailFile?.path;
       thumbnailReady = true;
     });
   }
@@ -116,18 +114,27 @@ class _VideoPickerState extends State<VideoPicker> {
     setState(() {
       status = 0;
     });
-    await createThumbnail(mainVideoPath);
-    //var video = await compressVideo(mainVideoPath);
-    bool res = await DatabaseService(uid: user.uid).addSpacePost(widget.space,
-        mainVideoPath, thumbnailPath, title, widget.replyTo, addToSpaceFeed);
-    if (res)
-      setState(() {
-        status = 1;
-      });
-    return res;
+    if (mainVideoPath != null) {
+      await createThumbnail(mainVideoPath!);
+      //var video = await compressVideo(mainVideoPath);
+      bool res = await DatabaseService(uid: user?.uid ?? '').addSpacePost(
+          widget.space!,
+          mainVideoPath!,
+          thumbnailPath!,
+          title!,
+          widget.replyTo!,
+          addToSpaceFeed);
+      if (res)
+        setState(() {
+          status = 1;
+        });
+      return res;
+    } else {
+      return false;
+    }
   }
 
-  Widget postButton() {
+  Widget? postButton() {
     if (status == -1) {
       return Padding(
         padding: const EdgeInsets.all(8.0),
@@ -157,6 +164,7 @@ class _VideoPickerState extends State<VideoPicker> {
         style: TextStyle(fontSize: 15, color: CupertinoColors.destructiveRed),
       );
     }
+    return Container();
   }
 
   @override
@@ -181,7 +189,7 @@ class _VideoPickerState extends State<VideoPicker> {
           ],
         )),
       );
-    if (mainVideo.lengthSync() > 1073741824) {
+    if (mainVideo!.lengthSync() > 1073741824) {
       return CupertinoAlertDialog(
         title: Text(
           "Size Limit Exceeded",
@@ -189,14 +197,14 @@ class _VideoPickerState extends State<VideoPicker> {
         ),
         content: Text('Video size should be less than 1 GB'),
         actions: <Widget>[
-          FlatButton(
+          TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
               child: Text(
                 'Go Back',
               )),
-          FlatButton(
+          TextButton(
               onPressed: () {
                 getItem();
               },
@@ -215,7 +223,7 @@ class _VideoPickerState extends State<VideoPicker> {
           }
         },
         backgroundColor: Colors.green,
-        label: postButton(),
+        label: postButton()!,
       ),
       body: CupertinoPageScaffold(
         navigationBar: CupertinoNavigationBar(
@@ -224,12 +232,12 @@ class _VideoPickerState extends State<VideoPicker> {
                 if (!isPlaying) {
                   setState(() {
                     isPlaying = true;
-                    _controller.play();
+                    _controller?.play();
                   });
                 } else {
                   setState(() {
                     isPlaying = false;
-                    _controller.pause();
+                    _controller?.pause();
                   });
                 }
               },
@@ -265,26 +273,19 @@ class _VideoPickerState extends State<VideoPicker> {
                     ),
                   ),
                 AspectRatio(
-                    aspectRatio: _controller.value.aspectRatio,
-                    child: VideoPlayer(_controller)),
-                VideoProgressIndicator(
-                  _controller,
-                  allowScrubbing: true,
-                  colors: VideoProgressColors(
-                      playedColor: CupertinoTheme.of(context).primaryColor),
-                ),
-                // CupertinoTextField(
-                //   inputFormatters: [
-                //     LengthLimitingTextInputFormatter(30),
-                //   ],
-                //   padding: EdgeInsets.all(15),
-                //   placeholder: 'Add a title to your post (< 30 letters)',
-                //   onChanged: (val) {
-                //     setState(() {
-                //       title = val;
-                //     });
-                //   },
-                // ),
+                    aspectRatio: _controller?.value.aspectRatio ?? 1,
+                    child: VideoPlayer(_controller!)),
+                Container(
+                  margin: EdgeInsets.only(top: 20, left: 10, right: 10),
+                  child: CupertinoTextField(
+                    placeholder: "Title",
+                    onChanged: (value) {
+                      setState(() {
+                        title = value;
+                      });
+                    },
+                  ),
+                )
               ],
             ),
           ),

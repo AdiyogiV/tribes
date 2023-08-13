@@ -1,10 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'package:adiHouse/pages/theatre.dart';
-import 'package:adiHouse/widgets/previewBox.dart';
+import 'package:tribes/pages/theatre.dart';
 
 class Replies extends StatefulWidget {
   @override
@@ -12,7 +10,7 @@ class Replies extends StatefulWidget {
 }
 
 class _RepliesState extends State<Replies> {
-  User user = FirebaseAuth.instance.currentUser;
+  User? user = FirebaseAuth.instance.currentUser;
   final CollectionReference userRepliesCollection =
       FirebaseFirestore.instance.collection('userReplies');
 
@@ -42,7 +40,7 @@ class _RepliesState extends State<Replies> {
       header: WaterDropHeader(),
       child: StreamBuilder<QuerySnapshot>(
           stream: userRepliesCollection
-              .doc(user.uid)
+              .doc(user!.uid)
               .collection('replies')
               .orderBy(
                 'timestamp',
@@ -56,7 +54,7 @@ class _RepliesState extends State<Replies> {
             }
             return Theatre(
               initpage: 0,
-              rid: user.uid,
+              rid: user!.uid,
             );
           }),
     );

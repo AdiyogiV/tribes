@@ -1,11 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:adiHouse/pages/login.dart';
-import 'package:adiHouse/widgets/assets/title.dart';
+import 'package:tribes/pages/login.dart';
+import 'package:tribes/widgets/assets/title.dart';
 
 class LoginDailog extends StatefulWidget {
-  const LoginDailog({Key key}) : super(key: key);
+  const LoginDailog({Key? key}) : super(key: key);
 
   @override
   _LoginDailogState createState() => _LoginDailogState();
@@ -40,7 +39,7 @@ class _LoginDailogState extends State<LoginDailog> {
         ],
       ),
       actions: <Widget>[
-        FlatButton(
+        TextButton(
             onPressed: () {
               Navigator.of(context).push(CupertinoPageRoute(builder: (context) {
                 return LoginPage();
@@ -52,7 +51,7 @@ class _LoginDailogState extends State<LoginDailog> {
                   color: CupertinoColors.destructiveRed,
                   fontWeight: FontWeight.w400),
             )),
-        FlatButton(
+        TextButton(
             onPressed: () {
               Navigator.of(context).pop();
             },

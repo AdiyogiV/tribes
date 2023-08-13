@@ -1,17 +1,15 @@
 import 'dart:io' as di;
-import 'package:adiHouse/pages/houseMarket.dart';
+import 'package:tribes/pages/houseMarket.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_cache_manager/file.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:adiHouse/services/databaseService.dart';
+import 'package:tribes/services/databaseService.dart';
 
 class JoinHouseDailog extends StatefulWidget {
-  final String space;
-  const JoinHouseDailog({Key key, this.space}) : super(key: key);
+  final String? space;
+  const JoinHouseDailog({Key? key, this.space}) : super(key: key);
 
   @override
   _JoinHouseDailogState createState() => _JoinHouseDailogState();
@@ -24,10 +22,10 @@ class _JoinHouseDailogState extends State<JoinHouseDailog> {
   bool nameRequired = false;
   TextEditingController _nameController = TextEditingController();
   TextEditingController _priceController = TextEditingController();
-  di.File itemImage;
-  String name;
-  String displayPicture;
-  File displayPicFile;
+  di.File? itemImage;
+  String? name;
+  String? displayPicture;
+  File? displayPicFile;
   @override
   void initState() {
     super.initState();
@@ -35,14 +33,12 @@ class _JoinHouseDailogState extends State<JoinHouseDailog> {
   }
 
   getSpaceBox() async {
-    DocumentSnapshot space = await DatabaseService().getSpace(widget.space);
+    DocumentSnapshot space = await DatabaseService().getSpace(widget.space!);
     name = space['name'];
     displayPicture = space['displayPicture'];
     setState(() {});
-    if (displayPicture != null) {
-      displayPicFile =
-          await DefaultCacheManager().getSingleFile(displayPicture);
-    }
+    displayPicFile =
+        await DefaultCacheManager().getSingleFile(displayPicture!);
     setState(() {});
   }
 
@@ -94,7 +90,7 @@ class _JoinHouseDailogState extends State<JoinHouseDailog> {
                   height: MediaQuery.of(context).size.width / 4,
                   child: (displayPicFile != null)
                       ? Image.file(
-                          displayPicFile,
+                          displayPicFile!,
                           fit: BoxFit.cover,
                         )
                       : Image.asset(

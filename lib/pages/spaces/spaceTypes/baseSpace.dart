@@ -2,12 +2,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/file.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-import 'package:adiHouse/pages/spaces/editSpace.dart';
-import 'package:adiHouse/pages/spaces/gridSpaceView.dart';
-import 'package:adiHouse/pages/theatre.dart';
+import 'package:tribes/pages/spaces/editSpace.dart';
+import 'package:tribes/pages/spaces/gridSpaceView.dart';
+import 'package:tribes/pages/theatre.dart';
 
 class BaseSpace extends StatefulWidget {
-  final String space;
+  final String? space;
   const BaseSpace({this.space, key}) : super(key: key);
 
   @override
@@ -15,17 +15,15 @@ class BaseSpace extends StatefulWidget {
 }
 
 class _BaseSpaceState extends State<BaseSpace> {
-  String displayPicture;
-  File displayPicFile;
+  String displayPicture = "";
+  File? displayPicFile;
   bool gridViewOn = false;
   int initPage = 0;
   String name = '';
 
   getSpaceBox() async {
-    if (displayPicture != null) {
-      displayPicFile =
-          await DefaultCacheManager().getSingleFile(displayPicture);
-    }
+    displayPicFile =
+        await DefaultCacheManager().getSingleFile(displayPicture);
     setState(() {});
   }
 
@@ -52,7 +50,7 @@ class _BaseSpaceState extends State<BaseSpace> {
                         borderRadius: BorderRadius.circular(5.0),
                         child: (displayPicFile != null)
                             ? Image.file(
-                                displayPicFile,
+                                displayPicFile!,
                                 fit: BoxFit.cover,
                               )
                             : Container(
@@ -87,7 +85,7 @@ class _BaseSpaceState extends State<BaseSpace> {
                         Navigator.of(context)
                             .push(CupertinoPageRoute(builder: (context) {
                           return EditSpace(
-                            space: widget.space,
+                            space: widget.space!,
                           );
                         }));
                       },
@@ -102,12 +100,12 @@ class _BaseSpaceState extends State<BaseSpace> {
             child: SafeArea(
               child: gridViewOn
                   ? GridSpaceView(
-                      rid: widget.space,
+                      rid: widget.space!,
                       setPageView: setPageView,
                     )
                   : Theatre(
                       initpage: initPage,
-                      rid: widget.space,
+                      rid: widget.space!,
                     ),
             )));
   }

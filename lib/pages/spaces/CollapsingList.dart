@@ -2,10 +2,10 @@ import 'package:flutter/cupertino.dart';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:adiHouse/pages/spaces/addSpacesMembers.dart';
+import 'package:tribes/pages/spaces/addSpacesMembers.dart';
 
 class CollapsingList extends StatefulWidget {
-  CollapsingList({Key key}) : super(key: key);
+  CollapsingList({Key? key}) : super(key: key);
 
   @override
   _CollapsingListState createState() => _CollapsingListState();
@@ -183,9 +183,8 @@ class _CollapsingListState extends State<CollapsingList> {
                             const EdgeInsets.only(bottom: 0, top: 0, left: 16),
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                              shape: CircleBorder(),
-                              padding: EdgeInsets.all(30),
-                              primary: Colors.indigo[700]),
+                              shape: CircleBorder(), backgroundColor: Colors.indigo[700],
+                              padding: EdgeInsets.all(30)),
                           child: Icon(
                             Icons.add,
                             size: 20,
@@ -218,9 +217,9 @@ class _CollapsingListState extends State<CollapsingList> {
 
 class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
   _SliverAppBarDelegate({
-    @required this.minHeight,
-    @required this.maxHeight,
-    @required this.child,
+    required this.minHeight,
+    required this.maxHeight,
+    required this.child,
   });
   final double minHeight;
   final double maxHeight;

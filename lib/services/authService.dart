@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:adiHouse/services/databaseService.dart';
+import 'package:tribes/services/databaseService.dart';
 
 enum Status {
   Undetermined,
@@ -12,17 +12,21 @@ enum Status {
 
 class AuthService extends ChangeNotifier {
   FirebaseAuth _auth = FirebaseAuth.instance;
-  User _user;
+  User? _user;
   Status _status = Status.Undetermined;
 
-  AuthService.instance() : _auth = FirebaseAuth.instance {
-    _auth.authStateChanges().listen(_authStateChanges);
-  }
+AuthService.instance() : _auth = FirebaseAuth.instance {
+  _auth.authStateChanges().listen((User? user) {
+    if (user != null) {
+      _authStateChanges(user);
+    }
+  });
+}
 
   Status get status => _status;
-  User get user => _user;
+  User? get user => _user;
 
-  String userId = '';
+  String? userId = '';
   bool isUserNew = false;
 
   signOut() async {
@@ -63,7 +67,7 @@ class AuthService extends ChangeNotifier {
       _status = Status.Unauthenticated;
     } else {
       _user = firebaseUser;
-      userId = _user.uid;
+      userId = _user?.uid;
       isUserNew = await DatabaseService(uid: userId).checkRegistration();
       handleStatus(isUserNew);
     }

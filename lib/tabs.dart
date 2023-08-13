@@ -1,23 +1,19 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:persistent_bottom_nav_bar/persistent-tab-view.dart';
+import 'package:persistent_bottom_nav_bar_v2/persistent-tab-view.dart';
 import 'package:provider/provider.dart';
-import 'package:adiHouse/pages/feed.dart';
-import 'package:adiHouse/pages/discovery.dart';
-import 'package:adiHouse/pages/flash.dart';
-import 'package:adiHouse/pages/gallery.dart';
-import 'package:adiHouse/pages/initUser.dart';
-import 'package:adiHouse/pages/login.dart';
-import 'package:adiHouse/pages/notifications.dart';
-import 'package:adiHouse/pages/replies.dart';
-import 'package:adiHouse/pages/requests.dart';
-import 'package:adiHouse/pages/spaces/inviteLandingPage.dart';
-import 'package:adiHouse/pages/userProfile.dart';
-import 'package:adiHouse/services/authService.dart';
-import 'package:adiHouse/widgets/previewBoxes/userPreviewBox.dart';
+import 'package:tribes/pages/discovery.dart';
+import 'package:tribes/pages/flash.dart';
+import 'package:tribes/pages/gallery.dart';
+import 'package:tribes/pages/initUser.dart';
+import 'package:tribes/pages/login.dart';
+import 'package:tribes/pages/notifications.dart';
+import 'package:tribes/pages/spaces/inviteLandingPage.dart';
+import 'package:tribes/pages/userProfile.dart';
+import 'package:tribes/services/authService.dart';
+import 'package:tribes/widgets/previewBoxes/userPreviewBox.dart';
 
 class TabHandler extends StatefulWidget {
   @override
@@ -29,12 +25,10 @@ class _TabHandlerState extends State<TabHandler> {
   final GlobalKey<NavigatorState> secondTabNavKey = GlobalKey<NavigatorState>();
   final GlobalKey<NavigatorState> thirdTabNavKey = GlobalKey<NavigatorState>();
   final GlobalKey<NavigatorState> fourthTabNavKey = GlobalKey<NavigatorState>();
-  final GlobalKey<NavigatorState> fifthTabNavKey = GlobalKey<NavigatorState>();
-  final GlobalKey<NavigatorState> sixthTabNavKey = GlobalKey<NavigatorState>();
 
   PersistentTabController _controller =
       PersistentTabController(initialIndex: 0);
-  User user = FirebaseAuth.instance.currentUser;
+   User? user = FirebaseAuth.instance.currentUser;
 
   @override
   void initState() {
@@ -49,7 +43,7 @@ class _TabHandlerState extends State<TabHandler> {
     await Permission.microphone.request().isGranted;
   }
 
-  getTabItems(String uid) {
+  getTabItems(String? uid) {
     List<PersistentBottomNavBarItem> items = [
       PersistentBottomNavBarItem(
           activeColorPrimary: Colors.white,
@@ -83,7 +77,7 @@ class _TabHandlerState extends State<TabHandler> {
     return items;
   }
 
-  List<Widget> tripControl(Status status, int b, String userID) {
+  List<Widget> tripControl(Status status, String? userID) {
     final tabs = [
       [
         Container(child: LoginPage()),
@@ -93,7 +87,6 @@ class _TabHandlerState extends State<TabHandler> {
             return Discovery();
           },
         ),
-        Container(child: LoginPage()),
         Container(child: LoginPage()),
         Container(child: LoginPage()),
       ],
@@ -133,26 +126,20 @@ class _TabHandlerState extends State<TabHandler> {
       return tabs[0];
   }
 
-  GlobalKey<NavigatorState> currentNavigatorKey() {
+  GlobalKey<NavigatorState>? currentNavigatorKey() {
     switch (_controller.index) {
       case 0:
         return firstTabNavKey;
-        break;
       case 1:
         return secondTabNavKey;
-        break;
       case 2:
         return thirdTabNavKey;
-        break;
       case 3:
         return fourthTabNavKey;
-        break;
-      case 4:
-        return fifthTabNavKey;
-        break;
-    }
-    return null;
-  }
+      default:
+        return firstTabNavKey;
+
+    }  }
 
   redirectFromLink(deepLink) {
     var res = deepLink.path.split('-');
@@ -199,23 +186,21 @@ class _TabHandlerState extends State<TabHandler> {
       if (auth.status == Status.Unauthenticated) {
         return LoginPage();
       }
-      if (auth.status == Status.Undetermined) {
-        return FlashScreen();
-      }
+   
       if (auth.status == Status.Uninitialized) {
         return InitUser();
       }
 
       return WillPopScope(
         onWillPop: () async {
-          return !await currentNavigatorKey().currentState.maybePop();
+          return await currentNavigatorKey()!.currentState!.maybePop();
         },
         child: PersistentTabView(
           context,
           controller: _controller,
           backgroundColor: Colors.black,
           items: getTabItems(auth.userId),
-          screens: tripControl(auth.status, 1, auth.userId),
+          screens: tripControl(auth.status, auth.userId),
           navBarStyle: NavBarStyle.style5,
           handleAndroidBackButtonPress: false,
           itemAnimationProperties: ItemAnimationProperties(

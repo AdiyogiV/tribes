@@ -1,19 +1,16 @@
 import 'dart:io' as di;
 import 'dart:math';
-import 'package:adiHouse/pages/houseMarket.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_cache_manager/file.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:adiHouse/services/databaseService.dart';
+import 'package:tribes/services/databaseService.dart';
 
 class TokenDialog extends StatefulWidget {
-  final String item;
-  const TokenDialog({Key key, this.item}) : super(key: key);
+  final String? item;
+  const TokenDialog({Key? key, this.item}) : super(key: key);
 
   @override
   _TokenDialogState createState() => _TokenDialogState();
@@ -26,12 +23,12 @@ class _TokenDialogState extends State<TokenDialog> {
   bool nameRequired = false;
   TextEditingController _nameController = TextEditingController();
   TextEditingController _priceController = TextEditingController();
-  di.File itemImage;
+  di.File? itemImage;
   String name = '';
   String displayPicture = '';
-  File displayPicFile;
+  File? displayPicFile;
   String price = '';
-  User user = FirebaseAuth.instance.currentUser;
+  User? user = FirebaseAuth.instance.currentUser;
   String address = '';
 
   @override
@@ -41,15 +38,13 @@ class _TokenDialogState extends State<TokenDialog> {
   }
 
   getItem() async {
-    DocumentSnapshot space = await DatabaseService().getItem(widget.item);
+    DocumentSnapshot space = await DatabaseService().getItem(widget.item!);
     name = space['name'];
     displayPicture = space['image'];
     price = space['price'];
     setState(() {});
-    if (displayPicture != null) {
-      displayPicFile =
-          await DefaultCacheManager().getSingleFile(displayPicture);
-    }
+    displayPicFile =
+        await DefaultCacheManager().getSingleFile(displayPicture);
     address = generateRandomString(20);
     setState(() {});
   }
@@ -84,7 +79,7 @@ class _TokenDialogState extends State<TokenDialog> {
           height: MediaQuery.of(context).size.width / 4,
           child: (displayPicFile != null)
               ? Image.file(
-                  displayPicFile,
+                  displayPicFile!,
                   fit: BoxFit.cover,
                 )
               : Image.asset(

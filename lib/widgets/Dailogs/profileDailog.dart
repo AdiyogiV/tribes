@@ -1,11 +1,10 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:adiHouse/pages/editUserProfile.dart';
-import 'package:adiHouse/services/authService.dart';
+import 'package:tribes/pages/editUserProfile.dart';
+import 'package:tribes/services/authService.dart';
 
 class ProfileOptions extends StatefulWidget {
-  final String uid;
+  final String? uid;
   ProfileOptions({
     this.uid,
   });

@@ -4,3 +4,8 @@ framework module FirebaseFunctions {
   export *
   module * { export * }
 }
+
+module FirebaseFunctions.Swift {
+  header "FirebaseFunctions-Swift.h"
+  requires objc
+}

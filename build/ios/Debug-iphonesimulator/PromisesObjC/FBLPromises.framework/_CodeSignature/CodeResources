@@ -50,7 +50,7 @@
 		</data>
 		<key>Headers/FBLPromise+Retry.h</key>
 		<data>
-		yWcTgblFfFp1WTKDOiSPZ5jDxNQ=
+		EFBZkIULq7mo/1LX3HSsRl51Fhw=
 		</data>
 		<key>Headers/FBLPromise+Testing.h</key>
 		<data>
@@ -90,7 +90,7 @@
 		</data>
 		<key>Info.plist</key>
 		<data>
-		0agzDEjkA26eaG75W9PlUVHD5Ik=
+		W9edOzOKSgs1hrbFFNx9AgnnLMs=
 		</data>
 		<key>Modules/module.modulemap</key>
 		<data>
@@ -228,11 +228,11 @@
 		<dict>
 			<key>hash</key>
 			<data>
-			yWcTgblFfFp1WTKDOiSPZ5jDxNQ=
+			EFBZkIULq7mo/1LX3HSsRl51Fhw=
 			</data>
 			<key>hash2</key>
 			<data>
-			Va6IWZOaB2Gi/utF/TdEGwXYqFYHunwUXo4DNOCGyuc=
+			onMjxab1k7BI/BmEl5YQXwuaYLZwgEh/ERMPIZ5utlY=
 			</data>
 		</dict>
 		<key>Headers/FBLPromise+Testing.h</key>

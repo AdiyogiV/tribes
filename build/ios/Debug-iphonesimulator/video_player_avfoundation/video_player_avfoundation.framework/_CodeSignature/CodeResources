@@ -4,21 +4,25 @@
 <dict>
 	<key>files</key>
 	<dict>
+		<key>Headers/AVAssetTrackUtils.h</key>
+		<data>
+		2zY+fPHDHcrwunD6JlBI03gPsPw=
+		</data>
 		<key>Headers/FLTVideoPlayerPlugin.h</key>
 		<data>
 		/TikdUF6KZ/6ZWoPA3uxFXN+YU8=
 		</data>
 		<key>Headers/messages.g.h</key>
 		<data>
-		KlO2gjwJPgAblV6BiCO08I/g5Tg=
+		Z6yFq2h+XpsMRN4ZZb8AqySbB+k=
 		</data>
 		<key>Headers/video_player_avfoundation-umbrella.h</key>
 		<data>
-		NSr6prpOky1Xe4uslPS7iOVDVrU=
+		R0G5qA9XH7drz8L0lMBywkdE5Qg=
 		</data>
 		<key>Info.plist</key>
 		<data>
-		1qE1c4UgkXf0GGPaSiKxxkXxE9o=
+		d2X+5BwVoxy4L3AKITNS20MxCzw=
 		</data>
 		<key>Modules/module.modulemap</key>
 		<data>
@@ -27,12 +31,15 @@
 	</dict>
 	<key>files2</key>
 	<dict>
+		<key>Headers/AVAssetTrackUtils.h</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			TwADlJyEjME/pwqAn6dXtVfQdbx1gj+s+9Dn4ZVwjk0=
+			</data>
+		</dict>
 		<key>Headers/FLTVideoPlayerPlugin.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			/TikdUF6KZ/6ZWoPA3uxFXN+YU8=
-			</data>
 			<key>hash2</key>
 			<data>
 			t/4E9xwTzk0ZJ73spSD6LVhxMtG58Xgu7lKWY9zlcdA=
@@ -40,32 +47,20 @@
 		</dict>
 		<key>Headers/messages.g.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			KlO2gjwJPgAblV6BiCO08I/g5Tg=
-			</data>
 			<key>hash2</key>
 			<data>
-			w/z8gXmItgqwyG9YW49rZma7up8eET6pDDsGuE0k1nE=
+			8F1s3Bz9bEs5kbXrNqzWLb2zUgPGnX5O2PxJm1ZuG38=
 			</data>
 		</dict>
 		<key>Headers/video_player_avfoundation-umbrella.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			NSr6prpOky1Xe4uslPS7iOVDVrU=
-			</data>
 			<key>hash2</key>
 			<data>
-			YTSAy1xEFJ4B9NGg4WX/PDclHRGoGx8P1B4bWRpVdIQ=
+			ifC4oVx4/turhfHeEhmyb1ifx6eIdBz/e1Vc0peu/8c=
 			</data>
 		</dict>
 		<key>Modules/module.modulemap</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			e19a7Vc/9EA2WzCimEERKBGHlyc=
-			</data>
 			<key>hash2</key>
 			<data>
 			9WXhHcl6c6Zp10RxdSze4967xiGkRuWPvYmcjL5Ftvg=

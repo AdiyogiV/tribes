@@ -3,9 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'package:adiHouse/pages/requests.dart';
-import 'package:adiHouse/widgets/notifications/followTile.dart';
-import 'package:adiHouse/widgets/notifications/replyTile.dart';
+import 'package:tribes/widgets/notifications/replyTile.dart';
 
 class Notifications extends StatefulWidget {
   @override
@@ -15,9 +13,9 @@ class Notifications extends StatefulWidget {
 class _NotificationsState extends State<Notifications> {
   final CollectionReference notificationsCollection =
       FirebaseFirestore.instance.collection('notifications');
-  User user = FirebaseAuth.instance.currentUser;
-  Map notifics;
-  int count;
+  User? user = FirebaseAuth.instance.currentUser;
+  Map? notifics;
+  int? count;
   RefreshController _refreshController =
       RefreshController(initialRefresh: false);
   List<Widget> itemList = <Widget>[];
@@ -37,20 +35,20 @@ class _NotificationsState extends State<Notifications> {
 
   getNotifications() async {
     List<Widget> _itemView = <Widget>[];
-    await notificationsCollection.doc(user.uid).get().then((value) => {
+    await notificationsCollection.doc(user!.uid).get().then((value) => {
           notifics = value['notifications'],
           count = value['count'],
-          for (int i = notifics.length; i > 0; i--)
+          for (int i = notifics!.length; i > 0; i--)
             {
-              if (notifics['$i']['type'] == 'reply')
+              if (notifics!['$i']['type'] == 'reply')
                 {
                   _itemView.add(ReplyTile(
-                    data: notifics['$i'],
+                    data: notifics!['$i'],
                   ))
                 }
               // else if (notifics['$i']['type'] == 'follow')
               //   {_itemView.add(FollowTile())}
-            },
+            }, 
           setState(() {
             itemList = _itemView;
           })

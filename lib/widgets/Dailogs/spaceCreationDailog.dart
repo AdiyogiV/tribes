@@ -1,13 +1,12 @@
-import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:adiHouse/pages/spaces/space.dart';
-import 'package:adiHouse/services/databaseService.dart';
+import 'package:tribes/pages/spaces/space.dart';
+import 'package:tribes/services/databaseService.dart';
 
 class SpaceCreationDailog extends StatefulWidget {
-  final int selectedSpaceType;
-  const SpaceCreationDailog({Key key, this.selectedSpaceType})
+  final int? selectedSpaceType;
+  const SpaceCreationDailog({Key? key, this.selectedSpaceType})
       : super(key: key);
 
   @override

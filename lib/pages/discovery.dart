@@ -1,21 +1,17 @@
-import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:algolia/algolia.dart';
-import 'package:flutter/rendering.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'package:adiHouse/pages/houseMarket.dart';
-import 'package:adiHouse/pages/spaces/space.dart';
-import 'package:adiHouse/pages/theatre.dart';
-import 'package:adiHouse/pages/userProfile.dart';
-import 'package:adiHouse/services/algoliaService.dart';
-import 'package:adiHouse/services/databaseService.dart';
-import 'package:adiHouse/widgets/previewBox.dart';
-import 'package:adiHouse/widgets/previewBoxes/crewPreview.dart';
-import 'package:adiHouse/widgets/previewBoxes/userPreviewBox.dart';
-import 'package:adiHouse/widgets/previewBoxes/spacePreviewBox.dart';
+import 'package:responsive_builder/responsive_builder.dart';
+import 'package:tribes/pages/spaces/space.dart';
+import 'package:tribes/pages/userProfile.dart';
+import 'package:tribes/services/algoliaService.dart';
+import 'package:tribes/services/databaseService.dart';
+import 'package:tribes/widgets/previewBox.dart';
+import 'package:tribes/widgets/previewBoxes/crewPreview.dart';
+import 'package:tribes/widgets/previewBoxes/spacePreviewBox.dart';
 
 class Discovery extends StatefulWidget {
   @override
@@ -56,7 +52,7 @@ class _DiscoveryState extends State<Discovery> {
   };
   bool public = false;
   int selectedSpaceType = 0;
-  TextEditingController _textController;
+  TextEditingController? _textController;
   int searchPost = 1;
   List<Widget> suggestions = [];
   FocusNode focusNode = FocusNode();
@@ -92,7 +88,7 @@ class _DiscoveryState extends State<Discovery> {
           .toList()
           .asMap()
           .map(
-            (index, doc) => MapEntry(
+            (index, documents) => MapEntry(
               index,
               GestureDetector(
                 key: UniqueKey(),
@@ -100,16 +96,16 @@ class _DiscoveryState extends State<Discovery> {
                   Navigator.of(context, rootNavigator: true)
                       .push(CupertinoPageRoute(builder: (context) {
                     return SpaceBox(
-                      rid: doc.id,
+                      rid: documents.id,
                     );
                   }));
                 },
                 child: Container(
-                  height: 100,
+                  height: 70,
                   padding: EdgeInsets.only(top: 7, left: 7, right: 7),
                   child: SpacePreviewBox(
                     key: UniqueKey(),
-                    space: doc.id,
+                    space: documents.id,
                   ),
                 ),
               ),
@@ -131,7 +127,7 @@ class _DiscoveryState extends State<Discovery> {
       suggestions = results
           .asMap()
           .map(
-            (index, doc) => MapEntry(
+            (index, documents) => MapEntry(
               index,
               GestureDetector(
                 key: UniqueKey(),
@@ -139,16 +135,16 @@ class _DiscoveryState extends State<Discovery> {
                   Navigator.of(context)
                       .push(CupertinoPageRoute(builder: (context) {
                     return UserProfilePage(
-                      uid: doc.objectID,
+                      uid: documents.objectID,
                     );
                   }));
                 },
                 child: Container(
-                  height: 100,
+                  height: 70,
                   padding: EdgeInsets.only(top: 7, left: 7, right: 7),
                   child: CrewPreview(
                     key: UniqueKey(),
-                    user: doc.objectID,
+                    user: documents.objectID,
                   ),
                 ),
               ),
@@ -165,7 +161,7 @@ class _DiscoveryState extends State<Discovery> {
   getPosts(String input) async {
     AlgoliaQuerySnapshot _querySnap = await _algoliaApp.instance
         .index('posts')
-        .search(input)
+        .query(input)
         .setHitsPerPage(40)
         .getObjects();
     List<AlgoliaObjectSnapshot> results = _querySnap.hits;
@@ -174,7 +170,7 @@ class _DiscoveryState extends State<Discovery> {
       suggestions = results
           .asMap()
           .map(
-            (index, doc) => MapEntry(
+            (index, documents) => MapEntry(
               index,
               GestureDetector(
                 key: UniqueKey(),
@@ -183,9 +179,9 @@ class _DiscoveryState extends State<Discovery> {
                   width: MediaQuery.of(context).size.width,
                   child: PreviewBox(
                     key: UniqueKey(),
-                    title: doc.data['title'],
-                    author: doc.data['author'],
-                    previewUrl: doc.data['thumbnail'],
+                    title: documents.data['title'],
+                    author: documents.data['author'],
+                    previewUrl: documents.data['thumbnail'],
                   ),
                 ),
               ),
@@ -215,7 +211,7 @@ class _DiscoveryState extends State<Discovery> {
   @override
   void dispose() {
     focusNode.dispose();
-    _textController.dispose();
+    _textController!.dispose();
     super.dispose();
   }
 
@@ -228,10 +224,19 @@ class _DiscoveryState extends State<Discovery> {
         ));
   }
 
+  Widget getResponsiveView() {
+    return ScreenTypeLayout.builder(
+      mobile: (BuildContext context) => Container(color: Colors.blue),
+      tablet: (BuildContext context) => Container(color: Colors.yellow),
+      desktop: (BuildContext context) => Container(color: Colors.red),
+      watch: (BuildContext context) => Container(color: Colors.purple),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black38,
+      backgroundColor: Colors.black,
       extendBody: true,
       resizeToAvoidBottomInset: false,
       body: SmartRefresher(

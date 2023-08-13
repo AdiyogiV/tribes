@@ -1,30 +1,19 @@
 import 'dart:io';
-import 'dart:math';
-import 'package:adiHouse/pages/houseMarket.dart';
-import 'package:adiHouse/widgets/Dailogs/joinHouseDailog.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'package:adiHouse/modal/spaceTypes.dart';
-import 'package:adiHouse/pages/login.dart';
-import 'package:adiHouse/pages/recorder.dart';
-import 'package:adiHouse/pages/spaces/createRoom.dart';
-import 'package:adiHouse/pages/spaces/editSpace.dart';
-import 'package:adiHouse/pages/spaces/gridSpaceView.dart';
-import 'package:adiHouse/pages/spaces/spaceTypes/openSpace.dart';
-import 'package:adiHouse/pages/spaces/spaceTypes/secretSpace.dart';
-import 'package:adiHouse/pages/theatre.dart';
-import 'package:adiHouse/services/databaseService.dart';
-import 'package:adiHouse/widgets/Dailogs/loginDailog.dart';
-import 'package:adiHouse/widgets/previewBox.dart';
+import 'package:tribes/pages/recorder.dart';
+import 'package:tribes/pages/spaces/editSpace.dart';
+import 'package:tribes/pages/spaces/gridSpaceView.dart';
+import 'package:tribes/pages/theatre.dart';
+import 'package:tribes/services/databaseService.dart';
+import 'package:tribes/widgets/Dailogs/loginDailog.dart';
 
 class SpaceBox extends StatefulWidget {
-  final String rid;
-  SpaceBox({Key key, this.rid}) : super(key: key);
+  final String? rid;
+  SpaceBox({Key? key, this.rid}) : super(key: key);
 
   @override
   _SpaceBoxState createState() => _SpaceBoxState();
@@ -33,18 +22,18 @@ class SpaceBox extends StatefulWidget {
 class _SpaceBoxState extends State<SpaceBox> {
   String name = '';
   String discription = '';
-  Map members;
+  Map? members;
   int membersCount = 0;
-  String displayPicture;
-  File displayPicFile;
+  String? displayPicture;
+  File? displayPicFile;
   String uidSelf = '';
   int personal = 0;
   bool isPublic = true;
   bool gridViewOn = true;
   int initPage = 0;
-  int spaceType;
+  int? spaceType;
   bool isMember = false;
-  User user = FirebaseAuth.instance.currentUser;
+  User? user = FirebaseAuth.instance.currentUser;
   bool authorized = false;
 
   List<Widget> spacePosts = [];
@@ -78,8 +67,8 @@ class _SpaceBoxState extends State<SpaceBox> {
   }
 
   getSpaceBox() async {
-    isMember = await DatabaseService().isMember(widget.rid);
-    DocumentSnapshot space = await DatabaseService().getSpace(widget.rid);
+    isMember = await DatabaseService().isMember(widget.rid!);
+    DocumentSnapshot space = await DatabaseService().getSpace(widget.rid!);
     spaceType = space['spaceType'];
     if ((isMember == false) && (spaceType == 2 || spaceType == 3)) {
       Navigator.of(context).pop();
@@ -95,10 +84,8 @@ class _SpaceBoxState extends State<SpaceBox> {
     setState(() {
       authorized = true;
     });
-    if (displayPicture != null) {
-      displayPicFile =
-          await DefaultCacheManager().getSingleFile(displayPicture);
-    }
+    displayPicFile =
+        await DefaultCacheManager().getSingleFile(displayPicture!);
     setState(() {});
   }
 
@@ -120,7 +107,7 @@ class _SpaceBoxState extends State<SpaceBox> {
                             context,
                             MaterialPageRoute(
                                 builder: (context) => Recorder(
-                                      space: widget.rid,
+                                      space: widget.rid!,
                                     )));
                       },
                       child: Icon(
@@ -156,7 +143,7 @@ class _SpaceBoxState extends State<SpaceBox> {
   getJoinButton() {
     return FloatingActionButton.extended(
       onPressed: () {
-        DatabaseService().addSpaceMember(widget.rid, user.uid);
+        DatabaseService().addSpaceMember(widget.rid!, user!.uid);
         getSpaceBox();
       },
       backgroundColor: CupertinoTheme.of(context).primaryColor,
@@ -191,7 +178,7 @@ class _SpaceBoxState extends State<SpaceBox> {
                         borderRadius: BorderRadius.circular(5.0),
                         child: (displayPicFile != null)
                             ? Image.file(
-                                displayPicFile,
+                                displayPicFile!,
                                 fit: BoxFit.cover,
                               )
                             : Container(
@@ -241,7 +228,7 @@ class _SpaceBoxState extends State<SpaceBox> {
             child: SafeArea(
               child: gridViewOn
                   ? GridSpaceView(
-                      rid: widget.rid,
+                      rid: widget.rid!,
                       setPageView: setPageView,
                     )
                   : Theatre(

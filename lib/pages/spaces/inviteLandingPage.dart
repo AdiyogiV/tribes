@@ -2,17 +2,17 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:adiHouse/pages/login.dart';
-import 'package:adiHouse/pages/login/handleLogin.dart';
-import 'package:adiHouse/pages/spaces/space.dart';
-import 'package:adiHouse/services/authService.dart';
-import 'package:adiHouse/services/databaseService.dart';
-import 'package:adiHouse/widgets/previewBoxes/userPreviewBox.dart';
-import 'package:adiHouse/widgets/previewBoxes/spacePreviewBox.dart';
+import 'package:tribes/pages/login.dart';
+import 'package:tribes/pages/login/handleLogin.dart';
+import 'package:tribes/pages/spaces/space.dart';
+import 'package:tribes/services/authService.dart';
+import 'package:tribes/services/databaseService.dart';
+import 'package:tribes/widgets/previewBoxes/userPreviewBox.dart';
+import 'package:tribes/widgets/previewBoxes/spacePreviewBox.dart';
 
 class InviteLandingPage extends StatefulWidget {
-  final String space;
-  final String invitee;
+  final String? space;
+  final String? invitee;
 
   InviteLandingPage({this.space, this.invitee});
 
@@ -21,7 +21,7 @@ class InviteLandingPage extends StatefulWidget {
 }
 
 class _InviteLandingPageState extends State<InviteLandingPage> {
-  User user = FirebaseAuth.instance.currentUser;
+  User? user = FirebaseAuth.instance.currentUser;
   @override
   void initState() {
     super.initState();
@@ -80,7 +80,7 @@ class _InviteLandingPageState extends State<InviteLandingPage> {
                 return;
               }
               bool res = await DatabaseService()
-                  .addSpaceMember(widget.space, user.uid);
+                  .addSpaceMember(widget.space!, user!.uid);
               if (res) {
                 Navigator.of(context, rootNavigator: true)
                     .push(CupertinoPageRoute(builder: (context) {
@@ -98,7 +98,7 @@ class _InviteLandingPageState extends State<InviteLandingPage> {
           ),
           appBar: CupertinoNavigationBar(
             middle: Text(
-              'adiHouse',
+              'tribes',
               style: TextStyle(fontWeight: FontWeight.w300),
             ),
           ),
@@ -135,7 +135,7 @@ class _InviteLandingPageState extends State<InviteLandingPage> {
                   child: Container(
                       width: MediaQuery.of(context).size.width / 2,
                       child: SpacePreviewBox(
-                        space: widget.space,
+                        space: widget.space!,
                       )),
                 ),
               ],

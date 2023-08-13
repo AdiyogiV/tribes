@@ -1,4 +1,3 @@
-import 'dart:ffi';
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
@@ -7,22 +6,22 @@ import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
 import 'package:visibility_detector/visibility_detector.dart';
-import 'package:adiHouse/pages/theatre.dart';
-import 'package:adiHouse/widgets/postHeader.dart';
-import 'package:adiHouse/widgets/postToolbar.dart';
+import 'package:tribes/pages/theatre.dart';
+import 'package:tribes/widgets/postHeader.dart';
+import 'package:tribes/widgets/postToolbar.dart';
 
 class MainPlayer extends StatefulWidget {
-  final String author;
-  final String space;
-  final String videoUrl;
-  final int pageIndex;
-  final int pageDepth;
-  final String postId;
-  final int upVoteCount;
-  final int downVoteCount;
-  final Map upVotes;
-  final Map downVotes;
-  final String title;
+  final String? author;
+  final String? space;
+  final String? videoUrl;
+  final int? pageIndex;
+  final int? pageDepth;
+  final String? postId;
+  final int? upVoteCount;
+  final int? downVoteCount;
+  final Map? upVotes;
+  final Map? downVotes;
+  final String? title;
 
   MainPlayer(
       {this.postId,
@@ -43,7 +42,7 @@ class MainPlayer extends StatefulWidget {
 
 class _MainPlayer extends State<MainPlayer> with WidgetsBindingObserver {
   bool isPlaying = false;
-  VideoPlayerController _controller;
+  VideoPlayerController? _controller;
   bool initialized = false;
   bool gameOn = false;
 
@@ -66,10 +65,10 @@ class _MainPlayer extends State<MainPlayer> with WidgetsBindingObserver {
   // }
 
   initializePlayer() async {
-    File video = await DefaultCacheManager().getSingleFile(widget.videoUrl);
+    File video = await DefaultCacheManager().getSingleFile(widget.videoUrl!);
     _controller = VideoPlayerController.file(video);
-    await _controller.initialize();
-    await _controller.setLooping(true);
+    await _controller!.initialize();
+    await _controller!.setLooping(true);
     if (mounted)
       setState(() {
         initialized = true;
@@ -78,29 +77,29 @@ class _MainPlayer extends State<MainPlayer> with WidgetsBindingObserver {
 
   toggleAudio(bool audio) {
     if (audio)
-      _controller.setVolume(100);
+      _controller!.setVolume(100);
     else
-      _controller.setVolume(0);
+      _controller!.setVolume(0);
   }
 
   isVisible(double visibility) {
     if (visibility == 1.0) {
-      _controller.play();
+      _controller!.play();
       Provider.of<PageIndexHolder>(context, listen: false)
-          .setPost(widget.postId);
+          .setPost(widget.postId!);
     } else {
-      _controller.pause();
+      _controller!.pause();
     }
   }
 
   double getRatio() {
-    if (_controller.value.aspectRatio > 1.5) {
+    if (_controller!.value.aspectRatio > 1.5) {
       return 1.5;
     }
-    if (_controller.value.aspectRatio < 0.5) {
+    if (_controller!.value.aspectRatio < 0.5) {
       return 0.5;
     }
-    return _controller.value.aspectRatio;
+    return _controller!.value.aspectRatio;
   }
 
   @override
@@ -125,13 +124,13 @@ class _MainPlayer extends State<MainPlayer> with WidgetsBindingObserver {
         aspectRatio: getRatio(),
         child: Stack(
           children: <Widget>[
-            VideoPlayer(_controller),
+            VideoPlayer(_controller!),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 PostHeader(
-                  uid: widget.author,
-                  space: widget.space,
+                  uid: widget.author!,
+                  space: widget.space!,
                 ),
                 Expanded(
                   child: Container(),
@@ -141,7 +140,7 @@ class _MainPlayer extends State<MainPlayer> with WidgetsBindingObserver {
                     child: Padding(
                       padding: const EdgeInsets.only(left: 15),
                       child: Text(
-                        widget.title,
+                        widget.title!,
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 16,
@@ -160,10 +159,10 @@ class _MainPlayer extends State<MainPlayer> with WidgetsBindingObserver {
                   padding: EdgeInsets.all(3),
                 ),
                 PostToolbar(
-                  postId: widget.postId,
+                  postId: widget.postId!,
                 ),
                 VideoProgressIndicator(
-                  _controller,
+                  _controller!,
                   allowScrubbing: true,
                   colors: VideoProgressColors(
                     playedColor: CupertinoTheme.of(context).primaryColor,
@@ -180,6 +179,6 @@ class _MainPlayer extends State<MainPlayer> with WidgetsBindingObserver {
   @override
   void dispose() {
     super.dispose();
-    _controller?.dispose();
+    _controller!.dispose();
   }
 }

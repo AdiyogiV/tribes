@@ -3,9 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'package:adiHouse/pages/theatre.dart';
-import 'package:adiHouse/services/algoliaService.dart';
-import 'package:adiHouse/widgets/previewBox.dart';
+import 'package:tribes/services/algoliaService.dart';
 
 class Feed extends StatefulWidget {
   @override
@@ -19,7 +17,7 @@ class _FeedState extends State<Feed> {
       FirebaseFirestore.instance.collection('posts');
   final CollectionReference votesCollection =
       FirebaseFirestore.instance.collection('votes');
-  User user = FirebaseAuth.instance.currentUser;
+  User? user = FirebaseAuth.instance.currentUser;
   List<Widget> postView = <Widget>[];
   RefreshController _refreshController =
       RefreshController(initialRefresh: false);

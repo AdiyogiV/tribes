@@ -6,7 +6,7 @@
 	<dict>
 		<key>Headers/FLTFirebaseFirestorePlugin.h</key>
 		<data>
-		9AE4hvDF6prIhr5aEAUzA+3biyw=
+		vcq+2tkE79mEyK8im1VjPkXes4I=
 		</data>
 		<key>Headers/cloud_firestore-umbrella.h</key>
 		<data>
@@ -14,7 +14,7 @@
 		</data>
 		<key>Info.plist</key>
 		<data>
-		Z+pBkDd0dR/mmBF/9vcWM578rxk=
+		JGaKITbPVJH385MAODKbFbO4As8=
 		</data>
 		<key>Modules/module.modulemap</key>
 		<data>
@@ -38,7 +38,7 @@
 		</data>
 		<key>PrivateHeaders/FLTLoadBundleStreamHandler.h</key>
 		<data>
-		FvZhD3p0CAPG/Fdne+KK6O1B9KU=
+		NGgXmtCGi1BoSJmi47FFi/Fpo5c=
 		</data>
 		<key>PrivateHeaders/FLTQuerySnapshotStreamHandler.h</key>
 		<data>
@@ -59,11 +59,11 @@
 		<dict>
 			<key>hash</key>
 			<data>
-			9AE4hvDF6prIhr5aEAUzA+3biyw=
+			vcq+2tkE79mEyK8im1VjPkXes4I=
 			</data>
 			<key>hash2</key>
 			<data>
-			LinpxuWKzJrP/mPW2THPGaug9RPgD4MExS6axbQq64I=
+			nzste0cB5Nqr39RvxRvQXZSq6M2FwdtwdxrlWu8wRgc=
 			</data>
 		</dict>
 		<key>Headers/cloud_firestore-umbrella.h</key>
@@ -136,11 +136,11 @@
 		<dict>
 			<key>hash</key>
 			<data>
-			FvZhD3p0CAPG/Fdne+KK6O1B9KU=
+			NGgXmtCGi1BoSJmi47FFi/Fpo5c=
 			</data>
 			<key>hash2</key>
 			<data>
-			RwzYi8242+A2p2sI1fUgpZhXNeNJCD7sgTFYd6mmVrw=
+			ovHIvdKn1C4lhkX6n1S5mZ+/NxEcDQwoP6nfe6qD/8o=
 			</data>
 		</dict>
 		<key>PrivateHeaders/FLTQuerySnapshotStreamHandler.h</key>

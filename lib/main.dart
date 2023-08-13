@@ -1,18 +1,18 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:adiHouse/tabs.dart';
-import 'package:adiHouse/services/authService.dart';
+import 'package:tribes/firebase_options.dart';
+import 'package:tribes/tabs.dart';
+import 'package:tribes/services/authService.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  // SystemChrome.setPreferredOrientations([
+  //   DeviceOrientation.portraitUp,
+  //   DeviceOrientation.portraitDown,
+  // ]);
   runApp(MyApp());
 }
 
@@ -35,7 +35,7 @@ class _MyAppState extends State<MyApp> {
         providers: [
           ChangeNotifierProvider(
             create: (context) => AuthService.instance(),
-          )
+           )
         ],
         child: CupertinoApp(
             localizationsDelegates: <LocalizationsDelegate<dynamic>>[
@@ -46,8 +46,10 @@ class _MyAppState extends State<MyApp> {
             debugShowCheckedModeBanner: false,
             theme: CupertinoThemeData(
               brightness: Brightness.light,
-              primaryColor: Colors.amber,
-              scaffoldBackgroundColor: Colors.blue[200],
+              primaryColor: Color.fromRGBO(200, 162, 200, 1),
+              scaffoldBackgroundColor: Colors.white,
+              primaryContrastingColor: Color.fromRGBO(255, 219, 0, 1),
+              barBackgroundColor: Color.fromRGBO(162, 228, 184, 1),
             ),
             home: TabHandler()));
   }

@@ -3,11 +3,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:adiHouse/services/databaseService.dart';
-import 'package:adiHouse/widgets/previewBoxes/userPicture.dart';
+import 'package:tribes/services/databaseService.dart';
+import 'package:tribes/widgets/previewBoxes/userPicture.dart';
 
 class EditProfile extends StatefulWidget {
-  final String uid;
+  final String? uid;
   EditProfile({
     this.uid,
   });
@@ -18,8 +18,8 @@ class EditProfile extends StatefulWidget {
 class MapScreenState extends State<EditProfile> {
   final FocusNode myFocusNode = FocusNode();
 
-  String displayPicture;
-  String updatedDpPath;
+  String? displayPicture;
+  String? updatedDpPath;
   bool check = true;
   bool isPublic = true;
   TextEditingController _nameController = TextEditingController();
@@ -37,23 +37,24 @@ class MapScreenState extends State<EditProfile> {
   }
 
   getProfile() async {
-    DocumentSnapshot spaceDoc = await userCollection.doc(widget.uid).get();
-    _nameController.text = spaceDoc['name'];
-    displayPicture = spaceDoc['displayPicture'];
+    DocumentSnapshot spacedocuments =
+        await userCollection.doc(widget.uid).get();
+    _nameController.text = spacedocuments['name'];
+    displayPicture = spacedocuments['displayPicture'];
     setState(() {});
   }
 
   void _onImageButtonPressed() async {
-    XFile pickedFile =
+    XFile? pickedFile =
         await ImagePicker().pickImage(source: ImageSource.gallery);
     setState(() {
-      updatedDpPath = File(pickedFile.path).path;
+      updatedDpPath = File(pickedFile!.path).path;
     });
   }
 
   void onSavePressed() {
-    DatabaseService(uid: widget.uid).updateSpace(widget.uid,
-        _nameController.text, _bioController.text, updatedDpPath, isPublic);
+    DatabaseService(uid: widget.uid).updateSpace(widget.uid!,
+        _nameController.text, _bioController.text, updatedDpPath!, isPublic);
     Navigator.of(context).pop();
   }
 
@@ -98,9 +99,9 @@ class MapScreenState extends State<EditProfile> {
                         height: MediaQuery.of(context).size.width / 2,
                         child: (updatedDpPath == null)
                             ? (displayPicture != null)
-                                ? UserPicture(displayPicture: displayPicture)
+                                ? UserPicture(displayPicture: displayPicture!)
                                 : Container()
-                            : Image.file(File(updatedDpPath))),
+                            : Image.file(File(updatedDpPath!))),
                   ),
                 ),
               ),

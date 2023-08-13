@@ -1,16 +1,15 @@
-import 'package:adiHouse/services/databaseService.dart';
-import 'package:adiHouse/widgets/Dailogs/buyItemDailog.dart';
+import 'package:tribes/services/databaseService.dart';
+import 'package:tribes/widgets/Dailogs/buyItemDailog.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'package:adiHouse/pages/spaces/space.dart';
-import 'package:adiHouse/widgets/Dailogs/itemCreationDailog.dart';
-import 'package:adiHouse/widgets/previewBoxes/itemPreview.dart';
+import 'package:tribes/widgets/Dailogs/itemCreationDailog.dart';
+import 'package:tribes/widgets/previewBoxes/itemPreview.dart';
 
 class HouseMarket extends StatefulWidget {
-  final String house;
-  const HouseMarket({this.house, Key key}) : super(key: key);
+  final String? house;
+  const HouseMarket({this.house, Key? key}) : super(key: key);
 
   @override
   State<HouseMarket> createState() => _HouseMarketState();
@@ -43,8 +42,8 @@ class _HouseMarketState extends State<HouseMarket> {
   }
 
   getSpace() async {
-    final doc = await DatabaseService().getSpace(widget.house);
-    name = doc['name'];
+    final documents = await DatabaseService().getSpace(widget.house!);
+    name = documents['name'];
     this.setState(() {});
   }
 
@@ -57,10 +56,10 @@ class _HouseMarketState extends State<HouseMarket> {
             return Center(child: CircularProgressIndicator());
           }
 
-          List spaceList = snapshot.data.docs.reversed
+          List<Widget> spaceList = snapshot.data!.docs.reversed
               .toList()
               .asMap()
-              .map((index, doc) => MapEntry(
+              .map((index, documents) => MapEntry(
                     index,
                     GestureDetector(
                       key: UniqueKey(),
@@ -69,15 +68,15 @@ class _HouseMarketState extends State<HouseMarket> {
                             context: context,
                             builder: (BuildContext context) {
                               return BuyItemDailog(
-                                house: widget.house,
-                                item: doc.id,
+                                house: widget.house!,
+                                item: documents.id,
                               );
                             });
 
                         //   Navigator.of(context, rootNavigator: true)
                         //       .push(CupertinoPageRoute(builder: (context) {
                         //     return HouseMarket(
-                        //       house: doc.id,
+                        //       house: documents.id,
                         //     );
                         //   }));
                       },
@@ -86,7 +85,7 @@ class _HouseMarketState extends State<HouseMarket> {
                         padding: EdgeInsets.all(10),
                         child: ItemPreview(
                           key: UniqueKey(),
-                          item: doc.id,
+                          item: documents.id,
                         ),
                       ),
                     ),
@@ -105,7 +104,7 @@ class _HouseMarketState extends State<HouseMarket> {
   Widget build(BuildContext context) {
     return Scaffold(
         extendBody: true,
-        backgroundColor: Colors.white,
+        backgroundColor: const Color.fromARGB(255, 35, 25, 25),
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () {
             Navigator.of(context).pop();
@@ -136,7 +135,7 @@ class _HouseMarketState extends State<HouseMarket> {
                             context: context,
                             builder: (BuildContext context) {
                               return ItemCreationDailog(
-                                space: widget.house,
+                                space: widget.house!,
                               );
                             });
                       },

@@ -3,13 +3,13 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:adiHouse/modal/SpaceRoles.dart';
+import 'package:tribes/modal/SpaceRoles.dart';
 
 class DatabaseService {
-  String uid;
+  String? uid;
   DatabaseService({this.uid});
 
-  User user = FirebaseAuth.instance.currentUser;
+  User? user = FirebaseAuth.instance.currentUser;
   final CollectionReference userCollection =
       FirebaseFirestore.instance.collection('users');
   final CollectionReference spacesCollection =
@@ -24,15 +24,15 @@ class DatabaseService {
   ) async {
     try {
       await nicknameCollection.doc('pairs').set({
-        nickname: {'name': name, 'uid': user.uid}
+        nickname: {'name': name, 'uid': user?.uid}
       }, SetOptions(merge: true));
       FirebaseStorage storageF = FirebaseStorage.instance;
       Reference storageReference =
-          storageF.ref().child('${user.uid}/displayPicture'
+          storageF.ref().child('${user?.uid}/displayPicture'
               '.jpg');
       await storageReference.putFile(File(displayPicture));
       storageReference.getDownloadURL().then((value) async {
-        await userCollection.doc(user.uid).set({
+        await userCollection.doc(user?.uid).set({
           'name': name,
           'nickname': nickname,
           'displayPicture': value,
@@ -47,7 +47,7 @@ class DatabaseService {
 
   Future<bool> checkRegistration() async {
     bool newUser = true;
-    await userCollection.doc(user.uid).get().then((snapshot) => {
+    await userCollection.doc(user?.uid).get().then((snapshot) => {
           if (snapshot.exists) {if (snapshot['nickname'] != '') newUser = false}
         });
     return newUser;
@@ -67,7 +67,7 @@ class DatabaseService {
     String id = space.id;
     await FirebaseFirestore.instance
         .collection('userSpaces')
-        .doc(user.uid)
+        .doc(user?.uid)
         .collection('spaces')
         .doc(id)
         .set({
@@ -79,7 +79,7 @@ class DatabaseService {
         .collection('spaceRoles')
         .doc(id)
         .collection('roles')
-        .doc(user.uid)
+        .doc(user?.uid)
         .set({
       'role': 'creator',
       "timestamp": Timestamp.fromDate(DateTime.now()),
@@ -200,6 +200,7 @@ class DatabaseService {
   Future<bool> approveSpaceMember(String space, String member) async {
     try {
       var role = 'member';
+      print(space);
 
       await FirebaseFirestore.instance
           .collection('spaceRoles')
@@ -253,7 +254,7 @@ class DatabaseService {
   ) async {
     var role = await FirebaseFirestore.instance
         .collection('userItems')
-        .doc(user.uid)
+        .doc(user?.uid)
         .collection('items')
         .doc(item)
         .get();
@@ -261,7 +262,7 @@ class DatabaseService {
 
     await FirebaseFirestore.instance
         .collection('userItems')
-        .doc(user.uid)
+        .doc(user?.uid)
         .collection('items')
         .doc(item)
         .set({"timestamp": Timestamp.fromDate(DateTime.now())});
@@ -285,6 +286,10 @@ class DatabaseService {
     return await FirebaseFirestore.instance.collection('posts').doc(post).get();
   }
 
+  Future<DocumentSnapshot> getUser(String user) async {
+    return await FirebaseFirestore.instance.collection('users').doc(user).get();
+  }
+
   Future<DocumentSnapshot> getSpace(String space) async {
     return await FirebaseFirestore.instance
         .collection('spaces')
@@ -302,13 +307,13 @@ class DatabaseService {
   }
 
   Future<String> getPostSpace(String post) async {
-    DocumentSnapshot postDoc = await getPost(post);
-    return postDoc['space'];
+    DocumentSnapshot postdocuments = await getPost(post);
+    return postdocuments['space'];
   }
 
   Future<bool> isUserSpaceOwner(String space) async {
-    String role = await getSpaceRole(space);
-    if (role == 'owner' || role == 'creator') {
+    roles role = await getSpaceRole(space);
+    if (role == roles.owner || role == roles.creator) {
       print(role);
       return true;
     }
@@ -319,34 +324,35 @@ class DatabaseService {
   Future<bool> isMember(
     String space,
   ) async {
-    String role = await getSpaceRole(space);
+    roles role = await getSpaceRole(space);
     print(role);
-    if (role == 'member' ||
-        role == 'admin' ||
-        role == 'creator' ||
-        role == 'owner') {
+    if (role == roles.member ||
+        role == roles.admin ||
+        role == roles.creator ||
+        role == roles.owner) {
       return true;
     }
     return false;
   }
 
   Future<bool> checkSpaceFeedPostingPermissions(String space) async {
-    String role = await getSpaceRole(space);
-    if (role == 'member' || role == 'owner' || role == 'creator') {
+    roles role = await getSpaceRole(space);
+    if (role == roles.member || role == roles.owner || role == roles.creator) {
       return true;
     }
     return false;
   }
 
-  Future<String> getSpaceRole(String space) async {
-    DocumentSnapshot spaceRoleDoc = await FirebaseFirestore.instance
+  Future<roles> getSpaceRole(String? space) async {
+    DocumentSnapshot spaceRoledocuments = await FirebaseFirestore.instance
         .collection('spaceRoles')
         .doc(space)
         .collection('roles')
-        .doc(user.uid)
+        .doc(user?.uid)
         .get();
-    if (spaceRoleDoc.data() == null) return roles.none.toString();
-    return spaceRoleDoc['role'];
+    if (spaceRoledocuments.data() == null) return roles.none;
+    return roles.values.firstWhere((element) =>
+        element.toString() == "roles." + spaceRoledocuments['role']);
   }
 
   Future<QuerySnapshot> getSpaces(String search) async {
@@ -361,12 +367,12 @@ class DatabaseService {
   }
 
   Future<QuerySnapshot> getAllSpaceRoles(String space) async {
-    QuerySnapshot spaceRoleDoc = await FirebaseFirestore.instance
+    QuerySnapshot spaceRoledocuments = await FirebaseFirestore.instance
         .collection('spaceRoles')
         .doc(space)
         .collection('roles')
         .get();
-    return spaceRoleDoc;
+    return spaceRoledocuments;
   }
 
   Future<bool> addSpacePost(
@@ -379,27 +385,25 @@ class DatabaseService {
     try {
       String video;
       String thumbnail;
-      String fetchedSpace = space;
+      String? fetchedSpace = space;
       String replyToUid;
-      if (replyTo != null) {
-        DocumentSnapshot replyDoc = await getPost(replyTo);
-        fetchedSpace = replyDoc['space'];
-        replyToUid = replyDoc['author'];
-      }
+      DocumentSnapshot replydocuments = await getPost(replyTo);
+      fetchedSpace = replydocuments['space'];
+      replyToUid = replydocuments['author'];
       print(fetchedSpace);
 
-      DocumentReference postDoc =
+      DocumentReference postdocuments =
           await FirebaseFirestore.instance.collection('posts').add(
         {
           "space": fetchedSpace,
-          "author": user.uid,
+          "author": user?.uid,
           "title": title,
           "replyTo": replyTo,
           "timestamp": Timestamp.fromDate(DateTime.now()),
         },
       );
 
-      String post = postDoc.id;
+      String post = postdocuments.id;
       FirebaseStorage storage = FirebaseStorage.instance;
 
       Reference thumbnailRef = storage.ref().child('$post/thumbnail.jpg');
@@ -416,8 +420,8 @@ class DatabaseService {
         "video": video,
       }, SetOptions(merge: true));
 
-      if (replyTo == null || addToSpaceFeed == true) {
-        if (fetchedSpace == null) fetchedSpace = user.uid;
+      if (addToSpaceFeed == true) {
+        if (fetchedSpace == null) fetchedSpace = user?.uid;
         await FirebaseFirestore.instance
             .collection('spacePosts')
             .doc(fetchedSpace)
@@ -425,7 +429,7 @@ class DatabaseService {
             .doc(post)
             .set(
           {
-            "author": user.uid,
+            "author": user?.uid,
             "title": title,
             "thumbnail": thumbnail,
             "replyTo": replyTo,
@@ -441,39 +445,37 @@ class DatabaseService {
         );
       }
 
-      if (replyTo != null) {
-        await FirebaseFirestore.instance
-            .collection('postReplies')
-            .doc(replyTo)
-            .collection("replies")
-            .doc(post)
-            .set(
-          {
-            "space": fetchedSpace,
-            "author": user.uid,
-            "title": title,
-            "video": video,
-            "thumbnail": thumbnail,
-            "timestamp": Timestamp.fromDate(DateTime.now())
-          },
-        );
-        await FirebaseFirestore.instance
-            .collection('userReplies')
-            .doc(replyToUid)
-            .collection("replies")
-            .doc(post)
-            .set(
-          {
-            "space": fetchedSpace,
-            "author": user.uid,
-            "title": title,
-            "video": video,
-            "thumbnail": thumbnail,
-            "seen": false,
-            "timestamp": Timestamp.fromDate(DateTime.now())
-          },
-        );
-      }
+      await FirebaseFirestore.instance
+          .collection('postReplies')
+          .doc(replyTo)
+          .collection("replies")
+          .doc(post)
+          .set(
+        {
+          "space": fetchedSpace,
+          "author": user?.uid,
+          "title": title,
+          "video": video,
+          "thumbnail": thumbnail,
+          "timestamp": Timestamp.fromDate(DateTime.now())
+        },
+      );
+      await FirebaseFirestore.instance
+          .collection('userReplies')
+          .doc(replyToUid)
+          .collection("replies")
+          .doc(post)
+          .set(
+        {
+          "space": fetchedSpace,
+          "author": user?.uid,
+          "title": title,
+          "video": video,
+          "thumbnail": thumbnail,
+          "seen": false,
+          "timestamp": Timestamp.fromDate(DateTime.now())
+        },
+      );
     } catch (e) {
       print(e);
       return false;
@@ -483,18 +485,18 @@ class DatabaseService {
   }
 
   deleteSpacePost(String post) async {
-    DocumentSnapshot postDoc =
+    DocumentSnapshot postdocuments =
         await FirebaseFirestore.instance.collection('posts').doc(post).get();
-    var replyTo = postDoc['replyTo'];
-    String space = postDoc['space'];
-    String replyToUid;
+    var replyTo = postdocuments['replyTo'];
+    String space = postdocuments['space'];
+    String? replyToUid;
 
     if (replyTo != null) {
-      DocumentSnapshot replyToDoc = await FirebaseFirestore.instance
+      DocumentSnapshot replyTodocuments = await FirebaseFirestore.instance
           .collection('posts')
           .doc(replyTo)
           .get();
-      replyToUid = replyToDoc['author'];
+      replyToUid = replyTodocuments['author'];
     }
 
     FirebaseStorage storage = FirebaseStorage.instance;
@@ -533,11 +535,11 @@ class DatabaseService {
     if (displayPicture != null) {
       FirebaseStorage storageF = FirebaseStorage.instance;
       Reference storageReference =
-          storageF.ref().child('users/${user.uid}/displayPicture'
+          storageF.ref().child('users/${user?.uid}/displayPicture'
               '.jpg');
       await storageReference.putFile(File(displayPicture));
       storageReference.getDownloadURL().then((value) async {
-        return await userCollection.doc(user.uid).set({
+        return await userCollection.doc(user?.uid).set({
           'name': name,
           'description': description,
           'displayPicture': value,
@@ -545,7 +547,7 @@ class DatabaseService {
         }, SetOptions(merge: true));
       });
     } else {
-      return await userCollection.doc(user.uid).set({
+      return await userCollection.doc(user?.uid).set({
         'name': name,
         'description': description,
         'public': isPublic,
@@ -559,7 +561,7 @@ class DatabaseService {
               .collection('spaces')
               .doc(space)
               .get())
-          .data()['public'];
+          .data()?['public'];
       String role = 'requested';
       if (isSpacePublic) {
         role = 'follower';
@@ -569,12 +571,12 @@ class DatabaseService {
           .collection('spaceRoles')
           .doc(space)
           .collection('roles')
-          .doc(user.uid)
+          .doc(user?.uid)
           .set({'role': '$role'});
 
       await FirebaseFirestore.instance
           .collection('userSpaces')
-          .doc(user.uid)
+          .doc(user?.uid)
           .collection('spaces')
           .doc(space)
           .set({'public': isSpacePublic, 'role': '$role', 'type': 'user'});
@@ -591,12 +593,12 @@ class DatabaseService {
           .collection('spaceRoles')
           .doc(space)
           .collection('roles')
-          .doc(user.uid)
+          .doc(user?.uid)
           .delete();
 
       await FirebaseFirestore.instance
           .collection('userSpaces')
-          .doc(user.uid)
+          .doc(user?.uid)
           .collection('spaces')
           .doc(space)
           .delete();
@@ -611,7 +613,7 @@ class DatabaseService {
     try {
       await FirebaseFirestore.instance
           .collection('spaceRoles')
-          .doc(user.uid)
+          .doc(user?.uid)
           .collection('roles')
           .doc(follower)
           .set({'role': 'follower'});
@@ -626,7 +628,7 @@ class DatabaseService {
     try {
       await FirebaseFirestore.instance
           .collection('spaceRoles')
-          .doc(user.uid)
+          .doc(user?.uid)
           .collection('roles')
           .doc(follower)
           .delete();

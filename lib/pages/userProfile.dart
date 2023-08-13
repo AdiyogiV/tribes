@@ -1,31 +1,22 @@
 import 'dart:io';
 
-import 'package:adiHouse/widgets/Dailogs/tokenDialog.dart';
-import 'package:adiHouse/widgets/previewBoxes/tokenPreview.dart';
+import 'package:tribes/modal/SpaceRoles.dart';
+import 'package:tribes/widgets/Dailogs/tokenDialog.dart';
+import 'package:tribes/widgets/previewBoxes/tokenPreview.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-import 'package:provider/provider.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'package:adiHouse/pages/editUserProfile.dart';
-import 'package:adiHouse/pages/login.dart';
-import 'package:adiHouse/pages/recorder.dart';
-import 'package:adiHouse/pages/stageCrew.dart';
-import 'package:adiHouse/pages/theatre.dart';
-import 'package:adiHouse/services/authService.dart';
-import 'package:adiHouse/services/databaseService.dart';
-import 'package:adiHouse/services/functionsService.dart';
-import 'package:adiHouse/widgets/Dailogs/profileDailog.dart';
-import 'package:adiHouse/widgets/previewBox.dart';
-import 'package:adiHouse/widgets/previewBoxes/userPicture.dart';
-import 'package:adiHouse/widgets/previewBoxes/userPreviewBox.dart';
+import 'package:tribes/pages/login.dart';
+import 'package:tribes/pages/recorder.dart';
+import 'package:tribes/services/databaseService.dart';
+import 'package:tribes/widgets/Dailogs/profileDailog.dart';
+import 'package:tribes/widgets/previewBoxes/userPreviewBox.dart';
 
 class UserProfilePage extends StatefulWidget {
-  final String uid;
-  UserProfilePage({Key key, this.uid}) : super(key: key);
+  final String? uid;
+  UserProfilePage({Key? key, required this.uid}) : super(key: key);
 
   @override
   _UserProfilePageState createState() => _UserProfilePageState();
@@ -37,18 +28,16 @@ class _UserProfilePageState extends State<UserProfilePage> {
   String name = '';
   String nickname = '';
   String bio = '';
-  List following = [];
-  User user = FirebaseAuth.instance.currentUser;
+  User? user = FirebaseAuth.instance.currentUser;
   bool isProfileSelf = false;
-  List followers = [];
   List requests = [];
   List<Widget> postView = <Widget>[];
   int personal = 0;
   StatusEnums followingStatus = StatusEnums.none;
   Color textColor = Colors.black87;
   List<Widget> spacePosts = [];
-  String displayPicture;
-  File userPicture;
+  String? displayPicture;
+  File? userPicture;
   bool isPublic = false;
 
   final CollectionReference spacesCollection =
@@ -78,18 +67,16 @@ class _UserProfilePageState extends State<UserProfilePage> {
   }
 
   checkStatus() async {
-    if (widget.uid == user.uid) {
+    if (widget.uid == user!.uid) {
       followingStatus = StatusEnums.owner;
       setState(() {});
       return;
     }
-    if (user != null) {
-      String role = await DatabaseService().getSpaceRole(widget.uid);
-      if (role == 'follower') followingStatus = StatusEnums.follower;
-      if (role == 'requested') followingStatus = StatusEnums.requested;
-      if (role == 'owner') followingStatus = StatusEnums.owner;
-      setState(() {});
-    }
+    roles role = await DatabaseService().getSpaceRole(widget.uid);
+    if (role == roles.follower) followingStatus = StatusEnums.follower;
+    if (role == roles.requested) followingStatus = StatusEnums.requested;
+    if (role == roles.owner) followingStatus = StatusEnums.owner;
+    setState(() {});
   }
 
   requestLogin() async {
@@ -99,7 +86,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
           return CupertinoAlertDialog(
             content: Text("Please Login to Continue"),
             actions: <Widget>[
-              FlatButton(
+              TextButton(
                   onPressed: () {
                     Navigator.of(context)
                         .push(CupertinoPageRoute(builder: (context) {
@@ -112,7 +99,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
                         color: CupertinoColors.destructiveRed,
                         fontWeight: FontWeight.w400),
                   )),
-              FlatButton(
+              TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
@@ -128,10 +115,11 @@ class _UserProfilePageState extends State<UserProfilePage> {
   }
 
   getProfile() async {
-    DocumentSnapshot spaceDoc = await userCollection.doc(widget.uid).get();
-    name = spaceDoc['name'];
-    nickname = spaceDoc['nickname'];
-    displayPicture = spaceDoc['displayPicture'];
+    DocumentSnapshot spacedocuments =
+        await userCollection.doc(widget.uid).get();
+    name = spacedocuments['name'];
+    nickname = spacedocuments['nickname'];
+    displayPicture = spacedocuments['displayPicture'];
 
     if (mounted) {
       setState(() {});
@@ -161,9 +149,9 @@ class _UserProfilePageState extends State<UserProfilePage> {
               child: Center(child: CircularProgressIndicator()),
             );
           }
-          spacePosts = snapshot.data.docs
+          spacePosts = snapshot.data!.docs
               .asMap()
-              .map((index, doc) => MapEntry(
+              .map((index, documents) => MapEntry(
                     index,
                     GestureDetector(
                       key: UniqueKey(),
@@ -172,14 +160,14 @@ class _UserProfilePageState extends State<UserProfilePage> {
                             context: context,
                             builder: (BuildContext context) {
                               return TokenDialog(
-                                item: doc.id,
+                                item: documents.id,
                               );
                             });
                       },
                       child: Container(
                           width: MediaQuery.of(context).size.width / 6,
                           child: UserToken(
-                            token: doc.id,
+                            token: documents.id,
                           )),
                     ),
                   ))
@@ -189,59 +177,6 @@ class _UserProfilePageState extends State<UserProfilePage> {
             children: spacePosts,
           );
         });
-  }
-
-  getFloatingButton() {
-    if (followingStatus == StatusEnums.owner) {
-      return FloatingActionButton(
-        onPressed: () {
-          Navigator.of(context).push(CupertinoPageRoute(builder: (builder) {
-            return Recorder();
-          }));
-        },
-        backgroundColor: CupertinoTheme.of(context).primaryColor,
-        child: Icon(Icons.add),
-      );
-    }
-    if (followingStatus == StatusEnums.follower) {
-      return FloatingActionButton.extended(
-        key: UniqueKey(),
-        onPressed: () async {
-          await DatabaseService().unfollow(widget.uid);
-          checkStatus();
-        },
-        backgroundColor: CupertinoColors.activeBlue,
-        icon: Icon(Icons.check),
-        label: Text('FOLLOWING'),
-      );
-    }
-    if (followingStatus == StatusEnums.requested) {
-      return FloatingActionButton.extended(
-        key: UniqueKey(),
-        onPressed: () async {
-          await DatabaseService().unfollow(widget.uid);
-          checkStatus();
-        },
-        backgroundColor: CupertinoColors.activeOrange,
-        icon: Icon(Icons.pending),
-        label: Text('REQUESTED'),
-      );
-    }
-    return FloatingActionButton.extended(
-      key: UniqueKey(),
-      onPressed: () async {
-        if (user == null) {
-          requestLogin();
-          return;
-        }
-
-        await DatabaseService().addFollower(widget.uid);
-        checkStatus();
-      },
-      backgroundColor: CupertinoColors.activeGreen,
-      icon: Icon(Icons.person_add_rounded),
-      label: Text('FOLLOW'),
-    );
   }
 
   @override
@@ -283,7 +218,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
                         showCupertinoModalPopup(
                             context: context,
                             builder: (BuildContext context) => ProfileOptions(
-                                  uid: widget.uid,
+                                  uid: widget.uid!,
                                 ));
                       },
                       child: Padding(

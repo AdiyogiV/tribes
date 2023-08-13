@@ -1,14 +1,12 @@
 import 'dart:io' as di;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_cache_manager/file.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:adiHouse/services/databaseService.dart';
+import 'package:tribes/services/databaseService.dart';
 
 class ItemCreationDailog extends StatefulWidget {
-  final String space;
-  const ItemCreationDailog({Key key, this.space}) : super(key: key);
+  final String? space;
+  const ItemCreationDailog({Key? key, this.space}) : super(key: key);
 
   @override
   _ItemCreationDailogState createState() => _ItemCreationDailogState();
@@ -21,13 +19,13 @@ class _ItemCreationDailogState extends State<ItemCreationDailog> {
   bool nameRequired = false;
   TextEditingController _nameController = TextEditingController();
   TextEditingController _priceController = TextEditingController();
-  di.File itemImage;
+  di.File? itemImage;
 
   void _onImageButtonPressed() async {
     try {
       final pickedFile =
-          await ImagePicker().getImage(source: ImageSource.gallery);
-      itemImage = di.File(pickedFile.path);
+          await ImagePicker().pickImage(source: ImageSource.gallery);
+      itemImage = di.File(pickedFile!.path);
       setState(() {});
     } catch (e) {
       setState(() {});
@@ -43,7 +41,7 @@ class _ItemCreationDailogState extends State<ItemCreationDailog> {
     }
 
     var res = await DatabaseService().createItem(_nameController.text,
-        _priceController.text, itemImage.path, widget.space);
+        _priceController.text, itemImage!.path, widget.space!);
     setState(() {});
     Navigator.of(context).pop();
   }
@@ -96,7 +94,7 @@ class _ItemCreationDailogState extends State<ItemCreationDailog> {
                   height: MediaQuery.of(context).size.width / 4,
                   child: (itemImage != null)
                       ? Image.file(
-                          itemImage,
+                          itemImage!,
                           fit: BoxFit.cover,
                         )
                       : Image.asset('assets/images/user.png'),

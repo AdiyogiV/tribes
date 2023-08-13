@@ -6,8 +6,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import 'package:adiHouse/services/authService.dart';
-import 'package:adiHouse/services/databaseService.dart';
+import 'package:tribes/services/authService.dart';
+import 'package:tribes/services/databaseService.dart';
 
 class InitUser extends StatefulWidget {
   @override
@@ -18,17 +18,17 @@ class _InitUserState extends State<InitUser> {
   TextEditingController _nameController = TextEditingController();
   TextEditingController _nicknameController = TextEditingController();
 
-  String nickname;
-  File displayPicture;
+  String? nickname;
+  File? displayPicture;
   bool availability = true;
   bool hasSpaces = false;
-  String phoneNo;
-  User user = FirebaseAuth.instance.currentUser;
+  String? phoneNo;
+  User? user = FirebaseAuth.instance.currentUser;
   bool check = false;
 
   final CollectionReference nicknamesCollection =
       FirebaseFirestore.instance.collection('nicknames');
-  DocumentSnapshot _snap;
+  DocumentSnapshot? _snap;
 
   @override
   void initState() {
@@ -39,8 +39,8 @@ class _InitUserState extends State<InitUser> {
   }
 
   checkAvailability() async {
-    if (_snap.exists) {
-      if (_snap[nickname] != false) {
+    if (_snap!.exists) {
+      if (_snap![nickname!] != false) {
         setState(() {
           availability = false;
         });
@@ -53,8 +53,7 @@ class _InitUserState extends State<InitUser> {
   }
 
   bool checkDetails() {
-    if (displayPicture != null &&
-        check &&
+    if (check &&
         _nameController.text.isNotEmpty &&
         _nicknameController.text.isNotEmpty &&
         !_nicknameController.text.contains(' ')) {
@@ -65,8 +64,8 @@ class _InitUserState extends State<InitUser> {
 
   Future<bool> onFinishPressed() async {
     if (checkDetails()) {
-      return await DatabaseService(uid: user.uid).registerNewUser(
-          _nameController.text, _nicknameController.text, displayPicture.path);
+      return await DatabaseService(uid: user!.uid).registerNewUser(
+          _nameController.text, _nicknameController.text, displayPicture!.path);
     } else {
       return false;
     }
@@ -75,15 +74,15 @@ class _InitUserState extends State<InitUser> {
   @override
   void dispose() {
     super.dispose();
-    _nicknameController?.dispose();
-    _nameController?.dispose();
+    _nicknameController.dispose();
+    _nameController.dispose();
   }
 
   void _onImageButtonPressed() async {
     try {
       final pickedFile =
           await ImagePicker().pickImage(source: ImageSource.gallery);
-      displayPicture = File(pickedFile.path);
+      displayPicture = File(pickedFile!.path);
       setState(() {});
     } catch (e) {}
   }
@@ -131,7 +130,7 @@ class _InitUserState extends State<InitUser> {
                         height: MediaQuery.of(context).size.width / 2,
                         child: (displayPicture != null)
                             ? Image.file(
-                                displayPicture,
+                                displayPicture!,
                                 fit: BoxFit.cover,
                               )
                             : Image.asset('assets/images/user.png'),

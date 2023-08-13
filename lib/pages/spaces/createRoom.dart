@@ -2,8 +2,8 @@
 // import 'package:drag_select_grid_view/drag_select_grid_view.dart';
 // import 'package:flutter/cupertino.dart';
 // import 'package:flutter/material.dart';
-// import 'package:adiHouse/services/databaseService.dart';
-// import 'package:adiHouse/widgets/selectableItem.dart';
+// import 'package:tribes/services/databaseService.dart';
+// import 'package:tribes/widgets/selectableItem.dart';
 //
 // class CreateRoom extends StatefulWidget {
 //
@@ -35,9 +35,9 @@
 //
 //   getUsers() async {
 //     await userCollection.limit(40).get().then((querySnapshot) async {
-//       querySnapshot.docs.forEach((document) {
-//         userList.add(UserFrame(document.data()['displayPicture'],
-//             document.data()['name'], document.id));
+//       querySnapshot.docs.forEach((documentsument) {
+//         userList.add(UserFrame(documentsument.data()['displayPicture'],
+//             documentsument.data()['name'], documentsument.id));
 //         setState(() {});
 //       });
 //     });

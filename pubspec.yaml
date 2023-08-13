@@ -1,5 +1,5 @@
-name: yantra
-description: A new Flutter application.
+name: tribes
+description: Social Space by Adidas
 
 # The following line prevents the package from being accidentally published to
 # pub.dev using `pub publish`. This is preferred for private packages.
@@ -17,13 +17,14 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 version: 4.0.0
 environment:
-  sdk: ">2.8.0"
+  sdk: ">2.12.0"
 
 dependencies:
   flutter:
     sdk: flutter
-  firebase_core :
-  firebase_auth:
+  firebase_core : ^2.8.0
+  firebase_core_web: ^2.3.0
+  firebase_auth: ^4.3.0
   cloud_firestore:
   provider:
   country_code_picker:
@@ -33,26 +34,26 @@ dependencies:
   like_button:
   visibility_detector:
   algolia:
-  pull_to_refresh: ^2.0.0
+  pull_to_refresh:
   permission_handler:
   cloud_functions :
-  video_compress:
   firebase_dynamic_links:
   share:
-  persistent_bottom_nav_bar:
-  flappy_search_bar:
+  persistent_bottom_nav_bar_v2: ^4.2.8
   cupertino_icons:
   image_picker:
   camera:
-  drag_select_grid_view: ^0.5.1
-
+  drag_select_grid_view:
+  video_compress: 
+  responsive_builder: ^0.4.0-nullsafety.1
+ 
 dev_dependencies:
   flutter_launcher_icons:
   flutter_test:
     sdk: flutter
 
 flutter_icons:
-  android: "launcher_icon"
+  android: "ic_launcher"
   ios: true
   image_path: "assets/images/icon.png"
 # For information on the generic Dart part of this file, see the
@@ -75,6 +76,7 @@ flutter:
      - assets/images/space.jpg
      - assets/images/rangoli.png
      - assets/images/adidaslogo.png
+     - assets/images/noise.gif
 
     #   - images/a_dot_ham.jpeg
 

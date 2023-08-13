@@ -1,2 +1,1 @@
-
-enum roles {follower, requested, owner, member, none}
+enum roles { follower, admin, creator, requested, owner, member, none }

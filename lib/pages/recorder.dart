@@ -1,17 +1,15 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:video_player/video_player.dart';
-import 'package:adiHouse/pages/videoPicker.dart';
+import 'package:tribes/pages/videoPicker.dart';
 
 List<CameraDescription> cameras = [];
 
 class Recorder extends StatefulWidget {
-  final String space;
-  final String replyTo;
+  final String? space;
+  final String? replyTo;
 
   const Recorder({this.replyTo, this.space}) : super();
 
@@ -21,12 +19,12 @@ class Recorder extends StatefulWidget {
 
 class _CameraExampleHomeState extends State<Recorder>
     with WidgetsBindingObserver {
-  CameraController controller;
-  String videoPath;
-  VideoPlayerController videoController;
-  VoidCallback videoPlayerListener;
+  CameraController? controller;
+  String? videoPath;
+  VideoPlayerController? videoController;
+  VoidCallback? videoPlayerListener;
   bool enableAudio = true;
-  double vidSize;
+  double? vidSize;
   bool processingVideo = false;
   bool frontCam = true;
   bool isRecording = false;
@@ -54,7 +52,7 @@ class _CameraExampleHomeState extends State<Recorder>
                             elevation: 5,
                             borderRadius: BorderRadius.circular(10),
                             clipBehavior: Clip.antiAlias,
-                            child: CameraPreview(controller)),
+                            child: CameraPreview(controller!)),
                       ), // this is my CameraPreview
                     ),
                     controlWidget(),
@@ -80,7 +78,7 @@ class _CameraExampleHomeState extends State<Recorder>
       cameras[0],
       ResolutionPreset.medium,
     );
-    controller.initialize().then((_) {
+    controller!.initialize().then((_) {
       if (!mounted) {
         return;
       }
@@ -250,9 +248,7 @@ class _CameraExampleHomeState extends State<Recorder>
     if (state == AppLifecycleState.inactive) {
       //controller?.dispose();
     } else if (state == AppLifecycleState.resumed) {
-      if (controller != null) {
-        onNewCameraSelected(controller.description);
-      }
+      onNewCameraSelected(controller!.description);
     }
   }
 
@@ -261,8 +257,8 @@ class _CameraExampleHomeState extends State<Recorder>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    videoController?.dispose();
-    controller?.dispose();
+    videoController!.dispose();
+    controller!.dispose();
     super.dispose();
   }
 
@@ -295,16 +291,16 @@ class _CameraExampleHomeState extends State<Recorder>
   }
 
   Future<void> startVideoRecording() async {
-    if (!controller.value.isInitialized) {
+    if (!controller!.value.isInitialized) {
       showInSnackBar('Error: select a camera first.');
       return null;
     }
-    if (controller.value.isRecordingVideo) {
+    if (controller!.value.isRecordingVideo) {
       // A recording is already started, do nothing.
       return null;
     }
     try {
-      await controller.startVideoRecording();
+      await controller!.startVideoRecording();
     } on CameraException catch (e) {
       _showCameraException(e);
       return null;
@@ -313,11 +309,11 @@ class _CameraExampleHomeState extends State<Recorder>
   }
 
   Future<void> stopVideoRecording() async {
-    if (!controller.value.isRecordingVideo) {
+    if (!controller!.value.isRecordingVideo) {
       return null;
     }
     try {
-      var file = await controller.stopVideoRecording();
+      var file = await controller!.stopVideoRecording();
       setState(() {
         processingVideo = false;
       });
@@ -338,12 +334,12 @@ class _CameraExampleHomeState extends State<Recorder>
   }
 
   Future<void> pauseVideoRecording() async {
-    if (!controller.value.isRecordingVideo) {
+    if (!controller!.value.isRecordingVideo) {
       return null;
     }
 
     try {
-      await controller.pauseVideoRecording();
+      await controller!.pauseVideoRecording();
     } on CameraException catch (e) {
       _showCameraException(e);
       rethrow;
@@ -351,12 +347,12 @@ class _CameraExampleHomeState extends State<Recorder>
   }
 
   Future<void> resumeVideoRecording() async {
-    if (!controller.value.isRecordingVideo) {
+    if (!controller!.value.isRecordingVideo) {
       return null;
     }
 
     try {
-      await controller.resumeVideoRecording();
+      await controller!.resumeVideoRecording();
     } on CameraException catch (e) {
       _showCameraException(e);
       rethrow;
@@ -364,9 +360,7 @@ class _CameraExampleHomeState extends State<Recorder>
   }
 
   void onNewCameraSelected(CameraDescription cameraDescription) async {
-    if (controller != null) {
-      await controller.dispose();
-    }
+    await controller!.dispose();
     controller = CameraController(
       cameraDescription,
       ResolutionPreset.medium,
@@ -374,15 +368,15 @@ class _CameraExampleHomeState extends State<Recorder>
     );
 
     // If the controller is updated then update the UI.
-    controller.addListener(() {
+    controller!.addListener(() {
       if (mounted) setState(() {});
-      if (controller.value.hasError) {
-        showInSnackBar('Camera error ${controller.value.errorDescription}');
+      if (controller!.value.hasError) {
+        showInSnackBar('Camera error ${controller!.value.errorDescription}');
       }
     });
 
     try {
-      await controller.initialize();
+      await controller!.initialize();
     } on CameraException catch (e) {
       _showCameraException(e);
     }
@@ -395,11 +389,10 @@ class _CameraExampleHomeState extends State<Recorder>
   String timestamp() => DateTime.now().millisecondsSinceEpoch.toString();
 
   void showInSnackBar(String message) {
-    _scaffoldKey.currentState.showSnackBar(SnackBar(content: Text(message)));
+    // _scaffoldKey.currentState.showSnackBar(SnackBar(content: Text(message)));
   }
 
   void _showCameraException(CameraException e) {
-    logError(e.code, e.description);
     showInSnackBar('Error: ${e.code}\n${e.description}');
   }
 }

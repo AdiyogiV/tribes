@@ -1,13 +1,10 @@
-import 'package:adiHouse/pages/recorder.dart';
+import 'package:tribes/pages/recorder.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:like_button/like_button.dart';
-import 'package:adiHouse/pages/login.dart';
-import 'package:adiHouse/services/functionsService.dart';
 
 class PostToolbar extends StatefulWidget {
-  final String postId;
+  final String? postId;
 
   PostToolbar({
     this.postId,
@@ -18,7 +15,7 @@ class PostToolbar extends StatefulWidget {
 }
 
 class _PostToolbarState extends State<PostToolbar> {
-  User user = FirebaseAuth.instance.currentUser;
+  User? user = FirebaseAuth.instance.currentUser;
   var inactiveColor = Colors.white;
 
   @override

@@ -1,12 +1,10 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:adiHouse/pages/editUserProfile.dart';
-import 'package:adiHouse/services/authService.dart';
+import 'package:tribes/services/authService.dart';
 
 class SpaceMemberOptions extends StatefulWidget {
-  final String space;
-  final String uid;
+  final String? space;
+  final String? uid;
   SpaceMemberOptions({
     this.space,
     this.uid,

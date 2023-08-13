@@ -3,18 +3,17 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'package:adiHouse/widgets/notifications/followRequestTile.dart';
-import 'package:adiHouse/widgets/previewBoxes/userPicture.dart';
-import 'package:adiHouse/widgets/previewBoxes/userPreviewBox.dart';
+import 'package:tribes/widgets/notifications/followRequestTile.dart';
 
 class Requests extends StatefulWidget {
-  const Requests({Key key}) : super(key: key);
+  final String? space; // Made nullable
+  const Requests({Key? key, this.space}) : super(key: key);
   @override
   _RequestsState createState() => _RequestsState();
 }
 
 class _RequestsState extends State<Requests> {
-  User user = FirebaseAuth.instance.currentUser;
+  User? user = FirebaseAuth.instance.currentUser; // Made nullable
 
   RefreshController _refreshController =
       RefreshController(initialRefresh: false);
@@ -33,7 +32,6 @@ class _RequestsState extends State<Requests> {
       ),
     ),
   };
-  int gp = 0;
 
   void _onRefresh() async {
     setState(() {});
@@ -45,25 +43,7 @@ class _RequestsState extends State<Requests> {
   }
 
   String getTitle() {
-    switch (gp) {
-      case 0:
-        {
-          return 'FOLLOW REQUESTS';
-        }
-        break;
-
-      case 1:
-        {
-          return 'SPACE REQUESTS';
-        }
-        break;
-
-      default:
-        {
-          return 'PEOPLE';
-        }
-        break;
-    }
+    return 'Requests';
   }
 
   @override
@@ -71,7 +51,7 @@ class _RequestsState extends State<Requests> {
     return FutureBuilder<QuerySnapshot>(
         future: FirebaseFirestore.instance
             .collection('spaceRoles')
-            .doc(user.uid)
+            .doc(widget.space)
             .collection('roles')
             .where('role', isEqualTo: 'requested')
             .get(),
@@ -79,9 +59,9 @@ class _RequestsState extends State<Requests> {
           if (!snapshot.hasData) {
             return Center(child: CircularProgressIndicator());
           }
-          var requests = snapshot.data.docs
+          var requests = snapshot.data!.docs // Added ! for null safety
               .asMap()
-              .map((index, doc) => MapEntry(
+              .map((index, documents) => MapEntry(
                     index,
                     GestureDetector(
                       key: UniqueKey(),
@@ -91,13 +71,16 @@ class _RequestsState extends State<Requests> {
                       child: Container(
                           width: MediaQuery.of(context).size.width,
                           child: FollowRequestTile(
-                            uid: doc.id,
+                            space: widget.space!,
+                            uid: documents.id,
+                            onRefresh: _onRefresh,
                           )),
                     ),
                   ))
               .values
               .toList();
           return Scaffold(
+            backgroundColor: CupertinoTheme.of(context).scaffoldBackgroundColor,
             body: SmartRefresher(
               onRefresh: _onRefresh,
               onLoading: _onLoading,
@@ -105,17 +88,11 @@ class _RequestsState extends State<Requests> {
               controller: _refreshController,
               header: WaterDropMaterialHeader(
                 color: Colors.white,
-                backgroundColor: CupertinoTheme.of(context).primaryColor,
                 distance: 100,
               ),
               child: CustomScrollView(
                 slivers: [
                   SliverAppBar(
-                    backgroundColor: Colors.transparent,
-                    shape: ContinuousRectangleBorder(
-                        borderRadius: BorderRadius.only(
-                            bottomLeft: Radius.circular(1),
-                            bottomRight: Radius.circular(1))),
                     title: Text(
                       getTitle(),
                       style: TextStyle(
@@ -123,48 +100,13 @@ class _RequestsState extends State<Requests> {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    floating: true,
-                    stretch: true,
-                    elevation: 4,
-                    forceElevated: true,
-                    flexibleSpace: Container(
-                      decoration: BoxDecoration(
-                        gradient: new LinearGradient(
-                            colors: [
-                              Colors.white,
-                              Colors.white70,
-                            ],
-                            begin: const FractionalOffset(0.0, 0.0),
-                            end: const FractionalOffset(0.0, 1),
-                            stops: [0.0, 1],
-                            tileMode: TileMode.mirror),
-                      ),
-                    ),
-                    actions: [
-                      Padding(
-                        padding: const EdgeInsets.all(7.0),
-                        child: CupertinoSlidingSegmentedControl(
-                          padding: EdgeInsets.all(4),
-                          onValueChanged: (value) {
-                            gp = value;
-                            setState(() {});
-                          },
-                          groupValue: gp,
-                          children: spaceTypes,
-                          backgroundColor: Colors.black12,
-                          thumbColor: Colors.white,
-                        ),
-                      ),
-                    ],
                     iconTheme: IconThemeData(
                         color: CupertinoTheme.of(context).primaryColor),
                   ),
                   SliverToBoxAdapter(
-                    child: (gp == 0)
-                        ? Wrap(
-                            children: requests,
-                          )
-                        : Container(),
+                    child: Wrap(
+                      children: requests,
+                    ),
                   ),
                 ],
               ),

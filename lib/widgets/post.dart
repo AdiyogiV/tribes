@@ -1,10 +1,9 @@
-import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:adiHouse/widgets/Dailogs/postDailog.dart';
-import 'package:adiHouse/widgets/mainPlayer.dart';
+import 'package:tribes/widgets/Dailogs/postDailog.dart';
+import 'package:tribes/widgets/mainPlayer.dart';
 
 typedef ReplyCallback = void Function(
   String post,
@@ -17,11 +16,11 @@ class Post extends StatefulWidget {
   final ReplyCallback onReplySelected;
 
   Post(
-      {this.post,
-      this.itemIndex,
-      this.itemDepth,
-      this.onReplySelected,
-      Key key})
+      {required this.post,
+      required this.itemIndex,
+      required this.itemDepth,
+      required this.onReplySelected,
+      Key? key})
       : super(key: key);
 
   @override
@@ -29,20 +28,20 @@ class Post extends StatefulWidget {
 }
 
 class _PostState extends State<Post> {
-  String author;
-  String space;
+  String? author;
+  String? space;
   bool dataloaded = false;
-  String video;
-  int replyCount;
-  bool isReply;
-  String replyToUid;
-  int replyToPN;
+  String? video;
+  int? replyCount;
+  bool? isReply;
+  String? replyToUid;
+  int? replyToPN;
   var replies;
-  int upVoteCount;
-  int downVoteCount;
-  Map upVotes;
-  Map downVotes;
-  String title;
+  int? upVoteCount;
+  int? downVoteCount;
+  Map? upVotes;
+  Map? downVotes;
+  String? title;
 
   final CollectionReference postCollection =
       FirebaseFirestore.instance.collection('posts');
@@ -99,7 +98,7 @@ class _PostState extends State<Post> {
                           context: context,
                           builder: (BuildContext context) => PostDailog(
                                 post: widget.post,
-                                author: author,
+                                author: author!,
                               ));
                     },
                     child: ClipRRect(
@@ -108,16 +107,16 @@ class _PostState extends State<Post> {
                         elevation: 5,
                         child: MainPlayer(
                           postId: widget.post,
-                          space: space,
-                          author: author,
-                          videoUrl: video,
-                          title: title,
+                          space: space!,
+                          author: author!,
+                          videoUrl: video!,
+                          title: title!,
                           pageIndex: widget.itemIndex,
                           pageDepth: widget.itemDepth,
-                          upVoteCount: upVoteCount,
-                          downVoteCount: downVoteCount,
-                          upVotes: upVotes,
-                          downVotes: downVotes,
+                          upVoteCount: upVoteCount!,
+                          downVoteCount: downVoteCount!,
+                          upVotes: upVotes!,
+                          downVotes: downVotes!,
                         ),
                       ),
                     ),
@@ -144,7 +143,7 @@ class MyPainter extends CustomPainter {
     final p4 = Offset(30, size.height + 100);
 
     final paint = Paint()
-      ..color = Colors.amber[700]
+      ..color = Colors.amber[700]!
       ..strokeWidth = 1;
     canvas.drawLine(p1, p4, paint);
   }

@@ -1,17 +1,16 @@
-import 'dart:collection';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:adiHouse/pages/login.dart';
-import 'package:adiHouse/widgets/previewBox.dart';
+import 'package:tribes/pages/login.dart';
+import 'package:tribes/widgets/previewBox.dart';
 
 typedef ReplyCallback = void Function(String postId);
 
 class PostReplies extends StatefulWidget {
-  final String post;
-  final String space;
-  final ReplyCallback onReplySelected;
+  final String? post;
+  final String? space;
+  final ReplyCallback? onReplySelected;
 
   PostReplies({this.post, this.onReplySelected, this.space});
 
@@ -21,7 +20,7 @@ class PostReplies extends StatefulWidget {
 
 class _PostRepliesState extends State<PostReplies> {
   List<Widget> replies = <Widget>[];
-  User user = FirebaseAuth.instance.currentUser;
+  User? user = FirebaseAuth.instance.currentUser;
   final CollectionReference postRepliesCollection =
       FirebaseFirestore.instance.collection('postReplies');
   final CollectionReference votesCollection =
@@ -44,7 +43,7 @@ class _PostRepliesState extends State<PostReplies> {
           return CupertinoAlertDialog(
             content: Text("Please Login to Continue"),
             actions: <Widget>[
-              FlatButton(
+              TextButton(
                   onPressed: () {
                     Navigator.of(context)
                         .push(CupertinoPageRoute(builder: (context) {
@@ -57,7 +56,7 @@ class _PostRepliesState extends State<PostReplies> {
                         color: CupertinoColors.destructiveRed,
                         fontWeight: FontWeight.w400),
                   )),
-              FlatButton(
+              TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
@@ -84,15 +83,15 @@ class _PostRepliesState extends State<PostReplies> {
               if (!snapshot.hasData) {
                 return Container();
               }
-              replies = snapshot.data.docs
+              replies = snapshot.data!.docs
                   .asMap()
-                  .map((index, doc) => MapEntry(
+                  .map((index, documents) => MapEntry(
                       index,
                       Container(
                           child: GestureDetector(
                         key: UniqueKey(),
                         onTap: () {
-                          widget.onReplySelected(doc.id);
+                          widget.onReplySelected!(documents.id);
                         },
                         child: Container(
                           width: MediaQuery.of(context).size.width / 4,
@@ -100,9 +99,9 @@ class _PostRepliesState extends State<PostReplies> {
                             painter: MyPainter(),
                             child: PreviewBox(
                               key: UniqueKey(),
-                              previewUrl: doc['thumbnail'],
-                              title: doc['title'],
-                              author: doc['author'],
+                              previewUrl: documents['thumbnail'],
+                              title: documents['title'],
+                              author: documents['author'],
                             ),
                           ),
                         ),
@@ -129,7 +128,7 @@ class MyPainter extends CustomPainter {
     final p2 = Offset(size.width / 2, 5);
 
     final paint = Paint()
-      ..color = Colors.blue[600]
+      ..color = Colors.blue[600]!
       ..strokeWidth = 1;
     canvas.drawLine(p1, p2, paint);
   }

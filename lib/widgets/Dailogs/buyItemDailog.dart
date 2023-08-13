@@ -1,19 +1,16 @@
 import 'dart:io' as di;
-import 'package:adiHouse/pages/houseMarket.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_cache_manager/file.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:adiHouse/services/databaseService.dart';
+import 'package:tribes/services/databaseService.dart';
 
 class BuyItemDailog extends StatefulWidget {
-  final String house;
-  final String item;
-  const BuyItemDailog({Key key, this.house, this.item}) : super(key: key);
+  final String? house;
+  final String? item;
+  const BuyItemDailog({Key? key, this.house, this.item}) : super(key: key);
 
   @override
   _BuyItemDailogState createState() => _BuyItemDailogState();
@@ -26,12 +23,12 @@ class _BuyItemDailogState extends State<BuyItemDailog> {
   bool nameRequired = false;
   TextEditingController _nameController = TextEditingController();
   TextEditingController _priceController = TextEditingController();
-  di.File itemImage;
+  di.File? itemImage;
   String name = '';
   String displayPicture = '';
-  File displayPicFile;
+  File? displayPicFile;
   String price = '';
-  User user = FirebaseAuth.instance.currentUser;
+  User? user = FirebaseAuth.instance.currentUser;
 
   @override
   void initState() {
@@ -40,15 +37,13 @@ class _BuyItemDailogState extends State<BuyItemDailog> {
   }
 
   getItem() async {
-    DocumentSnapshot space = await DatabaseService().getItem(widget.item);
+    DocumentSnapshot space = await DatabaseService().getItem(widget.item!);
     name = space['name'];
     displayPicture = space['image'];
     price = space['price'];
     setState(() {});
-    if (displayPicture != null) {
-      displayPicFile =
-          await DefaultCacheManager().getSingleFile(displayPicture);
-    }
+    displayPicFile =
+        await DefaultCacheManager().getSingleFile(displayPicture);
     setState(() {});
   }
 
@@ -76,7 +71,7 @@ class _BuyItemDailogState extends State<BuyItemDailog> {
           height: MediaQuery.of(context).size.width / 4,
           child: (displayPicFile != null)
               ? Image.file(
-                  displayPicFile,
+                  displayPicFile!,
                   fit: BoxFit.cover,
                 )
               : Image.asset(
@@ -144,7 +139,7 @@ class _BuyItemDailogState extends State<BuyItemDailog> {
                           ),
                         ])),
                 Text(
-                  'Item will be delivered shortly to your home\nMembership token has been delivered to your adiHouse wallet',
+                  'Item will be delivered shortly to your home\nMembership token has been delivered to your tribes wallet',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                       color: CupertinoColors.activeBlue,
@@ -215,9 +210,9 @@ class _BuyItemDailogState extends State<BuyItemDailog> {
                         color: Colors.green,
                         onPressed: () async {
                           await DatabaseService()
-                              .addSpaceMember(widget.house, user.uid);
+                              .addSpaceMember(widget.house!, user!.uid);
                           await DatabaseService()
-                              .addUserItem(user.uid, widget.item);
+                              .addUserItem(user!.uid, widget.item!);
                           active = true;
                           this.setState(() {});
                         },

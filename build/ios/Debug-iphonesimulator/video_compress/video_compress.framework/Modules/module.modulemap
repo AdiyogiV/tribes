@@ -6,6 +6,6 @@ framework module video_compress {
 }
 
 module video_compress.Swift {
-    header "video_compress-Swift.h"
-    requires objc
+  header "video_compress-Swift.h"
+  requires objc
 }

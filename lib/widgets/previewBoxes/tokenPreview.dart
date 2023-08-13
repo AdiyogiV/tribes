@@ -1,19 +1,18 @@
 import 'dart:io';
 
-import 'package:adiHouse/services/databaseService.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:tribes/services/databaseService.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
 class UserToken extends StatefulWidget {
-  final String token;
+  final String? token;
   UserToken({@required this.token});
   @override
   _UserTokenState createState() => _UserTokenState();
 }
 
 class _UserTokenState extends State<UserToken> {
-  File Picture;
+  File? Picture;
 
   @override
   void initState() {
@@ -22,8 +21,8 @@ class _UserTokenState extends State<UserToken> {
   }
 
   getData() async {
-    final itemDoc = await DatabaseService().getItem(widget.token);
-    Picture = await DefaultCacheManager().getSingleFile(itemDoc['image']);
+    final itemdocuments = await DatabaseService().getItem(widget.token!);
+    Picture = await DefaultCacheManager().getSingleFile(itemdocuments['image']);
     setState(() {});
   }
 
@@ -39,7 +38,7 @@ class _UserTokenState extends State<UserToken> {
           aspectRatio: 1,
           child: (Picture != null)
               ? Image.file(
-                  Picture,
+                  Picture!,
                   fit: BoxFit.cover,
                 )
               : Image.asset(

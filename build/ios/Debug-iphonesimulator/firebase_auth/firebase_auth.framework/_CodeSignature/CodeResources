@@ -4,13 +4,17 @@
 <dict>
 	<key>files</key>
 	<dict>
+		<key>Headers/CustomPigeonHeader.h</key>
+		<data>
+		9bku5eJNAU7rSNHR904Y9M0bvA0=
+		</data>
 		<key>Headers/FLTAuthStateChannelStreamHandler.h</key>
 		<data>
 		kK4l67yYxcrBGhpNlIKQDEueDmg=
 		</data>
 		<key>Headers/FLTFirebaseAuthPlugin.h</key>
 		<data>
-		I0E8D5yNFMjBtb2J+BDCqUFMU50=
+		qumRy2WtoNA8KSf0PEP7xBzPFz4=
 		</data>
 		<key>Headers/FLTIdTokenChannelStreamHandler.h</key>
 		<data>
@@ -18,15 +22,19 @@
 		</data>
 		<key>Headers/FLTPhoneNumberVerificationStreamHandler.h</key>
 		<data>
-		NyrpNUqKCRy5IygZIckIVgwwxws=
+		iR2htkjh1gFaippy7F0SHtUSNJM=
 		</data>
 		<key>Headers/firebase_auth-umbrella.h</key>
 		<data>
-		nH8144FJgxDPfIe9vTcivF+4Fqw=
+		78edfr+puOXoQA49eQLHibNv3ts=
+		</data>
+		<key>Headers/messages.g.h</key>
+		<data>
+		pVpAKHobE2tcQottsmWhvG42zec=
 		</data>
 		<key>Info.plist</key>
 		<data>
-		O4uoEtSiHcZkGAw8E0VoLkTk6GU=
+		KGkvAQwVvVgR/vgqOVL9sQsYQxs=
 		</data>
 		<key>Modules/module.modulemap</key>
 		<data>
@@ -35,6 +43,17 @@
 	</dict>
 	<key>files2</key>
 	<dict>
+		<key>Headers/CustomPigeonHeader.h</key>
+		<dict>
+			<key>hash</key>
+			<data>
+			9bku5eJNAU7rSNHR904Y9M0bvA0=
+			</data>
+			<key>hash2</key>
+			<data>
+			i14Hmk4InyCHEK9F4CDBQynCGmmxFw/MrrRm6SL/Rx8=
+			</data>
+		</dict>
 		<key>Headers/FLTAuthStateChannelStreamHandler.h</key>
 		<dict>
 			<key>hash</key>
@@ -50,11 +69,11 @@
 		<dict>
 			<key>hash</key>
 			<data>
-			I0E8D5yNFMjBtb2J+BDCqUFMU50=
+			qumRy2WtoNA8KSf0PEP7xBzPFz4=
 			</data>
 			<key>hash2</key>
 			<data>
-			zhXdmrDCgrL0OkpjOZVqtqE2PhN+ZAW8m/MgHcIqn30=
+			EVKAUbztp4r1Hgqrgc+YJ6f8bxCX4LUWE48sp93gUoA=
 			</data>
 		</dict>
 		<key>Headers/FLTIdTokenChannelStreamHandler.h</key>
@@ -72,22 +91,33 @@
 		<dict>
 			<key>hash</key>
 			<data>
-			NyrpNUqKCRy5IygZIckIVgwwxws=
+			iR2htkjh1gFaippy7F0SHtUSNJM=
 			</data>
 			<key>hash2</key>
 			<data>
-			fdzjJZkOzuxQsES3irzEqqCv2NLHDgp/lBXchj59sfE=
+			ADAQHn2BMxqVkUm/+m5tRV6lGVYrKHwQZfFGKxzjeZ0=
 			</data>
 		</dict>
 		<key>Headers/firebase_auth-umbrella.h</key>
 		<dict>
 			<key>hash</key>
 			<data>
-			nH8144FJgxDPfIe9vTcivF+4Fqw=
+			78edfr+puOXoQA49eQLHibNv3ts=
 			</data>
 			<key>hash2</key>
 			<data>
-			xgDB55c2L7eOndFGhujnHPAMNNqD0EvP2dvWi3E1s6c=
+			HrPzZAnq+E/zBooCR4Mzx9EHpNSk7tJNLFIENZj+8bI=
+			</data>
+		</dict>
+		<key>Headers/messages.g.h</key>
+		<dict>
+			<key>hash</key>
+			<data>
+			pVpAKHobE2tcQottsmWhvG42zec=
+			</data>
+			<key>hash2</key>
+			<data>
+			Tpb8JLSQYCm7G5F024THE8RX/5AffdmNXGE+l4ZbPkk=
 			</data>
 		</dict>
 		<key>Modules/module.modulemap</key>

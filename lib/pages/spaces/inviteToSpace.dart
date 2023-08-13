@@ -8,25 +8,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:share/share.dart';
-import 'package:adiHouse/pages/login.dart';
-import 'package:adiHouse/services/databaseService.dart';
+import 'package:tribes/services/databaseService.dart';
 
 class InviteToSpace extends StatefulWidget {
   final String space;
-  InviteToSpace({this.space});
+  InviteToSpace({required this.space});
 
   @override
   _InviteToSpaceState createState() => _InviteToSpaceState();
 }
 
 class _InviteToSpaceState extends State<InviteToSpace> {
-  User user = FirebaseAuth.instance.currentUser;
-  String space;
-  String link;
-  String userName;
-  String spaceName;
-  File spacePicture;
-  File userPicture;
+  User? user = FirebaseAuth.instance.currentUser;
+  late String space;
+  String? link;
+  String? userName;
+  String? spaceName;
+  File? spacePicture;
+  File? userPicture;
+
   final CollectionReference userCollection =
       FirebaseFirestore.instance.collection('users');
 
@@ -38,14 +38,16 @@ class _InviteToSpaceState extends State<InviteToSpace> {
   }
 
   getData() async {
-    DocumentSnapshot authorDoc = await DatabaseService().getSpace(user.uid);
-    userName = authorDoc['name'];
-    DocumentSnapshot spaceDoc = await DatabaseService().getSpace(widget.space);
-    spaceName = spaceDoc['name'];
-    if (spaceDoc['displayPicture'] != '')
-      spacePicture =
-          await DefaultCacheManager().getSingleFile(spaceDoc['displayPicture']);
-    spaceName = spaceDoc['name'];
+    DocumentSnapshot authordocuments =
+        await DatabaseService().getSpace(user!.uid); // Ensure user is not null before accessing uid
+    userName = authordocuments['name'] as String?;
+    DocumentSnapshot spacedocuments =
+        await DatabaseService().getSpace(widget.space);
+    spaceName = spacedocuments['name'] as String?;
+    if ((spacedocuments['displayPicture'] as String?) != '')
+      spacePicture = await DefaultCacheManager()
+          .getSingleFile(spacedocuments['displayPicture'] as String);
+    spaceName = spacedocuments['name'] as String?;
     setState(() {});
   }
 
@@ -54,9 +56,9 @@ class _InviteToSpaceState extends State<InviteToSpace> {
 
     final DynamicLinkParameters parameters = DynamicLinkParameters(
       uriPrefix: 'https://canay.page.link',
-      link: Uri.parse('https://canay.page.link/spaceInvite-$space-${user.uid}'),
+      link: Uri.parse('https://canay.page.link/spaceInvite-$space-${user!.uid}'), // Ensure user is not null before accessing uid
       androidParameters: AndroidParameters(
-        packageName: 'com.canay.adiHouse',
+        packageName: 'com.canay.tribes',
         minimumVersion: 24,
       ),
       iosParameters: IOSParameters(
@@ -81,15 +83,15 @@ class _InviteToSpaceState extends State<InviteToSpace> {
         onPressed: () {
           spacePicture != null
               ? Share.shareFiles(
-                  [spacePicture.path],
-                  text: link,
+                  [spacePicture!.path], // Ensure spacePicture is not null before accessing path
+                  text: link!,
                   subject:
-                      '$userName invited to join the $spaceName space on adiHouse',
+                      '$userName invited to join the $spaceName space on tribes',
                 )
               : Share.share(
-                  link,
+                  link!,
                   subject:
-                      '$userName invited to join the $spaceName space on adiHouse',
+                      '$userName invited to join the $spaceName space on tribes',
                 );
         },
         backgroundColor: CupertinoTheme.of(context).primaryColor,
@@ -102,13 +104,13 @@ class _InviteToSpaceState extends State<InviteToSpace> {
           child: (link != null)
               ? GestureDetector(
                   onTap: () {
-                    Clipboard.setData(new ClipboardData(text: link));
+                    Clipboard.setData(new ClipboardData(text: link!));
                   },
                   child: Container(
                       color: CupertinoTheme.of(context).primaryColor,
                       padding: EdgeInsets.all(10),
                       child: Text(
-                        link,
+                        link!,
                         style: TextStyle(color: Colors.white),
                       )),
                 )

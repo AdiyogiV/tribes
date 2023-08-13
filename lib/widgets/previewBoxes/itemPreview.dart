@@ -1,13 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_cache_manager/file.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
 class ItemPreview extends StatefulWidget {
-  final String item;
-  const ItemPreview({this.item, Key key}) : super(key: key);
+  final String? item;
+  const ItemPreview({this.item, Key? key}) : super(key: key);
 
   @override
   State<ItemPreview> createState() => _ItemPreviewState();
@@ -15,26 +14,30 @@ class ItemPreview extends StatefulWidget {
 
 class _ItemPreviewState extends State<ItemPreview> {
   String itemName = '';
-  File itemImage;
+  File? itemImage;
   String price = '';
 
   final CollectionReference itemsCollection =
       FirebaseFirestore.instance.collection('items');
   @override
-  void initState() {
+  void initState() { 
     super.initState();
     initializePreview();
   }
 
-  initializePreview() async {
-    DocumentSnapshot itemDoc = await itemsCollection.doc(widget.item).get();
-    itemName = itemDoc['name'];
-    price = itemDoc['price'];
+       
+ 
+ initializePreview() async {
+    DocumentSnapshot itemdocuments =
+        await itemsCollection.doc(widget.item).get();
+    itemName = itemdocuments['name'];
+    price = itemdocuments['price'];
     if (this.mounted) {
       setState(() {});
     }
-    if (itemDoc['image'] != '') {
-      itemImage = await DefaultCacheManager().getSingleFile(itemDoc['image']);
+    if (itemdocuments['image'] != '') {
+      itemImage =
+          await DefaultCacheManager().getSingleFile(itemdocuments['image']);
       if (this.mounted) {
         setState(() {});
       }
@@ -54,7 +57,7 @@ class _ItemPreviewState extends State<ItemPreview> {
                 aspectRatio: 1,
                 child: (itemImage != null)
                     ? Image.file(
-                        itemImage,
+                        itemImage!,
                         fit: BoxFit.cover,
                       )
                     : Image.asset(

@@ -1,18 +1,17 @@
 import 'dart:io';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
 class UserPicture extends StatefulWidget {
-  final String displayPicture;
+  final String? displayPicture;
   UserPicture({@required this.displayPicture});
   @override
   _UserPictureState createState() => _UserPictureState();
 }
 
 class _UserPictureState extends State<UserPicture> {
-  File userPicture;
+  File? userPicture;
 
   @override
   void initState() {
@@ -23,7 +22,7 @@ class _UserPictureState extends State<UserPicture> {
   getData() async {
     print(widget.displayPicture);
     userPicture =
-        await DefaultCacheManager().getSingleFile(widget.displayPicture);
+        await DefaultCacheManager().getSingleFile(widget.displayPicture!);
     setState(() {});
   }
 
@@ -39,7 +38,7 @@ class _UserPictureState extends State<UserPicture> {
           aspectRatio: 1,
           child: (userPicture != null)
               ? Image.file(
-                  userPicture,
+                  userPicture!,
                   fit: BoxFit.cover,
                 )
               : Image.asset(

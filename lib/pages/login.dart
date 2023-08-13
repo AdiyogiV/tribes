@@ -1,9 +1,8 @@
-import 'dart:ui';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:adiHouse/services/authService.dart';
+import 'package:tribes/services/authService.dart';
 import 'package:country_code_picker/country_code_picker.dart';
 
 class LoginPage extends StatefulWidget {
@@ -15,14 +14,14 @@ class _LoginPageState extends State<LoginPage> {
   final formKey = new GlobalKey<FormState>();
   TextEditingController _myPhoneField = TextEditingController();
   TextEditingController _countryCode = TextEditingController(text: '+91');
-  String phoneNo, verificationId, smsCode;
+  String? phoneNo, verificationId, smsCode;
   bool codeSent = false;
 
   @override
   void dispose() {
     super.dispose();
-    _myPhoneField?.dispose();
-    _countryCode?.dispose();
+    _myPhoneField.dispose();
+    _countryCode.dispose();
   }
 
   onSendOTPPressed() {
@@ -59,144 +58,167 @@ class _LoginPageState extends State<LoginPage> {
     return Consumer<AuthService>(
       builder: (context, auth, child) {
         return Scaffold(
-          backgroundColor: Colors.black,
-          floatingActionButton: FloatingActionButton.extended(
-            onPressed: () {
-              codeSent
-                  ? Provider.of<AuthService>(context, listen: false)
-                      .signInWithOTP(smsCode, verificationId)
-                  : onSendOTPPressed();
-            },
-            backgroundColor: CupertinoColors.activeBlue,
-            icon: Icon(
-              Icons.arrow_right_alt,
-              color: Colors.white,
+            backgroundColor: CupertinoTheme.of(context).scaffoldBackgroundColor,
+            floatingActionButton: FloatingActionButton.extended(
+              onPressed: () {
+                codeSent
+                    ? Provider.of<AuthService>(context, listen: false)
+                        .signInWithOTP(smsCode, verificationId)
+                    : onSendOTPPressed();
+              },
+              backgroundColor: CupertinoTheme.of(context).primaryColor,
+              label: codeSent ? Text('SUBMIT OTP') : Text('LOGIN'),
             ),
-            label: codeSent ? Text('LOGIN') : Text('SEND OTP'),
-          ),
-          body: Form(
-              key: formKey,
-              child: codeSent
-                  ? Padding(
-                      padding: EdgeInsets.only(left: 20.0, right: 20.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          Container(
-                            height: 200,
-                            color: Colors.transparent,
-                            child: getLogo(),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(10.0),
-                            child: Text(
-                              "OTP sent to $phoneNo",
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(5.0),
-                            child: CupertinoTextField(
-                              keyboardType: TextInputType.phone,
-                              padding: EdgeInsets.all(12),
-                              placeholder: 'Enter OTP',
-                              onChanged: (val) {
-                                setState(() {
-                                  this.smsCode = val;
-                                });
-                              },
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(5.0),
-                            child: CupertinoButton(
-                                child:
-                                    Center(child: Text('Use Another Number')),
-                                onPressed: () {
-                                  this.setState(() {
-                                    phoneNo = '';
-                                    codeSent = false;
-                                    _myPhoneField.text = '';
-                                  });
-                                }),
-                          )
-                        ],
-                      ))
-                  : Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Container(
-                          height: 200,
-                          child: getLogo(),
-                        ),
-                        Padding(
-                            padding: const EdgeInsets.only(
-                                left: 25.0, right: 25, bottom: 10),
-                            child: Row(
-                              children: <Widget>[
-                                Expanded(
-                                  child: CupertinoButton.filled(
-                                    disabledColor: CupertinoColors.white,
-                                    padding:
-                                        EdgeInsets.only(left: 10, right: 10),
-                                    onPressed: () {},
-                                    child: CountryCodePicker(
-                                      textStyle: TextStyle(
-                                        fontSize: 15,
-                                      ),
-                                      onChanged: (code) {
-                                        _countryCode.text = code.toString();
-                                      },
+            body: LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints constraints) {
+                if (constraints.maxWidth > 600) {
+                  return _buildWideLayout(context);
+                } else {
+                  return _buildNarrowLayout(context);
+                }
+              },
+            ));
+      },
+    );
+  }
 
-                                      textOverflow: TextOverflow.ellipsis,
-                                      // Initial selection and favorite can be one of code ('IT') OR dial_code('+39')
-                                      initialSelection: '+91',
-                                      favorite: ['+91', '+33', '+86'],
-                                      // optional. Shows only country name and flag
-                                      showCountryOnly: false,
-                                      // optional. Shows only country name and flag when popup is closed.
-                                      showOnlyCountryWhenClosed: true,
-                                    ),
-                                  ),
-                                )
-                              ],
-                            )),
-                        Row(
+  Widget _buildNarrowLayout(BuildContext context) {
+    return Container(
+      color: CupertinoTheme.of(context).barBackgroundColor,
+      child: Form(
+          key: formKey,
+          child: codeSent
+              ? Padding(
+                  padding: EdgeInsets.only(left: 20.0, right: 20.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Padding(
+                        padding: const EdgeInsets.all(10.0),
+                        child: Text(
+                          "OTP sent to $phoneNo",
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(5.0),
+                        child: CupertinoTextField(
+                          keyboardType: TextInputType.phone,
+                          padding: EdgeInsets.all(12),
+                          placeholder: 'Enter OTP',
+                          onChanged: (val) {
+                            setState(() {
+                              this.smsCode = val;
+                            });
+                          },
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(5.0),
+                        child: CupertinoButton(
+                            child: Center(child: Text('Use Another Number')),
+                            onPressed: () {
+                              this.setState(() {
+                                phoneNo = '';
+                                codeSent = false;
+                                _myPhoneField.text = '';
+                              });
+                            }),
+                      )
+                    ],
+                  ))
+              : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Padding(
+                        padding: const EdgeInsets.only(
+                            left: 25.0, right: 25, bottom: 10),
+                        child: Row(
                           children: <Widget>[
                             Expanded(
-                              flex: 2,
-                              child: Padding(
-                                padding: EdgeInsets.only(left: 25.0),
-                                child: CupertinoTextField(
-                                  readOnly: true,
-                                  padding: EdgeInsets.all(12),
-                                  controller: _countryCode,
-                                  keyboardType: TextInputType.phone,
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              flex: 7,
-                              child: Padding(
-                                padding: EdgeInsets.only(left: 5, right: 25.0),
-                                child: CupertinoTextField(
-                                  padding: EdgeInsets.all(12),
-                                  controller: _myPhoneField,
-                                  placeholder: 'Enter Phone Number',
-                                  keyboardType: TextInputType.phone,
-                                  onChanged: (val) {
-                                    setState(() {
-                                      this.phoneNo = _countryCode.text + '$val';
-                                    });
-                                  },
+                              child: Container(
+                                color: CupertinoTheme.of(context)
+                                    .primaryContrastingColor,
+                                child: CupertinoButton(
+                                  disabledColor: CupertinoColors.white,
+                                  padding: EdgeInsets.only(left: 10, right: 10),
+                                  onPressed: () {},
+                                  child: CountryCodePicker(
+                                    textStyle: TextStyle(
+                                      fontSize: 15,
+                                    ),
+                                    onChanged: (code) {
+                                      _countryCode.text = code.toString();
+                                    },
+
+                                    textOverflow: TextOverflow.ellipsis,
+
+                                    // Initial selection and favorite can be one of code ('IT') OR dial_code('+39')
+                                    initialSelection: '+91',
+                                    favorite: ['+91', '+33', '+86'],
+                                    // optional. Shows only country name and flag
+                                    showCountryOnly: false,
+                                    // optional. Shows only country name and flag when popup is closed.
+                                    showOnlyCountryWhenClosed: true,
+                                  ),
                                 ),
                               ),
                             )
                           ],
+                        )),
+                    Row(
+                      children: <Widget>[
+                        Expanded(
+                          flex: 2,
+                          child: Padding(
+                            padding: EdgeInsets.only(left: 25.0),
+                            child: CupertinoTextField(
+                              readOnly: true,
+                              padding: EdgeInsets.all(12),
+                              controller: _countryCode,
+                              keyboardType: TextInputType.phone,
+                            ),
+                          ),
                         ),
+                        Expanded(
+                          flex: 7,
+                          child: Padding(
+                            padding: EdgeInsets.only(left: 5, right: 25.0),
+                            child: CupertinoTextField(
+                              padding: EdgeInsets.all(12),
+                              controller: _myPhoneField,
+                              placeholder: 'Enter Phone Number',
+                              keyboardType: TextInputType.phone,
+                              onChanged: (val) {
+                                setState(() {
+                                  this.phoneNo = _countryCode.text + '$val';
+                                });
+                              },
+                            ),
+                          ),
+                        )
                       ],
-                    )),
-        );
-      },
+                    ),
+                  ],
+                )),
+    );
+  }
+
+  Widget _buildWideLayout(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+            flex: 2,
+            child: Text(
+              'युगान्तर\nyugantar\nਯੁਗਾਂਤਰ\nযুগান্তর\nಯುಗಾಂತರ\nயுகாந்தர்\nیگانتر\nyugantar',
+              style: TextStyle(
+                  fontSize: 60, color: CupertinoTheme.of(context).primaryColor),
+              textAlign: TextAlign.center,
+            )),
+        Flexible(
+          child: _buildNarrowLayout(context),
+          flex: 1,
+        )
+      ],
     );
   }
 
@@ -223,7 +245,7 @@ class _LoginPageState extends State<LoginPage> {
           });
     };
 
-    final PhoneCodeSent smsSent = (String verId, [int forceResend]) {
+    final PhoneCodeSent smsSent = (String verId, [int? forceResend]) {
       this.verificationId = verId;
       setState(() {
         this.codeSent = true;

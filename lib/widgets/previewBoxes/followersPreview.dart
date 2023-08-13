@@ -6,11 +6,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
 class FollowersPreview extends StatefulWidget {
-  final String uid;
-  final bool showName;
-  final bool isSelected;
+  final String? uid;
+  final bool? showName;
+  final bool? isSelected;
   FollowersPreview(
-      {Key key, this.uid, this.showName, @required this.isSelected})
+      {Key? key, this.uid, required this.showName, @required this.isSelected})
       : super(key: key);
 
   @override
@@ -20,9 +20,9 @@ class FollowersPreview extends StatefulWidget {
 class _FollowersPreviewState extends State<FollowersPreview> {
   final CollectionReference spacesCollection =
       FirebaseFirestore.instance.collection('spaces');
-  File userPicture;
+  File? userPicture;
   String name = '';
-  String username;
+  String? username;
 
   @override
   void initState() {
@@ -31,19 +31,20 @@ class _FollowersPreviewState extends State<FollowersPreview> {
   }
 
   getData() async {
-    DocumentSnapshot authorDoc = await spacesCollection.doc(widget.uid).get();
-    if (authorDoc != null) {
-      name = authorDoc['name'];
+    DocumentSnapshot authordocuments =
+        await spacesCollection.doc(widget.uid).get();
+    if (authordocuments != null) {
+      name = authordocuments['name'];
 
-      username = authorDoc['nickname'];
-      String authordp = authorDoc['displayPicture'];
+      username = authordocuments['nickname'];
+      String authordp = authordocuments['displayPicture'];
       if (authordp != '')
         userPicture = await DefaultCacheManager().getSingleFile(authordp);
       if (mounted) {
         setState(() {});
       }
     } else {
-      print(authorDoc);
+      print(authordocuments);
     }
   }
 
@@ -64,7 +65,7 @@ class _FollowersPreviewState extends State<FollowersPreview> {
                   aspectRatio: 1,
                   child: (userPicture != null)
                       ? Image.file(
-                          userPicture,
+                          userPicture!,
                           fit: BoxFit.cover,
                         )
                       : Image.asset(
@@ -73,7 +74,7 @@ class _FollowersPreviewState extends State<FollowersPreview> {
                         ),
                 ),
               ),
-              if (widget.showName == true && username != null)
+              if (widget.showName == true)
                 Padding(
                   padding: const EdgeInsets.all(5.0),
                   child: Text('$username'),

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:adiHouse/pages/initUser.dart';
-import 'package:adiHouse/pages/login.dart';
-import 'package:adiHouse/pages/spaces/inviteLandingPage.dart';
-import 'package:adiHouse/services/authService.dart';
+import 'package:tribes/pages/initUser.dart';
+import 'package:tribes/pages/login.dart';
+import 'package:tribes/pages/spaces/inviteLandingPage.dart';
+import 'package:tribes/services/authService.dart';
 
 class HandleLogin extends StatefulWidget {
-  final String space;
-  final String invitee;
+  final String? space;
+  final String? invitee;
 
   HandleLogin({this.space, this.invitee});
   @override

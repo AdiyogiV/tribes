@@ -1,6 +1,0 @@
-package com.canay.yantra
-
-import io.flutter.embedding.android.FlutterActivity
-
-class MainActivity: FlutterActivity() {
-}

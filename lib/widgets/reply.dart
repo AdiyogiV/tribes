@@ -1,39 +1,38 @@
-import 'dart:ui';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:adiHouse/services/databaseService.dart';
-import 'package:adiHouse/widgets/mainPlayer.dart';
-import 'package:adiHouse/widgets/postReplies.dart';
+import 'package:tribes/services/databaseService.dart';
+import 'package:tribes/widgets/mainPlayer.dart';
+import 'package:tribes/widgets/postReplies.dart';
 
 typedef ReplyCallback = void Function(
-  String postId,
+  String? postId,
 );
 
 class Reply extends StatefulWidget {
-  final String post;
-  final ReplyCallback onReplySelected;
+  final String? post;
+  final ReplyCallback? onReplySelected;
 
-  Reply({this.post, this.onReplySelected, Key key}) : super(key: key);
+  Reply({this.post, this.onReplySelected, Key? key}) : super(key: key);
 
   @override
   _ReplyState createState() => _ReplyState();
 }
 
 class _ReplyState extends State<Reply> {
-  String author;
-  String space;
+  String? author;
+  String? space;
   bool dataloaded = false;
-  String video;
-  String title;
+  String? video;
+  String? title;
 
   getReplyData() async {
-    DocumentSnapshot replyDoc = await DatabaseService().getPost(widget.post);
-    author = replyDoc['author'];
-    video = replyDoc['video'];
-    title = replyDoc['title'];
-    space = replyDoc['space'];
+    DocumentSnapshot replydocuments =
+        await DatabaseService().getPost(widget.post!);
+    author = replydocuments['author'];
+    video = replydocuments['video'];
+    title = replydocuments['title'];
+    space = replydocuments['space'];
     this.setState(() {
       dataloaded = true;
     });
@@ -65,7 +64,7 @@ class _ReplyState extends State<Reply> {
                       children: [
                         GestureDetector(
                           onTap: () {
-                            widget.onReplySelected(widget.post);
+                            widget.onReplySelected!(widget.post);
                           },
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(10.0),
@@ -81,8 +80,8 @@ class _ReplyState extends State<Reply> {
                         ClipRRect(
                           borderRadius: BorderRadius.circular(10.0),
                           child: PostReplies(
-                            onReplySelected: widget.onReplySelected,
-                            post: widget.post,
+                            onReplySelected: widget.onReplySelected!,
+                            post: widget.post!,
                           ),
                         )
                       ],
@@ -106,7 +105,7 @@ class MyPainter extends CustomPainter {
     final p4 = Offset(30, size.height + 100);
 
     final paint = Paint()
-      ..color = Colors.amber[700]
+      ..color = Colors.amber[700]!
       ..strokeWidth = 1;
     canvas.drawLine(p3, p2, paint);
     canvas.drawLine(p1, p4, paint);

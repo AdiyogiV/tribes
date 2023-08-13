@@ -1,44 +1,39 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/file.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-import 'package:adiHouse/pages/spaces/editSpace.dart';
-import 'package:adiHouse/pages/spaces/gridSpaceView.dart';
-import 'package:adiHouse/pages/theatre.dart';
-import 'package:adiHouse/services/databaseService.dart';
+import 'package:tribes/pages/spaces/editSpace.dart';
+import 'package:tribes/pages/spaces/gridSpaceView.dart';
+import 'package:tribes/pages/theatre.dart';
+import 'package:tribes/services/databaseService.dart';
 
 class SecretSpace extends StatefulWidget {
-  final String space;
-  const SecretSpace({this.space, Key key}) : super(key: key);
+  final String? space;
+  const SecretSpace({this.space, Key? key}) : super(key: key);
 
   @override
   _SecretSpaceState createState() => _SecretSpaceState();
 }
 
 class _SecretSpaceState extends State<SecretSpace> {
-  String displayPicture;
-  File displayPicFile;
+  String? displayPicture;
+  File? displayPicFile;
   bool gridViewOn = false;
   int initPage = 0;
   String name = '';
-  User user = FirebaseAuth.instance.currentUser;
+  User? user = FirebaseAuth.instance.currentUser;
   bool isMember = false;
 
   getSpaceBox() async {
-    if (displayPicture != null) {
-      displayPicFile =
-          await DefaultCacheManager().getSingleFile(displayPicture);
-    }
+    displayPicFile =
+        await DefaultCacheManager().getSingleFile(displayPicture!);
     setState(() {});
   }
 
   getSpaceRole() async {
-    if (user != null) {
-      isMember = await DatabaseService().isMember(widget.space);
-      setState(() {});
-    }
+    isMember = await DatabaseService().isMember(widget.space!);
+    setState(() {});
   }
 
   @override
@@ -75,7 +70,7 @@ class _SecretSpaceState extends State<SecretSpace> {
                     borderRadius: BorderRadius.circular(5.0),
                     child: (displayPicFile != null)
                         ? Image.file(
-                            displayPicFile,
+                            displayPicFile!,
                             fit: BoxFit.cover,
                           )
                         : Container(
@@ -125,7 +120,7 @@ class _SecretSpaceState extends State<SecretSpace> {
         child: SafeArea(
           child: gridViewOn
               ? GridSpaceView(
-                  rid: widget.space,
+                  rid: widget.space!,
                   setPageView: setPageView,
                 )
               : Theatre(

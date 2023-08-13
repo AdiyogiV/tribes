@@ -1,17 +1,17 @@
-import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-import 'package:adiHouse/pages/theatre.dart';
-import 'package:adiHouse/pages/userProfile.dart';
-import 'package:adiHouse/services/databaseService.dart';
-import 'package:adiHouse/widgets/previewBoxes/userPreviewBox.dart';
+import 'package:tribes/pages/userProfile.dart';
+import 'package:tribes/services/databaseService.dart';
+import 'package:tribes/widgets/previewBoxes/userPreviewBox.dart';
 
 class FollowRequestTile extends StatefulWidget {
-  final String uid;
-  FollowRequestTile({this.uid});
+  final String? space;
+  final String? uid;
+  Function? onRefresh;
+  FollowRequestTile({this.space, this.uid, this.onRefresh, Key? key})
+      : super(key: key);
   @override
   _FollowRequestTileState createState() => _FollowRequestTileState();
 }
@@ -19,7 +19,7 @@ class FollowRequestTile extends StatefulWidget {
 class _FollowRequestTileState extends State<FollowRequestTile> {
   String name = '';
   String username = '';
-  String displayPicture;
+  String? displayPicture;
   final CollectionReference usersCollection =
       FirebaseFirestore.instance.collection('users');
 
@@ -30,10 +30,11 @@ class _FollowRequestTileState extends State<FollowRequestTile> {
   }
 
   fetchData() async {
-    DocumentSnapshot userDoc = await DatabaseService().getSpace(widget.uid);
-    name = userDoc['name'];
-    username = userDoc['nickname'];
-    displayPicture = userDoc['displayPicture'];
+    DocumentSnapshot userdocuments =
+        await DatabaseService().getUser(widget.uid!);
+    name = userdocuments['name'];
+    username = userdocuments['nickname'];
+    displayPicture = userdocuments['displayPicture'];
     setState(() {});
   }
 
@@ -78,7 +79,7 @@ class _FollowRequestTileState extends State<FollowRequestTile> {
                 },
                 child: Column(
                   children: [
-                    Text("$name",
+                    Text(name,
                         style: TextStyle(
                             fontWeight: FontWeight.w400,
                             fontSize: 16,
@@ -107,8 +108,9 @@ class _FollowRequestTileState extends State<FollowRequestTile> {
               flex: 2,
               child: GestureDetector(
                 onTap: () async {
-                  await DatabaseService().rejectFollowRequest(widget.uid);
-                  setState(() {});
+                  await DatabaseService()
+                      .rejectSpaceMember(widget.space!, widget.uid!);
+                  widget.onRefresh!();
                 },
                 child: Icon(
                   Icons.cancel_rounded,
@@ -121,8 +123,9 @@ class _FollowRequestTileState extends State<FollowRequestTile> {
               flex: 2,
               child: GestureDetector(
                 onTap: () async {
-                  await DatabaseService().approveFollower(widget.uid);
-                  setState(() {});
+                  await DatabaseService()
+                      .approveSpaceMember(widget.space!, widget.uid!);
+                  widget.onRefresh!();
                 },
                 child: Icon(
                   Icons.check_circle,

@@ -4,19 +4,18 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-import 'package:adiHouse/pages/theatre.dart';
 
 class ReplyTile extends StatefulWidget {
-  final Map data;
+  final Map? data;
   ReplyTile({this.data});
   @override
   _ReplyTileState createState() => _ReplyTileState();
 }
 
 class _ReplyTileState extends State<ReplyTile> {
-  String nickname;
-  File replyThumbnail;
-  File replyToThumbnail;
+  String? nickname;
+  File? replyThumbnail;
+  File? replyToThumbnail;
   final CollectionReference postCollection =
       FirebaseFirestore.instance.collection('posts');
   @override
@@ -26,15 +25,15 @@ class _ReplyTileState extends State<ReplyTile> {
   }
 
   parseData() async {
-    nickname = widget.data['author_nickname'];
+    nickname = widget.data!['author_nickname'];
     DefaultCacheManager()
-        .getSingleFile(widget.data['thumbnail'])
+        .getSingleFile(widget.data!['thumbnail'])
         .then((value) => {
               setState(() {
                 replyThumbnail = value;
               })
             });
-    await postCollection.doc(widget.data['replyToPost']).get().then((value) => {
+    await postCollection.doc(widget.data!['replyToPost']).get().then((value) => {
           print(value.data()),
           DefaultCacheManager()
               .getSingleFile(value['thumbnail'])
@@ -48,7 +47,7 @@ class _ReplyTileState extends State<ReplyTile> {
 
   @override
   Widget build(BuildContext context) {
-    return (replyThumbnail != null && replyToThumbnail != null)
+    return (replyToThumbnail != null)
         ? Container(
             child: ListTile(
               contentPadding: EdgeInsets.only(top: 10, right: 10, left: 10),
@@ -58,7 +57,7 @@ class _ReplyTileState extends State<ReplyTile> {
                     width: 50,
                     height: 100,
                     child: Image.file(
-                      replyThumbnail,
+                      replyThumbnail!,
                       fit: BoxFit.cover,
                     )),
               ),
@@ -76,7 +75,7 @@ class _ReplyTileState extends State<ReplyTile> {
                     width: 50,
                     height: 100,
                     child: Image.file(
-                      replyToThumbnail,
+                      replyToThumbnail!,
                       fit: BoxFit.cover,
                     )),
               ),

@@ -10,6 +10,9 @@
 #endif
 #endif
 
+#import "FIRAggregateQuery.h"
+#import "FIRAggregateQuerySnapshot.h"
+#import "FIRAggregateSource.h"
 #import "FIRCollectionReference.h"
 #import "FIRDocumentChange.h"
 #import "FIRDocumentReference.h"
@@ -29,6 +32,7 @@
 #import "FIRSnapshotMetadata.h"
 #import "FIRTimestamp.h"
 #import "FIRTransaction.h"
+#import "FIRTransactionOptions.h"
 #import "FIRWriteBatch.h"
 
 FOUNDATION_EXPORT double FirebaseFirestoreVersionNumber;

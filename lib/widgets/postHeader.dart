@@ -1,15 +1,12 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:adiHouse/pages/spaces/space.dart';
-import 'package:adiHouse/pages/userProfile.dart';
-import 'package:adiHouse/widgets/previewBoxes/userPreviewBox.dart';
-import 'package:adiHouse/widgets/previewBoxes/spacePreviewBox.dart';
+import 'package:tribes/pages/userProfile.dart';
+import 'package:tribes/widgets/previewBoxes/userPreviewBox.dart';
 
 typedef ReplyCallback = void Function(String uid, int PN);
 
 class PostHeader extends StatefulWidget {
-  final String uid;
-  final String space;
+  final String? uid;
+  final String? space;
   PostHeader({this.uid, this.space});
 
   @override

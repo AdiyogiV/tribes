@@ -3,10 +3,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'package:adiHouse/pages/houseMarket.dart';
-import 'package:adiHouse/pages/spaces/space.dart';
-import 'package:adiHouse/widgets/Dailogs/spaceCreationDailog.dart';
-import 'package:adiHouse/widgets/previewBoxes/spacePreviewBox.dart';
+import 'package:tribes/pages/spaces/space.dart';
+import 'package:tribes/widgets/Dailogs/spaceCreationDailog.dart';
+import 'package:tribes/widgets/previewBoxes/spacePreviewBox.dart';
 
 class Gallery extends StatefulWidget {
   @override
@@ -14,7 +13,7 @@ class Gallery extends StatefulWidget {
 }
 
 class _GalleryState extends State<Gallery> {
-  User user = FirebaseAuth.instance.currentUser;
+  User? user = FirebaseAuth.instance.currentUser;
   final CollectionReference userSpacesCollection =
       FirebaseFirestore.instance.collection('userSpaces');
 
@@ -44,7 +43,7 @@ class _GalleryState extends State<Gallery> {
   getTribes() {
     return FutureBuilder<QuerySnapshot>(
         future: userSpacesCollection
-            .doc(user.uid)
+            .doc(user!.uid)
             .collection('spaces')
             .where('role', whereIn: ['member', 'owner']).get(),
         builder: (context, snapshot) {
@@ -52,10 +51,10 @@ class _GalleryState extends State<Gallery> {
             return Center(child: CircularProgressIndicator());
           }
 
-          List spaceList = snapshot.data.docs
+          List<Widget> spaceList = snapshot.data!.docs
               .toList()
               .asMap()
-              .map((index, doc) => MapEntry(
+              .map((index, documents) => MapEntry(
                     index,
                     GestureDetector(
                       key: UniqueKey(),
@@ -63,16 +62,15 @@ class _GalleryState extends State<Gallery> {
                         Navigator.of(context, rootNavigator: true)
                             .push(CupertinoPageRoute(builder: (context) {
                           return SpaceBox(
-                            rid: doc.id,
+                            rid: documents.id,
                           );
                         }));
                       },
                       child: Container(
-                        height: 100,
-                        padding: EdgeInsets.only(top: 7, left: 7, right: 7),
+                        padding: EdgeInsets.only(top: 7, left: 5, right: 5),
                         child: SpacePreviewBox(
                           key: UniqueKey(),
-                          space: doc.id,
+                          space: documents.id,
                         ),
                       ),
                     ),
@@ -89,9 +87,9 @@ class _GalleryState extends State<Gallery> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Scaffold( 
         extendBody: true,
-        backgroundColor: Colors.black38,
+        backgroundColor: CupertinoTheme.of(context).scaffoldBackgroundColor,
         floatingActionButton: FloatingActionButton(
           onPressed: () {
             showDialog(
@@ -145,7 +143,7 @@ class _GalleryState extends State<Gallery> {
                           tileMode: TileMode.mirror),
                     ),
                     child: Padding(
-                      padding: const EdgeInsets.only(top: 100.0),
+                      padding: const EdgeInsets.only(top: 10.0),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [

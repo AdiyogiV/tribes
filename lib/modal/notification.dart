@@ -6,8 +6,8 @@ class ReplyNotification{
   final String reid;
 
   const ReplyNotification({
-    @required this.ogid,
-    @required this.reid
+    required this.ogid,
+    required this.reid
   });
 }
 
@@ -16,7 +16,7 @@ class FollowNotification{
   final String reid;
 
   const FollowNotification({
-    @required this.ogid,
-    @required this.reid
+    required this.ogid,
+    required this.reid
   });
 }
