@@ -1,0 +1,63 @@
+# This file configures the analyzer, which statically analyzes Dart code to
+# check for errors, warnings, and lints.
+
+# The following line activates a set of recommended lints for Flutter apps,
+# packages, and plugins designed to encourage good coding practices.
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    # Exclude generated files
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "**/*.mocks.dart"
+    - "**/generated_plugin_registrant.dart"
+    # Exclude build directories
+    - "build/**"
+    - ".dart_tool/**"
+  
+  # Allow certain patterns that are common in Flutter apps
+  language:
+    strict-casts: false
+    strict-inference: false
+    strict-raw-types: false
+
+linter:
+  rules:
+    # Disable rules that are too strict for existing codebase
+    avoid_print: false  # Allow print statements for debugging
+    file_names: false   # Allow existing camelCase file names
+    use_build_context_synchronously: false  # Allow existing async patterns
+    
+    # Disable overly pedantic rules for widgets
+    library_private_types_in_public_api: false
+    
+    # Disable performance rules that would require massive refactoring
+    prefer_const_constructors: false
+    prefer_const_declarations: false
+    prefer_const_literals_to_create_immutables: false
+    prefer_single_quotes: false  # Don't enforce quote style
+    
+    # Keep important rules enabled for code quality
+    avoid_unnecessary_containers: true
+    prefer_interpolation_to_compose_strings: true
+    prefer_typing_uninitialized_variables: true
+    sort_child_properties_last: true
+    sized_box_for_whitespace: true
+    unnecessary_brace_in_string_interps: true
+    
+    # Safety rules
+    avoid_empty_else: true
+    avoid_slow_async_io: false  # Allow async I/O in cache service
+    cancel_subscriptions: false  # Don't enforce subscription cancellation (complex to fix)
+    close_sinks: true
+    
+    # Style rules that improve readability
+    prefer_is_empty: true
+    prefer_is_not_empty: true
+    unnecessary_new: true
+    unnecessary_this: true
+    
+    # Allow field overrides and naming conventions
+    overridden_fields: false
+    constant_identifier_names: false  # Allow existing constant naming

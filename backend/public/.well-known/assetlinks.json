@@ -1,0 +1,14 @@
+[
+    {
+        "relation": ["delegate_permission/common.handle_all_urls"],
+        "target": {
+            "namespace": "android_app",
+            "package_name": "com.canay.dhaara",
+            "sha256_cert_fingerprints": [
+                "EC:AB:74:C0:3F:9F:9A:73:5C:5D:9E:48:82:02:5F:1A:3C:69:C5:85:5C:C0:37:6B:2F:3E:83:1F:09:47:E1:CF",
+                "D6:A2:7A:1C:E9:B6:1A:40:53:C2:1D:11:EF:C7:5F:D2:8A:16:7B:2A:53:0E:F2:E4:CA:5C:AB:2F:07:49:41:C7"
+            ]
+        }
+    }
+]
+

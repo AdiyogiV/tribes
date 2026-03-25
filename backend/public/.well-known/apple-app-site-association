@@ -1,0 +1,23 @@
+{
+    "applinks": {
+        "apps": [],
+        "details": [
+            {
+                "appID": "6CF95PPRR7.com.canay.dhaara",
+                "paths": [
+                    "/u/*",
+                    "/cosmic/*",
+                    "/p/*",
+                    "/s/*"
+                ]
+            }
+        ]
+    },
+    "webcredentials": {
+        "apps": [
+            "6CF95PPRR7.com.canay.dhaara"
+        ]
+    }
+}
+
+

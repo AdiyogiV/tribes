@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Post on Aurogram</title>
+    <meta name="description" content="View this post on Aurogram.">
+    
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="View Post on Aurogram">
+    <meta property="og:description" content="Check out this post on Aurogram - your cosmic social network.">
+    
+    <!-- iOS Smart App Banner -->
+    <meta name="apple-itunes-app" content="app-id=YOUR_APP_STORE_ID">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1410 0%, #2d241c 50%, #1a1410 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #d4a574;
+            padding: 20px;
+        }
+        
+        .container {
+            text-align: center;
+            max-width: 400px;
+        }
+        
+        .post-card {
+            background: rgba(212, 165, 116, 0.08);
+            border: 1px solid rgba(212, 165, 116, 0.2);
+            border-radius: 20px;
+            padding: 32px 24px;
+            margin-bottom: 24px;
+        }
+        
+        .post-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        
+        .post-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .post-subtitle {
+            font-size: 14px;
+            opacity: 0.7;
+            margin-bottom: 16px;
+        }
+        
+        .btn {
+            display: block;
+            padding: 16px 24px;
+            background: #d4a574;
+            color: #1a1410;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.2s ease;
+            margin-bottom: 12px;
+        }
+        
+        .btn:hover {
+            background: #e5b885;
+            transform: translateY(-2px);
+        }
+        
+        .btn.secondary {
+            background: transparent;
+            color: #d4a574;
+            border: 2px solid rgba(212, 165, 116, 0.4);
+        }
+        
+        .store-links {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 16px;
+        }
+        
+        .store-link {
+            font-size: 13px;
+            color: #d4a574;
+            opacity: 0.7;
+            text-decoration: none;
+        }
+        
+        .branding {
+            margin-top: 32px;
+            font-size: 12px;
+            opacity: 0.5;
+        }
+        
+        .branding a {
+            color: #d4a574;
+            text-decoration: none;
+        }
+        
+        .loading {
+            display: none;
+            margin: 16px 0;
+            font-size: 14px;
+            opacity: 0.7;
+        }
+        
+        .loading.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="post-card">
+            <div class="post-icon">📝</div>
+            <h1 class="post-title">View Post</h1>
+            <p class="post-subtitle">Someone shared a post with you on Aurogram</p>
+        </div>
+        
+        <a href="#" class="btn" id="open-app-btn" onclick="openApp()">
+            Open in App
+        </a>
+        
+        <p class="loading" id="loading-msg">Opening app...</p>
+        
+        <a href="#" class="btn secondary" id="download-btn">
+            Download Aurogram
+        </a>
+        
+        <div class="store-links">
+            <a href="https://apps.apple.com/app/id6474496853" class="store-link">iOS</a>
+            <span style="opacity: 0.3">•</span>
+            <a href="https://play.google.com/store/apps/details?id=com.canay.dhaara" class="store-link">Android</a>
+        </div>
+        
+        <div class="branding">
+            <a href="/">✨ Aurogram</a>
+        </div>
+    </div>
+    
+    <script>
+        const pathParts = window.location.pathname.split('/');
+        const postId = pathParts[pathParts.length - 1] || pathParts[pathParts.length - 2];
+        
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const isAndroid = /Android/.test(navigator.userAgent);
+        
+        const downloadBtn = document.getElementById('download-btn');
+        if (isIOS) {
+            downloadBtn.href = 'https://apps.apple.com/app/id6474496853';
+        } else if (isAndroid) {
+            downloadBtn.href = 'https://play.google.com/store/apps/details?id=com.canay.dhaara';
+        } else {
+            downloadBtn.href = 'https://apps.apple.com/app/id6474496853';
+        }
+        
+        function openApp() {
+            const loadingMsg = document.getElementById('loading-msg');
+            loadingMsg.classList.add('show');
+            
+            const customSchemeUrl = `aurogram://p/${postId}`;
+            let appOpened = false;
+            
+            const timeout = setTimeout(() => {
+                if (!appOpened) {
+                    loadingMsg.textContent = 'Redirecting to store...';
+                    setTimeout(() => {
+                        window.location.href = downloadBtn.href;
+                    }, 1000);
+                }
+            }, 2500);
+            
+            document.addEventListener('visibilitychange', function() {
+                if (document.hidden) {
+                    appOpened = true;
+                    clearTimeout(timeout);
+                }
+            });
+            
+            if (isIOS || isAndroid) {
+                window.location.href = customSchemeUrl;
+            }
+        }
+    </script>
+</body>
+</html>
+
+

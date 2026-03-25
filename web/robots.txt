@@ -1,0 +1,10 @@
+# Aurogram robots.txt
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://aurogram.in/sitemap.xml
+
+# Disallow Flutter internals
+Disallow: /flutter_service_worker.js
+Disallow: /version.json

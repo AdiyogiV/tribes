@@ -1,0 +1,330 @@
+import 'dart:math';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:aurogram/services/user_service.dart';
+import 'package:aurogram/utils/logging/app_logger.dart';
+import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/widgets/universal/transparent_toolbox.dart';
+import 'package:aurogram/pages/onboarding/ftue_welcome.dart';
+
+class InitUser extends StatefulWidget {
+  const InitUser({Key? key}) : super(key: key);
+
+  @override
+  InitUserState createState() => InitUserState();
+}
+
+class InitUserState extends State<InitUser> with SingleTickerProviderStateMixin {
+  final _nameController = TextEditingController();
+  String? _username;
+  bool _isLoading = false;
+  
+  late AnimationController _animController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
+  // Warm greeting based on time of day
+  String get _greeting {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    if (hour < 21) return 'Good evening';
+    return 'Welcome';
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController.addListener(_generateUsername);
+    
+    _animController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeOut),
+    );
+    
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic));
+    
+    _animController.forward();
+  }
+
+  void _generateUsername() async {
+    final name = _nameController.text.trim();
+    if (name.isEmpty) {
+      setState(() => _username = null);
+      return;
+    }
+
+    final base = name.split(' ')[0].toLowerCase();
+    final random = Random();
+    final collection = FirebaseFirestore.instance.collection('nicknames');
+    
+    for (int i = 0; i < 50; i++) {
+      final candidate = '$base${random.nextInt(9000) + 1000}';
+      final doc = await collection.doc('pairs').get();
+      if (!doc.exists || !(doc.data() as Map).containsKey(candidate)) {
+        if (mounted) setState(() => _username = candidate);
+        return;
+      }
+    }
+  }
+
+  Future<void> _continue() async {
+    if (_nameController.text.trim().isEmpty || _username == null || _isLoading) return;
+    
+    HapticFeedback.mediumImpact();
+    setState(() => _isLoading = true);
+    
+    try {
+      final success = await UserService().registerNewUser(
+        _nameController.text.trim(),
+        _username!,
+        null,
+      );
+
+      if (!success) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed. Please try again.')),
+          );
+          setState(() => _isLoading = false);
+        }
+        return;
+      }
+      
+      if (mounted) {
+        // Use push (not pushReplacement) so TabHandler remains as the root route
+        // When user completes FTUE, popUntil(route.isFirst) will return to TabHandler
+        // which will rebuild with Authenticated status and show the tabs
+        Navigator.of(context).push(
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) => const FtueWelcome(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+            transitionDuration: const Duration(milliseconds: 400),
+          ),
+        );
+      }
+    } catch (e) {
+      AppLogger.e('Profile error', category: LogCategory.auth, error: e);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Something went wrong.')),
+        );
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _animController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final canContinue = _nameController.text.trim().isNotEmpty && _username != null;
+    final name = _nameController.text.trim();
+    
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        resizeToAvoidBottomInset: true,
+        body: Stack(
+          children: [
+            // Main content
+            SafeArea(
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: SlideTransition(
+                  position: _slideAnimation,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.only(bottom: 200),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: 60),
+                        _buildHeader(name),
+                        const SizedBox(height: 40),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // Bottom toolboxes
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: _buildBottomToolboxes(canContinue, name),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(String name) {
+    return Column(
+      children: [
+        // App icon with glow
+        Container(
+          height: 100,
+          width: 100,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                blurRadius: 30,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: Image.asset(
+              'assets/images/icon_transparent.png',
+              fit: BoxFit.contain,
+            ),
+          ),
+        ),
+        const SizedBox(height: 32),
+        
+        // Dynamic greeting
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          child: Text(
+            name.isEmpty ? '$_greeting!' : 'Hello, $name!',
+            key: ValueKey(name.isEmpty ? 'greeting' : 'name'),
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              color: AppTheme.textLightColor,
+              fontWeight: FontWeight.bold,
+              letterSpacing: -0.5,
+            ),
+          ),
+        ),
+        
+        const SizedBox(height: 12),
+        
+        // Subtitle
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          child: Text(
+            name.isEmpty 
+                ? "What should we call you?"
+                : "Let's get you started.",
+            key: ValueKey(name.isEmpty ? 'ask' : 'confirm'),
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 16,
+              color: AppTheme.textSecondaryLightColor,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBottomToolboxes(bool canContinue, String name) {
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.zero,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Name entry toolbox
+            _buildNameEntryToolbox(),
+            
+            // Continue button toolbox
+            _buildContinueToolbox(canContinue),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNameEntryToolbox() {
+    return TransparentToolbox(
+      content: Row(
+        children: [
+          Icon(
+            Icons.person_outline_rounded,
+            color: AppTheme.primaryColor.withValues(alpha: 0.85),
+            size: 24,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: TextField(
+              controller: _nameController,
+              autofocus: true,
+              textCapitalization: TextCapitalization.words,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) {
+                FocusScope.of(context).unfocus();
+                if (_nameController.text.trim().isNotEmpty && _username != null) {
+                  _continue();
+                }
+              },
+              decoration: InputDecoration(
+                hintText: 'Enter your name',
+                hintStyle: TextStyle(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                  fontSize: 16,
+                ),
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                filled: false,
+                contentPadding: EdgeInsets.zero,
+              ),
+              style: TextStyle(
+                color: AppTheme.primaryColor.withValues(alpha: 0.9),
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          // Clear button
+          if (_nameController.text.isNotEmpty)
+            GestureDetector(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                _nameController.clear();
+              },
+              child: Icon(
+                Icons.close_rounded,
+                color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                size: 20,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContinueToolbox(bool canContinue) {
+    return TransparentToolbox.button(
+      text: 'Continue',
+      onTap: _continue,
+      isLoading: _isLoading,
+      enabled: canContinue,
+      icon: Icons.arrow_forward_rounded,
+    );
+  }
+}

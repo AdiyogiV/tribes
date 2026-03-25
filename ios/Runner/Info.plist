@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleDisplayName</key>
+	<string>Aurogram</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>Aurogram</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(FLUTTER_BUILD_NAME)</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.canay.dhaara</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>aurogram</string>
+				<string>Dhaara</string>
+				<string>app-1-735015361682-ios-ba2c09702cc4cb85645a4b</string>
+			</array>
+		</dict>
+	</array>
+	<key>CFBundleVersion</key>
+	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>NSAppleMusicUsageDescription</key>
+	<string>Aurogram may need access to your music library to allow you to share and include music in your posts and voice messages.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Aurogram may need access to Bluetooth to enable audio playback features and connect with audio devices for better voice message and media experience.</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>Aurogram may need access to Bluetooth to enable audio playback features and connect with audio devices for better voice message and media experience.</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>Aurogram may need access to your calendar to help you schedule and manage events within your groups and spaces.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Aurogram needs access to your camera to record video posts using your device's camera app.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>Aurogram may need access to your contacts to help you invite friends and connect with people you know to your groups and spaces.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Aurogram needs access to your location to provide location-based features and recommendations.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Aurogram needs access to your location to provide location-based features and recommendations.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Aurogram needs access to your location to provide location-based features and recommendations.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Aurogram needs access to your microphone to record audio for your video posts.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>Aurogram may need access to motion sensors to detect device orientation and movement for improved video recording and media capture experience.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Aurogram needs access to your photo library to select photos to set display pictures for you and your groups.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Aurogram needs access to speech recognition to convert your voice messages into text for easier communication.</string>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+		<string>fetch</string>
+	</array>
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string>
+	<key>UIMainStoryboardFile</key>
+	<string>Main</string>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>instagram-stories</string>
+		<string>instagram</string>
+	</array>
+	<key>FacebookAppID</key>
+	<string>964631802585634</string>
+</dict>
+</plist>

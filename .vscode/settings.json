@@ -1,0 +1,20 @@
+{
+    "editor.fontSize": 14,
+    "markdown.preview.fontSize": 16,
+    "scm.inputFontSize": 16,
+    "interactiveSession.editor.fontSize": 16,
+    "debug.console.fontSize": 16,
+    "terminal.integrated.fontSize": 16,
+    "editor.formatOnSave": true,
+    "code-runner.saveAllFilesBeforeRun": true,
+    "code-runner.saveFileBeforeRun": true,
+    "dart.flutterSdkPath": "/opt/homebrew",
+    "dart.debugSdkLibraries": true,
+    "dart.debugExternalPackageLibraries": true,
+    "dart.flutterHotReloadOnSave": true,
+    "dart.hotReloadOnSave": "always",
+    "dart.vmServiceOutFile": "service.json",
+    "debug.openDebug": "openOnDebugBreak",
+    "cmake.sourceDirectory": "/Users/abhinavvashisht/Documents/GroupCaster/tribes/windows",
+    "traycer.enableAutoAnalysis": false
+}

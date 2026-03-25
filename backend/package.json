@@ -1,0 +1,50 @@
+{
+    "name": "aurafarm-tribes-functions",
+    "version": "1.0.0",
+    "description": "Firebase Cloud Functions for Aurogram Tribes app",
+    "main": "index.js",
+    "type": "module",
+    "engines": {
+        "node": "20"
+    },
+    "scripts": {
+        "serve": "firebase emulators:start --only functions",
+        "shell": "firebase functions:shell",
+        "start": "npm run shell",
+        "deploy": "firebase deploy --only functions",
+        "logs": "firebase functions:log",
+        "lint": "eslint .",
+        "lint:fix": "eslint . --fix",
+        "test": "npm run test:rules && npm run test:reposts",
+        "test:rules": "node --test tests/firestore.rules.test.js",
+        "test:reposts": "node tests/test_reposts_final.js && node tests/test_reposts_cascade.js && node tests/test_reposts_helpers.js && node tests/test_reposts_edge_cases.js",
+        "test:all": "node tests/test_all.js",
+        "audit": "npm audit",
+        "audit:fix": "npm audit fix",
+        "predeploy": "npm run lint",
+        "check": "npm run lint && npm run audit"
+    },
+    "dependencies": {
+        "@google-cloud/tasks": "^6.2.1",
+        "@google/generative-ai": "^0.21.0",
+        "@langchain/community": "^0.3.57",
+        "@langchain/core": "^0.3.78",
+        "@langchain/langgraph": "^0.4.9",
+        "@langchain/openai": "^0.6.14",
+        "agora-token": "^2.0.5",
+        "cheerio": "^1.1.2",
+        "firebase-admin": "^12.7.0",
+        "firebase-functions": "^7.0.3",
+        "jsonwebtoken": "^9.0.2",
+        "langchain": "^0.3.35",
+        "luxon": "^3.5.0",
+        "tz-lookup": "^6.1.25",
+        "zod": "^3.25.76"
+    },
+    "devDependencies": {
+        "@firebase/rules-unit-testing": "^5.0.0",
+        "eslint": "^8.57.0",
+        "eslint-config-google": "^0.14.0"
+    },
+    "private": true
+}

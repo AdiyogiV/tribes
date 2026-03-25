@@ -1,0 +1,137 @@
+{
+    "functions": [
+        {
+            "source": ".",
+            "codebase": "default",
+            "ignore": [
+                "node_modules",
+                ".git",
+                "firebase-debug.log",
+                "firebase-debug.*.log",
+                "public"
+            ]
+        }
+    ],
+    "hosting": {
+        "public": "public",
+        "ignore": [
+            "firebase.json",
+            "**/.*",
+            "**/node_modules/**"
+        ],
+        "rewrites": [
+            {
+                "source": "/u/**",
+                "destination": "/u/index.html"
+            },
+            {
+                "source": "/cosmic/**",
+                "destination": "/cosmic/index.html"
+            },
+            {
+                "source": "/p/**",
+                "destination": "/p/index.html"
+            },
+            {
+                "source": "/s/**",
+                "destination": "/s/index.html"
+            }
+        ],
+        "headers": [
+            {
+                "source": "**",
+                "headers": [
+                    {
+                        "key": "X-Content-Type-Options",
+                        "value": "nosniff"
+                    },
+                    {
+                        "key": "X-Frame-Options",
+                        "value": "SAMEORIGIN"
+                    },
+                    {
+                        "key": "X-XSS-Protection",
+                        "value": "1; mode=block"
+                    }
+                ]
+            },
+            {
+                "source": "/.well-known/apple-app-site-association",
+                "headers": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ]
+            },
+            {
+                "source": "/.well-known/assetlinks.json",
+                "headers": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ]
+            },
+            {
+                "source": "firebase-messaging-sw.js",
+                "headers": [
+                    {
+                        "key": "Cache-Control",
+                        "value": "no-cache, must-revalidate"
+                    }
+                ]
+            },
+            {
+                "source": "main.dart.js",
+                "headers": [
+                    {
+                        "key": "Cache-Control",
+                        "value": "no-cache, must-revalidate"
+                    }
+                ]
+            },
+            {
+                "source": "index.html",
+                "headers": [
+                    {
+                        "key": "Cache-Control",
+                        "value": "no-cache, must-revalidate"
+                    }
+                ]
+            },
+            {
+                "source": "**/*.@(jpg|jpeg|gif|png|svg|webp|ico)",
+                "headers": [
+                    {
+                        "key": "Cache-Control",
+                        "value": "public, max-age=604800"
+                    }
+                ]
+            }
+        ]
+    },
+    "firestore": {
+        "rules": "firestore.rules",
+        "indexes": "firestore.indexes.json"
+    },
+    "storage": {
+        "rules": "storage.rules"
+    },
+    "emulators": {
+        "functions": {
+            "port": 5001,
+            "host": "127.0.0.1"
+        },
+        "firestore": {
+            "port": 8080,
+            "host": "127.0.0.1"
+        },
+        "ui": {
+            "enabled": true,
+            "port": 4000,
+            "host": "127.0.0.1"
+        },
+        "singleProjectMode": true
+    }
+}

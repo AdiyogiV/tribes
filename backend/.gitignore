@@ -1,0 +1,14 @@
+# Runtime config with API keys
+.runtimeconfig.json
+
+# Node modules
+node_modules/
+
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# Service account keys
+serviceAccountKey.json

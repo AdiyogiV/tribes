@@ -1,0 +1,141 @@
+name: aurogram
+description: Aurogram - Social Platform with Astrology Insights
+
+# Ensure the package is private (not published to pub.dev)
+publish_to: "none"
+
+# Versioning
+version: 67.0.0+67
+versionCode: 67
+# Minimum Flutter SDK version requirement
+environment:
+  sdk: ">=3.0.0 <4.0.0" # Dart 3.0+ required for records syntax
+
+dependencies:
+  # Flutter SDK
+  flutter:
+    sdk: flutter
+
+  # Firebase Services
+  firebase_core:
+  firebase_core_web:
+  firebase_auth:
+  cloud_firestore:
+  firebase_storage:
+  cloud_functions:
+  firebase_messaging:
+  firebase_analytics:
+  firebase_crashlytics:
+  firebase_remote_config:
+  firebase_app_check: ^0.4.1+2
+  package_info_plus: ^9.0.0
+  connectivity_plus: ^7.0.0
+  # UI and State Management
+  provider:
+  cupertino_icons:
+  very_good_infinite_list: ^0.9.0
+  # Additional Dependencies
+  country_code_picker:
+  video_player:
+  flutter_cache_manager:
+  like_button:
+  visibility_detector:
+  pull_to_refresh:
+  permission_handler:
+  speech_to_text: ^7.0.0
+  flutter_sound: ^9.2.13
+  just_audio: ^0.10.5
+  audio_session: ^0.2.2
+  image_picker:
+  drag_select_grid_view:
+  get_thumbnail_video:
+  intl:
+  preload_page_view:
+  url_launcher:
+  share_plus:
+  app_links: ^7.0.0  # Deep linking (Universal Links, App Links)
+  flutter_local_notifications:
+  shared_preferences: ^2.5.3
+  path:
+  path_provider: ^2.1.5
+  device_info_plus: ^12.2.0
+  uuid:
+  get_it: ^9.0.5
+  flutter_displaymode: ^0.7.0
+  video_compress: ^3.1.2 # Added for video compression
+  # UI Components
+  cached_network_image: ^3.3.1 # Added for optimized image loading
+  photo_view: ^0.15.0 # Added for fullscreen image viewing with pinch-to-zoom
+  flutter_svg:
+  shimmer:
+  flutter_lints: ^6.0.0
+  # Missing dependencies for recovered features
+  geolocator: ^14.0.2
+  geocoding: ^4.0.0
+  flutter_markdown_plus: ^1.0.5
+  image: ^4.1.7
+  markdown: ^7.3.0
+  http: ^1.1.0
+  lat_lng_to_timezone: ^0.2.0
+  timezone: ^0.10.1
+  kundali_chart: ^0.0.2
+  
+  # World Calendar Support
+  hijri_date: ^1.0.0          # Islamic/Hijri calendar
+  chinese_lunar_calendar: ^1.0.4  # Chinese lunar calendar with zodiac
+  kosher_dart: ^2.0.17        # Jewish/Hebrew calendar (pinned for lints compatibility)
+  
+  flutter_contacts: ^1.1.9+2  # Contact sync
+  crypto: ^3.0.6              # Phone hashing
+  record: ^6.1.2
+  firebase_ai: ^3.6.0  # Firebase AI Logic for Gemini
+  screenshot: ^3.0.0   # Capture widgets as images for sharing
+  
+  # Voice/Video Calling
+  # 1:1 Calls - WebRTC P2P (existing)
+  flutter_webrtc: ^1.2.1          # WebRTC for peer-to-peer 1:1 calls
+  wakelock_plus: ^1.2.10           # Keep screen awake during calls
+  vibration: ^3.1.5                # Vibrate on incoming calls
+  
+  # Group Calls - Agora SFU
+  agora_rtc_engine: ^6.5.3         # Agora RTC for group calls (upgraded from 6.3.2)
+  
+  logger: any
+  metadata_fetch: ^0.4.2
+  social_share: ^2.3.1
+dependency_overrides:
+  geolocator_android: ^5.0.2
+  uuid: ^4.0.0
+
+dev_dependencies:
+  flutter_launcher_icons:
+  flutter_test:
+    sdk: flutter
+  mockito: ^5.4.4
+  build_runner: ^2.4.13
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/icon_transparent.png"
+  remove_alpha_ios: true
+
+# Flutter Specific Configuration
+flutter:
+  uses-material-design: true
+
+  # Assets (optimized loading)
+  assets:
+    - assets/images/
+    - assets/icons/
+
+  # Deferred components for faster initial load (disabled due to Android build issues)
+  # deferred-components:
+  #   - name: astrology
+  #     libraries:
+  #       - package:aurogram/utils/astrology/astrology_exports.dart
+
+# iOS Configuration
+ios:
+  # Set your minimum iOS deployment target here
+  deployment_target: 13.0

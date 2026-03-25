@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
+
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
+
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
+  <base href="/">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+
+  <!-- Primary Meta Tags -->
+  <title>Aurogram - Connect with Your Tribe</title>
+  <meta name="title" content="Aurogram - Connect with Your Tribe">
+  <meta name="description"
+    content="Connect with your tribe through video, chat, and AI-powered insights. Share moments, join group calls, and explore your cosmic journey.">
+  <meta name="keywords" content="social app, video chat, group calls, astrology, AI chat, community, tribes">
+  <meta name="author" content="Aurogram">
+  <meta name="robots" content="index, follow">
+
+  <!-- Theme Color -->
+  <meta name="theme-color" content="#5A3D34">
+  <meta name="msapplication-TileColor" content="#080C14">
+  <meta name="msapplication-navbutton-color" content="#5A3D34">
+
+  <!-- Canonical URL -->
+  <link rel="canonical" href="https://aurogram.in/">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://aurogram.in/">
+  <meta property="og:title" content="Aurogram - Connect with Your Tribe">
+  <meta property="og:description"
+    content="Connect with your tribe through video, chat, and AI-powered insights. Share moments, join group calls, and explore your cosmic journey.">
+  <meta property="og:image" content="https://aurogram.in/icons/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="Aurogram">
+  <meta property="og:locale" content="en_US">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://aurogram.in/">
+  <meta name="twitter:title" content="Aurogram - Connect with Your Tribe">
+  <meta name="twitter:description"
+    content="Connect with your tribe through video, chat, and AI-powered insights. Share moments, join group calls, and explore your cosmic journey.">
+  <meta name="twitter:image" content="https://aurogram.in/icons/og-image.png">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Aurogram">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/Icon-192.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="icons/Icon-192.png">
+  <link rel="apple-touch-icon" sizes="120x120" href="icons/Icon-192.png">
+
+  <!-- Splash screens for iOS -->
+  <link rel="apple-touch-startup-image" href="icons/Icon-512.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon.png">
+  <link rel="shortcut icon" href="favicon.png">
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Preconnect for performance -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://firebasestorage.googleapis.com">
+  <link rel="dns-prefetch" href="https://firestore.googleapis.com">
+  <!-- Preconnect for Agora CDN to speed up SDK loading -->
+  <link rel="preconnect" href="https://download.agora.io">
+  <link rel="dns-prefetch" href="https://download.agora.io">
+
+  <script>
+    // The value below is injected by flutter build, do not touch.
+    const serviceWorkerVersion = "456642925";
+
+    // Agora SDK lazy loading - only load when user needs video call features
+    // This saves ~500KB+ on initial page load for users who don't use calls
+    var agoraLoaded = false;
+    var agoraLoadCallbacks = [];
+    var agoraLoadAttempted = false;
+
+    // #region agent log
+    function debugLog(msg, data) {
+      try {
+        fetch('http://127.0.0.1:7242/ingest/327cfdf5-167e-4df8-b9b2-c2bd6e2cc615', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'index.html:loadAgoraSDK', message: msg, data: data || {}, timestamp: Date.now(), sessionId: 'debug-session', hypothesisId: 'A-B' }) }).catch(function () { });
+      } catch (e) { }
+    }
+    // #endregion
+
+    function loadAgoraSDK(callback) {
+      // #region agent log
+      debugLog('loadAgoraSDK called', { agoraLoaded: agoraLoaded, agoraLoadAttempted: agoraLoadAttempted, hasCallback: !!callback });
+      // #endregion
+
+      if (agoraLoaded) {
+        // #region agent log
+        debugLog('SDK already loaded, calling callback immediately');
+        // #endregion
+        if (callback) callback();
+        return;
+      }
+
+      if (callback) agoraLoadCallbacks.push(callback);
+
+      // Prevent multiple load attempts
+      if (agoraLoadAttempted) {
+        // #region agent log
+        debugLog('Load already attempted, waiting for result');
+        // #endregion
+        return;
+      }
+      agoraLoadAttempted = true;
+
+      console.log('[Aurogram] Loading Agora SDK on demand...');
+      // #region agent log
+      debugLog('Starting iris-web-rtc script load (official URL)');
+      // #endregion
+
+      // Load the iris-web-rtc bundle ONLY (it includes Agora Web SDK)
+      // Per official docs: https://pub.dev/packages/agora_rtc_engine
+      var irisScript = document.createElement('script');
+      // CORRECT URL from official agora_rtc_engine 6.5.3 documentation
+      irisScript.src = 'https://download.agora.io/sdk/release/iris-web-rtc_n450_w4220_0.8.6.js';
+      irisScript.onload = function () {
+        console.log('[Aurogram] Agora SDK (iris-web-rtc) loaded successfully');
+        // #region agent log
+        debugLog('Iris script onload fired', { success: true });
+        // #endregion
+        agoraLoaded = true;
+        // Execute all pending callbacks
+        var pendingCount = agoraLoadCallbacks.length;
+        // #region agent log
+        debugLog('Executing callbacks', { count: pendingCount });
+        // #endregion
+        agoraLoadCallbacks.forEach(function (cb) {
+          try { cb(); } catch (e) { console.error('Callback error:', e); }
+        });
+        agoraLoadCallbacks = [];
+      };
+      irisScript.onerror = function (e) {
+        console.error('[Aurogram] Failed to load Iris bridge');
+        // #region agent log
+        debugLog('Iris script onerror fired', { error: e ? e.toString() : 'unknown' });
+        // #endregion
+        agoraLoadAttempted = false; // Allow retry
+      };
+      document.head.appendChild(irisScript);
+      // #region agent log
+      debugLog('Script element appended to head', { src: irisScript.src });
+      // #endregion
+    }
+
+    // Expose to Flutter via JS interop
+    window.loadAgoraSDK = loadAgoraSDK;
+    window.isAgoraLoaded = function () { return agoraLoaded; };
+  </script>
+  <!-- This script adds the flutter initialization JS code -->
+  <script src="flutter.js" defer></script>
+
+  <!-- Loading styles -->
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #080C14;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      overflow: hidden;
+    }
+
+    /* Hide Flutter's default loading indicator */
+    .flutter-loader,
+    flt-glass-pane,
+    flt-scene-host {
+      background-color: #080C14 !important;
+    }
+
+    .loading-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      width: 100vw;
+      background-color: #080C14;
+      z-index: 9999;
+    }
+
+    .loading-logo {
+      width: 100px;
+      height: 100px;
+      margin-bottom: 24px;
+      animation: pulse 2s ease-in-out infinite;
+      border-radius: 20px;
+    }
+
+    .loading-text {
+      color: #8D6E63;
+      font-size: 22px;
+      letter-spacing: 4px;
+      text-transform: lowercase;
+      font-weight: 600;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+
+      50% {
+        transform: scale(1.05);
+        opacity: 0.85;
+      }
+    }
+
+    /* Hide loading screen once Flutter loads */
+    .flutter-loaded .loading-container {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease-out;
+    }
+
+    /* WebRTC 1:1 call: force contain so video is not cropped on web (plugin only sets object-fit when WEBRTC_USE_HTML_ELEMENT_VIEW is true) */
+    video[id^="video_RTCVideoRenderer"] {
+      object-fit: contain !important;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Loading screen shown while Flutter initializes -->
+  <div class="loading-container" id="loading">
+    <img src="icons/icon_transparent.png" alt="Aurogram" class="loading-logo" onerror="this.style.display='none'">
+    <div class="loading-text">aurogram</div>
+  </div>
+
+  <script>
+    // Register Firebase Messaging Service Worker for push notifications and caching
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/firebase-messaging-sw.js')
+        .then(function (registration) {
+          console.log('Firebase Messaging SW registered:', registration.scope);
+        })
+        .catch(function (error) {
+          console.log('Firebase Messaging SW registration failed:', error);
+        });
+    }
+
+    window.addEventListener('load', function (ev) {
+      // Download main.dart.js
+      _flutter.loader.loadEntrypoint({
+        serviceWorker: {
+          serviceWorkerVersion: serviceWorkerVersion,
+        },
+        onEntrypointLoaded: function (engineInitializer) {
+          engineInitializer.initializeEngine().then(function (appRunner) {
+            // Hide loading screen and run app
+            document.body.classList.add('flutter-loaded');
+            appRunner.runApp();
+          });
+        }
+      });
+    });
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,116 @@
+import 'package:flutter/material.dart';
+import 'package:aurogram/utils/theme/app_theme.dart';
+
+/// Loading skeleton for profile page
+class ProfileLoadingSkeleton extends StatelessWidget {
+  const ProfileLoadingSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color placeholder =
+        AppTheme.primaryColor.withValues(alpha: isDark ? 0.12 : 0.08);
+    final Color placeholderDark =
+        AppTheme.primaryColor.withValues(alpha: isDark ? 0.18 : 0.12);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        children: [
+          const SizedBox(height: 24),
+          // Avatar skeleton
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              color: placeholder,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(height: 20),
+          // Name skeleton
+          Container(
+            width: 150,
+            height: 22,
+            decoration: BoxDecoration(
+              color: placeholderDark,
+              borderRadius: BorderRadius.circular(11),
+            ),
+          ),
+          const SizedBox(height: 10),
+          // Username skeleton
+          Container(
+            width: 100,
+            height: 14,
+            decoration: BoxDecoration(
+              color: placeholder,
+              borderRadius: BorderRadius.circular(7),
+            ),
+          ),
+          const SizedBox(height: 28),
+          // Stats row skeleton
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              3,
+              (i) => Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        color: placeholderDark,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      width: 56,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: placeholder,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 28),
+          // Bio skeleton lines
+          ...List.generate(
+            2,
+            (i) => Padding(
+              padding: EdgeInsets.only(
+                bottom: 10,
+                left: i == 1 ? 30 : 0,
+                right: i == 1 ? 30 : 0,
+              ),
+              child: Container(
+                width: double.infinity,
+                height: 14,
+                decoration: BoxDecoration(
+                  color: i == 0 ? placeholderDark : placeholder,
+                  borderRadius: BorderRadius.circular(7),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Action buttons skeleton
+          Container(
+            width: 200,
+            height: 44,
+            decoration: BoxDecoration(
+              color: placeholder,
+              borderRadius: BorderRadius.circular(22),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

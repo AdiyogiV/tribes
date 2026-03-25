@@ -1,0 +1,183 @@
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withReader('UTF-8') { reader ->
+        localProperties.load(reader)
+    }
+}
+
+def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
+if (flutterVersionCode == null) {
+    flutterVersionCode = '18'
+}
+
+def flutterVersionName = localProperties.getProperty('flutter.versionName')
+if (flutterVersionName == null) {
+    flutterVersionName = '1.0'
+}
+
+
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('key.properties')
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+android {
+    namespace "com.canay.dhaara"
+    compileSdkVersion 36
+    ndkVersion "28.2.13676358"
+
+    // Performance optimizations
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+        coreLibraryDesugaringEnabled true
+    }
+    tasks.withType(JavaCompile) {
+        options.compilerArgs << "-Xlint:-options"
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+    }
+
+    defaultConfig {
+        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
+        applicationId "com.canay.dhaara"
+        // You can update the following values to match your application needs.
+        // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
+        minSdkVersion 24
+        targetSdkVersion 36
+        versionCode flutterVersionCode.toInteger()
+        versionName flutterVersionName
+        multiDexEnabled true
+        
+        ndk {
+            // Only include 64-bit ARM for production
+            // 32-bit (armeabi-v7a) dropped - <5% of devices in 2026
+            abiFilters 'arm64-v8a'
+        }
+    }
+
+    signingConfigs {
+        release {
+            if (keystoreProperties['storeFile']) {
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+                storeFile file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            // Debug build configuration
+            debuggable true
+            minifyEnabled false
+            shrinkResources false
+        }
+        release {
+            // Use release signing config if available, otherwise use debug
+            if (keystoreProperties['storeFile']) {
+                signingConfig signingConfigs.release
+            } else {
+                signingConfig signingConfigs.debug
+            }
+            // Enable code shrinking, obfuscation, and optimization
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            
+            // Additional optimizations
+            zipAlignEnabled true
+            debuggable false
+            
+            // Use SYMBOL_TABLE to avoid strip failure (Flutter 3.32+ strip step can fail without NDK in PATH)
+            ndk {
+                debugSymbolLevel 'SYMBOL_TABLE'
+            }
+        }
+    }
+    
+    // ============================================================
+    // APP SIZE OPTIMIZATION: Exclude unused native libraries
+    // ============================================================
+    packagingOptions {
+        // Force exclude non-arm64 architectures
+        // x86/x86_64 = emulator only, armeabi-v7a = 32-bit (<5% devices in 2026)
+        exclude 'lib/x86_64/**'
+        exclude 'lib/x86/**'
+        exclude 'lib/armeabi-v7a/**'
+        
+        // Exclude unused Agora SDK extensions (saves ~50-60MB)
+        // We only use basic RTC - no AI features, beauty filters, or advanced codecs
+        
+        // AI and ML extensions (not used)
+        exclude 'lib/*/libagora_ai_echo_cancellation_extension.so'
+        exclude 'lib/*/libagora_ai_echo_cancellation_ll_extension.so'
+        exclude 'lib/*/libagora_ai_noise_suppression_extension.so'
+        exclude 'lib/*/libagora_ai_noise_suppression_ll_extension.so'
+        
+        // Face/body detection and tracking (not used)
+        exclude 'lib/*/libagora_face_capture_extension.so'
+        exclude 'lib/*/libagora_face_detection_extension.so'
+        exclude 'lib/*/libagora_segmentation_extension.so'
+        
+        // Video enhancement and beauty (not used)
+        exclude 'lib/*/libagora_clear_vision_extension.so'
+        exclude 'lib/*/libagora_audio_beauty_extension.so'
+        exclude 'lib/*/libagora_video_quality_analyzer_extension.so'
+        
+        // Spatial audio and lip sync (not used)
+        exclude 'lib/*/libagora_spatial_audio_extension.so'
+        exclude 'lib/*/libagora_lip_sync_extension.so'
+        
+        // AV1 codec extensions (H.264/VP8 are sufficient)
+        exclude 'lib/*/libagora_video_av1_encoder_extension.so'
+        exclude 'lib/*/libagora_video_av1_decoder_extension.so'
+        
+        // Content moderation (not used)
+        exclude 'lib/*/libagora_content_inspect_extension.so'
+        
+        // Screen capture extension (not needed for basic calls)
+        exclude 'lib/*/libagora_screen_capture_extension.so'
+        
+        // Duplicate/unnecessary libraries
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/license.txt'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/NOTICE.txt'
+        exclude 'META-INF/notice.txt'
+    }
+}
+
+
+
+
+flutter {
+    source '../..'
+}
+
+dependencies {
+
+        implementation "androidx.multidex:multidex:2.0.1"  
+        coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'
+        implementation 'com.google.android.play:app-update:2.1.0'
+        implementation 'com.google.android.play:feature-delivery:2.1.0'
+        implementation 'com.google.android.gms:play-services-tasks:18.2.0'
+}
+apply plugin: 'com.google.gms.google-services'

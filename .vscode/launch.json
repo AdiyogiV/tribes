@@ -1,0 +1,59 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Flutter (Debug)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "console": "debugConsole",
+            "flutterMode": "debug"
+        },
+        {
+            "name": "Flutter (Run Only)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "noDebug": true,
+            "flutterMode": "debug"
+        },
+        {
+            "name": "Flutter Web (Chrome)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "flutterMode": "debug",
+            "deviceId": "chrome",
+            "args": [
+                "--web-browser-flag=--use-fake-ui-for-media-stream",
+                "--web-browser-flag=--enable-features=WebRTCAllowInsecureOrigins"
+            ]
+        },
+        {
+            "name": "Flutter Web (Chrome with Real Media)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "flutterMode": "debug",
+            "deviceId": "chrome",
+            "args": [
+                "--web-browser-flag=--enable-features=WebRTCAllowInsecureOrigins",
+                "--web-browser-flag=--disable-features=WebRtcHideLocalIpsWithMdns"
+            ]
+        },
+        {
+            "name": "Flutter (Profile)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "Flutter (Release)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "flutterMode": "release"
+        }
+    ]
+}

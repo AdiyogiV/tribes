@@ -1,0 +1,605 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // =============================================================================
+    // SHARED HELPERS
+    // =============================================================================
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function getSpaceData(spaceId) {
+      return get(/databases/$(database)/documents/spaces/$(spaceId)).data;
+    }
+
+    function isPublicSpace(spaceId) {
+      let data = getSpaceData(spaceId);
+      return data.isProfileGram == true ||
+             data.spaceType == 0 || // legacy open
+             data.spaceType == 1;   // public
+    }
+
+    function isSpaceMember(spaceId) {
+      return isSignedIn() &&
+             exists(/databases/$(database)/documents/spaceRoles/$(spaceId)/roles/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/spaceRoles/$(spaceId)/roles/$(request.auth.uid)).data.role in ['member', 'admin', 'creator'];
+    }
+
+    function canReadSpace(spaceId) {
+      return isPublicSpace(spaceId) || isSpaceMember(spaceId);
+    }
+
+    function isUserFollower(userId) {
+      return isSignedIn() &&
+             exists(/databases/$(database)/documents/userFollowers/$(userId)/followers/$(request.auth.uid));
+    }
+
+    // Requester and profileUserId are mutual friends (both follow each other with status 'following')
+    function isMutualWith(profileUserId) {
+      return isSignedIn() &&
+             exists(/databases/$(database)/documents/userFollowers/$(profileUserId)/followers/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/userFollowers/$(profileUserId)/followers/$(request.auth.uid)).data.status == 'following' &&
+             exists(/databases/$(database)/documents/userFollowing/$(request.auth.uid)/following/$(profileUserId)) &&
+             get(/databases/$(database)/documents/userFollowing/$(request.auth.uid)/following/$(profileUserId)).data.status == 'following';
+    }
+
+    function canReadProfile(userId) {
+      // Allow any signed-in user to read profile docs to prevent feed/query failures.
+      // For logged-out users: allow reading user profiles (they are public by default).
+      // User profiles are public - only posts can be private, not user profiles themselves.
+      return isSignedIn() ||
+             exists(/databases/$(database)/documents/users/$(userId));
+    }
+
+    function getPostSpaceId(postData) {
+      return postData.contextId != null ? postData.contextId : postData.space;
+    }
+
+    function canReadPostData(postData) {
+      return postData.contextType == 'profile'
+        ? canReadProfile(postData.author)
+        : (getPostSpaceId(postData) != null && canReadSpace(getPostSpaceId(postData)));
+    }
+
+    function canReadPost(postId) {
+      return canReadPostData(get(/databases/$(database)/documents/posts/$(postId)).data);
+    }
+
+    // AI Chat Sessions - Real-time updates from backend
+    // Public read allowed - chatId is random/unpredictable and only known to requester
+    // This enables thought steps streaming for logged-out users too
+    match /ai_chat_sessions/{chatId} {
+      allow read: if true; // Anyone with the chatId can read (for guest AI chat)
+      allow write: if false; // Only backend can write
+    }
+    
+    // Users collection - Allow public read for basic profile info
+    match /users/{userId} {
+      // Allow read if authenticated, or basic profile, or unauthenticated read for docs with anonymousLinkSlug (invite /s/ slug lookup)
+      allow read: if canReadProfile(userId) ||
+                    (request.auth == null && resource != null && 'anonymousLinkSlug' in resource.data);
+      
+      // Allow writing to own document only
+      allow write: if request.auth != null && request.auth.uid == userId;
+      
+      // NOTE: auraScore updates are now handled ONLY by backend Cloud Functions
+      // Removed client-side aura update rule for security
+      
+      match /blocked/{blockedUserId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // Aura History - user can read own, only backend writes (via Admin SDK)
+      match /auraHistory/{historyId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if false; // Backend only via Admin SDK
+      }
+      
+      // Aura Tracking - user can read own, only backend writes (via Admin SDK)
+      match /auraTracking/{trackingId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if false; // Backend only via Admin SDK
+      }
+      
+      // Namaste Quota - tracks daily namaste sends (3 per day limit)
+      // Only user can read their own quota, backend writes via Cloud Functions
+      match /namasteQuota/{date} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // Daily Insights - users can read their own insights, backend can write
+      match /dailyInsights/{date} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if false; // Only backend can write via Cloud Functions
+      }
+      
+      // Favorite Insights - users can read/write their own favorites
+      match /favoriteInsights/{insightId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // Insight Feedback - users can read/write their own feedback
+      match /insightFeedback/{feedbackId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // Saved Insights - users can read/write their own saved insights
+      match /savedInsights/{insightId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // Stories - 24h ephemeral; any authenticated user can read, only owner can write
+      match /stories/{storyId} {
+        allow read: if request.auth != null;
+        allow create, update, delete: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // Allow users to update their own insightStreak and lastInsightView
+      allow update: if request.auth != null && 
+                       request.auth.uid == userId &&
+                       request.resource.data.diff(resource.data).affectedKeys()
+                       .hasOnly(['insightStreak', 'lastInsightView', 'lastStreakUpdate']);
+    }
+    
+    // Astro Cache - backend only (no user access needed)
+    match /astroCache/{cacheKey} {
+      allow read: if false; // Backend only
+      allow write: if false; // Backend only
+    }
+    
+    // Global Astro - shared data like sky positions, muhurat, panchang
+    // Authenticated users can read, only backend writes
+    match /global_astro/{docId} {
+      allow read: if isSignedIn();
+      allow write: if false; // Backend only via Admin SDK
+    }
+    
+    // DM Conversations - participants only
+    // Note: conversationId format is "dm_{userId1}_{userId2}" (sorted alphabetically)
+    match /dmConversations/{conversationId} {
+      // Read: only participants (ID contains user's uid due to deterministic naming)
+      allow read: if request.auth != null;
+      // Create: user must be in participants array
+      allow create: if request.auth != null && 
+                      request.auth.uid in request.resource.data.participants;
+      // Update: user must be in existing participants
+      allow update: if request.auth != null && 
+                      request.auth.uid in resource.data.participants;
+      // Delete: not allowed from client
+      allow delete: if false;
+      
+      match /messages/{messageId} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null;
+      }
+    }
+    
+    // Space Chats
+    match /spaceChats/{chatId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+    
+    // Typing Indicators
+    // Document ID format: {spaceId}_{userId}
+    match /typing/{docId} {
+      // Anyone authenticated can read typing indicators
+      allow read: if request.auth != null;
+      // Users can only write their own typing status (docId ends with their uid)
+      allow create, update: if request.auth != null 
+        && docId.matches('.*_' + request.auth.uid + '$');
+      // Users can only delete their own typing status
+      allow delete: if request.auth != null 
+        && docId.matches('.*_' + request.auth.uid + '$');
+    }
+    
+    // User Conversation Settings (pin, mute, archive)
+    // Document ID format: {userId}_{conversationId}
+    match /userConversationSettings/{docId} {
+      // Users can only read/write their own settings
+      allow read, write: if request.auth != null 
+        && docId.matches('^' + request.auth.uid + '_.*');
+    }
+    
+    // Spaces - Allow public read access
+    match /spaces/{spaceId} {
+      // Allow read when doc does not exist (so /s/{id} invite links can check space vs anonymous slug without auth),
+      // or for public spaces (type 0 or 1 / isProfileGram) or if user is a member
+      allow read: if !exists(/databases/$(database)/documents/spaces/$(spaceId)) ||
+                    isSignedIn() ||
+                    resource.data.spaceType == 0 ||
+                    resource.data.spaceType == 1 ||
+                    resource.data.isProfileGram == true;
+      allow write: if request.auth != null;
+      
+      // Active group call tracking (Agora)
+      match /calls/{callDoc} {
+        // Any member can read active call status
+        allow read: if request.auth != null;
+        // Any member can update (join/leave) the call
+        allow write: if request.auth != null;
+      }
+      
+      // Space messages (chat messages including call history)
+      match /messages/{messageId} {
+        // Any authenticated user can read space messages
+        allow read: if request.auth != null;
+        // Any authenticated user can write (add messages, call history, etc.)
+        allow write: if request.auth != null;
+      }
+    }
+    
+    // Posts - Public read (feed shows posts from globalFeed; knowing a post ID is enough to read)
+    match /posts/{postId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      // Only post author can update (repostCount updates are backend-only via Cloud Functions)
+      allow update: if request.auth != null && resource.data.author == request.auth.uid;
+      allow delete: if request.auth != null && resource.data.author == request.auth.uid;
+    }
+
+    // User profile posts subcollection (repost to profile: posts/{userId}/userPosts)
+    match /posts/{userId}/userPosts/{postId} {
+      allow read: if canReadProfile(userId);
+      allow create: if request.auth != null && request.auth.uid == userId;
+      // Only post author can update (repostCount updates are backend-only via Cloud Functions)
+      allow update: if request.auth != null && resource.data.author == request.auth.uid;
+      allow delete: if request.auth != null && resource.data.author == request.auth.uid;
+    }
+    
+    // Post Replies - Public read (replies to posts; create/update require auth)
+    match /postReplies/{postId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+      
+      match /replies/{replyId} {
+        allow read: if true;
+        allow create: if request.auth != null;
+        allow update, delete: if request.auth != null && 
+                                 resource.data.author == request.auth.uid;
+      }
+    }
+    
+    // Post Likes - Allow read for authenticated users
+    match /postLikes/{postId} {
+      // Allow read for authenticated users (simplifies queries)
+      allow read: if isSignedIn();
+      // Parent doc metadata - any authenticated can update (count tracking)
+      allow write: if request.auth != null;
+      
+      match /likes/{userId} {
+        // Allow read for authenticated users
+        allow read: if isSignedIn();
+        // Users can only manage their own like (userId in path must match auth uid)
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+    
+    // Space Posts - Allow public read for displaying posts
+    match /spacePosts/{spaceId} {
+      // Allow read for all - needed to display space post metadata
+      allow read: if canReadSpace(spaceId);
+      allow write: if request.auth != null;
+      
+      match /posts/{postId} {
+        // Allow read for all - simplifies public post display
+        allow read: if canReadSpace(spaceId);
+        allow write: if request.auth != null;
+      }
+    }
+    
+    // User Posts - Profile posts collection (new architecture without isProfileGram)
+    match /userPosts/{userId} {
+      // Allow read for all - needed to display user profile posts
+      allow read: if canReadProfile(userId);
+      // Only the owner can write metadata
+      allow write: if request.auth != null && request.auth.uid == userId;
+      
+      match /posts/{postId} {
+        // Allow read for all - public profile posts
+        allow read: if canReadProfile(userId);
+        // Only the owner can write their posts
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+    
+    // Helper function to check if user is admin or creator of a space
+    function isSpaceAdminOrCreator(spaceId) {
+      return exists(/databases/$(database)/documents/spaceRoles/$(spaceId)/roles/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/spaceRoles/$(spaceId)/roles/$(request.auth.uid)).data.role in ['admin', 'creator'];
+    }
+    
+    // User Spaces
+    match /userSpaces/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId;
+      
+      match /spaces/{spaceId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        // Allow user to write their own spaces
+        // Also allow any authenticated user to write (for invitations)
+        // The app logic handles permission checks
+        allow write: if request.auth != null && 
+                       (request.auth.uid == userId || isSpaceAdminOrCreator(spaceId));
+      }
+    }
+    
+    // User Feed
+    match /userFeed/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null;
+      
+      match /posts/{postId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if request.auth != null;
+      }
+    }
+    
+    // Global Feed - Allow public read access for logged-out users
+    match /globalFeed/{postId} {
+      allow read: if true; // Public read access
+      allow write: if request.auth != null;
+    }
+    
+    // User Replies
+    match /userReplies/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null;
+      
+      match /replies/{replyId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if request.auth != null;
+      }
+    }
+    
+    // Space Roles
+    match /spaceRoles/{spaceId} {
+      allow read: if isSignedIn();
+      // No direct client writes to the parent document
+      allow write: if false;
+      
+      match /roles/{roleId} {
+        allow read: if request.auth != null;
+        // Allow any authenticated user to write - trust the app logic
+        // The app only allows users to write their own roles or admins to manage others
+        allow write: if isSignedIn() &&
+                       (request.auth.uid == roleId || isSpaceAdminOrCreator(spaceId));
+      }
+    }
+    
+    // User Items
+    match /userItems/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId;
+      
+      match /items/{itemId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+    
+    // Space Items
+    match /spaceItems/{spaceId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+      
+      match /items/{itemId} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null;
+      }
+    }
+    
+    // Items (global)
+    match /items/{itemId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+    
+    // Nicknames
+    match /nicknames/{document=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+    
+    // Votes
+    match /votes/{voteId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+    
+    // Notifications (backend writes via Admin SDK; client can only read/write own)
+    match /notifications/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId;
+      
+      match /notifications/{notificationId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // Anonymous messages
+    match /anonymousMessages/{messageId} {
+      allow read: if request.auth != null &&
+                    request.auth.uid == resource.data.recipientId;
+      allow update: if request.auth != null &&
+                     request.auth.uid == resource.data.recipientId &&
+                     request.resource.data.diff(resource.data).affectedKeys()
+                       .hasOnly(['status']) &&
+                     request.resource.data.status in ['visible', 'hidden', 'blocked'];
+      allow create, delete: if false; // backend only
+    }
+    
+    // Reports (backend only write)
+    match /reports/{reportId} {
+      allow read: if false;
+      allow write: if request.auth != null;
+    }
+    
+    // Reposts collection - Twitter-style reference-only model
+    match /reposts/{repostId} {
+      // Public read for feed queries
+      allow read: if true;
+      // Only Cloud Functions can create/update reposts
+      allow create: if false;
+      allow update: if false;
+      // Users can delete their own reposts
+      allow delete: if request.auth != null && 
+                     resource.data.reposterId == request.auth.uid;
+    }
+    
+    // Deleted Users - users can write their own deletion record
+    match /deletedUsers/{userId} {
+      allow read: if request.auth != null;
+      // Allow user to create their own deletion record when deleting account
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Phone Index - for contact discovery
+    // Hash of phone number -> userId mapping
+    match /phoneIndex/{phoneHash} {
+      // Authenticated users can read to check if contacts are on the app
+      allow read: if request.auth != null;
+      // Users can only create/update their own entry (userId must match auth)
+      allow create: if request.auth != null && 
+                      request.resource.data.userId == request.auth.uid;
+      allow update: if request.auth != null && 
+                      request.resource.data.userId == request.auth.uid;
+      // No delete - keep for discovery even if user leaves
+      allow delete: if false;
+    }
+    
+    // Share Links - for tracking viral shares
+    match /shareLinks/{linkCode} {
+      // Anyone can read to verify links
+      allow read: if true;
+      // Authenticated users can create their own share links
+      allow create: if request.auth != null && 
+                      request.resource.data.sharerId == request.auth.uid;
+      // Anyone can update click counts, only sharer can update other fields
+      allow update: if request.auth != null;
+      allow delete: if false;
+    }
+    
+    // User Blocks - for blocking other users
+    // Structure: blocks/{userId}/blocked/{blockedUserId}
+    match /blocks/{userId} {
+      // Users can read their own block list
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId;
+      
+      match /blocked/{blockedUserId} {
+        // Users can read/write their own block entries
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if request.auth != null && request.auth.uid == userId;
+        
+        // Allow users to check if THEY have been blocked by someone
+        // (collectionGroup query needs read access)
+        allow read: if request.auth != null && request.auth.uid == blockedUserId;
+      }
+    }
+    
+    // User Following - tracks who a user follows
+    // Frontend writes here; backend Cloud Functions handle the rest
+    match /userFollowing/{userId} {
+      // Users can read their own following list
+      allow read: if request.auth != null && request.auth.uid == userId;
+      // Only owner can write to their following collection
+      allow write: if request.auth != null && request.auth.uid == userId;
+      
+      match /following/{targetUserId} {
+        // Users can read their own following entries
+        // Target user can read to check if there's a pending request to them
+        // Mutual friends (both follow each other with status 'following') can read the list so they can see Following tab
+        allow read: if request.auth != null && (
+          request.auth.uid == userId
+          || request.auth.uid == targetUserId
+          || isMutualWith(userId)
+        );
+        // Only owner can follow/unfollow - triggers backend Cloud Function
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+    
+    // User Followers - tracks who follows a user
+    // Backend-managed: Cloud Functions write here when userFollowing changes
+    match /userFollowers/{userId} {
+      // Anyone authenticated can read follower lists
+      allow read: if request.auth != null;
+      // No client writes - only backend Cloud Functions (Admin SDK)
+      allow write: if false;
+      
+      match /followers/{followerId} {
+        // Anyone authenticated can check follow status
+        allow read: if request.auth != null;
+        // No client writes - only backend Cloud Functions (Admin SDK)
+        allow write: if false;
+      }
+    }
+    
+    // User Contacts - stored by contact_matching backend function
+    match /userContacts/{userId} {
+      // Users can only read their own contact list
+      allow read: if request.auth != null && request.auth.uid == userId;
+      // Backend writes via Admin SDK (no client writes)
+      allow write: if false;
+    }
+    
+    // Contact Match Analytics - backend only collection
+    match /contactMatchAnalytics/{docId} {
+      allow read: if false; // Backend only
+      allow write: if false; // Backend writes via Admin SDK
+    }
+    
+    // Function Events - backend idempotency tracking
+    match /functionEvents/{eventId} {
+      allow read: if false; // Backend only
+      allow write: if false; // Backend writes via Admin SDK
+    }
+    
+    // Predictions - stored within user's subcollection
+    // Backend writes predictions, users can read and update feedback
+    match /users/{userId}/predictions/{predictionId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      // Users can update status/feedback on their predictions
+      allow update: if request.auth != null && request.auth.uid == userId;
+      allow create, delete: if false; // Backend only
+    }
+    
+    // Voice/Video Calls - WebRTC signaling via Firestore
+    // Only caller and callee can access call documents
+    match /calls/{callId} {
+      // Read: caller or callee only
+      allow read: if request.auth != null && 
+                    (resource.data.callerId == request.auth.uid || 
+                     resource.data.calleeId == request.auth.uid);
+      // Create: any authenticated user (they become caller)
+      allow create: if request.auth != null && 
+                      request.resource.data.callerId == request.auth.uid;
+      // Update: caller or callee can update (for answer, status changes)
+      allow update: if request.auth != null && 
+                      (resource.data.callerId == request.auth.uid || 
+                       resource.data.calleeId == request.auth.uid);
+      // Delete: only backend cleans up
+      allow delete: if false;
+      
+      // ICE candidates for WebRTC signaling
+      match /callerCandidates/{candidateId} {
+        allow read: if request.auth != null;
+        allow create: if request.auth != null;
+        allow update, delete: if false;
+      }
+      
+      match /calleeCandidates/{candidateId} {
+        allow read: if request.auth != null;
+        allow create: if request.auth != null;
+        allow update, delete: if false;
+      }
+    }
+  }
+}
+

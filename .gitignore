@@ -1,0 +1,185 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control, so this line
+# is commented out by default.
+#.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+/build/
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# iOS/XCode related
+**/ios/**/*.mode1v3
+**/ios/**/*.mode2v3
+**/ios/**/*.moved-aside
+**/ios/**/*.pbxuser
+**/ios/**/*.perspectivev3
+**/ios/**/*sync/
+**/ios/**/.sconsign.dblite
+**/ios/**/.tags*
+**/ios/**/.vagrant/
+**/ios/**/DerivedData/
+**/ios/**/Icon?
+**/ios/**/Pods/
+**/ios/**/.symlinks/
+**/ios/**/profile
+**/ios/**/xcuserdata
+**/ios/.generated/
+**/ios/Flutter/.last_build_id
+**/ios/Flutter/App.framework
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/ephemeral/
+**/ios/Flutter/app.flx
+**/ios/Flutter/app.zip
+**/ios/Flutter/flutter_assets/
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/ServiceDefinitions.json
+**/ios/Runner/GeneratedPluginRegistrant.*
+
+# macOS
+**/macos/Flutter/GeneratedPluginRegistrant.swift
+**/macos/Flutter/ephemeral/
+
+# Linux
+**/linux/flutter/generated_plugin_registrant.cc
+**/linux/flutter/generated_plugin_registrant.h
+**/linux/flutter/generated_plugins.cmake
+
+# Windows
+**/windows/flutter/generated_plugin_registrant.cc
+**/windows/flutter/generated_plugin_registrant.h
+**/windows/flutter/generated_plugins.cmake
+
+# Web related
+
+# Coverage
+coverage/
+
+# Exceptions to above rules.
+!/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
+
+# Firebase - Now tracked for team builds
+# google-services.json
+# GoogleService-Info.plist
+# firebase_options.dart
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# FVM Version Cache
+.fvm/
+
+# Node modules (if using web)
+node_modules/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Log files
+*.log
+
+# Test coverage
+coverage/
+test/coverage/
+
+# Build artifacts
+*.dSYM.zip
+*.dSYM
+
+# Flutter build artifacts
+**/build/
+**/flutter_*.js
+**/flutter_*.js.map
+
+# Package related
+.packages
+# pubspec.lock - Now tracked for reproducible builds
+
+# Analysis
+.dart_tool/package_config.json
+analyzer_output.txt
+analyzer_results.txt
+
+# Firebase cache
+.firebase/
+
+# Backend specific
+backend/node_modules/
+backend/*.log
+backend/*_report.json
+backend/firebase-debug.log
+backend/serviceAccountKey.json
+
+# Test artifacts
+*_report.json
+test_report.json
+
+# IDE specific
+devtools_options.yaml # Temporary documentation (one-time notes)
+*_COMPLETE*.txt
+*_ISSUES*.txt
+*_GUIDE*.txt
+*_REPORT*.txt
+PHASE_*.md
+SYSTEM_*.md
+
+# Screenshot/debug files
+flutter_*.png
+flutter_*.log # Empty/backup files
+*_backup.* # Secrets and certificates
+.secrets/
+*.pem
+*.p12
+*.key
+*.keystore
+serviceAccountKey.json
+**/serviceAccountKey.json # Local configuration
+local.properties
+**/local.properties # Kotlin build cache
+android/.kotlin/.git-backup/
+.cursor/
+*.csv

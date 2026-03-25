@@ -1,0 +1,479 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:aurogram/pages/spaces/spaceScreen.dart';
+import 'package:aurogram/services/database_service.dart';
+import 'package:aurogram/services/data/post_db_service.dart';
+import 'package:aurogram/utils/dependency_injection.dart';
+import 'package:aurogram/utils/time_display.dart';
+import 'package:aurogram/widgets/previewBoxes/gramPicture.dart';
+import 'package:aurogram/widgets/previewBoxes/previewBox.dart';
+import 'package:aurogram/widgets/user_avatar.dart';
+import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
+import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/utils/logging/app_logger.dart';
+
+class NewPostTile extends StatefulWidget {
+  final Map? data;
+
+  const NewPostTile({this.data, Key? key}) : super(key: key);
+
+  @override
+  _NewPostTileState createState() => _NewPostTileState();
+}
+
+class _NewPostTileState extends State<NewPostTile> {
+  final CollectionReference postCollection =
+      FirebaseFirestore.instance.collection('posts');
+  String author = 'Unknown Author';
+  String authorId = '';
+  String authorDp = '';
+  String space = 'Unknown Space';
+  String date = 'Unknown Date';
+  bool ready = false;
+  DocumentSnapshot? postDoc;
+  DocumentSnapshot? spaceDoc;
+  String postThumbnail = '';
+  String spacePicture = '';
+  String postType = 'video'; // Default to video for backward compatibility
+  String postContent = ''; // Content for text posts
+
+  @override
+  void initState() {
+    super.initState();
+    fetchInfo();
+  }
+
+  Future<void> fetchInfo() async {
+    try {
+      // Try to fetch referenced data, but show notification even if some is missing
+      // Don't delete notifications - show with fallback data instead
+      
+      // Try to fetch post (optional - notification will show even if post is deleted)
+      if (widget.data?['postId'] != null) {
+        try {
+          postDoc = await locator<PostDbService>()
+              .getPost(widget.data!['postId'])
+              .timeout(Duration(seconds: 5));
+        } catch (e) {
+          // Log but continue - we'll show notification with fallback data
+          AppLogger.w('Could not fetch post for notification',
+              category: LogCategory.network, data: {'error': e.toString()});
+        }
+      }
+
+      // Try to fetch space (optional - notification will show even if space is deleted)
+      if (widget.data?['space'] != null) {
+        try {
+          spaceDoc = await DatabaseService()
+              .getSpace(widget.data!['space'])
+              .timeout(Duration(seconds: 5));
+        } catch (e) {
+          // Log but continue - we'll show notification with fallback data
+          AppLogger.w('Could not fetch space for notification',
+              category: LogCategory.network, data: {'error': e.toString()});
+        }
+      }
+
+      // Fetch user info with fallback
+      if (widget.data?['author'] != null) {
+        authorId = widget.data!['author'].toString();
+        try {
+          DocumentSnapshot? user = await DatabaseService()
+              .getUser(widget.data!['author'])
+              .timeout(Duration(seconds: 5));
+          if (user.exists) {
+            author = user.get('name')?.toString() ?? 'Someone';
+            authorDp = user.get('displayPicture')?.toString() ?? '';
+          }
+        } catch (e) {
+          // Use fallback
+          author = 'Someone';
+        }
+      }
+
+      // Use space info from fetched doc or fallback
+      if (spaceDoc != null && spaceDoc!.exists) {
+        space = spaceDoc!.get('name')?.toString() ?? 'A Space';
+        spacePicture = spaceDoc!.get('displayPicture')?.toString() ?? '';
+      } else {
+        // Fallback to notification data or default
+        space = widget.data?['spaceName']?.toString() ?? 'A Gram';
+      }
+
+      // Fetch timestamp
+      if (widget.data?['timestamp'] != null) {
+        try {
+          date = TimeDisplay.getCompactTimestamp(
+              widget.data!['timestamp'].toDate());
+        } catch (e) {
+          date = 'Recently';
+        }
+      }
+
+      // Use post info from fetched doc or fallback to notification data
+      if (postDoc != null && postDoc!.exists) {
+        final data = postDoc!.data() as Map<String, dynamic>?;
+        postThumbnail = data?['thumbnail']?.toString() ?? '';
+        postType = data?['postType']?.toString() ?? 'video';
+        postContent = data?['content']?.toString() ?? '';
+      } else {
+        // Fallback to notification data
+        if (widget.data?['thumbnail'] != null) {
+          postThumbnail = widget.data!['thumbnail'].toString();
+        }
+      }
+
+      ready = true;
+      if (mounted) setState(() {});
+    } catch (e) {
+      AppLogger.e('Error fetching post info',
+          category: LogCategory.general, data: {'error': e.toString()});
+      // Show notification with fallback data instead of hiding it
+      if (author.isEmpty || author == 'Unknown Author') author = 'Someone';
+      if (space.isEmpty || space == 'Unknown Space') space = 'A Space';
+      if (date.isEmpty || date == 'Unknown Date') date = 'Recently';
+      ready = true;
+      if (mounted) setState(() {});
+    }
+  }
+
+  Widget _buildPreview() {
+    return PreviewBox(
+      previewUrl: postThumbnail,
+      content: postContent,
+      postType: postType,
+      showPlayIcon: postType != 'text',
+      showNoteIcon: false,
+      limitTextPreview: false,
+    );
+  }
+
+  Widget _buildSpacePlaceholder() {
+    return Container(
+      color: Colors.grey[100],
+      child: Icon(
+        Icons.group_outlined,
+        color: Colors.grey[400],
+        size: 40,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!ready) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+        child: SkeletonListItem(height: 70),
+      );
+    }
+
+    return Container(
+      margin: EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!, width: 0.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () {
+            if (widget.data?['postId'] != null &&
+                widget.data?['space'] != null) {
+              Navigator.of(context, rootNavigator: true)
+                  .push(CupertinoPageRoute(builder: (context) {
+                return SpaceScreen(
+                  postId: widget.data!['postId'],
+                  rid: widget.data!['space'],
+                );
+              }));
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Post or space information is unavailable'),
+                  duration: Duration(seconds: 2),
+                  behavior: SnackBarBehavior.fixed,
+                  backgroundColor: AppTheme.errorColor,
+                ),
+              );
+            }
+          },
+          child: Padding(
+            padding: EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header with user info
+                Row(
+                  children: [
+                    UserAvatar(
+                      userId: authorId,
+                      imageUrl: authorDp,
+                      size: 40,
+                      nameInitials:
+                          author.isNotEmpty ? author.substring(0, 1) : null,
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '$author added a new post',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey[900],
+                              height: 1.3,
+                            ),
+                          ),
+                          SizedBox(height: 3),
+                          Row(
+                            children: [
+                              if (space.isNotEmpty &&
+                                  space != 'Unknown Space') ...[
+                                Text(
+                                  space,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.grey[600],
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                Text(
+                                  ' • ',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.grey[400],
+                                  ),
+                                ),
+                              ],
+                              Text(
+                                date,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey[500],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                SizedBox(height: 32), // Increased padding for banner space
+
+                // Space and Post thumbnails with hanging tab banners
+                Row(
+                  children: [
+                    // Space section with hanging tab
+                    Expanded(
+                      child: Container(
+                        padding: EdgeInsets.all(15),
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            // Space preview
+                            GestureDetector(
+                              onTap: () {
+                                if (widget.data?['space'] != null) {
+                                  Navigator.of(context, rootNavigator: true)
+                                      .push(CupertinoPageRoute(
+                                          builder: (context) {
+                                    return SpaceScreen(
+                                        rid: widget.data!['space']);
+                                  }));
+                                }
+                              },
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                      color: Colors.grey[300]!, width: 1),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.04),
+                                      blurRadius: 4,
+                                      offset: Offset(0, 1),
+                                    ),
+                                  ],
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: AspectRatio(
+                                    aspectRatio: 1.0,
+                                    child: spacePicture.isNotEmpty
+                                        ? GramPicture(
+                                            displayPicture: spacePicture)
+                                        : _buildSpacePlaceholder(),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // Hanging GROUP tab
+                            Positioned(
+                              top: -20,
+                              right: 8,
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[100],
+                                  borderRadius: BorderRadius.only(
+                                    topLeft: Radius.circular(8),
+                                    topRight: Radius.circular(8),
+                                    bottomLeft: Radius.circular(4),
+                                    bottomRight: Radius.circular(4),
+                                  ),
+                                  border: Border.all(
+                                      color: Colors.grey[300]!, width: 0.5),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.04),
+                                      blurRadius: 2,
+                                      offset: Offset(0, -1),
+                                    ),
+                                  ],
+                                ),
+                                child: Text(
+                                  'GROUP',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.grey[700],
+                                    letterSpacing: 0.3,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 16),
+                    // Arrow
+                    Column(
+                      children: [
+                        SizedBox(height: 20),
+                        Container(
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.chevron_right,
+                            size: 16,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(width: 16),
+                    // New Post section with hanging tab
+                    Expanded(
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          // Post preview
+                          GestureDetector(
+                            onTap: () {
+                              if (widget.data?['postId'] != null &&
+                                  widget.data?['space'] != null) {
+                                Navigator.of(context, rootNavigator: true).push(
+                                    CupertinoPageRoute(builder: (context) {
+                                  return SpaceScreen(
+                                    postId: widget.data!['postId'],
+                                    rid: widget.data!['space'],
+                                  );
+                                }));
+                              }
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                    color: Colors.green.withValues(alpha: 0.3),
+                                    width: 1),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.green.withValues(alpha: 0.1),
+                                    blurRadius: 6,
+                                    offset: Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(7),
+                                child: AspectRatio(
+                                  aspectRatio: 1.0,
+                                  child: _buildPreview(),
+                                ),
+                              ),
+                            ),
+                          ),
+                          // Hanging NEW POST tab
+                          Positioned(
+                            top: -20,
+                            right: 8,
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.green,
+                                    Colors.green.withValues(alpha: 0.8),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.only(
+                                  topLeft: Radius.circular(8),
+                                  topRight: Radius.circular(8),
+                                  bottomLeft: Radius.circular(4),
+                                  bottomRight: Radius.circular(4),
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.green.withValues(alpha: 0.2),
+                                    blurRadius: 4,
+                                    offset: Offset(0, -1),
+                                  ),
+                                ],
+                              ),
+                              child: Text(
+                                'NEW POST',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

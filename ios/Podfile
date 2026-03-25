@@ -1,0 +1,146 @@
+# Uncomment this line to define a global platform for your project
+platform :ios, '15.1'
+
+# CocoaPods analytics sends network stats synchronously affecting flutter build latency.
+ENV['COCOAPODS_DISABLE_STATS'] = 'true'
+
+project 'Runner', {
+  'Debug' => :debug,
+  'Profile' => :release,
+  'Release' => :release,
+}
+
+def flutter_root
+  generated_xcode_build_settings_path = File.expand_path(File.join('..', 'Flutter', 'Generated.xcconfig'), __FILE__)
+  unless File.exist?(generated_xcode_build_settings_path)
+    raise "#{generated_xcode_build_settings_path} must exist. If you're running pod install manually, make sure flutter pub get is executed first"
+  end
+
+  File.foreach(generated_xcode_build_settings_path) do |line|
+    matches = line.match(/FLUTTER_ROOT\=(.*)/)
+    return matches[1].strip if matches
+  end
+  raise "FLUTTER_ROOT not found in #{generated_xcode_build_settings_path}. Try deleting Generated.xcconfig, then run flutter pub get"
+end
+
+require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
+
+flutter_ios_podfile_setup
+
+target 'Runner' do
+  use_frameworks! :linkage => :static
+  use_modular_headers!
+
+  # ============================================================
+  # APP SIZE OPTIMIZATION: Use only basic Agora SDK (saves ~40-50MB)
+  # ============================================================
+  # Explicitly specify AgoraRtcEngine_iOS with only RtcBasic subspec
+  # BEFORE flutter_install_all_ios_pods. This overrides the Flutter
+  # plugin's default full SDK dependency.
+  #
+  # RtcBasic includes: AgoraRtcKit, Agorafdkaac, Agoraffmpeg, AgoraSoundTouch
+  # 
+  # If you need specific extensions later, add them to the subspecs array:
+  # e.g., :subspecs => ['RtcBasic', 'AINS'] for AI noise suppression
+  # Available subspecs: AINS, AudioBeauty, ClearVision, ContentInspect,
+  #                     FaceCapture, FaceDetection, LipSync, SpatialAudio,
+  #                     VideoCodecEnc, VideoCodecDec, VideoProcess, etc.
+  #
+  pod 'AgoraRtcEngine_iOS', '~> 4.5.0', :subspecs => ['RtcBasic']
+
+  flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+  
+  target 'RunnerTests' do
+    inherit! :search_paths
+  end
+end
+
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    flutter_additional_ios_build_settings(target)
+    
+    # Fix for gRPC-Core template issue
+    target.build_configurations.each do |config|
+      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= [
+        '$(inherited)',
+        'PERMISSION_EVENTS=1',
+        'PERMISSION_REMINDERS=1',
+        'PERMISSION_CONTACTS=1',
+        'PERMISSION_CAMERA=1',
+        'PERMISSION_MICROPHONE=1',
+        'PERMISSION_SPEECH_RECOGNIZER=1',
+        'PERMISSION_PHOTOS=1',
+        'PERMISSION_NOTIFICATIONS=1',
+        'PERMISSION_MEDIA_LIBRARY=1',
+        'PERMISSION_SENSORS=1',
+        'PERMISSION_BLUETOOTH=1',
+        'PERMISSION_APP_TRACKING_TRANSPARENCY=1',
+        'PERMISSION_CRITICAL_ALERTS=1',
+      ]
+      
+      # Fix gRPC-Core C++ compilation issues
+      if target.name.start_with?('gRPC') || target.name.include?('grpc')
+        config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++14'
+        config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
+        config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+        config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
+        config.build_settings['OTHER_CPLUSPLUSFLAGS'] = '$(inherited) -DGRPC_BAZEL_BUILD -Wno-comma'
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'GPB_USE_PROTOBUF_FRAMEWORK_IMPORTS=1'
+      end
+
+      # Avoid module build failures in sqflite_darwin
+      if target.name == 'sqflite_darwin'
+        config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
+      end
+
+      # Exclude privacy manifest from compile sources on older Xcode
+      if target.name == 'geocoding_ios'
+        excluded = config.build_settings['EXCLUDED_SOURCE_FILE_NAMES'] || ''
+        config.build_settings['EXCLUDED_SOURCE_FILE_NAMES'] = [excluded, 'PrivacyInfo.xcprivacy'].reject(&:empty?).join(' ')
+      end
+    end
+    
+    if target.name == 'BoringSSL-GRPC'
+      target.source_build_phase.files.each do |file|
+        if file.settings && file.settings['COMPILER_FLAGS']
+          flags = file.settings['COMPILER_FLAGS'].split
+          flags.reject! { |flag| flag == '-GCC_WARN_INHIBIT_ALL_WARNINGS' }
+          file.settings['COMPILER_FLAGS'] = flags.join(' ')
+        end
+      end
+    end
+    
+  end
+  
+  # Fix gRPC template issues after pod installation
+  puts "Applying gRPC template fixes..."
+  
+  # Fix gRPC-Core
+  grpc_core_file = "Pods/gRPC-Core/src/core/lib/promise/detail/basic_seq.h"
+  if File.exist?(grpc_core_file)
+    begin
+      text = File.read(grpc_core_file)
+      # Remove template keyword from CallSeqFactory but keep it for CheckResultAndRunNext
+      new_contents = text.gsub(/Traits::template CallSeqFactory/, 'Traits::CallSeqFactory')
+      File.write(grpc_core_file, new_contents)
+      puts "Fixed gRPC-Core template issue"
+    rescue => e
+      puts "Warning: Could not fix gRPC-Core template issue: #{e.message}"
+    end
+  end
+  
+  # Fix gRPC-C++
+  grpc_cpp_file = "Pods/gRPC-C++/src/core/lib/promise/detail/basic_seq.h"
+  if File.exist?(grpc_cpp_file)
+    begin
+      text = File.read(grpc_cpp_file)
+      # Remove template keyword from CallSeqFactory but keep it for CheckResultAndRunNext  
+      new_contents = text.gsub(/Traits::template CallSeqFactory/, 'Traits::CallSeqFactory')
+      File.write(grpc_cpp_file, new_contents)
+      puts "Fixed gRPC-C++ template issue"
+    rescue => e
+      puts "Warning: Could not fix gRPC-C++ template issue: #{e.message}"
+    end
+  end
+end

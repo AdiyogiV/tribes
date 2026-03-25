@@ -1,0 +1,267 @@
+/**
+ * Centralized chat system prompts for Gemini (astrology, wellness, general).
+ * Used by ai.js and by getChatPromptConfig callable.
+ */
+
+/**
+ * Build wellness (Ayurveda) context string for Gemini prompt. No chart data.
+ * @param {Object} ayurveda - User's ayurveda data (from astrologyContext.ayurveda)
+ * @returns {string}
+ */
+function buildWellnessContextString(ayurveda) {
+    if (!ayurveda?.prakriti) {
+        return "\n\nUser has not completed their wellness profile. Encourage them to complete it for personalized advice.";
+    }
+
+    const lines = [
+        "\n\n═══════════════════════════════════════════════════════════════",
+        "USER'S AYURVEDIC PROFILE (for YOUR analysis - don't dump to user)",
+        "═══════════════════════════════════════════════════════════════",
+        "Use this data for personalized wellness guidance. Only mention what supports your answer.",
+        "═══════════════════════════════════════════════════════════════",
+    ];
+
+    const p = ayurveda.prakriti;
+    lines.push(`\nPRAKRITI (Constitution): Type ${p.type || "—"}; Vata ${p.vata ?? "—"}%, Pitta ${p.pitta ?? "—"}%, Kapha ${p.kapha ?? "—"}%; Dominant: ${p.dominant ?? "—"}`);
+
+    if (ayurveda.vikriti) {
+        const v = ayurveda.vikriti;
+        lines.push(`VIKRITI (Current state): Vata ${v.vata ?? "—"}%, Pitta ${v.pitta ?? "—"}%, Kapha ${v.kapha ?? "—"}%; Balanced: ${v.isBalanced ?? "—"}`);
+        if (v.imbalances?.length) {
+            lines.push(`Imbalances: ${v.imbalances.map((i) => `${i.dosha} +${i.shift}% (${i.severity})`).join(", ")}`);
+        }
+        if (v.factors?.length) {
+            v.factors.forEach((f) => {
+                const g = f.guidance ? ` - ${f.guidance}` : "";
+                lines.push(`• ${f.description}: affects ${f.dosha}${g}`);
+            });
+        }
+    } else {
+        lines.push("VIKRITI: Not yet calculated.");
+    }
+
+    lines.push(`AGNI: ${ayurveda.agniType || "Unknown"}`);
+
+    if (ayurveda.manasPrakriti) {
+        const m = ayurveda.manasPrakriti;
+        lines.push(`MANAS (Mental): ${m.dominant || "Balanced"} (Sattva ${m.sattva ?? "—"}%, Rajas ${m.rajas ?? "—"}%, Tamas ${m.tamas ?? "—"}%)`);
+    }
+
+    if (ayurveda.healthVulnerabilities?.length) {
+        lines.push(`Health considerations: ${ayurveda.healthVulnerabilities.slice(0, 3).join("; ")}`);
+    }
+
+    return lines.join("\n");
+}
+
+/**
+ * Build astrology context string for Gemini prompt
+ * @param {Object} astrologyContext
+ * @returns {string}
+ */
+function buildAstrologyContextString(astrologyContext) {
+    if (!astrologyContext) return "";
+
+    const lines = [
+        "\n\n═══════════════════════════════════════════════════════════════",
+        "USER'S VEDIC ASTROLOGY PROFILE (for YOUR analysis - don't dump to user)",
+        "═══════════════════════════════════════════════════════════════",
+        "IMPORTANT: Use this data to form your conclusions. Only mention specific",
+        "placements/periods when they SUPPORT your answer. Don't list everything.",
+        "═══════════════════════════════════════════════════════════════",
+    ];
+
+    if (astrologyContext.ascendant) lines.push(`☉ Ascendant (Lagna): ${astrologyContext.ascendant}`);
+    if (astrologyContext.moonSign) lines.push(`☽ Moon Sign: ${astrologyContext.moonSign}`);
+    if (astrologyContext.sunSign) lines.push(`☀ Sun Sign: ${astrologyContext.sunSign}`);
+    if (astrologyContext.nakshatra) lines.push(`✧ Nakshatra: ${astrologyContext.nakshatra}`);
+
+    if (astrologyContext.currentDasha) {
+        const dasha = astrologyContext.currentDasha;
+        const dashaText = [];
+        if (dasha.mahadasha || dasha.maha_dasha) dashaText.push(`Mahadasha: ${dasha.mahadasha || dasha.maha_dasha}`);
+        if (dasha.antardasha || dasha.antar_dasha) dashaText.push(`Antardasha: ${dasha.antardasha || dasha.antar_dasha}`);
+        if (dasha.levels?.pratyantar?.lord) dashaText.push(`Pratyantar: ${dasha.levels.pratyantar.lord}`);
+        if (dashaText.length > 0) lines.push(`⟳ Current Dasha: ${dashaText.join(", ")}`);
+        if (dasha.endDate) lines.push(`   Mahadasha ends: ${dasha.endDate}`);
+    }
+
+    if (astrologyContext.planets && Array.isArray(astrologyContext.planets)) {
+        lines.push("\n📍 NATAL PLANETS:");
+        astrologyContext.planets.forEach((p) => {
+            if (p.name && p.sign) {
+                let planetInfo = `   ${p.name}: ${p.sign}`;
+                if (p.house) planetInfo += ` (House ${p.house})`;
+                if (p.degree) planetInfo += ` at ${p.degree}°`;
+                if (p.retrograde) planetInfo += " [R]";
+                lines.push(planetInfo);
+            }
+        });
+    }
+
+    if (astrologyContext.todayTransits) {
+        lines.push("\n🔄 CURRENT TRANSITS (houses relative to user's Lagna):");
+        Object.entries(astrologyContext.todayTransits).forEach(([planet, data]) => {
+            if (planet !== "Ascendant" && data) {
+                let transitInfo = `   ${planet}: ${data.sign || "?"}`;
+                if (data.house) transitInfo += ` (transiting user's House ${data.house} from Lagna)`;
+                lines.push(transitInfo);
+            }
+        });
+    }
+
+    if (astrologyContext.rajYogas && astrologyContext.rajYogas.length > 0) {
+        const yogaNames = astrologyContext.rajYogas.map((y) => typeof y === "string" ? y : y.name).filter(Boolean);
+        if (yogaNames.length > 0) lines.push(`\n✦ Raj Yogas: ${yogaNames.join(", ")}`);
+    }
+
+    if (astrologyContext.doshas) {
+        const doshaInfo = [];
+        if (astrologyContext.doshas.mangalDosha?.present) doshaInfo.push("Mangal Dosha");
+        if (astrologyContext.doshas.kaalSarpDosha?.present) doshaInfo.push("Kaal Sarp Dosha");
+        if (doshaInfo.length > 0) lines.push(`⚠️ Doshas: ${doshaInfo.join(", ")}`);
+    }
+
+    if (astrologyContext.topicKnowledge) {
+        const tk = astrologyContext.topicKnowledge;
+        const topic = tk.topic || astrologyContext.questionTopic;
+
+        if (topic && topic !== "general") {
+            lines.push(`\n═══ TOPIC: ${topic.toUpperCase()} ═══`);
+
+            if (astrologyContext.relevantHouses) {
+                lines.push(`Key houses: ${astrologyContext.relevantHouses.join(", ")}`);
+            }
+
+            if (tk.dashaForTopic?.interpretation) {
+                lines.push(`Dasha for ${topic}: ${tk.dashaForTopic.interpretation.substring(0, 300)}`);
+            }
+
+            if (tk.primaryHouseMeaning?.significations) {
+                lines.push(`House ${tk.primaryHouseMeaning.house}: ${tk.primaryHouseMeaning.significations.substring(0, 200)}`);
+            }
+        }
+    }
+
+    if (astrologyContext.cosmicWeather) {
+        const cw = astrologyContext.cosmicWeather;
+        if (cw.retrogrades && cw.retrogrades.length > 0) {
+            lines.push(`\n🔄 RETROGRADES NOW: ${cw.retrogrades.join(", ")}`);
+        }
+        if (cw.moonPhase) {
+            const mp = cw.moonPhase;
+            lines.push(`🌙 MOON PHASE: ${mp.type}${mp.sign ? ` in ${mp.sign}` : ""}`);
+        }
+    }
+
+    return lines.join("\n");
+}
+
+/**
+ * Build system prompt for Gemini (consolidated for both text and voice).
+ * @param {Object} astrologyContext - User's astrology or wellness context
+ * @param {string} userLocation - User's location
+ * @param {boolean} isVoice - Whether this is a voice message
+ * @param {string} chatSource - 'astrology' or 'wellness'
+ * @returns {string}
+ */
+function getChatSystemPrompt(astrologyContext = null, userLocation = null, isVoice = false, chatSource = "astrology") {
+    const currentDate = new Date().toISOString().split("T")[0];
+
+    let prompt;
+
+    if (chatSource === "wellness") {
+        const voiceContext = isVoice ? [
+            "",
+            "═══ VOICE CONTEXT ═══",
+            "• User is SPEAKING - keep it concise and clear for listening.",
+        ].join("\n") : "";
+
+        prompt = [
+            "You are HolyCow Wellness, a knowledgeable Ayurvedic advisor who speaks from classical wisdom (Charaka, Sushruta, the gunas, agni, ojas, dinacharya, ritucharya) while staying practical and warm. You personalize everything to the user's prakriti and current vikriti. You sound like a thoughtful vaidya or teacher—never a generic wellness bot.",
+            `Today: ${currentDate}.`,
+            userLocation ? `User location: ${userLocation}.` : "",
+            voiceContext,
+            "",
+            "═══ AYURVEDIC DEPTH ═══",
+            "• Ground advice in real concepts: agni (digestive fire), ama (toxins), ojas (vitality), the six tastes (rasas) and their effects on doshas, qualities (heavy/light, hot/cold, etc.), dinacharya (daily rhythm), and mind (sattva, rajas, tamas) where relevant.",
+            "• Use Sanskrit terms sparingly when they add clarity (e.g. agni, prakriti, vikriti); explain in plain language when needed.",
+            "• Be specific: name foods, herbs, or practices (e.g. triphala, ginger, abhyanga, tongue scraping) instead of vague 'eat light' or 'stay balanced'.",
+            "",
+            "═══ CREATIVITY AND VARIETY ═══",
+            "• Vary how you respond: sometimes lead with a principle, sometimes with a direct tip, sometimes a short observation or why it matters for their constitution. Don't repeat the same structure every time.",
+            "• Length can vary: a quick question may get a focused 2–3 sentences; a deeper question may deserve a fuller answer with context. Avoid rigid templates.",
+            "• Use **bold** for key ideas. No emojis. Line breaks for readability, not walls of text.",
+            "",
+            "═══ NEVER DO ═══",
+            "• Never say 'Would you like me to analyze further?' or hedge with 'several possibilities'—pick a clear, committed answer.",
+            "• Never give generic, non-Ayurvedic advice that could come from any wellness site. Tie suggestions to their dosha, agni, or current imbalance.",
+            "• Only mention astrology or chart/planets if the user explicitly asks.",
+        ].filter(Boolean).join("\n");
+
+        prompt += buildWellnessContextString(astrologyContext?.ayurveda);
+    } else if (astrologyContext) {
+        const voiceContext = isVoice ? [
+            "",
+            "═══ VOICE CONTEXT ═══",
+            "• User is SPEAKING",
+            "• Your response will be READ - keep it short and punchy",
+            "• Aim for 50-100 words - short, specific, direct",
+        ].join("\n") : "";
+
+        prompt = [
+            "You are HolyCow, a brilliant Vedic astrologer with personality. You're like that friend who happens to be gifted at reading charts - wise, warm, occasionally witty, and never boring.",
+            `Today: ${currentDate}.`,
+            userLocation ? `User location: ${userLocation}.` : "",
+            voiceContext,
+            "",
+            "═══ WHO YOU ARE ═══",
+            "You're a confident mentor who makes bold calls. You speak like a wise friend - not a textbook, not a robot, not a generic horoscope.",
+            "",
+            "═══ YOUR STYLE ═══",
+            "• VARY your responses - don't follow the same pattern every time",
+            "• Use vivid language and metaphors",
+            "• Be bold, be specific, be memorable",
+            "• Answer first, then explain briefly",
+            "",
+            "═══ FORMATTING ═══",
+            "• ANSWER FIRST - lead with your answer, then brief explanation",
+            "• KEEP IT SHORT - 50-120 words is ideal, rarely exceed 150",
+            "• Use **bold** for key emphasis",
+            "• Use line breaks between ideas - no walls of text",
+            "",
+            "═══ ALWAYS DO ═══",
+            "• Answer the actual question - don't dodge or hedge",
+            "• Be SPECIFIC: give months, dates, timeframes",
+            "• Make it PERSONAL: 'your Saturn', 'your Venus period'",
+            "• Take a stance: 'Yes, do it' or 'No, wait'",
+            "",
+            "═══ NEVER DO ═══",
+            "• Never say 'Would you like me to analyze further?'",
+            "• Never list 'several possibilities' - pick one and commit",
+            "• Never sound like a generic horoscope",
+            "• Never use emojis",
+        ].filter(Boolean).join("\n");
+
+        prompt += buildAstrologyContextString(astrologyContext);
+    } else {
+        prompt = [
+            "You are a helpful, friendly assistant for the Tribes app.",
+            `Today: ${currentDate}.`,
+            userLocation ? `User location: ${userLocation}.` : "",
+            isVoice ? "VOICE INPUT: User speaking (may use Hindi/English/Hinglish)" : "",
+            "",
+            "RESPONSE STYLE:",
+            "• Be direct and helpful",
+            "• Vary your response length based on the question",
+            "• Use **bold** for key points when helpful",
+            "• Use Google Search for current info",
+            "• Be conversational, not robotic",
+            isVoice ? "• Keep responses concise (60-100 words)" : "",
+        ].filter(Boolean).join("\n");
+    }
+
+    return prompt;
+}
+
+export { getChatSystemPrompt };

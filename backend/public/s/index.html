@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join Gram | Aurogram</title>
+    <meta name="description" content="You've been invited to join a gram on Aurogram!">
+    
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="You're Invited to Join a Gram ✨">
+    <meta property="og:description" content="Someone invited you to join their community on Aurogram. Tap to accept!">
+    
+    <!-- iOS Smart App Banner -->
+    <meta name="apple-itunes-app" content="app-id=6474496853">
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #080C14;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #F5F0E8;
+            padding: 20px;
+        }
+        
+        .container {
+            text-align: center;
+            max-width: 320px;
+        }
+        
+        .invite-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            background: rgba(212, 165, 116, 0.1);
+            border: 1px solid rgba(212, 165, 116, 0.25);
+            border-radius: 24px;
+            margin-bottom: 24px;
+        }
+        
+        .invite-badge-icon {
+            font-size: 16px;
+        }
+        
+        .invite-badge-text {
+            font-size: 14px;
+            font-weight: 600;
+            color: #D4A574;
+        }
+        
+        .gram-name {
+            font-size: 26px;
+            font-weight: 700;
+            color: #D4A574;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+        
+        .invite-text {
+            font-size: 15px;
+            color: rgba(245, 240, 232, 0.6);
+            margin-bottom: 36px;
+            line-height: 1.5;
+        }
+        
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 16px 24px;
+            background: #D4A574;
+            color: #080C14;
+            text-decoration: none;
+            border-radius: 14px;
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+        }
+        
+        .btn:hover {
+            background: #E5B885;
+            transform: translateY(-1px);
+        }
+        
+        .btn.secondary {
+            background: transparent;
+            color: #D4A574;
+            border: 1px solid rgba(212, 165, 116, 0.3);
+            font-size: 14px;
+        }
+        
+        .branding {
+            margin-top: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 12px;
+            color: rgba(245, 240, 232, 0.4);
+        }
+        
+        .branding img {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="invite-badge">
+            <span class="invite-badge-icon">✉️</span>
+            <span class="invite-badge-text" id="invite-badge">Gram Invite</span>
+        </div>
+        
+        <div class="gram-name" id="gram-name">Join this Gram</div>
+        <p class="invite-text" id="invite-text">Open in Aurogram to see details and join</p>
+        
+        <a href="#" class="btn" id="open-btn">
+            Open in Aurogram
+        </a>
+        
+        <a href="#" class="btn secondary" id="download-btn">
+            Get Aurogram
+        </a>
+        
+        <div class="branding">
+            <img src="/logo.png" alt="Aurogram">
+            <span>Aurogram</span>
+        </div>
+    </div>
+    
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const gramName = urlParams.get('name');
+        const inviterName = urlParams.get('by');
+        const inviterId = urlParams.get('inv');
+        
+        const path = window.location.pathname.split('/');
+        const spaceId = path[path.length - 1] || path[path.length - 2];
+        
+        // Update UI with gram info
+        if (gramName) {
+            document.getElementById('gram-name').textContent = gramName;
+            document.title = `Join ${gramName} | Aurogram`;
+        }
+        
+        if (inviterName) {
+            document.getElementById('invite-badge').textContent = `${inviterName} invited you`;
+            document.getElementById('invite-text').textContent = 'Open in Aurogram to join';
+        }
+        
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const isAndroid = /Android/.test(navigator.userAgent);
+        
+        // Build deep link with query params
+        let deepLink = `aurogram://s/${spaceId}`;
+        if (inviterId) {
+            deepLink += `?inv=${inviterId}`;
+        }
+        
+        // Open App button - uses custom URL scheme
+        const openBtn = document.getElementById('open-btn');
+        openBtn.href = deepLink;
+        
+        // Download button - app store links
+        const downloadBtn = document.getElementById('download-btn');
+        const iosUrl = 'https://apps.apple.com/app/id6474496853';
+        const androidUrl = 'https://play.google.com/store/apps/details?id=com.canay.dhaara';
+        downloadBtn.href = isAndroid ? androidUrl : iosUrl;
+        downloadBtn.textContent = isAndroid ? 'Get on Play Store' : 'Get on App Store';
+    </script>
+</body>
+</html>
