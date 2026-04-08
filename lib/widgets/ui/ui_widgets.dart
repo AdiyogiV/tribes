@@ -1,10 +1,3 @@
-export 'common_widgets.dart';
-export 'drop_zone.dart';
-export 'error_boundary.dart';
-export 'glass_container.dart';
-export 'gradient_separator.dart';
-export 'loading_screen.dart';
-export 'offline_indicator.dart';
-export 'responsive_spacer.dart';
-export 'size_reporting_widget.dart';
-export 'skeleton_widgets.dart';
+// Barrel redirect — file moved to new location.
+// TODO: Update imports to use the new path directly, then delete this file.
+export 'package:aurogram/shared/presentation/widgets/media/ui_widgets.dart';

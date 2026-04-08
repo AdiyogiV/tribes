@@ -37,7 +37,7 @@ class _CosmicDateTimeCardState extends State<CosmicDateTimeCard> {
   void initState() {
     super.initState();
     // Tick every 12 seconds — half-Pala for smoother live feel
-    _timer = Timer.periodic(const Duration(seconds: 12), (_) {
+    _timer = Timer.periodic(const Duration(seconds: 15), (_) {
       if (mounted) setState(() => _now = DateTime.now());
     });
   }

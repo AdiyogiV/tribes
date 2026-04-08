@@ -1,6 +1,3 @@
-/// Cross-platform file uploader
-/// Uses conditional exports to provide platform-specific implementation
-library;
-
-export 'file_uploader_stub.dart'
-    if (dart.library.io) 'file_uploader_mobile.dart';
+// Barrel redirect — file moved to new location.
+// TODO: Update imports to use the new path directly, then delete this file.
+export 'package:aurogram/shared/services/media/file_uploader.dart';

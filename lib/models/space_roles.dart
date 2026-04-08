@@ -1,7 +1,3 @@
-/// SpaceRoles enum
-/// Defines the different roles a user can have in a Space
-enum SpaceRoles { admin, creator, requested, owner, member, invited, none }
-
-/// Backward compatibility aliases
-typedef FarmRoles = SpaceRoles;
-typedef GramRoles = SpaceRoles;
+// Barrel redirect — file moved to new location.
+// TODO: Update imports to use the new path directly, then delete this file.
+export 'package:aurogram/shared/models/space_roles.dart';

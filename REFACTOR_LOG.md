@@ -63,3 +63,42 @@ Current `analysis_options.yaml` has these disabled — will re-enable post-restr
 ### Verification
 - `flutter analyze`: 17 issues (same as baseline — 0 errors, 2 warnings, 15 info)
 - `flutter test`: 238 passed, 1 skipped, 0 failed (same as baseline)
+
+---
+
+## Phase 2: Core + Shared Infrastructure
+**Date**: 2026-04-09
+**Status**: Complete
+
+### Files Moved
+| Layer | Files Moved | From | To |
+|-------|-------------|------|----|
+| core/config/ | 6 | utils/config/, config/, utils/feature_flags | core/config/ |
+| core/di/ | 1 | utils/dependency_injection | core/di/injection |
+| core/error/ | 1 | utils/error_handler | core/error/ |
+| core/logging/ | 3 | utils/logging/ | core/logging/ |
+| core/network/ | 2 | utils/network/ | core/network/ |
+| core/routing/ | 2 | utils/navigation/ | core/routing/ |
+| core/storage/ | 5 | utils/memory/, utils/performance/ | core/storage/ |
+| core/theme/ | 5 | utils/theme/ | core/theme/ |
+| shared/models/ | 9 | models/ | shared/models/ |
+| shared/utils/ | 3 | utils/ | shared/utils/ |
+| shared/presentation/ | 41 | widgets/common,ui,dialogs,player,layout,painters,responsive | shared/presentation/ |
+| shared/services/ | 6 | services/ (analytics,deep_link,device,locale,location,search) | shared/services/ |
+| shared/services/media/ | 29 | services/media/, services/audio*, services/video* | shared/services/media/ |
+| shared/services/share/ | 13 | services/share*, widgets/share_cards | shared/services/share/ |
+| shared/data/ | 1 | utils/firestore/ | shared/data/firebase/ |
+| shared/presentation/responsive/ | 1 | utils/responsive | shared/presentation/responsive/ |
+| **Total** | **128 files** | | |
+
+### Barrel Redirects Created: 125
+All old import paths continue to work via barrel re-exports.
+
+### Structure Summary
+- `lib/core/`: 26 files (config, DI, error, logging, network, routing, storage, theme)
+- `lib/shared/`: 104 files (models, services, presentation, utils, data, providers)
+
+### Verification
+- `flutter analyze`: 17 issues (same as baseline)
+- `flutter test`: 238 passed, 1 skipped, 0 failed (same as baseline)
+- Total Dart files: 785 (655 originals + 125 barrels + 5 new files)
