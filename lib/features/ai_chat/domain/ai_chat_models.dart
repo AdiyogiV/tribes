@@ -1,4 +1,4 @@
-import 'package:aurogram/models/thought_process.dart';
+import 'package:aurogram/shared/models/thought_process.dart';
 
 /// Represents a single AI chat message
 class AiMessage {

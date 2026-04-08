@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:aurogram/providers/ai_chat_provider.dart';
 import 'package:aurogram/core/config/api_endpoints.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
-import 'package:aurogram/models/thought_process.dart';
+import 'package:aurogram/shared/models/thought_process.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
+import 'package:aurogram/features/ai_chat/domain/ai_chat_provider.dart';
 
 /// A utility class for building search result cards in the chat interface.
 ///

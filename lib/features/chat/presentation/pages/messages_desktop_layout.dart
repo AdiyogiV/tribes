@@ -6,7 +6,7 @@ import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/header_style.dart';
 import 'package:aurogram/features/chat/presentation/widgets/embedded_chat_view.dart';
 import 'package:aurogram/shared/models/space.dart';
-import 'package:aurogram/pages/tabs/widgets/messages_search_bar.dart';
+import 'package:aurogram/app/tabs/widgets/messages_search_bar.dart';
 
 /// Desktop master-detail layout with conversation list on left and chat on right
 class MessagesDesktopLayout extends StatelessWidget {

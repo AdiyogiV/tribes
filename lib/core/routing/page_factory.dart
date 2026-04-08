@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:aurogram/core/routing/route_names.dart';
-import 'package:aurogram/models/call.dart';
+import 'package:aurogram/shared/models/call.dart';
 
 // ── Page imports (centralized — services must NOT import these) ────────────
 import 'package:aurogram/features/astrology/presentation/pages/daily_insight_page.dart';

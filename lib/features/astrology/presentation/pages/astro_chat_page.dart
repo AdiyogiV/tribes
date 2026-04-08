@@ -2,12 +2,12 @@ import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:aurogram/providers/ai_chat_provider.dart';
 import 'package:aurogram/features/chat/presentation/widgets/chat_message_widgets.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/astro_chat_input.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/shared/services/media/audio_input_service.dart';
+import 'package:aurogram/features/ai_chat/domain/ai_chat_provider.dart';
 
 /// Data class for passing voice message from entry pages
 class InitialVoiceMessage {

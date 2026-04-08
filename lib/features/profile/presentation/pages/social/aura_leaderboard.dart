@@ -7,7 +7,7 @@ import 'package:aurogram/features/profile/domain/aura_service.dart';
 import 'package:aurogram/shared/presentation/widgets/avatars/user_avatar.dart';
 import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
-import 'package:aurogram/widgets/universal/transparent_toolbox.dart';
+import 'package:aurogram/shared/presentation/widgets/universal/transparent_toolbox.dart';
 import 'package:aurogram/features/profile/presentation/pages/user_profile.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';

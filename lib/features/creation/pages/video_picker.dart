@@ -6,7 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/rendering.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart';
-import 'package:aurogram/services/database_service.dart';
+import 'package:aurogram/shared/services/database_service.dart';
 import 'package:aurogram/features/feed/data/datasources/firebase_post_repository.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/features/feed/data/datasources/post_db_service.dart';

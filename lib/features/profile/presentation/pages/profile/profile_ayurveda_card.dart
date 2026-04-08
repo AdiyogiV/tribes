@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
-import 'package:aurogram/widgets/universal/transparent_toolbox.dart';
+import 'package:aurogram/shared/presentation/widgets/universal/transparent_toolbox.dart';
 import 'package:aurogram/shared/models/astrology_profile.dart';
 import 'package:aurogram/shared/models/ayurveda_profile.dart';
 import 'package:aurogram/features/ayurveda/presentation/widgets/ayurveda_profile_card.dart';

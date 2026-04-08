@@ -3,7 +3,7 @@ import 'package:aurogram/core/storage/image_optimizer.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
-import 'package:aurogram/services/cache_service.dart';
+import 'package:aurogram/shared/services/cache_service.dart';
 import 'package:aurogram/core/di/injection.dart';
 
 /// A widget that displays a user avatar with fallback options

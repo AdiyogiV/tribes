@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/header_style.dart';
-import 'package:aurogram/widgets/universal/transparent_toolbox.dart';
+import 'package:aurogram/shared/presentation/widgets/universal/transparent_toolbox.dart';
 import 'package:aurogram/features/profile/presentation/widgets/preview_boxes/preview_box.dart';
 import 'package:aurogram/features/feed/presentation/pages/thread_view.dart';
 import 'package:aurogram/features/profile/domain/follow_service.dart';

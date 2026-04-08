@@ -6,9 +6,9 @@ import 'package:aurogram/features/anonymous_messages/anonymous_message_service.d
 import 'package:aurogram/shared/services/share/share_ui.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/shared/presentation/widgets/dialogs/login_bottom_sheet.dart';
-import 'package:aurogram/widgets/universal/transparent_toolbox.dart';
-import 'package:aurogram/services/anonymous_message_settings_service.dart';
-import 'package:aurogram/pages/helpers/user_settings.dart';
+import 'package:aurogram/shared/presentation/widgets/universal/transparent_toolbox.dart';
+import 'package:aurogram/features/anonymous_messages/anonymous_message_settings_service.dart';
+import 'package:aurogram/features/settings/presentation/pages/user_settings.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/shared/presentation/widgets/feedback/snack_bar_service.dart';
 

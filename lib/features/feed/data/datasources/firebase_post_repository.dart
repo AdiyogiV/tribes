@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:aurogram/services/post_service.dart';
+import 'package:aurogram/features/feed/domain/post_service.dart';
 import 'package:aurogram/features/feed/data/datasources/post_repository.dart';
 
 /// Firebase implementation of the post repository interface

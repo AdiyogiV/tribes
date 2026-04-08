@@ -16,15 +16,15 @@ import 'package:aurogram/features/astrology/domain/astrology_service.dart';
 import 'package:aurogram/features/ayurveda/domain/ayurveda_service.dart';
 import 'package:aurogram/features/astrology/domain/sky_positions_service.dart';
 import 'package:aurogram/shared/services/media/audio_input_service.dart';
-import 'package:aurogram/providers/ai_chat_provider.dart';
-import 'package:aurogram/widgets/cosmic_dashboard/cosmic_dashboard_data.dart';
-import 'package:aurogram/widgets/cosmic_dashboard.dart';
+import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/cosmic_dashboard_data.dart';
+import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard.dart';
 import 'package:aurogram/shared/presentation/widgets/media/glass_container.dart';
 import 'package:aurogram/features/ai_chat/presentation/pages/ai_chat_page.dart';
 import 'package:aurogram/features/ai_chat/presentation/pages/recent_conversations_page.dart';
 import 'package:aurogram/features/astrology/presentation/pages/holycow/holycow_desktop_layout.dart';
 import 'package:aurogram/features/astrology/presentation/pages/holycow/holycow_empty_states.dart';
 import 'package:aurogram/features/astrology/presentation/pages/holycow/holycow_cosmic_content.dart';
+import 'package:aurogram/features/ai_chat/domain/ai_chat_provider.dart';
 
 class HolyCowPage extends StatefulWidget {
   const HolyCowPage({super.key});

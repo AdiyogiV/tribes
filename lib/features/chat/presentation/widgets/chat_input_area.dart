@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:provider/provider.dart';
-import 'package:aurogram/providers/ai_chat_provider.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/shared/services/media/audio_input_service.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
 import 'package:aurogram/shared/presentation/widgets/media/glass_container.dart';
+import 'package:aurogram/features/ai_chat/domain/ai_chat_provider.dart';
 
 class ChatInputArea extends StatefulWidget {
   final TextEditingController messageController;

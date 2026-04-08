@@ -2,7 +2,7 @@ import 'dart:io'
     if (dart.library.html) 'package:aurogram/platform/io_stub.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:aurogram/services/cache_service.dart';
+import 'package:aurogram/shared/services/cache_service.dart';
 import 'package:flutter/material.dart';
 import 'package:aurogram/core/di/injection.dart';
 import 'package:aurogram/core/theme/app_theme.dart';

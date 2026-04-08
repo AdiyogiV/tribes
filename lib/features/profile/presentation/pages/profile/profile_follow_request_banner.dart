@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/header_style.dart';
-import 'package:aurogram/widgets/universal/transparent_toolbox.dart';
+import 'package:aurogram/shared/presentation/widgets/universal/transparent_toolbox.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 
 /// Banner card for accepting/declining a follow request from another user.

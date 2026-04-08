@@ -8,8 +8,8 @@ import 'package:flutter/material.dart';
 
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:aurogram/shared/services/search_service.dart';
-import 'package:aurogram/services/cache_service.dart';
-import 'package:aurogram/services/database_service.dart';
+import 'package:aurogram/shared/services/cache_service.dart';
+import 'package:aurogram/shared/services/database_service.dart';
 import 'package:aurogram/core/di/injection.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
-import 'package:aurogram/widgets/universal/transparent_toolbox.dart';
+import 'package:aurogram/shared/presentation/widgets/universal/transparent_toolbox.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 
 /// Country-code picker toolbox.

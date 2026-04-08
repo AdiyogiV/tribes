@@ -3,7 +3,7 @@ import 'package:aurogram/shared/presentation/widgets/media/common_widgets.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/shared/presentation/responsive/responsive.dart';
 import 'package:aurogram/features/chat/domain/markdown_utils.dart';
-import 'package:aurogram/widgets/universal/transparent_toolbox.dart';
+import 'package:aurogram/shared/presentation/widgets/universal/transparent_toolbox.dart';
 import 'package:aurogram/features/onboarding/domain/onboarding_constants.dart';
 import 'package:aurogram/features/onboarding/presentation/steps/shared_widgets.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';

@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:aurogram/services/cache_service.dart';
+import 'package:aurogram/shared/services/cache_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';

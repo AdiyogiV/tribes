@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:aurogram/shared/models/space.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/shared/presentation/widgets/avatars/user_avatar.dart';
-import 'package:aurogram/widgets/call/call_button.dart';
-import 'package:aurogram/widgets/call/group_call_button.dart';
+import 'package:aurogram/features/calling/presentation/widgets/call_button.dart';
+import 'package:aurogram/features/calling/presentation/widgets/group_call_button.dart';
 
 /// Chat header content widget showing avatar, name, and online status
 class SpaceChatHeaderContent extends StatelessWidget {

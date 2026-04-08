@@ -2,7 +2,7 @@ import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:flutter/material.dart';
 import 'package:aurogram/shared/models/ayurveda_profile.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
-import 'package:aurogram/widgets/universal/transparent_toolbox.dart';
+import 'package:aurogram/shared/presentation/widgets/universal/transparent_toolbox.dart';
 import 'package:aurogram/features/ayurveda/presentation/widgets/ayurveda_theme.dart';
 
 /// Compact card showing current Vikriti (today's balance) on profile

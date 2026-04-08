@@ -212,21 +212,57 @@ Total barrels (including Phase 2): 518
 ---
 
 ## Final Summary
-**Total restructure**: 5 phases over 1 session
+---
+
+## Phase 6: Complete Legacy Migration
+**Date**: 2026-04-09
+**Status**: Complete
+
+### Actions
+1. **New `settings` feature** (4 files): user_settings, settings_dialogs, settings_tiles, settings_exports
+2. **Spaces feature expansion** (+4 files): gram_creation, gram_selection, group_creation, group_selection
+3. **Feed feature expansion** (+6 files): feed services (layout cache, state manager, video focus, post, repost) + embedded theatre widget
+4. **Calling feature expansion** (+5 files): call stubs + call widgets (active_call_banner, call_button, group_call_button)
+5. **Astrology feature expansion** (+6 files): cosmic_dashboard + sub-widgets + daily_mandala_card
+6. **New `app/` layer** (20 files): tab handler, tab pages (discovery, feed, grams, messages), tab widgets (13 files)
+7. **Core expansion** (+5 files): startup services, startup_auth, startup_config, startup_service, app_initializer
+8. **Shared expansion** (+18 files): models (10), providers (2), database_service, cache_service, batch_data_loader, universal/toolbox widgets, shared utility widgets
+9. **Barrel cleanup round 2**: 91 barrels deleted, 218 imports updated
+10. **Bug fix**: typo `$gati` → `$ghati` in vedic_time_utils.dart
+11. **Import cleanup**: removed 13 unused `ai_chat_models.dart` imports that became redundant
+
+### Verification
+- `flutter analyze`: 17 issues (0 errors, 2 warnings, 15 info — matches baseline)
+- `flutter test`: 238 passed, 1 skipped, 0 failed (same as baseline)
+
+---
+
+## Final Summary
+
+**Total restructure**: 6 phases
 - **Phase 0**: Baseline metrics and cleanup
 - **Phase 1**: Service→Page coupling broken (PageFactory + RouteNames)
 - **Phase 2**: Core/ and Shared/ extraction (130 files)
 - **Phase 3**: Feature migration (14 features, 409 files)
 - **Phase 4**: Barrel cleanup (518 barrels deleted, 2403 imports updated)
-- **Phase 5**: God class decomposition
+- **Phase 5**: God class decomposition (main.dart, database_service)
+- **Phase 6**: Complete legacy migration (91 more barrels, app/ layer, settings feature)
 
-**Architecture**:
+**Final Architecture**:
 ```
 lib/
-  core/         26 files  — routing, theme, config, DI, storage, logging, notifications
-  shared/      104 files  — cross-feature models, services, widgets, utils
-  features/    407 files  — 14 feature modules (auth → profile)
-  legacy/      ~135 files — app-level pages, platform code, export barrels
+  core/          32 files  — routing, theme, config, DI, storage, logging, notifications, startup
+  shared/       133 files  — cross-feature models, services, widgets, providers, utils
+  features/     434 files  — 15 feature modules
+  app/           20 files  — tab infrastructure, navigation shell
+  platform/      25 files  — web/io/stub implementations
+  services/      20 files  — part-file comments + platform stubs (irreducible minimum)
 ```
 
-**Quality**: 0 errors, 238/238 tests passing throughout all phases.
+**15 Feature Modules**:
+auth, onboarding, ai_chat, spaces, chat, calling, stories, creation,
+anonymous_messages, ayurveda, astrology, notifications, feed, profile, settings
+
+**Quality**: 0 errors, 238/238 tests passing, 17 issues (all info/warnings) — matches baseline throughout all 6 phases.
+
+**File count**: 668 .dart files (down from 1,195 at peak barrel count).

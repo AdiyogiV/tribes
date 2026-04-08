@@ -3,10 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/shared/services/share/share_service.dart';
 import 'package:aurogram/shared/services/share/share_links.dart';
-import 'package:aurogram/services/repost_service.dart';
+import 'package:aurogram/features/feed/domain/repost_service.dart';
 import 'package:aurogram/shared/presentation/widgets/feedback/snack_bar_service.dart';
 import 'package:aurogram/features/feed/presentation/widgets/post_data.dart';
-import 'package:aurogram/services/batch_data_loader.dart' show UserData;
+import 'package:aurogram/shared/services/batch_data_loader.dart' show UserData;
 
 // =============================================================================
 // POST CONTEXT MENU ACTIONS

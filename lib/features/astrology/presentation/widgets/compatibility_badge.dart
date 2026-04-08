@@ -5,7 +5,7 @@ import 'package:aurogram/features/astrology/domain/compatibility_service.dart';
 import 'package:aurogram/features/profile/domain/follow_service.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
-import 'package:aurogram/widgets/universal/transparent_toolbox.dart';
+import 'package:aurogram/shared/presentation/widgets/universal/transparent_toolbox.dart';
 import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
 import 'package:aurogram/features/astrology/presentation/pages/compatibility_details_page.dart';
 

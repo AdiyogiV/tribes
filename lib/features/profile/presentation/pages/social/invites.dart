@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:aurogram/features/spaces/presentation/pages/space_screen.dart';
 import 'package:aurogram/features/profile/presentation/pages/user_profile.dart';
-import 'package:aurogram/services/database_service.dart';
+import 'package:aurogram/shared/services/database_service.dart';
 import 'package:aurogram/features/spaces/domain/space_service.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/header_style.dart';

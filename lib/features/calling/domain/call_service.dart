@@ -8,12 +8,12 @@ import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/features/chat/domain/space_chat_service.dart';
 import 'package:aurogram/shared/services/device_manager.dart';
 import 'package:aurogram/features/profile/domain/follow_service.dart';
-import 'package:aurogram/models/call.dart';
+import 'package:aurogram/shared/models/call.dart';
 import 'package:aurogram/features/calling/domain/call/call_signaling.dart';
 import 'package:aurogram/features/calling/domain/call/call_webrtc.dart';
 
 // Re-export so existing `import 'call_service.dart'` still exposes Call, etc.
-export 'package:aurogram/models/call.dart';
+export 'package:aurogram/shared/models/call.dart';
 export 'package:aurogram/features/calling/domain/call/call_signaling.dart';
 export 'package:aurogram/features/calling/domain/call/call_webrtc.dart';
 

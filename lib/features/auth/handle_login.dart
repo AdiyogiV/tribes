@@ -1,4 +1,4 @@
-import 'package:aurogram/pages/helpers/flash.dart';
+import 'package:aurogram/shared/presentation/widgets/flash.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:aurogram/features/auth/init_user.dart';

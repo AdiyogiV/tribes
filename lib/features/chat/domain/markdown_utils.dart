@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:aurogram/features/chat/domain/url_launcher_utils.dart';
-import 'package:aurogram/models/thought_process.dart';
+import 'package:aurogram/shared/models/thought_process.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 
 class MarkdownUtils {

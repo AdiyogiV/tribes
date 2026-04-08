@@ -2,8 +2,8 @@ import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:aurogram/providers/ai_chat_provider.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:aurogram/features/ai_chat/domain/ai_chat_provider.dart';
 
 class ChatDialogs {
   static Future<void> showClearHistoryDialog(BuildContext context) async {

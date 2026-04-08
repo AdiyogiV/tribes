@@ -6,7 +6,7 @@ import 'package:aurogram/features/feed/presentation/pages/thread_view.dart';
 import 'package:aurogram/features/stories/pages/story_composer_page.dart';
 import 'package:aurogram/features/stories/pages/story_viewer_page.dart';
 import 'package:aurogram/features/feed/domain/feed_service.dart';
-import 'package:aurogram/services/feed_layout_cache.dart';
+import 'package:aurogram/features/feed/domain/feed_layout_cache.dart';
 import 'package:aurogram/features/stories/story_service.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/header_style.dart';

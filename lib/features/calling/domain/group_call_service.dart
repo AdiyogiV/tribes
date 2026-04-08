@@ -14,8 +14,8 @@ import 'package:permission_handler/permission_handler.dart'
 import 'package:aurogram/platform/agora_web_helper_stub.dart'
     if (dart.library.html) 'package:aurogram/platform/agora_web_helper.dart'
     as agora_web;
-import 'package:aurogram/models/group_call_participant.dart';
-export 'package:aurogram/models/group_call_participant.dart';
+import 'package:aurogram/shared/models/group_call_participant.dart';
+export 'package:aurogram/shared/models/group_call_participant.dart';
 
 /// GroupCallService - Agora-based group calling for grams
 class GroupCallService {

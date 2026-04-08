@@ -9,9 +9,9 @@ import 'package:aurogram/shared/presentation/widgets/media/media_type_selector.d
 import 'package:aurogram/shared/presentation/widgets/dialogs/login_bottom_sheet.dart';
 import 'package:aurogram/features/feed/presentation/widgets/post_options_sheet.dart';
 import 'package:aurogram/features/auth/auth_service.dart';
-import 'package:aurogram/services/database_service.dart';
+import 'package:aurogram/shared/services/database_service.dart';
 import 'package:aurogram/features/feed/data/datasources/post_db_service.dart';
-import 'package:aurogram/services/repost_service.dart';
+import 'package:aurogram/features/feed/domain/repost_service.dart';
 import 'package:aurogram/shared/services/share/share_service.dart';
 import 'package:aurogram/features/feed/presentation/pages/feed_controller.dart';
 

@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:aurogram/shared/presentation/widgets/media/common_widgets.dart';
-import 'package:aurogram/providers/ai_chat_provider.dart';
+import 'package:aurogram/features/ai_chat/domain/ai_chat_models.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/features/chat/domain/markdown_utils.dart';
 import 'package:aurogram/features/chat/domain/url_launcher_utils.dart';
-import 'package:aurogram/models/thought_process.dart';
+import 'package:aurogram/shared/models/thought_process.dart';
 import 'typing_indicator.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/shared/presentation/widgets/feedback/snack_bar_service.dart';
+import 'package:aurogram/features/ai_chat/domain/ai_chat_provider.dart';
 
 /// Builder methods for AI assistant messages including sources dialog
 class AiMessageBuilder {

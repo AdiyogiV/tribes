@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:aurogram/providers/ai_chat_provider.dart';
-import 'package:aurogram/models/thought_process.dart';
+import 'package:aurogram/features/ai_chat/domain/ai_chat_models.dart';
+import 'package:aurogram/shared/models/thought_process.dart';
 
 void main() {
   group('AiMessage', () {

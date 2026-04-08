@@ -9,7 +9,7 @@ import 'package:aurogram/features/chat/domain/space_chat_service.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/features/chat/domain/chat_notification_service.dart';
-import 'package:aurogram/widgets/call/active_call_banner.dart';
+import 'package:aurogram/features/calling/presentation/widgets/active_call_banner.dart';
 import 'package:aurogram/shared/presentation/responsive/responsive.dart';
 import 'package:aurogram/core/di/injection.dart';
 import 'package:aurogram/features/profile/domain/user_service.dart';

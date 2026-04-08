@@ -4,8 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/theme_helper.dart';
-import 'package:aurogram/pages/helpers/flash.dart';
-import 'package:aurogram/widgets/cosmic_dashboard.dart';
+import 'package:aurogram/shared/presentation/widgets/flash.dart';
+import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 
 /// Header background style options

@@ -1,9 +1,9 @@
 import 'dart:async' show unawaited, runZonedGuarded, TimeoutException;
 import 'package:aurogram/firebase_options.dart';
-import 'package:aurogram/services/cache_service.dart';
-import 'package:aurogram/services/startup_service.dart';
+import 'package:aurogram/shared/services/cache_service.dart';
+import 'package:aurogram/core/startup/startup_service.dart';
 import 'package:aurogram/features/notifications/domain/notification_service.dart';
-import 'package:aurogram/services/onboarding_service.dart';
+import 'package:aurogram/features/onboarding/domain/onboarding_service.dart';
 import 'package:aurogram/core/di/injection.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/core/storage/app_performance.dart';
@@ -16,26 +16,26 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:aurogram/providers/theme_provider.dart';
+import 'package:aurogram/shared/providers/theme_provider.dart';
 import 'package:aurogram/features/auth/auth_service.dart';
-import 'package:aurogram/providers/ai_chat_provider.dart';
 import 'package:aurogram/shared/services/media/speech_recognition_service.dart';
 import 'package:aurogram/shared/services/media/audio_input_service.dart';
 import 'package:aurogram/features/ai_chat/domain/ai_chat_service.dart';
 import 'package:aurogram/shared/services/location_service.dart';
 import 'package:aurogram/features/feed/presentation/pages/feed_controller.dart';
-import 'package:aurogram/utils/app_initializer.dart';
-import 'tabs.dart';
+import 'package:aurogram/core/startup/app_initializer.dart';
+import 'package:aurogram/app/tabs/tab_handler.dart';
 import 'package:aurogram/core/storage/memory_manager.dart';
 import 'package:aurogram/core/network/network_manager.dart';
 import 'package:aurogram/core/network/network_optimizer.dart';
 import 'package:aurogram/shared/services/media/media_compression_service.dart';
 import 'package:aurogram/core/routing/dynamic_link_navigator.dart';
-import 'package:aurogram/pages/helpers/flash.dart';
+import 'package:aurogram/shared/presentation/widgets/flash.dart';
 import 'package:aurogram/platform/platform.dart';
+import 'package:aurogram/features/ai_chat/domain/ai_chat_provider.dart';
 
 // Conditional imports for mobile-only features
-import 'package:aurogram/services/call_service_export.dart';
+import 'package:aurogram/features/calling/domain/call_service.dart';
 import 'package:aurogram/features/calling/presentation/pages/incoming_call_screen.dart'
     if (dart.library.html) 'package:aurogram/pages/call/incoming_call_screen_stub.dart';
 import 'package:aurogram/core/notifications/fcm_background_handler.dart';

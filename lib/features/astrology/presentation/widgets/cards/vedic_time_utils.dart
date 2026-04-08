@@ -15,9 +15,9 @@ import 'package:aurogram/core/logging/app_logger.dart';
 ///    - Use [buildFullVedicDate] and [buildBirthSamvatYear] (no year validation)
 ///    - Use [filterBirthSamvat] to verify data matches birth date
 class VedicTimeUtils {
-  /// Calculate Vedic time details (Prahar, Gati, Pala)
+  /// Calculate Vedic time details (Prahar, Ghati, Pala)
   /// Uses 8 Prahar system: 8 consecutive prahars from sunrise to sunrise
-  /// Each Prahar = 3 hours (180 minutes). Also shows Gati (1 Gati = 24 minutes)
+  /// Each Prahar = 3 hours (180 minutes). Also shows Ghati (1 Ghati = 24 minutes)
   /// IMPORTANT: Vedic time is calculated from sunrise, not midnight
   ///
   /// KNOWN LIMITATION: Uses hardcoded sunrise (6 AM).
@@ -45,26 +45,50 @@ class VedicTimeUtils {
     // Calculate Prahar (1 Prahar = 3 hours = 180 minutes)
     final prahar = (minutesFromSunrise ~/ 180) + 1;
 
-    // Convert to Gati (1 Gati = 24 minutes = 1440 seconds)
-    final gati = secondsFromSunrise ~/ 1440;
+    // Convert to Ghati (1 Ghati = 24 minutes = 1440 seconds)
+    final ghati = secondsFromSunrise ~/ 1440;
     // Calculate remaining Pala (1 Pala = 24 seconds)
-    final remainingSeconds = secondsFromSunrise - (gati * 1440);
+    final remainingSeconds = secondsFromSunrise - (ghati * 1440);
     final pala = remainingSeconds ~/ 24;
 
-    // Format: "8 Prahar 32 Gati 15 Pala"
-    return '$prahar Prahar $gati Gati $pala Pala';
+    // Format: "8 Prahar 32 Ghati 15 Pala"
+    return '$prahar Prahar $ghati Ghati $pala Pala';
   }
 
-  /// Short Vedic time: "Gati 52 Pala 29"
+  // Traditional Prahar names (8 watches, starting at sunrise)
+  static const _praharNames = [
+    'Purvanha',   // early morning (sunrise–9 AM)
+    'Madhyanha',  // midday (9 AM–12 PM)
+    'Aparanha',   // afternoon (12–3 PM)
+    'Sayanha',    // evening (3–6 PM)
+    'Pradosha',   // early night (6–9 PM)
+    'Nishitha',   // midnight (9 PM–12 AM)
+    'Triyama',    // late night (12–3 AM)
+    'Usha',       // dawn (3–6 AM)
+  ];
+
+  /// Current Prahar name: "Usha Prahar"
+  static String getVedicPrahar(DateTime time) {
+    const sunriseHour = 6;
+    var secondsFromSunrise = (time.hour - sunriseHour) * 3600 + time.minute * 60 + time.second;
+    if (secondsFromSunrise < 0) secondsFromSunrise += 86400;
+
+    final minutesFromSunrise = secondsFromSunrise / 60.0;
+    final praharIndex = (minutesFromSunrise ~/ 180) % 8;
+
+    return '${_praharNames[praharIndex]} Prahar ${praharIndex + 1}';
+  }
+
+  /// Short Vedic time: "Ghati 52 · Pala 29"
   static String getVedicTimeShort(DateTime time) {
     const sunriseHour = 6;
     var secondsFromSunrise = (time.hour - sunriseHour) * 3600 + time.minute * 60 + time.second;
     if (secondsFromSunrise < 0) secondsFromSunrise += 86400;
 
-    final gati = secondsFromSunrise ~/ 1440;
-    final pala = (secondsFromSunrise - (gati * 1440)) ~/ 24;
+    final ghati = secondsFromSunrise ~/ 1440;
+    final pala = (secondsFromSunrise - (ghati * 1440)) ~/ 24;
 
-    return 'Gati $gati Pala $pala';
+    return 'Ghati $ghati · Pala $pala';
   }
 
   /// Get ordinal suffix for prahar number (1st, 2nd, 3rd, 4th, etc.)
@@ -222,6 +246,33 @@ class VedicTimeUtils {
       return result;
     }
     if (vikramName != null) {
+      return 'Vikram Samvat $vikramName';
+    }
+    return null;
+  }
+
+  /// Build Samvat year for TODAY's card — name only, no number.
+  /// Example: "Vikram Samvat Siddharthi"
+  static String? buildSamvatYearNameOnly(Map<String, dynamic>? samvat) {
+    if (samvat == null) return null;
+
+    final vikramNumber = samvat['vikram_chaitradi_number'];
+    final vikramName = samvat['vikram_chaitradi_year_name'];
+
+    // Validate year is reasonable for today
+    if (vikramNumber != null) {
+      final currentGregorianYear = DateTime.now().year;
+      final expectedVikramMin = currentGregorianYear + 56;
+      final expectedVikramMax = currentGregorianYear + 58;
+      final yearNum = vikramNumber is num
+          ? vikramNumber.toInt()
+          : int.tryParse(vikramNumber.toString());
+      if (yearNum != null && (yearNum < expectedVikramMin - 1 || yearNum > expectedVikramMax + 1)) {
+        return null; // stale birth data
+      }
+    }
+
+    if (vikramName != null && vikramName.toString().isNotEmpty) {
       return 'Vikram Samvat $vikramName';
     }
     return null;

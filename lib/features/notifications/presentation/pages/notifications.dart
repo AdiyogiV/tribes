@@ -19,7 +19,7 @@ import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/core/theme/header_style.dart';
 import 'package:aurogram/shared/presentation/responsive/responsive.dart';
-import 'package:aurogram/models/notification.dart';
+import 'package:aurogram/shared/models/notification.dart';
 import 'package:aurogram/features/notifications/domain/notification_service.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/shared/presentation/widgets/feedback/snack_bar_service.dart';

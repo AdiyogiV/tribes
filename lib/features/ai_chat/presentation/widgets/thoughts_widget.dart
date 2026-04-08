@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:aurogram/shared/presentation/widgets/media/common_widgets.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
-import 'package:aurogram/models/thought_process.dart';
+import 'package:aurogram/shared/models/thought_process.dart';
 import 'package:aurogram/features/chat/domain/url_launcher_utils.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 

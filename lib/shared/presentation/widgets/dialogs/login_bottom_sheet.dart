@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'dart:ui';
 import 'package:aurogram/features/auth/login.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
-import 'package:aurogram/widgets/universal/transparent_toolbox.dart';
+import 'package:aurogram/shared/presentation/widgets/universal/transparent_toolbox.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 
 /// Minimal login bottom sheet

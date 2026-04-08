@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import 'package:aurogram/shared/presentation/widgets/media/common_widgets.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
@@ -57,9 +56,10 @@ class _CosmicDateTimeCardState extends State<CosmicDateTimeCard> {
     final c = AppTheme.primaryColor;
     final samvat = widget.samvat;
 
+    final vedicPrahar = VedicTimeUtils.getVedicPrahar(_now);
     final vedicTimeShort = VedicTimeUtils.getVedicTimeShort(_now);
     final fullVedicDate = VedicTimeUtils.buildFullVedicDate(samvat);
-    final samvatYear = VedicTimeUtils.buildSamvatYear(samvat);
+    final samvatYear = VedicTimeUtils.buildSamvatYearNameOnly(samvat);
     final vedicNumericDate = VedicTimeUtils.buildVedicNumericDate(samvat);
 
     // Extract moon phase data
@@ -130,7 +130,18 @@ class _CosmicDateTimeCardState extends State<CosmicDateTimeCard> {
                 ),
                 child: Column(
                   children: [
-                    // Line 1: Gati 52 Pala 29
+                    // Line 1: Usha Prahar
+                    Text(
+                      vedicPrahar,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: AppTheme.holyCowTextSize,
+                        fontWeight: FontWeight.w500,
+                        color: c,
+                        height: 1.5,
+                      ),
+                    ),
+                    // Line 2: Ghati 52 · Pala 29
                     Text(
                       vedicTimeShort,
                       textAlign: TextAlign.center,
@@ -173,7 +184,7 @@ class _CosmicDateTimeCardState extends State<CosmicDateTimeCard> {
                         style: TextStyle(
                           fontSize: AppTheme.holyCowTextSize,
                           fontWeight: FontWeight.w500,
-                          color: c.withValues(alpha: 0.6),
+                          color: c.withValues(alpha: 0.5),
                           height: 1.5,
                         ),
                       ),
@@ -262,14 +273,14 @@ class VedicTimeInfoSheet extends StatelessWidget {
                 'A 3-hour time division. There are 8 Prahars in a full day (sunrise to sunrise), numbered Pratham through Ashtam.',
           ),
           _buildInfoItem(
-            title: 'Gati',
+            title: 'Ghati',
             description:
-                'A Gati equals 24 minutes. One day has 60 Gati. Used in astrological calculations and muhurat timing.',
+                'A Ghati equals 24 minutes. One day has 60 Ghati. Used in astrological calculations and muhurat timing.',
           ),
           _buildInfoItem(
             title: 'Pala',
             description:
-                'A Pala is 24 seconds (1/60th of a Gati). The smallest commonly used Vedic time unit.',
+                'A Pala is 24 seconds (1/60th of a Ghati). The smallest commonly used Vedic time unit.',
           ),
           _buildInfoItem(
             title: 'Tithi',

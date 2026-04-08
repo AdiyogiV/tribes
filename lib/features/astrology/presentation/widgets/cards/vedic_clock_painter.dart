@@ -2,13 +2,13 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 
-/// Vedic analog clock showing Gati/Pala hands with Prahar background.
+/// Vedic analog clock showing Ghati/Pala hands with Prahar background.
 ///
 /// Layout (center → edge):
 ///   0.00 → 0.68  Prahar background segments + labels
-///   0.72 → 0.92  Gati tick marks (60 marks) + ☀ at 12 o'clock
-///   Hands reach into Gati ring area
-///   Sunrise (6 AM) at 12 o'clock = 0 Gati
+///   0.72 → 0.92  Ghati tick marks (60 marks) + ☀ at 12 o'clock
+///   Hands reach into Ghati ring area
+///   Sunrise (6 AM) at 12 o'clock = 0 Ghati
 class VedicClockPainter extends CustomPainter {
   final DateTime time;
   final Color primaryColor;
@@ -23,9 +23,16 @@ class VedicClockPainter extends CustomPainter {
   static const _sunriseHour = 6;
 
   // Prahar names
+  // Traditional Prahar names (8 watches of the day, starting at sunrise)
   static const _praharNames = [
-    'pratham', 'dwitiya', 'tritiya', 'chaturth',
-    'pancham', 'shashth', 'saptam', 'ashtam',
+    'purvanha',   // early morning (6–9 AM)
+    'madhyanha',  // midday (9 AM–12 PM)
+    'aparanha',   // afternoon (12–3 PM)
+    'sayanha',    // evening (3–6 PM)
+    'pradosha',   // early night (6–9 PM)
+    'nishitha',   // midnight (9 PM–12 AM)
+    'triyama',    // late night (12–3 AM)
+    'usha',       // dawn (3–6 AM)
   ];
 
   @override
@@ -40,15 +47,15 @@ class VedicClockPainter extends CustomPainter {
     var secondsFromSunrise = (hour - _sunriseHour) * 3600 + minute * 60 + second;
     if (secondsFromSunrise < 0) secondsFromSunrise += 86400;
 
-    final gati = secondsFromSunrise / 1440.0; // 0–60
+    final ghati = secondsFromSunrise / 1440.0; // 0–60
     final pala = (secondsFromSunrise % 1440) / 24.0; // 0–60
 
     canvas.save();
     canvas.translate(center.dx, center.dy);
 
     _drawPraharSegments(canvas, radius);
-    _drawGatiRing(canvas, radius);
-    _drawHands(canvas, radius, gati, pala);
+    _drawGhatiRing(canvas, radius);
+    _drawHands(canvas, radius, ghati, pala);
     _drawCenterDot(canvas, radius);
 
     canvas.restore();
@@ -122,9 +129,9 @@ class VedicClockPainter extends CustomPainter {
     );
   }
 
-  // ── Gati marks (outer ring, fills to edge) ────────────────
+  // ── Ghati marks (outer ring, fills to edge) ────────────────
 
-  void _drawGatiRing(Canvas canvas, double radius) {
+  void _drawGhatiRing(Canvas canvas, double radius) {
     final outerR = radius * 0.92;
     final innerR = radius * 0.80;
     final labelR = radius * 0.84; // visually centered in ring gap (0.80–0.92)
@@ -162,12 +169,12 @@ class VedicClockPainter extends CustomPainter {
         );
       }
 
-      // Sun at 0 Gati (sunrise / 12 o'clock) — drawn as golden circle + rays
+      // Sun at 0 Ghati (sunrise / 12 o'clock) — drawn as golden circle + rays
       if (isSunrise) {
         _drawSunIcon(canvas, labelR * math.cos(angle), labelR * math.sin(angle), radius * 0.038);
       }
 
-      // Number label every 10 Gati
+      // Number label every 10 Ghati
       if (hasNumberLabel) {
         _drawLabel(
           canvas,
@@ -184,7 +191,7 @@ class VedicClockPainter extends CustomPainter {
 
   // ── Hands ─────────────────────────────────────────────────
 
-  void _drawHands(Canvas canvas, double radius, double gati, double pala) {
+  void _drawHands(Canvas canvas, double radius, double ghati, double pala) {
     // Pala hand — long, thin
     final palaAngle = -math.pi / 2 + (pala / 60.0) * 2 * math.pi;
     _drawHand(canvas,
@@ -195,10 +202,10 @@ class VedicClockPainter extends CustomPainter {
       color: primaryColor.withValues(alpha: 0.6),
     );
 
-    // Gati hand — short, thick
-    final gatiAngle = -math.pi / 2 + (gati / 60.0) * 2 * math.pi;
+    // Ghati hand — short, thick
+    final ghatiAngle = -math.pi / 2 + (ghati / 60.0) * 2 * math.pi;
     _drawHand(canvas,
-      angle: gatiAngle,
+      angle: ghatiAngle,
       length: radius * 0.52,
       tail: radius * 0.08,
       width: 2.8,

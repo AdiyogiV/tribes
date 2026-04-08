@@ -11,7 +11,7 @@ import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/features/profile/presentation/pages/user_profile.dart';
 import 'package:aurogram/features/spaces/presentation/pages/space_screen.dart';
 import 'package:aurogram/features/chat/domain/chat_notification_service.dart';
-import 'package:aurogram/widgets/call/active_call_banner.dart';
+import 'package:aurogram/features/calling/presentation/widgets/active_call_banner.dart';
 import 'package:aurogram/features/spaces/presentation/widgets/space_chat_input.dart';
 import 'package:aurogram/features/spaces/presentation/widgets/media_gallery_page.dart';
 import 'package:aurogram/features/chat/presentation/widgets/message_search_sheet.dart';

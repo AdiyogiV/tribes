@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:aurogram/shared/models/dm_conversation.dart';
 import 'package:aurogram/shared/models/contact_match.dart';
 import 'package:aurogram/core/theme/header_style.dart';
-import 'package:aurogram/pages/tabs/widgets/messages_empty_state.dart';
+import 'package:aurogram/app/tabs/widgets/messages_empty_state.dart';
 import 'package:aurogram/features/chat/presentation/pages/messages_unified_card.dart';
 import 'package:aurogram/features/chat/presentation/pages/messages_section_widgets.dart';
 

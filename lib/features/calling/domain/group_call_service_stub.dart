@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'package:aurogram/models/group_call_participant.dart';
-export 'package:aurogram/models/group_call_participant.dart';
+import 'package:aurogram/shared/models/group_call_participant.dart';
+export 'package:aurogram/shared/models/group_call_participant.dart';
 
 /// Stub for GroupCallService on web
 /// Group calling is not supported on web in Phase 1

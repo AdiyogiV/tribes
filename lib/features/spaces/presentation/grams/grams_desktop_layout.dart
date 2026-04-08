@@ -5,8 +5,8 @@ import 'package:aurogram/shared/models/space.dart';
 import 'package:aurogram/features/spaces/presentation/grams/grams_empty_state.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/header_style.dart';
-import 'package:aurogram/widgets/theatre/embedded_theatre_view.dart';
-import 'package:aurogram/widgets/universal/transparent_toolbox.dart';
+import 'package:aurogram/features/feed/presentation/widgets/embedded_theatre_view.dart';
+import 'package:aurogram/shared/presentation/widgets/universal/transparent_toolbox.dart';
 
 /// Desktop master-detail layout for grams: list on left, detail on right.
 class GramsDesktopLayout extends StatelessWidget {

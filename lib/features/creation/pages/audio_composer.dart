@@ -12,7 +12,7 @@ import 'package:logger/logger.dart' show Level;
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
-import 'package:aurogram/services/database_service.dart';
+import 'package:aurogram/shared/services/database_service.dart';
 import 'package:aurogram/shared/presentation/widgets/feedback/snack_bar_service.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/features/feed/data/datasources/firebase_post_repository.dart';

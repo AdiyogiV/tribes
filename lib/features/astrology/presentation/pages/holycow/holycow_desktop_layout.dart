@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:aurogram/shared/models/dm_conversation.dart';
-import 'package:aurogram/providers/ai_chat_provider.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/header_style.dart';
 import 'package:aurogram/features/chat/domain/chat_dialogs.dart';
@@ -10,6 +9,7 @@ import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/features/ai_chat/presentation/pages/ai_chat_page.dart';
 import 'package:aurogram/features/astrology/presentation/pages/holycow/holycow_empty_states.dart';
 import 'package:intl/intl.dart';
+import 'package:aurogram/features/ai_chat/domain/ai_chat_provider.dart';
 
 /// Desktop master-detail layout: conversation sidebar on the left,
 /// AiChatPage (inline) or cosmic dashboard on the right.

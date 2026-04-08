@@ -8,7 +8,7 @@ import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/header_style.dart';
 import 'package:aurogram/core/di/injection.dart';
 import 'package:aurogram/features/profile/domain/user_service.dart';
-import 'package:aurogram/services/batch_data_loader.dart';
+import 'package:aurogram/shared/services/batch_data_loader.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 

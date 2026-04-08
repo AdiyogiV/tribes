@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:aurogram/core/theme/app_theme.dart';
-import 'package:aurogram/services/cache_service.dart';
+import 'package:aurogram/shared/services/cache_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';

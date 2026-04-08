@@ -205,15 +205,15 @@ class AstrologyFormatters {
         ];
         final praharName = praharNames[(prahar - 1) % 8];
 
-        // Convert to Gati (1 Gati = 24 minutes)
-        final totalGati = minutesFromSunrise / 24.0;
-        final gatis = totalGati.floor();
-        final palas = ((totalGati - gatis) * 60).round();
+        // Convert to Ghati (1 Ghati = 24 minutes)
+        final totalGhati = minutesFromSunrise / 24.0;
+        final ghatis = totalGhati.floor();
+        final palas = ((totalGhati - ghatis) * 60).round();
 
         return {
           'prahar': prahar,
           'praharName': praharName,
-          'gatis': gatis,
+          'ghatis': ghatis,
           'palas': palas,
         };
       }

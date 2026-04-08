@@ -4,7 +4,7 @@ import 'package:aurogram/shared/presentation/widgets/player/text_note_player.dar
 import 'package:aurogram/shared/presentation/widgets/player/audio_note_player.dart';
 import 'package:aurogram/shared/presentation/widgets/player/image_note_player.dart';
 import 'package:aurogram/features/feed/presentation/widgets/post_data.dart';
-import 'package:aurogram/services/batch_data_loader.dart';
+import 'package:aurogram/shared/services/batch_data_loader.dart';
 
 // =============================================================================
 // POST MEDIA BUILDER

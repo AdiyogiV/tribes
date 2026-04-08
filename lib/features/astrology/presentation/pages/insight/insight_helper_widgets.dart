@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:aurogram/shared/models/daily_insight.dart';
 import 'package:aurogram/shared/presentation/widgets/media/common_widgets.dart';
 import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
-import 'package:aurogram/pages/helpers/flash.dart';
+import 'package:aurogram/shared/presentation/widgets/flash.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 
 /// Skeleton loading placeholder for insight cards.

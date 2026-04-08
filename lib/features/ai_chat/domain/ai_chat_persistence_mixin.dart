@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:aurogram/shared/models/dm_conversation.dart';
-import 'package:aurogram/models/thought_process.dart';
+import 'package:aurogram/shared/models/thought_process.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 
 import 'ai_chat_models.dart';

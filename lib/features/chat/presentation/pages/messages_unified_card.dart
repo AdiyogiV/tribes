@@ -8,7 +8,7 @@ import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/header_style.dart';
 import 'package:aurogram/shared/presentation/widgets/avatars/user_avatar.dart';
 import 'package:aurogram/features/profile/presentation/widgets/preview_boxes/gram_picture.dart';
-import 'package:aurogram/pages/tabs/widgets/namaste_button.dart';
+import 'package:aurogram/app/tabs/widgets/namaste_button.dart';
 
 /// Callback types for card interactions
 typedef CardTapCallback = void Function({

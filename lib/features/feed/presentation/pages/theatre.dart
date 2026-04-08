@@ -5,7 +5,7 @@ import 'package:aurogram/features/feed/presentation/widgets/post_switcher.dart';
 import 'package:aurogram/features/profile/presentation/widgets/preview_boxes/gram_picture.dart';
 import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
 import 'package:aurogram/core/config/call_ui_config.dart';
-import 'package:aurogram/widgets/call/active_call_banner.dart';
+import 'package:aurogram/features/calling/presentation/widgets/active_call_banner.dart';
 import 'package:aurogram/features/calling/presentation/pages/group_call_screen.dart';
 import 'package:aurogram/features/calling/domain/group_call_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';

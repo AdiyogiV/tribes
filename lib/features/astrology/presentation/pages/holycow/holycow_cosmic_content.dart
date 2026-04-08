@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:aurogram/shared/presentation/widgets/media/common_widgets.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
-import 'package:aurogram/core/theme/header_style.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/timeline/muhurat_timeline_widget.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cards/cosmic_date_time_card.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cards/cosmic_insight_card.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cards/cosmic_panchang_card.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cards/upcoming_events_card.dart';
-import 'package:aurogram/widgets/cosmic_dashboard/widgets/cosmic_sky_chart_card.dart';
-import 'package:aurogram/widgets/cosmic_dashboard/cosmic_dashboard_data.dart';
+import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/widgets/cosmic_sky_chart_card.dart';
+import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/cosmic_dashboard_data.dart';
 import 'package:aurogram/shared/models/astrology_profile.dart';
 import 'package:aurogram/shared/models/daily_insight.dart';
 import 'package:aurogram/features/astrology/domain/sky_positions_service.dart';

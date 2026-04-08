@@ -8,7 +8,7 @@ import 'package:aurogram/shared/presentation/widgets/media/context_menu.dart';
 import 'package:aurogram/features/feed/presentation/widgets/post_replies.dart' hide ReplyCallback;
 import 'package:aurogram/core/di/injection.dart';
 import 'package:aurogram/features/feed/data/datasources/post_db_service.dart';
-import 'package:aurogram/services/batch_data_loader.dart';
+import 'package:aurogram/shared/services/batch_data_loader.dart';
 import 'package:aurogram/features/feed/presentation/pages/feed_controller.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/core/theme/app_theme.dart';

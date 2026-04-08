@@ -7,7 +7,7 @@ import 'package:video_player/video_player.dart';
 
 import 'story_video_preview_io.dart'
     if (dart.library.html) 'story_video_preview_stub.dart' as video_preview;
-import 'package:aurogram/models/story.dart';
+import 'package:aurogram/shared/models/story.dart';
 import 'package:aurogram/features/stories/story_service.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/logging/app_logger.dart';

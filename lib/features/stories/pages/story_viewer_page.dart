@@ -6,7 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
-import 'package:aurogram/models/story.dart';
+import 'package:aurogram/shared/models/story.dart';
 import 'package:aurogram/features/stories/story_service.dart';
 import 'package:aurogram/features/stories/widgets/story_progress_bar.dart';
 import 'package:aurogram/features/stories/widgets/story_top_bar.dart';

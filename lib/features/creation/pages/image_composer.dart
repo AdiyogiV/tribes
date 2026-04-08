@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:aurogram/services/database_service.dart';
+import 'package:aurogram/shared/services/database_service.dart';
 import 'package:aurogram/shared/services/media/media_storage_service.dart';
 import 'package:aurogram/features/feed/data/datasources/post_db_service.dart';
 import 'package:aurogram/core/logging/app_logger.dart';

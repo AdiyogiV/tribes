@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:aurogram/providers/ai_chat_provider.dart';
 import 'package:aurogram/core/theme/header_style.dart';
 import 'package:aurogram/shared/models/dm_conversation.dart';
 import 'package:aurogram/features/chat/domain/space_chat_service.dart';
 import 'package:aurogram/features/chat/domain/chat_dialogs.dart';
-import 'package:aurogram/widgets/universal/transparent_toolbox.dart';
+import 'package:aurogram/shared/presentation/widgets/universal/transparent_toolbox.dart';
 import 'package:aurogram/features/ai_chat/presentation/widgets/recent_conversations_list.dart';
 import 'package:aurogram/features/ai_chat/presentation/widgets/recent_conversations_states.dart';
+import 'package:aurogram/features/ai_chat/domain/ai_chat_provider.dart';
 
 /// Page to display recent AI conversations
 /// Accessed from HolyCow page header

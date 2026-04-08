@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:aurogram/models/story.dart';
+import 'package:aurogram/shared/models/story.dart';
 import 'package:aurogram/features/stories/story_service.dart';
 import 'package:aurogram/features/chat/domain/space_chat_service.dart';
 import 'package:aurogram/core/logging/app_logger.dart';

@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:aurogram/models/thought_process.dart';
+import 'package:aurogram/shared/models/thought_process.dart';
 import 'package:aurogram/features/ai_chat/domain/ai_chat_service.dart';
 import 'package:aurogram/shared/services/location_service.dart';
 import 'package:aurogram/core/logging/app_logger.dart';

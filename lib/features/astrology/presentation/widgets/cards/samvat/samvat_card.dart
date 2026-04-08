@@ -188,7 +188,7 @@ class SamvatCard extends StatelessWidget {
               '${yearName.toString()} \u2022 $yearNumber',
             ),
           ],
-          // Vedic Time - Prahar & Gati/Pala
+          // Vedic Time - Prahar & Ghati/Pala
           if (birthTime != null && birthTime!.isNotEmpty) ...[
             const SizedBox(height: AppDimensions.spacingSm),
             Builder(builder: (context) {
@@ -204,7 +204,7 @@ class SamvatCard extends StatelessWidget {
                   const SizedBox(height: AppDimensions.spacingSm),
                   _buildDateComponent(
                     'Samay (Time)',
-                    '${vedicTime['gatis']} Gati ${vedicTime['palas']} Pala',
+                    '${vedicTime['ghatis']} Ghati ${vedicTime['palas']} Pala',
                   ),
                 ],
               );

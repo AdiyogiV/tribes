@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
-import 'package:aurogram/services/feed_state_manager.dart';
-import 'package:aurogram/services/batch_data_loader.dart';
+import 'package:aurogram/features/feed/domain/feed_state_manager.dart';
+import 'package:aurogram/shared/services/batch_data_loader.dart';
 
 /// Post interaction state (separate from widget)
 /// This is what production apps (Instagram, TikTok) do - keep state outside widgets

@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
 import 'package:video_player/video_player.dart';
-import 'package:aurogram/services/cache_service.dart';
+import 'package:aurogram/shared/services/cache_service.dart';
 import 'package:aurogram/shared/services/media/video_controller_pool.dart';
 import 'package:aurogram/core/di/injection.dart';
 import 'package:aurogram/core/logging/app_logger.dart';

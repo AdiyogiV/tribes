@@ -6,7 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:aurogram/features/auth/auth_service.dart';
 import 'package:aurogram/features/astrology/domain/astrology_service.dart';
 import 'package:aurogram/features/notifications/domain/notification_service.dart';
-import 'package:aurogram/services/onboarding_service.dart';
+import 'package:aurogram/features/onboarding/domain/onboarding_service.dart';
 import 'package:aurogram/features/astrology/presentation/pages/daily_insight_page.dart';
 import 'package:aurogram/features/astrology/presentation/pages/astrology_details_page.dart';
 import 'package:aurogram/features/ayurveda/presentation/pages/ayurveda_details_page.dart';

@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
-import 'package:aurogram/models/call.dart';
+import 'package:aurogram/shared/models/call.dart';
 
 /// Mixin that handles WebRTC peer connection setup, media streams,
 /// and media controls (mute, camera, speaker).

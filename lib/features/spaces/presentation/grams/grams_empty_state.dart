@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/header_style.dart';
-import 'package:aurogram/pages/helpers/gram_creation_page.dart'
+import 'package:aurogram/features/spaces/presentation/pages/gram_creation_page.dart'
     show SpaceCreationPage;
 import 'package:aurogram/shared/presentation/widgets/media/common_widgets.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';

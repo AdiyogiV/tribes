@@ -1,12 +1,12 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
-import 'package:aurogram/models/compatibility/compatibility_result.dart';
-import 'package:aurogram/models/compatibility/traditional_match.dart';
-export 'package:aurogram/models/compatibility/cosmic_match.dart';
-export 'package:aurogram/models/compatibility/life_phase.dart';
-export 'package:aurogram/models/compatibility/traditional_match.dart';
-export 'package:aurogram/models/compatibility/compatibility_result.dart';
+import 'package:aurogram/shared/models/compatibility/compatibility_result.dart';
+import 'package:aurogram/shared/models/compatibility/traditional_match.dart';
+export 'package:aurogram/shared/models/compatibility/cosmic_match.dart';
+export 'package:aurogram/shared/models/compatibility/life_phase.dart';
+export 'package:aurogram/shared/models/compatibility/traditional_match.dart';
+export 'package:aurogram/shared/models/compatibility/compatibility_result.dart';
 
 // =============================================================================
 // COMPATIBILITY SERVICE

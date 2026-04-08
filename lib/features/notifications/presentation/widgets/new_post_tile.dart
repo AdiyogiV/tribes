@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:aurogram/features/feed/presentation/pages/thread_view.dart';
 import 'package:aurogram/features/spaces/presentation/pages/space_screen.dart';
-import 'package:aurogram/services/database_service.dart';
+import 'package:aurogram/shared/services/database_service.dart';
 import 'package:aurogram/features/feed/data/datasources/post_db_service.dart';
 import 'package:aurogram/core/di/injection.dart';
 import 'package:aurogram/features/profile/domain/user_service.dart';

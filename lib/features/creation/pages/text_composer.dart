@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/features/feed/data/datasources/post_db_service.dart';
-import 'package:aurogram/services/database_service.dart';
+import 'package:aurogram/shared/services/database_service.dart';
 import 'package:aurogram/core/di/injection.dart';
 import 'package:aurogram/core/theme/theme_helper.dart';
 import 'package:aurogram/shared/presentation/widgets/feedback/snack_bar_service.dart';
 import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
 import 'package:aurogram/features/feed/presentation/widgets/quoted_post_preview.dart';
-import 'package:aurogram/services/repost_service.dart';
+import 'package:aurogram/features/feed/domain/repost_service.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 
 class TextComposer extends StatefulWidget {

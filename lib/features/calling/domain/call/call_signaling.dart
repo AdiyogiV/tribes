@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
-import 'package:aurogram/models/call.dart';
+import 'package:aurogram/shared/models/call.dart';
 
 /// Mixin that handles Firestore signaling for WebRTC calls:
 /// offer/answer exchange, ICE candidate relay, and call-status listeners.

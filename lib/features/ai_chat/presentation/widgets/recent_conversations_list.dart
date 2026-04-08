@@ -5,7 +5,7 @@ import 'package:aurogram/shared/models/dm_conversation.dart';
 import 'package:aurogram/features/chat/domain/space_chat_service.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/header_style.dart';
-import 'package:aurogram/widgets/universal/transparent_toolbox.dart';
+import 'package:aurogram/shared/presentation/widgets/universal/transparent_toolbox.dart';
 
 class RecentConversationsList extends StatelessWidget {
   final List<DmConversation> conversations;

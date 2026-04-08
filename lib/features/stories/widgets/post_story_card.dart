@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/shared/presentation/widgets/media/common_widgets.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:aurogram/models/post.dart';
+import 'package:aurogram/shared/models/post.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 
 /// Instagram-style post card for stories.

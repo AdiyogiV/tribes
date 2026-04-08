@@ -4,8 +4,8 @@ import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/header_style.dart';
 import 'package:aurogram/core/storage/image_optimizer.dart';
 import 'package:aurogram/shared/presentation/widgets/avatars/user_avatar.dart';
-import 'package:aurogram/widgets/universal/transparent_toolbox.dart';
-import 'package:aurogram/pages/tabs/widgets/fullscreen_avatar_viewer.dart';
+import 'package:aurogram/shared/presentation/widgets/universal/transparent_toolbox.dart';
+import 'package:aurogram/app/tabs/widgets/fullscreen_avatar_viewer.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 
 /// Profile hero section with avatar, name, and follow status badges.

@@ -3,7 +3,7 @@ import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:flutter/services.dart';
 import 'package:aurogram/shared/presentation/responsive/responsive.dart';
 import 'package:aurogram/shared/models/ayurveda_profile.dart';
-import 'package:aurogram/widgets/universal/transparent_toolbox.dart';
+import 'package:aurogram/shared/presentation/widgets/universal/transparent_toolbox.dart';
 import 'package:aurogram/features/onboarding/domain/onboarding_constants.dart';
 import 'package:aurogram/features/onboarding/domain/onboarding_ayurveda_data.dart';
 import 'package:aurogram/features/onboarding/presentation/widgets/onboarding_dialogs.dart';
