@@ -1,10 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:aurogram/pages/tabs/user_profile.dart';
+import 'package:aurogram/utils/logging/app_logger.dart';
 import 'package:aurogram/utils/time_display.dart';
 import 'package:aurogram/widgets/notifications/unified_notification_card.dart';
-import 'package:aurogram/widgets/user_avatar.dart';
+import 'package:aurogram/widgets/common/user_avatar.dart';
 
 /// Alerts list tile for a missed voice/video call. Tap opens caller profile.
 class MissedCallTile extends StatelessWidget {
@@ -18,7 +18,9 @@ class MissedCallTile extends StatelessWidget {
         final ts = data!['timestamp'];
         return TimeDisplay.getCompactTimestamp(
             ts is Timestamp ? ts.toDate() : DateTime.now());
-      } catch (_) {}
+      } catch (_) {
+        AppLogger.w('MissedCallTile: failed to parse timestamp', category: LogCategory.general);
+      }
     }
     return 'Recently';
   }

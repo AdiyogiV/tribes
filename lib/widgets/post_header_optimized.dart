@@ -5,6 +5,7 @@ import 'package:aurogram/pages/tabs/user_profile.dart';
 import 'package:aurogram/pages/spaces/space_screen.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/services/batch_data_loader.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Optimized post header - ZERO async fetches, all data passed as props
 ///
@@ -58,7 +59,7 @@ class PostHeaderOptimized extends StatelessWidget {
             child: _buildAvatar(),
           ),
 
-          const SizedBox(width: 12),
+          const SizedBox(width: AppDimensions.spacingMd),
 
           // Username + Gram (left-aligned, single line or two)
           Expanded(
@@ -70,7 +71,7 @@ class PostHeaderOptimized extends StatelessWidget {
                 children: [
                   _buildUserName(),
                   if (!isProfilePost && space != null && space!.isNotEmpty) ...[
-                    const SizedBox(height: 2),
+                    const SizedBox(height: AppDimensions.spacingXxs),
                     GestureDetector(
                       onTap: () => _navigateToSpace(context),
                       child: _buildSpaceName(),
@@ -88,7 +89,7 @@ class PostHeaderOptimized extends StatelessWidget {
               decoration: BoxDecoration(
                 color: (labelColor ?? AppTheme.primaryColor)
                     .withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
               ),
               child: Text(
                 label!,
@@ -103,7 +104,7 @@ class PostHeaderOptimized extends StatelessWidget {
 
           // Three dots (Instagram-style) - right side of header
           if (onMoreTap != null) ...[
-            if (label != null) const SizedBox(width: 8),
+            if (label != null) const SizedBox(width: AppDimensions.spacingSm),
             GestureDetector(
               onTap: onMoreTap,
               behavior: HitTestBehavior.opaque,

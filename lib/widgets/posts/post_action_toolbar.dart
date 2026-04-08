@@ -1,8 +1,10 @@
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/utils/logging/app_logger.dart';
 import 'package:aurogram/utils/media_type_selector.dart';
 import 'package:aurogram/widgets/dialogs/login_bottom_sheet.dart';
 import 'package:aurogram/widgets/posts/post_options_sheet.dart';
@@ -11,7 +13,7 @@ import 'package:aurogram/services/database_service.dart';
 import 'package:aurogram/services/data/post_db_service.dart';
 import 'package:aurogram/services/repost_service.dart';
 import 'package:aurogram/services/share_service.dart';
-import 'package:aurogram/controllers/feed_controller.dart';
+import 'package:aurogram/pages/tabs/feed/feed_controller.dart';
 
 /// Shared post action toolbar: like, reply, link?, repost, share.
 /// Used by all post types (video, audio, text, image) for a single place to maintain behavior and UI.
@@ -66,7 +68,9 @@ class _PostActionToolbarState extends State<PostActionToolbar> {
       _replyCount = state.replyCount;
       _likeCount = state.likeCount;
       _isLiked = state.isLiked;
-    } catch (_) {}
+    } catch (_) {
+      AppLogger.w('PostActionToolbar: failed to hydrate from FeedController', category: LogCategory.general);
+    }
   }
 
   Future<void> _loadCounters() async {
@@ -100,7 +104,9 @@ class _PostActionToolbarState extends State<PostActionToolbar> {
       final feedController = context.read<FeedController>();
       feedController.updateLike(widget.postId!, _likeCount, _isLiked);
       feedController.updateReplyCount(widget.postId!, _replyCount);
-    } catch (_) {}
+    } catch (_) {
+      AppLogger.w('PostActionToolbar: failed to sync to FeedController', category: LogCategory.general);
+    }
   }
 
   void _toggleLike() {
@@ -140,14 +146,17 @@ class _PostActionToolbarState extends State<PostActionToolbar> {
     final rawLink = widget.link?.trim();
     if (rawLink == null || rawLink.isEmpty) return;
     Uri? uri = Uri.tryParse(rawLink);
-    if (uri == null || uri.scheme.isEmpty)
+    if (uri == null || uri.scheme.isEmpty) {
       uri = Uri.tryParse('https://$rawLink');
+    }
     if (uri != null) {
       try {
         if (await canLaunchUrl(uri)) {
           await launchUrl(uri, mode: LaunchMode.externalApplication);
         }
-      } catch (_) {}
+      } catch (_) {
+        AppLogger.w('PostActionToolbar: failed to launch URL', category: LogCategory.general);
+      }
     }
   }
 
@@ -232,8 +241,8 @@ class _PostActionToolbarState extends State<PostActionToolbar> {
 
     if (_isLoading) {
       return const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: SizedBox(height: 40),
+        padding: EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd, vertical: AppDimensions.paddingSm),
+        child: SizedBox(height: AppDimensions.spacingLargeSection),
       );
     }
 
@@ -248,7 +257,7 @@ class _PostActionToolbarState extends State<PostActionToolbar> {
             activeColor: AppTheme.barnRed,
             onTap: _toggleLike,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppDimensions.spacingSm),
           _PostToolbarButton(
             icon: Icons.reply_outlined,
             label: _replyCount > 0 ? _formatCount(_replyCount) : null,
@@ -256,14 +265,14 @@ class _PostActionToolbarState extends State<PostActionToolbar> {
             onTap: _openReply,
           ),
           if (widget.link != null && widget.link!.isNotEmpty) ...[
-            const SizedBox(width: 8),
+            const SizedBox(width: AppDimensions.spacingSm),
             _PostToolbarButton(
               icon: CupertinoIcons.link,
               color: AppTheme.primaryColor,
               onTap: _openLink,
             ),
           ],
-          const SizedBox(width: 8),
+          const SizedBox(width: AppDimensions.spacingSm),
           _PostToolbarButton(
             icon: CupertinoIcons.arrow_2_squarepath,
             label: _repostCount > 0 ? _formatCount(_repostCount) : null,
@@ -272,7 +281,7 @@ class _PostActionToolbarState extends State<PostActionToolbar> {
             onTap: _repostPost,
             iconSize: 22,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppDimensions.spacingSm),
           _PostToolbarButton(
             icon: CupertinoIcons.paperplane_fill,
             color: iconColor,
@@ -324,7 +333,7 @@ class _PostToolbarButton extends StatelessWidget {
           children: [
             Icon(icon, size: iconSize ?? 22, color: resolvedColor),
             if (label != null) ...[
-              const SizedBox(width: 4),
+              const SizedBox(width: AppDimensions.spacingXs),
               Text(
                 label!,
                 style: TextStyle(

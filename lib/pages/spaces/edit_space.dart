@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:aurogram/models/space_types.dart';
 import 'package:aurogram/pages/spaces/space_screen.dart';
@@ -11,7 +10,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:aurogram/models/space.dart';
 import 'package:aurogram/models/space_roles.dart';
-import 'package:aurogram/pages/requests.dart';
+import 'package:aurogram/pages/social/requests.dart';
 import 'package:aurogram/pages/spaces/add_spaces_members.dart';
 import 'package:aurogram/services/cache_service.dart';
 import 'package:aurogram/services/database_service.dart';
@@ -27,6 +26,8 @@ import 'package:aurogram/services/share_service.dart';
 
 // Conditional import for dart:io
 import 'dart:io' if (dart.library.html) 'package:aurogram/platform/io_stub.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/widgets/common/snack_bar_service.dart';
 
 class EditSpace extends StatefulWidget {
   final String? space;
@@ -322,13 +323,7 @@ class EditSpaceState extends State<EditSpace>
       
       if (mounted) {
         // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('You have left the gram'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
-        );
+        showCustomSnackBar(context, message: 'You have left the gram', backgroundColor: Colors.green, duration: const Duration(seconds: 2));
         
         // Navigate back to home/grams tab
         Navigator.of(context).popUntil((route) => route.isFirst);
@@ -365,13 +360,7 @@ class EditSpaceState extends State<EditSpace>
                 setState(() {
                   role = null;
                 });
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Join request cancelled'),
-                    backgroundColor: Colors.orange,
-                    duration: Duration(seconds: 2),
-                  ),
-                );
+                showCustomSnackBar(context, message: 'Join request cancelled', backgroundColor: Colors.orange, duration: const Duration(seconds: 2));
                 getSpaceBox();
               }
             },
@@ -388,13 +377,7 @@ class EditSpaceState extends State<EditSpace>
       setState(() {
         role = SpaceRoles.requested;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Join request sent'),
-          backgroundColor: AppTheme.primaryColor,
-          duration: Duration(seconds: 2),
-        ),
-      );
+      showCustomSnackBar(context, message: 'Join request sent', backgroundColor: AppTheme.primaryColor, duration: const Duration(seconds: 2));
       getSpaceBox();
     }
   }
@@ -466,19 +449,19 @@ class EditSpaceState extends State<EditSpace>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
-                    SizedBox(height: 20),
+                    SizedBox(height: AppDimensions.spacingXl),
                     _buildImageContainer(),
-                    SizedBox(height: 8),
+                    SizedBox(height: AppDimensions.spacingSm),
                     Center(child: _buildVisibilityIndicator()),
-                    SizedBox(height: 24),
+                    SizedBox(height: AppDimensions.spacingXxl),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 15.0),
                       child: _buildDetailsSection(),
                     ),
-                    SizedBox(height: 20),
+                    SizedBox(height: AppDimensions.spacingXl),
                     if (isAdmin || role == SpaceRoles.creator) ...[
                       _buildAdminSettings(),
-                      SizedBox(height: 20),
+                      SizedBox(height: AppDimensions.spacingXl),
                     ],
                     getCrew()
                   ],
@@ -513,7 +496,7 @@ class EditSpaceState extends State<EditSpace>
                     label: Text('Add Members'),
                     backgroundColor: Colors.amber,
                   ),
-                  SizedBox(height: 10),
+                  SizedBox(height: AppDimensions.spacingMdSm),
                   FloatingActionButton.extended(
                     heroTag: 'sharelink',
                     onPressed: _shareLink,
@@ -609,7 +592,7 @@ class EditSpaceState extends State<EditSpace>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         _buildCupertinoTextField(_nameController, 'Gram Name'),
-        SizedBox(height: 10),
+        SizedBox(height: AppDimensions.spacingMdSm),
         _buildCupertinoTextField(_bioController, 'Description', fontSize: 14),
       ],
     );
@@ -685,10 +668,10 @@ class EditSpaceState extends State<EditSpace>
                 .textTheme
                 .titleMedium
                 ?.copyWith(fontWeight: FontWeight.w700)),
-        SizedBox(height: 8),
+        SizedBox(height: AppDimensions.spacingSm),
         Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
             border: Border.all(color: CupertinoColors.systemGrey4),
           ),
           child: Row(
@@ -706,7 +689,7 @@ class EditSpaceState extends State<EditSpace>
                         color: isSelected
                             ? option.color.withValues(alpha: 0.12)
                             : CupertinoColors.systemBackground,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -715,7 +698,7 @@ class EditSpaceState extends State<EditSpace>
                               color: isSelected
                                   ? option.color
                                   : CupertinoColors.systemGrey),
-                          SizedBox(width: 8),
+                          SizedBox(width: AppDimensions.spacingSm),
                           Text(
                             option.label,
                             style: TextStyle(
@@ -734,7 +717,7 @@ class EditSpaceState extends State<EditSpace>
             }).toList(),
           ),
         ),
-        SizedBox(height: 8),
+        SizedBox(height: AppDimensions.spacingSm),
         Text(
           description,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -762,14 +745,14 @@ class EditSpaceState extends State<EditSpace>
           padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(isPrivate ? CupertinoIcons.lock_fill : CupertinoIcons.globe,
                   size: 16, color: color),
-              SizedBox(width: 6),
+              SizedBox(width: AppDimensions.spacingSmMd),
               Text(
                 label,
                 style: TextStyle(

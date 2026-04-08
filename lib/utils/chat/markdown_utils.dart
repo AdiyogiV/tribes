@@ -5,13 +5,9 @@ import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:aurogram/utils/chat/url_launcher_utils.dart';
 import 'package:aurogram/models/thought_process.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 class MarkdownUtils {
-  /// Web-safe font family stack for regular text
-  static String get _webSafeFontFamily => kIsWeb
-      ? '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
-      : '';
-
   /// Web-safe monospace font family stack
   static String get _webSafeMonoFontFamily => kIsWeb
       ? 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace'
@@ -56,7 +52,7 @@ class MarkdownUtils {
           height: 1.6,
           color: bodyColor,
         ),
-        pPadding: const EdgeInsets.only(bottom: 12),
+        pPadding: const EdgeInsets.only(bottom: AppDimensions.paddingMd),
 
         // Headers with proper hierarchy and spacing
         h1: TextStyle(
@@ -135,12 +131,12 @@ class MarkdownUtils {
           color: isDark
               ? colorScheme.surface.withValues(alpha: 0.4)
               : colorScheme.surface.withValues(alpha: 0.6),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
           border: Border.all(
             color: colorScheme.outline.withValues(alpha: 0.3),
           ),
         ),
-        codeblockPadding: const EdgeInsets.all(16),
+        codeblockPadding: const EdgeInsets.all(AppDimensions.paddingLg),
 
         // Blockquote styling
         blockquote: TextStyle(
@@ -153,7 +149,7 @@ class MarkdownUtils {
             const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         blockquoteDecoration: BoxDecoration(
           color: colorScheme.surface.withValues(alpha: 0.3),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
           border: Border(
             left: BorderSide(
               color: textColor ?? colorScheme.primary,
@@ -177,7 +173,7 @@ class MarkdownUtils {
           width: 1,
         ),
         tableHeadAlign: TextAlign.start,
-        tableCellsPadding: const EdgeInsets.all(8),
+        tableCellsPadding: const EdgeInsets.all(AppDimensions.paddingSm),
 
         // Link styling - make links more visible
         a: TextStyle(
@@ -235,12 +231,12 @@ class MarkdownUtils {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.symmetric(vertical: 12),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppDimensions.paddingLg),
       decoration: BoxDecoration(
         color: isDark
             ? colorScheme.surface.withValues(alpha: 0.4)
             : colorScheme.surface.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
         border: Border.all(
           color: colorScheme.outline.withValues(alpha: 0.3),
         ),
@@ -250,7 +246,7 @@ class MarkdownUtils {
         children: [
           if (language != null && language.isNotEmpty)
             Container(
-              margin: const EdgeInsets.only(bottom: 12),
+              margin: const EdgeInsets.only(bottom: AppDimensions.paddingMd),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -259,7 +255,7 @@ class MarkdownUtils {
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: colorScheme.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(AppDimensions.radiusSmMd),
                     ),
                     child: Text(
                       language.toUpperCase(),
@@ -296,17 +292,17 @@ class MarkdownUtils {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
         onTap: () {
           Clipboard.setData(ClipboardData(text: code));
           // Code copied silently with haptic feedback
           HapticFeedback.lightImpact();
         },
         child: Container(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(AppDimensions.paddingSm),
           decoration: BoxDecoration(
             color: colorScheme.primary.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
             border: Border.all(
               color: colorScheme.primary.withValues(alpha: 0.3),
             ),

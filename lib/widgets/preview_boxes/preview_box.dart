@@ -3,12 +3,17 @@ import 'dart:io'
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:aurogram/services/cache_service.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:aurogram/utils/dependency_injection.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/utils/theme/header_style.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
+
+// Extracted sub-widgets
+import 'parts/preview_box_parts.dart';
+
+// Re-export so existing imports keep working
+export 'parts/preview_box_parts.dart';
 
 class PreviewBox extends StatefulWidget {
   final String previewUrl;
@@ -129,64 +134,21 @@ class _PreviewBoxState extends State<PreviewBox>
     return authorPicture != null;
   }
 
-  /// Build the preview image widget (handles both web and mobile)
-  Widget _buildPreviewImage() {
-    if (kIsWeb && _webPreviewUrl != null) {
-      return Image.network(
-        _webPreviewUrl!,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          AppLogger.w('Error loading preview image (web)',
-              category: LogCategory.ui, data: {'error': error.toString()});
-          return _buildErrorPlaceholder();
-        },
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
-          return _buildLoadingPlaceholder();
-        },
+  Widget _buildPreviewImage() => buildPreviewImage(
+        isWeb: kIsWeb,
+        webPreviewUrl: _webPreviewUrl,
+        preview: preview,
+        compact: widget.compact,
+        isUploading: _isUploading,
+        context: context,
       );
-    }
-    // Mobile: use Image.file
-    if (!kIsWeb && preview != null) {
-      return Image.file(
-        preview!,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return _buildErrorPlaceholder();
-        },
-      );
-    }
-    return _buildErrorPlaceholder();
-  }
 
-  /// Build the author picture image widget
-  Widget _buildAuthorPicImage() {
-    Widget errorWidget = Container(
-      color: AppTheme.primaryLightColor.withValues(alpha: 0.2),
-      child: Icon(
-        Icons.person,
-        color: AppTheme.textSecondaryLightColor,
-        size: widget.compact ? 10 : 20,
-      ),
-    );
-
-    if (kIsWeb && _webAuthorPicUrl != null) {
-      return Image.network(
-        _webAuthorPicUrl!,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => errorWidget,
+  Widget _buildAuthorPicImage() => buildAuthorPicImage(
+        isWeb: kIsWeb,
+        webAuthorPicUrl: _webAuthorPicUrl,
+        authorPicture: authorPicture,
+        compact: widget.compact,
       );
-    }
-    // Mobile: use Image.file
-    if (!kIsWeb && authorPicture != null) {
-      return Image.file(
-        authorPicture!,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => errorWidget,
-      );
-    }
-    return errorWidget;
-  }
 
   final CollectionReference usersCollection =
       FirebaseFirestore.instance.collection('users');
@@ -262,14 +224,8 @@ class _PreviewBoxState extends State<PreviewBox>
   Future<void> _loadPreview(String url) async {
     try {
       if (url.isNotEmpty) {
-        // Do not retry if we've already marked this URL as permanently failing
         if (_permanentFailures[_stableKey] == true) {
-          if (mounted) {
-            setState(() {
-              isLoading = false;
-              loadError = true;
-            });
-          }
+          if (mounted) setState(() { isLoading = false; loadError = true; });
           return;
         }
 
@@ -310,11 +266,7 @@ class _PreviewBoxState extends State<PreviewBox>
     } catch (e) {
       AppLogger.w('Error reloading preview',
           category: LogCategory.ui, data: {'error': e.toString()});
-      if (mounted) {
-        setState(() {
-          loadError = true;
-        });
-      }
+      if (mounted) setState(() => loadError = true);
     }
   }
 
@@ -383,26 +335,15 @@ class _PreviewBoxState extends State<PreviewBox>
         }
       }
 
-      // For uploading posts, don't mark as failure - thumbnail might still be processing
-      // For text posts, we don't need to mark failure if no preview
       if (!_isTextPost &&
           !_isUploading &&
           preview == null &&
           widget.previewUrl.isNotEmpty) {
-        final key = _stableKey;
-        if (key.isNotEmpty) {
-          _permanentFailures[key] = true;
-          final cb = widget.onPermanentFailure;
-          if (cb != null) {
-            WidgetsBinding.instance.addPostFrameCallback((_) => cb(key));
-          }
-        }
+        _markPermanentFailure();
       }
 
       if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
+        setState(() => isLoading = false);
         final key = _stableKey;
         if (key.isNotEmpty && preview != null) {
           _inMemoryFiles[key] = preview!;
@@ -414,21 +355,10 @@ class _PreviewBoxState extends State<PreviewBox>
       if (mounted) {
         setState(() {
           isLoading = false;
-          loadError = !_isTextPost &&
-              !_isUploading; // Don't mark as error for text or uploading posts
+          loadError = !_isTextPost && !_isUploading;
         });
       }
-      // Only mark permanent failure for non-text posts that aren't uploading
-      if (!_isTextPost && !_isUploading) {
-        final key = _stableKey;
-        if (key.isNotEmpty) {
-          _permanentFailures[key] = true;
-          final cb = widget.onPermanentFailure;
-          if (cb != null) {
-            WidgetsBinding.instance.addPostFrameCallback((_) => cb(key));
-          }
-        }
-      }
+      if (!_isTextPost && !_isUploading) _markPermanentFailure();
     }
   }
 
@@ -470,26 +400,14 @@ class _PreviewBoxState extends State<PreviewBox>
         }
       }
 
-      // Mark as permanent failure if no URL available (but not for uploading posts)
       if (!_isTextPost &&
           !_isUploading &&
           _webPreviewUrl == null &&
           widget.previewUrl.isNotEmpty) {
-        final key = _stableKey;
-        if (key.isNotEmpty) {
-          _permanentFailures[key] = true;
-          final cb = widget.onPermanentFailure;
-          if (cb != null) {
-            WidgetsBinding.instance.addPostFrameCallback((_) => cb(key));
-          }
-        }
+        _markPermanentFailure();
       }
 
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
-      }
+      if (mounted) setState(() => isLoading = false);
     } catch (e) {
       AppLogger.e('Error loading preview (web)',
           category: LogCategory.ui, data: {'error': e.toString()});
@@ -536,205 +454,16 @@ class _PreviewBoxState extends State<PreviewBox>
         child: Stack(
           fit: StackFit.expand,
           children: <Widget>[
-            isLoading
-                ? (widget.hideWhileLoading
-                    ? const SizedBox.shrink()
-                    : _buildLoadingPlaceholder())
-                : _isAudioPost
-                    ? _buildAudioPostContent()
-                    : _isTextPost
-                        ? _buildTextPostContent()
-                        : _isImagePost && _hasValidPreview && !loadError
-                            ? SizedBox(
-                                width: double.infinity,
-                                height: double.infinity,
-                                child: _buildPreviewImage(),
-                              )
-                            : _hasValidPreview && !loadError
-                                ? SizedBox(
-                                    width: double.infinity,
-                                    height: double.infinity,
-                                    child: _buildPreviewImage(),
-                                  )
-                                : (preview != null && !loadError && !kIsWeb)
-                                    ? SizedBox(
-                                        width: double.infinity,
-                                        height: double.infinity,
-                                        child: Image.file(
-                                          preview!,
-                                          fit: BoxFit.cover,
-                                          errorBuilder:
-                                              (context, error, stackTrace) {
-                                            AppLogger.w(
-                                                'Error loading preview image',
-                                                category: LogCategory.ui,
-                                                data: {
-                                                  'error': error.toString()
-                                                });
-
-                                            // If the error is related to missing file, try to reload
-                                            final errorText = error.toString();
-                                            final isMissingFile = error
-                                                    is FileSystemException ||
-                                                errorText
-                                                    .contains('No such file');
-                                            final isInvalidData = errorText
-                                                .contains('Invalid image data');
-
-                                            // For invalid/corrupt data, don't retry. Mark permanent and update after frame.
-                                            if (isInvalidData) {
-                                              final key = _stableKey;
-                                              if (key.isNotEmpty) {
-                                                _permanentFailures[key] = true;
-                                                // Notify parent if provided
-                                                final cb =
-                                                    widget.onPermanentFailure;
-                                                if (cb != null) {
-                                                  WidgetsBinding.instance
-                                                      .addPostFrameCallback(
-                                                          (_) => cb(key));
-                                                }
-                                              }
-                                              if (!_hasFinalizedError) {
-                                                _hasFinalizedError = true;
-                                                WidgetsBinding.instance
-                                                    .addPostFrameCallback((_) {
-                                                  if (mounted) {
-                                                    setState(() {
-                                                      loadError = true;
-                                                      preview = null;
-                                                    });
-                                                  }
-                                                });
-                                              }
-                                            } else if (isMissingFile &&
-                                                _errorCount <
-                                                    _maxErrorRetries) {
-                                              _errorCount++;
-                                              // Attempt to reload the image on the next frame (guarded)
-                                              if (!_hasFinalizedError) {
-                                                _hasFinalizedError = true;
-                                                WidgetsBinding.instance
-                                                    .addPostFrameCallback((_) {
-                                                  if (mounted) {
-                                                    setState(() {
-                                                      loadError = true;
-                                                      preview = null;
-                                                    });
-                                                    if (widget.previewUrl
-                                                        .isNotEmpty) {
-                                                      _loadPreview(
-                                                          widget.previewUrl);
-                                                    }
-                                                  }
-                                                });
-                                              }
-                                            } else {
-                                              // Exceeded retries: mark as permanent failure and update after frame
-                                              final key = _stableKey;
-                                              if (key.isNotEmpty) {
-                                                _permanentFailures[key] = true;
-                                                final cb =
-                                                    widget.onPermanentFailure;
-                                                if (cb != null) {
-                                                  WidgetsBinding.instance
-                                                      .addPostFrameCallback(
-                                                          (_) => cb(key));
-                                                }
-                                              }
-                                              if (!_hasFinalizedError) {
-                                                _hasFinalizedError = true;
-                                                WidgetsBinding.instance
-                                                    .addPostFrameCallback((_) {
-                                                  if (mounted) {
-                                                    setState(() {
-                                                      loadError = true;
-                                                      preview = null;
-                                                    });
-                                                  }
-                                                });
-                                              }
-                                            }
-
-                                            return _buildErrorPlaceholder();
-                                          },
-                                          cacheWidth: 300,
-                                          cacheHeight: 300,
-                                        ),
-                                      )
-                                    : (widget.skipIfMissing
-                                        ? const SizedBox.shrink()
-                                        : _buildErrorPlaceholder()),
+            _buildMainContent(),
             if (widget.isRepost)
-              Positioned(
-                top: widget.compact ? 4 : 6,
-                right: widget.compact ? 4 : 6,
-                child: Container(
-                  padding: EdgeInsets.all(widget.compact ? 3 : 4),
-                  decoration: BoxDecoration(
-                    color: AppTheme.scaffoldLightColor.withValues(alpha: 0.9),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.2),
-                        blurRadius: 2,
-                        offset: const Offset(0, 1),
-                      ),
-                    ],
-                  ),
-                  child: Icon(
-                    CupertinoIcons.arrow_2_squarepath,
-                    size: widget.compact ? 12 : 16,
-                    color: AppTheme.successColor,
-                  ),
-                ),
-              ),
+              PreviewBoxRepostBadge(compact: widget.compact),
             if (widget.showAuthorPicture && _hasValidAuthorPic)
-              Positioned(
-                top: widget.compact ? 4 : 6,
-                left: widget.compact ? 4 : 8,
-                child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppTheme.scaffoldLightColor,
-                    boxShadow: widget.compact
-                        ? []
-                        : [
-                            BoxShadow(
-                              color: AppTheme.textLightColor
-                                  .withValues(alpha: 0.2),
-                              blurRadius: 2,
-                              offset: Offset(0, 1),
-                            ),
-                          ],
-                  ),
-                  child: Material(
-                    shape: CircleBorder(),
-                    clipBehavior: Clip.antiAlias,
-                    child: SizedBox(
-                      width: widget.compact ? 12 : 22,
-                      height: widget.compact ? 12 : 22,
-                      child: _buildAuthorPicImage(),
-                    ),
-                  ),
-                ),
+              PreviewBoxAuthorPic(
+                compact: widget.compact,
+                authorPicImage: _buildAuthorPicImage(),
               ),
             if (widget.showPlayIcon && !isLoading && !_isUploading)
-              Center(
-                child: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.85),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.play_arrow_rounded,
-                    color: Colors.white,
-                    size: 26,
-                  ),
-                ),
-              ),
+              const PreviewBoxPlayIcon(),
             // Uploading overlay - only show if we have a preview (thumbnail)
             // If no preview, the placeholder already shows uploading state
             if (_isUploading && _hasValidPreview && !loadError)
@@ -745,354 +474,125 @@ class _PreviewBoxState extends State<PreviewBox>
     );
   }
 
+  /// Selects and returns the primary content widget based on current state.
+  Widget _buildMainContent() {
+    if (isLoading) {
+      return widget.hideWhileLoading
+          ? const SizedBox.shrink()
+          : _buildLoadingPlaceholder();
+    }
+    if (_isAudioPost) return _buildAudioPostContent();
+    if (_isTextPost) return _buildTextPostContent();
+
+    if ((_isImagePost || !_isImagePost) && _hasValidPreview && !loadError) {
+      return SizedBox(
+        width: double.infinity,
+        height: double.infinity,
+        child: _buildPreviewImage(),
+      );
+    }
+
+    if (preview != null && !loadError && !kIsWeb) {
+      return SizedBox(
+        width: double.infinity,
+        height: double.infinity,
+        child: Image.file(
+          preview!,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) =>
+              _handleImageError(error),
+          cacheWidth: 300,
+          cacheHeight: 300,
+        ),
+      );
+    }
+
+    return widget.skipIfMissing
+        ? const SizedBox.shrink()
+        : _buildErrorPlaceholder();
+  }
+
+  /// Handles image load errors with retry / permanent-failure logic.
+  Widget _handleImageError(Object error) {
+    AppLogger.w('Error loading preview image',
+        category: LogCategory.ui,
+        data: {'error': error.toString()});
+
+    final errorText = error.toString();
+    final isMissingFile =
+        error is FileSystemException || errorText.contains('No such file');
+    final isInvalidData = errorText.contains('Invalid image data');
+
+    if (isInvalidData) {
+      _markPermanentFailure();
+      _scheduleErrorState();
+    } else if (isMissingFile && _errorCount < _maxErrorRetries) {
+      _errorCount++;
+      _scheduleErrorState(reload: true);
+    } else {
+      _markPermanentFailure();
+      _scheduleErrorState();
+    }
+
+    return _buildErrorPlaceholder();
+  }
+
+  void _markPermanentFailure() {
+    final key = _stableKey;
+    if (key.isNotEmpty) {
+      _permanentFailures[key] = true;
+      final cb = widget.onPermanentFailure;
+      if (cb != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => cb(key));
+      }
+    }
+  }
+
+  void _scheduleErrorState({bool reload = false}) {
+    if (_hasFinalizedError) return;
+    _hasFinalizedError = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      setState(() {
+        loadError = true;
+        preview = null;
+      });
+      if (reload && widget.previewUrl.isNotEmpty) {
+        _loadPreview(widget.previewUrl);
+      }
+    });
+  }
+
   Widget _buildTextPostContent() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    // Scale sizes based on compact mode
-    final double padding = widget.compact ? 6.0 : 12.0;
-    final double fontSize = widget.compact ? 7.5 : 12.0;
-
-    // Match TextNotePlayer styling - warm cream background, primary text color
-    // Light: warm cream (#FFFBE8), Dark: warm brown (#2A2520)
-    final backgroundColor =
-        isDark ? const Color(0xFF2A2520) : const Color(0xFFFFFBE8);
-
-    return Container(
-      padding: EdgeInsets.all(padding),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-      ),
-      child: Text(
-        widget.limitTextPreview ? _getPreviewText() : _getFullText(),
-        style: TextStyle(
-          fontSize: fontSize,
-          color: isDark
-              ? Colors.white
-              : AppTheme.primaryColor.withValues(alpha: 0.85),
-          height: 1.35,
-          fontWeight: FontWeight.w400,
-        ),
-        overflow: TextOverflow.fade,
-        maxLines: widget.compact ? 8 : 12,
-      ),
+    return PreviewBoxTextContent(
+      content: widget.content,
+      compact: widget.compact,
+      limitTextPreview: widget.limitTextPreview,
     );
   }
 
-  /// Audio post preview - shows uploading indicator or voice icon
   Widget _buildAudioPostContent() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return PreviewBoxAudioContent(
+      compact: widget.compact,
+      isUploading: _isUploading,
+      durationInSeconds: widget.durationInSeconds,
+      title: widget.title,
+    );
+  }
 
-    // Match note preview colors: warm cream (light) / warm brown (dark)
-    final backgroundColor =
-        isDark ? const Color(0xFF2A2520) : const Color(0xFFFFFBE8);
+  Widget _buildLoadingPlaceholder() =>
+      PreviewBoxPlaceholders.loading(context);
 
-    // Show uploading indicator if still uploading
-    if (_isUploading) {
-      return Container(
-        color: backgroundColor,
-        child: Center(
-          child: _UploadingIndicator(
-            compact: widget.compact,
-            iconColor: AppTheme.primaryColor.withValues(alpha: 0.6),
-            textColor: AppTheme.primaryColor.withValues(alpha: 0.7),
-          ),
-        ),
+  Widget _buildErrorPlaceholder() => PreviewBoxPlaceholders.error(
+        context,
+        compact: widget.compact,
+        isUploading: _isUploading,
       );
-    }
 
-    // Show voice icon with duration after upload
-    final iconSize = widget.compact ? 28.0 : 40.0;
-    final durationFontSize = widget.compact ? 9.0 : 12.0;
-
-    return Container(
-      color: backgroundColor,
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Voice icon in a circle
-            Container(
-              width: iconSize + 16,
-              height: iconSize + 16,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppTheme.primaryColor.withValues(alpha: 0.12),
-              ),
-              child: Icon(
-                CupertinoIcons.waveform,
-                color: AppTheme.primaryColor.withValues(alpha: 0.8),
-                size: iconSize,
-              ),
-            ),
-
-            // Duration display
-            if (widget.durationInSeconds != null &&
-                widget.durationInSeconds! > 0) ...[
-              SizedBox(height: widget.compact ? 4 : 8),
-              Text(
-                _formatAudioDuration(widget.durationInSeconds!),
-                style: TextStyle(
-                  fontSize: durationFontSize,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.primaryColor.withValues(alpha: 0.7),
-                ),
-              ),
-            ],
-
-            // Title if available
-            if (widget.title != null &&
-                widget.title!.isNotEmpty &&
-                !widget.compact) ...[
-              const SizedBox(height: 6),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Text(
-                  widget.title!,
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w500,
-                    color: AppTheme.primaryColor.withValues(alpha: 0.6),
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  String _formatAudioDuration(int seconds) {
-    final m = seconds ~/ 60;
-    final s = seconds % 60;
-    return '$m:${s.toString().padLeft(2, '0')}';
-  }
-
-  String _getPreviewText() {
-    String content = widget.content ?? '';
-    if (content.trim().isEmpty) {
-      return 'Empty note';
-    }
-
-    // Remove extra whitespace and newlines for preview
-    content = content.replaceAll(RegExp(r'\s+'), ' ');
-
-    // Show first 100 characters for preview
-    if (content.length > 100) {
-      return '${content.substring(0, 100)}...';
-    }
-
-    return content;
-  }
-
-  String _getFullText() {
-    String content = widget.content ?? '';
-    if (content.trim().isEmpty) {
-      return 'Empty note';
-    }
-
-    return content.trim();
-  }
-
-  Widget _buildLoadingPlaceholder() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    // Match note preview colors: warm cream (light) / warm brown (dark)
-    final backgroundColor =
-        isDark ? const Color(0xFF2A2520) : const Color(0xFFFFFBE8);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: backgroundColor,
-      ),
-    );
-  }
-
-  Widget _buildErrorPlaceholder() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    // If uploading, show uploading placeholder instead of error
-    if (_isUploading) {
-      return _buildUploadingPlaceholder();
-    }
-
-    // Match note preview colors: warm cream (light) / warm brown (dark)
-    final backgroundColor =
-        isDark ? const Color(0xFF2A2520) : const Color(0xFFFFFBE8);
-
-    // Compact mode: minimal icon
-    if (widget.compact) {
-      return Container(
-        color: backgroundColor,
-        child: Center(
-          child: Icon(
-            CupertinoIcons.photo,
-            color: AppTheme.primaryColor.withValues(alpha: 0.4),
-            size: 16,
-          ),
-        ),
-      );
-    }
-
-    // Full size: show icon with text
-    return Container(
-      color: backgroundColor,
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              CupertinoIcons.photo,
-              color: AppTheme.primaryColor.withValues(alpha: 0.5),
-              size: 28,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'No preview',
-              style: TextStyle(
-                color: AppTheme.primaryColor.withValues(alpha: 0.5),
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Uploading placeholder - shown when post is uploading but thumbnail isn't ready yet
-  Widget _buildUploadingPlaceholder() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    final backgroundColor =
-        isDark ? const Color(0xFF2A2520) : const Color(0xFFFFFBE8);
-
-    return Container(
-      color: backgroundColor,
-      child: Center(
-        child: _UploadingIndicator(
-          compact: widget.compact,
-          iconColor: AppTheme.primaryColor.withValues(alpha: 0.6),
-          textColor: AppTheme.primaryColor.withValues(alpha: 0.7),
-        ),
-      ),
-    );
-  }
-
-  /// Uploading overlay - shown on top of the thumbnail when uploading
-  Widget _buildUploadingOverlay() {
-    return Container(
-      color: Colors.black.withValues(alpha: 0.45),
-      child: Center(
-        child: _UploadingIndicator(
-          compact: widget.compact,
-          iconColor: Colors.white.withValues(alpha: 0.95),
-          textColor: Colors.white.withValues(alpha: 0.9),
-        ),
-      ),
-    );
-  }
+  Widget _buildUploadingOverlay() =>
+      PreviewBoxPlaceholders.uploadingOverlay(compact: widget.compact);
 
   @override
   bool get wantKeepAlive => true;
 }
 
-/// Animated three dots indicator for uploading posts
-class _UploadingIndicator extends StatefulWidget {
-  final bool compact;
-  final Color iconColor;
-  final Color textColor;
-
-  const _UploadingIndicator({
-    required this.compact,
-    required this.iconColor,
-    required this.textColor,
-  });
-
-  @override
-  State<_UploadingIndicator> createState() => _UploadingIndicatorState();
-}
-
-class _UploadingIndicatorState extends State<_UploadingIndicator>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 1000),
-      vsync: this,
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final dotSize = widget.compact ? 6.0 : 8.0;
-    final dotSpacing = widget.compact ? 4.0 : 6.0;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        // Animated three dots
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: List.generate(3, (index) {
-            return AnimatedBuilder(
-              animation: _controller,
-              builder: (context, child) {
-                // Stagger the animation for each dot
-                final delay = index * 0.2;
-                final progress = (_controller.value + delay) % 1.0;
-                // Create a smooth pulse: fade in then out
-                final opacity = progress < 0.5
-                    ? 0.3 + (progress * 2 * 0.7) // 0.3 to 1.0
-                    : 1.0 - ((progress - 0.5) * 2 * 0.7); // 1.0 to 0.3
-
-                return Padding(
-                  padding: EdgeInsets.symmetric(horizontal: dotSpacing / 2),
-                  child: Opacity(
-                    opacity: opacity,
-                    child: Container(
-                      width: dotSize,
-                      height: dotSize,
-                      decoration: BoxDecoration(
-                        color: widget.iconColor,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                );
-              },
-            );
-          }),
-        ),
-        // Static text (no animation)
-        if (!widget.compact) ...[
-          const SizedBox(height: 8),
-          Text(
-            'Uploading',
-            style: TextStyle(
-              color: widget.textColor,
-              fontSize: 10,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-}

@@ -1,7 +1,9 @@
 import 'dart:io';
+import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// A beautiful shareable card for gram invites
 /// Designed to be captured as an image for social sharing
@@ -32,19 +34,19 @@ class GramShareCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 360,
-      padding: const EdgeInsets.all(24),
-      color: const Color(0xFF0a0e17), // Dark background for outer padding
+      padding: const EdgeInsets.all(AppDimensions.paddingXxl),
+      color: AppTheme.darkGradientDeep, // Dark background for outer padding
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
           gradient: const LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFF1a1a2e),
-              Color(0xFF0f1624),
-              Color(0xFF0a0e17),
+              AppTheme.darkGradientBase,
+              AppTheme.darkGradientMid,
+              AppTheme.darkGradientDeep,
             ],
           ),
         ),
@@ -56,7 +58,7 @@ class GramShareCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               decoration: BoxDecoration(
                 color: _primary.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
                 border: Border.all(
                   color: _primary.withValues(alpha: 0.3),
                   width: 1,
@@ -74,11 +76,11 @@ class GramShareCard extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppDimensions.spacingXl),
 
             // Gram image or placeholder
             _buildGramImage(),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppDimensions.spacingLg),
 
             // Gram name
             Text(
@@ -94,7 +96,7 @@ class GramShareCard extends StatelessWidget {
 
             // Description if available
             if (description != null && description!.isNotEmpty) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: AppDimensions.spacingSm),
               Text(
                 description!,
                 textAlign: TextAlign.center,
@@ -108,12 +110,12 @@ class GramShareCard extends StatelessWidget {
               ),
             ],
 
-            const SizedBox(height: 20),
+            const SizedBox(height: AppDimensions.spacingXl),
 
             // Stats row
             _buildStatsRow(),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: AppDimensions.spacingXxl),
 
             // App branding
             _buildBranding(),
@@ -152,7 +154,7 @@ class GramShareCard extends StatelessWidget {
       width: 100,
       height: 100,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
         border: Border.all(
           color: _primary.withValues(alpha: 0.3),
           width: 2,
@@ -169,7 +171,7 @@ class GramShareCard extends StatelessWidget {
     return Container(
       width: 100,
       height: 100,
-      color: const Color(0xFF1a1a2e),
+      color: AppTheme.darkGradientBase,
       child: Center(
         child: Icon(
           Icons.people_rounded,
@@ -182,10 +184,10 @@ class GramShareCard extends StatelessWidget {
 
   Widget _buildStatsRow() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingMd),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -227,7 +229,7 @@ class GramShareCard extends StatelessWidget {
           size: 18,
           color: _primary.withValues(alpha: 0.7),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppDimensions.spacingSm),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -257,7 +259,7 @@ class GramShareCard extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         ClipRRect(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
           child: Image.asset(
             'assets/images/icon_transparent.png',
             width: 36,

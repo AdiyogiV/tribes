@@ -1,10 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:aurogram/pages/spaces/space_chat_screen.dart';
+import 'package:aurogram/utils/logging/app_logger.dart';
 import 'package:aurogram/utils/time_display.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/widgets/notifications/unified_notification_card.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Alerts list tile for a group call in a gram. Tap opens space chat (call entry).
 class GroupCallTile extends StatelessWidget {
@@ -18,7 +19,9 @@ class GroupCallTile extends StatelessWidget {
         final ts = data!['timestamp'];
         return TimeDisplay.getCompactTimestamp(
             ts is Timestamp ? ts.toDate() : DateTime.now());
-      } catch (_) {}
+      } catch (_) {
+        AppLogger.w('GroupCallTile: failed to parse timestamp', category: LogCategory.general);
+      }
     }
     return 'Recently';
   }
@@ -45,7 +48,7 @@ class GroupCallTile extends StatelessWidget {
         height: 40,
         decoration: BoxDecoration(
           color: AppTheme.primaryColor.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
         ),
         child: Icon(
           CupertinoIcons.person_2_fill,

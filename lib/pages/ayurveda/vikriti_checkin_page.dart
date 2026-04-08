@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:aurogram/widgets/ui/common_widgets.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:aurogram/models/ayurveda_profile.dart';
@@ -6,6 +7,8 @@ import 'package:aurogram/models/astrology_profile.dart';
 import 'package:aurogram/services/ayurveda_service.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/pages/ayurveda/widgets/ayurveda_theme.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/widgets/common/snack_bar_service.dart';
 
 /// Redesigned Vikriti Check-In Page
 /// Quick 3-step mood tracker with optional detailed expansion
@@ -113,7 +116,7 @@ class _VikritiCheckInPageState extends State<VikritiCheckInPage> {
               color: isDone || isActive
                   ? _getStepColor(index)
                   : (isDark ? Colors.white24 : Colors.black12),
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
             ),
           );
         }),
@@ -282,16 +285,16 @@ class _VikritiCheckInPageState extends State<VikritiCheckInPage> {
     required Function(String) onSelect,
   }) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingXxl),
       child: Column(
         children: [
-          const SizedBox(height: 20),
+          const SizedBox(height: AppDimensions.spacingXl),
           // Question header
           Text(
             emoji,
             style: const TextStyle(fontSize: 48),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.spacingLg),
           Text(
             question,
             style: TextStyle(
@@ -301,7 +304,7 @@ class _VikritiCheckInPageState extends State<VikritiCheckInPage> {
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: AppDimensions.spacingSection),
 
           // Options
           ...options.map((option) {
@@ -309,19 +312,19 @@ class _VikritiCheckInPageState extends State<VikritiCheckInPage> {
             final optionColor = getDoshaColor(option.dosha);
 
             return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.only(bottom: AppDimensions.paddingMd),
               child: GestureDetector(
                 onTap: () => onSelect(option.id),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(AppDimensions.paddingLg),
                   decoration: BoxDecoration(
                     color: isSelected
                         ? optionColor.withValues(alpha: 0.15)
                         : (isDark
                             ? Colors.white.withValues(alpha: 0.05)
                             : Colors.grey.shade50),
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
                     border: Border.all(
                       color: isSelected
                           ? optionColor
@@ -335,7 +338,7 @@ class _VikritiCheckInPageState extends State<VikritiCheckInPage> {
                         option.emoji,
                         style: const TextStyle(fontSize: 28),
                       ),
-                      const SizedBox(width: 16),
+                      const SizedBox(width: AppDimensions.spacingLg),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -350,7 +353,7 @@ class _VikritiCheckInPageState extends State<VikritiCheckInPage> {
                                     : (isDark ? Colors.white : Colors.black87),
                               ),
                             ),
-                            const SizedBox(height: 2),
+                            const SizedBox(height: AppDimensions.spacingXxs),
                             Text(
                               option.subtitle,
                               style: TextStyle(
@@ -389,7 +392,7 @@ class _VikritiCheckInPageState extends State<VikritiCheckInPage> {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
+            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingXxl),
             child: Text(
               'Tell us more (optional)',
               style: TextStyle(
@@ -399,7 +402,7 @@ class _VikritiCheckInPageState extends State<VikritiCheckInPage> {
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.spacingLg),
           TabBar(
             labelColor: isDark ? Colors.white : Colors.black,
             unselectedLabelColor: isDark ? Colors.white54 : Colors.black45,
@@ -431,13 +434,13 @@ class _VikritiCheckInPageState extends State<VikritiCheckInPage> {
       List<Map<String, String>> symptoms, Set<String> selected) {
     final color = getDoshaColor(dosha);
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppDimensions.paddingLg),
       itemCount: symptoms.length,
       itemBuilder: (context, index) {
         final symptom = symptoms[index];
         final isSelected = selected.contains(symptom['id']);
         return Padding(
-          padding: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.only(bottom: AppDimensions.paddingSm),
           child: GestureDetector(
             onTap: () {
               HapticFeedback.lightImpact();
@@ -450,14 +453,14 @@ class _VikritiCheckInPageState extends State<VikritiCheckInPage> {
               });
             },
             child: Container(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(AppDimensions.paddingMdLg),
               decoration: BoxDecoration(
                 color: isSelected
                     ? color.withValues(alpha: 0.1)
                     : (isDark
                         ? Colors.white.withValues(alpha: 0.05)
                         : Colors.grey.shade50),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                 border: Border.all(
                   color: isSelected
                       ? color.withValues(alpha: 0.5)
@@ -481,7 +484,7 @@ class _VikritiCheckInPageState extends State<VikritiCheckInPage> {
                     height: 22,
                     decoration: BoxDecoration(
                       color: isSelected ? color : Colors.transparent,
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(AppDimensions.radiusSmMd),
                       border: Border.all(
                         color: isSelected
                             ? color
@@ -509,7 +512,7 @@ class _VikritiCheckInPageState extends State<VikritiCheckInPage> {
     final isLastQuickStep = _currentStep == 2;
 
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(AppDimensions.paddingXxl),
       decoration: BoxDecoration(
         color: isDark ? Colors.black : Colors.white,
         border: Border(
@@ -543,18 +546,15 @@ class _VikritiCheckInPageState extends State<VikritiCheckInPage> {
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusMdLg),
                   ),
                   elevation: 0,
                 ),
                 child: _isSubmitting
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation(Colors.white),
-                        ),
+                    ? const AppLoadingIndicator(
+                        size: 20,
+                        strokeWidth: 2,
+                        color: Colors.white,
                       )
                     : Text(
                         _showDetailedMode
@@ -572,7 +572,7 @@ class _VikritiCheckInPageState extends State<VikritiCheckInPage> {
 
             // "Tell me more" option (only on last quick step)
             if (isLastQuickStep && canSubmit && !_showDetailedMode) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: AppDimensions.spacingMd),
               TextButton(
                 onPressed: () {
                   HapticFeedback.lightImpact();
@@ -704,9 +704,7 @@ class _VikritiCheckInPageState extends State<VikritiCheckInPage> {
     } catch (e) {
       if (mounted) {
         setState(() => _isSubmitting = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
-        );
+        showCustomSnackBar(context, message: 'Error: ${e.toString()}');
       }
     }
   }
@@ -723,10 +721,10 @@ class _VikritiCheckInPageState extends State<VikritiCheckInPage> {
       enableDrag: false,
       builder: (context) => Container(
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+          color: isDark ? AppTheme.nearBlackColor : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppDimensions.paddingXxl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -738,7 +736,7 @@ class _VikritiCheckInPageState extends State<VikritiCheckInPage> {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppDimensions.spacingXxl),
             Container(
               width: 72,
               height: 72,
@@ -754,7 +752,7 @@ class _VikritiCheckInPageState extends State<VikritiCheckInPage> {
                 color: isBalanced ? Colors.green : Colors.amber.shade700,
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppDimensions.spacingXl),
             Text(
               isBalanced ? 'Looking Good!' : 'Balance Shift Detected',
               style: TextStyle(
@@ -763,7 +761,7 @@ class _VikritiCheckInPageState extends State<VikritiCheckInPage> {
                 color: isDark ? Colors.white : Colors.black87,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppDimensions.spacingSm),
             Text(
               isBalanced
                   ? 'Your doshas are well-balanced today. Keep up your current routine!'
@@ -776,16 +774,16 @@ class _VikritiCheckInPageState extends State<VikritiCheckInPage> {
               ),
             ),
             if (vikriti != null && vikriti.imbalances.isNotEmpty) ...[
-              const SizedBox(height: 20),
+              const SizedBox(height: AppDimensions.spacingXl),
               ...vikriti.imbalances.map((imb) {
                 final color = getDoshaColor(imb.dosha);
                 return Container(
-                  margin: const EdgeInsets.only(bottom: 8),
+                  margin: const EdgeInsets.only(bottom: AppDimensions.paddingSm),
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingMd),
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                   ),
                   child: Row(
                     children: [
@@ -797,7 +795,7 @@ class _VikritiCheckInPageState extends State<VikritiCheckInPage> {
                           color: color,
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppDimensions.spacingMd),
                       Expanded(
                         child: Text(
                           '${capitalize(imb.dosha)} +${imb.shift}% from baseline',
@@ -812,7 +810,7 @@ class _VikritiCheckInPageState extends State<VikritiCheckInPage> {
                 );
               }),
             ],
-            const SizedBox(height: 24),
+            const SizedBox(height: AppDimensions.spacingXxl),
             SizedBox(
               width: double.infinity,
               height: 52,
@@ -826,7 +824,7 @@ class _VikritiCheckInPageState extends State<VikritiCheckInPage> {
                       isBalanced ? Colors.green : AppTheme.primaryColor,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusMdLg),
                   ),
                   elevation: 0,
                 ),

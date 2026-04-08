@@ -1,5 +1,6 @@
 /// Platform abstraction layer for handling platform-specific features
 /// This allows the app to compile and run on web while maintaining mobile functionality
+library;
 
 abstract class PlatformServices {
   /// Singleton instance - set by platform-specific implementation

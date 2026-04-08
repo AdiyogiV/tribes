@@ -1,5 +1,7 @@
+import 'package:aurogram/config/api_endpoints.dart';
+
 class ShareLinks {
-  static const String baseUrl = 'https://aurogram.in';
+  static const String baseUrl = ApiEndpoints.appBaseUrl;
 
   static String profile(String userId) => '${ShareLinks.baseUrl}/u/$userId';
 

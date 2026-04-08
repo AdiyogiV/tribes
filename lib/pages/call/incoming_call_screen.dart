@@ -7,8 +7,10 @@ import 'package:vibration/vibration.dart';
 import 'package:aurogram/services/call_service.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
-import 'package:aurogram/widgets/user_avatar.dart';
+import 'package:aurogram/widgets/common/user_avatar.dart';
 import 'package:aurogram/pages/call/call_screen.dart';
+import 'package:aurogram/widgets/common/snack_bar_service.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Full-screen incoming call UI
 /// Modern design matching CallScreen
@@ -146,13 +148,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen>
     // Show brief message and pop
     Future.microtask(() {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Call ended'),
-            duration: Duration(seconds: 2),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        showCustomSnackBar(context, message: 'Call ended', duration: const Duration(seconds: 2), behavior: SnackBarBehavior.floating);
         Navigator.of(context).pop();
       }
     });
@@ -337,15 +333,15 @@ class _IncomingCallScreenState extends State<IncomingCallScreen>
       child: AnnotatedRegion<SystemUiOverlayStyle>(
         value: SystemUiOverlayStyle.light,
         child: Scaffold(
-          backgroundColor: const Color(0xFF0D0D0D),
+          backgroundColor: AppTheme.callBackground,
           body: Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Color(0xFF1A1A2E),
-                  Color(0xFF16213E),
+                  AppTheme.darkGradientBase,
+                  AppTheme.callGradientMid,
                   Color(0xFF0F0F1A),
                 ],
                 stops: [0.0, 0.5, 1.0],
@@ -391,15 +387,15 @@ class _IncomingCallScreenState extends State<IncomingCallScreen>
 
   Widget _buildTopSection(bool isVideo) {
     return Padding(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(AppDimensions.paddingXl),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingSm),
             decoration: BoxDecoration(
               color: AppTheme.primaryColor.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
               border: Border.all(
                 color: AppTheme.primaryColor.withValues(alpha: 0.3),
                 width: 1,
@@ -422,7 +418,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen>
                     ],
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: AppDimensions.spacingMdSm),
                 Text(
                   'Incoming Call',
                   style: TextStyle(
@@ -553,7 +549,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen>
       ),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
         border: Border.all(
           color: Colors.white.withValues(alpha: 0.1),
           width: 1,
@@ -603,10 +599,10 @@ class _IncomingCallScreenState extends State<IncomingCallScreen>
                 end: Alignment.bottomRight,
                 colors: [
                   Color(0xFFFF5F5F),
-                  Color(0xFFE53935),
+                  AppTheme.dangerRed,
                 ],
               ),
-              shadowColor: const Color(0xFFE53935),
+              shadowColor: AppTheme.dangerRed,
               onTap: _rejectCall,
               isDesktop: isDesktop,
             ),

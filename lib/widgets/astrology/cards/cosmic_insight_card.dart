@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:aurogram/models/daily_insight.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Card to display today's cosmic insight
 /// Matches astrology details page card styling
@@ -27,30 +28,32 @@ class CosmicInsightCard extends StatelessWidget {
       color: cardColor,
       elevation: 2,
       shadowColor: Colors.black.withValues(alpha: 0.2),
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppDimensions.paddingLg),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
             // Header - Title Case, matches astrology details page
             Text(
               'Current Energy',
+              textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: AppTheme.holyCowTextSize,
                 fontWeight: FontWeight.w700,
                 color: c,
               ),
             ),
             // Message - full text
             if (message.isNotEmpty) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: AppDimensions.spacingMd),
               Text(
                 message,
+                textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: AppTheme.holyCowTextSize,
                   fontWeight: FontWeight.w500,
                   color: c.withValues(alpha: 0.7),
                   height: 1.5,

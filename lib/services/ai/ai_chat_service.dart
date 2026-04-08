@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:aurogram/config/api_endpoints.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
 import 'package:http/http.dart' as http;
 
@@ -9,7 +10,7 @@ class AiChatService {
   final FirebaseAuth _auth;
   final http.Client _client = http.Client();
 
-  static const String _aiChatUrl = 'https://aichat-7p5vte54jq-et.a.run.app';
+  static const String _aiChatUrl = ApiEndpoints.aiChat;
 
   AiChatService({FirebaseAuth? auth}) : _auth = auth ?? FirebaseAuth.instance;
 
@@ -119,7 +120,9 @@ class AiChatService {
               final decoded = jsonDecode(payload) as Map<String, dynamic>;
               yield decoded;
               return;
-            } catch (_) {}
+            } catch (_) {
+              AppLogger.w('AiChatService: failed to decode SSE fallback payload', category: LogCategory.general);
+            }
           }
         }
       }

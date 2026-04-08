@@ -4,6 +4,7 @@ import 'package:aurogram/services/astrology_service.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/utils/astrology/astrology_formatters.dart';
 import 'package:aurogram/pages/astrology/daily_insight_page.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Compact insight preview card shown on the astrology details page
 /// Taps through to the full daily insight page
@@ -28,7 +29,7 @@ class InsightPreviewCard extends StatelessWidget {
       color: cardColor,
       elevation: 2,
       shadowColor: Colors.black.withValues(alpha: 0.2),
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
       child: InkWell(
         onTap: () {
           Navigator.of(context).push(
@@ -37,9 +38,9 @@ class InsightPreviewCard extends StatelessWidget {
             ),
           );
         },
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
         child: Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppDimensions.paddingLg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -59,7 +60,7 @@ class InsightPreviewCard extends StatelessWidget {
                             color: brown,
                           ),
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: AppDimensions.spacingXxs),
                         Text(
                           AstrologyFormatters.formatTodayDate(),
                           style: TextStyle(
@@ -81,7 +82,7 @@ class InsightPreviewCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppDimensions.spacingMd),
               StreamBuilder<DailyInsight?>(
                 stream: service.streamTodayInsight(uid),
                 builder: (context, snapshot) {

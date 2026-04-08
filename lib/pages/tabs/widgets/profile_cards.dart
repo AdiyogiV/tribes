@@ -1,12 +1,12 @@
 import 'package:flutter/cupertino.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/widgets/universal/transparent_toolbox.dart';
 import 'package:aurogram/models/astrology_profile.dart';
 import 'package:aurogram/models/daily_insight.dart';
 import 'package:aurogram/services/follow_service.dart';
-import 'package:aurogram/pages/follow_list_page.dart';
+import 'package:aurogram/pages/social/follow_list_page.dart';
 
 /// Stats card showing Aura, Followers, Following
 class ProfileStatsCard extends StatelessWidget {
@@ -39,18 +39,18 @@ class ProfileStatsCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text('STATS', style: AppTheme.cardLabelStyle),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppDimensions.spacingXs),
           Row(
             children: [
               _buildStatItem('Auro Score', auraScore.toString(), primaryColor),
-              const SizedBox(width: 24),
+              const SizedBox(width: AppDimensions.spacingXxl),
               _buildTappableStatItem(
                 label: 'Followers',
                 value: followService.getFollowerTier(followerCount),
                 color: primaryColor,
                 onTap: () => onOpenFollowList(FollowListType.followers),
               ),
-              const SizedBox(width: 24),
+              const SizedBox(width: AppDimensions.spacingXxl),
               _buildTappableStatItem(
                 label: 'Following',
                 value: followService.getFollowerTier(followingCount),
@@ -77,7 +77,7 @@ class ProfileStatsCard extends StatelessWidget {
             color: color.withValues(alpha: 0.7),
           ),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: AppDimensions.spacingXxs),
         Text(
           value,
           style: TextStyle(
@@ -122,7 +122,7 @@ class ProfileStatsCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: AppDimensions.spacingXxs),
           Text(
             value,
             style: TextStyle(
@@ -193,27 +193,27 @@ class ProfileAstrologyCard extends StatelessWidget {
                   children: [
                     Text('STARS', style: AppTheme.cardLabelStyle),
                     if (isLoading) ...[
-                      const SizedBox(height: 4),
+                      const SizedBox(height: AppDimensions.spacingXs),
                       _buildLoadingSkeleton(primaryColor, isDark),
                     ] else if (hasCalculatedData) ...[
-                      const SizedBox(height: 4),
+                      const SizedBox(height: AppDimensions.spacingXs),
                       Row(
                         children: [
-                          _buildSignItem('Rising', profile!.ascendant ?? '—',
+                          _buildSignItem('Rising', profile.ascendant ?? '—',
                               primaryColor),
-                          const SizedBox(width: 24),
+                          const SizedBox(width: AppDimensions.spacingXxl),
                           _buildSignItem(
                               'Sun', profile.sunSign ?? '—', primaryColor),
-                          const SizedBox(width: 24),
+                          const SizedBox(width: AppDimensions.spacingXxl),
                           _buildSignItem(
                               'Moon', profile.moonSign ?? '—', primaryColor),
                         ],
                       ),
                     ] else if (isCalculating) ...[
-                      const SizedBox(height: 8),
+                      const SizedBox(height: AppDimensions.spacingSm),
                       _buildCalculatingState(primaryColor, isDark),
                     ] else ...[
-                      const SizedBox(height: 4),
+                      const SizedBox(height: AppDimensions.spacingXs),
                       Text(
                         'Set up your birth chart',
                         style: TextStyle(
@@ -249,7 +249,7 @@ class ProfileAstrologyCard extends StatelessWidget {
             color: color.withValues(alpha: 0.7),
           ),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: AppDimensions.spacingXxs),
         Text(
           value,
           style: TextStyle(
@@ -267,9 +267,9 @@ class ProfileAstrologyCard extends StatelessWidget {
     return Row(
       children: [
         _buildSkeletonSignItem(skeletonBase),
-        const SizedBox(width: 24),
+        const SizedBox(width: AppDimensions.spacingXxl),
         _buildSkeletonSignItem(skeletonBase),
-        const SizedBox(width: 24),
+        const SizedBox(width: AppDimensions.spacingXxl),
         _buildSkeletonSignItem(skeletonBase),
       ],
     );
@@ -288,7 +288,7 @@ class ProfileAstrologyCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(5),
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppDimensions.spacingXs),
         Container(
           width: 50,
           height: 14,
@@ -315,14 +315,14 @@ class ProfileAstrologyCard extends StatelessWidget {
                   child: Icon(
                     Icons.nights_stay_rounded,
                     size: 18,
-                    color: const Color(0xFF8B5CF6)
+                    color: AppTheme.cosmicPurple
                         .withValues(alpha: 0.7 + (value * 0.3)),
                   ),
                 );
               },
               onEnd: () => setState(() {}),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: AppDimensions.spacingMdSm),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -335,7 +335,7 @@ class ProfileAstrologyCard extends StatelessWidget {
                       color: primaryColor.withValues(alpha: 0.8),
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: AppDimensions.spacingXxs),
                   Text(
                     'Your birth chart is being prepared',
                     style: TextStyle(
@@ -393,7 +393,7 @@ class ProfileInsightsCard extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text('INSIGHTS', style: AppTheme.cardLabelStyle),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppDimensions.spacingSm),
                     StreamBuilder<DailyInsight?>(
                       stream: insightStream,
                       builder: (context, insightSnapshot) {
@@ -446,21 +446,21 @@ class ProfileInsightsCard extends StatelessWidget {
           width: double.infinity,
           height: 12,
           decoration: BoxDecoration(
-              color: skeletonBase, borderRadius: BorderRadius.circular(6)),
+              color: skeletonBase, borderRadius: BorderRadius.circular(AppDimensions.radiusSmMd)),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppDimensions.spacingSm),
         Container(
           width: MediaQuery.of(context).size.width * 0.7,
           height: 12,
           decoration: BoxDecoration(
-              color: skeletonBase, borderRadius: BorderRadius.circular(6)),
+              color: skeletonBase, borderRadius: BorderRadius.circular(AppDimensions.radiusSmMd)),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppDimensions.spacingSm),
         Container(
           width: MediaQuery.of(context).size.width * 0.5,
           height: 12,
           decoration: BoxDecoration(
-              color: skeletonBase, borderRadius: BorderRadius.circular(6)),
+              color: skeletonBase, borderRadius: BorderRadius.circular(AppDimensions.radiusSmMd)),
         ),
       ],
     );
@@ -533,7 +533,7 @@ class FollowRequestBanner extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text('FOLLOW REQUEST', style: AppTheme.cardLabelStyle),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppDimensions.spacingXs),
             Text(
               '$displayName has requested to follow you',
               style: TextStyle(
@@ -542,7 +542,7 @@ class FollowRequestBanner extends StatelessWidget {
                 color: c.withValues(alpha: 0.7),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppDimensions.spacingMd),
             Row(
               children: [
                 Expanded(
@@ -552,7 +552,7 @@ class FollowRequestBanner extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(
                         color: c,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
                       ),
                       child: Center(
                         child: isLoading
@@ -574,7 +574,7 @@ class FollowRequestBanner extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: AppDimensions.spacingMdSm),
                 Expanded(
                   child: GestureDetector(
                     onTap: isLoading ? null : onDecline,
@@ -582,7 +582,7 @@ class FollowRequestBanner extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(
                         color: Colors.transparent,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
                         border: Border.all(
                             color: c.withValues(alpha: 0.2), width: 1.5),
                       ),
@@ -641,7 +641,7 @@ class PrivateProfileLockedCard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text('POSTS PRIVATE', style: AppTheme.cardLabelStyle),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppDimensions.spacingXs),
             Row(
               children: [
                 Expanded(
@@ -654,7 +654,7 @@ class PrivateProfileLockedCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: AppDimensions.spacingSmMd),
                 Icon(icon, size: 14, color: iconColor),
               ],
             ),

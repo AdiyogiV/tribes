@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:aurogram/utils/chat/internal_link_utils.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
-import 'package:aurogram/widgets/user_avatar.dart';
+import 'package:aurogram/widgets/common/user_avatar.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// A card widget that displays a preview of an internal app link
 class LinkPreviewCard extends StatelessWidget {
@@ -29,7 +30,7 @@ class LinkPreviewCard extends StatelessWidget {
           color: isDark
               ? Colors.white.withValues(alpha: 0.05)
               : Colors.black.withValues(alpha: 0.03),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
           border: Border.all(
             color: isDark
                 ? Colors.white.withValues(alpha: 0.1)
@@ -82,13 +83,13 @@ class LinkPreviewCard extends StatelessWidget {
 
         // Content section
         Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(AppDimensions.paddingMd),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Icon or avatar
               _buildLeadingWidget(context),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppDimensions.spacingMd),
 
               // Text content
               Expanded(
@@ -98,7 +99,7 @@ class LinkPreviewCard extends StatelessWidget {
                   children: [
                     // Type indicator
                     _buildTypeChip(context),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppDimensions.spacingXs),
 
                     // Title
                     Text(
@@ -114,7 +115,7 @@ class LinkPreviewCard extends StatelessWidget {
 
                     // Subtitle
                     if (preview.subtitle != null) ...[
-                      const SizedBox(height: 4),
+                      const SizedBox(height: AppDimensions.spacingXs),
                       Text(
                         preview.subtitle!,
                         style: TextStyle(
@@ -147,7 +148,7 @@ class LinkPreviewCard extends StatelessWidget {
         children: [
           // Icon or avatar
           _buildLeadingWidget(context, size: 36),
-          const SizedBox(width: 10),
+          const SizedBox(width: AppDimensions.spacingMdSm),
 
           // Content
           Expanded(
@@ -158,7 +159,7 @@ class LinkPreviewCard extends StatelessWidget {
                 Row(
                   children: [
                     _buildTypeChip(context, small: true),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: AppDimensions.spacingSmMd),
                     Expanded(
                       child: Text(
                         preview.title,
@@ -174,7 +175,7 @@ class LinkPreviewCard extends StatelessWidget {
                   ],
                 ),
                 if (preview.subtitle != null) ...[
-                  const SizedBox(height: 2),
+                  const SizedBox(height: AppDimensions.spacingXxs),
                   Text(
                     preview.subtitle!,
                     style: TextStyle(
@@ -302,7 +303,7 @@ class LinkPreviewCard extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: AppTheme.primaryColor.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -312,7 +313,7 @@ class LinkPreviewCard extends StatelessWidget {
             size: small ? 10 : 12,
             color: AppTheme.primaryColor,
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: AppDimensions.spacingXs),
           Text(
             label,
             style: TextStyle(
@@ -340,7 +341,7 @@ class LinkPreviewCard extends StatelessWidget {
           items = [
             if (likes > 0)
               _buildStatItem(Icons.favorite_outline, '$likes', context),
-            if (likes > 0 && replies > 0) const SizedBox(width: 12),
+            if (likes > 0 && replies > 0) const SizedBox(width: AppDimensions.spacingMd),
             if (replies > 0)
               _buildStatItem(Icons.chat_bubble_outline, '$replies', context),
           ];
@@ -386,7 +387,7 @@ class LinkPreviewCard extends StatelessWidget {
           size: 12,
           color: isDark ? Colors.grey[500] : Colors.grey[500],
         ),
-        const SizedBox(width: 4),
+        const SizedBox(width: AppDimensions.spacingXs),
         Text(
           text,
           style: TextStyle(
@@ -409,12 +410,12 @@ class LinkPreviewLoading extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.only(top: 8),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppDimensions.paddingMd),
       decoration: BoxDecoration(
         color: isDark
             ? Colors.white.withValues(alpha: 0.05)
             : Colors.black.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
         border: Border.all(
           color: isDark
               ? Colors.white.withValues(alpha: 0.1)
@@ -428,10 +429,10 @@ class LinkPreviewLoading extends StatelessWidget {
             height: 40,
             decoration: BoxDecoration(
               color: isDark ? Colors.grey[800] : Colors.grey[200],
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppDimensions.spacingMd),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -441,16 +442,16 @@ class LinkPreviewLoading extends StatelessWidget {
                   width: 100,
                   decoration: BoxDecoration(
                     color: isDark ? Colors.grey[800] : Colors.grey[200],
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppDimensions.spacingSm),
                 Container(
                   height: 10,
                   width: double.infinity,
                   decoration: BoxDecoration(
                     color: isDark ? Colors.grey[800] : Colors.grey[200],
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
                   ),
                 ),
               ],

@@ -1,3 +1,4 @@
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -118,7 +119,7 @@ class _GroupCallButtonState extends State<GroupCallButton> {
           content: const Row(
             children: [
               Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20),
-              SizedBox(width: 12),
+              SizedBox(width: AppDimensions.spacingMd),
               Text('Already in another call'),
             ],
           ),
@@ -287,7 +288,7 @@ class GroupCallButtonCircle extends StatelessWidget {
           content: const Row(
             children: [
               Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20),
-              SizedBox(width: 12),
+              SizedBox(width: AppDimensions.spacingMd),
               Text('Already in another call'),
             ],
           ),

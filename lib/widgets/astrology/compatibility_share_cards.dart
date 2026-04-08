@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 // =============================================================================
@@ -19,7 +21,7 @@ class _ShareCardHelpers {
       ),
       child: CircleAvatar(
         radius: radius,
-        backgroundColor: const Color(0xFF1a1a2e),
+        backgroundColor: AppTheme.darkGradientBase,
         backgroundImage: photoUrl != null && photoUrl.isNotEmpty
             ? CachedNetworkImageProvider(photoUrl)
             : null,
@@ -36,7 +38,7 @@ class _ShareCardHelpers {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         ClipRRect(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusSmMd),
           child: Image.asset(
             'assets/images/icon_transparent.png',
             width: 22,
@@ -44,7 +46,7 @@ class _ShareCardHelpers {
             fit: BoxFit.contain,
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppDimensions.spacingSm),
         Text(
           'Aurogram',
           style: TextStyle(
@@ -111,12 +113,12 @@ class CosmicVibeShareCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color(0xFF1a1a2e),
-            Color(0xFF16213e),
-            Color(0xFF0f1624),
+            AppTheme.darkGradientBase,
+            AppTheme.callGradientMid,
+            AppTheme.darkGradientMid,
           ],
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -124,7 +126,7 @@ class CosmicVibeShareCard extends StatelessWidget {
           // Title - prominent at top
           ShaderMask(
             shaderCallback: (bounds) => const LinearGradient(
-              colors: [Color(0xFFA78BFA), Color(0xFFF472B6)],
+              colors: [AppTheme.softViolet, AppTheme.rosePink],
             ).createShader(bounds),
             child: const Text(
               'Cosmic Vibe Match',
@@ -136,16 +138,16 @@ class CosmicVibeShareCard extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: AppDimensions.spacingXl),
 
           // User avatars with connection
           _buildUserAvatars(),
-          const SizedBox(height: 20),
+          const SizedBox(height: AppDimensions.spacingXl),
 
           // Big score with glow effect
           ShaderMask(
             shaderCallback: (bounds) => const LinearGradient(
-              colors: [Color(0xFFA78BFA), Color(0xFFFFFFFF), Color(0xFFF472B6)],
+              colors: [AppTheme.softViolet, Color(0xFFFFFFFF), AppTheme.rosePink],
             ).createShader(bounds),
             child: Text(
               '$score%',
@@ -158,19 +160,19 @@ class CosmicVibeShareCard extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppDimensions.spacingSm),
 
           // Label badge
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingSm),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  const Color(0xFFA78BFA).withValues(alpha: 0.2),
-                  const Color(0xFFF472B6).withValues(alpha: 0.2),
+                  AppTheme.softViolet.withValues(alpha: 0.2),
+                  AppTheme.rosePink.withValues(alpha: 0.2),
                 ],
               ),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
               border: Border.all(
                 color: Colors.white.withValues(alpha: 0.1),
               ),
@@ -184,12 +186,12 @@ class CosmicVibeShareCard extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppDimensions.spacingXxl),
 
           // Pillars grid with icons - adapts to pillar count
           _buildPillarsGrid(),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: AppDimensions.spacingXxl),
 
           // Branding
           _ShareCardHelpers.buildBranding(),
@@ -207,8 +209,8 @@ class CosmicVibeShareCard extends StatelessWidget {
         Column(
           children: [
             _ShareCardHelpers.buildAvatar(
-                user1PhotoUrl, const Color(0xFFA78BFA)),
-            const SizedBox(height: 8),
+                user1PhotoUrl, AppTheme.softViolet),
+            const SizedBox(height: AppDimensions.spacingSm),
             Text(
               _ShareCardHelpers.truncateName(user1Name),
               style: const TextStyle(
@@ -217,13 +219,13 @@ class CosmicVibeShareCard extends StatelessWidget {
                 color: Colors.white,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: AppDimensions.spacingSmMd),
             _buildSignsColumn(user1Sun, user1Moon, user1Rising),
           ],
         ),
         // Connection indicator
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
           child: Padding(
             padding: const EdgeInsets.only(top: 24),
             child: Text(
@@ -240,8 +242,8 @@ class CosmicVibeShareCard extends StatelessWidget {
         Column(
           children: [
             _ShareCardHelpers.buildAvatar(
-                user2PhotoUrl, const Color(0xFFF472B6)),
-            const SizedBox(height: 8),
+                user2PhotoUrl, AppTheme.rosePink),
+            const SizedBox(height: AppDimensions.spacingSm),
             Text(
               _ShareCardHelpers.truncateName(user2Name),
               style: const TextStyle(
@@ -250,7 +252,7 @@ class CosmicVibeShareCard extends StatelessWidget {
                 color: Colors.white,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: AppDimensions.spacingSmMd),
             _buildSignsColumn(user2Sun, user2Moon, user2Rising),
           ],
         ),
@@ -291,7 +293,7 @@ class CosmicVibeShareCard extends StatelessWidget {
               color: Colors.white.withValues(alpha: 0.4),
             ),
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: AppDimensions.spacingXs),
           Text(
             sign,
             style: TextStyle(
@@ -310,10 +312,10 @@ class CosmicVibeShareCard extends StatelessWidget {
     // For 5+ pillars, use two rows
     if (pillars.length <= 4) {
       return Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppDimensions.paddingLg),
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -329,10 +331,10 @@ class CosmicVibeShareCard extends StatelessWidget {
     final secondRow = pillars.skip(firstRowCount).toList();
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(AppDimensions.paddingMdLg),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
       ),
       child: Column(
         children: [
@@ -340,7 +342,7 @@ class CosmicVibeShareCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: firstRow.map((p) => _buildPillarItem(p, compact: true)).toList(),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppDimensions.spacingMd),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: secondRow.map((p) => _buildPillarItem(p, compact: true)).toList(),
@@ -366,7 +368,7 @@ class CosmicVibeShareCard extends StatelessWidget {
               color: Colors.white,
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: AppDimensions.spacingXxs),
           Text(
             displayName,
             style: TextStyle(
@@ -430,12 +432,12 @@ class AshtakootShareCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color(0xFF1a1a2e),
+            AppTheme.darkGradientBase,
             Color(0xFF2d1b4e),
-            Color(0xFF1a1a2e),
+            AppTheme.darkGradientBase,
           ],
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -443,7 +445,7 @@ class AshtakootShareCard extends StatelessWidget {
           // Title - prominent at top
           ShaderMask(
             shaderCallback: (bounds) => const LinearGradient(
-              colors: [Color(0xFFE8B4F8), Color(0xFFFFD700)],
+              colors: [AppTheme.lavenderGlow, AppTheme.goldColor],
             ).createShader(bounds),
             child: const Text(
               'Ashtakoot Match',
@@ -455,11 +457,11 @@ class AshtakootShareCard extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: AppDimensions.spacingXl),
 
           // User avatars with connection
           _buildUserAvatars(),
-          const SizedBox(height: 20),
+          const SizedBox(height: AppDimensions.spacingXl),
 
           // Big score
           Row(
@@ -469,7 +471,7 @@ class AshtakootShareCard extends StatelessWidget {
             children: [
               ShaderMask(
                 shaderCallback: (bounds) => const LinearGradient(
-                  colors: [Color(0xFFE8B4F8), Color(0xFFFFD700)],
+                  colors: [AppTheme.lavenderGlow, AppTheme.goldColor],
                 ).createShader(bounds),
                 child: Text(
                   score % 1 == 0
@@ -494,19 +496,19 @@ class AshtakootShareCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppDimensions.spacingSm),
 
           // Label badge
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingSm),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  const Color(0xFFE8B4F8).withValues(alpha: 0.2),
-                  const Color(0xFFFFD700).withValues(alpha: 0.2),
+                  AppTheme.lavenderGlow.withValues(alpha: 0.2),
+                  AppTheme.goldColor.withValues(alpha: 0.2),
                 ],
               ),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
               border: Border.all(
                 color: Colors.white.withValues(alpha: 0.1),
               ),
@@ -520,12 +522,12 @@ class AshtakootShareCard extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: AppDimensions.spacingXl),
 
           // Kootas grid
           _buildKootasGrid(),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: AppDimensions.spacingXxl),
 
           // Branding
           _ShareCardHelpers.buildBranding(),
@@ -541,8 +543,8 @@ class AshtakootShareCard extends StatelessWidget {
         Column(
           children: [
             _ShareCardHelpers.buildAvatar(
-                user1PhotoUrl, const Color(0xFFE8B4F8)),
-            const SizedBox(height: 8),
+                user1PhotoUrl, AppTheme.lavenderGlow),
+            const SizedBox(height: AppDimensions.spacingSm),
             Text(
               _ShareCardHelpers.truncateName(user1Name),
               style: const TextStyle(
@@ -554,7 +556,7 @@ class AshtakootShareCard extends StatelessWidget {
           ],
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
           child: Text(
             '&',
             style: TextStyle(
@@ -567,8 +569,8 @@ class AshtakootShareCard extends StatelessWidget {
         Column(
           children: [
             _ShareCardHelpers.buildAvatar(
-                user2PhotoUrl, const Color(0xFFFFD700)),
-            const SizedBox(height: 8),
+                user2PhotoUrl, AppTheme.goldColor),
+            const SizedBox(height: AppDimensions.spacingSm),
             Text(
               _ShareCardHelpers.truncateName(user2Name),
               style: const TextStyle(
@@ -588,10 +590,10 @@ class AshtakootShareCard extends StatelessWidget {
     final secondRow = kootas.skip(4).take(4).toList();
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(AppDimensions.paddingMdLg),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
       ),
       child: Column(
         children: [
@@ -599,7 +601,7 @@ class AshtakootShareCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: firstRow.map((k) => _buildKootaItem(k)).toList(),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppDimensions.spacingMdLg),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: secondRow.map((k) => _buildKootaItem(k)).toList(),
@@ -641,7 +643,7 @@ class AshtakootShareCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: AppDimensions.spacingXxs),
           Text(
             koota.name,
             style: TextStyle(
@@ -701,12 +703,12 @@ class LifePhaseShareCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color(0xFF1a1a2e),
+            AppTheme.darkGradientBase,
             Color(0xFF1e3a5f),
-            Color(0xFF0f1624),
+            AppTheme.darkGradientMid,
           ],
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -714,7 +716,7 @@ class LifePhaseShareCard extends StatelessWidget {
           // Title - prominent at top
           ShaderMask(
             shaderCallback: (bounds) => const LinearGradient(
-              colors: [Color(0xFF64B5F6), Color(0xFF7FFFD4)],
+              colors: [AppTheme.lightBlueAccent, AppTheme.aquamarine],
             ).createShader(bounds),
             child: const Text(
               'Life Phase Sync',
@@ -726,19 +728,19 @@ class LifePhaseShareCard extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.spacingLg),
 
           // Sync label badge
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingSm),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  const Color(0xFF64B5F6).withValues(alpha: 0.2),
-                  const Color(0xFF7FFFD4).withValues(alpha: 0.2),
+                  AppTheme.lightBlueAccent.withValues(alpha: 0.2),
+                  AppTheme.aquamarine.withValues(alpha: 0.2),
                 ],
               ),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
               border: Border.all(
                 color: Colors.white.withValues(alpha: 0.1),
               ),
@@ -752,7 +754,7 @@ class LifePhaseShareCard extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppDimensions.spacingXxl),
 
           // Two user phase cards side by side
           Row(
@@ -764,7 +766,7 @@ class LifePhaseShareCard extends StatelessWidget {
                   mahaDasha: user1MahaDasha,
                   antarDasha: user1AntarDasha,
                   theme: user1Theme,
-                  color: const Color(0xFF64B5F6),
+                  color: AppTheme.lightBlueAccent,
                 ),
               ),
               // Connection
@@ -786,20 +788,20 @@ class LifePhaseShareCard extends StatelessWidget {
                   mahaDasha: user2MahaDasha,
                   antarDasha: user2AntarDasha,
                   theme: user2Theme,
-                  color: const Color(0xFF7FFFD4),
+                  color: AppTheme.aquamarine,
                 ),
               ),
             ],
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.spacingLg),
 
           // Insight
           Container(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(AppDimensions.paddingMdLg),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
             ),
             child: Text(
               insight,
@@ -813,7 +815,7 @@ class LifePhaseShareCard extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: AppDimensions.spacingXl),
 
           // Branding
           _ShareCardHelpers.buildBranding(),
@@ -831,10 +833,10 @@ class LifePhaseShareCard extends StatelessWidget {
     required Color color,
   }) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppDimensions.paddingMd),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMdLg),
         border: Border.all(
           color: color.withValues(alpha: 0.2),
         ),
@@ -843,7 +845,7 @@ class LifePhaseShareCard extends StatelessWidget {
         children: [
           // Avatar and name
           _ShareCardHelpers.buildAvatar(photoUrl, color, radius: 20),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppDimensions.spacingSmMd),
           Text(
             _ShareCardHelpers.truncateName(name, maxLength: 8),
             style: const TextStyle(
@@ -852,7 +854,7 @@ class LifePhaseShareCard extends StatelessWidget {
               color: Colors.white,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppDimensions.spacingMdSm),
           // Dasha info
           Text(
             'Mahadasha',
@@ -863,7 +865,7 @@ class LifePhaseShareCard extends StatelessWidget {
               letterSpacing: 0.5,
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: AppDimensions.spacingXxs),
           Text(
             mahaDasha,
             style: TextStyle(
@@ -873,7 +875,7 @@ class LifePhaseShareCard extends StatelessWidget {
             ),
           ),
           if (antarDasha != null && antarDasha.isNotEmpty) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: AppDimensions.spacingSmMd),
             Text(
               'Antardasha',
               style: TextStyle(
@@ -883,7 +885,7 @@ class LifePhaseShareCard extends StatelessWidget {
                 letterSpacing: 0.5,
               ),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: AppDimensions.spacingXxs),
             Text(
               antarDasha,
               style: TextStyle(
@@ -893,7 +895,7 @@ class LifePhaseShareCard extends StatelessWidget {
               ),
             ),
           ],
-          const SizedBox(height: 6),
+          const SizedBox(height: AppDimensions.spacingSmMd),
           Text(
             theme,
             textAlign: TextAlign.center,

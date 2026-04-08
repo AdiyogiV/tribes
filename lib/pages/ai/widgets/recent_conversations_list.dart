@@ -1,5 +1,7 @@
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:aurogram/models/dm_conversation.dart';
 import 'package:aurogram/services/chat/space_chat_service.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/utils/theme/header_style.dart';
@@ -72,12 +74,12 @@ class _SectionLabel extends StatelessWidget {
               letterSpacing: 0.3,
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppDimensions.spacingSm),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
               color: AppTheme.primaryColor.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm),
             ),
             child: Text(
               '$count',
@@ -170,7 +172,7 @@ class _ConversationTile extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: AppDimensions.spacingMdLg),
                 Expanded(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -190,7 +192,7 @@ class _ConversationTile extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppDimensions.spacingMd),
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -203,7 +205,7 @@ class _ConversationTile extends StatelessWidget {
                         color: AppTheme.primaryColor.withValues(alpha: 0.45),
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppDimensions.spacingXs),
                     Icon(
                       Icons.chevron_right_rounded,
                       color: AppTheme.primaryColor.withValues(alpha: 0.3),
@@ -236,7 +238,7 @@ class _LoadMoreButton extends StatelessWidget {
       ),
       child: TransparentToolbox.buildCard(
         context: context,
-        padding: const EdgeInsets.symmetric(vertical: 14),
+        padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingMdLg),
         onTap: () {
           HapticFeedback.lightImpact();
           onTap();
@@ -249,7 +251,7 @@ class _LoadMoreButton extends StatelessWidget {
               size: 20,
               color: AppTheme.primaryColor.withValues(alpha: 0.6),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppDimensions.spacingSm),
             Text(
               'Load More',
               style: TextStyle(

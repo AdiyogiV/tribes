@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:aurogram/models/astrology_profile.dart';
 import 'package:aurogram/utils/astrology/planet_utils.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Horizontal scrollable list of planet cards showing position in signs
 class CoreTriadWidget extends StatelessWidget {
@@ -36,7 +37,7 @@ class CoreTriadWidget extends StatelessWidget {
         padding: EdgeInsets.zero,
         clipBehavior: Clip.none,
         itemCount: planets.length,
-        separatorBuilder: (context, index) => const SizedBox(width: 12),
+        separatorBuilder: (context, index) => const SizedBox(width: AppDimensions.spacingMd),
         itemBuilder: (context, index) {
           final planet = planets[index];
           final planetName = planet['name'] as String? ?? '—';
@@ -53,12 +54,12 @@ class CoreTriadWidget extends StatelessWidget {
                 color: cardColor,
                 elevation: 2,
                 shadowColor: Colors.black.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
                 child: InkWell(
                   onTap: onPlanetTap != null
                       ? () => onPlanetTap!(context, planet, isDark)
                       : null,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
                   child: _PlanetCard(
                     planetName: planetName,
                     sign: planet['sign'] as String? ?? '—',
@@ -240,7 +241,7 @@ class _PlanetCard extends StatelessWidget {
     final symbol = PlanetUtils.getSymbol(planetName);
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppDimensions.paddingMd),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
@@ -280,7 +281,7 @@ class _PlanetCard extends StatelessWidget {
                       const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                   decoration: BoxDecoration(
                     color: Colors.red.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
                   ),
                   child: Text(
                     'R',
@@ -295,7 +296,7 @@ class _PlanetCard extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppDimensions.spacingSmMd),
           Text(
             sign,
             style: TextStyle(
@@ -305,7 +306,7 @@ class _PlanetCard extends StatelessWidget {
               height: 1.2,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppDimensions.spacingXs),
           Text(
             nakshatra,
             style: TextStyle(

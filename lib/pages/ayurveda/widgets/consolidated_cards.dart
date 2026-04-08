@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:aurogram/models/ayurveda_profile.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/pages/ayurveda/widgets/ayurveda_theme.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CollapsibleRecommendationsCard - Expandable recommendations
@@ -53,7 +54,7 @@ class _CollapsibleRecommendationsCardState
               color: c,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppDimensions.spacingMd),
 
           // Foods section (collapsible)
           if (foods != null)
@@ -67,7 +68,7 @@ class _CollapsibleRecommendationsCardState
 
           // Lifestyle section (collapsible)
           if (lifestyle != null) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: AppDimensions.spacingSm),
             _buildCollapsibleSection(
               title: 'Lifestyle Tips',
               icon: Icons.self_improvement_outlined,
@@ -81,7 +82,7 @@ class _CollapsibleRecommendationsCardState
           // Health insights (collapsible)
           if (widget.vulnerabilities != null &&
               widget.vulnerabilities!.isNotEmpty) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: AppDimensions.spacingSm),
             _buildCollapsibleSection(
               title: 'Health Insights',
               icon: Icons.favorite_border,
@@ -114,12 +115,12 @@ class _CollapsibleRecommendationsCardState
               color: widget.isDark
                   ? Colors.white.withValues(alpha: 0.05)
                   : Colors.grey.shade50,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm),
             ),
             child: Row(
               children: [
                 Icon(icon, size: 18, color: c.withValues(alpha: 0.7)),
-                const SizedBox(width: 10),
+                const SizedBox(width: AppDimensions.spacingMdSm),
                 Expanded(
                   child: Text(
                     title,
@@ -170,7 +171,7 @@ class _CollapsibleRecommendationsCardState
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
             color: doshaColor.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
           ),
           child: Text(
             food as String,
@@ -194,7 +195,7 @@ class _CollapsibleRecommendationsCardState
                 size: 14,
                 color: widget.isDark ? Colors.white38 : Colors.black38,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppDimensions.spacingSm),
               Expanded(
                 child: Text(
                   tip as String,
@@ -224,7 +225,7 @@ class _CollapsibleRecommendationsCardState
                 size: 14,
                 color: widget.isDark ? Colors.white38 : Colors.black38,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppDimensions.spacingSm),
               Expanded(
                 child: Text(
                   vuln.description,

@@ -1,5 +1,6 @@
 /// Stub for video_thumbnail package on web
 /// Native thumbnail generation is not supported on web
+library;
 
 // Stub for ImageFormat enum
 enum ImageFormat {

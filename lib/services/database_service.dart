@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
@@ -12,9 +11,6 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:aurogram/models/space_roles.dart';
 import 'package:flutter/foundation.dart';
 
-// Conditional import for dart:io
-import 'dart:io'
-    if (dart.library.html) 'package:aurogram/platform/io_stub.dart';
 import 'package:aurogram/platform/file_helper.dart' as file_helper;
 
 class DatabaseService {
@@ -382,60 +378,10 @@ class DatabaseService {
     return await locator<PostDbService>().getPost(post);
   }
 
-  // Add post to cache with expiry and LRU eviction
-  void _addToPostCache(String postId, DocumentSnapshot doc) {
-    // Increase cache size for better performance
-    final maxCacheSize = 200; // Increased from 50
-
-    // Check if cache is full
-    if (_postCache.length >= maxCacheSize) {
-      // Find oldest cache entry
-      String? oldestKey;
-      DateTime? oldestTime;
-
-      _postCacheExpiry.forEach((key, time) {
-        if (oldestTime == null || time.isBefore(oldestTime!)) {
-          oldestKey = key;
-          oldestTime = time;
-        }
-      });
-
-      // Remove oldest entry
-      if (oldestKey != null) {
-        _postCache.remove(oldestKey);
-        _postCacheExpiry.remove(oldestKey);
-      }
-    }
-
-    // Add to cache with 15 minute expiry (extended from 5)
-    _postCache[postId] = doc;
-    _postCacheExpiry[postId] = DateTime.now().add(Duration(minutes: 15));
-  }
-
   /// Check if a post is known to be missing
   bool isPostKnownMissing(String? postId) {
     if (postId == null) return true;
     return _notFoundPosts.contains(postId);
-  }
-
-  // Clean up missing post references in the background
-  // Note: userFeed cleanup removed as that collection is deprecated
-  void _cleanupMissingPostReferences(String postId) {
-    // Don't await to allow this to run in background
-    Future(() async {
-      try {
-        // Get space ID if available and clean up spacePosts reference
-        String? spaceId = await _getPostSpaceId(postId);
-        if (spaceId != null) {
-          await cleanupMissingSpacePost(postId, spaceId);
-        }
-      } catch (cleanupError) {
-        // Ignore cleanup errors
-        AppLogger.w('Error during cleanup',
-            category: LogCategory.general,
-            data: {'error': cleanupError.toString()});
-      }
-    });
   }
 
   /// Attempt to get the space ID for a post
@@ -632,98 +578,11 @@ class DatabaseService {
 
   // ============================================================================
   // DEPRECATED FEED METHODS
-  // These methods use the old fanout-based userFeed collection.
-  // New code should use FeedService which queries posts/ directly.
-  // Kept for backward compatibility during migration.
   // ============================================================================
-
-  /// @deprecated Use FeedService instead - this queries the old userFeed collection
-  /// Get posts from users that the current user is following
-  /// These are posts marked with showOnProfile=true from followed users' personal grams
-  @Deprecated('Use FeedService.getFeed() instead')
-  Future<List<QueryDocumentSnapshot>> getFollowedUsersPosts(int limit) async {
-    if (user?.uid == null) return [];
-
-    try {
-      // Get list of users this user is following
-      final followingSnapshot = await FirebaseFirestore.instance
-          .collection('userFollowing')
-          .doc(user!.uid)
-          .collection('following')
-          .get();
-
-      if (followingSnapshot.docs.isEmpty) return [];
-
-      // Get personal gram IDs for followed users
-      final followedUserIds = followingSnapshot.docs.map((d) => d.id).toList();
-
-      // Batch query for profile posts - get from personal grams where showOnProfile=true
-      // Note: Firestore limits whereIn to 10 items, so we may need multiple queries
-      final List<QueryDocumentSnapshot> allPosts = [];
-
-      for (int i = 0; i < followedUserIds.length; i += 10) {
-        final batch = followedUserIds.skip(i).take(10).toList();
-
-        final postsSnapshot = await FirebaseFirestore.instance
-            .collection('posts')
-            .where('author', whereIn: batch)
-            .where('showOnProfile', isEqualTo: true)
-            .orderBy('timestamp', descending: true)
-            .limit(limit)
-            .get();
-
-        allPosts.addAll(postsSnapshot.docs);
-      }
-
-      // Sort by timestamp and limit
-      allPosts.sort((a, b) {
-        final aTime = (a.data() as Map)['timestamp'] as Timestamp?;
-        final bTime = (b.data() as Map)['timestamp'] as Timestamp?;
-        if (aTime == null || bTime == null) return 0;
-        return bTime.compareTo(aTime);
-      });
-
-      return allPosts.take(limit).toList();
-    } catch (e) {
-      AppLogger.w('Error fetching followed users posts',
-          category: LogCategory.general, data: {'error': e.toString()});
-      return [];
-    }
-  }
-
-  /// @deprecated Use FeedService.getFeed() instead
-  @Deprecated(
-      'Use FeedService.getFeed() instead - queries old userFeed collection')
-  Future<List<QueryDocumentSnapshot>> getUserFeed(int limit) async {
-    if (user?.uid == null) {
-      return getGlobalFeed(limit);
-    }
-
-    try {
-      QuerySnapshot feedPosts = await FirebaseFirestore.instance
-          .collection('userFeed')
-          .doc(user!.uid)
-          .collection('posts')
-          .where('seen', isEqualTo: false)
-          .orderBy('timestamp', descending: true)
-          .limit(limit)
-          .get();
-
-      return feedPosts.docs;
-    } catch (e) {
-      AppLogger.w('getUserFeed deprecated - use FeedService',
-          category: LogCategory.general);
-      return [];
-    }
-  }
-
-  /// @deprecated No longer used - seen/unseen tracking removed in pull-based architecture
-  @Deprecated('Seen tracking removed - use FeedService.getFeed() instead')
-  Future<List<QueryDocumentSnapshot>> getUserFeedSeen(int limit) async {
-    AppLogger.w('getUserFeedSeen deprecated - seen tracking removed',
-        category: LogCategory.general);
-    return [];
-  }
+  // FEED METHODS
+  // Use FeedService for main user feed. Only getGlobalFeed remains here
+  // for the discovery/explore page.
+  // ============================================================================
 
   /// Get global feed posts (used by discovery page)
   /// Note: For main feed, use FeedService.getFeed() instead
@@ -741,22 +600,6 @@ class DatabaseService {
           category: LogCategory.general, error: e);
       return [];
     }
-  }
-
-  /// @deprecated Seen tracking removed in pull-based feed architecture
-  /// No-op method kept for backward compatibility with player widgets
-  @Deprecated('Seen tracking removed - this is now a no-op')
-  Future<bool> markPostAsSeen(String? postId) async {
-    // No-op: Seen tracking is no longer used in pull-based architecture
-    // Posts are fetched directly from posts/ collection without seen/unseen state
-    return true;
-  }
-
-  /// @deprecated userFeed collection deprecated
-  @Deprecated('userFeed collection deprecated')
-  Future<bool> deleteErroredPost(String? postId) async {
-    // No-op: userFeed collection is deprecated
-    return true;
   }
 
   /// Like or unlike a post
@@ -886,41 +729,6 @@ class DatabaseService {
     }
   }
 
-  /// @deprecated No longer needed - userFeed collection deprecated
-  @Deprecated('userFeed collection deprecated - use FeedService')
-  Future<List<String>> batchValidateUserFeedPosts(String userId,
-      {int limit = 50}) async {
-    return [];
-  }
-
-  /// @deprecated No longer needed - userFeed collection deprecated
-  @Deprecated('userFeed collection deprecated - use FeedService')
-  Future<List<String>> validateAndCleanupFeedPosts(String userId,
-      {int limit = 50}) async {
-    return [];
-  }
-
-  /// @deprecated No longer needed - userFeed collection deprecated
-  @Deprecated('userFeed collection deprecated - use FeedService')
-  Future<void> batchCleanupInvalidFeedPosts(
-      String userId, List<String> invalidPostIds) async {
-    // No-op: userFeed collection is deprecated
-  }
-
-  /// @deprecated Use FeedService.loadMore() instead
-  @Deprecated('userFeed collection deprecated - use FeedService.loadMore()')
-  Future<List<QueryDocumentSnapshot>> getUserFeedNextBatch(
-      String lastPostId, int limit) async {
-    return [];
-  }
-
-  /// @deprecated Seen tracking removed
-  @Deprecated('Seen tracking removed - use FeedService')
-  Future<List<QueryDocumentSnapshot>> getUserFeedSeenNextBatch(
-      String lastPostId, int limit) async {
-    return [];
-  }
-
   /// Get the next batch of posts from the global feed, starting after the given post ID
   Future<List<QueryDocumentSnapshot>> getGlobalFeedNextBatch(
       String lastPostId, int limit) async {
@@ -954,17 +762,6 @@ class DatabaseService {
       }
       return [];
     }
-  }
-
-  /// @deprecated No longer needed - pull-based feed queries posts/ directly
-  /// Returns postIds unchanged (no validation needed when fetching from canonical source)
-  @Deprecated(
-      'Not needed in pull-based architecture - posts are fetched directly')
-  Future<List<String>> validatePostIds(List<String> postIds,
-      {bool priorityValidation = false}) async {
-    // No validation needed: In pull-based architecture, posts are fetched
-    // directly from the canonical posts/ collection, so they're always valid
-    return postIds;
   }
 
   /// Mark a post as missing to prevent future fetch attempts

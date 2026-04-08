@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:aurogram/models/thought_process.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/utils/chat/url_launcher_utils.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 class SourcesSection extends StatefulWidget {
   final List<SearchResult> sources;
@@ -90,7 +91,7 @@ class _SourcesSectionState extends State<SourcesSection>
       margin: const EdgeInsets.only(top: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
         border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
       ),
       child: Column(
@@ -105,7 +106,7 @@ class _SourcesSectionState extends State<SourcesSection>
               onTap: _toggleExpansion,
               child: Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingMd),
                 child: Row(
                   children: [
                     Icon(
@@ -113,12 +114,12 @@ class _SourcesSectionState extends State<SourcesSection>
                       size: 16,
                       color: AppTheme.primaryColor.withValues(alpha: 0.7),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppDimensions.spacingSm),
                     Expanded(
                       child: Text(
                         'Sources (${referencedSources.length})',
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: AppTheme.holyCowTextSize,
                           color: AppTheme.primaryColor,
                           fontWeight: FontWeight.w600,
                         ),
@@ -146,7 +147,7 @@ class _SourcesSectionState extends State<SourcesSection>
               child: Column(
                 children: [
                   const Divider(height: 1),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppDimensions.spacingMd),
                   ...referencedSources
                       .map((source) => _buildSourceCard(source)),
                 ],
@@ -160,17 +161,17 @@ class _SourcesSectionState extends State<SourcesSection>
 
   Widget _buildSourceCard(SearchResult source) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: AppDimensions.paddingMd),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
           onTap: () => UrlLauncherUtils.launchURL(source.link, context),
           child: Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(AppDimensions.paddingMd),
             decoration: BoxDecoration(
               color: Colors.grey[50],
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
               border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
             ),
             child: Column(
@@ -185,11 +186,11 @@ class _SourcesSectionState extends State<SourcesSection>
                       height: 16,
                       decoration: BoxDecoration(
                         color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
                       ),
                       child: source.favicon != null
                           ? ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
                               child: Image.network(
                                 source.favicon!,
                                 width: 16,
@@ -210,12 +211,12 @@ class _SourcesSectionState extends State<SourcesSection>
                               color: AppTheme.primaryColor,
                             ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppDimensions.spacingSm),
                     Expanded(
                       child: Text(
                         source.displayLink,
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: AppTheme.holyCowTextSize,
                           color: Colors.grey[600],
                           fontWeight: FontWeight.w500,
                         ),
@@ -223,10 +224,10 @@ class _SourcesSectionState extends State<SourcesSection>
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.all(4),
+                      padding: const EdgeInsets.all(AppDimensions.paddingXs),
                       decoration: BoxDecoration(
                         color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(6),
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusSmMd),
                       ),
                       child: Icon(
                         Icons.open_in_new,
@@ -236,12 +237,12 @@ class _SourcesSectionState extends State<SourcesSection>
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppDimensions.spacingSm),
                 // Title
                 Text(
                   source.title,
                   style: const TextStyle(
-                    fontSize: 13,
+                    fontSize: AppTheme.holyCowTextSize,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF111827),
                     height: 1.3,
@@ -249,12 +250,12 @@ class _SourcesSectionState extends State<SourcesSection>
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: AppDimensions.spacingSmMd),
                 // Snippet
                 Text(
                   source.snippet,
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: AppTheme.holyCowTextSize,
                     color: Colors.grey[700],
                     height: 1.4,
                   ),
@@ -263,7 +264,7 @@ class _SourcesSectionState extends State<SourcesSection>
                 ),
                 // Referenced indicator
                 if (source.isReferenced) ...[
-                  const SizedBox(height: 6),
+                  const SizedBox(height: AppDimensions.spacingSmMd),
                   Row(
                     children: [
                       Icon(
@@ -271,11 +272,11 @@ class _SourcesSectionState extends State<SourcesSection>
                         size: 12,
                         color: Colors.green[600],
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: AppDimensions.spacingXs),
                       Text(
                         'Referenced in response',
                         style: TextStyle(
-                          fontSize: 9,
+                          fontSize: AppTheme.holyCowTextSize,
                           color: Colors.green[600],
                           fontWeight: FontWeight.w500,
                         ),

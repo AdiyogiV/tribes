@@ -1,4 +1,6 @@
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/widgets/ui/common_widgets.dart';
 import 'package:flutter/material.dart';
 
 class AyurvedaResetOverlay extends StatelessWidget {
@@ -17,10 +19,8 @@ class AyurvedaResetOverlay extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation(AppTheme.primaryColor),
-              ),
-              const SizedBox(height: 16),
+              AppLoadingIndicator(),
+              const SizedBox(height: AppDimensions.spacingLg),
               Text(
                 'Resetting Ayurveda profile...',
                 style: TextStyle(

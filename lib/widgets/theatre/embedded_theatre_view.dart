@@ -1,13 +1,14 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:aurogram/widgets/ui/common_widgets.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:aurogram/models/space.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/utils/theme/header_style.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
-import 'package:aurogram/pages/thread_view.dart';
-import 'package:aurogram/widgets/post_switcher.dart';
+import 'package:aurogram/pages/content/thread_view.dart';
+import 'package:aurogram/widgets/posts/post_switcher.dart';
 import 'package:aurogram/widgets/preview_boxes/gram_picture.dart';
 import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
 import 'package:aurogram/widgets/chat/embedded_chat_view.dart';
@@ -15,6 +16,7 @@ import 'package:aurogram/widgets/call/group_call_button.dart';
 import 'package:aurogram/pages/spaces/grid_space_view.dart';
 import 'package:aurogram/pages/spaces/edit_space.dart';
 import 'package:aurogram/services/share_service.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// An embeddable theatre view that displays gram posts in a nested layout.
 /// Unlike Theatre, this doesn't use its own Scaffold and is designed
@@ -329,7 +331,7 @@ class EmbeddedTheatreViewState extends State<EmbeddedTheatreView> {
                   child: GestureDetector(
                     onTap: _openSettings,
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
                       child: GramPicture(
                         displayPicture: widget.space?.displayPicture,
                         size: 36,
@@ -340,7 +342,7 @@ class EmbeddedTheatreViewState extends State<EmbeddedTheatreView> {
                   ),
                 ),
 
-                const SizedBox(width: 12),
+                const SizedBox(width: AppDimensions.spacingMd),
 
                 // Gram name
                 Expanded(
@@ -408,7 +410,7 @@ class EmbeddedTheatreViewState extends State<EmbeddedTheatreView> {
                       tooltip: 'Settings',
                     ),
 
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppDimensions.spacingSm),
                   ],
                 ),
               ],
@@ -440,14 +442,9 @@ class EmbeddedTheatreViewState extends State<EmbeddedTheatreView> {
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
         icon: isLoading
-            ? SizedBox(
-                width: _headerIconSize,
-                height: _headerIconSize,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor:
-                      AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
-                ),
+            ? AppLoadingIndicator(
+                size: _headerIconSize,
+                strokeWidth: 2,
               )
             : Icon(
                 icon,
@@ -518,7 +515,7 @@ class EmbeddedTheatreViewState extends State<EmbeddedTheatreView> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const CupertinoActivityIndicator(radius: 14),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppDimensions.spacingLg),
               Text(
                 'Loading posts...',
                 style: TextStyle(
@@ -547,7 +544,7 @@ class EmbeddedTheatreViewState extends State<EmbeddedTheatreView> {
         if (index == _feed.length) {
           return _hasMorePosts
               ? const PaginationLoader()
-              : const SizedBox(height: 60);
+              : const SizedBox(height: AppDimensions.spacingHero);
         }
 
         final postId = _feed[index];
@@ -612,7 +609,7 @@ class EmbeddedTheatreViewState extends State<EmbeddedTheatreView> {
               size: 64,
               color: AppTheme.primaryColor.withValues(alpha: 0.4),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppDimensions.spacingLg),
             Text(
               'No posts yet',
               style: TextStyle(
@@ -622,7 +619,7 @@ class EmbeddedTheatreViewState extends State<EmbeddedTheatreView> {
                     isDark ? AppTheme.textDarkColor : AppTheme.textLightColor,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppDimensions.spacingSm),
             Text(
               'Be the first to share something!',
               style: TextStyle(

@@ -208,7 +208,7 @@ class _GramPictureState extends State<GramPicture>
         height: widget.size,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: isDark ? const Color(0xFF252525) : const Color(0xFFF0EDE8),
+          color: isDark ? AppTheme.darkPlaceholder : AppTheme.skeletonLightColor,
         ),
       );
     }
@@ -260,7 +260,7 @@ class _GramPictureState extends State<GramPicture>
           height: widget.size,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: isDark ? const Color(0xFF252525) : const Color(0xFFF0EDE8),
+            color: isDark ? AppTheme.darkPlaceholder : AppTheme.skeletonLightColor,
           ),
         );
       },

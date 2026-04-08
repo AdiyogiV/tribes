@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Custom swipeable message widget with smooth animation for reply gesture
 class SwipeableMessage extends StatefulWidget {
@@ -79,7 +80,7 @@ class _SwipeableMessageState extends State<SwipeableMessage>
                   ? Alignment.centerRight
                   : Alignment.centerLeft,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
                 child: AnimatedOpacity(
                   duration: const Duration(milliseconds: 100),
                   opacity: iconOpacity,

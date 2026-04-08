@@ -1,7 +1,8 @@
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 import 'package:flutter/material.dart';
 import 'package:aurogram/models/space.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
-import 'package:aurogram/widgets/user_avatar.dart';
+import 'package:aurogram/widgets/common/user_avatar.dart';
 import 'package:aurogram/widgets/call/call_button.dart';
 import 'package:aurogram/widgets/call/group_call_button.dart';
 
@@ -41,7 +42,7 @@ class SpaceChatHeaderContent extends StatelessWidget {
     if (isDMConversation) {
       if (isOtherUserOnline) {
         statusText = 'Active now';
-        statusColor = const Color(0xFF4CAF50);
+        statusColor = AppTheme.activeGreen;
       } else if (otherUserLastSeen != null) {
         statusText = 'Last seen ${_formatLastSeen(otherUserLastSeen!)}';
       }
@@ -100,7 +101,7 @@ class SpaceChatHeaderContent extends StatelessWidget {
                   width: 10,
                   height: 10,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF4CAF50),
+                    color: AppTheme.activeGreen,
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: Theme.of(context).scaffoldBackgroundColor,
@@ -111,7 +112,7 @@ class SpaceChatHeaderContent extends StatelessWidget {
               ),
           ],
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: AppDimensions.spacingMdSm),
         // Name and status column - wrapped in Flexible to prevent overflow
         Flexible(
           child: Column(
@@ -130,7 +131,7 @@ class SpaceChatHeaderContent extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
               if (statusText != null) ...[
-                const SizedBox(height: 2),
+                const SizedBox(height: AppDimensions.spacingXxs),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -139,11 +140,11 @@ class SpaceChatHeaderContent extends StatelessWidget {
                         width: 6,
                         height: 6,
                         decoration: const BoxDecoration(
-                          color: Color(0xFF4CAF50),
+                          color: AppTheme.activeGreen,
                           shape: BoxShape.circle,
                         ),
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: AppDimensions.spacingXs),
                     ],
                     Text(
                       statusText,
@@ -177,7 +178,7 @@ class SpaceChatHeaderContent extends StatelessWidget {
             shape: BoxShape.circle,
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: AppDimensions.spacingMdSm),
         Container(
           width: 80,
           height: 14,

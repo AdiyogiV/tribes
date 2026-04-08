@@ -21,6 +21,8 @@ import 'package:aurogram/utils/theme/header_style.dart';
 import 'package:aurogram/utils/responsive.dart';
 import 'package:aurogram/models/notification.dart';
 import 'package:aurogram/services/notification_service.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/widgets/common/snack_bar_service.dart';
 
 /// Filter options for notifications (simplified: All + Unread only)
 enum NotificationFilter {
@@ -271,14 +273,7 @@ class NotificationsState extends State<Notifications> {
       });
       
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('All notifications marked as read'),
-            duration: const Duration(seconds: 2),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: AppTheme.primaryColor,
-          ),
-        );
+        showCustomSnackBar(context, message: 'All notifications marked as read', backgroundColor: AppTheme.primaryColor, duration: const Duration(seconds: 2), behavior: SnackBarBehavior.floating);
       }
     } catch (e) {
       AppLogger.e('Failed to mark all as read', category: LogCategory.general, error: e);
@@ -333,11 +328,11 @@ class NotificationsState extends State<Notifications> {
 
   Widget _buildUnknownNotificationTile(AppNotification notification) {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(vertical: AppDimensions.paddingXs, horizontal: AppDimensions.paddingLg),
+      padding: const EdgeInsets.all(AppDimensions.paddingLg),
       decoration: BoxDecoration(
         color: AppTheme.cardColor,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
         border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.15), width: 0.5),
       ),
       child: Row(
@@ -355,7 +350,7 @@ class NotificationsState extends State<Notifications> {
               size: 20,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppDimensions.spacingMd),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -368,7 +363,7 @@ class NotificationsState extends State<Notifications> {
                     color: AppTheme.textColor,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppDimensions.spacingXs),
                 Text(
                   notification.displayBody,
                   style: TextStyle(
@@ -389,10 +384,10 @@ class NotificationsState extends State<Notifications> {
   Widget _buildFilterChips() {
     return Container(
       height: 44,
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: AppDimensions.paddingSm),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
         itemCount: NotificationFilter.values.length,
         itemBuilder: (context, index) {
           final filter = NotificationFilter.values[index];
@@ -413,15 +408,15 @@ class NotificationsState extends State<Notifications> {
                     size: 14,
                     color: isSelected ? AppTheme.primaryColor.withValues(alpha: 0.9) : secondaryColor,
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: AppDimensions.spacingSmMd),
                   Text(filter.displayName),
                   if (filter == NotificationFilter.unread && _unreadCount > 0) ...[
-                    const SizedBox(width: 6),
+                    const SizedBox(width: AppDimensions.spacingSmMd),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
                         color: isSelected ? AppTheme.primaryColor.withValues(alpha: 0.25) : AppTheme.primaryColor,
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm),
                       ),
                       child: Text(
                         _unreadCount > 99 ? '99+' : _unreadCount.toString(),
@@ -444,9 +439,9 @@ class NotificationsState extends State<Notifications> {
               selectedColor: AppTheme.primaryColor.withValues(alpha: 0.15),
               checkmarkColor: AppTheme.primaryColor,
               showCheckmark: false,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+              padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
               ),
               side: BorderSide(
                 color: isSelected ? AppTheme.primaryColor : AppTheme.primaryColor.withValues(alpha: 0.2),
@@ -492,7 +487,7 @@ class NotificationsState extends State<Notifications> {
                 color: AppTheme.primaryColor,
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppDimensions.spacingXl),
             Text(
               message,
               textAlign: TextAlign.center,
@@ -586,7 +581,7 @@ class NotificationsState extends State<Notifications> {
                         if (_hasMore) {
                           return _isLoading
                               ? const PaginationLoader()
-                              : const SizedBox(height: 60); // Placeholder for next load trigger
+                              : const SizedBox(height: AppDimensions.spacingHero); // Placeholder for next load trigger
                         }
                         
                         // Fallback - should not reach here with correct childCount

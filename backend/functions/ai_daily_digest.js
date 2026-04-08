@@ -3,6 +3,7 @@ import { onCall } from "firebase-functions/v2/https";
 import { db, FieldValue, logger } from "../lib/firebase.js";
 import { geminiApiKey } from "../lib/secrets.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { AI_MODELS } from "../lib/config.js";
 import { HOLYCOW_AI_USER_ID } from "../lib/constants.js";
 
 /**
@@ -110,7 +111,7 @@ async function generateNewsDigest() {
 
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
-        model: "gemini-2.0-flash",
+        model: AI_MODELS.GEMINI_FLASH,
         tools: [{ googleSearch: {} }],
         generationConfig: {
             temperature: 0.7,

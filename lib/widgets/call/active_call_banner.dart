@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:aurogram/config/call_ui_config.dart';
 import 'package:aurogram/pages/call/group_call_screen.dart';
 import 'package:aurogram/services/group_call_service.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Banner that shows when there's an active call in a gram
 /// Allows users to easily join an ongoing call
@@ -88,21 +90,21 @@ class _ActiveCallBannerState extends State<ActiveCallBanner> with SingleTickerPr
             animation: _pulseAnimation,
             builder: (context, child) {
               return Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                margin: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingSm),
+                padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingMd),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      const Color(0xFF4CAF50).withValues(alpha: _pulseAnimation.value),
+                      AppTheme.activeGreen.withValues(alpha: _pulseAnimation.value),
                       const Color(0xFF2E7D32).withValues(alpha: _pulseAnimation.value),
                     ],
                   ),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF4CAF50).withValues(alpha: 0.3 * _pulseAnimation.value),
+                      color: AppTheme.activeGreen.withValues(alpha: 0.3 * _pulseAnimation.value),
                       blurRadius: 12,
                       spreadRadius: 2,
                     ),
@@ -124,7 +126,7 @@ class _ActiveCallBannerState extends State<ActiveCallBanner> with SingleTickerPr
                         size: 22,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: AppDimensions.spacingMd),
                     
                     // Call info
                     Expanded(
@@ -140,7 +142,7 @@ class _ActiveCallBannerState extends State<ActiveCallBanner> with SingleTickerPr
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                          const SizedBox(height: 2),
+                          const SizedBox(height: AppDimensions.spacingXxs),
                           Text(
                             '$participantCount ${participantCount == 1 ? 'participant' : 'participants'}',
                             style: TextStyle(
@@ -154,10 +156,10 @@ class _ActiveCallBannerState extends State<ActiveCallBanner> with SingleTickerPr
                     
                     // Join button
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingSm),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
                       ),
                       child: const Text(
                         'Join',
@@ -235,11 +237,11 @@ class ActiveCallIndicator extends StatelessWidget {
             margin: const EdgeInsets.only(right: 8),
             decoration: BoxDecoration(
               color: isInCall 
-                  ? const Color(0xFF4CAF50) 
-                  : const Color(0xFF4CAF50).withValues(alpha: 0.2),
+                  ? AppTheme.activeGreen 
+                  : AppTheme.activeGreen.withValues(alpha: 0.2),
               shape: BoxShape.circle,
               border: Border.all(
-                color: const Color(0xFF4CAF50),
+                color: AppTheme.activeGreen,
                 width: 2,
               ),
             ),

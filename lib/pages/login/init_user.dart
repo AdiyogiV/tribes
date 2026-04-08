@@ -2,13 +2,14 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:aurogram/services/user_service.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
 import 'package:aurogram/utils/responsive.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/widgets/universal/transparent_toolbox.dart';
 import 'package:aurogram/pages/onboarding/ftue_welcome.dart';
+import 'package:aurogram/widgets/common/snack_bar_service.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 class InitUser extends StatefulWidget {
   const InitUser({super.key});
@@ -86,8 +87,9 @@ class InitUserState extends State<InitUser>
   }
 
   Future<void> _continue() async {
-    if (_nameController.text.trim().isEmpty || _username == null || _isLoading)
+    if (_nameController.text.trim().isEmpty || _username == null || _isLoading) {
       return;
+    }
 
     HapticFeedback.mediumImpact();
     setState(() => _isLoading = true);
@@ -101,9 +103,7 @@ class InitUserState extends State<InitUser>
 
       if (!success) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed. Please try again.')),
-          );
+          showCustomSnackBar(context, message: 'Failed. Please try again.');
           setState(() => _isLoading = false);
         }
         return;
@@ -128,9 +128,7 @@ class InitUserState extends State<InitUser>
     } catch (e) {
       AppLogger.e('Profile error', category: LogCategory.auth, error: e);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Something went wrong.')),
-        );
+        showCustomSnackBar(context, message: 'Something went wrong.');
         setState(() => _isLoading = false);
       }
     }
@@ -204,14 +202,14 @@ class InitUserState extends State<InitUser>
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const SizedBox(height: 40),
+                    const SizedBox(height: AppDimensions.spacingLargeSection),
                     _buildHeader(name),
                     const SizedBox(height: 48),
                     // Toolboxes in flow (not positioned)
                     _buildNameEntryToolbox(),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppDimensions.spacingLg),
                     _buildContinueToolbox(canContinue),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: AppDimensions.spacingLargeSection),
                   ],
                 ),
               ),
@@ -238,9 +236,9 @@ class InitUserState extends State<InitUser>
                   mainAxisAlignment: MainAxisAlignment.start,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(height: 60),
+                    const SizedBox(height: AppDimensions.spacingHero),
                     _buildHeader(name),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: AppDimensions.spacingLargeSection),
                   ],
                 ),
               ),
@@ -266,17 +264,17 @@ class InitUserState extends State<InitUser>
           height: 100,
           width: 100,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusXxl),
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusXxl),
             child: Image.asset(
               'assets/images/icon_transparent.png',
               fit: BoxFit.contain,
             ),
           ),
         ),
-        const SizedBox(height: 32),
+        const SizedBox(height: AppDimensions.spacingSection),
 
         // Dynamic greeting
         AnimatedSwitcher(
@@ -294,7 +292,7 @@ class InitUserState extends State<InitUser>
           ),
         ),
 
-        const SizedBox(height: 12),
+        const SizedBox(height: AppDimensions.spacingMd),
 
         // Subtitle
         AnimatedSwitcher(
@@ -343,7 +341,7 @@ class InitUserState extends State<InitUser>
             color: AppTheme.primaryColor.withValues(alpha: 0.85),
             size: 24,
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppDimensions.spacingMd),
           Expanded(
             child: TextField(
               controller: _nameController,

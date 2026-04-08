@@ -1,5 +1,6 @@
 /// Stub for ContactService on web
 /// Contact sync is not supported on web browsers
+library;
 
 /// Result of contact sync operation
 class ContactSyncResult {

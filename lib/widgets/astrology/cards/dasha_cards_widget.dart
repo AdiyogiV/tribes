@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:aurogram/models/astrology_profile.dart';
 import 'package:aurogram/utils/astrology/dasha_utils.dart';
 import 'package:aurogram/utils/astrology/planet_utils.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Horizontal scrollable list of current Dasha period cards
 class DashaCardsWidget extends StatelessWidget {
@@ -38,7 +39,7 @@ class DashaCardsWidget extends StatelessWidget {
         padding: EdgeInsets.zero,
         clipBehavior: Clip.none,
         itemCount: dashaLevels.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        separatorBuilder: (_, __) => const SizedBox(width: AppDimensions.spacingMd),
         itemBuilder: (context, index) {
           final level = dashaLevels[index];
           return Padding(
@@ -49,12 +50,12 @@ class DashaCardsWidget extends StatelessWidget {
                 color: cardColor,
                 elevation: 2,
                 shadowColor: Colors.black.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
                 child: InkWell(
                   onTap: onDashaTap != null
                       ? () => onDashaTap!(level, dasha, isDark)
                       : null,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
                   child: _DashaLevelCard(level: level, isDark: isDark),
                 ),
               ),
@@ -74,7 +75,7 @@ class _DashaLevelCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final progress = level['progress'] as double? ??
+    final _ = level['progress'] as double? ??
         DashaUtils.calculateDashaProgress(
             level['startDate'] as String?, level['endDate'] as String?);
     final shortDateRange = DashaUtils.formatShortDashaDateRange(
@@ -85,7 +86,7 @@ class _DashaLevelCard extends StatelessWidget {
     final lordSymbol = PlanetUtils.getSymbol(lord);
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppDimensions.paddingMd),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
@@ -122,7 +123,7 @@ class _DashaLevelCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppDimensions.spacingSmMd),
           Text(
             lord,
             style: TextStyle(
@@ -133,7 +134,7 @@ class _DashaLevelCard extends StatelessWidget {
             ),
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppDimensions.spacingXs),
           Text(
             shortDateRange,
             style: TextStyle(

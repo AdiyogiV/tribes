@@ -1,3 +1,4 @@
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -278,14 +279,14 @@ class _AstroChatPageState extends State<AstroChatPage> {
               size: 22,
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppDimensions.spacingSm),
           // Title with icon (astrology or wellness)
           Icon(
             widget.chatSource == 'wellness' ? Icons.spa : Icons.auto_awesome,
             color: brownColor,
             size: 20,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppDimensions.spacingSm),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -445,7 +446,7 @@ class _AstroChatPageState extends State<AstroChatPage> {
               size: 48,
               color: brownColor.withValues(alpha: 0.6),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppDimensions.spacingLg),
             Text(
               'Your Personal Astrologer',
               style: TextStyle(
@@ -454,7 +455,7 @@ class _AstroChatPageState extends State<AstroChatPage> {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppDimensions.spacingSm),
             Text(
               'Ask questions about your birth chart,\nplanetary transits, and life guidance',
               textAlign: TextAlign.center,

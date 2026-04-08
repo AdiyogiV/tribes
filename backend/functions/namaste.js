@@ -1,8 +1,8 @@
 import { logger } from "firebase-functions";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { FieldValue, getFirestore } from "firebase-admin/firestore";
-import { RATE_LIMITS } from "../lib/constants.js";
-import { AURA_POINTS } from "../lib/constants.js";
+import { RATE_LIMITS, AURA_POINTS } from "../lib/constants.js";
+import { isBlockedEitherWay } from "../lib/utils.js";
 
 // Namaste configuration - uses shared constants
 const NAMASTE_CONFIG = {
@@ -18,34 +18,9 @@ function getTodayDateString() {
     return new Date().toISOString().split("T")[0];
 }
 
-/**
- * Check if user A has blocked user B or vice versa
- */
+/** @see ../lib/utils.js — consolidated blocking utility */
 async function checkBlocked(db, userA, userB) {
-    try {
-        // Check if A blocked B
-        const aBlockedB = await db
-            .collection("blocks")
-            .doc(userA)
-            .collection("blocked")
-            .doc(userB)
-            .get();
-
-        if (aBlockedB.exists) return true;
-
-        // Check if B blocked A
-        const bBlockedA = await db
-            .collection("blocks")
-            .doc(userB)
-            .collection("blocked")
-            .doc(userA)
-            .get();
-
-        return bBlockedA.exists;
-    } catch (error) {
-        logger.warn("Error checking blocked status:", error);
-        return false;
-    }
+    return isBlockedEitherWay(db, userA, userB);
 }
 
 /**

@@ -1,5 +1,6 @@
 /// Stub for flutter_sound on web platform
 /// These classes provide the same interface but do nothing on web
+library;
 
 class FlutterSoundRecorder {
   Future<void> openRecorder() async {}

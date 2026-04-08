@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 class SecretMessageShareCard extends StatelessWidget {
   final String message;
@@ -25,7 +26,7 @@ class SecretMessageShareCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusXxl),
         border: Border.all(
           color: AppTheme.primaryColor.withValues(alpha: 0.2),
           width: 1,
@@ -43,7 +44,7 @@ class SecretMessageShareCard extends StatelessWidget {
               letterSpacing: 0.8,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppDimensions.spacingMd),
           Text(
             'Someone said:',
             style: TextStyle(
@@ -52,7 +53,7 @@ class SecretMessageShareCard extends StatelessWidget {
               color: AppTheme.textSecondaryColor,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.spacingLg),
           Text(
             message,
             style: TextStyle(
@@ -61,9 +62,9 @@ class SecretMessageShareCard extends StatelessWidget {
               color: AppTheme.textColor,
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppDimensions.spacingXxl),
           Divider(color: AppTheme.primaryColor.withValues(alpha: 0.25)),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.spacingLg),
           Text(
             'Send me an anonymous message',
             style: TextStyle(
@@ -72,7 +73,7 @@ class SecretMessageShareCard extends StatelessWidget {
               color: AppTheme.primaryColor,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppDimensions.spacingSmMd),
           Text(
             'Add a link sticker on your story (link is not clickable from the card).',
             style: TextStyle(
@@ -80,7 +81,7 @@ class SecretMessageShareCard extends StatelessWidget {
               color: AppTheme.textSecondaryColor,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppDimensions.spacingSm),
           Text(
             shareLink,
             style: TextStyle(
@@ -213,7 +214,7 @@ class AnonymousLinkShareCard extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.link_rounded, size: 22, color: purple),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppDimensions.spacingMd),
                 Text(
                   'Paste your LINK here',
                   style: TextStyle(
@@ -225,16 +226,16 @@ class AnonymousLinkShareCard extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppDimensions.spacingMdLg),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(Icons.arrow_upward_rounded,
                   color: Colors.white.withValues(alpha: 0.7), size: 24),
-              const SizedBox(width: 14),
+              const SizedBox(width: AppDimensions.spacingMdLg),
               Icon(Icons.arrow_upward_rounded,
                   color: Colors.white.withValues(alpha: 0.7), size: 24),
-              const SizedBox(width: 14),
+              const SizedBox(width: AppDimensions.spacingMdLg),
               Icon(Icons.arrow_upward_rounded,
                   color: Colors.white.withValues(alpha: 0.7), size: 24),
             ],
@@ -248,7 +249,7 @@ class AnonymousLinkShareCard extends StatelessWidget {
                 width: 36,
                 height: 36,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppDimensions.spacingMd),
               Text(
                 'Aurogram',
                 style: TextStyle(

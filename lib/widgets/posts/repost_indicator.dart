@@ -1,6 +1,7 @@
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 import 'package:flutter/material.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
-import 'package:aurogram/widgets/user_avatar.dart';
+import 'package:aurogram/widgets/common/user_avatar.dart';
 import 'package:aurogram/pages/tabs/user_profile.dart';
 
 /// Widget that shows repost information at the top of a reposted post
@@ -50,7 +51,7 @@ class RepostIndicator extends StatelessWidget {
               size: 16,
               color: AppTheme.textSecondaryColor,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppDimensions.spacingSm),
             // Reposter avatar
             if (reposterAvatar != null && reposterAvatar!.isNotEmpty)
               UserAvatar(
@@ -66,15 +67,15 @@ class RepostIndicator extends StatelessWidget {
                 height: 20,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppTheme.primaryColor.withOpacity(0.1),
+                  color: AppTheme.primaryColor.withValues(alpha: 0.1),
                 ),
                 child: Icon(
                   Icons.person,
                   size: 12,
-                  color: AppTheme.primaryColor.withOpacity(0.5),
+                  color: AppTheme.primaryColor.withValues(alpha: 0.5),
                 ),
               ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppDimensions.spacingSm),
             Expanded(
               child: Text(
                 '$reposterName reposted from $originalAuthorName',
@@ -119,7 +120,7 @@ class CompactRepostIndicator extends StatelessWidget {
               size: 12,
               color: AppTheme.textSecondaryColor,
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: AppDimensions.spacingXs),
             Text(
               '$reposterName reposted',
               style: TextStyle(

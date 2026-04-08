@@ -1,3 +1,4 @@
+import 'package:aurogram/utils/logging/app_logger.dart';
 
 /// Utility class for astrology-related date/time formatting
 class AstrologyFormatters {
@@ -64,7 +65,9 @@ class AstrologyFormatters {
         if (hour == 0) hour = 12;
         return '$hour:$minute $period';
       }
-    } catch (_) {}
+    } catch (_) {
+      AppLogger.w('AstrologyFormatters: failed to parse time string', category: LogCategory.general);
+    }
     return time;
   }
 
@@ -214,7 +217,9 @@ class AstrologyFormatters {
           'palas': palas,
         };
       }
-    } catch (_) {}
+    } catch (_) {
+      AppLogger.w('AstrologyFormatters: failed to calculate Vedic time units', category: LogCategory.general);
+    }
     return null;
   }
 }

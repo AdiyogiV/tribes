@@ -1,5 +1,6 @@
 /// Stub for path package on web
 /// Provides basic path manipulation for compatibility
+library;
 
 /// Join path segments
 String join(String part1, [String? part2, String? part3, String? part4]) {

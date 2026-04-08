@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:aurogram/widgets/ui/common_widgets.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/pages/ayurveda/widgets/ayurveda_theme.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// AI-powered personalized Ayurveda recommendations card
 /// Fetches recommendations from backend using Gemini AI
@@ -24,7 +26,6 @@ class AIRecommendationsCard extends StatefulWidget {
 class _AIRecommendationsCardState extends State<AIRecommendationsCard> {
   bool _isLoading = true;
   bool _hasError = false;
-  String? _errorMessage;
   Map<String, dynamic>? _recommendations;
   Map<String, dynamic>? _context;
 
@@ -38,7 +39,6 @@ class _AIRecommendationsCardState extends State<AIRecommendationsCard> {
     setState(() {
       _isLoading = true;
       _hasError = false;
-      _errorMessage = null;
     });
 
     try {
@@ -69,7 +69,6 @@ class _AIRecommendationsCardState extends State<AIRecommendationsCard> {
           category: LogCategory.general, error: e, stackTrace: stackTrace);
       setState(() {
         _hasError = true;
-        _errorMessage = 'Unable to load recommendations';
         _isLoading = false;
       });
     }
@@ -110,7 +109,7 @@ class _AIRecommendationsCardState extends State<AIRecommendationsCard> {
           ),
 
           if (_context != null && _context!['topImbalance'] != null) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: AppDimensions.spacingXs),
             Text(
               'Based on your ${_context!['topImbalance']} imbalance • ${_context!['season'] ?? 'Current season'}',
               style: TextStyle(
@@ -120,7 +119,7 @@ class _AIRecommendationsCardState extends State<AIRecommendationsCard> {
             ),
           ],
 
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.spacingLg),
 
           // Content
           if (_isLoading)
@@ -137,16 +136,11 @@ class _AIRecommendationsCardState extends State<AIRecommendationsCard> {
   Widget _buildLoadingState() {
     return Column(
       children: [
-        const SizedBox(height: 20),
-        SizedBox(
-          width: 24,
-          height: 24,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            valueColor: AlwaysStoppedAnimation(AppTheme.primaryColor),
-          ),
+        const SizedBox(height: AppDimensions.spacingXl),
+        AppLoadingIndicator(
+          strokeWidth: 2,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppDimensions.spacingMd),
         Text(
           'Generating personalized tips...',
           style: TextStyle(
@@ -154,7 +148,7 @@ class _AIRecommendationsCardState extends State<AIRecommendationsCard> {
             color: widget.isDark ? Colors.white54 : Colors.black54,
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: AppDimensions.spacingXl),
       ],
     );
   }
@@ -162,7 +156,7 @@ class _AIRecommendationsCardState extends State<AIRecommendationsCard> {
   Widget _buildErrorState() {
     // Show compact retry option instead of prominent error
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingSm),
       child: Row(
         children: [
           Icon(
@@ -170,7 +164,7 @@ class _AIRecommendationsCardState extends State<AIRecommendationsCard> {
             size: 16,
             color: widget.isDark ? Colors.white38 : Colors.black38,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppDimensions.spacingSm),
           Expanded(
             child: Text(
               'AI tips unavailable',
@@ -210,19 +204,19 @@ class _AIRecommendationsCardState extends State<AIRecommendationsCard> {
         // Quick Remedy (most prominent)
         if (quickRemedy != null) ...[
           _buildQuickRemedySection(quickRemedy),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.spacingLg),
         ],
 
         // Diet recommendations
         if (diet != null && diet['favor'] != null) ...[
           _buildDietSection(diet),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.spacingLg),
         ],
 
         // Lifestyle tips
         if (lifestyle != null && lifestyle.isNotEmpty) ...[
           _buildLifestyleSection(lifestyle),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.spacingLg),
         ],
 
         // Mindfulness note
@@ -236,10 +230,10 @@ class _AIRecommendationsCardState extends State<AIRecommendationsCard> {
     final reasoning = remedy['reasoning'] as String?;
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppDimensions.paddingMd),
       decoration: BoxDecoration(
         color: AppTheme.primaryColor.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
         border: Border.all(
           color: AppTheme.primaryColor.withValues(alpha: 0.2),
           width: 1,
@@ -249,10 +243,10 @@ class _AIRecommendationsCardState extends State<AIRecommendationsCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(AppDimensions.paddingSm),
             decoration: BoxDecoration(
               color: AppTheme.primaryColor.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
             ),
             child: Icon(
               Icons.spa,
@@ -260,7 +254,7 @@ class _AIRecommendationsCardState extends State<AIRecommendationsCard> {
               color: AppTheme.primaryColor,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppDimensions.spacingMd),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -273,7 +267,7 @@ class _AIRecommendationsCardState extends State<AIRecommendationsCard> {
                     color: AppTheme.primaryColor,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppDimensions.spacingXs),
                 Text(
                   action,
                   style: TextStyle(
@@ -283,7 +277,7 @@ class _AIRecommendationsCardState extends State<AIRecommendationsCard> {
                   ),
                 ),
                 if (reasoning != null) ...[
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppDimensions.spacingXs),
                   Text(
                     reasoning,
                     style: TextStyle(
@@ -313,7 +307,7 @@ class _AIRecommendationsCardState extends State<AIRecommendationsCard> {
               size: 14,
               color: widget.isDark ? Colors.white54 : Colors.black54,
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: AppDimensions.spacingSmMd),
             Text(
               'Foods to Favor',
               style: TextStyle(
@@ -324,7 +318,7 @@ class _AIRecommendationsCardState extends State<AIRecommendationsCard> {
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppDimensions.spacingSm),
         Wrap(
           spacing: 6,
           runSpacing: 6,
@@ -335,7 +329,7 @@ class _AIRecommendationsCardState extends State<AIRecommendationsCard> {
                 color: widget.isDark
                     ? Colors.white.withValues(alpha: 0.08)
                     : Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
               ),
               child: Text(
                 food,
@@ -362,7 +356,7 @@ class _AIRecommendationsCardState extends State<AIRecommendationsCard> {
               size: 14,
               color: widget.isDark ? Colors.white54 : Colors.black54,
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: AppDimensions.spacingSmMd),
             Text(
               'Daily Routine',
               style: TextStyle(
@@ -373,7 +367,7 @@ class _AIRecommendationsCardState extends State<AIRecommendationsCard> {
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppDimensions.spacingSm),
         ...lifestyle.take(3).map((tip) {
           return Padding(
             padding: const EdgeInsets.only(bottom: 6),
@@ -385,7 +379,7 @@ class _AIRecommendationsCardState extends State<AIRecommendationsCard> {
                   size: 14,
                   color: AppTheme.primaryColor.withValues(alpha: 0.7),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppDimensions.spacingSm),
                 Expanded(
                   child: Text(
                     tip.toString(),
@@ -405,10 +399,10 @@ class _AIRecommendationsCardState extends State<AIRecommendationsCard> {
 
   Widget _buildMindfulnessSection(String mindfulness) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppDimensions.paddingMd),
       decoration: BoxDecoration(
         color: Colors.purple.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm),
       ),
       child: Row(
         children: [
@@ -417,7 +411,7 @@ class _AIRecommendationsCardState extends State<AIRecommendationsCard> {
             size: 16,
             color: Colors.purple,
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: AppDimensions.spacingMdSm),
           Expanded(
             child: Text(
               mindfulness,

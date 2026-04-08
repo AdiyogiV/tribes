@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:aurogram/utils/logging/app_logger.dart';
 import 'package:aurogram/services/compatibility_service.dart';
 import 'package:aurogram/services/share_service.dart';
 import 'package:aurogram/utils/compatibility_constants.dart';
@@ -7,6 +8,7 @@ import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/widgets/astrology/compatibility_share_cards.dart';
 import 'package:aurogram/pages/astrology/utils/compatibility_label_utils.dart';
 import 'package:aurogram/pages/astrology/widgets/compatibility_cosmic_section.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Compatibility details page - multi-layer design
 /// Shows Cosmic Match (primary) and Traditional Ashtakoot (secondary)
@@ -57,7 +59,7 @@ class CompatibilityDetailsPage extends StatelessWidget {
               bottom: false,
               child: Container(
                 height: 60,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
                 child: Row(
                   children: [
                     SizedBox(
@@ -92,11 +94,11 @@ class CompatibilityDetailsPage extends StatelessWidget {
           // Content
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppDimensions.spacingLg),
 
                   // ==========================================================
                   // COSMIC MATCH (Primary)
@@ -184,7 +186,7 @@ class CompatibilityDetailsPage extends StatelessWidget {
                   letterSpacing: 0.5,
                 ),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: AppDimensions.spacingSmMd),
               Icon(
                 Icons.help_outline_rounded,
                 size: 16,
@@ -193,16 +195,16 @@ class CompatibilityDetailsPage extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: AppDimensions.spacingXl),
 
         // Sync label badge (using theme color)
         Material(
           elevation: 2,
           shadowColor: Colors.black.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
           color: Colors.white,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingSm),
             child: Text(
               CompatibilityLabelUtils.getCreativeLifePhaseLabel(sync.label),
               style: TextStyle(
@@ -213,7 +215,7 @@ class CompatibilityDetailsPage extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: AppDimensions.spacingXl),
 
         // Two user phase cards side by side
         Row(
@@ -235,7 +237,7 @@ class CompatibilityDetailsPage extends StatelessWidget {
                 antarEndDate: user1.antarEndDate,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppDimensions.spacingMd),
             Expanded(
               child: _buildPhaseCard(
                 context,
@@ -254,16 +256,16 @@ class CompatibilityDetailsPage extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppDimensions.spacingMd),
 
         // Insight text
         Material(
           elevation: 2,
           shadowColor: Colors.black.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
           color: cardColor,
           child: Padding(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(AppDimensions.paddingMdLg),
             child: Text(
               sync.insight,
               textAlign: TextAlign.center,
@@ -277,7 +279,7 @@ class CompatibilityDetailsPage extends StatelessWidget {
         ),
 
         // Share button
-        const SizedBox(height: 16),
+        const SizedBox(height: AppDimensions.spacingLg),
         _buildShareButton(
           context: context,
           c: c,
@@ -341,10 +343,10 @@ class CompatibilityDetailsPage extends StatelessWidget {
     return Material(
       elevation: 2,
       shadowColor: Colors.black.withValues(alpha: 0.15),
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(AppDimensions.radiusMdLg),
       color: cardColor,
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(AppDimensions.paddingMd),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -358,7 +360,7 @@ class CompatibilityDetailsPage extends StatelessWidget {
                 letterSpacing: 1,
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: AppDimensions.spacingMdSm),
 
             // Mahadasha section
             Text(
@@ -370,7 +372,7 @@ class CompatibilityDetailsPage extends StatelessWidget {
                 letterSpacing: 0.5,
               ),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: AppDimensions.spacingXxs),
             Text(
               mahaDasha,
               style: TextStyle(
@@ -382,14 +384,14 @@ class CompatibilityDetailsPage extends StatelessWidget {
 
             // Mahadasha progress bar
             if (mahaProgress != null) ...[
-              const SizedBox(height: 6),
+              const SizedBox(height: AppDimensions.spacingSmMd),
               _buildProgressBar(c.withValues(alpha: 0.9), mahaProgress,
                   mahaTimeRemaining, isDark),
             ],
 
             // Antardasha (if available)
             if (antarDasha != null && antarDasha.isNotEmpty) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: AppDimensions.spacingMd),
               Text(
                 'ANTARDASHA',
                 style: TextStyle(
@@ -399,7 +401,7 @@ class CompatibilityDetailsPage extends StatelessWidget {
                   letterSpacing: 0.5,
                 ),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: AppDimensions.spacingXxs),
               Text(
                 antarDasha,
                 style: TextStyle(
@@ -411,14 +413,14 @@ class CompatibilityDetailsPage extends StatelessWidget {
 
               // Antardasha progress bar
               if (antarProgress != null) ...[
-                const SizedBox(height: 6),
+                const SizedBox(height: AppDimensions.spacingSmMd),
                 _buildProgressBar(c.withValues(alpha: 0.9), antarProgress,
                     antarTimeRemaining, isDark),
               ],
             ],
 
             // Theme
-            const SizedBox(height: 12),
+            const SizedBox(height: AppDimensions.spacingMd),
             Text(
               theme,
               style: TextStyle(
@@ -459,7 +461,9 @@ class CompatibilityDetailsPage extends StatelessWidget {
         }
         return {'progress': progress, 'timeRemaining': timeRemaining};
       }
-    } catch (_) {}
+    } catch (_) {
+      AppLogger.w('CompatibilityDetailsPage: dasha progress calculation failed', category: LogCategory.general);
+    }
     return {'progress': null, 'timeRemaining': null};
   }
 
@@ -480,7 +484,7 @@ class CompatibilityDetailsPage extends StatelessWidget {
           ),
         ),
         if (timeRemaining != null) ...[
-          const SizedBox(height: 3),
+          const SizedBox(height: AppDimensions.spacingXxxs),
           Text(
             timeRemaining,
             style: TextStyle(
@@ -566,7 +570,7 @@ class CompatibilityDetailsPage extends StatelessWidget {
                   letterSpacing: 0.5,
                 ),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: AppDimensions.spacingSmMd),
               Icon(
                 Icons.help_outline_rounded,
                 size: 16,
@@ -575,7 +579,7 @@ class CompatibilityDetailsPage extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppDimensions.spacingLg),
 
         // Big score display
         Row(
@@ -603,14 +607,14 @@ class CompatibilityDetailsPage extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: AppDimensions.spacingXl),
         Material(
           elevation: 2,
           shadowColor: Colors.black.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
           color: Colors.white,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingSm),
             child: Text(
               label,
               style: TextStyle(
@@ -637,7 +641,7 @@ class CompatibilityDetailsPage extends StatelessWidget {
         ),
 
         // Share button
-        const SizedBox(height: 16),
+        const SizedBox(height: AppDimensions.spacingLg),
         _buildShareButton(
           context: context,
           c: c,
@@ -810,10 +814,10 @@ class CompatibilityDetailsPage extends StatelessWidget {
       color: cardColor,
       elevation: 2,
       shadowColor: Colors.black.withValues(alpha: 0.15),
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(AppDimensions.radiusMdLg),
       child: InkWell(
         onTap: () => _showKootaDetails(context, c, name, scoreVal, maxScore),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMdLg),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
           child: Column(
@@ -842,7 +846,7 @@ class CompatibilityDetailsPage extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppDimensions.spacingSm),
               Text(
                 name,
                 style: TextStyle(
@@ -884,7 +888,7 @@ class CompatibilityDetailsPage extends StatelessWidget {
                 color: c,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppDimensions.spacingMd),
             Text(
               '$scoreDisplay/${maxScore.toInt()}',
               style: TextStyle(
@@ -920,12 +924,12 @@ class CompatibilityDetailsPage extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingSm),
           decoration: BoxDecoration(
             color: c.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -935,7 +939,7 @@ class CompatibilityDetailsPage extends StatelessWidget {
                 size: 14,
                 color: c.withValues(alpha: 0.6),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: AppDimensions.spacingSmMd),
               Text(
                 'Share',
                 style: TextStyle(

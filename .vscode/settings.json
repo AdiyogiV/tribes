@@ -16,5 +16,6 @@
     "dart.vmServiceOutFile": "service.json",
     "debug.openDebug": "openOnDebugBreak",
     "cmake.sourceDirectory": "/Users/abhinavvashisht/Documents/GroupCaster/tribes/windows",
-    "traycer.enableAutoAnalysis": false
+    "traycer.enableAutoAnalysis": false,
+    "diffEditor.codeLens": true
 }

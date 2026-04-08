@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:aurogram/utils/logging/app_logger.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/utils/responsive.dart';
@@ -13,6 +14,7 @@ import 'package:aurogram/services/sky_positions_service.dart';
 import 'package:aurogram/pages/astrology/astrology_setup_page.dart';
 import 'package:aurogram/pages/login/login.dart';
 import 'package:aurogram/pages/onboarding/widgets/zodiac_wheel_painter.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// FTUE (First Time User Experience) page
 /// Shows different states based on login status:
@@ -55,12 +57,12 @@ class _FtueWelcomeState extends State<FtueWelcome>
           }
         });
         if (planetLongs.isNotEmpty) {
-          debugPrint('FTUE: Loaded ${planetLongs.length} planet positions');
+          AppLogger.d('FtueWelcome: Loaded ${planetLongs.length} planet positions', category: LogCategory.ui);
           setState(() => _planetPositions = planetLongs);
         }
       }
     } catch (e) {
-      debugPrint('FTUE: Failed to load sky positions: $e');
+      AppLogger.w('FtueWelcome: Failed to load sky positions: $e', category: LogCategory.ui);
     }
   }
 
@@ -112,8 +114,8 @@ class _FtueWelcomeState extends State<FtueWelcome>
   }
 
   /// Complete FTUE and go home
-  /// [targetTab]: 0=Feed, 1=Grams, 2=HolyCow AI, 3=Messages
-  Future<void> _completeFtue({int targetTab = 2}) async {
+  /// [targetTab]: 0=HolyCow AI, 1=Messages, 2=Grams, 3=Profile
+  Future<void> _completeFtue({int targetTab = 0}) async {
     if (_isNavigating) return;
     setState(() => _isNavigating = true);
     HapticFeedback.lightImpact();
@@ -148,9 +150,13 @@ class _FtueWelcomeState extends State<FtueWelcome>
           AnalyticsService()
               .trackFtueCompleted(birthDetailsProvided: hasBirthDetails);
           AnalyticsService().setHasBirthDetails(hasBirthDetails);
-        } catch (_) {}
+        } catch (_) {
+          AppLogger.w('FtueWelcome: analytics tracking failed', category: LogCategory.general);
+        }
       }
-    } catch (_) {}
+    } catch (_) {
+      AppLogger.w('FtueWelcome: FTUE completion save failed', category: LogCategory.general);
+    }
   }
 
   @override
@@ -237,7 +243,7 @@ class _FtueWelcomeState extends State<FtueWelcome>
                 padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
                 child: _buildMantra(isDark, isWide: true),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppDimensions.spacingXs),
               // Main content - flexible row with wheel and poem
               Expanded(
                 child: LayoutBuilder(
@@ -369,10 +375,10 @@ class _FtueWelcomeState extends State<FtueWelcome>
               children: [
                 // Header with logo, title, and close button
                 _buildHeader(isDark),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppDimensions.spacingSm),
                 // Mantra - three-word philosophy
                 _buildMantra(isDark),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppDimensions.spacingLg),
                 // Zodiac wheel - use LayoutBuilder for responsive sizing
                 LayoutBuilder(
                   builder: (context, constraints) {
@@ -391,13 +397,13 @@ class _FtueWelcomeState extends State<FtueWelcome>
                     );
                   },
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppDimensions.spacingXxl),
                 // Full poem
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: _buildPoem(isDark),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppDimensions.spacingLg),
               ],
             ),
           ),
@@ -496,7 +502,7 @@ class _FtueWelcomeState extends State<FtueWelcome>
           textAlign: TextAlign.center,
           style: poemStyle,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppDimensions.spacingLg),
         Text(
           "Sunshine of those chilly days,\n"
           "clouds that returned to pour,\n"
@@ -505,7 +511,7 @@ class _FtueWelcomeState extends State<FtueWelcome>
           textAlign: TextAlign.center,
           style: poemStyle,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppDimensions.spacingLg),
         Text(
           "Something beneath it all,\n"
           "a pull without a name,\n"
@@ -514,7 +520,7 @@ class _FtueWelcomeState extends State<FtueWelcome>
           textAlign: TextAlign.center,
           style: poemStyle,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppDimensions.spacingLg),
         Text(
           "Aurogram lets you read those quiet lines,\n"
           "your chart, your stars, your cosmic designs.",
@@ -544,15 +550,15 @@ class _FtueWelcomeState extends State<FtueWelcome>
           curve: const Interval(0.2, 1.0),
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+          padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingXxl),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildMantraWord('Your stars', const Color(0xFF8B5CF6), fontSize),
+              _buildMantraWord('Your stars', AppTheme.cosmicPurple, fontSize),
               _buildMantraDot(dotSize),
               _buildMantraWord('Your vibe', AppTheme.primaryColor, fontSize),
               _buildMantraDot(dotSize),
-              _buildMantraWord('Your gram', const Color(0xFF10B981), fontSize),
+              _buildMantraWord('Your gram', AppTheme.emeraldGreen, fontSize),
             ],
           ),
         ),
@@ -604,7 +610,7 @@ class _FtueWelcomeState extends State<FtueWelcome>
                 color: AppTheme.primaryColor,
                 size: 22,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppDimensions.spacingMd),
               // Text
               Text(
                 _isNavigating ? 'Loading...' : 'Login to Unlock All Features',
@@ -647,7 +653,7 @@ class _FtueWelcomeState extends State<FtueWelcome>
                 color: starColor,
                 size: 20,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppDimensions.spacingMd),
               // Text
               Expanded(
                 child: Text(

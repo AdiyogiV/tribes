@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/widgets/send_me_something/message_card.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Full-screen view of a single anonymous message (NGL-style).
 /// App header, scaffold background, centered card, black pill Reply button.
@@ -131,7 +132,7 @@ class _NglReplyButton extends StatelessWidget {
                   BlendMode.srcIn,
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: AppDimensions.spacingMdSm),
               Text(
                 'reply',
                 style: TextStyle(

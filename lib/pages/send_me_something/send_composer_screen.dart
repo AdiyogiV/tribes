@@ -1,9 +1,11 @@
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:aurogram/widgets/ui/common_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:aurogram/services/anonymous_message_service.dart';
 import 'package:aurogram/utils/responsive.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 class SecretMessageSendComposer extends StatefulWidget {
   final String? recipientId;
@@ -188,10 +190,10 @@ class _SecretMessageSendComposerState extends State<SecretMessageSendComposer> {
           children: [
             _buildPlaceholder(
                 width: 200, height: 24, color: placeholder, radius: 8),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppDimensions.spacingMd),
             _buildPlaceholder(
                 width: 240, height: 16, color: placeholder, radius: 8),
-            const SizedBox(height: 32),
+            const SizedBox(height: AppDimensions.spacingSection),
             _buildPlaceholder(
               width: double.infinity,
               height: 120,
@@ -271,7 +273,7 @@ class _SecretMessageSendComposerState extends State<SecretMessageSendComposer> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.check_circle, size: 64, color: Colors.green.shade600),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppDimensions.spacingXl),
               Text(
                 'Sent.',
                 textAlign: TextAlign.center,
@@ -281,7 +283,7 @@ class _SecretMessageSendComposerState extends State<SecretMessageSendComposer> {
                   color: AppTheme.textColor,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppDimensions.spacingSm),
               Text(
                 'They’ll see it in the app.',
                 textAlign: TextAlign.center,
@@ -326,7 +328,7 @@ class _SecretMessageSendComposerState extends State<SecretMessageSendComposer> {
           Material(
             elevation: 4,
             shadowColor: Colors.black.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
             color: AppTheme.cardColor,
             child: TextField(
               controller: _controller,
@@ -386,14 +388,9 @@ class _SecretMessageSendComposerState extends State<SecretMessageSendComposer> {
                     borderRadius: BorderRadius.circular(buttonHeight / 2),
                     child: Center(
                       child: _isSending
-                          ? SizedBox(
-                              height: 24,
-                              width: 24,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor:
-                                    AlwaysStoppedAnimation<Color>(primaryColor),
-                              ),
+                          ? AppLoadingIndicator(
+                              strokeWidth: 2,
+                              color: primaryColor,
                             )
                           : Text(
                               'Send',

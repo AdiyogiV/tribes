@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/models/astrology_profile.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Horizontal scrollable list of Yoga cards - minimal design
 /// Sorted by: Raj Yogas first, then by strength (Strong > Moderate > Mild)
@@ -66,7 +68,7 @@ class RajYogasWidget extends StatelessWidget {
       case 'strong':
       case 'high':
       case 'powerful':
-        return isDark ? const Color(0xFFFFD700) : const Color(0xFFB8860B);
+        return isDark ? AppTheme.goldColor : const Color(0xFFB8860B);
       case 'moderate':
       case 'medium':
       case 'active':
@@ -185,7 +187,7 @@ class RajYogasWidget extends StatelessWidget {
         padding: EdgeInsets.zero,
         clipBehavior: Clip.none,
         itemCount: yogaList.length,
-        separatorBuilder: (context, index) => const SizedBox(width: 12),
+        separatorBuilder: (context, index) => const SizedBox(width: AppDimensions.spacingMd),
         itemBuilder: (context, index) {
           final yoga = yogaList[index];
           final yogaName = yoga['name']?.toString() ?? 'Yoga';
@@ -203,7 +205,7 @@ class RajYogasWidget extends StatelessWidget {
                 color: cardColor,
                 elevation: 2,
                 shadowColor: Colors.black.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
                 child: InkWell(
                   onTap: onYogaTap != null
                       ? () => onYogaTap!(
@@ -218,7 +220,7 @@ class RajYogasWidget extends StatelessWidget {
                             yogaData: yoga,
                           )
                       : null,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 12, vertical: 10),

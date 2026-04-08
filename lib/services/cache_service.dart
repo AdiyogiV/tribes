@@ -479,7 +479,10 @@ class CacheService {
             _imageCacheExpiry.remove(effectiveCacheKey);
             try {
               await cachedFile.delete();
-            } catch (_) {}
+            } catch (_) {
+              AppLogger.w('CacheService: failed to delete corrupt cached file',
+                  category: LogCategory.performance);
+            }
           } else {
             // Refresh expiry time
             _imageCacheExpiry[effectiveCacheKey] =
@@ -503,7 +506,10 @@ class CacheService {
                 // Delete corrupted file to allow future re-downloads
                 try {
                   await fileInfo.file.delete();
-                } catch (_) {}
+                } catch (_) {
+                  AppLogger.w('CacheService: failed to delete corrupt disk cache file',
+                      category: LogCategory.performance);
+                }
               } else {
                 // Store in memory cache for faster access next time
                 _imageCache[effectiveCacheKey] = fileInfo.file;
@@ -553,7 +559,10 @@ class CacheService {
               // Delete invalid file so future attempts can re-download
               try {
                 await file.file.delete();
-              } catch (_) {}
+              } catch (_) {
+                AppLogger.w('CacheService: failed to delete invalid downloaded file',
+                    category: LogCategory.performance);
+              }
               return null;
             }
 
@@ -571,7 +580,10 @@ class CacheService {
             // Delete corrupted file to allow future re-downloads
             try {
               await file.file.delete();
-            } catch (_) {}
+            } catch (_) {
+              AppLogger.w('CacheService: failed to delete unreadable downloaded file',
+                  category: LogCategory.performance);
+            }
 
             return null;
           }
@@ -587,7 +599,10 @@ class CacheService {
             if (!isValid) {
               try {
                 await file.delete();
-              } catch (_) {}
+              } catch (_) {
+                AppLogger.w('CacheService: failed to delete invalid fallback file',
+                    category: LogCategory.performance);
+              }
             } else {
               // Store in our cache for next time
               _imageCache[effectiveCacheKey] = file;
@@ -597,7 +612,8 @@ class CacheService {
             }
           }
         } catch (_) {
-          // Ignore errors from fallback
+          AppLogger.w('CacheService: fallback getSingleFile also failed',
+              category: LogCategory.performance, data: {'url': url});
         }
 
         AppLogger.w('Error downloading file',
@@ -636,7 +652,10 @@ class CacheService {
             return cachedFile;
           }
         }
-      } catch (_) {}
+      } catch (_) {
+        AppLogger.w('CacheService: memory cache check failed',
+            category: LogCategory.performance);
+      }
     }
 
     // Check disk cache
@@ -649,7 +668,10 @@ class CacheService {
             if (!isValid) {
               try {
                 await fileInfo.file.delete();
-              } catch (_) {}
+              } catch (_) {
+                AppLogger.w('CacheService: failed to delete invalid cached file in getFileIfCached',
+                    category: LogCategory.performance);
+              }
             } else {
               // Store in memory cache for faster access next time
               _imageCache[effectiveCacheKey] = fileInfo.file;
@@ -658,9 +680,15 @@ class CacheService {
               return fileInfo.file;
             }
           }
-        } catch (_) {}
+        } catch (_) {
+          AppLogger.w('CacheService: disk cache file access failed',
+              category: LogCategory.performance);
+        }
       }
-    } catch (_) {}
+    } catch (_) {
+      AppLogger.w('CacheService: disk cache lookup failed',
+          category: LogCategory.performance);
+    }
 
     return null;
   }

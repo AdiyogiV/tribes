@@ -1,3 +1,4 @@
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 import 'package:flutter/material.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 
@@ -111,7 +112,7 @@ class _UploadIndicatorState extends State<UploadIndicator>
                 ),
               ),
               if (widget.text != null) ...[
-                const SizedBox(width: 8),
+                const SizedBox(width: AppDimensions.spacingSm),
                 Text(
                   widget.text!,
                   style: TextStyle(

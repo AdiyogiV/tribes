@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:aurogram/widgets/ui/common_widgets.dart';
 import 'package:flutter/services.dart';
 import 'package:aurogram/models/ayurveda_profile.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/pages/ayurveda/widgets/ayurveda_theme.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PrakritiHeroCard - Your permanent constitution
@@ -56,7 +58,7 @@ class PrakritiHeroCard extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppDimensions.spacingSmMd),
 
           // Type name and description
           Text(
@@ -67,7 +69,7 @@ class PrakritiHeroCard extends StatelessWidget {
               color: isDark ? Colors.white : Colors.black87,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppDimensions.spacingXs),
           Text(
             getPrakritiDescription(prakriti.type),
             style: TextStyle(
@@ -75,15 +77,15 @@ class PrakritiHeroCard extends StatelessWidget {
               color: isDark ? Colors.white54 : Colors.black54,
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: AppDimensions.spacingXl),
 
           // Dosha bars
           _buildDoshaBar('Vata', prakriti.vata, vataColor),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppDimensions.spacingMdSm),
           _buildDoshaBar('Pitta', prakriti.pitta, pittaColor),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppDimensions.spacingMdSm),
           _buildDoshaBar('Kapha', prakriti.kapha, kaphaColor),
-          const SizedBox(height: 20),
+          const SizedBox(height: AppDimensions.spacingXl),
 
           // Refine button
           GestureDetector(
@@ -100,7 +102,7 @@ class PrakritiHeroCard extends StatelessWidget {
                         ? Colors.white.withValues(alpha: 0.05)
                         : Colors.grey.shade50)
                     : c.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm),
                 border: Border.all(
                   color: isRefined
                       ? (isDark ? Colors.white12 : Colors.grey.shade200)
@@ -115,7 +117,7 @@ class PrakritiHeroCard extends StatelessWidget {
                     size: 16,
                     color: isRefined ? Colors.green : c,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppDimensions.spacingSm),
                   Text(
                     isRefined ? 'Profile Refined' : 'Personalize with Quiz',
                     style: TextStyle(
@@ -127,7 +129,7 @@ class PrakritiHeroCard extends StatelessWidget {
                     ),
                   ),
                   if (!isRefined) ...[
-                    const SizedBox(width: 4),
+                    const SizedBox(width: AppDimensions.spacingXs),
                     Icon(Icons.arrow_forward_ios, size: 12, color: c),
                   ],
                 ],
@@ -153,7 +155,7 @@ class PrakritiHeroCard extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppDimensions.spacingSm),
         Expanded(
           child: Stack(
             children: [
@@ -164,7 +166,7 @@ class PrakritiHeroCard extends StatelessWidget {
                   color: isDark
                       ? Colors.white.withValues(alpha: 0.1)
                       : Colors.grey.shade200,
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
                 ),
               ),
               // Filled bar
@@ -174,14 +176,14 @@ class PrakritiHeroCard extends StatelessWidget {
                   height: 8,
                   decoration: BoxDecoration(
                     color: color,
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
                   ),
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppDimensions.spacingSm),
         SizedBox(
           width: 35,
           child: Text(
@@ -248,7 +250,7 @@ class TodaysBalanceCard extends StatelessWidget {
                 ),
               ),
               if (lastCheckIn != null) ...[
-                const SizedBox(width: 8),
+                const SizedBox(width: AppDimensions.spacingSm),
                 Flexible(
                   child: Text(
                     formatLastCheckIn(lastCheckIn!),
@@ -261,7 +263,7 @@ class TodaysBalanceCard extends StatelessWidget {
                 ),
               ],
               if (onInfo != null) ...[
-                const SizedBox(width: 8),
+                const SizedBox(width: AppDimensions.spacingSm),
                 GestureDetector(
                   onTap: onInfo,
                   child: Icon(
@@ -273,7 +275,7 @@ class TodaysBalanceCard extends StatelessWidget {
               ],
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.spacingLg),
 
           if (isCalculating)
             _buildLoadingState()
@@ -282,7 +284,7 @@ class TodaysBalanceCard extends StatelessWidget {
           else
             _buildVikritiContent(),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.spacingLg),
 
           // Check-in button
           GestureDetector(
@@ -295,7 +297,7 @@ class TodaysBalanceCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
                 color: c.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm),
                 border: Border.all(color: c.withValues(alpha: 0.3)),
               ),
               child: Row(
@@ -303,7 +305,7 @@ class TodaysBalanceCard extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.favorite_border, size: 16, color: c),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppDimensions.spacingSm),
                   Flexible(
                     child: Text(
                       hasVikriti ? 'Update Check-in' : 'Quick Check-in',
@@ -315,7 +317,7 @@ class TodaysBalanceCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: AppDimensions.spacingXs),
                   Text(
                     '~30s',
                     style: TextStyle(
@@ -339,15 +341,11 @@ class TodaysBalanceCard extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            SizedBox(
-              width: 18,
-              height: 18,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation(AppTheme.primaryColor),
-              ),
+            AppLoadingIndicator(
+              size: 18,
+              strokeWidth: 2,
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppDimensions.spacingMd),
             Text(
               'Calculating...',
               style: TextStyle(
@@ -381,7 +379,7 @@ class TodaysBalanceCard extends StatelessWidget {
               color: isDark ? Colors.white38 : Colors.black26,
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: AppDimensions.spacingMdLg),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -394,7 +392,7 @@ class TodaysBalanceCard extends StatelessWidget {
                     color: isDark ? Colors.white : Colors.black87,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: AppDimensions.spacingXxs),
                 Text(
                   'A quick check-in tracks your daily balance',
                   style: TextStyle(
@@ -422,7 +420,7 @@ class TodaysBalanceCard extends StatelessWidget {
           color: vataColor,
           primaryColor: c,
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: AppDimensions.spacingMdSm),
         DoshaComparisonBar(
           label: 'Pitta',
           baseline: prakriti.pitta,
@@ -430,7 +428,7 @@ class TodaysBalanceCard extends StatelessWidget {
           color: pittaColor,
           primaryColor: c,
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: AppDimensions.spacingMdSm),
         DoshaComparisonBar(
           label: 'Kapha',
           baseline: prakriti.kapha,
@@ -441,7 +439,7 @@ class TodaysBalanceCard extends StatelessWidget {
 
         // Cosmic factors (if any)
         if (vikriti!.factors.isNotEmpty) ...[
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.spacingLg),
           _buildFactorChips(),
         ],
       ],
@@ -464,7 +462,7 @@ class TodaysBalanceCard extends StatelessWidget {
             color: isDark
                 ? Colors.white.withValues(alpha: 0.05)
                 : Colors.grey.shade100,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -474,7 +472,7 @@ class TodaysBalanceCard extends StatelessWidget {
                 size: 12,
                 color: getDoshaColor(factor.dosha).withValues(alpha: 0.7),
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: AppDimensions.spacingXs),
               Text(
                 factor.description,
                 style: TextStyle(

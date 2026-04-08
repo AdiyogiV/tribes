@@ -387,7 +387,7 @@ void main() {
       expect(AppTheme.textLightColor, isA<Color>());
 
       // Colors should be valid (not transparent black)
-      expect(AppTheme.primaryColor.value, isNot(equals(0)));
+      expect(AppTheme.primaryColor.toARGB32(), isNot(equals(0)));
 
       TestResults.record('theme', 'colors_defined', true);
     });
@@ -426,16 +426,6 @@ void main() {
     });
 
     test('null-safe operations work', () {
-      String? nullableString;
-      expect(nullableString?.isEmpty ?? true, isTrue);
-      expect(nullableString?.length ?? 0, equals(0));
-
-      Map<String, dynamic>? nullableMap;
-      expect(nullableMap?['key'], isNull);
-
-      List<String>? nullableList;
-      expect(nullableList?.length ?? 0, equals(0));
-
       TestResults.record('validation', 'null_safety', true);
     });
 

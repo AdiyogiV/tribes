@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:aurogram/widgets/ui/common_widgets.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
@@ -26,6 +27,8 @@ import 'package:aurogram/pages/astrology/astrology_details_page.dart';
 import 'package:aurogram/pages/ayurveda/ayurveda_details_page.dart';
 import 'package:aurogram/pages/ayurveda/vikriti_checkin_page.dart';
 import 'package:aurogram/tabs.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/widgets/common/snack_bar_service.dart';
 
 /// Feature flag to enable/disable mandala
 const bool _kShowMandala = false;
@@ -58,42 +61,35 @@ class CosmicDashboard extends StatefulWidget {
   }
 
   static void _showUnauthenticatedPrompt(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final brown = AppTheme.primaryColor;
 
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        margin: const EdgeInsets.all(16),
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1C1C1E) : Colors.white,
-          borderRadius: BorderRadius.circular(24),
-        ),
+    AppBottomSheet.show(
+      context,
+      child: Padding(
+        padding: const EdgeInsets.all(AppDimensions.paddingXxl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(height: 8),
+            const SizedBox(height: AppDimensions.spacingSm),
             Text(
               'Unlock Your Cosmic View',
               style: TextStyle(
-                fontSize: 20,
+                fontSize: AppTheme.holyCowTextSize,
                 fontWeight: FontWeight.w700,
                 color: brown,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppDimensions.spacingMd),
             Text(
               'Sign in to see your birth chart, current planetary positions, and personalized insights.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: AppTheme.holyCowTextSize,
                 height: 1.5,
                 color: brown.withValues(alpha: 0.7),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppDimensions.spacingXxl),
             SizedBox(
               width: double.infinity,
               child: TextButton(
@@ -101,7 +97,7 @@ class CosmicDashboard extends StatefulWidget {
                 child: Text(
                   'Got it',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: AppTheme.holyCowTextSize,
                     fontWeight: FontWeight.w600,
                     color: brown,
                   ),
@@ -442,7 +438,7 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 8),
+                const SizedBox(height: AppDimensions.spacingSm),
 
                 // Header
                 _buildHeader(brown),
@@ -472,20 +468,31 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
 
                 if (_kShowMandala) SizedBox(height: spacing),
 
-                // Date card
+                // TODAY's Vedic Date Card
+                // IMPORTANT: Only TODAY's data — never profile.samvatInfo (birth data)!
                 Builder(builder: (context) {
                   final globalPanchang = _skyService.getTodayPanchang();
-                  final hasGlobalPanchang =
-                      globalPanchang != null && globalPanchang.isNotEmpty;
                   final insightPanchangRaw =
                       insight?.astrologicalData?['panchang'];
                   final insightPanchang = insightPanchangRaw is Map
                       ? Map<String, dynamic>.from(insightPanchangRaw)
                       : null;
-                  final samvatToUse =
-                      hasGlobalPanchang ? globalPanchang : insightPanchang;
+                  final todaySamvatRaw =
+                      insight?.astrologicalData?['todaySamvat'];
+                  final todaySamvat = todaySamvatRaw is Map
+                      ? Map<String, dynamic>.from(todaySamvatRaw)
+                      : null;
+                  // Merge today's sources (lowest → highest priority):
+                  // 1. todaySamvat (lunar month, vikram year)
+                  // 2. insight panchang (tithi, nakshatra, yoga)
+                  // 3. global panchang (full panchang if available)
+                  final Map<String, dynamic> merged = {};
+                  if (todaySamvat != null) merged.addAll(todaySamvat);
+                  if (insightPanchang != null) merged.addAll(insightPanchang);
+                  if (globalPanchang != null) merged.addAll(globalPanchang);
+                  final todayPanchang = merged.isNotEmpty ? merged : null;
                   return CosmicDateTimeCard(
-                    samvat: samvatToUse,
+                    samvat: todayPanchang,
                     brown: brown,
                   );
                 }),
@@ -634,11 +641,11 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
                   },
                   onAskAI: () {
                     Navigator.pop(context);
-                    TabHandler.switchTab(2);
+                    TabHandler.switchTab(0);
                   },
                 ),
 
-                const SizedBox(height: 32),
+                const SizedBox(height: AppDimensions.spacingSection),
               ],
             ),
           ),
@@ -654,7 +661,7 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
           onTap: () => Navigator.pop(context),
           behavior: HitTestBehavior.opaque,
           child: Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(AppDimensions.paddingSm),
             child: Icon(
               Icons.arrow_back_ios_new_rounded,
               size: 20,
@@ -662,11 +669,11 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
             ),
           ),
         ),
-        const SizedBox(width: 4),
+        const SizedBox(width: AppDimensions.spacingXs),
         Text(
           'Cosmic Today',
           style: TextStyle(
-            fontSize: 18,
+            fontSize: AppTheme.holyCowTextSize,
             fontWeight: FontWeight.w600,
             color: brown,
           ),
@@ -681,24 +688,21 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
       color: cardColor,
       elevation: 2,
       shadowColor: Colors.black.withValues(alpha: 0.2),
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppDimensions.paddingLg),
         child: Row(
           children: [
-            SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: c.withValues(alpha: 0.6),
-              ),
+            AppLoadingIndicator(
+              size: 16,
+              strokeWidth: 2,
+              color: c.withValues(alpha: 0.6),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppDimensions.spacingMd),
             Text(
               'Loading time guidance...',
               style: TextStyle(
-                fontSize: 13,
+                fontSize: AppTheme.holyCowTextSize,
                 fontWeight: FontWeight.w500,
                 color: c.withValues(alpha: 0.7),
               ),
@@ -712,33 +716,33 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
   Widget _buildSkeleton(bool isDark, Color brown) {
     return ShimmerBox(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppDimensions.paddingLg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 16),
+            const SizedBox(height: AppDimensions.spacingLg),
             Container(
               width: 120,
               height: 24,
               decoration: BoxDecoration(
                 color: brown.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusSmMd),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppDimensions.spacingXl),
             Container(
               height: 100,
               decoration: BoxDecoration(
                 color: brown.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppDimensions.spacingXl),
             Container(
               height: 200,
               decoration: BoxDecoration(
                 color: brown.withValues(alpha: 0.06),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
               ),
             ),
           ],
@@ -816,19 +820,12 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
   }
 
   void _showMindfulPrompt() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final brown = AppTheme.primaryColor;
 
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        margin: const EdgeInsets.all(16),
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1C1C1E) : Colors.white,
-          borderRadius: BorderRadius.circular(24),
-        ),
+    AppBottomSheet.show(
+      context,
+      child: Padding(
+        padding: const EdgeInsets.all(AppDimensions.paddingXxl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -837,26 +834,26 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
               size: 48,
               color: Color(0xFF5C6BC0),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppDimensions.spacingLg),
             Text(
               'Take a Mindful Moment',
               style: TextStyle(
-                fontSize: 20,
+                fontSize: AppTheme.holyCowTextSize,
                 fontWeight: FontWeight.w700,
                 color: brown,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppDimensions.spacingMd),
             Text(
               'Pause. Take three deep breaths.\nNotice how you feel right now.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: AppTheme.holyCowTextSize,
                 height: 1.5,
                 color: brown.withValues(alpha: 0.7),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppDimensions.spacingXxl),
             SizedBox(
               width: double.infinity,
               child: TextButton(
@@ -864,7 +861,7 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
                 child: const Text(
                   'I\'m Present',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: AppTheme.holyCowTextSize,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF5C6BC0),
                   ),
@@ -878,12 +875,6 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
   }
 
   void _showInfoSnackbar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    showCustomSnackBar(context, message: message, duration: const Duration(seconds: 2), behavior: SnackBarBehavior.floating);
   }
 }

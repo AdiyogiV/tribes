@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Dialog to show expanded card details in onboarding
 /// Short, contextual, and personalized information
@@ -55,7 +56,7 @@ class CardDetailsDialog extends StatelessWidget {
 
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.all(24),
+      insetPadding: const EdgeInsets.all(AppDimensions.paddingXxl),
       child: TweenAnimationBuilder<double>(
         tween: Tween(begin: 0.9, end: 1.0),
         duration: const Duration(milliseconds: 200),
@@ -70,7 +71,7 @@ class CardDetailsDialog extends StatelessWidget {
           color: cardColor,
           elevation: 8,
           shadowColor: Colors.black.withValues(alpha: 0.25),
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusXxl),
           child: Container(
             constraints: BoxConstraints(
               maxWidth: 360,
@@ -81,14 +82,14 @@ class CardDetailsDialog extends StatelessWidget {
               children: [
                 // Header with icon and title (fixed, not scrollable)
                 Padding(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(AppDimensions.paddingXxl),
                   child: Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(14),
+                        padding: const EdgeInsets.all(AppDimensions.paddingMdLg),
                         decoration: BoxDecoration(
                           color: color.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
                         ),
                         child: Icon(
                           icon,
@@ -96,7 +97,7 @@ class CardDetailsDialog extends StatelessWidget {
                           color: color,
                         ),
                       ),
-                      const SizedBox(width: 16),
+                      const SizedBox(width: AppDimensions.spacingLg),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -109,7 +110,7 @@ class CardDetailsDialog extends StatelessWidget {
                                 color: isDark ? Colors.white : Colors.black87,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: AppDimensions.spacingXs),
                             Text(
                               subtitle,
                               style: TextStyle(
@@ -127,7 +128,7 @@ class CardDetailsDialog extends StatelessWidget {
                       GestureDetector(
                         onTap: () => Navigator.of(context).pop(),
                         child: Container(
-                          padding: const EdgeInsets.all(8),
+                          padding: const EdgeInsets.all(AppDimensions.paddingSm),
                           decoration: BoxDecoration(
                             color: (isDark ? Colors.white : Colors.black)
                                 .withValues(alpha: 0.06),
@@ -165,7 +166,7 @@ class CardDetailsDialog extends StatelessWidget {
                         // Expanded content if available
                         if (expandedContent != null &&
                             expandedContent!.isNotEmpty) ...[
-                          const SizedBox(height: 16),
+                          const SizedBox(height: AppDimensions.spacingLg),
                           Text(
                             expandedContent!,
                             style: TextStyle(
@@ -210,7 +211,7 @@ class NotificationPermissionSheet extends StatelessWidget {
         isDark ? Theme.of(context).scaffoldBackgroundColor : Colors.white;
 
     return Container(
-      margin: const EdgeInsets.all(16),
+      margin: const EdgeInsets.all(AppDimensions.paddingLg),
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(28),
@@ -231,7 +232,7 @@ class NotificationPermissionSheet extends StatelessWidget {
             children: [
               // Icon with glow
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppDimensions.paddingLg),
                 decoration: BoxDecoration(
                   color: sunGold.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
@@ -243,7 +244,7 @@ class NotificationPermissionSheet extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: AppDimensions.spacingXl),
 
               // Title
               Text(
@@ -256,7 +257,7 @@ class NotificationPermissionSheet extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: AppDimensions.spacingMd),
 
               // Description
               Text(
@@ -269,19 +270,19 @@ class NotificationPermissionSheet extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 8),
+              const SizedBox(height: AppDimensions.spacingSm),
 
               // Features
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   _buildFeatureChip('🌅 Morning insights', primaryColor),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppDimensions.spacingSm),
                   _buildFeatureChip('🔔 Once daily', primaryColor),
                 ],
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: AppDimensions.spacingXxl),
 
               // Enable button
               GestureDetector(
@@ -294,7 +295,7 @@ class NotificationPermissionSheet extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   decoration: BoxDecoration(
                     color: primaryColor.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
                     border: Border.all(
                       color: primaryColor.withValues(alpha: 0.15),
                     ),
@@ -307,7 +308,7 @@ class NotificationPermissionSheet extends StatelessWidget {
                         size: 20,
                         color: primaryColor,
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: AppDimensions.spacingMdSm),
                       Text(
                         'Enable Notifications',
                         style: TextStyle(
@@ -321,7 +322,7 @@ class NotificationPermissionSheet extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: AppDimensions.spacingMd),
 
               // Skip button
               GestureDetector(
@@ -330,7 +331,7 @@ class NotificationPermissionSheet extends StatelessWidget {
                   Navigator.of(context).pop(false);
                 },
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingSm),
                   child: Text(
                     'Maybe Later',
                     style: TextStyle(
@@ -353,7 +354,7 @@ class NotificationPermissionSheet extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
       ),
       child: Text(
         label,

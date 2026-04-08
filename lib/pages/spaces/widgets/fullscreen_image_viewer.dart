@@ -3,6 +3,7 @@ import 'package:photo_view/photo_view.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
+import 'package:aurogram/widgets/common/snack_bar_service.dart';
 
 /// Fullscreen image viewer with pinch-to-zoom
 class FullscreenImageViewer extends StatelessWidget {
@@ -26,12 +27,7 @@ class FullscreenImageViewer extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.download_rounded, color: Colors.white),
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('Download coming soon'),
-                  backgroundColor: AppTheme.primaryColor,
-                ),
-              );
+              showCustomSnackBar(context, message: 'Download coming soon', backgroundColor: AppTheme.primaryColor);
             },
           ),
         ],

@@ -8,7 +8,7 @@ import { getDashaMeaning, getHouseMeaning, getTransitMeaning } from "./search.js
 import { getDailySearchContext } from "./astro_context.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { checkRateLimit as checkPersistentRateLimit, RATE_LIMIT_PRESETS } from "../lib/rate_limiter.js";
-import { CHAT_CONFIG } from "../lib/config.js";
+import { CHAT_CONFIG, AI_MODELS } from "../lib/config.js";
 
 // =============================================================================
 // TOPIC-AWARE ASTROLOGY SEARCH SYSTEM
@@ -592,7 +592,7 @@ async function streamFromGemini({ chatId, audioUrl, messages, write, astrologyCo
 
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
-        model: "gemini-2.0-flash",
+        model: AI_MODELS.GEMINI_FLASH,
         tools: [{ googleSearch: {} }],
     });
 
@@ -729,7 +729,7 @@ async function streamFromGeminiText({ chatId, userMessage, messages, write, astr
 
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
-        model: "gemini-2.0-flash",
+        model: AI_MODELS.GEMINI_FLASH,
         tools: [{ googleSearch: {} }],
     });
 

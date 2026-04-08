@@ -1,11 +1,13 @@
 import 'dart:async';
+import 'package:aurogram/widgets/ui/common_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:aurogram/services/chat/space_chat_service.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/utils/responsive.dart';
-import 'package:aurogram/widgets/user_avatar.dart';
+import 'package:aurogram/widgets/common/user_avatar.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Result callback for message search
 typedef OnMessageSelected = void Function(ChatMessage message);
@@ -27,11 +29,9 @@ class MessageSearchSheet extends StatefulWidget {
     required String spaceId,
     required OnMessageSelected onMessageSelected,
   }) {
-    return showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => MessageSearchSheet(
+    return AppBottomSheet.show(
+      context,
+      child: MessageSearchSheet(
         spaceId: spaceId,
         onMessageSelected: onMessageSelected,
       ),
@@ -162,7 +162,7 @@ class _MessageSearchSheetState extends State<MessageSearchSheet> {
 
             // Header
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingSm),
               child: Row(
                 children: [
                   Text(
@@ -187,7 +187,7 @@ class _MessageSearchSheetState extends State<MessageSearchSheet> {
 
             // Search field
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
               child: TextField(
                 controller: _searchController,
                 focusNode: _focusNode,
@@ -219,7 +219,7 @@ class _MessageSearchSheetState extends State<MessageSearchSheet> {
                       ? Colors.white.withValues(alpha: 0.05)
                       : Colors.grey[100],
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                     borderSide: BorderSide.none,
                   ),
                   contentPadding: const EdgeInsets.symmetric(
@@ -234,7 +234,7 @@ class _MessageSearchSheetState extends State<MessageSearchSheet> {
               ),
             ),
 
-            const SizedBox(height: 8),
+            const SizedBox(height: AppDimensions.spacingSm),
 
             // Results
             Expanded(
@@ -253,9 +253,7 @@ class _MessageSearchSheetState extends State<MessageSearchSheet> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (_isSearching) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const AppLoadingIndicator();
     }
 
     if (_searchController.text.isEmpty) {
@@ -268,7 +266,7 @@ class _MessageSearchSheetState extends State<MessageSearchSheet> {
               size: 48,
               color: isDark ? Colors.grey[700] : Colors.grey[300],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppDimensions.spacingLg),
             Text(
               'Search for messages',
               style: TextStyle(
@@ -291,7 +289,7 @@ class _MessageSearchSheetState extends State<MessageSearchSheet> {
               size: 48,
               color: isDark ? Colors.grey[700] : Colors.grey[300],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppDimensions.spacingLg),
             Text(
               'No messages found',
               style: TextStyle(
@@ -344,7 +342,7 @@ class _SearchResultTile extends StatelessWidget {
     return ListTile(
       onTap: onTap,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
       ),
       leading: UserAvatar(
         userId: message.senderId,
@@ -381,13 +379,13 @@ class _SearchResultTile extends StatelessWidget {
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 2),
+          const SizedBox(height: AppDimensions.spacingXxs),
           _buildHighlightedText(
             message.content,
             query,
             isDark,
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: AppDimensions.spacingXxs),
           Text(
             timeFormat.format(message.timestamp),
             style: TextStyle(

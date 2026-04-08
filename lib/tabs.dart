@@ -1,1 +1,1 @@
-export 'tabs/tab_handler.dart';
+export 'pages/tabs/tab_handler.dart';

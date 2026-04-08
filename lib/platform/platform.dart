@@ -16,7 +16,7 @@
 /// }
 /// ```
 
-library platform;
+library;
 
 export 'platform_interface.dart';
 

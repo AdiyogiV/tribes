@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -9,8 +8,6 @@ import 'package:aurogram/utils/error_handler.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
 import 'package:aurogram/services/analytics_service.dart';
 
-// Conditional import for dart:io
-import 'dart:io' if (dart.library.html) 'package:aurogram/platform/io_stub.dart';
 import 'package:aurogram/platform/file_helper.dart' as file_helper;
 
 /// Service for handling post-related operations
@@ -96,7 +93,9 @@ class PostService {
             effectiveThumbPath = generated.path;
           }
         }
-      } catch (_) {}
+      } catch (_) {
+        AppLogger.w('PostService: thumbnail generation failed', category: LogCategory.general);
+      }
 
       String? permanentThumbnailPath = await _storageService
           .copyToPermanentLocation(effectiveThumbPath, 'thumbnail_$post.jpg');
@@ -112,7 +111,9 @@ class PostService {
             ? permanentThumbnailPath
             : 'file://$permanentThumbnailPath';
         await _postDbService.updatePostThumbnail(post, localThumbPath);
-      } catch (_) {}
+      } catch (_) {
+        AppLogger.w('PostService: failed to update local thumbnail path', category: LogCategory.general);
+      }
 
       AppLogger.d('Adding post to compression queue',
           category: LogCategory.general,

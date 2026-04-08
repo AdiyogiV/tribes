@@ -1,5 +1,6 @@
 /// Stub for path_provider package on web
 /// Local file system directories are not available on web
+library;
 
 // Re-export Directory from io_stub to avoid conflicts
 export 'package:aurogram/platform/io_stub.dart' show Directory;

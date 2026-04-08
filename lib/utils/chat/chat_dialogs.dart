@@ -1,3 +1,4 @@
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -111,7 +112,7 @@ class ChatDialogs {
             child: ListBody(
               children: <Widget>[
                 Text('Chat settings will be available soon.'),
-                SizedBox(height: 16),
+                SizedBox(height: AppDimensions.spacingLg),
                 Text('Features coming:'),
                 Text('• Export chat history'),
                 Text('• Change AI model'),

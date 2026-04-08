@@ -2,10 +2,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:aurogram/widgets/user_avatar.dart';
+import 'package:aurogram/widgets/common/user_avatar.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
 import 'package:aurogram/utils/dependency_injection.dart';
 import 'package:aurogram/services/user_service.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 class UserPreview extends StatefulWidget {
   final String? uid;
@@ -143,7 +144,7 @@ class _UserPreviewState extends State<UserPreview> {
                       const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                   decoration: BoxDecoration(
                     color: AppTheme.primaryColor.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm),
                   ),
                   child: Text(
                     name,

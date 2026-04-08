@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -17,6 +16,8 @@ import 'package:aurogram/utils/logging/app_logger.dart';
 import 'dart:io'
     if (dart.library.html) 'package:aurogram/platform/io_stub.dart';
 import 'package:aurogram/platform/file_helper.dart' as file_helper;
+import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/widgets/common/snack_bar_service.dart';
 
 class SpaceCreationPage extends StatefulWidget {
   const SpaceCreationPage({super.key});
@@ -141,8 +142,7 @@ class SpaceCreationPageState extends State<SpaceCreationPage>
       _isLoading = false;
       _progressMessage = "Error: ${error.toString()}";
     });
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text("Failed to create sub-gram. Please try again.")));
+    showCustomSnackBar(context, message: "Failed to create sub-gram. Please try again.");
   }
 
   @override
@@ -172,7 +172,7 @@ class SpaceCreationPageState extends State<SpaceCreationPage>
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           PulsingDots(size: 10),
-          const SizedBox(height: 20),
+          const SizedBox(height: AppDimensions.spacingXl),
           Text(
             _progressMessage,
             textAlign: TextAlign.center,
@@ -208,7 +208,7 @@ class SpaceCreationPageState extends State<SpaceCreationPage>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildImagePicker(context, isDark, compact: true),
-                  SizedBox(width: 16),
+                  SizedBox(width: AppDimensions.spacingLg),
                   Expanded(child: _buildNameField(context, isDark)),
                 ],
               ),
@@ -249,7 +249,7 @@ class SpaceCreationPageState extends State<SpaceCreationPage>
             ],
           ),
         ),
-        SizedBox(height: 16),
+        SizedBox(height: AppDimensions.spacingLg),
         _buildCreateButton(context),
         SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
       ],
@@ -379,19 +379,19 @@ class SpaceCreationPageState extends State<SpaceCreationPage>
       fillColor: fillColor,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
         borderSide: BorderSide(color: borderColor),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
         borderSide: BorderSide(color: borderColor),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
         borderSide: BorderSide(color: AppTheme.primaryColor, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
         borderSide: const BorderSide(color: AppTheme.errorColor),
       ),
       labelStyle: ThemeHelper.captionStyleFor(context),
@@ -490,12 +490,12 @@ class SpaceCreationPageState extends State<SpaceCreationPage>
                   color: Colors.transparent,
                   child: InkWell(
                     onTap: () => onSelected(opt.value),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                           vertical: 12, horizontal: 12),
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                         color: isSelected
                             ? opt.color.withValues(alpha: 0.15)
                             : (isDark
@@ -523,7 +523,7 @@ class SpaceCreationPageState extends State<SpaceCreationPage>
                                     ? AppTheme.textSecondaryDarkColor
                                     : AppTheme.textSecondaryLightColor),
                           ),
-                          SizedBox(width: 8),
+                          SizedBox(width: AppDimensions.spacingSm),
                           Flexible(
                             child: Text(
                               opt.label,
@@ -551,7 +551,7 @@ class SpaceCreationPageState extends State<SpaceCreationPage>
             );
           }).toList(),
         ),
-        SizedBox(height: 10),
+        SizedBox(height: AppDimensions.spacingMdSm),
         Text(
           description,
           style: ThemeHelper.captionStyleFor(context)
@@ -575,7 +575,7 @@ class SpaceCreationPageState extends State<SpaceCreationPage>
           foregroundColor: foregroundColor,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusMdLg),
           ),
           elevation: 0,
         ),

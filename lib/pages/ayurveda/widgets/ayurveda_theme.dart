@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Dosha Colors (consistent across Ayurveda UI)
@@ -120,9 +121,9 @@ class AyurvedaCardContainer extends StatelessWidget {
       color: cardColor,
       elevation: 2,
       shadowColor: Colors.black.withValues(alpha: 0.2),
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppDimensions.paddingLg),
         child: child,
       ),
     );
@@ -162,7 +163,7 @@ class DoshaBar extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppDimensions.spacingSm),
         Expanded(
           child: Container(
             height: 8,
@@ -170,7 +171,7 @@ class DoshaBar extends StatelessWidget {
               color: isDark
                   ? Colors.white.withValues(alpha: 0.1)
                   : Colors.grey.shade200,
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
             ),
             child: FractionallySizedBox(
               alignment: Alignment.centerLeft,
@@ -178,13 +179,13 @@ class DoshaBar extends StatelessWidget {
               child: Container(
                 decoration: BoxDecoration(
                   color: color,
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
                 ),
               ),
             ),
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppDimensions.spacingSm),
         SizedBox(
           width: 32,
           child: Text(
@@ -255,7 +256,7 @@ class DoshaComparisonBar extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppDimensions.spacingSm),
         Expanded(
           child: LayoutBuilder(
             builder: (context, constraints) {
@@ -303,7 +304,7 @@ class DoshaComparisonBar extends StatelessWidget {
             },
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppDimensions.spacingSm),
         // Value with optional shift indicator
         SizedBox(
           width: hasShift ? valueWidth + 20 : valueWidth,
@@ -321,7 +322,7 @@ class DoshaComparisonBar extends StatelessWidget {
                 ),
               ),
               if (hasShift) ...[
-                const SizedBox(width: 2),
+                const SizedBox(width: AppDimensions.spacingXxs),
                 Flexible(
                   child: Text(
                     shift > 0 ? '+$shift' : '$shift',

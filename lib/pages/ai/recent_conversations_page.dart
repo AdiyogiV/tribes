@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:aurogram/providers/ai_chat_provider.dart';
 import 'package:aurogram/utils/theme/header_style.dart';
+import 'package:aurogram/models/dm_conversation.dart';
 import 'package:aurogram/services/chat/space_chat_service.dart';
 import 'package:aurogram/utils/chat/chat_dialogs.dart';
 import 'package:aurogram/widgets/universal/transparent_toolbox.dart';

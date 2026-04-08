@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:aurogram/utils/astrology/planet_utils.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Shows detailed information about a planet in a dialog
 class PlanetDetailsDialog extends StatelessWidget {
@@ -31,17 +32,17 @@ class PlanetDetailsDialog extends StatelessWidget {
 
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.all(16),
+      insetPadding: const EdgeInsets.all(AppDimensions.paddingLg),
       child: Material(
         color: cardColor,
         elevation: 4,
         shadowColor: Colors.black.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusXxl),
         child: Container(
           constraints: const BoxConstraints(maxWidth: 400),
           child: SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(AppDimensions.paddingXxl),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -50,10 +51,10 @@ class PlanetDetailsDialog extends StatelessWidget {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(14),
+                        padding: const EdgeInsets.all(AppDimensions.paddingMdLg),
                         decoration: BoxDecoration(
                           color: planetColor.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(AppDimensions.radiusMdLg),
                         ),
                         child: Icon(
                           planetIcon,
@@ -61,7 +62,7 @@ class PlanetDetailsDialog extends StatelessWidget {
                           color: planetColor,
                         ),
                       ),
-                      const SizedBox(width: 16),
+                      const SizedBox(width: AppDimensions.spacingLg),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -74,7 +75,7 @@ class PlanetDetailsDialog extends StatelessWidget {
                                 color: isDark ? Colors.white : Colors.black87,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: AppDimensions.spacingXs),
                             Text(
                               planet['sign'] as String? ?? '—',
                               style: TextStyle(
@@ -90,14 +91,14 @@ class PlanetDetailsDialog extends StatelessWidget {
                         icon: Icon(
                           Icons.close_rounded,
                           color: isDark
-                              ? Colors.white.withOpacity(0.7)
+                              ? Colors.white.withValues(alpha: 0.7)
                               : Colors.black54,
                         ),
                         onPressed: () => Navigator.of(context).pop(),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppDimensions.spacingXxl),
 
                   // Details
                   _buildDetailRow(
@@ -198,7 +199,7 @@ class PlanetDetailsDialog extends StatelessWidget {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white.withOpacity(0.6) : Colors.black54,
+                color: isDark ? Colors.white.withValues(alpha: 0.6) : Colors.black54,
               ),
             ),
           ),

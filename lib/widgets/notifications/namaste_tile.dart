@@ -6,11 +6,12 @@ import 'package:aurogram/services/database_service.dart';
 import 'package:aurogram/utils/dependency_injection.dart';
 import 'package:aurogram/services/user_service.dart';
 import 'package:aurogram/utils/time_display.dart';
-import 'package:aurogram/widgets/user_avatar.dart';
+import 'package:aurogram/widgets/common/user_avatar.dart';
 import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/widgets/notifications/unified_notification_card.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 class NamasteTile extends StatefulWidget {
   final Map<String, dynamic>? data;
@@ -141,7 +142,7 @@ class _NamasteTileState extends State<NamasteTile> {
   Widget build(BuildContext context) {
     if (!ready || widget.data == null || widget.data!['author'] == null) {
       return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+        padding: EdgeInsets.symmetric(vertical: AppDimensions.paddingXs, horizontal: AppDimensions.paddingLg),
         child: SkeletonListItem(height: 70),
       );
     }
@@ -163,7 +164,7 @@ class _NamasteTileState extends State<NamasteTile> {
             }
           },
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingMd),
             child: Row(
               children: [
                 UserAvatar(
@@ -173,7 +174,7 @@ class _NamasteTileState extends State<NamasteTile> {
                   nameInitials:
                       author.isNotEmpty ? author.substring(0, 1) : null,
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppDimensions.spacingMd),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,13 +182,13 @@ class _NamasteTileState extends State<NamasteTile> {
                       Text(
                         '$author greets you with namaste!',
                         style: TextStyle(
-                          fontSize: 15,
+                          fontSize: AppTheme.holyCowTextSize,
                           fontWeight: FontWeight.w600,
                           color: AppTheme.textColor,
                           height: 1.3,
                         ),
                       ),
-                      const SizedBox(height: 3),
+                      const SizedBox(height: AppDimensions.spacingXxxs),
                       Text(
                         widget.data!['timestamp'] != null
                             ? TimeDisplay.getCompactTimestamp(
@@ -195,14 +196,14 @@ class _NamasteTileState extends State<NamasteTile> {
                                     .toDate())
                             : date,
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: AppTheme.holyCowTextSize,
                           color: AppTheme.textSecondaryColor,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppDimensions.spacingMd),
                 Center(
                   child: Image.asset(
                     'assets/icons/namaste.png',

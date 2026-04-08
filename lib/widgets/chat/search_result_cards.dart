@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:aurogram/providers/ai_chat_provider.dart';
+import 'package:aurogram/config/api_endpoints.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/models/thought_process.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// A utility class for building search result cards in the chat interface.
 ///
@@ -23,16 +25,16 @@ class SearchResultCards {
       child: Card(
         elevation: 3,
         shadowColor: AppTheme.primaryColor.withValues(alpha: 0.1),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusLg)),
         child: InkWell(
           onTap: () {
             onLaunchUrl(result.link);
             HapticFeedback.lightImpact();
           },
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -43,7 +45,7 @@ class SearchResultCards {
               ),
             ),
             child: Padding(
-              padding: EdgeInsets.all(14),
+              padding: EdgeInsets.all(AppDimensions.paddingMdLg),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -54,7 +56,7 @@ class SearchResultCards {
                         padding: EdgeInsets.all(2),
                         decoration: BoxDecoration(
                           color: Colors.grey[100],
-                          borderRadius: BorderRadius.circular(4),
+                          borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
                         ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(2),
@@ -75,7 +77,7 @@ class SearchResultCards {
                           ),
                         ),
                       ),
-                      SizedBox(width: 10),
+                      SizedBox(width: AppDimensions.spacingMdSm),
                       Expanded(
                         child: Text(
                           result.displayLink,
@@ -88,10 +90,10 @@ class SearchResultCards {
                         ),
                       ),
                       Container(
-                        padding: EdgeInsets.all(4),
+                        padding: EdgeInsets.all(AppDimensions.paddingXs),
                         decoration: BoxDecoration(
                           color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
                         ),
                         child: Icon(
                           Icons.open_in_new,
@@ -101,7 +103,7 @@ class SearchResultCards {
                       ),
                     ],
                   ),
-                  SizedBox(height: 12),
+                  SizedBox(height: AppDimensions.spacingMd),
                   // Title
                   Text(
                     result.title,
@@ -114,7 +116,7 @@ class SearchResultCards {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  SizedBox(height: 8),
+                  SizedBox(height: AppDimensions.spacingSm),
                   // Snippet
                   Expanded(
                     child: Text(
@@ -128,7 +130,7 @@ class SearchResultCards {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  SizedBox(height: 8),
+                  SizedBox(height: AppDimensions.spacingSm),
                   // Source indicator
                   Row(
                     children: [
@@ -137,7 +139,7 @@ class SearchResultCards {
                         size: 12,
                         color: AppTheme.primaryColor.withValues(alpha: 0.7),
                       ),
-                      SizedBox(width: 4),
+                      SizedBox(width: AppDimensions.spacingXs),
                       Text(
                         'Tap to read more',
                         style: TextStyle(
@@ -161,7 +163,7 @@ class SearchResultCards {
       SearchResult result, Function(String) onLaunchUrl) {
     // Generate a background image URL based on the domain
     final domainImageUrl =
-        'https://logo.clearbit.com/${Uri.parse(result.link).host}';
+        '${ApiEndpoints.clearbitLogo}/${Uri.parse(result.link).host}';
 
     return Container(
       width: 240,
@@ -169,16 +171,16 @@ class SearchResultCards {
       child: Card(
         elevation: 2,
         shadowColor: AppTheme.primaryColor.withValues(alpha: 0.1),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusMd)),
         child: InkWell(
           onTap: () {
             onLaunchUrl(result.link);
             HapticFeedback.lightImpact();
           },
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -231,7 +233,7 @@ class SearchResultCards {
                 ),
                 // Content
                 Padding(
-                  padding: EdgeInsets.all(12),
+                  padding: EdgeInsets.all(AppDimensions.paddingMd),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -247,7 +249,7 @@ class SearchResultCards {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      SizedBox(height: 4),
+                      SizedBox(height: AppDimensions.spacingXs),
                       // Domain
                       Row(
                         children: [
@@ -273,7 +275,7 @@ class SearchResultCards {
                               ),
                             ),
                           ),
-                          SizedBox(width: 6),
+                          SizedBox(width: AppDimensions.spacingSmMd),
                           Expanded(
                             child: Text(
                               result.displayLink,
@@ -292,7 +294,7 @@ class SearchResultCards {
                           ),
                         ],
                       ),
-                      SizedBox(height: 6),
+                      SizedBox(height: AppDimensions.spacingSmMd),
                       // Snippet
                       Expanded(
                         child: Text(
@@ -341,7 +343,7 @@ class SearchResultCards {
         Material(
           color: Colors.transparent,
           child: InkWell(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
             onTap: () {
               onExpansionChanged(messageId, !isExpanded);
               HapticFeedback.lightImpact();
@@ -355,7 +357,7 @@ class SearchResultCards {
                     size: 14,
                     color: AppTheme.primaryColor.withValues(alpha: 0.7),
                   ),
-                  SizedBox(width: 6),
+                  SizedBox(width: AppDimensions.spacingSmMd),
                   Text(
                     'Sources (${searchResults.length})',
                     style: TextStyle(
@@ -364,7 +366,7 @@ class SearchResultCards {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  SizedBox(width: 4),
+                  SizedBox(width: AppDimensions.spacingXs),
                   AnimatedRotation(
                     turns: isExpanded ? 0.5 : 0.0,
                     duration: Duration(milliseconds: 200),

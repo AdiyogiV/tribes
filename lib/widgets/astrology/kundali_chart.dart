@@ -3,6 +3,7 @@ import 'package:kundali_chart/kundali_chart.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/widgets/astrology/dialogs/house_details_dialog.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Professional North Indian Kundali Chart with tappable houses
 class KundaliChartWidget extends StatelessWidget {
@@ -57,7 +58,7 @@ class KundaliChartWidget extends StatelessWidget {
               height: chartHeight,
               decoration: BoxDecoration(
                 color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                 border: Border.all(
                   color: isDark
                       ? Colors.white.withValues(alpha: 0.1)
@@ -78,7 +79,7 @@ class KundaliChartWidget extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.all(padding),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
                   child: Transform(
                     transform: Matrix4.identity()..scale(scaleX, scaleY),
                     alignment: Alignment.center,

@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'package:aurogram/utils/logging/app_logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// A widget that shows an offline indicator banner when the device loses internet connection.
 /// Only shows on web platform for a more app-like experience.
@@ -69,7 +71,7 @@ class _OfflineIndicatorState extends State<OfflineIndicator>
           .listen(_updateConnectionStatus);
     } catch (e) {
       // Connectivity check failed, assume online
-      debugPrint('Connectivity check failed: $e');
+      AppLogger.w('OfflineIndicator: Connectivity check failed: $e', category: LogCategory.network);
     }
   }
 
@@ -133,13 +135,13 @@ class _OfflineIndicatorState extends State<OfflineIndicator>
       child: Material(
         color: Colors.transparent,
         child: Container(
-          margin: const EdgeInsets.all(12),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          margin: const EdgeInsets.all(AppDimensions.paddingMd),
+          padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingMd),
           decoration: BoxDecoration(
             color: isDark
                 ? const Color(0xFF2D2D2D)
                 : Colors.white,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.15),
@@ -155,10 +157,10 @@ class _OfflineIndicatorState extends State<OfflineIndicator>
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(AppDimensions.paddingSm),
                 decoration: BoxDecoration(
                   color: AppTheme.warningColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
                 ),
                 child: Icon(
                   Icons.cloud_off_rounded,
@@ -166,7 +168,7 @@ class _OfflineIndicatorState extends State<OfflineIndicator>
                   size: 20,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppDimensions.spacingMd),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -180,7 +182,7 @@ class _OfflineIndicatorState extends State<OfflineIndicator>
                         color: isDark ? Colors.white : AppTheme.textLightColor,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: AppDimensions.spacingXxs),
                     Text(
                       'Some features may not be available',
                       style: TextStyle(
@@ -200,10 +202,10 @@ class _OfflineIndicatorState extends State<OfflineIndicator>
                   _updateConnectionStatus(results);
                 },
                 child: Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(AppDimensions.paddingSm),
                   decoration: BoxDecoration(
                     color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
                   ),
                   child: Icon(
                     Icons.refresh_rounded,

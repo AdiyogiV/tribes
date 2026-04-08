@@ -2,8 +2,7 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { db, FieldValue, logger } from "../lib/firebase.js";
 import { geminiApiKey } from "../lib/secrets.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-
-const GEMINI_MODEL = "gemini-2.0-flash";
+import { AI_MODELS } from "../lib/config.js";
 
 const CURRENT_TIMES_CONFIG = {
     MAX_OUTPUT_TOKENS: 700,
@@ -220,7 +219,7 @@ Write the current times reading now (180–220 words, rich markdown):`;
 
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
-        model: GEMINI_MODEL,
+        model: AI_MODELS.GEMINI_FLASH,
         generationConfig: {
             temperature: CURRENT_TIMES_CONFIG.TEMPERATURE,
             maxOutputTokens: CURRENT_TIMES_CONFIG.MAX_OUTPUT_TOKENS,

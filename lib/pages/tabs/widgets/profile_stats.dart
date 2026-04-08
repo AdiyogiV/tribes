@@ -1,3 +1,4 @@
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 import 'package:flutter/material.dart';
 
 class ProfileStatItem extends StatelessWidget {
@@ -26,7 +27,7 @@ class ProfileStatItem extends StatelessWidget {
             color: color.withValues(alpha: 0.7),
           ),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: AppDimensions.spacingXxs),
         Text(
           value,
           style: TextStyle(
@@ -71,7 +72,7 @@ class ProfileTappableStatItem extends StatelessWidget {
               color: color.withValues(alpha: 0.7),
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: AppDimensions.spacingXxs),
           Text(
             value,
             style: TextStyle(

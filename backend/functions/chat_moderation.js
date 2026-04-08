@@ -1,29 +1,6 @@
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import { db, logger } from "../lib/firebase.js";
-
-// Content filtering blocklist - expanded for App Store compliance
-const BLOCKLIST = [
-    "kill yourself",
-    "kys",
-    "suicide",
-    // Add more objectionable terms as needed
-];
-
-/**
- * Normalize text for filtering
- */
-function normalizeText(text) {
-    return (text || "").trim().toLowerCase();
-}
-
-/**
- * Check if text contains blocked/objectionable content
- */
-function containsBlockedText(text) {
-    if (!text) return false;
-    const normalized = normalizeText(text);
-    return BLOCKLIST.some((term) => normalized.includes(term));
-}
+import { containsBlockedText } from "../lib/utils.js";
 
 /**
  * Cloud Function triggered when a new chat message is created

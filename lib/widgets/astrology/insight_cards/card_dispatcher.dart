@@ -12,9 +12,9 @@ class CardDispatcher extends StatelessWidget {
   final InsightSection section;
   
   const CardDispatcher({
-    Key? key,
+    super.key,
     required this.section,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

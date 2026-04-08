@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -9,9 +8,6 @@ import 'package:aurogram/models/space_roles.dart';
 import 'package:aurogram/models/space_types.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
 
-// Conditional import for dart:io
-import 'dart:io'
-    if (dart.library.html) 'package:aurogram/platform/io_stub.dart';
 import 'package:aurogram/platform/file_helper.dart' as file_helper;
 
 typedef ProgressCallback = void Function(String message);

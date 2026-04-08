@@ -1,8 +1,9 @@
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
-import 'package:aurogram/pages/thread_view.dart';
+import 'package:aurogram/pages/content/thread_view.dart';
 import 'package:aurogram/widgets/preview_boxes/preview_box.dart';
 
 /// Indicator showing that a post is a reply to another post
@@ -73,7 +74,7 @@ class ReplyIndicator extends StatelessWidget {
             children: [
               // "Replying to" text - subtle, aligned with post header style
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+                padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
                 child: GestureDetector(
                   onTap: () => _navigateToParent(context, null),
                   child: Row(
@@ -87,7 +88,7 @@ class ReplyIndicator extends StatelessWidget {
                               color:
                                   AppTheme.primaryColor.withValues(alpha: 0.6),
                             ),
-                            const SizedBox(width: 6),
+                            const SizedBox(width: AppDimensions.spacingSmMd),
                             Text(
                               parentAuthorName != null
                                   ? 'Replying to $parentAuthorName'
@@ -105,7 +106,7 @@ class ReplyIndicator extends StatelessWidget {
                         ),
                       ),
                       if (parentPosts.length > 1) ...[
-                        const SizedBox(width: 8),
+                        const SizedBox(width: AppDimensions.spacingSm),
                         Text(
                           '${parentPosts.length} posts in thread',
                           style: TextStyle(
@@ -115,7 +116,7 @@ class ReplyIndicator extends StatelessWidget {
                           ),
                         ),
                       ],
-                      const SizedBox(width: 4),
+                      const SizedBox(width: AppDimensions.spacingXs),
                       Icon(
                         CupertinoIcons.chevron_right,
                         size: 12,
@@ -125,7 +126,7 @@ class ReplyIndicator extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppDimensions.spacingSm),
               _buildThumbnails(
                   context, parentPosts, immediateParentIndex, thumbWidth),
             ],
@@ -168,7 +169,7 @@ class ReplyIndicator extends StatelessWidget {
                       clipBehavior: Clip.none,
                       children: [
                         ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm),
                           child: AspectRatio(
                             aspectRatio: 1.0,
                             child: PreviewBox(
@@ -190,7 +191,7 @@ class ReplyIndicator extends StatelessWidget {
                           Positioned.fill(
                             child: Container(
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm),
                                 border: Border.all(
                                   color: AppTheme.primaryColor,
                                   width: 2,
@@ -222,7 +223,7 @@ class ReplyIndicator extends StatelessWidget {
     // Use SingleChildScrollView + Row (EXACT same as PostReplies)
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
       child: Row(
         children: thumbnails,
       ),

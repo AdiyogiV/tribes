@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:aurogram/utils/theme/app_theme.dart';
 import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -610,7 +611,7 @@ class ImageOptimizer {
     return Container(
       width: width,
       height: height,
-      color: const Color(0xFFF0EDE8), // Warm skeleton color
+      color: AppTheme.skeletonLightColor, // Warm skeleton color
     );
   }
 

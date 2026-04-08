@@ -1,4 +1,5 @@
 import 'package:aurogram/models/space.dart';
+import 'package:aurogram/widgets/ui/common_widgets.dart';
 import 'package:aurogram/models/space_types.dart';
 import 'package:aurogram/services/space_service.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
@@ -14,6 +15,8 @@ import 'package:aurogram/pages/login/handle_login.dart';
 import 'package:aurogram/pages/spaces/space_screen.dart';
 import 'package:aurogram/services/auth_service.dart';
 import 'package:aurogram/pages/send_me_something/send_composer_screen.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/widgets/common/snack_bar_service.dart';
 
 class InviteLandingPage extends StatefulWidget {
   final String? space;
@@ -280,15 +283,7 @@ class InviteLandingPageState extends State<InviteLandingPage> {
 
   void _showError(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: AppTheme.errorColor,
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.all(16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
+    showCustomSnackBar(context, message: message, backgroundColor: AppTheme.errorColor, behavior: SnackBarBehavior.floating);
   }
 
   @override
@@ -335,9 +330,9 @@ class InviteLandingPageState extends State<InviteLandingPage> {
             Icon(
               Icons.link_off_rounded,
               size: 64,
-              color: textSecondary.withOpacity(0.5),
+              color: textSecondary.withValues(alpha: 0.5),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppDimensions.spacingLg),
             Text(
               _error ?? 'Something went wrong',
               style: TextStyle(
@@ -346,7 +341,7 @@ class InviteLandingPageState extends State<InviteLandingPage> {
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppDimensions.spacingXxl),
             TextButton(
               onPressed: _dismiss,
               child: Text(
@@ -365,23 +360,23 @@ class InviteLandingPageState extends State<InviteLandingPage> {
 
   Widget _buildInviteContent(bool isDark, Color cardColor, Color textPrimary, Color textSecondary) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingXxl),
       child: Column(
         children: [
-          const SizedBox(height: 20),
+          const SizedBox(height: AppDimensions.spacingXl),
           
           // Status badge
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
               color: _isAlreadyMember 
-                  ? AppTheme.successColor.withOpacity(0.1)
-                  : AppTheme.primaryColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(20),
+                  ? AppTheme.successColor.withValues(alpha: 0.1)
+                  : AppTheme.primaryColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
               border: Border.all(
                 color: _isAlreadyMember 
-                    ? AppTheme.successColor.withOpacity(0.2)
-                    : AppTheme.primaryColor.withOpacity(0.2),
+                    ? AppTheme.successColor.withValues(alpha: 0.2)
+                    : AppTheme.primaryColor.withValues(alpha: 0.2),
               ),
             ),
             child: Row(
@@ -396,7 +391,7 @@ class InviteLandingPageState extends State<InviteLandingPage> {
                       ? AppTheme.successColor
                       : AppTheme.primaryColor,
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: AppDimensions.spacingMdSm),
                 Text(
                   _isAlreadyMember 
                       ? "You're already a member"
@@ -415,18 +410,18 @@ class InviteLandingPageState extends State<InviteLandingPage> {
             ),
           ),
           
-          const SizedBox(height: 32),
+          const SizedBox(height: AppDimensions.spacingSection),
           
           // Gram card
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(AppDimensions.paddingXxl),
             decoration: BoxDecoration(
               color: cardColor,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
+                  color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
                   blurRadius: 20,
                   offset: const Offset(0, 4),
                 ),
@@ -442,7 +437,7 @@ class InviteLandingPageState extends State<InviteLandingPage> {
                   borderRadius: 20,
                 ),
                 
-                const SizedBox(height: 16),
+                const SizedBox(height: AppDimensions.spacingLg),
                 
                 // Gram name
                 Text(
@@ -458,7 +453,7 @@ class InviteLandingPageState extends State<InviteLandingPage> {
                 // Description if available
                 if (_spaceData?.description != null && 
                     _spaceData!.description!.isNotEmpty) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppDimensions.spacingSm),
                   Text(
                     _spaceData!.description!,
                     style: TextStyle(
@@ -472,7 +467,7 @@ class InviteLandingPageState extends State<InviteLandingPage> {
                   ),
                 ],
                 
-                const SizedBox(height: 16),
+                const SizedBox(height: AppDimensions.spacingLg),
                 
                 // Space type badge
                 Container(
@@ -480,9 +475,9 @@ class InviteLandingPageState extends State<InviteLandingPage> {
                   decoration: BoxDecoration(
                     color: _spaceData?.spaceType != null && 
                            _isPrivateSpace(_spaceData!.spaceType)
-                        ? AppTheme.warningColor.withOpacity(0.1)
-                        : AppTheme.successColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
+                        ? AppTheme.warningColor.withValues(alpha: 0.1)
+                        : AppTheme.successColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -498,7 +493,7 @@ class InviteLandingPageState extends State<InviteLandingPage> {
                             ? AppTheme.warningColor
                             : AppTheme.successColor,
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: AppDimensions.spacingSmMd),
                       Text(
                         _spaceData?.spaceType != null && 
                             _isPrivateSpace(_spaceData!.spaceType)
@@ -520,12 +515,12 @@ class InviteLandingPageState extends State<InviteLandingPage> {
             ),
           ),
           
-          const SizedBox(height: 40),
+          const SizedBox(height: AppDimensions.spacingLargeSection),
           
           // Action buttons
           _buildActionButtons(isDark, cardColor, textPrimary, textSecondary),
           
-          const SizedBox(height: 40),
+          const SizedBox(height: AppDimensions.spacingLargeSection),
         ],
       ),
     );
@@ -547,7 +542,7 @@ class InviteLandingPageState extends State<InviteLandingPage> {
                 foregroundColor: isDark ? AppTheme.scaffoldDarkColor : Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusMdLg),
                 ),
               ),
               child: const Text(
@@ -560,7 +555,7 @@ class InviteLandingPageState extends State<InviteLandingPage> {
             ),
           ),
           
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.spacingLg),
           
           // Dismiss link
           TextButton(
@@ -592,18 +587,15 @@ class InviteLandingPageState extends State<InviteLandingPage> {
               foregroundColor: isDark ? AppTheme.scaffoldDarkColor : Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusMdLg),
               ),
-              disabledBackgroundColor: AppTheme.primaryColor.withOpacity(0.5),
+              disabledBackgroundColor: AppTheme.primaryColor.withValues(alpha: 0.5),
             ),
             child: _isJoining
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
+                ? const AppLoadingIndicator(
+                    size: 20,
+                    strokeWidth: 2,
+                    color: Colors.white,
                   )
                 : const Text(
                     'Join Gram',
@@ -615,7 +607,7 @@ class InviteLandingPageState extends State<InviteLandingPage> {
           ),
         ),
         
-        const SizedBox(height: 12),
+        const SizedBox(height: AppDimensions.spacingMd),
         
         // Preview button (secondary)
         SizedBox(
@@ -626,10 +618,10 @@ class InviteLandingPageState extends State<InviteLandingPage> {
             style: OutlinedButton.styleFrom(
               foregroundColor: AppTheme.primaryColor,
               side: BorderSide(
-                color: AppTheme.primaryColor.withOpacity(0.3),
+                color: AppTheme.primaryColor.withValues(alpha: 0.3),
               ),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusMdLg),
               ),
             ),
             child: const Text(
@@ -642,7 +634,7 @@ class InviteLandingPageState extends State<InviteLandingPage> {
           ),
         ),
         
-        const SizedBox(height: 16),
+        const SizedBox(height: AppDimensions.spacingLg),
         
         // Dismiss link
         TextButton(

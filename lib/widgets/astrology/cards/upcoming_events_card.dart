@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:aurogram/services/sky_positions_service.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Card showing upcoming planetary events (sign changes, retrogrades)
 /// Matches astrology details page card styling
@@ -46,24 +47,25 @@ class UpcomingEventsCard extends StatelessWidget {
       color: cardColor,
       elevation: 2,
       shadowColor: Colors.black.withValues(alpha: 0.2),
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppDimensions.paddingLg),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
             // Header - Title Case, matches astrology details page
             Text(
               'Upcoming Transits',
+              textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: AppTheme.holyCowTextSize,
                 fontWeight: FontWeight.w700,
                 color: c,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppDimensions.spacingMd),
 
             // Sign Transits
             if (transits.isNotEmpty) ...[
@@ -75,14 +77,15 @@ class UpcomingEventsCard extends StatelessWidget {
 
             // Retrogrades
             if (retrogrades.isNotEmpty) ...[
-              if (transits.isNotEmpty) const SizedBox(height: 12),
+              if (transits.isNotEmpty) const SizedBox(height: AppDimensions.spacingMd),
               if (transits.isNotEmpty)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.only(bottom: AppDimensions.paddingSm),
                   child: Text(
                     'Retrograde Motion',
+                    textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: AppTheme.holyCowTextSize,
                       fontWeight: FontWeight.w600,
                       color: c.withValues(alpha: 0.5),
                     ),
@@ -106,42 +109,46 @@ class UpcomingEventsCard extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.only(bottom: isLast ? 0 : 10),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           // Planet name
           SizedBox(
-            width: 70,
+            width: 90,
             child: Text(
               event.planet,
+              textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: AppTheme.holyCowTextSize,
                 fontWeight: FontWeight.w700,
                 color: c,
               ),
             ),
           ),
-          
+
           // Action (enters sign / goes retrograde / goes direct)
           Expanded(
             child: Text(
               action,
+              textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: AppTheme.holyCowTextSize,
                 fontWeight: FontWeight.w500,
-                color: isRetrograde 
-                    ? (event.type == 'retrograde_end' 
-                        ? Colors.green.shade600 
+                color: isRetrograde
+                    ? (event.type == 'retrograde_end'
+                        ? Colors.green.shade600
                         : Colors.orange.shade600)
                     : c.withValues(alpha: 0.7),
               ),
             ),
           ),
-          
+
           // Date
           Text(
             event.formattedDate,
+            textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: AppTheme.holyCowTextSize,
               fontWeight: FontWeight.w600,
               color: c.withValues(alpha: 0.6),
             ),

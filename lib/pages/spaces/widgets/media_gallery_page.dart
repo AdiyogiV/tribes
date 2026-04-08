@@ -5,6 +5,8 @@ import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/utils/responsive.dart';
 import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
 import 'fullscreen_image_viewer.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/widgets/common/snack_bar_service.dart';
 
 /// A page that displays all media (images, videos, files) shared in a chat
 class MediaGalleryPage extends StatefulWidget {
@@ -91,7 +93,7 @@ class _MediaGalleryPageState extends State<MediaGalleryPage>
                     size: 48,
                     color: Colors.grey[400],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppDimensions.spacingLg),
                   Text(
                     'Failed to load media',
                     style: TextStyle(
@@ -173,12 +175,7 @@ class _MediaGalleryPageState extends State<MediaGalleryPage>
           isVideo: true,
           onTap: () {
             // TODO: Navigate to video player
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Video player coming soon'),
-                duration: Duration(seconds: 2),
-              ),
-            );
+            showCustomSnackBar(context, message: 'Video player coming soon', duration: const Duration(seconds: 2));
           },
         );
       },
@@ -191,7 +188,7 @@ class _MediaGalleryPageState extends State<MediaGalleryPage>
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppDimensions.paddingLg),
       itemCount: files.length,
       itemBuilder: (context, index) {
         final message = files[index];
@@ -212,7 +209,7 @@ class _MediaGalleryPageState extends State<MediaGalleryPage>
             size: 64,
             color: isDark ? Colors.grey[700] : Colors.grey[300],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.spacingLg),
           Text(
             text,
             style: TextStyle(
@@ -279,7 +276,7 @@ class _MediaGridItem extends StatelessWidget {
           if (isVideo)
             Center(
               child: Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(AppDimensions.paddingSm),
                 decoration: BoxDecoration(
                   color: Colors.black.withValues(alpha: 0.5),
                   shape: BoxShape.circle,
@@ -318,11 +315,11 @@ class _FileListItem extends StatelessWidget {
     }
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: AppDimensions.paddingSm),
+      padding: const EdgeInsets.all(AppDimensions.paddingMd),
       decoration: BoxDecoration(
         color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[100],
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
       ),
       child: Row(
         children: [
@@ -331,14 +328,14 @@ class _FileListItem extends StatelessWidget {
             height: 44,
             decoration: BoxDecoration(
               color: AppTheme.primaryColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm),
             ),
             child: Icon(
               isAudio ? Icons.mic_rounded : Icons.insert_drive_file_rounded,
               color: AppTheme.primaryColor,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppDimensions.spacingMd),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

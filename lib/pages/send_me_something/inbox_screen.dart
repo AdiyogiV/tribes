@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
+import 'package:aurogram/widgets/ui/common_widgets.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:aurogram/services/anonymous_message_service.dart';
@@ -11,6 +10,8 @@ import 'package:aurogram/widgets/send_me_something/message_card.dart';
 import 'package:aurogram/widgets/send_me_something/share_card_builder.dart';
 import 'package:aurogram/widgets/dialogs/login_bottom_sheet.dart';
 import 'package:aurogram/pages/send_me_something/get_link_screen.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/widgets/common/snack_bar_service.dart';
 
 class SecretMessagesInboxScreen extends StatefulWidget {
   final bool embedded;
@@ -116,24 +117,13 @@ class _SecretMessagesInboxScreenState extends State<SecretMessagesInboxScreen> {
     // Also hide the message
     await _service.updateMessageStatus(messageId, 'hidden');
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text(
-            'Message reported. It will be reviewed within 24 hours.'),
-        backgroundColor: AppTheme.primaryColor,
-      ),
-    );
+    showCustomSnackBar(context, message: 'Message reported. It will be reviewed within 24 hours.', backgroundColor: AppTheme.primaryColor);
   }
 
   Future<void> _blockMessage(String messageId) async {
     await _service.updateMessageStatus(messageId, 'blocked');
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Message blocked'),
-        backgroundColor: AppTheme.primaryColor,
-      ),
-    );
+    showCustomSnackBar(context, message: 'Message blocked', backgroundColor: AppTheme.primaryColor);
   }
 
   Future<void> _deleteMessage(String messageId) async {
@@ -145,9 +135,7 @@ class _SecretMessagesInboxScreenState extends State<SecretMessagesInboxScreen> {
     } catch (e) {
       _service.logError('Failed to delete message', e);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not delete message')),
-      );
+      showCustomSnackBar(context, message: 'Could not delete message');
     }
   }
 
@@ -189,7 +177,7 @@ class _SecretMessagesInboxScreenState extends State<SecretMessagesInboxScreen> {
       stream: _service.inboxStream(user.uid),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return const AppLoadingIndicator();
         }
 
         final docs = snapshot.data?.docs ?? [];
@@ -198,7 +186,7 @@ class _SecretMessagesInboxScreenState extends State<SecretMessagesInboxScreen> {
         }
 
         return ListView.builder(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppDimensions.paddingLg),
           itemCount: docs.length,
           itemBuilder: (context, index) {
             final data = docs[index].data();
@@ -241,7 +229,7 @@ class _SecretMessagesInboxScreenState extends State<SecretMessagesInboxScreen> {
   Widget _buildEmptyState() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppDimensions.paddingXxl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -250,7 +238,7 @@ class _SecretMessagesInboxScreenState extends State<SecretMessagesInboxScreen> {
               size: 60,
               color: AppTheme.textSecondaryColor,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppDimensions.spacingLg),
             Text(
               'No messages yet.',
               style: TextStyle(
@@ -259,13 +247,13 @@ class _SecretMessagesInboxScreenState extends State<SecretMessagesInboxScreen> {
                 color: AppTheme.textColor,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: AppDimensions.spacingSmMd),
             Text(
               'Share your link to get your first one.',
               style: TextStyle(color: AppTheme.textSecondaryColor),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppDimensions.spacingLg),
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).push(

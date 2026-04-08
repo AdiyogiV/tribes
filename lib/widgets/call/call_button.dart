@@ -6,6 +6,7 @@ import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/pages/call/call_screen.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
 import 'package:aurogram/services/follow_service.dart';
+import 'package:aurogram/widgets/common/snack_bar_service.dart';
 
 /// Compact call button for chat headers
 class CallButton extends StatefulWidget {
@@ -66,12 +67,7 @@ class _CallButtonState extends State<CallButton> {
       AppLogger.w('Cannot start call - already in a call',
           category: LogCategory.general);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('You are already in a call'),
-            duration: Duration(seconds: 2),
-          ),
-        );
+        showCustomSnackBar(context, message: 'You are already in a call', duration: const Duration(seconds: 2));
       }
       return;
     }
@@ -169,12 +165,7 @@ class _CallButtonsState extends State<CallButtons> {
       AppLogger.w('Cannot start call - already in a call',
           category: LogCategory.general);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('You are already in a call'),
-            duration: Duration(seconds: 2),
-          ),
-        );
+        showCustomSnackBar(context, message: 'You are already in a call', duration: const Duration(seconds: 2));
       }
       return;
     }
@@ -194,13 +185,7 @@ class _CallButtonsState extends State<CallButtons> {
       
       if (!isMutual) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('You can only call people who follow you back'),
-              duration: const Duration(seconds: 3),
-              backgroundColor: AppTheme.errorColor,
-            ),
-          );
+          showCustomSnackBar(context, message: 'You can only call people who follow you back', backgroundColor: AppTheme.errorColor, duration: const Duration(seconds: 3));
         }
         setState(() => _isStartingCall = false);
         return;
@@ -226,13 +211,7 @@ class _CallButtonsState extends State<CallButtons> {
       });
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Cannot start call: ${e.toString()}'),
-            duration: const Duration(seconds: 3),
-            backgroundColor: AppTheme.errorColor,
-          ),
-        );
+        showCustomSnackBar(context, message: 'Cannot start call: ${e.toString()}', backgroundColor: AppTheme.errorColor, duration: const Duration(seconds: 3));
       }
       setState(() => _isStartingCall = false);
     }

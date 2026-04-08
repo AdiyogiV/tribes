@@ -1,3 +1,4 @@
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -78,7 +79,7 @@ class _ChatInputAreaState extends State<ChatInputArea>
         },
         child: GlassContainer(
           height: 70,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: EdgeInsets.zero,
           child: Consumer<AiChatProvider>(
             builder: (context, provider, _) {
               return Consumer<AudioInputService>(
@@ -123,21 +124,50 @@ class _ChatInputAreaState extends State<ChatInputArea>
       duration: Duration(milliseconds: 150),
       switchInCurve: Curves.easeOut,
       switchOutCurve: Curves.easeIn,
-      child: Row(
+      child: LayoutBuilder(
         key: ValueKey(stateKey),
-        children: [
-          // Left section - Input, voice status, or processing status
-          Expanded(
-            child: _buildInputSection(audioService, isRecording, hasTranscript,
-                hasSpeechError, isProcessing),
-          ),
+        builder: (context, constraints) {
+          // Tab bar uses spaceEvenly with 4 items, each 64px wide.
+          // spaceEvenly gap = (totalWidth - 4*64) / 5
+          final totalWidth = constraints.maxWidth;
+          final gap = (totalWidth - 4 * 64) / 5;
 
-          const SizedBox(width: 8),
-
-          // Right section - Controls (stop button when processing, mic+send otherwise)
-          _buildControlsSection(
-              provider, audioService, isRecording, isProcessing),
-        ],
+          return Row(
+            children: [
+              // Left gap — same as tab bar spaceEvenly leading gap
+              SizedBox(width: gap),
+              // HolyCow icon — aligned with first tab bar icon
+              SizedBox(
+                width: 64,
+                height: 70,
+                child: Center(
+                  child: Image.asset(
+                    'assets/images/cow1.png',
+                    width: 48,
+                    height: 48,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+              // Center section - Input
+              Expanded(
+                child: _buildInputSection(audioService, isRecording,
+                    hasTranscript, hasSpeechError, isProcessing),
+              ),
+              // Right section - Controls (mic/send) — aligned with last tab bar icon
+              SizedBox(
+                width: 64,
+                height: 70,
+                child: Center(
+                  child: _buildControlsSection(
+                      provider, audioService, isRecording, isProcessing),
+                ),
+              ),
+              // Right gap — same as tab bar spaceEvenly trailing gap
+              SizedBox(width: gap),
+            ],
+          );
+        },
       ),
     );
   }
@@ -163,12 +193,12 @@ class _ChatInputAreaState extends State<ChatInputArea>
           size: 5,
           color: AppTheme.primaryColor.withValues(alpha: 0.6),
         ),
-        SizedBox(width: 10),
+        SizedBox(width: AppDimensions.spacingMdSm),
         Text(
           'Generating',
           style: TextStyle(
             color: AppTheme.primaryColor.withValues(alpha: 0.5),
-            fontSize: 14,
+            fontSize: AppTheme.holyCowTextSize,
           ),
         ),
       ],
@@ -208,10 +238,10 @@ class _ChatInputAreaState extends State<ChatInputArea>
           controller: widget.messageController,
           focusNode: widget.focusNode,
           decoration: InputDecoration(
-            hintText: 'Ask me anything',
+            hintText: 'namaste',
             hintStyle: TextStyle(
               color: AppTheme.primaryColor.withValues(alpha: 0.6),
-              fontSize: 16,
+              fontSize: AppTheme.holyCowTextSize,
               fontWeight: FontWeight.w500,
             ),
             border: InputBorder.none,
@@ -224,9 +254,10 @@ class _ChatInputAreaState extends State<ChatInputArea>
           ),
           style: TextStyle(
             color: AppTheme.primaryColor.withValues(alpha: 0.85),
-            fontSize: 16,
+            fontSize: AppTheme.holyCowTextSize,
             fontWeight: FontWeight.w500,
           ),
+          textAlign: TextAlign.center,
           maxLines: null,
           maxLength: null,
           textInputAction:
@@ -253,12 +284,12 @@ class _ChatInputAreaState extends State<ChatInputArea>
       children: [
         // Animated recording indicator - 3 pulsing bars
         _buildRecordingWaveAnimation(),
-        SizedBox(width: 12),
+        SizedBox(width: AppDimensions.spacingMd),
         Text(
           'Recording...',
           style: TextStyle(
             color: Colors.red[400],
-            fontSize: 14,
+            fontSize: AppTheme.holyCowTextSize,
             fontWeight: FontWeight.w500,
             letterSpacing: 0.5,
           ),
@@ -330,7 +361,7 @@ class _ChatInputAreaState extends State<ChatInputArea>
           ),
         ),
 
-        SizedBox(width: 8),
+        SizedBox(width: AppDimensions.spacingSm),
 
         // Send button
         SizedBox(
@@ -361,53 +392,43 @@ class _ChatInputAreaState extends State<ChatInputArea>
       return _buildStopButton(provider);
     }
 
-    // Normal state: mic + send buttons
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Microphone button
-        if (widget.onMicPressed != null) ...[
-          SizedBox(
-            width: 44,
-            height: 44,
-            child: IconButton(
-              onPressed: () => _startVoiceRecording(audioService, provider),
-              icon: Icon(Icons.mic, size: 24),
-              style: IconButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                foregroundColor: AppTheme.primaryColor,
-                shape: CircleBorder(),
-                padding: EdgeInsets.zero,
-              ),
-              tooltip: 'Voice message',
-            ),
-          ),
-        ],
-
-        // Send button
-        SizedBox(
-          width: 44,
-          height: 44,
-          child: IconButton(
-            onPressed: () {
-              widget.onSendMessage();
-            },
-            icon: Icon(
-              Icons.arrow_upward,
-              color: AppTheme.primaryColor,
-              size: 24,
-            ),
-            style: IconButton.styleFrom(
-              backgroundColor: Colors.transparent,
-              foregroundColor: AppTheme.primaryColor,
-              shape: CircleBorder(),
-              padding: EdgeInsets.zero,
-            ),
-            tooltip: 'Send message',
-          ),
+    // Normal state: show mic when no text, send (paperplane) when text entered
+    if (_hasText) {
+      // Send button (paperplane) - visible only when text is entered
+      return IconButton(
+        onPressed: () {
+          widget.onSendMessage();
+        },
+        icon: Icon(
+          Icons.send,
+          color: AppTheme.primaryColor,
+          size: 24,
         ),
-      ],
-    );
+        style: IconButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          foregroundColor: AppTheme.primaryColor,
+          shape: CircleBorder(),
+          padding: EdgeInsets.zero,
+        ),
+        tooltip: 'Send message',
+      );
+    } else {
+      // Microphone button - visible only when no text
+      if (widget.onMicPressed != null) {
+        return IconButton(
+          onPressed: () => _startVoiceRecording(audioService, provider),
+          icon: Icon(Icons.mic, size: 24),
+          style: IconButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            foregroundColor: AppTheme.primaryColor,
+            shape: CircleBorder(),
+            padding: EdgeInsets.zero,
+          ),
+          tooltip: 'Voice message',
+        );
+      }
+      return const SizedBox.shrink();
+    }
   }
 
   /// Build a subtle stop button for when AI is processing

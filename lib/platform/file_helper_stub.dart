@@ -1,5 +1,6 @@
 /// Web stub implementation of file helpers
 /// File system operations are not available on web
+library;
 
 import 'dart:typed_data';
 

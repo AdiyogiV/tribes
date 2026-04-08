@@ -1,10 +1,10 @@
 // ignore_for_file: avoid_web_libraries_in_flutter
 
-import 'dart:async';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
+
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 // Conditional import for web-specific functionality
 import 'package:aurogram/widgets/ui/drop_zone_stub.dart'
@@ -69,7 +69,7 @@ class _DropZoneState extends State<DropZone> {
               color: AppTheme.primaryColor,
               width: 3,
             ),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
           ),
           child: Center(
             child: Column(
@@ -80,7 +80,7 @@ class _DropZoneState extends State<DropZone> {
                   size: 64,
                   color: AppTheme.primaryColor,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppDimensions.spacingLg),
                 Text(
                   'Drop your video here',
                   style: TextStyle(
@@ -89,7 +89,7 @@ class _DropZoneState extends State<DropZone> {
                     color: isDark ? Colors.white : AppTheme.primaryColor,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppDimensions.spacingSm),
                 Text(
                   'Supported formats: MP4, MOV, WebM',
                   style: TextStyle(

@@ -1,10 +1,13 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:aurogram/widgets/ui/common_widgets.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/widgets/astrology/cards/vedic_time_utils.dart';
 import 'package:aurogram/widgets/astrology/cards/moon_phase_strip.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Static flag to track if moon phase has been logged (once per session)
 bool _loggedMoonPhase = false;
@@ -12,7 +15,7 @@ bool _loggedMoonPhase = false;
 /// Date and time card for Cosmic Dashboard
 /// Shows both Vedic and Western time formats
 /// Matches astrology details page card styling
-class CosmicDateTimeCard extends StatelessWidget {
+class CosmicDateTimeCard extends StatefulWidget {
   final Map<String, dynamic>? samvat;
   final Color brown;
 
@@ -23,61 +26,72 @@ class CosmicDateTimeCard extends StatelessWidget {
   });
 
   @override
+  State<CosmicDateTimeCard> createState() => _CosmicDateTimeCardState();
+}
+
+class _CosmicDateTimeCardState extends State<CosmicDateTimeCard> {
+  Timer? _timer;
+  DateTime _now = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    // Tick every 12 seconds — half-Pala for smoother live feel
+    _timer = Timer.periodic(const Duration(seconds: 12), (_) {
+      if (mounted) setState(() => _now = DateTime.now());
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final Color cardColor =
         isDark ? Theme.of(context).colorScheme.surface : Colors.white;
     final c = AppTheme.primaryColor;
+    final samvat = widget.samvat;
 
-    final now = DateTime.now();
-    final westernDate = DateFormat('EEEE, d MMMM yyyy').format(now);
-    final timeStr = DateFormat('h:mm a').format(now);
+    final westernDate = DateFormat('EEEE, d MMMM yyyy').format(_now);
+    final timeStr = DateFormat('h:mm a').format(_now);
 
-    final vedicTimeDetails = VedicTimeUtils.getVedicTimeDetails(now);
+    final vedicTimeDetails = VedicTimeUtils.getVedicTimeDetails(_now);
     final fullVedicDate = VedicTimeUtils.buildFullVedicDate(samvat);
     final samvatYear = VedicTimeUtils.buildSamvatYear(samvat);
 
     // Extract moon phase data
-    // Backend stores as 'number', insight panchang uses 'tithi_number' or has tithi name
     int? tithiNumber = _extractTithiNumber(samvat);
     final pakshaRaw = _extractPaksha(samvat);
     final paksha = pakshaRaw.isNotEmpty ? pakshaRaw : 'shukla';
     final hasMoonPhase = tithiNumber != null && pakshaRaw.isNotEmpty;
-    
-    // Debug log for moon phase (only once per session when we have data)
+
+    // Log once per session when data arrives
     if (samvat != null && !_loggedMoonPhase) {
       _loggedMoonPhase = true;
-      final s = samvat!;
-      // Get raw number for debug
-      final rawNum = s['number'] ?? s['tithi_number'] ?? s['tithiNumber'];
-      AppLogger.i('CosmicDateTimeCard: Moon phase extraction',
+      AppLogger.d('CosmicDateTimeCard: today panchang',
           category: LogCategory.ui,
           data: {
-            'RESULT_tithiNumber': tithiNumber,
-            'RESULT_paksha': paksha,
-            'RESULT_hasMoonPhase': hasMoonPhase,
-            // Raw values from data
-            'RAW_number': rawNum,
-            'RAW_paksha': s['paksha'] ?? s['tithiPaksha'],
-            'RAW_name': s['name'] ?? s['tithi'],
-            'pakshaRaw_isEmpty': pakshaRaw.isEmpty,
-            'allKeys': s.keys.take(10).toList(),
+            'vedicDate': fullVedicDate,
+            'samvatYear': samvatYear,
+            'tithiNumber': tithiNumber,
+            'paksha': paksha,
           });
     }
-    // Note: Don't set _loggedMoonPhase when samvat is null - we want to log when data arrives
 
-    // Log for debugging - helps identify when wrong data is shown
+    // Warn if stale data somehow leaks through (birth date in today's card)
     final vikramNumber = samvat?['vikram_chaitradi_number'];
     final isValidYear = VedicTimeUtils.isValidVikramYearForToday(vikramNumber);
     if (samvat != null && !isValidYear && vikramNumber != null) {
-      AppLogger.w('CosmicDateTimeCard: Possible stale samvat data',
+      AppLogger.w('CosmicDateTimeCard: STALE birth data in today card!',
           category: LogCategory.ui,
           data: {
             'vikramYear': vikramNumber,
-            'expectedRange': '${now.year + 55}-${now.year + 59}',
-            'lunarMonth': samvat?['lunar_month_full_name'],
-            'tithi': samvat?['name'],
-            'timestamp': samvat?['timestamp'],
+            'expectedRange': '${_now.year + 55}-${_now.year + 59}',
+            'timestamp': samvat['timestamp'],
           });
     }
 
@@ -87,84 +101,106 @@ class CosmicDateTimeCard extends StatelessWidget {
         color: cardColor,
         elevation: 2,
         shadowColor: Colors.black.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
         child: InkWell(
           onTap: () => _showVedicTimeInfo(context, isDark, c),
-          borderRadius: BorderRadius.circular(20),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+          child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-              // 1. Vedic Time (Prahar, Ghati, Pala)
-              Text(
-                vedicTimeDetails,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: c,
-                  height: 1.5,
+              // Text content with card padding
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppDimensions.paddingLg,
+                  AppDimensions.paddingLg,
+                  AppDimensions.paddingLg,
+                  0,
+                ),
+                child: Column(
+                  children: [
+                    // 1. Vedic Time (Prahar, Ghati, Pala)
+                    Text(
+                      vedicTimeDetails,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: AppTheme.holyCowTextSize,
+                        fontWeight: FontWeight.w500,
+                        color: c,
+                        height: 1.5,
+                      ),
+                    ),
+                    // 2. Full Vedic Date
+                    if (fullVedicDate != null)
+                      Text(
+                        fullVedicDate,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: AppTheme.holyCowTextSize,
+                          fontWeight: FontWeight.w500,
+                          color: c,
+                          height: 1.5,
+                        ),
+                      ),
+                    // 3. Samvat Year
+                    if (samvatYear != null)
+                      Text(
+                        samvatYear,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: AppTheme.holyCowTextSize,
+                          fontWeight: FontWeight.w500,
+                          color: c,
+                          height: 1.5,
+                        ),
+                      ),
+                    // 4. Western Time, Date, Year
+                    Text(
+                      '$timeStr, $westernDate',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: AppTheme.holyCowTextSize,
+                        fontWeight: FontWeight.w500,
+                        color: c.withValues(alpha: 0.6),
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              // 2. Full Vedic Date
-              if (fullVedicDate != null)
-                Text(
-                  fullVedicDate,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: c,
-                    height: 1.5,
-                  ),
-                ),
-              // 3. Samvat Year
-              if (samvatYear != null)
-                Text(
-                  samvatYear,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: c,
-                    height: 1.5,
-                  ),
-                ),
-              // 4. Western Time, Date, Year
-              Text(
-                '$timeStr, $westernDate',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: c.withValues(alpha: 0.6),
-                  height: 1.5,
-                ),
-              ),
-              // 5. Moon Phase Strip
+              // 5. Moon Phase Strip — edge to edge, no horizontal padding
               if (hasMoonPhase) ...[
-                const SizedBox(height: 14),
-                MoonPhaseStrip(
-                  tithiNumber: tithiNumber is int
-                      ? tithiNumber
-                      : int.tryParse(tithiNumber.toString()) ?? 1,
-                  paksha: paksha,
-                  isDark: isDark,
+                ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(AppDimensions.radiusXl),
+                    bottomRight: Radius.circular(AppDimensions.radiusXl),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                      top: AppDimensions.paddingSm,
+                      bottom: AppDimensions.paddingSm,
+                    ),
+                    child: MoonPhaseStrip(
+                      tithiNumber: tithiNumber,
+                      paksha: paksha,
+                      isDark: isDark,
+                    ),
+                  ),
                 ),
-              ],
+              ] else
+                const SizedBox(height: AppDimensions.paddingLg),
             ],
           ),
         ),
-      ),
       ),
     );
   }
 
   void _showVedicTimeInfo(BuildContext context, bool isDark, Color c) {
     HapticFeedback.lightImpact();
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => VedicTimeInfoSheet(
+    AppBottomSheet.show(
+      context,
+      child: VedicTimeInfoSheet(
         isDark: isDark,
         brown: c,
       ),
@@ -188,25 +224,26 @@ class VedicTimeInfoSheet extends StatelessWidget {
     final c = AppTheme.primaryColor;
     
     return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(20),
+      margin: const EdgeInsets.all(AppDimensions.paddingLg),
+      padding: const EdgeInsets.all(AppDimensions.paddingXl),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1C1C1E) : Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        color: isDark ? AppTheme.sheetDarkColor : Colors.white,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusXxl),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
             'Understanding Vedic Time',
+            textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 18,
+              fontSize: AppTheme.holyCowTextSize,
               fontWeight: FontWeight.w700,
               color: c,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.spacingLg),
           _buildInfoItem(
             title: 'Prahar',
             description:
@@ -238,7 +275,7 @@ class VedicTimeInfoSheet extends StatelessWidget {
                 'The traditional Hindu calendar year, approximately 57 years ahead of the Gregorian calendar.',
             isLast: true,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.spacingLg),
           SizedBox(
             width: double.infinity,
             child: TextButton(
@@ -246,7 +283,7 @@ class VedicTimeInfoSheet extends StatelessWidget {
               child: Text(
                 'Got it',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: AppTheme.holyCowTextSize,
                   fontWeight: FontWeight.w600,
                   color: c,
                 ),
@@ -268,21 +305,23 @@ class VedicTimeInfoSheet extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.only(bottom: isLast ? 0 : 12),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
             title,
+            textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 14,
+              fontSize: AppTheme.holyCowTextSize,
               fontWeight: FontWeight.w600,
               color: c,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppDimensions.spacingXs),
           Text(
             description,
+            textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: AppTheme.holyCowTextSize,
               fontWeight: FontWeight.w400,
               color: c.withValues(alpha: 0.7),
               height: 1.4,

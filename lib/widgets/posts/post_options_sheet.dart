@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
@@ -12,8 +11,9 @@ import 'package:aurogram/widgets/dialogs/report_post_dialog.dart';
 import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
 import 'package:aurogram/widgets/dialogs/login_bottom_sheet.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
-import 'package:aurogram/pages/text_composer.dart';
+import 'package:aurogram/pages/creation/text_composer.dart';
 import 'package:aurogram/widgets/common/snack_bar_service.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Repost to profile immediately (or undo if already reposted). No gram selector.
 Future<void> showRepostFlow(
@@ -83,11 +83,7 @@ void showPostOptionsSheet({
             Navigator.of(ctx).pop();
             Clipboard.setData(ClipboardData(text: ShareLinks.post(postId)));
             if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                    content: Text('Link copied to clipboard'),
-                    duration: Duration(seconds: 2)),
-              );
+              showCustomSnackBar(context, message: 'Link copied to clipboard', duration: const Duration(seconds: 2));
             }
           },
         ),
@@ -183,11 +179,7 @@ Future<void> _onRepost(
     } catch (e) {
       AppLogger.e('Failed to load post for repost', error: e);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Could not load post'),
-              duration: Duration(seconds: 2)),
-        );
+        showCustomSnackBar(context, message: 'Could not load post', duration: const Duration(seconds: 2));
       }
       return;
     }
@@ -247,11 +239,7 @@ Future<void> _onQuote(
     } catch (e) {
       AppLogger.e('Failed to load post for quote', error: e);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Could not load post'),
-              duration: Duration(seconds: 2)),
-        );
+        showCustomSnackBar(context, message: 'Could not load post', duration: const Duration(seconds: 2));
       }
       return;
     }
@@ -305,7 +293,7 @@ void _showDeleteConfirmation(BuildContext context, String postId) async {
         mainAxisSize: MainAxisSize.min,
         children: [
           PulsingDots(size: 8),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppDimensions.spacingMdSm),
           const Text('Please wait...'),
         ],
       ),
@@ -352,7 +340,7 @@ class _Action extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(icon, color: AppTheme.primaryColor, size: 20),
-          const SizedBox(width: 10),
+          const SizedBox(width: AppDimensions.spacingMdSm),
           Text(label, style: TextStyle(color: AppTheme.primaryColor)),
         ],
       ),

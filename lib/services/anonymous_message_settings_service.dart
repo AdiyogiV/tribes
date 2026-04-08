@@ -2,7 +2,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
 
 /// Service to manage anonymous message feature enable/disable preference
+///
+/// NOTE: Feature globally disabled to comply with App Store Guideline 1.2
+/// (anonymous chat is not permitted). All entry points return disabled.
+/// To re-enable, remove the `_featureKilled` flag below.
 class AnonymousMessageSettingsService {
+  /// Global kill switch – set to `true` to disable the entire feature.
+  static const bool _featureKilled = true;
   static const String _keyAnonymousMessagesEnabled = 'anonymous_messages_enabled';
   
   // Singleton instance
@@ -28,31 +34,34 @@ class AnonymousMessageSettingsService {
   }
 
   /// Check if anonymous messages are enabled
-  /// Defaults to true if not set (for backward compatibility)
+  /// Returns false when feature is killed (App Store Guideline 1.2 compliance)
   Future<bool> isEnabled() async {
+    if (_featureKilled) return false;
+
     if (!_initialized) {
       await initialize();
     }
-    
+
     if (_cachedValue != null) {
       return _cachedValue!;
     }
 
     try {
-      // Default to true if not set (backward compatibility)
       final enabled = _prefs?.getBool(_keyAnonymousMessagesEnabled) ?? true;
       _cachedValue = enabled;
       return enabled;
     } catch (e) {
       AppLogger.e('Failed to read anonymous messages setting',
           category: LogCategory.general, error: e);
-      // Default to true on error
-      return true;
+      return false;
     }
   }
 
   /// Set anonymous messages enabled/disabled
+  /// No-op when feature is killed.
   Future<bool> setEnabled(bool enabled) async {
+    if (_featureKilled) return false;
+
     if (!_initialized) {
       await initialize();
     }

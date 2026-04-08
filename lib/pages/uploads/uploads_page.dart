@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:aurogram/services/media/media_compression_service.dart';
-import 'package:aurogram/widgets/upload_progress_tracker.dart';
+import 'package:aurogram/widgets/ui/upload_progress_tracker.dart';
 import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 class UploadsPage extends StatefulWidget {
   final VoidCallback? onAllComplete;
@@ -48,10 +49,10 @@ class UploadsPageState extends State<UploadsPage> {
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return ListView.builder(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(AppDimensions.paddingLg),
                     itemCount: 3,
                     itemBuilder: (_, __) => const Padding(
-                      padding: EdgeInsets.only(bottom: 12),
+                      padding: EdgeInsets.only(bottom: AppDimensions.paddingMd),
                       child: SkeletonListItem(height: 80),
                     ),
                   );
@@ -69,7 +70,7 @@ class UploadsPageState extends State<UploadsPage> {
                           size: 80,
                           color: Colors.grey[400],
                         ),
-                        SizedBox(height: 16),
+                        SizedBox(height: AppDimensions.spacingLg),
                         Text(
                           'No uploads in progress',
                           style: TextStyle(
@@ -78,7 +79,7 @@ class UploadsPageState extends State<UploadsPage> {
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        SizedBox(height: 8),
+                        SizedBox(height: AppDimensions.spacingSm),
                         Text(
                           'Your video uploads will appear here',
                           style: TextStyle(
@@ -118,7 +119,7 @@ class UploadsPageState extends State<UploadsPage> {
                       margin: EdgeInsets.fromLTRB(16, 16, 16, 8),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(alpha: 0.05),
@@ -170,7 +171,7 @@ class UploadsPageState extends State<UploadsPage> {
             size: 24,
             color: color,
           ),
-          SizedBox(height: 8),
+          SizedBox(height: AppDimensions.spacingSm),
           Text(
             count.toString(),
             style: TextStyle(
@@ -179,7 +180,7 @@ class UploadsPageState extends State<UploadsPage> {
               color: color,
             ),
           ),
-          SizedBox(height: 4),
+          SizedBox(height: AppDimensions.spacingXs),
           Text(
             label,
             style: TextStyle(

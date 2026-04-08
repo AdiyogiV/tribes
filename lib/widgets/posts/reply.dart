@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:aurogram/services/data/post_db_service.dart';
 import 'package:aurogram/utils/dependency_injection.dart';
-import 'package:aurogram/widgets/main_player.dart';
-import 'package:aurogram/widgets/text_note_player.dart';
-import 'package:aurogram/widgets/audio_note_player.dart';
-import 'package:aurogram/widgets/image_note_player.dart';
+import 'package:aurogram/widgets/player/main_player.dart';
+import 'package:aurogram/widgets/player/text_note_player.dart';
+import 'package:aurogram/widgets/player/audio_note_player.dart';
+import 'package:aurogram/widgets/player/image_note_player.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
 import 'package:aurogram/widgets/posts/reply_indicator.dart';
 import 'package:aurogram/services/user_service.dart';
@@ -253,7 +254,7 @@ class _ReplyState extends State<Reply> {
   /// Card styling (border radius, shadows) handled by PostSwitcher
   Widget _buildLoading() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final base = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF0F0F0);
+    final base = isDark ? AppTheme.darkElevatedSurface : const Color(0xFFF0F0F0);
 
     return Container(
       height: 200,

@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:aurogram/models/space_roles.dart';
 import 'package:aurogram/utils/dependency_injection.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
-import 'package:aurogram/widgets/user_avatar.dart';
+import 'package:aurogram/widgets/common/user_avatar.dart';
 import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
 import 'package:aurogram/services/data/space_db_service.dart';
 import 'package:aurogram/services/user_service.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 class CrewPreview extends StatefulWidget {
   final String? user;
@@ -79,7 +80,7 @@ class _CrewPreviewState extends State<CrewPreview> {
       padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
         border: Border.all(
           color: color.withValues(alpha: 0.3),
           width: 1,
@@ -89,7 +90,7 @@ class _CrewPreviewState extends State<CrewPreview> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 12, color: color),
-          SizedBox(width: 4),
+          SizedBox(width: AppDimensions.spacingXs),
           Text(
             text,
             style: TextStyle(
@@ -130,9 +131,9 @@ class _CrewPreviewState extends State<CrewPreview> {
           ),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppTheme.primaryColor,
-            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd, vertical: AppDimensions.paddingSm),
             shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusXl)),
             minimumSize: Size(80, 36),
             elevation: 0,
           ),
@@ -148,9 +149,9 @@ class _CrewPreviewState extends State<CrewPreview> {
                   fontWeight: FontWeight.w600)),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppTheme.successColor,
-            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd, vertical: AppDimensions.paddingSm),
             shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusXl)),
             minimumSize: Size(80, 36),
             elevation: 0,
           ),
@@ -167,9 +168,9 @@ class _CrewPreviewState extends State<CrewPreview> {
                   fontWeight: FontWeight.w600)),
           style: OutlinedButton.styleFrom(
             side: BorderSide(color: AppTheme.warningColor, width: 1.5),
-            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd, vertical: AppDimensions.paddingSm),
             shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusXl)),
             minimumSize: Size(80, 36),
           ),
         );
@@ -195,7 +196,7 @@ class _CrewPreviewState extends State<CrewPreview> {
               content: Row(
                 children: [
                   Icon(Icons.check_circle, color: Colors.white, size: 20),
-                  SizedBox(width: 8),
+                  SizedBox(width: AppDimensions.spacingSm),
                   Text('Member invited successfully'),
                 ],
               ),
@@ -203,7 +204,7 @@ class _CrewPreviewState extends State<CrewPreview> {
               behavior: SnackBarBehavior.floating,
               duration: Duration(seconds: 2),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm)),
             ),
           );
         }
@@ -226,7 +227,7 @@ class _CrewPreviewState extends State<CrewPreview> {
             content: Row(
               children: [
                 Icon(Icons.error_outline, color: Colors.white, size: 20),
-                SizedBox(width: 8),
+                SizedBox(width: AppDimensions.spacingSm),
                 Expanded(child: Text(errorMessage)),
               ],
             ),
@@ -234,7 +235,7 @@ class _CrewPreviewState extends State<CrewPreview> {
             behavior: SnackBarBehavior.floating,
             duration: Duration(seconds: 3),
             shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm)),
           ),
         );
       }
@@ -258,7 +259,7 @@ class _CrewPreviewState extends State<CrewPreview> {
               content: Row(
                 children: [
                   Icon(Icons.check_circle, color: Colors.white, size: 20),
-                  SizedBox(width: 8),
+                  SizedBox(width: AppDimensions.spacingSm),
                   Text('Member removed successfully'),
                 ],
               ),
@@ -266,7 +267,7 @@ class _CrewPreviewState extends State<CrewPreview> {
               behavior: SnackBarBehavior.floating,
               duration: Duration(seconds: 2),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm)),
             ),
           );
         }
@@ -283,7 +284,7 @@ class _CrewPreviewState extends State<CrewPreview> {
             content: Row(
               children: [
                 Icon(Icons.error_outline, color: Colors.white, size: 20),
-                SizedBox(width: 8),
+                SizedBox(width: AppDimensions.spacingSm),
                 Expanded(child: Text('Failed to remove member')),
               ],
             ),
@@ -291,7 +292,7 @@ class _CrewPreviewState extends State<CrewPreview> {
             behavior: SnackBarBehavior.floating,
             duration: Duration(seconds: 3),
             shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm)),
           ),
         );
       }
@@ -315,7 +316,7 @@ class _CrewPreviewState extends State<CrewPreview> {
               content: Row(
                 children: [
                   Icon(Icons.check_circle, color: Colors.white, size: 20),
-                  SizedBox(width: 8),
+                  SizedBox(width: AppDimensions.spacingSm),
                   Text('Join request approved'),
                 ],
               ),
@@ -323,7 +324,7 @@ class _CrewPreviewState extends State<CrewPreview> {
               behavior: SnackBarBehavior.floating,
               duration: Duration(seconds: 2),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm)),
             ),
           );
         }
@@ -340,7 +341,7 @@ class _CrewPreviewState extends State<CrewPreview> {
             content: Row(
               children: [
                 Icon(Icons.error_outline, color: Colors.white, size: 20),
-                SizedBox(width: 8),
+                SizedBox(width: AppDimensions.spacingSm),
                 Expanded(child: Text('Failed to approve request')),
               ],
             ),
@@ -348,7 +349,7 @@ class _CrewPreviewState extends State<CrewPreview> {
             behavior: SnackBarBehavior.floating,
             duration: Duration(seconds: 3),
             shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm)),
           ),
         );
       }
@@ -379,7 +380,7 @@ class _CrewPreviewState extends State<CrewPreview> {
                 height: 14,
                 decoration: BoxDecoration(
                   color: Colors.grey.shade200,
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
                 ),
               ),
               Container(
@@ -387,22 +388,22 @@ class _CrewPreviewState extends State<CrewPreview> {
                 height: 12,
                 decoration: BoxDecoration(
                   color: Colors.grey.shade200,
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
                 ),
               ),
             ],
           ),
         ),
-        SizedBox(width: 8),
+        SizedBox(width: AppDimensions.spacingSm),
         Container(
           width: 80,
           height: 36,
           decoration: BoxDecoration(
             color: Colors.grey.shade200,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
           ),
         ),
-        SizedBox(width: 8),
+        SizedBox(width: AppDimensions.spacingSm),
       ],
     );
   }
@@ -485,7 +486,7 @@ class _CrewPreviewState extends State<CrewPreview> {
                                 decoration: BoxDecoration(
                                   color: AppTheme.primaryColor
                                       .withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(6),
+                                  borderRadius: BorderRadius.circular(AppDimensions.radiusSmMd),
                                 ),
                                 child: Text(
                                   '@${data['username'] ?? ''}',
@@ -499,14 +500,14 @@ class _CrewPreviewState extends State<CrewPreview> {
                               ),
                             ),
                           ),
-                          SizedBox(width: 8),
+                          SizedBox(width: AppDimensions.spacingSm),
                           _buildUserTypeWidget(data['role']),
                         ],
                       ),
                     ],
                   ),
                 ),
-                SizedBox(width: 8),
+                SizedBox(width: AppDimensions.spacingSm),
                 Padding(
                   padding: EdgeInsets.only(right: 8),
                   child: _buildTrailingAction(data['role']),

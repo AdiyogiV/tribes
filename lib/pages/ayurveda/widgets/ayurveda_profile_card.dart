@@ -1,3 +1,4 @@
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 import 'package:flutter/material.dart';
 import 'package:aurogram/models/ayurveda_profile.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
@@ -44,7 +45,7 @@ class AyurvedaProfileCard extends StatelessWidget {
                 // Header label
                 if (showHeader) ...[
                   Text('AYURVEDA', style: AppTheme.cardLabelStyle),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppDimensions.spacingSm),
                   // Subtitle
                   Text(
                     hasVikriti ? "Today's Balance" : prakriti.type,
@@ -54,7 +55,7 @@ class AyurvedaProfileCard extends StatelessWidget {
                       color: c.withValues(alpha: 0.7),
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppDimensions.spacingXs),
                 ],
 
                 // Dosha bars - show vikriti comparison if available, else prakriti
@@ -67,7 +68,7 @@ class AyurvedaProfileCard extends StatelessWidget {
                     primaryColor: c,
                     compact: true,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppDimensions.spacingSm),
                   DoshaComparisonBar(
                     label: 'Pitta',
                     baseline: prakriti.pitta,
@@ -76,7 +77,7 @@ class AyurvedaProfileCard extends StatelessWidget {
                     primaryColor: c,
                     compact: true,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppDimensions.spacingSm),
                   DoshaComparisonBar(
                     label: 'Kapha',
                     baseline: prakriti.kapha,
@@ -87,15 +88,15 @@ class AyurvedaProfileCard extends StatelessWidget {
                   ),
                 ] else ...[
                   _buildSimpleDoshaBar('Vata', prakriti.vata, vataColor, c),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppDimensions.spacingSm),
                   _buildSimpleDoshaBar('Pitta', prakriti.pitta, pittaColor, c),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppDimensions.spacingSm),
                   _buildSimpleDoshaBar('Kapha', prakriti.kapha, kaphaColor, c),
                 ],
 
                 // Check-in prompt if no vikriti
                 if (!hasVikriti) ...[
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppDimensions.spacingMd),
                   Text(
                     'Check in for today\'s balance',
                     style: TextStyle(
@@ -132,7 +133,7 @@ class AyurvedaProfileCard extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppDimensions.spacingSm),
         Expanded(
           child: Stack(
             children: [
@@ -158,7 +159,7 @@ class AyurvedaProfileCard extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppDimensions.spacingSm),
         SizedBox(
           width: 24,
           child: Text(

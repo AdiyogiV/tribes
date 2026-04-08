@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -579,7 +578,9 @@ class AudioInputService extends ChangeNotifier {
       if (fileSize == 0 || fileSize < 100) {
         AppLogger.e('❌ Audio file is empty or too small ($fileSize bytes)',
             category: LogCategory.voice);
-        try { await file.delete(); } catch (_) {}
+        try { await file.delete(); } catch (_) {
+          AppLogger.w('AudioInputService: failed to delete empty audio file', category: LogCategory.general);
+        }
         
         final result = AudioInputResult(
           transcript: _currentTranscript.trim(),

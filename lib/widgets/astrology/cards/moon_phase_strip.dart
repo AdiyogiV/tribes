@@ -1,3 +1,4 @@
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 import 'package:flutter/material.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 
@@ -104,7 +105,7 @@ class _LunarMonthStripState extends State<LunarMonthStrip> {
             height: 1.3,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppDimensions.spacingSm),
         SizedBox(
           height: 60,
           child: ListView.separated(
@@ -126,7 +127,7 @@ class _LunarMonthStripState extends State<LunarMonthStrip> {
                   color: isCurrent
                       ? AppTheme.primaryColor.withValues(alpha: 0.15)
                       : Colors.transparent,
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusSmMd),
                   border: isCurrent
                       ? Border.all(color: AppTheme.primaryColor, width: 1.5)
                       : null,
@@ -139,7 +140,7 @@ class _LunarMonthStripState extends State<LunarMonthStrip> {
                       _getMoonIcon(day, totalDays),
                       style: const TextStyle(fontSize: 24, height: 1.0),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppDimensions.spacingXs),
                     if (isNewMoon || isFullMoon)
                       Text(
                         isNewMoon ? 'NM' : 'FM',
@@ -222,8 +223,8 @@ class _MoonPhaseStripState extends State<MoonPhaseStrip> {
   void _scrollToCenter(int index) {
     if (!_scrollController.hasClients) return;
 
-    const itemWidth = 33.0;
-    const separatorWidth = 3.0;
+    const itemWidth = 48.0;
+    const separatorWidth = 5.0;
     const itemWithSeparator = itemWidth + separatorWidth;
 
     final viewportWidth = _scrollController.position.viewportDimension;
@@ -301,88 +302,85 @@ class _MoonPhaseStripState extends State<MoonPhaseStrip> {
   Widget build(BuildContext context) {
     final phases = _buildPhases();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Lunar Cycle',
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: AppTheme.primaryColor.withValues(alpha: 0.65),
-            height: 1.3,
-          ),
-        ),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 60,
-          child: ListView.separated(
-            controller: _scrollController,
-            scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.zero,
-            itemCount: phases.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 3),
-            itemBuilder: (context, index) {
-              final phase = phases[index];
-              final isCurrent = phase['isCurrent'] as bool;
-              final tithi = phase['tithi'] as int;
-              final pakshaNum = phase['paksha'] as int;
-              final isNewMoon = tithi == 15 && pakshaNum == 2;
-              final isFullMoon = tithi == 15 && pakshaNum == 1;
+    return SizedBox(
+      height: 92,
+      child: ListView.separated(
+        controller: _scrollController,
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.zero,
+        itemCount: phases.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 5),
+        itemBuilder: (context, index) {
+          final phase = phases[index];
+          final isCurrent = phase['isCurrent'] as bool;
+          final tithi = phase['tithi'] as int;
+          final pakshaNum = phase['paksha'] as int;
+          final isNewMoon = tithi == 15 && pakshaNum == 2;
+          final isFullMoon = tithi == 15 && pakshaNum == 1;
 
-              return Container(
-                constraints: const BoxConstraints(minWidth: 32, maxWidth: 34),
-                padding:
-                    const EdgeInsets.symmetric(vertical: 5, horizontal: 2),
-                decoration: BoxDecoration(
-                  color: isCurrent
-                      ? AppTheme.primaryColor.withValues(alpha: 0.15)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(6),
-                  border: isCurrent
-                      ? Border.all(color: AppTheme.primaryColor, width: 1.5)
-                      : null,
+          final moonSize = isCurrent ? 46.0 : 38.0;
+
+          return SizedBox(
+            width: 48,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Moon — selected is scaled up, others normal
+                AnimatedScale(
+                  scale: isCurrent ? 1.0 : 0.82,
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOut,
+                  child: Text(
+                    phase['icon'] as String,
+                    style: TextStyle(fontSize: moonSize, height: 1.0),
+                  ),
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      phase['icon'] as String,
-                      style: const TextStyle(fontSize: 24, height: 1.0),
+                const SizedBox(height: 4),
+                // Label
+                if (isNewMoon || isFullMoon)
+                  Text(
+                    isNewMoon ? 'NM' : 'FM',
+                    style: TextStyle(
+                      fontSize: isCurrent ? 12 : 11,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.primaryColor.withValues(alpha: 0.8),
+                      height: 1.0,
+                      letterSpacing: 0.3,
                     ),
-                    const SizedBox(height: 4),
-                    if (isNewMoon || isFullMoon)
-                      Text(
-                        isNewMoon ? 'NM' : 'FM',
-                        style: TextStyle(
-                          fontSize: 7.5,
-                          fontWeight: FontWeight.w800,
-                          color: AppTheme.primaryColor.withValues(alpha: 0.8),
-                          height: 1.0,
-                          letterSpacing: 0.3,
-                        ),
-                      )
-                    else
-                      Text(
-                        phase['label'] as String,
-                        style: TextStyle(
-                          fontSize: 8,
-                          fontWeight:
-                              isCurrent ? FontWeight.w700 : FontWeight.w500,
-                          color: isCurrent
-                              ? AppTheme.primaryColor
-                              : AppTheme.primaryColor.withValues(alpha: 0.5),
-                          height: 1.0,
-                        ),
-                      ),
-                  ],
+                  )
+                else
+                  Text(
+                    phase['label'] as String,
+                    style: TextStyle(
+                      fontSize: isCurrent ? 12 : 11,
+                      fontWeight:
+                          isCurrent ? FontWeight.w700 : FontWeight.w500,
+                      color: isCurrent
+                          ? AppTheme.primaryColor
+                          : AppTheme.primaryColor.withValues(alpha: 0.45),
+                      height: 1.0,
+                    ),
+                  ),
+                const SizedBox(height: 5),
+                // Selection indicator — small pill dot
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOut,
+                  width: isCurrent ? 16 : 0,
+                  height: 3,
+                  decoration: BoxDecoration(
+                    color: isCurrent
+                        ? AppTheme.primaryColor
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
-              );
-            },
-          ),
-        ),
-      ],
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }

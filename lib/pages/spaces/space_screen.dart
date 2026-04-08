@@ -1,3 +1,4 @@
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 import 'dart:io';
 import 'package:aurogram/pages/helpers/flash.dart';
 import 'package:aurogram/widgets/dialogs/login_bottom_sheet.dart';
@@ -12,13 +13,14 @@ import 'package:aurogram/utils/media_type_selector.dart';
 import 'package:aurogram/pages/spaces/edit_space.dart';
 import 'package:aurogram/pages/spaces/grid_space_view.dart';
 import 'package:aurogram/pages/spaces/space_chat_screen.dart';
-import 'package:aurogram/pages/theatre.dart';
+import 'package:aurogram/pages/content/theatre.dart';
 import 'package:aurogram/services/space_service.dart';
 import 'package:aurogram/services/share_service.dart';
 import 'package:aurogram/services/cache_service.dart';
 import 'package:aurogram/utils/dependency_injection.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
+import 'package:aurogram/widgets/common/snack_bar_service.dart';
 
 class SpaceScreen extends StatefulWidget {
   final String rid;
@@ -204,11 +206,11 @@ class SpaceScreenState extends State<SpaceScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               _buildIconButton(CupertinoIcons.list_bullet, _toggleGridView),
-              const SizedBox(width: 4),
+              const SizedBox(width: AppDimensions.spacingXs),
               _buildIconButton(CupertinoIcons.chat_bubble_2, _openChat),
-              const SizedBox(width: 4),
+              const SizedBox(width: AppDimensions.spacingXs),
               _buildIconButton(Icons.open_in_new_rounded, _shareGram),
-              const SizedBox(width: 4),
+              const SizedBox(width: AppDimensions.spacingXs),
               _buildIconButton(CupertinoIcons.settings, _navigateToEditSpace),
             ],
           ),
@@ -270,12 +272,7 @@ class SpaceScreenState extends State<SpaceScreen> {
     } catch (e) {
       AppLogger.e('Error joining space',
           category: LogCategory.general, data: {'error': e.toString()});
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to join space. Please try again.'),
-          behavior: SnackBarBehavior.fixed,
-        ),
-      );
+      showCustomSnackBar(context, message: 'Failed to join space. Please try again.', behavior: SnackBarBehavior.fixed);
     }
   }
 
@@ -322,12 +319,7 @@ class SpaceScreenState extends State<SpaceScreen> {
   void _openChat() {
     // Check if user can access chat
     if (!_isMember() && !_isPublicOrOpen()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('You need to be a member to access chat'),
-          backgroundColor: AppTheme.errorColor,
-        ),
-      );
+      showCustomSnackBar(context, message: 'You need to be a member to access chat', backgroundColor: AppTheme.errorColor);
       return;
     }
 
@@ -356,7 +348,7 @@ class SpaceScreenState extends State<SpaceScreen> {
               'An error occurred. Please try again.',
               style: TextStyle(color: AppTheme.textLightColor),
             ),
-            SizedBox(height: 16),
+            SizedBox(height: AppDimensions.spacingLg),
             CupertinoButton(
               onPressed: _refreshSpace,
               color: AppTheme.primaryColor,

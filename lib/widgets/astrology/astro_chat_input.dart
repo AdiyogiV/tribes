@@ -1,3 +1,4 @@
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
@@ -93,7 +94,7 @@ class _AstroChatInputState extends State<AstroChatInput> {
           Expanded(
             child: isRecording ? _buildRecordingIndicator() : _buildTextField(),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppDimensions.spacingSm),
           isRecording
               ? _buildRecordingControls(audioService)
               : _buildNormalControls(audioService),
@@ -134,7 +135,7 @@ class _AstroChatInputState extends State<AstroChatInput> {
       children: [
         // Animated dots
         _AnimatedRecordingDots(),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppDimensions.spacingMd),
         Text(
           'Recording...',
           style: TextStyle(
@@ -229,7 +230,7 @@ class _AstroChatInputState extends State<AstroChatInput> {
             tooltip: 'Cancel',
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppDimensions.spacingSm),
         // Send button
         SizedBox(
           width: 44,

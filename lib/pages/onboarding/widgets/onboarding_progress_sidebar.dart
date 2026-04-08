@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:aurogram/widgets/ui/common_widgets.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Onboarding progress sidebar for web
 /// Shows the different phases of onboarding with progress indicators
@@ -54,7 +56,7 @@ class OnboardingProgressSidebar extends StatelessWidget {
               child: Row(
                 children: [
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm),
                     child: Image.asset(
                       'assets/images/icon_transparent.png',
                       height: 32,
@@ -62,7 +64,7 @@ class OnboardingProgressSidebar extends StatelessWidget {
                       fit: BoxFit.contain,
                     ),
                   ),
-                  const SizedBox(width: 14),
+                  const SizedBox(width: AppDimensions.spacingMdLg),
                   Expanded(
                     child: Text(
                       'Astroboarding',
@@ -78,12 +80,12 @@ class OnboardingProgressSidebar extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 8),
+            const SizedBox(height: AppDimensions.spacingSm),
 
             // Progress steps - matching nav item style
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
                 children: [
                   _buildStep(
                     context: context,
@@ -192,7 +194,7 @@ class OnboardingProgressSidebar extends StatelessWidget {
           color: isActive
               ? activeColor.withValues(alpha: isDark ? 0.2 : 0.1)
               : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
           border: isActive
               ? Border.all(
                   color: activeColor.withValues(alpha: 0.3),
@@ -210,13 +212,9 @@ class OnboardingProgressSidebar extends StatelessWidget {
                 color: activeColor.withValues(alpha: 0.8),
               )
             else if (isGenerating)
-              SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.5,
-                  valueColor: AlwaysStoppedAnimation<Color>(activeColor),
-                ),
+              AppLoadingIndicator(
+                size: 22,
+                color: activeColor,
               )
             else
               Icon(
@@ -224,7 +222,7 @@ class OnboardingProgressSidebar extends StatelessWidget {
                 size: 22,
                 color: isActive ? activeColor : inactiveColor,
               ),
-            const SizedBox(width: 14),
+            const SizedBox(width: AppDimensions.spacingMdLg),
             // Label
             Expanded(
               child: Text(

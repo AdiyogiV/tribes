@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/widgets/ui/common_widgets.dart';
 
+/// Empty state for the messages list.
+///
+/// Delegates to [EmptyStateWidget] with chat-specific defaults.
 class MessagesEmptyState extends StatelessWidget {
   final bool isDark;
   final String title;
@@ -15,37 +19,11 @@ class MessagesEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        children: [
-          Icon(
-            Icons.chat_bubble_outline_rounded,
-            size: 48,
-            color: AppTheme.primaryColor.withValues(alpha: 0.3),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: isDark ? AppTheme.textDarkColor : AppTheme.textLightColor,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            subtitle,
-            style: TextStyle(
-              fontSize: 14,
-              color: isDark
-                  ? AppTheme.textSecondaryDarkColor
-                  : AppTheme.textSecondaryLightColor,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
+    return EmptyStateWidget(
+      icon: Icons.chat_bubble_outline_rounded,
+      iconColor: AppTheme.primaryColor.withValues(alpha: 0.3),
+      title: title,
+      subtitle: subtitle,
     );
   }
 }

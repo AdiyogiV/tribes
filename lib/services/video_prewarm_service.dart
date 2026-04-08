@@ -65,7 +65,9 @@ class VideoPrewarmService {
       if (controller != null) {
         try {
           controller.dispose();
-        } catch (_) {}
+        } catch (_) {
+          AppLogger.w('VideoPrewarmService: failed to dispose prewarm controller', category: LogCategory.general);
+        }
       }
     }
   }

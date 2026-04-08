@@ -1,6 +1,7 @@
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 class AyurvedaDetailsHeader extends StatelessWidget {
   final VoidCallback onBack;
@@ -22,7 +23,7 @@ class AyurvedaDetailsHeader extends StatelessWidget {
       bottom: false,
       child: Container(
         height: 60,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
         child: Row(
           children: [
             SizedBox(
@@ -81,7 +82,7 @@ class AyurvedaDetailsHeader extends StatelessWidget {
                                 size: 20,
                                 color: AppTheme.primaryColor,
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: AppDimensions.spacingMd),
                               const Text('Wellness Check-In'),
                             ],
                           ),
@@ -96,7 +97,7 @@ class AyurvedaDetailsHeader extends StatelessWidget {
                                 size: 20,
                                 color: Colors.red,
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: AppDimensions.spacingMd),
                               const Text(
                                 'Reset & Recalculate',
                                 style: TextStyle(color: Colors.red),

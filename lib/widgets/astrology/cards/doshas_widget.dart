@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:aurogram/models/astrology_profile.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Horizontal scrollable list of Dosha cards - minimal design
 /// Sorted by strength (Strong > Moderate > Mild)
@@ -93,7 +94,7 @@ class DoshasWidget extends StatelessWidget {
         padding: EdgeInsets.zero,
         clipBehavior: Clip.none,
         itemCount: doshaList.length,
-        separatorBuilder: (context, index) => const SizedBox(width: 12),
+        separatorBuilder: (context, index) => const SizedBox(width: AppDimensions.spacingMd),
         itemBuilder: (context, index) {
           final dosha = doshaList[index];
           final doshaName = dosha['name'] as String;
@@ -113,7 +114,7 @@ class DoshasWidget extends StatelessWidget {
                 color: cardColor,
                 elevation: 2,
                 shadowColor: Colors.black.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
                 child: InkWell(
                   onTap: onDoshaTap != null
                       ? () => onDoshaTap!(
@@ -130,7 +131,7 @@ class DoshasWidget extends StatelessWidget {
                             doshaData: dosha,
                           )
                       : null,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     child: Center(

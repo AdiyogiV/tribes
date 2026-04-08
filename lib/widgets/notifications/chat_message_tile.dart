@@ -12,8 +12,10 @@ import 'package:aurogram/utils/time_display.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
 import 'package:aurogram/widgets/notifications/unified_notification_card.dart';
-import 'package:aurogram/widgets/user_avatar.dart';
+import 'package:aurogram/widgets/common/user_avatar.dart';
 import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
+import 'package:aurogram/widgets/common/snack_bar_service.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 class ChatMessageTile extends StatefulWidget {
   final Map<String, dynamic>? data;
@@ -150,14 +152,7 @@ class _ChatMessageTileState extends State<ChatMessageTile> {
 
   void _navigateToChat() {
     if (_spaceId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Unable to open chat'),
-          duration: const Duration(seconds: 2),
-          behavior: SnackBarBehavior.fixed,
-          backgroundColor: AppTheme.errorColor,
-        ),
-      );
+      showCustomSnackBar(context, message: 'Unable to open chat', duration: const Duration(seconds: 2), backgroundColor: AppTheme.errorColor);
       return;
     }
 
@@ -211,7 +206,7 @@ class _ChatMessageTileState extends State<ChatMessageTile> {
   Widget build(BuildContext context) {
     if (!_isReady) {
       return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+        padding: EdgeInsets.symmetric(vertical: AppDimensions.paddingXs, horizontal: AppDimensions.paddingLg),
         child: SkeletonListItem(height: 80),
       );
     }
@@ -223,7 +218,7 @@ class _ChatMessageTileState extends State<ChatMessageTile> {
         child: InkWell(
           onTap: _navigateToChat,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingMd),
             child: Row(
               children: [
                 // Avatar
@@ -258,7 +253,7 @@ class _ChatMessageTileState extends State<ChatMessageTile> {
                     ),
                   ],
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppDimensions.spacingMd),
                 // Content
                 Expanded(
                   child: Column(
@@ -270,7 +265,7 @@ class _ChatMessageTileState extends State<ChatMessageTile> {
                             child: Text(
                               _isDM ? _senderName : _spaceName,
                               style: TextStyle(
-                                fontSize: 15,
+                                fontSize: AppTheme.holyCowTextSize,
                                 fontWeight:
                                     _isRead ? FontWeight.w600 : FontWeight.w700,
                                 color: AppTheme.textColor,
@@ -292,13 +287,13 @@ class _ChatMessageTileState extends State<ChatMessageTile> {
                             ),
                         ],
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: AppDimensions.spacingXs),
                       Text(
                         _isDM
                             ? _displayMessage
                             : '$_senderName: $_displayMessage',
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: AppTheme.holyCowTextSize,
                           color: _isRead ? AppTheme.textSecondaryColor : AppTheme.textColor,
                           fontWeight:
                               _isRead ? FontWeight.normal : FontWeight.w500,
@@ -307,7 +302,7 @@ class _ChatMessageTileState extends State<ChatMessageTile> {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: AppDimensions.spacingXs),
                       Row(
                         children: [
                           Icon(
@@ -317,27 +312,27 @@ class _ChatMessageTileState extends State<ChatMessageTile> {
                             size: 12,
                             color: AppTheme.textSecondaryColor,
                           ),
-                          const SizedBox(width: 4),
+                          const SizedBox(width: AppDimensions.spacingXs),
                           Text(
                             _isDM ? 'Direct Message' : 'Gram Chat',
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: AppTheme.holyCowTextSize,
                               color: AppTheme.textSecondaryColor,
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: AppDimensions.spacingSm),
                           Text(
                             '•',
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: AppTheme.holyCowTextSize,
                               color: AppTheme.textSecondaryColor,
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: AppDimensions.spacingSm),
                           Text(
                             _date,
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: AppTheme.holyCowTextSize,
                               color: AppTheme.textSecondaryColor,
                             ),
                           ),
@@ -347,7 +342,7 @@ class _ChatMessageTileState extends State<ChatMessageTile> {
                   ),
                 ),
                 // Arrow
-                const SizedBox(width: 8),
+                const SizedBox(width: AppDimensions.spacingSm),
                 Icon(
                   CupertinoIcons.chevron_right,
                   size: 16,

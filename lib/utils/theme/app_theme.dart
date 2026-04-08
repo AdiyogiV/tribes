@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Theme configuration for the app - Farm & Astrology inspired
 /// Light mode: Farm colors from logo (sun, cow, sky)
@@ -20,6 +21,12 @@ class AppTheme {
       letterSpacing: letterSpacing,
     );
   }
+
+  // ============================================
+  // HOLYCOW PAGE — CONFIGURABLE TEXT SIZE
+  // Change this single value to resize all text on the HolyCow dashboard.
+  // ============================================
+  static const double holyCowTextSize = 15.0;
 
   // ============================================
   // PRIMARY COLORS - Astrology Dark Brown Theme
@@ -331,6 +338,97 @@ class AppTheme {
   static const Color pastelLilac = Color(0xFFB39DDB); // Evening sky
 
   // ============================================
+  // COMMONLY USED COLORS - Extracted from codebase
+  // ============================================
+
+  /// Active/online green (Material Green 500) - calls, status indicators
+  static const Color activeGreen = Color(0xFF4CAF50);
+
+  /// Pure black - story backgrounds, pitch-black overlays
+  static const Color pitchBlack = Color(0xFF000000);
+
+  /// Cosmic purple - astrology accents, onboarding highlights
+  static const Color cosmicPurple = Color(0xFF8B5CF6);
+
+  /// Dark sheet/card background (iOS-style dark surface)
+  static const Color sheetDarkColor = Color(0xFF1C1C1E);
+
+  /// Danger/end-call red (Material Red 600)
+  static const Color dangerRed = Color(0xFFE53935);
+
+  /// Warm skeleton placeholder (light mode)
+  static const Color skeletonLightColor = Color(0xFFF0EDE8);
+
+  /// Dark gradient base - share cards, call screens
+  static const Color darkGradientBase = Color(0xFF1A1A2E);
+
+  /// Emerald green - creation dialogs, highlights
+  static const Color emeraldGreen = Color(0xFF10B981);
+
+  /// Warm cream - preview box light background
+  static const Color previewLightColor = Color(0xFFFFFBE8);
+
+  /// Gold - astrology accents, raj yogas
+  static const Color goldColor = Color(0xFFFFD700);
+
+  /// Pink accent - creation dialogs, astrology
+  static const Color pinkAccent = Color(0xFFEC4899);
+
+  /// Skeleton base (light mode)
+  static const Color skeletonBaseLight = Color(0xFFE8E0D5);
+
+  /// Warm dark brown - preview box dark background
+  static const Color previewDarkColor = Color(0xFF2A2520);
+
+  /// Dark gradient mid tone - share cards
+  static const Color darkGradientMid = Color(0xFF0F1624);
+
+  /// Light border/input color
+  static const Color borderLightColor = Color(0xFFE0D8CC);
+
+  /// Skeleton shimmer (light mode)
+  static const Color skeletonShimmerLight = Color(0xFFD8CFC2);
+
+  /// Near-black surface
+  static const Color nearBlackColor = Color(0xFF1A1A1A);
+
+  /// Aquamarine - life phase sync accent
+  static const Color aquamarine = Color(0xFF7FFFD4);
+
+  /// Amber accent - pitta dosha, onboarding
+  static const Color amberAccent = Color(0xFFF59E0B);
+
+  /// Rose pink - compatibility card accent
+  static const Color rosePink = Color(0xFFF472B6);
+
+  /// Lavender glow - ashtakoot card accent
+  static const Color lavenderGlow = Color(0xFFE8B4F8);
+
+  /// Soft violet - cosmic vibe card accent
+  static const Color softViolet = Color(0xFFA78BFA);
+
+  /// Indigo - creation dialogs, group call avatars
+  static const Color indigoColor = Color(0xFF6366F1);
+
+  /// Dark placeholder surface
+  static const Color darkPlaceholder = Color(0xFF252525);
+
+  /// Deepest dark gradient tone - share cards
+  static const Color darkGradientDeep = Color(0xFF0A0E17);
+
+  /// Light blue accent - life phase sync, compatibility
+  static const Color lightBlueAccent = Color(0xFF64B5F6);
+
+  /// Call screen background
+  static const Color callBackground = Color(0xFF0D0D0D);
+
+  /// Call gradient mid tone
+  static const Color callGradientMid = Color(0xFF16213E);
+
+  /// Dark elevated surface (dark mode cards, replies)
+  static const Color darkElevatedSurface = Color(0xFF2A2A2A);
+
+  // ============================================
   // ASTROLOGY SPECIFIC COLORS (using primary colors)
   // ============================================
 
@@ -458,7 +556,7 @@ class AppTheme {
             ? Colors.black.withValues(alpha: 0.4)
             : Colors.black.withValues(alpha: 0.08),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
         ),
       ),
 
@@ -469,7 +567,7 @@ class AppTheme {
           foregroundColor: isDarkMode ? const Color(0xFF080C14) : Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
           ),
           elevation: 2,
           shadowColor: primaryClr.withValues(alpha: 0.4),
@@ -487,7 +585,7 @@ class AppTheme {
           foregroundColor: primaryClr,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
           ),
           textStyle: const TextStyle(
             fontWeight: FontWeight.w600,
@@ -504,7 +602,7 @@ class AppTheme {
           side: BorderSide(color: primaryClr, width: 1.5),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
           ),
           textStyle: const TextStyle(
             fontWeight: FontWeight.w600,
@@ -520,7 +618,7 @@ class AppTheme {
         foregroundColor: const Color(0xFF080C14),
         elevation: 4,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
         ),
       ),
 
@@ -696,7 +794,7 @@ class AppTheme {
             ? Colors.white.withValues(alpha: 0.05)
             : const Color(0xFFF5F2ED),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
           borderSide: BorderSide(
             color: isDarkMode
                 ? Colors.white.withValues(alpha: 0.15)
@@ -705,7 +803,7 @@ class AppTheme {
           ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
           borderSide: BorderSide(
             color: isDarkMode
                 ? Colors.white.withValues(alpha: 0.15)
@@ -714,21 +812,21 @@ class AppTheme {
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
           borderSide: BorderSide(
             color: primaryClr,
             width: 2.0,
           ),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
           borderSide: const BorderSide(
             color: errorColor,
             width: 1.5,
           ),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
           borderSide: const BorderSide(
             color: errorColor,
             width: 2.0,
@@ -773,9 +871,9 @@ class AppTheme {
           fontSize: 13,
           fontWeight: FontWeight.w500,
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd, vertical: AppDimensions.paddingSm),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
         ),
       ),
 
@@ -784,7 +882,7 @@ class AppTheme {
         backgroundColor: isDarkMode ? cardDarkColor : cardLightColor,
         elevation: 8,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
         ),
         titleTextStyle: TextStyle(
           color: textClr,
@@ -821,7 +919,7 @@ class AppTheme {
         actionTextColor: accentColor,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
         ),
       ),
 
@@ -831,7 +929,7 @@ class AppTheme {
         textColor: textClr,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
         ),
       ),
 
@@ -865,7 +963,7 @@ class AppTheme {
           isDarkMode ? const Color(0xFF080C14) : Colors.white,
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
         ),
       ),
 

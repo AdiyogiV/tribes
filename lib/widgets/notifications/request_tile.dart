@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:aurogram/models/space.dart';
-import 'package:aurogram/pages/requests.dart';
+import 'package:aurogram/pages/social/requests.dart';
 import 'package:aurogram/services/database_service.dart';
 import 'package:aurogram/services/space_service.dart';
 import 'package:aurogram/utils/time_display.dart';
@@ -12,6 +12,8 @@ import 'package:aurogram/widgets/preview_boxes/gram_picture.dart';
 import 'package:aurogram/widgets/preview_boxes/user_picture.dart';
 import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/widgets/common/snack_bar_service.dart';
 
 class RequestTile extends StatefulWidget {
   final Map? data;
@@ -115,25 +117,18 @@ class _RequestTileState extends State<RequestTile> {
                       return Requests(space: widget.data!['space']);
                     }));
                   } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Gram information is unavailable'),
-                        duration: Duration(seconds: 2),
-                        behavior: SnackBarBehavior.fixed,
-                        backgroundColor: AppTheme.errorColor,
-                      ),
-                    );
+                    showCustomSnackBar(context, message: 'Gram information is unavailable', backgroundColor: AppTheme.errorColor, duration: const Duration(seconds: 2), behavior: SnackBarBehavior.fixed);
                   }
                 },
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingMd),
                   child: Row(
                     children: [
                       Container(
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
                           border:
                               Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.2), width: 1),
                         ),
@@ -151,7 +146,7 @@ class _RequestTileState extends State<RequestTile> {
                                 ),
                         ),
                       ),
-                      SizedBox(width: 12),
+                      SizedBox(width: AppDimensions.spacingMd),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -159,24 +154,24 @@ class _RequestTileState extends State<RequestTile> {
                             Text(
                               '$requestorName requested to join $space',
                               style: TextStyle(
-                                fontSize: 15,
+                                fontSize: AppTheme.holyCowTextSize,
                                 fontWeight: FontWeight.w600,
                                 color: AppTheme.textColor,
                                 height: 1.3,
                               ),
                             ),
-                            SizedBox(height: 3),
+                            SizedBox(height: AppDimensions.spacingXxxs),
                             Text(
                               date,
                               style: TextStyle(
-                                fontSize: 13,
+                                fontSize: AppTheme.holyCowTextSize,
                                 color: AppTheme.textSecondaryColor,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      SizedBox(width: 12),
+                      SizedBox(width: AppDimensions.spacingMd),
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -184,7 +179,7 @@ class _RequestTileState extends State<RequestTile> {
                             width: 40,
                             height: 40,
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(20),
+                              borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
                               border: Border.all(
                                   color: AppTheme.primaryColor.withValues(alpha: 0.2), width: 1),
                             ),
@@ -204,7 +199,7 @@ class _RequestTileState extends State<RequestTile> {
                                     ),
                             ),
                           ),
-                          SizedBox(width: 8),
+                          SizedBox(width: AppDimensions.spacingSm),
                           Icon(
                             Icons.chevron_right,
                             color: AppTheme.textSecondaryColor,
@@ -219,7 +214,7 @@ class _RequestTileState extends State<RequestTile> {
             ),
           )
         : const Padding(
-            padding: EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+            padding: EdgeInsets.symmetric(vertical: AppDimensions.paddingXs, horizontal: AppDimensions.paddingLg),
             child: SkeletonListItem(height: 70),
           );
   }

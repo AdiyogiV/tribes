@@ -1,3 +1,5 @@
+import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:aurogram/utils/theme/header_style.dart';
 import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
@@ -17,7 +19,7 @@ class MessageSkeletons extends StatelessWidget {
           _MessageSectionLabelSkeleton(isDark: isDark),
           ...List.generate(
               5, (index) => _MessageCardSkeleton(index: index, isDark: isDark)),
-          SizedBox(height: 16),
+          SizedBox(height: AppDimensions.spacingLg),
           _MessageSectionLabelSkeleton(isDark: isDark),
           ...List.generate(
               3,
@@ -41,7 +43,7 @@ class _MessageSectionLabelSkeleton extends StatelessWidget {
         isDark ? Theme.of(context).colorScheme.surface : Colors.white;
     // Warm beige colors matching feed skeleton
     final Color placeholder =
-        isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE8E0D5);
+        isDark ? Colors.white.withValues(alpha: 0.08) : AppTheme.skeletonBaseLight;
 
     return Padding(
       padding: EdgeInsets.fromLTRB(
@@ -66,10 +68,10 @@ class _MessageSectionLabelSkeleton extends StatelessWidget {
                   height: 12,
                   decoration: BoxDecoration(
                     color: placeholder,
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusSmMd),
                   ),
                 ),
-                SizedBox(width: 10),
+                SizedBox(width: AppDimensions.spacingMdSm),
                 Container(
                   width: 32,
                   height: 18,
@@ -100,9 +102,9 @@ class _MessageCardSkeleton extends StatelessWidget {
         isDark ? Theme.of(context).colorScheme.surface : Colors.white;
     // Warm beige colors matching feed skeleton
     final Color placeholder =
-        isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE8E0D5);
+        isDark ? Colors.white.withValues(alpha: 0.08) : AppTheme.skeletonBaseLight;
     final Color placeholderDark =
-        isDark ? Colors.white.withValues(alpha: 0.14) : const Color(0xFFD8CFC2);
+        isDark ? Colors.white.withValues(alpha: 0.14) : AppTheme.skeletonShimmerLight;
 
     // Vary widths naturally for organic look
     final nameWidths = [100.0, 85.0, 115.0, 90.0, 105.0, 80.0, 95.0, 110.0];
@@ -135,7 +137,7 @@ class _MessageCardSkeleton extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                 ),
-                SizedBox(width: 14),
+                SizedBox(width: AppDimensions.spacingMdLg),
                 // Content
                 Expanded(
                   child: Column(
@@ -151,7 +153,7 @@ class _MessageCardSkeleton extends StatelessWidget {
                           borderRadius: BorderRadius.circular(7),
                         ),
                       ),
-                      SizedBox(height: 6),
+                      SizedBox(height: AppDimensions.spacingSmMd),
                       // Message preview
                       Container(
                         width: msgWidths[index % msgWidths.length],
@@ -177,7 +179,7 @@ class _MessageCardSkeleton extends StatelessWidget {
                         borderRadius: BorderRadius.circular(5),
                       ),
                     ),
-                    SizedBox(width: 8),
+                    SizedBox(width: AppDimensions.spacingSm),
                     // Namaste button area
                     Container(
                       width: 36,

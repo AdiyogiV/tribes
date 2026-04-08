@@ -6,6 +6,7 @@ import 'package:aurogram/utils/media_type_selector.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/utils/theme/header_style.dart';
 import 'package:aurogram/widgets/dialogs/login_bottom_sheet.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Instagram-like creation hub that appears when swiping right from feed
 /// Shows options to create a new post or story
@@ -60,7 +61,7 @@ class _CreationHubPageState extends State<CreationHubPage> {
       ),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+          padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingXxl),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -71,14 +72,14 @@ class _CreationHubPageState extends State<CreationHubPage> {
                 subtitle: 'Share photos, videos, or notes',
                 gradient: LinearGradient(
                   colors: [
-                    const Color(0xFF6366F1), // Indigo
-                    const Color(0xFFEC4899), // Pink
+                    AppTheme.indigoColor, // Indigo
+                    AppTheme.pinkAccent, // Pink
                   ],
                 ),
                 onTap: () => _createPost(context),
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: AppDimensions.spacingXxl),
 
               // Story option
               _CreationOption(
@@ -88,7 +89,7 @@ class _CreationHubPageState extends State<CreationHubPage> {
                 gradient: LinearGradient(
                   colors: [
                     const Color(0xFF0EA5E9), // Sky blue
-                    const Color(0xFF10B981), // Green
+                    AppTheme.emeraldGreen, // Green
                   ],
                 ),
                 onTap: () => _createStory(context),
@@ -125,7 +126,7 @@ class _CreationOption extends StatelessWidget {
         height: 140,
         decoration: BoxDecoration(
           gradient: gradient,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusXxl),
           boxShadow: [
             BoxShadow(
               color: AppTheme.primaryColor.withValues(alpha: 0.3),
@@ -138,9 +139,9 @@ class _CreationOption extends StatelessWidget {
           color: Colors.transparent,
           child: InkWell(
             onTap: onTap,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusXxl),
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(AppDimensions.paddingXxl),
               child: Row(
                 children: [
                   // Icon
@@ -149,7 +150,7 @@ class _CreationOption extends StatelessWidget {
                     height: 64,
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
                     ),
                     child: Icon(
                       icon,
@@ -157,7 +158,7 @@ class _CreationOption extends StatelessWidget {
                       size: 32,
                     ),
                   ),
-                  const SizedBox(width: 20),
+                  const SizedBox(width: AppDimensions.spacingXl),
                   // Text content
                   Expanded(
                     child: Column(
@@ -172,7 +173,7 @@ class _CreationOption extends StatelessWidget {
                             color: Colors.white,
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: AppDimensions.spacingSmMd),
                         Text(
                           subtitle,
                           style: TextStyle(

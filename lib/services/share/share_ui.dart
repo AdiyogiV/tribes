@@ -1,3 +1,4 @@
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
 import 'package:aurogram/widgets/chat/chat_picker_sheet.dart';
@@ -52,7 +53,7 @@ class ShareUi {
                 children: [
                   Icon(CupertinoIcons.add_circled,
                       color: AppTheme.primaryColor, size: 20),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppDimensions.spacingSm),
                   Text('Add to Story',
                       style: TextStyle(color: AppTheme.primaryColor)),
                 ],
@@ -70,7 +71,7 @@ class ShareUi {
                 children: [
                   Icon(CupertinoIcons.chat_bubble,
                       color: AppTheme.primaryColor, size: 20),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppDimensions.spacingSm),
                   Text('Send in Chat',
                       style: TextStyle(color: AppTheme.primaryColor)),
                 ],
@@ -87,7 +88,7 @@ class ShareUi {
               children: [
                 Icon(CupertinoIcons.share,
                     color: AppTheme.primaryColor, size: 20),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppDimensions.spacingSm),
                 Text('Share via...',
                     style: TextStyle(color: AppTheme.primaryColor)),
               ],
@@ -107,7 +108,7 @@ class ShareUi {
                 children: [
                   Icon(CupertinoIcons.doc_on_clipboard,
                       color: AppTheme.primaryColor, size: 20),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppDimensions.spacingSm),
                   Text('Copy Link',
                       style: TextStyle(color: AppTheme.primaryColor)),
                 ],
@@ -197,7 +198,7 @@ class ShareUi {
                 children: [
                   Icon(CupertinoIcons.chat_bubble,
                       color: AppTheme.primaryColor, size: 20),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppDimensions.spacingSm),
                   Text('Send in Chat',
                       style: TextStyle(color: AppTheme.primaryColor)),
                 ],
@@ -217,7 +218,7 @@ class ShareUi {
                 children: [
                   Icon(CupertinoIcons.doc_on_clipboard,
                       color: AppTheme.primaryColor, size: 20),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppDimensions.spacingSm),
                   Text('Copy Link',
                       style: TextStyle(color: AppTheme.primaryColor)),
                 ],

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/utils/navigation/dynamic_link_navigator.dart';
-import 'package:aurogram/widgets/user_avatar.dart';
+import 'package:aurogram/widgets/common/user_avatar.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// A card widget that displays shared content (post, profile, space, insight) in chat
 class SharedContentCard extends StatelessWidget {
@@ -69,7 +70,7 @@ class SharedContentCard extends StatelessWidget {
               color: textColor,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppDimensions.spacingSm),
         ],
 
         // Shared content card - transparent, inherits bubble styling
@@ -104,12 +105,12 @@ class SharedContentCard extends StatelessWidget {
 
               // Content row
               Padding(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(AppDimensions.paddingSm),
                 child: Row(
                   children: [
                     // Leading icon/avatar
                     _buildLeading(context),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: AppDimensions.spacingMd),
 
                     // Text content
                     Expanded(
@@ -130,7 +131,7 @@ class SharedContentCard extends StatelessWidget {
 
                           // Subtitle
                           if (_subtitle != null) ...[
-                            const SizedBox(height: 4),
+                            const SizedBox(height: AppDimensions.spacingXs),
                             Text(
                               _subtitle!,
                               style: TextStyle(
@@ -144,7 +145,7 @@ class SharedContentCard extends StatelessWidget {
 
                           // Author
                           if (_authorName != null) ...[
-                            const SizedBox(height: 4),
+                            const SizedBox(height: AppDimensions.spacingXs),
                             Text(
                               'by $_authorName',
                               style: TextStyle(
@@ -195,7 +196,7 @@ class SharedContentCard extends StatelessWidget {
     if (_type == 'space') {
       if (_imageUrl != null) {
         return ClipRRect(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm),
           child: CachedNetworkImage(
             imageUrl: _imageUrl!,
             width: size,
@@ -246,7 +247,7 @@ class SharedContentCard extends StatelessWidget {
                 ? Colors.white.withValues(alpha: 0.15)
                 : AppTheme.primaryColor.withValues(alpha: 0.12))
             : AppTheme.primaryColor.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm),
       ),
       child: Icon(
         icon,
@@ -301,7 +302,7 @@ class ForwardedIndicator extends StatelessWidget {
                 ? Colors.white.withValues(alpha: 0.6)
                 : (isDark ? Colors.grey[500] : Colors.grey[500]),
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: AppDimensions.spacingXs),
           Text(
             'Forwarded',
             style: TextStyle(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// High-performance base widget for input areas.
 /// 
@@ -41,7 +42,7 @@ class ResponsiveInputBase extends StatelessWidget {
             color: isDark 
                 ? surface.withValues(alpha: 0.92)
                 : Colors.white.withValues(alpha: 0.95),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
             // Subtle shadow for depth
             boxShadow: [
               BoxShadow(
@@ -59,11 +60,11 @@ class ResponsiveInputBase extends StatelessWidget {
             ),
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
             child: Material(
               color: Colors.transparent,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
                 child: child,
               ),
             ),
@@ -102,7 +103,7 @@ class ResponsiveInputGradient extends StatelessWidget {
         child: Container(
           height: height,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
             // Subtle gradient instead of blur
             gradient: LinearGradient(
               begin: Alignment.topLeft,
@@ -135,11 +136,11 @@ class ResponsiveInputGradient extends StatelessWidget {
             ),
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
             child: Material(
               color: Colors.transparent,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
                 child: child,
               ),
             ),

@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
 /// Custom painter for animated star field background in onboarding
@@ -66,7 +67,7 @@ class AnimatedStarField extends StatelessWidget {
         return CustomPaint(
           painter: StarFieldPainter(
             rotation: rotationAnimation.value * 2 * math.pi,
-            color: const Color(0xFF8B5CF6).withValues(alpha: alphaMultiplier),
+            color: AppTheme.cosmicPurple.withValues(alpha: alphaMultiplier),
           ),
         );
       },

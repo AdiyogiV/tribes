@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:aurogram/config/api_endpoints.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
 
 class AnonymousMessageService {
@@ -107,7 +108,7 @@ class AnonymousMessageService {
   }
 
   String buildShareLink(String slug) {
-    return 'https://aurogram.in/s/$slug';
+    return '${ApiEndpoints.appBaseUrl}/s/$slug';
   }
 
   String buildSharePrefill() {

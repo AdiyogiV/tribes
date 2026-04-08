@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:aurogram/models/daily_insight.dart';
 import 'package:aurogram/widgets/astrology/insight_cards/astro_card_theme.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Prediction card - future forecast with subtle highlight
 class PredictionCard extends StatelessWidget {
   final InsightSection section;
   
-  const PredictionCard({Key? key, required this.section}) : super(key: key);
+  const PredictionCard({super.key, required this.section});
 
   @override
   Widget build(BuildContext context) {
@@ -16,12 +17,12 @@ class PredictionCard extends StatelessWidget {
       color: theme.cardBackground,
       elevation: 2,
       shadowColor: Colors.black.withValues(alpha: 0.2),
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
       child: Container(
         width: double.infinity,
         padding: theme.cardPadding,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
           // Subtle gradient to make prediction feel special
           gradient: LinearGradient(
             begin: Alignment.topLeft,

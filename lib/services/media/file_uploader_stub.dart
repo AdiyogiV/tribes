@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-import 'package:firebase_storage/firebase_storage.dart';
 
 /// Stub file uploader for web - only supports bytes upload
 class FileUploader {

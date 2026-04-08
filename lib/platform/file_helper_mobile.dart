@@ -1,4 +1,5 @@
 /// Mobile implementation of file helpers using dart:io
+library;
 
 import 'dart:io' as io;
 import 'dart:typed_data';

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:aurogram/utils/astrology/dasha_utils.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Shows detailed information about a Dasha level in a bottom sheet
 class DashaLevelDialog extends StatelessWidget {
@@ -38,7 +39,7 @@ class DashaLevelDialog extends StatelessWidget {
     final duration = DashaUtils.formatDurationLabel(
         level['startDate'] as String?, level['endDate'] as String?);
 
-    final sheetColor = isDark ? const Color(0xFF1A1A1A) : Colors.white;
+    final sheetColor = isDark ? AppTheme.nearBlackColor : Colors.white;
 
     return Padding(
       padding: EdgeInsets.only(
@@ -51,10 +52,10 @@ class DashaLevelDialog extends StatelessWidget {
         constraints: BoxConstraints(
           maxHeight: MediaQuery.of(context).size.height * 0.8,
         ),
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(AppDimensions.paddingXl),
         decoration: BoxDecoration(
           color: sheetColor,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
           border: Border.all(
             color: isDark
                 ? Colors.white.withValues(alpha: 0.08)
@@ -74,10 +75,10 @@ class DashaLevelDialog extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(AppDimensions.paddingMd),
                   decoration: BoxDecoration(
                     color: AppTheme.primaryColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                   ),
                   child: Icon(
                     level['icon'] as IconData? ?? Icons.bolt_rounded,
@@ -85,7 +86,7 @@ class DashaLevelDialog extends StatelessWidget {
                     color: AppTheme.primaryColor,
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: AppDimensions.spacingLg),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -99,7 +100,7 @@ class DashaLevelDialog extends StatelessWidget {
                               isDark ? Colors.white : const Color(0xFF1F1F1F),
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: AppDimensions.spacingXs),
                       Text(
                         level['lord'] as String? ?? '—',
                         style: TextStyle(
@@ -108,7 +109,7 @@ class DashaLevelDialog extends StatelessWidget {
                           color: isDark ? Colors.white : Colors.black87,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: AppDimensions.spacingXxs),
                       Text(
                         dateRange,
                         style: TextStyle(
@@ -120,7 +121,7 @@ class DashaLevelDialog extends StatelessWidget {
                         ),
                       ),
                       if (duration != null) ...[
-                        const SizedBox(height: 2),
+                        const SizedBox(height: AppDimensions.spacingXxs),
                         Text(
                           duration,
                           style: TextStyle(
@@ -146,7 +147,7 @@ class DashaLevelDialog extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppDimensions.spacingLg),
             Text(
               'PERIODS',
               style: TextStyle(
@@ -156,7 +157,7 @@ class DashaLevelDialog extends StatelessWidget {
                 color: AppTheme.primaryColor,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppDimensions.spacingMd),
             Expanded(
               child: periods.isEmpty
                   ? Center(
@@ -248,7 +249,7 @@ class _DashaPeriodTile extends StatelessWidget {
               ),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppDimensions.spacingXs),
         Text(
           range,
           style: TextStyle(
@@ -260,7 +261,7 @@ class _DashaPeriodTile extends StatelessWidget {
           ),
         ),
         if (duration != null) ...[
-          const SizedBox(height: 2),
+          const SizedBox(height: AppDimensions.spacingXxs),
           Text(
             duration,
             style: TextStyle(

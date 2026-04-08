@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Data class for house information
 class HouseInfo {
@@ -42,12 +43,12 @@ class HouseDetailsDialog extends StatelessWidget {
 
     return Dialog(
       backgroundColor: bg,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusXl)),
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 340),
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(AppDimensions.paddingXl),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -56,19 +57,19 @@ class HouseDetailsDialog extends StatelessWidget {
               Row(
                 children: [
                   _badge(color),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppDimensions.spacingMd),
                   Expanded(child: _title(color)),
                   _closeButton(context),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppDimensions.spacingLg),
 
               // Interpretation
               _interpretationCard(color),
 
               // Planets
               if (info.planets.isNotEmpty) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: AppDimensions.spacingMd),
                 _planetChips(),
               ],
             ],
@@ -80,10 +81,10 @@ class HouseDetailsDialog extends StatelessWidget {
 
   Widget _badge(Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd, vertical: AppDimensions.paddingSm),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(10),
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -97,13 +98,13 @@ class HouseDetailsDialog extends StatelessWidget {
               height: 1,
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: AppDimensions.spacingXxs),
           Text(
             'House',
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w600,
-              color: color.withOpacity(0.8),
+              color: color.withValues(alpha: 0.8),
               height: 1,
             ),
           ),
@@ -164,18 +165,18 @@ class HouseDetailsDialog extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(AppDimensions.paddingMdLg),
       decoration: BoxDecoration(
         color:
-            isDark ? Colors.white.withOpacity(0.05) : color.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(12),
+            isDark ? Colors.white.withValues(alpha: 0.05) : color.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
       ),
       child: Text(
         text,
         style: TextStyle(
           fontSize: 14,
           height: 1.5,
-          color: isDark ? Colors.white.withOpacity(0.85) : Colors.black87,
+          color: isDark ? Colors.white.withValues(alpha: 0.85) : Colors.black87,
         ),
       ),
     );
@@ -190,9 +191,9 @@ class HouseDetailsDialog extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
             color: isDark
-                ? Colors.amber.withOpacity(0.15)
-                : Colors.orange.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(16),
+                ? Colors.amber.withValues(alpha: 0.15)
+                : Colors.orange.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
           ),
           child: Text(
             '${_planetSymbol(p)} $p',

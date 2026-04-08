@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
+import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 class GroupCallTopBar extends StatelessWidget {
   final String spaceName;
@@ -28,7 +30,7 @@ class GroupCallTopBar extends StatelessWidget {
       left: 0,
       right: 0,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingMd),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -54,7 +56,7 @@ class GroupCallTopBar extends StatelessWidget {
                     color: Colors.white, size: 20),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppDimensions.spacingMd),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -69,7 +71,7 @@ class GroupCallTopBar extends StatelessWidget {
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: AppDimensions.spacingXxs),
                   ValueListenableBuilder<int>(
                     valueListenable: callDuration,
                     builder: (context, duration, _) {
@@ -80,11 +82,11 @@ class GroupCallTopBar extends StatelessWidget {
                               width: 6,
                               height: 6,
                               decoration: const BoxDecoration(
-                                color: Color(0xFF4CAF50),
+                                color: AppTheme.activeGreen,
                                 shape: BoxShape.circle,
                               ),
                             ),
-                            const SizedBox(width: 6),
+                            const SizedBox(width: AppDimensions.spacingSmMd),
                           ],
                           Text(
                             isJoining
@@ -104,18 +106,18 @@ class GroupCallTopBar extends StatelessWidget {
             ),
             if (!isJoining)
               _ConnectionQualityIndicator(quality: connectionQuality),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppDimensions.spacingSm),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Icon(Icons.people, color: Colors.white, size: 16),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: AppDimensions.spacingXs),
                   Text(
                     '$participantsCount',
                     style: const TextStyle(
@@ -145,7 +147,7 @@ class _ConnectionQualityIndicator extends StatelessWidget {
     final String tooltip;
 
     if (quality >= 4) {
-      color = const Color(0xFF4CAF50);
+      color = AppTheme.activeGreen;
       icon = Icons.signal_cellular_4_bar;
       tooltip = 'Excellent connection';
     } else if (quality >= 3) {

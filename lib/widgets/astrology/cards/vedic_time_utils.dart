@@ -1,6 +1,19 @@
 import 'package:aurogram/utils/logging/app_logger.dart';
 
-/// Utility class for Vedic time calculations
+/// Utility class for Vedic time calculations.
+///
+/// IMPORTANT — Birth Date vs Today's Date:
+/// This class has TWO distinct use cases that must NEVER be mixed:
+///
+/// 1. **TODAY's Vedic Date** (HolyCow page, cosmic dashboard):
+///    - Data source: `DailyInsight.astrologicalData['todaySamvat']` + `['panchang']`
+///    - Or: `SkyPositionsService.getTodayPanchang()` (global panchang)
+///    - Use [buildFullVedicDate] and [buildSamvatYear] (validates against current year)
+///
+/// 2. **BIRTH Vedic Date** (astrology details page, samvat card):
+///    - Data source: `AstrologyProfile.birthSamvatInfo`
+///    - Use [buildFullVedicDate] and [buildBirthSamvatYear] (no year validation)
+///    - Use [filterBirthSamvat] to verify data matches birth date
 class VedicTimeUtils {
   /// Calculate Vedic time details (Prahar, Ghati, Pala)
   /// Uses 8 Prahar system: 8 consecutive prahars from sunrise to sunrise
@@ -14,39 +27,32 @@ class VedicTimeUtils {
   static String getVedicTimeDetails(DateTime time) {
     final hour = time.hour;
     final minute = time.minute;
+    final second = time.second;
 
     // Use device's local time - this is already in the user's timezone
     // Approximate sunrise at 6 AM (equinox average)
     // NOTE: This is an approximation - actual times vary by ~2 hours seasonally
     const sunriseHour = 6;
 
-    // Calculate minutes from sunrise (Vedic timekeeping measures from sunrise to sunrise)
-    var minutesFromSunrise = (hour - sunriseHour) * 60 + minute;
-    if (minutesFromSunrise < 0) {
-      minutesFromSunrise += 24 * 60;
+    // Calculate seconds from sunrise (for Pala-level precision)
+    var secondsFromSunrise = (hour - sunriseHour) * 3600 + minute * 60 + second;
+    if (secondsFromSunrise < 0) {
+      secondsFromSunrise += 24 * 3600;
     }
 
+    final minutesFromSunrise = secondsFromSunrise / 60.0;
+
     // Calculate Prahar (1 Prahar = 3 hours = 180 minutes)
-    // Prahar 1-8: each represents a 3-hour period starting from sunrise
     final prahar = (minutesFromSunrise ~/ 180) + 1;
-    
-    final praharNames = [
-      'Pratham', 'Dwitiya', 'Tritiya', 'Chaturth',
-      'Pancham', 'Shashth', 'Saptam', 'Ashtam'
-    ];
-    final praharName = praharNames[(prahar - 1) % 8];
-    
-    final praharOrdinal = _getOrdinal(prahar);
 
-    // Convert to Ghatis (1 Ghati = 24 minutes)
-    final totalGhatis = minutesFromSunrise / 24.0;
-    final ghati = totalGhatis.floor();
-    // Calculate remaining Pala (1 Ghati = 60 Pala, 1 Pala = 24 seconds = 0.4 minutes)
-    final remainingMinutes = minutesFromSunrise - (ghati * 24);
-    final pala = (remainingMinutes / 0.4).round();
+    // Convert to Ghatis (1 Ghati = 24 minutes = 1440 seconds)
+    final ghati = secondsFromSunrise ~/ 1440;
+    // Calculate remaining Pala (1 Pala = 24 seconds)
+    final remainingSeconds = secondsFromSunrise - (ghati * 1440);
+    final pala = remainingSeconds ~/ 24;
 
-    // Format: "8th Ashtam Prahar • 32 Ghati 15 Pala"
-    return '$praharOrdinal $praharName Prahar • $ghati Ghati $pala Pala';
+    // Format: "8 Prahar 32 Ghati 15 Pala"
+    return '$prahar Prahar $ghati Ghati $pala Pala';
   }
 
   /// Get ordinal suffix for prahar number (1st, 2nd, 3rd, 4th, etc.)
@@ -59,7 +65,9 @@ class VedicTimeUtils {
     return '${num}th';
   }
 
-  /// Build full Vedic date string from panchang data
+  /// Build full Vedic date string from panchang data.
+  /// Works for both birth and today — returns "LunarMonth Paksha Tithi" format.
+  /// Example: "Chaitra Shukla Pratipada"
   static String? buildFullVedicDate(Map<String, dynamic>? samvat) {
     if (samvat == null) return null;
 
@@ -92,8 +100,10 @@ class VedicTimeUtils {
     return null;
   }
 
-  /// Build Samvat year string from panchang data
-  /// Validates that the year is reasonable (should be ~56-57 years ahead of Gregorian)
+  /// Build Samvat year for TODAY's date card.
+  /// Validates that the year is reasonable (should be ~56-57 years ahead of Gregorian).
+  /// Returns null if year is outside expected range (prevents showing birth year on today's card).
+  /// For birth date display, use [buildBirthSamvatYear] instead.
   static String? buildSamvatYear(Map<String, dynamic>? samvat) {
     if (samvat == null) return null;
 
@@ -120,17 +130,19 @@ class VedicTimeUtils {
 
       var result = 'Vikram Samvat $vikramNumber';
       if (vikramName != null) {
-        result = '$result ($vikramName)';
+        result = '$result $vikramName';
       }
       return result;
     }
     if (vikramName != null) {
-      return 'Vikram Samvat ($vikramName)';
+      return 'Vikram Samvat $vikramName';
     }
     return null;
   }
 
-  /// Build Samvat year string for birth data (no current-year validation).
+  /// Build Samvat year for BIRTH DATE display (no current-year validation).
+  /// Use this on the astrology details page with `profile.birthSamvatInfo`.
+  /// For today's date card, use [buildSamvatYear] instead (has year validation).
   static String? buildBirthSamvatYear(Map<String, dynamic>? samvat) {
     if (samvat == null) return null;
 
@@ -139,18 +151,19 @@ class VedicTimeUtils {
     if (vikramNumber != null) {
       var result = 'Vikram Samvat $vikramNumber';
       if (vikramName != null && vikramName.toString().isNotEmpty) {
-        result = '$result ($vikramName)';
+        result = '$result $vikramName';
       }
       return result;
     }
     if (vikramName != null && vikramName.toString().isNotEmpty) {
-      return 'Vikram Samvat ($vikramName)';
+      return 'Vikram Samvat $vikramName';
     }
     return null;
   }
 
-  /// Only use samvat data if it matches the birth date (within 1 day).
-  /// Prevents showing today's samvat in birth-focused views.
+  /// Filter samvat data to only match the BIRTH DATE (within 1 day).
+  /// Prevents today's samvat from leaking into birth-focused views.
+  /// Use with `profile.birthSamvatInfo` on the astrology details page.
   static Map<String, dynamic>? filterBirthSamvat(
     Map<String, dynamic>? samvat,
     DateTime? birthDate,
@@ -245,7 +258,9 @@ class VedicTimeUtils {
       if (trimmed.isNotEmpty) {
         try {
           return DateTime.parse(trimmed);
-        } catch (_) {}
+        } catch (_) {
+          // Fall through to regex parsing below
+        }
         final match =
             RegExp(r'(\d{4})[-/](\d{1,2})[-/](\d{1,2})').firstMatch(trimmed);
         if (match != null) {

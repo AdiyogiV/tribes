@@ -85,9 +85,8 @@ class ShareMedia {
         filePrefix: filePrefix,
       );
 
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        text: shareText,
+      await SharePlus.instance.share(
+        ShareParams(files: [XFile(file.path)], text: shareText),
       );
 
       Future.delayed(const Duration(seconds: 30), () {
@@ -121,9 +120,8 @@ class ShareMedia {
           card: card,
           filePrefix: filePrefix,
         );
-        await Share.shareXFiles(
-          [XFile(file.path)],
-          text: shareUrl,
+        await SharePlus.instance.share(
+          ShareParams(files: [XFile(file.path)], text: shareUrl),
         );
         Future.delayed(const Duration(seconds: 30), () {
           if (file.existsSync()) file.deleteSync();
@@ -159,9 +157,8 @@ class ShareMedia {
       if (!context.mounted) return;
       if (file != null && file.existsSync()) {
         try {
-          await Share.shareXFiles(
-            [XFile(file.path)],
-            text: shareUrl,
+          await SharePlus.instance.share(
+            ShareParams(files: [XFile(file.path)], text: shareUrl),
           );
           final f = file;
           Future.delayed(const Duration(seconds: 30), () {

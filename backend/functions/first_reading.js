@@ -2,11 +2,7 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { db, FieldValue, logger } from "../lib/firebase.js";
 import { geminiApiKey } from "../lib/secrets.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-
-// ============================================================================
-// CONFIGURATION - Using Gemini (cost-effective)
-// ============================================================================
-const GEMINI_MODEL = "gemini-2.0-flash"; // Stable, fast model (same as daily_astro_insights)
+import { AI_MODELS } from "../lib/config.js";
 
 // Birth reading generation parameters (personality/identity only)
 const FIRST_READING_CONFIG = {
@@ -76,12 +72,12 @@ TONE: Confident, personal, transformative. No jargon. No timing or predictions.
 OUTPUT: Your entire response must be valid markdown (headings, bold, bullets). Write the BIRTH reading now:`;
 
     const aiStartTime = Date.now();
-    logger.info("🤖 Starting Gemini call for first reading", { model: GEMINI_MODEL, userName, sunSign });
+    logger.info("🤖 Starting Gemini call for first reading", { model: AI_MODELS.GEMINI_FLASH, userName, sunSign });
 
     // Initialize Gemini
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
-        model: GEMINI_MODEL,
+        model: AI_MODELS.GEMINI_FLASH,
         generationConfig: {
             temperature: FIRST_READING_CONFIG.TEMPERATURE,
             maxOutputTokens: FIRST_READING_CONFIG.MAX_OUTPUT_TOKENS,
@@ -100,7 +96,7 @@ OUTPUT: Your entire response must be valid markdown (headings, bold, bullets). W
         logger.error("🤖 Gemini API call failed", {
             error: apiError.message,
             stack: apiError.stack?.substring(0, 500),
-            model: GEMINI_MODEL,
+            model: AI_MODELS.GEMINI_FLASH,
             hasApiKey: !!apiKey
         });
         throw new Error(`Gemini API error: ${apiError.message}`);

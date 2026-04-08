@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
 /// Centralized call UI configuration
@@ -27,10 +28,10 @@ class CallUIConfig {
   // ═══════════════════════════════════════════════════════════════
 
   /// Color when call is active
-  static const Color activeCallColor = Color(0xFF4CAF50);
+  static const Color activeCallColor = AppTheme.activeGreen;
 
   /// Color for end call button
-  static const Color endCallColor = Color(0xFFE53935);
+  static const Color endCallColor = AppTheme.dangerRed;
 
   /// Muted state color
   static const Color mutedColor = Color(0xFFFF9800);

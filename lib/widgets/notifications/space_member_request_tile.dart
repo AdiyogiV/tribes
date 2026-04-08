@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:aurogram/pages/tabs/user_profile.dart';
 import 'package:aurogram/utils/dependency_injection.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
-import 'package:aurogram/widgets/user_avatar.dart';
+import 'package:aurogram/widgets/common/user_avatar.dart';
 import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
 import 'package:aurogram/services/data/space_db_service.dart';
 import 'package:aurogram/services/user_service.dart';
+import 'package:aurogram/widgets/common/snack_bar_service.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Tile for space membership requests (used in Requests page)
 /// Shows accept/decline buttons for users requesting to join a space
@@ -81,23 +83,13 @@ class _SpaceMemberRequestTileState extends State<SpaceMemberRequestTile> {
           widget.onRefresh?.call();
         } else {
           setState(() => _isProcessing = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Failed to approve request'),
-              backgroundColor: AppTheme.errorColor,
-            ),
-          );
+          showCustomSnackBar(context, message: 'Failed to approve request', backgroundColor: AppTheme.errorColor);
         }
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isProcessing = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Failed to approve request'),
-            backgroundColor: AppTheme.errorColor,
-          ),
-        );
+        showCustomSnackBar(context, message: 'Failed to approve request', backgroundColor: AppTheme.errorColor);
       }
     }
   }
@@ -122,23 +114,13 @@ class _SpaceMemberRequestTileState extends State<SpaceMemberRequestTile> {
           widget.onRefresh?.call();
         } else {
           setState(() => _isProcessing = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Failed to decline request'),
-              backgroundColor: AppTheme.errorColor,
-            ),
-          );
+          showCustomSnackBar(context, message: 'Failed to decline request', backgroundColor: AppTheme.errorColor);
         }
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isProcessing = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Failed to decline request'),
-            backgroundColor: AppTheme.errorColor,
-          ),
-        );
+        showCustomSnackBar(context, message: 'Failed to decline request', backgroundColor: AppTheme.errorColor);
       }
     }
   }
@@ -157,7 +139,7 @@ class _SpaceMemberRequestTileState extends State<SpaceMemberRequestTile> {
   Widget build(BuildContext context) {
     if (!_ready) {
       return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+        padding: EdgeInsets.symmetric(vertical: AppDimensions.paddingXs, horizontal: AppDimensions.paddingLg),
         child: SkeletonListItem(height: 80),
       );
     }
@@ -169,7 +151,7 @@ class _SpaceMemberRequestTileState extends State<SpaceMemberRequestTile> {
       child: InkWell(
         onTap: _openProfile,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingMd),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -180,7 +162,7 @@ class _SpaceMemberRequestTileState extends State<SpaceMemberRequestTile> {
                 size: 44,
                 nameInitials: _userName.isNotEmpty ? _userName[0] : null,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppDimensions.spacingMd),
               // Content
               Expanded(
                 child: Column(
@@ -189,32 +171,32 @@ class _SpaceMemberRequestTileState extends State<SpaceMemberRequestTile> {
                     Text(
                       _userName,
                       style: TextStyle(
-                        fontSize: 15,
+                        fontSize: AppTheme.holyCowTextSize,
                         fontWeight: FontWeight.w600,
                         color: primaryColor,
                       ),
                     ),
                     if (_username.isNotEmpty) ...[
-                      const SizedBox(height: 2),
+                      const SizedBox(height: AppDimensions.spacingXxs),
                       Text(
                         '@$_username',
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: AppTheme.holyCowTextSize,
                           color: primaryColor.withValues(alpha: 0.6),
                         ),
                       ),
                     ],
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppDimensions.spacingXs),
                     Text(
                       'Wants to join this space',
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: AppTheme.holyCowTextSize,
                         color: primaryColor.withValues(alpha: 0.5),
                       ),
                     ),
                     // Action buttons
                     if (!_isApproved && !_isDeclined) ...[
-                      const SizedBox(height: 10),
+                      const SizedBox(height: AppDimensions.spacingMdSm),
                       Row(
                         children: [
                           // Approve button
@@ -223,10 +205,10 @@ class _SpaceMemberRequestTileState extends State<SpaceMemberRequestTile> {
                               onTap: _isProcessing ? null : _approveRequest,
                               child: Container(
                                 padding:
-                                    const EdgeInsets.symmetric(vertical: 8),
+                                    const EdgeInsets.symmetric(vertical: AppDimensions.paddingSm),
                                 decoration: BoxDecoration(
                                   color: AppTheme.successColor,
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
                                 ),
                                 child: _isProcessing
                                     ? const SizedBox(
@@ -240,7 +222,7 @@ class _SpaceMemberRequestTileState extends State<SpaceMemberRequestTile> {
                                         'Approve',
                                         textAlign: TextAlign.center,
                                         style: TextStyle(
-                                          fontSize: 13,
+                                          fontSize: AppTheme.holyCowTextSize,
                                           fontWeight: FontWeight.w600,
                                           color: Colors.white,
                                         ),
@@ -248,23 +230,23 @@ class _SpaceMemberRequestTileState extends State<SpaceMemberRequestTile> {
                               ),
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: AppDimensions.spacingSm),
                           // Decline button
                           Expanded(
                             child: GestureDetector(
                               onTap: _isProcessing ? null : _declineRequest,
                               child: Container(
                                 padding:
-                                    const EdgeInsets.symmetric(vertical: 8),
+                                    const EdgeInsets.symmetric(vertical: AppDimensions.paddingSm),
                                 decoration: BoxDecoration(
                                   color: primaryColor.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
                                 ),
                                 child: Text(
                                   'Decline',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
-                                    fontSize: 13,
+                                    fontSize: AppTheme.holyCowTextSize,
                                     fontWeight: FontWeight.w600,
                                     color: primaryColor,
                                   ),
@@ -275,11 +257,11 @@ class _SpaceMemberRequestTileState extends State<SpaceMemberRequestTile> {
                         ],
                       ),
                     ] else ...[
-                      const SizedBox(height: 8),
+                      const SizedBox(height: AppDimensions.spacingSm),
                       Text(
                         _isApproved ? 'Request approved' : 'Request declined',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: AppTheme.holyCowTextSize,
                           fontWeight: FontWeight.w500,
                           color: _isApproved
                               ? AppTheme.successColor

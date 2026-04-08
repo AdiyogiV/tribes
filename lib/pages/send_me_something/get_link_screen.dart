@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:aurogram/widgets/ui/common_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:aurogram/services/anonymous_message_service.dart';
@@ -8,6 +9,8 @@ import 'package:aurogram/widgets/dialogs/login_bottom_sheet.dart';
 import 'package:aurogram/widgets/universal/transparent_toolbox.dart';
 import 'package:aurogram/services/anonymous_message_settings_service.dart';
 import 'package:aurogram/pages/helpers/user_settings.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/widgets/common/snack_bar_service.dart';
 
 class SecretMessagesGetLinkScreen extends StatefulWidget {
   const SecretMessagesGetLinkScreen({super.key});
@@ -52,12 +55,7 @@ class _SecretMessagesGetLinkScreenState
     if (_link == null) return;
     await Clipboard.setData(ClipboardData(text: _link!));
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Link copied'),
-        backgroundColor: AppTheme.primaryColor,
-      ),
-    );
+    showCustomSnackBar(context, message: 'Link copied', backgroundColor: AppTheme.primaryColor);
   }
 
   Future<void> _shareLink() async {
@@ -104,7 +102,7 @@ class _SecretMessagesGetLinkScreenState
               backgroundColor: AppTheme.scaffoldColor,
               elevation: 0,
             ),
-            body: const Center(child: CircularProgressIndicator()),
+            body: const AppLoadingIndicator(),
           );
         }
 
@@ -120,7 +118,7 @@ class _SecretMessagesGetLinkScreenState
             ),
             body: SafeArea(
               child: Padding(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(AppDimensions.paddingXl),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -129,7 +127,7 @@ class _SecretMessagesGetLinkScreenState
                       size: 64,
                       color: AppTheme.primaryColor.withValues(alpha: 0.5),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: AppDimensions.spacingXxl),
                     Text(
                       'Anonymous messages are disabled',
                       style: TextStyle(
@@ -139,7 +137,7 @@ class _SecretMessagesGetLinkScreenState
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppDimensions.spacingMd),
                     Text(
                       'Enable anonymous messages in Settings > Privacy to receive messages.',
                       style: TextStyle(
@@ -148,7 +146,7 @@ class _SecretMessagesGetLinkScreenState
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: AppDimensions.spacingSection),
                     ElevatedButton(
                       onPressed: () {
                         Navigator.of(context).push(
@@ -182,9 +180,9 @@ class _SecretMessagesGetLinkScreenState
           ),
           body: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(AppDimensions.paddingXl),
               child: _loading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? const AppLoadingIndicator()
                   : Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -195,12 +193,12 @@ class _SecretMessagesGetLinkScreenState
                             color: AppTheme.textSecondaryColor,
                           ),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: AppDimensions.spacingMd),
                         Container(
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.all(AppDimensions.paddingMd),
                           decoration: BoxDecoration(
                             color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
                             border: Border.all(
                               color: AppTheme.primaryColor.withValues(alpha: 0.2),
                             ),
@@ -213,7 +211,7 @@ class _SecretMessagesGetLinkScreenState
                                 size: 18,
                                 color: AppTheme.primaryColor,
                               ),
-                              const SizedBox(width: 8),
+                              const SizedBox(width: AppDimensions.spacingSm),
                               Expanded(
                                 child: Text(
                                   'Safety tip: Only share your link with people you know. You can report or block any inappropriate messages.',
@@ -227,10 +225,10 @@ class _SecretMessagesGetLinkScreenState
                             ],
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: AppDimensions.spacingLg),
                         TransparentToolbox.buildCard(
                           context: context,
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(AppDimensions.paddingLg),
                           child: Text(
                             _link ?? 'Link unavailable',
                             style: TextStyle(
@@ -239,7 +237,7 @@ class _SecretMessagesGetLinkScreenState
                             ),
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: AppDimensions.spacingLg),
                         Row(
                           children: [
                             Expanded(
@@ -247,25 +245,25 @@ class _SecretMessagesGetLinkScreenState
                                 onPressed: _copyLink,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppTheme.primaryColor,
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingMdLg),
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                                   ),
                                 ),
                                 child: const Text('Copy link'),
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: AppDimensions.spacingMd),
                             Expanded(
                               child: OutlinedButton(
                                 onPressed: _shareLink,
                                 style: OutlinedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingMdLg),
                                   side: BorderSide(
                                     color: AppTheme.primaryColor,
                                   ),
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                                   ),
                                 ),
                                 child: Text(

@@ -5,6 +5,7 @@ import 'package:aurogram/services/astrology_service.dart';
 import 'package:aurogram/pages/astrology/astrology_details_page.dart';
 import 'package:aurogram/pages/astrology/astrology_setup_page.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Brown theme colors for astrology - uses AppTheme
 class AstroTheme {
@@ -75,15 +76,15 @@ class _AstrologyBadgeState extends State<AstrologyBadge> {
       color: Colors.transparent,
       child: InkWell(
         onTap: canNavigate ? () => _navigateToDetails(context) : null,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 20),
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(AppDimensions.paddingXl),
           decoration: BoxDecoration(
-            color: brownColor.withOpacity(isDark ? 0.12 : 0.08),
-            borderRadius: BorderRadius.circular(16),
+            color: brownColor.withValues(alpha: isDark ? 0.12 : 0.08),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
             border: Border.all(
-              color: brownColor.withOpacity(0.2),
+              color: brownColor.withValues(alpha: 0.2),
               width: 1,
             ),
           ),
@@ -94,8 +95,8 @@ class _AstrologyBadgeState extends State<AstrologyBadge> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: brownColor.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
+                  color: brownColor.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                 ),
                 child: Icon(
                   Icons.stars_rounded,
@@ -103,7 +104,7 @@ class _AstrologyBadgeState extends State<AstrologyBadge> {
                   size: 24,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: AppDimensions.spacingLg),
               // Content
               Expanded(
                 child: Column(
@@ -118,7 +119,7 @@ class _AstrologyBadgeState extends State<AstrologyBadge> {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppDimensions.spacingXs),
                     Text(
                       '${profile.ascendant ?? '—'} • ${profile.moonSign ?? '—'} • ${profile.sunSign ?? '—'}',
                       style: theme.textTheme.titleMedium?.copyWith(
@@ -137,7 +138,7 @@ class _AstrologyBadgeState extends State<AstrologyBadge> {
               if (canNavigate)
                 Icon(
                   Icons.arrow_forward_ios_rounded,
-                  color: theme.colorScheme.onSurfaceVariant.withOpacity(0.4),
+                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
                   size: 16,
                 ),
             ],
@@ -156,15 +157,15 @@ class _AstrologyBadgeState extends State<AstrologyBadge> {
       color: Colors.transparent,
       child: InkWell(
         onTap: () => _navigateToSetup(context),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 20),
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(AppDimensions.paddingXl),
           decoration: BoxDecoration(
-            color: brownColor.withOpacity(isDark ? 0.08 : 0.05),
-            borderRadius: BorderRadius.circular(16),
+            color: brownColor.withValues(alpha: isDark ? 0.08 : 0.05),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
             border: Border.all(
-              color: brownColor.withOpacity(0.15),
+              color: brownColor.withValues(alpha: 0.15),
               width: 1,
             ),
           ),
@@ -175,8 +176,8 @@ class _AstrologyBadgeState extends State<AstrologyBadge> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: brownColor.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(12),
+                  color: brownColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                 ),
                 child: Icon(
                   Icons.add_circle_outline_rounded,
@@ -184,7 +185,7 @@ class _AstrologyBadgeState extends State<AstrologyBadge> {
                   size: 24,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: AppDimensions.spacingLg),
               // Content
               Expanded(
                 child: Column(
@@ -199,7 +200,7 @@ class _AstrologyBadgeState extends State<AstrologyBadge> {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppDimensions.spacingXs),
                     Text(
                       'Add astrology',
                       style: theme.textTheme.titleMedium?.copyWith(
@@ -214,7 +215,7 @@ class _AstrologyBadgeState extends State<AstrologyBadge> {
               ),
               Icon(
                 Icons.arrow_forward_ios_rounded,
-                color: theme.colorScheme.onSurfaceVariant.withOpacity(0.4),
+                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
                 size: 16,
               ),
             ],

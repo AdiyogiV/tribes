@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:aurogram/widgets/ui/common_widgets.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
 import 'package:aurogram/services/data/post_db_service.dart';
 import 'package:aurogram/services/analytics_service.dart';
@@ -336,11 +337,9 @@ class ShareService {
       inviterName: inviterName,
     );
 
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (ctx) => GramCardPreviewSheet(
+    AppBottomSheet.show(
+      context,
+      child: GramCardPreviewSheet(
         card: card,
         spaceName: gramName,
         onCopyLink: () async {
@@ -349,13 +348,13 @@ class ShareService {
               inviterName: inviterName,
               inviterId: inviterId);
           await Clipboard.setData(ClipboardData(text: shareUrl));
-          if (ctx.mounted) {
-            Navigator.pop(ctx);
-            ShareUi.showSuccessSnackbar(ctx, 'Link copied!');
+          if (context.mounted) {
+            Navigator.pop(context);
+            ShareUi.showSuccessSnackbar(context, 'Link copied!');
           }
         },
         onShareCard: () {
-          Navigator.pop(ctx);
+          Navigator.pop(context);
           final shareUrl = ShareLinks.space(spaceId,
               gramName: gramName,
               inviterName: inviterName,
@@ -373,7 +372,7 @@ class ShareService {
           );
         },
         onAddToStory: () async {
-          Navigator.pop(ctx);
+          Navigator.pop(context);
           await addToStoryFromCard(
             context,
             card,
@@ -420,15 +419,13 @@ class ShareService {
 
     final shareText = ShareTextBuilders.cosmicVibeMatch(score: score);
 
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (ctx) => CompatibilityCardPreviewSheet(
+    AppBottomSheet.show(
+      context,
+      child: CompatibilityCardPreviewSheet(
         card: card,
         title: 'Cosmic Vibe Match',
         onShare: () {
-          Navigator.pop(ctx);
+          Navigator.pop(context);
           ShareMedia.shareWidgetAsImage(
             context: context,
             card: card,
@@ -471,15 +468,13 @@ class ShareService {
       outOf: outOf,
     );
 
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (ctx) => CompatibilityCardPreviewSheet(
+    AppBottomSheet.show(
+      context,
+      child: CompatibilityCardPreviewSheet(
         card: card,
         title: 'Ashtakoot Match',
         onShare: () {
-          Navigator.pop(ctx);
+          Navigator.pop(context);
           ShareMedia.shareWidgetAsImage(
             context: context,
             card: card,
@@ -525,15 +520,13 @@ class ShareService {
 
     final shareText = ShareTextBuilders.lifePhaseSync(syncLabel: syncLabel);
 
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (ctx) => CompatibilityCardPreviewSheet(
+    AppBottomSheet.show(
+      context,
+      child: CompatibilityCardPreviewSheet(
         card: card,
         title: 'Life Phase Sync',
         onShare: () {
-          Navigator.pop(ctx);
+          Navigator.pop(context);
           ShareMedia.shareWidgetAsImage(
             context: context,
             card: card,
@@ -621,21 +614,19 @@ class ShareService {
     final shareText =
         ShareTextBuilders.insight(cardType: cardType, title: title);
 
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (ctx) => InsightCardPreviewSheet(
+    AppBottomSheet.show(
+      context,
+      child: InsightCardPreviewSheet(
         card: card,
         onCopyText: () async {
           await Clipboard.setData(ClipboardData(text: shareText));
-          if (ctx.mounted) {
-            Navigator.pop(ctx);
-            ShareUi.showSuccessSnackbar(ctx, 'Copied to clipboard!');
+          if (context.mounted) {
+            Navigator.pop(context);
+            ShareUi.showSuccessSnackbar(context, 'Copied to clipboard!');
           }
         },
         onShareCard: () {
-          Navigator.pop(ctx);
+          Navigator.pop(context);
           ShareMedia.shareWidgetAsImage(
             context: context,
             card: card,
@@ -645,7 +636,7 @@ class ShareService {
           );
         },
         onAddToStory: () async {
-          Navigator.pop(ctx);
+          Navigator.pop(context);
           await addToStoryFromCard(
             context,
             card,
@@ -680,14 +671,12 @@ class ShareService {
       risingNakshatra: risingNakshatra,
     );
 
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (ctx) => CosmicCardPreviewSheet(
+    AppBottomSheet.show(
+      context,
+      child: CosmicCardPreviewSheet(
         card: card,
         onShare: () {
-          Navigator.pop(ctx);
+          Navigator.pop(context);
           final shareUrl = ShareLinks.cosmicProfile(userId);
           final shareText = ShareTextBuilders.cosmicCard(shareUrl: shareUrl);
           ShareMedia.shareWidgetAsImage(
@@ -699,7 +688,7 @@ class ShareService {
           );
         },
         onAddToStory: () async {
-          Navigator.pop(ctx);
+          Navigator.pop(context);
           await addToStoryFromCard(
             context,
             card,

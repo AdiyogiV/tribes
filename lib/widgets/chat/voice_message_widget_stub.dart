@@ -1,5 +1,6 @@
 /// Web stub - no file caching on web
 /// Audio playback uses direct URLs with just_audio
+library;
 
 /// Check if running on iOS (always false on web)
 bool get isIOS => false;

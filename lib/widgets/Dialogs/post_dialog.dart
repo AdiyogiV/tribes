@@ -5,6 +5,7 @@ import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/widgets/dialogs/report_post_dialog.dart';
 import 'package:aurogram/widgets/dialogs/login_bottom_sheet.dart';
 import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 class PostDialog extends StatefulWidget {
   final String? post;
@@ -61,7 +62,7 @@ class PostDialogState extends State<PostDialog> {
         content: const Column(
           children: [
             PulsingDots(size: 8),
-            SizedBox(height: 10),
+            SizedBox(height: AppDimensions.spacingMdSm),
             Text('Please wait...'),
           ],
         ),

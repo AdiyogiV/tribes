@@ -1,9 +1,11 @@
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:aurogram/pages/text_composer.dart';
-import 'package:aurogram/pages/video_picker.dart';
-import 'package:aurogram/pages/audio_composer.dart';
-import 'package:aurogram/pages/image_composer.dart';
+import 'package:aurogram/widgets/ui/common_widgets.dart';
+import 'package:aurogram/pages/creation/text_composer.dart';
+import 'package:aurogram/pages/creation/video_picker.dart';
+import 'package:aurogram/pages/creation/audio_composer.dart';
+import 'package:aurogram/pages/creation/image_composer.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 
 /// Helper utility for showing media type selection (Video vs Note)
@@ -21,11 +23,9 @@ class MediaTypeSelector {
     String? replyTo,
     bool isProfilePost = false,
   }) {
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (BuildContext context) => _MediaTypeSelectionModal(
+    AppBottomSheet.show<void>(
+      context,
+      child: _MediaTypeSelectionModal(
         space: space,
         replyTo: replyTo,
         isProfilePost: isProfilePost,
@@ -88,7 +88,7 @@ class _MediaTypeSelectionModal extends StatelessWidget {
                 ),
               ),
 
-              SizedBox(height: 20),
+              SizedBox(height: AppDimensions.spacingXl),
 
               // Options in a single row
               Row(
@@ -259,7 +259,7 @@ class _MediaTypeSelectionModal extends StatelessWidget {
               size: 26,
             ),
           ),
-          SizedBox(height: 6),
+          SizedBox(height: AppDimensions.spacingSmMd),
           Text(
             label,
             style: TextStyle(

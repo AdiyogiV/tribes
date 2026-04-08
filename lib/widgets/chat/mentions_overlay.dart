@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:aurogram/services/chat/space_chat_service.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
-import 'package:aurogram/widgets/user_avatar.dart';
+import 'package:aurogram/widgets/common/user_avatar.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Controller for managing mentions in a text field
 class MentionsController {
@@ -181,7 +182,7 @@ class MentionsOverlay extends StatelessWidget {
         color: isDark
             ? AppTheme.cardDarkColor.withValues(alpha: 0.98)
             : Colors.white.withValues(alpha: 0.98),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.1),
@@ -191,7 +192,7 @@ class MentionsOverlay extends StatelessWidget {
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
         child: ListView.builder(
           shrinkWrap: true,
           padding: const EdgeInsets.symmetric(vertical: 4),
@@ -225,7 +226,7 @@ class _MentionSuggestionTile extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd, vertical: AppDimensions.paddingSm),
         child: Row(
           children: [
             UserAvatar(
@@ -237,7 +238,7 @@ class _MentionSuggestionTile extends StatelessWidget {
                   ? user.name.substring(0, 1).toUpperCase()
                   : 'U',
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppDimensions.spacingMd),
             Expanded(
               child: Text(
                 user.name,

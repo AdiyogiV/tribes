@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
-import 'package:aurogram/pages/theatre.dart';
+import 'package:aurogram/pages/content/theatre.dart';
 import 'package:aurogram/services/database_service.dart';
 import 'package:aurogram/widgets/preview_boxes/preview_box.dart';
 import 'package:flutter/cupertino.dart';
@@ -15,6 +15,7 @@ import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/utils/theme/header_style.dart';
 import 'package:aurogram/utils/responsive.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 class Discovery extends StatefulWidget {
   const Discovery({super.key});
@@ -373,10 +374,10 @@ class DiscoveryState extends State<Discovery> {
           color: cardColor,
           elevation: 1,
           shadowColor: Colors.black.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
           child: Container(
             height: 100,
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppDimensions.paddingLg),
             child: Row(
               children: [
                 Container(
@@ -384,10 +385,10 @@ class DiscoveryState extends State<Discovery> {
                   height: 56,
                   decoration: BoxDecoration(
                     color: placeholder,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                   ),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: AppDimensions.spacingMdLg),
                 Expanded(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -401,7 +402,7 @@ class DiscoveryState extends State<Discovery> {
                           borderRadius: BorderRadius.circular(7),
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: AppDimensions.spacingSm),
                       Container(
                         width: widths[index % widths.length] - 30,
                         height: 11,

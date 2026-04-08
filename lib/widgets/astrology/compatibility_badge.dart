@@ -1,3 +1,4 @@
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:aurogram/services/compatibility_service.dart';
@@ -275,7 +276,7 @@ class _CompatibilityBadgeState extends State<CompatibilityBadge> {
                   'COMPATIBILITY',
                   style: AppTheme.cardLabelStyle,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppDimensions.spacingXs),
                 Text(
                   'Calculating...',
                   style: TextStyle(
@@ -306,7 +307,7 @@ class _CompatibilityBadgeState extends State<CompatibilityBadge> {
             'COMPATIBILITY',
             style: AppTheme.cardLabelStyle,
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppDimensions.spacingXs),
           Text(
             errorMsg,
             style: TextStyle(
@@ -351,7 +352,6 @@ class _CompatibilityBadgeState extends State<CompatibilityBadge> {
         break;
       case FollowRelationship.none:
       case FollowRelationship.mutual:
-      default:
         // Generic message
         message = 'Follow each other to unlock';
         icon = CupertinoIcons.lock_fill;
@@ -368,7 +368,7 @@ class _CompatibilityBadgeState extends State<CompatibilityBadge> {
             'COMPATIBILITY',
             style: AppTheme.cardLabelStyle,
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppDimensions.spacingXs),
           Row(
             children: [
               Expanded(
@@ -381,7 +381,7 @@ class _CompatibilityBadgeState extends State<CompatibilityBadge> {
                   ),
                 ),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: AppDimensions.spacingSmMd),
               Icon(
                 icon,
                 size: 14,
@@ -418,14 +418,14 @@ class _CompatibilityBadgeState extends State<CompatibilityBadge> {
                   hasCosmic ? 'COSMIC MATCH' : 'COMPATIBILITY',
                   style: AppTheme.cardLabelStyle,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppDimensions.spacingXs),
                 Row(
                   children: [
                     Text(
                       '$score%',
                       style: AppTheme.cardValueStyle,
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppDimensions.spacingSm),
                     Text(
                       label,
                       style: TextStyle(

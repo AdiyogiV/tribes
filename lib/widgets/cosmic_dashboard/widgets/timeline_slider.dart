@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:aurogram/widgets/ui/common_widgets.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Time slider widget for navigating through different dates
 class TimelineSlider extends StatelessWidget {
@@ -47,15 +49,12 @@ class TimelineSlider extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        SizedBox(
-                          width: 12,
-                          height: 12,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 1.5,
-                            color: Colors.teal.withValues(alpha: 0.5),
-                          ),
+                        AppLoadingIndicator(
+                          size: 12,
+                          strokeWidth: 1.5,
+                          color: Colors.teal.withValues(alpha: 0.5),
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: AppDimensions.spacingSmMd),
                         Text(
                           'Loading timeline...',
                           style: TextStyle(
@@ -77,7 +76,7 @@ class TimelineSlider extends StatelessWidget {
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: AppDimensions.spacingXs),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -89,7 +88,7 @@ class TimelineSlider extends StatelessWidget {
                                       horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(
                                     color: Colors.teal.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(8),
+                                    borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
                                   ),
                                   child: Text(
                                     'Load Data',
@@ -102,7 +101,7 @@ class TimelineSlider extends StatelessWidget {
                                 ),
                               ),
                             if (onLoadData != null && onForceRefresh != null)
-                              const SizedBox(width: 6),
+                              const SizedBox(width: AppDimensions.spacingSmMd),
                             if (onForceRefresh != null)
                               GestureDetector(
                                 onTap: onForceRefresh,
@@ -111,7 +110,7 @@ class TimelineSlider extends StatelessWidget {
                                       horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(
                                     color: Colors.orange.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(8),
+                                    borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
                                   ),
                                   child: Text(
                                     'Force Refresh',

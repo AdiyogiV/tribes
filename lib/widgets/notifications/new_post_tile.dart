@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:aurogram/pages/thread_view.dart';
+import 'package:aurogram/pages/content/thread_view.dart';
 import 'package:aurogram/pages/spaces/space_screen.dart';
 import 'package:aurogram/services/database_service.dart';
 import 'package:aurogram/services/data/post_db_service.dart';
@@ -10,11 +10,13 @@ import 'package:aurogram/services/user_service.dart';
 import 'package:aurogram/utils/time_display.dart';
 import 'package:aurogram/widgets/preview_boxes/gram_picture.dart';
 import 'package:aurogram/widgets/preview_boxes/preview_box.dart';
-import 'package:aurogram/widgets/user_avatar.dart';
+import 'package:aurogram/widgets/common/user_avatar.dart';
 import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
 import 'package:aurogram/widgets/notifications/unified_notification_card.dart';
+import 'package:aurogram/widgets/common/snack_bar_service.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 class NewPostTile extends StatefulWidget {
   final Map? data;
@@ -187,7 +189,7 @@ class _NewPostTileState extends State<NewPostTile> {
   Widget build(BuildContext context) {
     if (!ready) {
       return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+        padding: EdgeInsets.symmetric(vertical: AppDimensions.paddingXs, horizontal: AppDimensions.paddingLg),
         child: SkeletonListItem(height: 70),
       );
     }
@@ -205,18 +207,11 @@ class _NewPostTileState extends State<NewPostTile> {
                 return ThreadView(postId: widget.data!['postId']);
               }));
             } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Post information is unavailable'),
-                  duration: Duration(seconds: 2),
-                  behavior: SnackBarBehavior.fixed,
-                  backgroundColor: AppTheme.errorColor,
-                ),
-              );
+              showCustomSnackBar(context, message: 'Post information is unavailable', duration: const Duration(seconds: 2), backgroundColor: AppTheme.errorColor);
             }
           },
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingMd),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -230,7 +225,7 @@ class _NewPostTileState extends State<NewPostTile> {
                       nameInitials:
                           author.isNotEmpty ? author.substring(0, 1) : null,
                     ),
-                    SizedBox(width: 12),
+                    SizedBox(width: AppDimensions.spacingMd),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -238,13 +233,13 @@ class _NewPostTileState extends State<NewPostTile> {
                           Text(
                             '$author added a new post',
                             style: TextStyle(
-                              fontSize: 15,
+                              fontSize: AppTheme.holyCowTextSize,
                               fontWeight: FontWeight.w600,
                               color: AppTheme.textColor,
                               height: 1.3,
                             ),
                           ),
-                          SizedBox(height: 3),
+                          SizedBox(height: AppDimensions.spacingXxxs),
                           Row(
                             children: [
                               if (space.isNotEmpty &&
@@ -252,7 +247,7 @@ class _NewPostTileState extends State<NewPostTile> {
                                 Text(
                                   space,
                                   style: TextStyle(
-                                    fontSize: 13,
+                                    fontSize: AppTheme.holyCowTextSize,
                                     color: AppTheme.textSecondaryColor,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -260,7 +255,7 @@ class _NewPostTileState extends State<NewPostTile> {
                                 Text(
                                   ' • ',
                                   style: TextStyle(
-                                    fontSize: 13,
+                                    fontSize: AppTheme.holyCowTextSize,
                                     color: AppTheme.textSecondaryColor,
                                   ),
                                 ),
@@ -268,7 +263,7 @@ class _NewPostTileState extends State<NewPostTile> {
                               Text(
                                 date,
                                 style: TextStyle(
-                                  fontSize: 13,
+                                  fontSize: AppTheme.holyCowTextSize,
                                   color: AppTheme.textSecondaryColor,
                                 ),
                               ),
@@ -280,7 +275,7 @@ class _NewPostTileState extends State<NewPostTile> {
                   ],
                 ),
 
-                SizedBox(height: 32), // Increased padding for banner space
+                SizedBox(height: AppDimensions.spacingSection), // Increased padding for banner space
 
                 // Space and Post thumbnails with hanging tab banners
                 Row(
@@ -306,7 +301,7 @@ class _NewPostTileState extends State<NewPostTile> {
                               },
                               child: Container(
                                 decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
                                   border: Border.all(
                                       color: AppTheme.primaryColor.withValues(alpha: 0.2), width: 1),
                                   boxShadow: [
@@ -319,7 +314,7 @@ class _NewPostTileState extends State<NewPostTile> {
                                   ],
                                 ),
                                 child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
                                   child: AspectRatio(
                                     aspectRatio: 1.0,
                                     child: spacePicture.isNotEmpty
@@ -359,7 +354,7 @@ class _NewPostTileState extends State<NewPostTile> {
                                 child: Text(
                                   'GROUP',
                                   style: TextStyle(
-                                    fontSize: 10,
+                                    fontSize: AppTheme.holyCowTextSize,
                                     fontWeight: FontWeight.w600,
                                     color: AppTheme.textSecondaryColor,
                                     letterSpacing: 0.3,
@@ -371,11 +366,11 @@ class _NewPostTileState extends State<NewPostTile> {
                         ),
                       ),
                     ),
-                    SizedBox(width: 16),
+                    SizedBox(width: AppDimensions.spacingLg),
                     // Arrow
                     Column(
                       children: [
-                        SizedBox(height: 20),
+                        SizedBox(height: AppDimensions.spacingXl),
                         Container(
                           width: 28,
                           height: 28,
@@ -391,7 +386,7 @@ class _NewPostTileState extends State<NewPostTile> {
                         ),
                       ],
                     ),
-                    SizedBox(width: 16),
+                    SizedBox(width: AppDimensions.spacingLg),
                     // New Post section with hanging tab
                     Expanded(
                       child: Stack(
@@ -410,7 +405,7 @@ class _NewPostTileState extends State<NewPostTile> {
                             },
                             child: Container(
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
                                 border: Border.all(
                                     color: Colors.green.withValues(alpha: 0.3),
                                     width: 1),
@@ -462,7 +457,7 @@ class _NewPostTileState extends State<NewPostTile> {
                               child: Text(
                                 'NEW POST',
                                 style: TextStyle(
-                                  fontSize: 10,
+                                  fontSize: AppTheme.holyCowTextSize,
                                   fontWeight: FontWeight.w600,
                                   color: AppTheme.cardColor,
                                   letterSpacing: 0.3,

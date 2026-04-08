@@ -12,6 +12,8 @@ import 'package:aurogram/widgets/preview_boxes/gram_picture.dart';
 import 'package:aurogram/widgets/preview_boxes/user_picture.dart';
 import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/widgets/common/snack_bar_service.dart';
 
 class AddedToGroupTile extends StatefulWidget {
   final Map? data;
@@ -106,25 +108,18 @@ class _AddedToGroupTileState extends State<AddedToGroupTile> {
                       );
                     }));
                   } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Gram information is unavailable'),
-                        duration: Duration(seconds: 2),
-                        behavior: SnackBarBehavior.fixed,
-                        backgroundColor: AppTheme.errorColor,
-                      ),
-                    );
+                    showCustomSnackBar(context, message: 'Gram information is unavailable', backgroundColor: AppTheme.errorColor, duration: const Duration(seconds: 2), behavior: SnackBarBehavior.fixed);
                   }
                 },
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingMd),
                   child: Row(
                     children: [
                       Container(
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
                           border:
                               Border.all(color: Colors.grey[300]!, width: 1),
                         ),
@@ -142,7 +137,7 @@ class _AddedToGroupTileState extends State<AddedToGroupTile> {
                                 ),
                         ),
                       ),
-                      SizedBox(width: 12),
+                      SizedBox(width: AppDimensions.spacingMd),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -150,24 +145,24 @@ class _AddedToGroupTileState extends State<AddedToGroupTile> {
                             Text(
                               '$inviterName added you to $space',
                               style: TextStyle(
-                                fontSize: 15,
+                                fontSize: AppTheme.holyCowTextSize,
                                 fontWeight: FontWeight.w600,
                                 color: Colors.grey[900],
                                 height: 1.3,
                               ),
                             ),
-                            SizedBox(height: 3),
+                            SizedBox(height: AppDimensions.spacingXxxs),
                             Text(
                               date,
                               style: TextStyle(
-                                fontSize: 13,
+                                fontSize: AppTheme.holyCowTextSize,
                                 color: Colors.grey[500],
                               ),
                             ),
                           ],
                         ),
                       ),
-                      SizedBox(width: 12),
+                      SizedBox(width: AppDimensions.spacingMd),
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -175,7 +170,7 @@ class _AddedToGroupTileState extends State<AddedToGroupTile> {
                             width: 40,
                             height: 40,
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(20),
+                              borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
                               border: Border.all(
                                   color: Colors.grey[300]!, width: 1),
                             ),
@@ -194,7 +189,7 @@ class _AddedToGroupTileState extends State<AddedToGroupTile> {
                                     ),
                             ),
                           ),
-                          SizedBox(width: 8),
+                          SizedBox(width: AppDimensions.spacingSm),
                           Icon(
                             Icons.chevron_right,
                             color: Colors.grey[400],
@@ -209,7 +204,7 @@ class _AddedToGroupTileState extends State<AddedToGroupTile> {
             ),
           )
         : const Padding(
-            padding: EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+            padding: EdgeInsets.symmetric(vertical: AppDimensions.paddingXs, horizontal: AppDimensions.paddingLg),
             child: SkeletonListItem(height: 70),
           );
   }

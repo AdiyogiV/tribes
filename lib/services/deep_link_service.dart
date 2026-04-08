@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:app_links/app_links.dart';
+import 'package:aurogram/config/api_endpoints.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
 import 'package:aurogram/utils/navigation/dynamic_link_navigator.dart';
 
@@ -244,7 +245,7 @@ class DeepLinkService {
 /// Extension for building share URLs
 extension ShareUrlBuilder on DeepLinkService {
   /// Base URL for share links
-  static const String baseUrl = 'https://aurogram.in';
+  static const String baseUrl = ApiEndpoints.appBaseUrl;
 
   /// Build a user profile share URL
   static String userProfileUrl(String userId) => '$baseUrl/u/$userId';

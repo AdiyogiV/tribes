@@ -1,3 +1,4 @@
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 import 'package:flutter/material.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 
@@ -45,7 +46,7 @@ class ChartBlendSlider extends StatelessWidget {
                         shape: BoxShape.circle,
                       ),
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: AppDimensions.spacingXs),
                     Text(
                       'Sky',
                       style: TextStyle(
@@ -69,7 +70,7 @@ class ChartBlendSlider extends StatelessWidget {
                             brown.withValues(alpha: value >= 0.5 ? 0.7 : 0.4),
                       ),
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: AppDimensions.spacingXs),
                     Container(
                       width: 5,
                       height: 5,

@@ -7,6 +7,7 @@ import 'package:aurogram/utils/time_display.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
 import 'package:aurogram/widgets/notifications/unified_notification_card.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 class DailyInsightTile extends StatefulWidget {
   final Map<String, dynamic>? data;
@@ -93,7 +94,7 @@ class _DailyInsightTileState extends State<DailyInsightTile> {
         child: InkWell(
           onTap: _navigateToInsight,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingMd),
             child: Row(
               children: [
                 // Icon container
@@ -101,8 +102,8 @@ class _DailyInsightTileState extends State<DailyInsightTile> {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
+                    color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                   ),
                   child: Icon(
                     _cardIcon,
@@ -110,7 +111,7 @@ class _DailyInsightTileState extends State<DailyInsightTile> {
                     color: AppTheme.primaryColor,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppDimensions.spacingMd),
                 // Content
                 Expanded(
                   child: Column(
@@ -122,7 +123,7 @@ class _DailyInsightTileState extends State<DailyInsightTile> {
                             child: Text(
                               _title,
                               style: TextStyle(
-                                fontSize: 15,
+                                fontSize: AppTheme.holyCowTextSize,
                                 fontWeight: _isRead ? FontWeight.w600 : FontWeight.w700,
                                 color: AppTheme.textColor,
                                 height: 1.3,
@@ -143,49 +144,49 @@ class _DailyInsightTileState extends State<DailyInsightTile> {
                             ),
                         ],
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: AppDimensions.spacingXs),
                       Text(
                         _preview,
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: AppTheme.holyCowTextSize,
                           color: AppTheme.textSecondaryColor,
                           height: 1.3,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: AppDimensions.spacingSmMd),
                       Row(
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: AppTheme.primaryColor.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(4),
+                              color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
                             ),
                             child: Text(
                               _cardType.toUpperCase(),
                               style: TextStyle(
-                                fontSize: 10,
+                                fontSize: AppTheme.holyCowTextSize,
                                 fontWeight: FontWeight.w600,
                                 color: AppTheme.primaryColor,
                                 letterSpacing: 0.3,
                               ),
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: AppDimensions.spacingSm),
                           Text(
                             '•',
-                            style: TextStyle(fontSize: 10, color: AppTheme.textSecondaryColor),
+                            style: TextStyle(fontSize: AppTheme.holyCowTextSize, color: AppTheme.textSecondaryColor),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: AppDimensions.spacingSm),
                           Text(
                             widget.data?['timestamp'] != null
                                 ? TimeDisplay.getCompactTimestamp(
                                     (widget.data!['timestamp'] as Timestamp).toDate())
                                 : _date.isNotEmpty ? _date : 'Today',
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: AppTheme.holyCowTextSize,
                               color: AppTheme.textSecondaryColor,
                             ),
                           ),
@@ -195,7 +196,7 @@ class _DailyInsightTileState extends State<DailyInsightTile> {
                   ),
                 ),
                 // Arrow
-                const SizedBox(width: 8),
+                const SizedBox(width: AppDimensions.spacingSm),
                 Icon(
                   CupertinoIcons.chevron_right,
                   size: 16,

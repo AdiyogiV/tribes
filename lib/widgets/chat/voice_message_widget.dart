@@ -1,4 +1,6 @@
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 import 'dart:async';
+import 'package:aurogram/widgets/ui/common_widgets.dart';
 import 'dart:math' as math;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -573,14 +575,14 @@ class _VoiceMessageWidgetState extends State<VoiceMessageWidget>
           // Play/pause button (elevated)
           _buildPlayButton(primaryColor, secondaryColor, isUser, isDark),
           
-          const SizedBox(width: 8),
+          const SizedBox(width: AppDimensions.spacingSm),
           
           // Waveform
           Expanded(
             child: _buildWaveform(primaryColor, secondaryColor),
           ),
           
-          const SizedBox(width: 8),
+          const SizedBox(width: AppDimensions.spacingSm),
           
           // Duration at end
           _buildDurationText(primaryColor, isDark, isUser),
@@ -609,15 +611,10 @@ class _VoiceMessageWidgetState extends State<VoiceMessageWidget>
           shape: BoxShape.circle,
           color: secondaryColor,
         ),
-        child: Center(
-          child: SizedBox(
-            width: 16,
-            height: 16,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: primaryColor,
-            ),
-          ),
+        child: AppLoadingIndicator(
+          size: 16,
+          strokeWidth: 2,
+          color: primaryColor,
         ),
       );
     }
@@ -644,15 +641,10 @@ class _VoiceMessageWidgetState extends State<VoiceMessageWidget>
                 ],
               ),
               child: _isLoading
-                  ? Center(
-                      child: SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: primaryColor,
-                        ),
-                      ),
+                  ? AppLoadingIndicator(
+                      size: 16,
+                      strokeWidth: 2,
+                      color: primaryColor,
                     )
                   : Icon(
                       _isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
@@ -742,7 +734,7 @@ class _VoiceMessageWidgetState extends State<VoiceMessageWidget>
           '...',
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 11,
+            fontSize: AppTheme.holyCowTextSize,
             fontWeight: FontWeight.w500,
             color: textColor,
           ),
@@ -770,7 +762,7 @@ class _VoiceMessageWidgetState extends State<VoiceMessageWidget>
         Text(
           _formatDuration(displayDuration),
           style: TextStyle(
-            fontSize: 11,
+            fontSize: AppTheme.holyCowTextSize,
             fontWeight: FontWeight.w600,
             color: textColor,
           ),

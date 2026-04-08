@@ -6,6 +6,7 @@ library;
 
 import 'dart:async';
 import 'dart:js_interop';
+import 'package:aurogram/utils/logging/app_logger.dart';
 
 /// JavaScript binding for loadAgoraSDK function
 @JS('loadAgoraSDK')
@@ -94,15 +95,12 @@ void _debugLog(String message, Map<String, dynamic> data) {
   try {
     // ignore: avoid_dynamic_calls
     _sendDebugLog(message, data);
-  } catch (_) {}
+  } catch (_) {
+    // Fallback if AppLogger fails at platform boundary
+  }
 }
 
-@JS('fetch')
-external void _jsFetch(String url, JSObject options);
-
 void _sendDebugLog(String message, Map<String, dynamic> data) {
-  // Use a simpler approach - just log to console for now, JS side will capture
-  // ignore: avoid_print
-  print('[AGORA_DEBUG] $message ${data.toString()}');
+  AppLogger.d('AgoraWebHelper: $message', category: LogCategory.voice, data: data);
 }
 // #endregion

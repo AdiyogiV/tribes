@@ -4,7 +4,7 @@ import 'package:aurogram/utils/theme/app_theme.dart';
 
 class GlassContainer extends StatelessWidget {
   final Widget child;
-  final double height;
+  final double? height;
   final EdgeInsetsGeometry padding;
   final double borderRadius;
   final double blurSigma;
@@ -13,7 +13,7 @@ class GlassContainer extends StatelessWidget {
   const GlassContainer({
     super.key,
     required this.child,
-    required this.height,
+    this.height,
     required this.padding,
     this.borderRadius = 20,
     this.blurSigma = 3,

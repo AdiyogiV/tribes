@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/widgets/universal/transparent_toolbox.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Reusable sign card for onboarding (Sun, Moon, Rising)
 class OnboardingSignCard extends StatelessWidget {
@@ -47,7 +48,7 @@ class OnboardingSignCard extends StatelessWidget {
             children: [
               // Icon
               Icon(icon, color: color, size: 22),
-              const SizedBox(width: 14),
+              const SizedBox(width: AppDimensions.spacingMdLg),
               // Content
               Expanded(
                 child: Column(
@@ -64,7 +65,7 @@ class OnboardingSignCard extends StatelessWidget {
                             color: AppTheme.primaryColor.withValues(alpha: 0.9),
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: AppDimensions.spacingSm),
                         Text(
                           label,
                           style: TextStyle(
@@ -76,7 +77,7 @@ class OnboardingSignCard extends StatelessWidget {
                       ],
                     ),
                     if (description.isNotEmpty) ...[
-                      const SizedBox(height: 2),
+                      const SizedBox(height: AppDimensions.spacingXxs),
                       Text(
                         description,
                         style: TextStyle(
@@ -142,7 +143,7 @@ class OnboardingHighlightCard extends StatelessWidget {
             children: [
               // Icon
               Icon(icon, color: color, size: 22),
-              const SizedBox(width: 14),
+              const SizedBox(width: AppDimensions.spacingMdLg),
               // Content
               Expanded(
                 child: Column(
@@ -158,7 +159,7 @@ class OnboardingHighlightCard extends StatelessWidget {
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: AppDimensions.spacingXxs),
                     Text(
                       subtitle,
                       style: TextStyle(
@@ -167,7 +168,7 @@ class OnboardingHighlightCard extends StatelessWidget {
                         color: color.withValues(alpha: 0.8),
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppDimensions.spacingXs),
                     Text(
                       description,
                       style: TextStyle(
@@ -218,7 +219,7 @@ class OnboardingPathButton extends StatelessWidget {
           children: [
             // Icon
             Icon(icon, color: color, size: 20),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppDimensions.spacingMd),
             // Text content
             Expanded(
               child: Column(
@@ -283,7 +284,7 @@ class OnboardingContinueButton extends StatelessWidget {
               color: AppTheme.primaryColor,
               size: 20,
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppDimensions.spacingMd),
             Expanded(
               child: Text(
                 label,
@@ -328,7 +329,7 @@ class OnboardingShareLink extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
           decoration: BoxDecoration(
             color: AppTheme.primaryColor.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -338,7 +339,7 @@ class OnboardingShareLink extends StatelessWidget {
                 color: AppTheme.primaryColor,
                 size: 18,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppDimensions.spacingSm),
               Text(
                 'Share your blueprint',
                 style: TextStyle(
@@ -379,7 +380,7 @@ class OnboardingHeader extends StatelessWidget {
       children: [
         // Clean header - app icon without shadow
         ClipRRect(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
           child: Image.asset(
             'assets/images/icon_transparent.png',
             height: 56,
@@ -387,7 +388,7 @@ class OnboardingHeader extends StatelessWidget {
             fit: BoxFit.contain,
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppDimensions.spacingLg),
         Text(
           title,
           style: TextStyle(
@@ -398,7 +399,7 @@ class OnboardingHeader extends StatelessWidget {
           ),
         ),
         if (subtitle != null) ...[
-          const SizedBox(height: 6),
+          const SizedBox(height: AppDimensions.spacingSmMd),
           Text(
             subtitle!,
             style: TextStyle(

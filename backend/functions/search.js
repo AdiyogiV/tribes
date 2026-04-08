@@ -8,6 +8,7 @@ import {
     cacheAstroCurrent,
 } from "./cache_utils.js";
 import { getOrdinal } from "../lib/utils.js";
+import { AI_MODELS } from "../lib/config.js";
 
 // =============================================================================
 // WEB SEARCH (VIA GEMINI GOOGLE SEARCH GROUNDING)
@@ -16,7 +17,6 @@ import { getOrdinal } from "../lib/utils.js";
 // =============================================================================
 
 const MAX_RESULTS_PER_QUERY = 5;
-const GEMINI_SEARCH_MODEL = "gemini-2.0-flash";
 
 function stripCodeFences(text) {
     if (!text) return "";
@@ -796,7 +796,7 @@ export async function performWebSearch(query, numResults = MAX_RESULTS_PER_QUERY
 
         const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({
-            model: GEMINI_SEARCH_MODEL,
+            model: AI_MODELS.GEMINI_FLASH,
             tools: [{ googleSearch: {} }],
         });
 

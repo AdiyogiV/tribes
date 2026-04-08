@@ -1,3 +1,5 @@
+import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
@@ -205,11 +207,11 @@ class UnifiedCallControls extends StatelessWidget {
                 ...controlButtons
                     .expand((button) => [
                           button,
-                          SizedBox(width: 24),
+                          SizedBox(width: AppDimensions.spacingXxl),
                         ])
                     .toList()
                   ..removeLast(), // Remove last spacing
-                SizedBox(width: 32),
+                SizedBox(width: AppDimensions.spacingSection),
                 CallEndCallButton(onTap: onEndCall, isDesktop: isDesktop),
               ],
             )
@@ -389,13 +391,13 @@ class CallEndCallButton extends StatelessWidget {
                 end: Alignment.bottomRight,
                 colors: [
                   Color(0xFFFF5F5F),
-                  Color(0xFFE53935),
+                  AppTheme.dangerRed,
                 ],
               ),
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFE53935).withValues(alpha: 0.4),
+                  color: AppTheme.dangerRed.withValues(alpha: 0.4),
                   blurRadius: isDesktop ? 24 : 20,
                   offset: const Offset(0, 8),
                 ),
@@ -548,7 +550,7 @@ class _CallControlButton extends StatelessWidget {
                 size: 24,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppDimensions.spacingSm),
             Text(
               label,
               style: TextStyle(

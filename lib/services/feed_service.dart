@@ -364,7 +364,6 @@ class FeedService {
         // Batch verify posts exist (skip if already known missing)
         final validPostIds = <String>{};
         for (final postId in postIdsToCheck) {
-          if (postId == null) continue;
           // Skip if post is known to be missing
           if (postDbService.isPostKnownMissing(postId)) {
             continue;

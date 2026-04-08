@@ -7,6 +7,7 @@ import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
 import 'package:aurogram/widgets/cosmic_dashboard/widgets/chart_blend_slider.dart';
 import 'package:aurogram/widgets/cosmic_dashboard/widgets/timeline_slider.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Card widget displaying the current sky chart with optional birth chart overlay
 class CosmicSkyChartCard extends StatelessWidget {
@@ -64,7 +65,7 @@ class CosmicSkyChartCard extends StatelessWidget {
         'positionsEmpty': positions.isEmpty,
         'positionsCount': positions.length,
         'positionsPlanets': positions.keys.toList(),
-        'willShowChart': !positions.isEmpty,
+        'willShowChart': positions.isNotEmpty,
       },
     );
 
@@ -104,7 +105,7 @@ class CosmicSkyChartCard extends StatelessWidget {
       color: cardColor,
       elevation: 2,
       shadowColor: Colors.black.withValues(alpha: 0.2),
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
       child: Column(
         children: [
           // Header with date display and birth chart toggle
@@ -214,7 +215,7 @@ class CosmicSkyChartCard extends StatelessWidget {
             child: Text(
               isSliderOnToday ? 'Current Sky' : dateStr,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: AppTheme.holyCowTextSize,
                 fontWeight: FontWeight.w700,
                 color: c,
               ),
@@ -237,12 +238,12 @@ class CosmicSkyChartCard extends StatelessWidget {
                       color: showTransitOverlay
                           ? c.withValues(alpha: 0.15)
                           : c.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                     ),
                     child: Text(
                       showTransitOverlay ? 'Sky Only' : 'Show Birth',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: AppTheme.holyCowTextSize,
                         fontWeight: FontWeight.w600,
                         color:
                             c.withValues(alpha: showTransitOverlay ? 0.8 : 0.6),
@@ -252,7 +253,7 @@ class CosmicSkyChartCard extends StatelessWidget {
                 ),
               // Reset to today button
               if (!isSliderOnToday) ...[
-                const SizedBox(width: 8),
+                const SizedBox(width: AppDimensions.spacingSm),
                 GestureDetector(
                   onTap: onResetToToday,
                   child: Container(
@@ -260,12 +261,12 @@ class CosmicSkyChartCard extends StatelessWidget {
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
                       color: c.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                     ),
                     child: Text(
                       'Today',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: AppTheme.holyCowTextSize,
                         fontWeight: FontWeight.w600,
                         color: c.withValues(alpha: 0.7),
                       ),
@@ -307,7 +308,7 @@ class CosmicSkyChartCard extends StatelessWidget {
             height: chartWidth,
             padding: const EdgeInsets.all(padding),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
               child: Transform.scale(
                 scale: baseScale,
                 alignment: Alignment.center,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Shared decoration helpers for astrology UI components
 /// Ensures consistent styling across all astrology-related widgets
@@ -173,9 +174,9 @@ class AstrologyDecorations {
   }
 
   /// Standard padding values
-  static const EdgeInsets cardPadding = EdgeInsets.all(16);
-  static const EdgeInsets cardPaddingCompact = EdgeInsets.all(12);
-  static const EdgeInsets horizontalPadding = EdgeInsets.symmetric(horizontal: 16);
+  static const EdgeInsets cardPadding = EdgeInsets.all(AppDimensions.paddingLg);
+  static const EdgeInsets cardPaddingCompact = EdgeInsets.all(AppDimensions.paddingMd);
+  static const EdgeInsets horizontalPadding = EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg);
   static const double cardBorderRadius = 12;
   static const double cardBorderRadiusLarge = 20;
 }

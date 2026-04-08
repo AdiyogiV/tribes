@@ -1,7 +1,8 @@
 import { onDocumentCreated, onDocumentDeleted } from "firebase-functions/v2/firestore";
 import { db, FieldValue, logger } from "../lib/firebase.js";
 import { withIdempotency } from "../lib/idempotency.js";
-import { BATCH_SIZES, isPublicSpaceType } from "../lib/constants.js";
+import { BATCH_SIZES } from "../lib/constants.js";
+import { isPublicSpace } from "../lib/utils.js";
 
 /**
  * Feed System - Pull-Based Architecture
@@ -51,17 +52,7 @@ async function fetchSpaceMemberIds(spaceId) {
     return memberIds;
 }
 
-/**
- * Space is public (eligible for global feed) iff:
- * - type is OPEN or PUBLIC (see constants.js SPACE_TYPES) and not limitedVisibility, or
- * - legacy profile gram. Must match firestore.rules isPublicSpace().
- */
-function isPublicSpace(spaceData) {
-    if (!spaceData) return false;
-    if (spaceData.limitedVisibility === true) return false;
-    if (spaceData.isProfileGram === true) return true;
-    return isPublicSpaceType(spaceData.spaceType);
-}
+// isPublicSpace imported from ../lib/utils.js
 
 /**
  * Handle space post creation

@@ -1,3 +1,4 @@
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 import 'package:flutter/material.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 
@@ -58,7 +59,7 @@ class ResponsiveLayout extends StatelessWidget {
             'Hello, World! Web version is working!',
             style: TextStyle(fontSize: 18),
           ),
-          SizedBox(height: 20),
+          SizedBox(height: AppDimensions.spacingXl),
           Text(
             'Rotate device to see landscape layout',
             style: TextStyle(fontSize: 14, color: Colors.grey),

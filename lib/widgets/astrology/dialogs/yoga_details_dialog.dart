@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:aurogram/widgets/astrology/cards/raj_yogas_widget.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Minimal yoga details dialog - clean data-rich display
 class YogaDetailsDialog extends StatelessWidget {
@@ -133,10 +134,10 @@ class YogaDetailsDialog extends StatelessWidget {
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
       child: Material(
         color: cardColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
         child: Container(
           constraints: const BoxConstraints(maxWidth: 340),
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(AppDimensions.paddingXl),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -162,13 +163,13 @@ class YogaDetailsDialog extends StatelessWidget {
               ),
               
               // Type + Strength
-              const SizedBox(height: 6),
+              const SizedBox(height: AppDimensions.spacingSmMd),
               Text(
                 '$yogaType • $strengthText',
                 style: TextStyle(fontSize: 12, color: subtleColor, fontWeight: FontWeight.w500),
               ),
 
-              const SizedBox(height: 14),
+              const SizedBox(height: AppDimensions.spacingMdLg),
               
               // Formation description
               Text(
@@ -178,19 +179,19 @@ class YogaDetailsDialog extends StatelessWidget {
 
               // Planets involved
               if (planetList.isNotEmpty) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: AppDimensions.spacingMd),
                 Text(
                   'Planets: ${planetList.map((p) => '${_getPlanetSymbol(p)}$p').join(', ')}',
                   style: TextStyle(fontSize: 12, color: subtleColor),
                 ),
               ],
 
-              const SizedBox(height: 14),
+              const SizedBox(height: AppDimensions.spacingMdLg),
               
               // Benefits
               _buildSection('Benefits', benefits, textColor, subtleColor),
               
-              const SizedBox(height: 10),
+              const SizedBox(height: AppDimensions.spacingMdSm),
               
               // Guidance  
               _buildSection('Guidance', guidance, textColor, subtleColor),
@@ -209,7 +210,7 @@ class YogaDetailsDialog extends StatelessWidget {
           title,
           style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: subtleColor, letterSpacing: 0.5),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppDimensions.spacingXs),
         Text(
           content,
           style: TextStyle(fontSize: 12, height: 1.5, color: textColor.withValues(alpha: 0.85)),

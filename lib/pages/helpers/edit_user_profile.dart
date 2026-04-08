@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:aurogram/services/user_service.dart';
@@ -6,14 +5,14 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:aurogram/widgets/user_avatar.dart';
+import 'package:aurogram/widgets/common/user_avatar.dart';
 import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/widgets/universal/transparent_toolbox.dart';
+import 'package:aurogram/widgets/common/snack_bar_service.dart';
 
-// Conditional import for dart:io
-import 'dart:io' if (dart.library.html) 'package:aurogram/platform/io_stub.dart';
 import 'package:aurogram/platform/file_helper.dart' as file_helper;
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 class EditProfile extends StatefulWidget {
   final String? uid;
@@ -34,7 +33,7 @@ class EditProfileState extends State<EditProfile> {
   // For web: blob URL for preview
   String? _webPreviewUrl;
   String? _currentNickname;
-  bool _isNicknameAvailable = true;
+  bool _isNicknameAvailable = true; // ignore: unused_field
   Map<String, dynamic> _nicknamePairs = {};
   bool _saving = false;
   bool _loading = true;
@@ -77,6 +76,7 @@ class EditProfileState extends State<EditProfile> {
     if (mounted) setState(() => _loading = false);
   }
 
+  // ignore: unused_element
   void _checkNickname(String nickname) {
     if (nickname.length < 4) {
       setState(() => _isNicknameAvailable = false);
@@ -225,9 +225,7 @@ class EditProfileState extends State<EditProfile> {
   }
 
   void _showError(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: AppTheme.errorColor),
-    );
+    showCustomSnackBar(context, message: msg, backgroundColor: AppTheme.errorColor);
   }
 
   // Username validation removed - username is now backend-only
@@ -260,7 +258,7 @@ class EditProfileState extends State<EditProfile> {
                           bottom: false,
                           child: Container(
                             height: 60,
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
                             child: Row(
                               children: [
                                 // Back button
@@ -451,7 +449,7 @@ class EditProfileState extends State<EditProfile> {
             color: AppTheme.primaryColor.withValues(alpha: 0.85),
             size: 22,
           ),
-          SizedBox(width: 12),
+          SizedBox(width: AppDimensions.spacingMd),
           Expanded(
             child: TextField(
               controller: _nameController,
@@ -476,68 +474,6 @@ class EditProfileState extends State<EditProfile> {
               onChanged: (_) => setState(() {}),
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildUsernameToolbox() {
-    final showStatus = _nicknameController.text.isNotEmpty &&
-        _nicknameController.text != _currentNickname;
-
-    return TransparentToolbox(
-      content: Row(
-        children: [
-          Icon(
-            CupertinoIcons.at,
-            color: AppTheme.primaryColor.withValues(alpha: 0.85),
-            size: 22,
-          ),
-          SizedBox(width: 12),
-          Expanded(
-            child: TextField(
-              controller: _nicknameController,
-              textInputAction: TextInputAction.done,
-              onSubmitted: (_) => FocusScope.of(context).unfocus(),
-              decoration: InputDecoration(
-                hintText: 'Username',
-                hintStyle: TextStyle(
-                  color: AppTheme.primaryColor.withValues(alpha: 0.5),
-                  fontSize: 16,
-                ),
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                filled: false,
-                contentPadding: EdgeInsets.zero,
-              ),
-              style: TextStyle(
-                color: AppTheme.primaryColor.withValues(alpha: 0.85),
-                fontSize: 16,
-              ),
-              onChanged: (v) {
-                final lower = v.toLowerCase();
-                if (v != lower) {
-                  _nicknameController.value = _nicknameController.value.copyWith(
-                    text: lower,
-                    selection: TextSelection.collapsed(offset: lower.length),
-                  );
-                }
-                _checkNickname(lower);
-                setState(() {});
-              },
-            ),
-          ),
-          if (showStatus)
-            Icon(
-              _isNicknameAvailable && _nicknameController.text.length >= 4
-                  ? CupertinoIcons.checkmark_circle_fill
-                  : CupertinoIcons.xmark_circle_fill,
-              color: _isNicknameAvailable && _nicknameController.text.length >= 4
-                  ? AppTheme.successColor
-                  : AppTheme.errorColor,
-              size: 22,
-            ),
         ],
       ),
     );

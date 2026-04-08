@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Minimal dosha details dialog - clean data-rich display
 class DoshaDetailsDialog extends StatelessWidget {
@@ -256,10 +257,10 @@ class DoshaDetailsDialog extends StatelessWidget {
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
       child: Material(
         color: cardColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
         child: Container(
           constraints: const BoxConstraints(maxWidth: 340),
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(AppDimensions.paddingXl),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -285,13 +286,13 @@ class DoshaDetailsDialog extends StatelessWidget {
               ),
               
               // Severity + Placement (if any)
-              const SizedBox(height: 6),
+              const SizedBox(height: AppDimensions.spacingSmMd),
               Text(
                 '$severityText${placement.isNotEmpty ? ' • $placement' : ''}',
                 style: TextStyle(fontSize: 12, color: subtleColor, fontWeight: FontWeight.w500),
               ),
 
-              const SizedBox(height: 14),
+              const SizedBox(height: AppDimensions.spacingMdLg),
               
               // Description
               Text(
@@ -299,12 +300,12 @@ class DoshaDetailsDialog extends StatelessWidget {
                 style: TextStyle(fontSize: 13, height: 1.5, color: textColor),
               ),
 
-              const SizedBox(height: 14),
+              const SizedBox(height: AppDimensions.spacingMdLg),
               
               // Insight
               _buildSection('Insight', details['insight'] ?? '', textColor, subtleColor),
               
-              const SizedBox(height: 10),
+              const SizedBox(height: AppDimensions.spacingMdSm),
               
               // Guidance
               _buildSection('Guidance', details['guidance'] ?? '', textColor, subtleColor),
@@ -323,7 +324,7 @@ class DoshaDetailsDialog extends StatelessWidget {
           title,
           style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: subtleColor, letterSpacing: 0.5),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppDimensions.spacingXs),
         Text(
           content,
           style: TextStyle(fontSize: 12, height: 1.5, color: textColor.withValues(alpha: 0.85)),

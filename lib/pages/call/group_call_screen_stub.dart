@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:aurogram/widgets/common/snack_bar_service.dart';
 
 /// Stub for GroupCallScreen on web
 /// This screen is never shown on web since group calling is not supported
@@ -19,11 +20,7 @@ class GroupCallScreen extends StatelessWidget {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (context.mounted) {
         Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Group calling is not available on web'),
-          ),
-        );
+        showCustomSnackBar(context, message: 'Group calling is not available on web');
       }
     });
 

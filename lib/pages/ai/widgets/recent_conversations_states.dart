@@ -1,3 +1,4 @@
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 import 'package:flutter/material.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/utils/theme/header_style.dart';
@@ -25,7 +26,7 @@ class RecentConversationsSkeleton extends StatelessWidget {
             child: Row(
               children: const [
                 SkeletonBox(width: 50, height: 14, borderRadius: 6),
-                SizedBox(width: 8),
+                SizedBox(width: AppDimensions.spacingSm),
                 SkeletonBox(width: 24, height: 18, borderRadius: 9),
               ],
             ),
@@ -58,7 +59,7 @@ class RecentConversationsSkeleton extends StatelessWidget {
                 child: Row(
                   children: const [
                     SkeletonBox(width: 44, height: 44, borderRadius: 22),
-                    SizedBox(width: 14),
+                    SizedBox(width: AppDimensions.spacingMdLg),
                     Expanded(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -68,12 +69,12 @@ class RecentConversationsSkeleton extends StatelessWidget {
                               width: double.infinity,
                               height: 14,
                               borderRadius: 6),
-                          SizedBox(height: 6),
+                          SizedBox(height: AppDimensions.spacingSmMd),
                           SkeletonBox(width: 120, height: 12, borderRadius: 5),
                         ],
                       ),
                     ),
-                    SizedBox(width: 12),
+                    SizedBox(width: AppDimensions.spacingMd),
                     SkeletonBox(width: 30, height: 12, borderRadius: 5),
                   ],
                 ),
@@ -100,7 +101,7 @@ class RecentConversationsEmpty extends StatelessWidget {
             size: 52,
             color: AppTheme.primaryColor.withValues(alpha: 0.3),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppDimensions.spacingMd),
           Text(
             'No conversations yet',
             style: TextStyle(
@@ -109,7 +110,7 @@ class RecentConversationsEmpty extends StatelessWidget {
               color: AppTheme.primaryColor.withValues(alpha: 0.8),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppDimensions.spacingSm),
           Text(
             'Start a new chat from HolyCow to see it here.',
             textAlign: TextAlign.center,
@@ -138,7 +139,7 @@ class RecentConversationsNoResults extends StatelessWidget {
             size: 52,
             color: AppTheme.primaryColor.withValues(alpha: 0.3),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppDimensions.spacingMd),
           Text(
             'No results found',
             style: TextStyle(
@@ -147,7 +148,7 @@ class RecentConversationsNoResults extends StatelessWidget {
               color: AppTheme.primaryColor.withValues(alpha: 0.8),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppDimensions.spacingSm),
           Text(
             'Try a different keyword.',
             textAlign: TextAlign.center,
@@ -176,7 +177,7 @@ class RecentConversationsError extends StatelessWidget {
             size: 52,
             color: AppTheme.errorColor.withValues(alpha: 0.6),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppDimensions.spacingMd),
           Text(
             'Unable to load conversations',
             style: TextStyle(
@@ -185,7 +186,7 @@ class RecentConversationsError extends StatelessWidget {
               color: AppTheme.primaryColor.withValues(alpha: 0.8),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppDimensions.spacingSm),
           Text(
             'Please check your connection and try again.',
             textAlign: TextAlign.center,
@@ -214,7 +215,7 @@ class RecentConversationsSignInPrompt extends StatelessWidget {
             size: 52,
             color: AppTheme.primaryColor.withValues(alpha: 0.3),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppDimensions.spacingMd),
           Text(
             'Sign in to view conversations',
             style: TextStyle(
@@ -223,7 +224,7 @@ class RecentConversationsSignInPrompt extends StatelessWidget {
               color: AppTheme.primaryColor.withValues(alpha: 0.8),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppDimensions.spacingSm),
           Text(
             'Your chats will appear here once you\'re signed in.',
             textAlign: TextAlign.center,

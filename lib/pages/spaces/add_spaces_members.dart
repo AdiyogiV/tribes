@@ -14,11 +14,12 @@ import 'package:aurogram/utils/dependency_injection.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
 
 import 'package:aurogram/widgets/preview_boxes/crew_preview.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 class AddSpacesMember extends StatefulWidget {
   final String? space;
   final spaceMembers;
-  const AddSpacesMember({super.key, @required this.space, this.spaceMembers});
+  const AddSpacesMember({super.key, required this.space, this.spaceMembers});
 
   @override
   AddSpacesMemberState createState() => AddSpacesMemberState();
@@ -190,7 +191,7 @@ class AddSpacesMemberState extends State<AddSpacesMember> {
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                 border: Border.all(
                   color: Colors.grey.shade300,
                   width: 1,
@@ -259,7 +260,7 @@ class AddSpacesMemberState extends State<AddSpacesMember> {
                           size: 80,
                           color: Colors.grey.shade400,
                         ),
-                        SizedBox(height: 16),
+                        SizedBox(height: AppDimensions.spacingLg),
                         Text(
                           'Search for members to add',
                           style: TextStyle(
@@ -268,7 +269,7 @@ class AddSpacesMemberState extends State<AddSpacesMember> {
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        SizedBox(height: 8),
+                        SizedBox(height: AppDimensions.spacingSm),
                         Text(
                           'Type a name in the search box above',
                           style: TextStyle(
@@ -295,7 +296,7 @@ class AddSpacesMemberState extends State<AddSpacesMember> {
                           size: 80,
                           color: Colors.grey.shade400,
                         ),
-                        SizedBox(height: 16),
+                        SizedBox(height: AppDimensions.spacingLg),
                         Text(
                           'No members found',
                           style: TextStyle(
@@ -304,7 +305,7 @@ class AddSpacesMemberState extends State<AddSpacesMember> {
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        SizedBox(height: 8),
+                        SizedBox(height: AppDimensions.spacingSm),
                         Text(
                           'Try a different search term',
                           style: TextStyle(

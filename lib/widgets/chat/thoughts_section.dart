@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:aurogram/models/thought_process.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 class ThoughtsSection extends StatefulWidget {
   final ThoughtProcess? thoughtProcess;
@@ -120,10 +121,10 @@ class _ThoughtsSectionState extends State<ThoughtsSection>
     final isExpanded = thoughtProcess?.isExpanded ?? false;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: AppDimensions.paddingMd),
       decoration: BoxDecoration(
         color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
         border: Border.all(
           color: widget.isStreaming
               ? AppTheme.primaryColor.withValues(alpha: 0.3)
@@ -143,7 +144,7 @@ class _ThoughtsSectionState extends State<ThoughtsSection>
               onTap: _toggleExpansion,
               child: Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingMd),
                 child: Row(
                   children: [
                     // Thinking icon with pulse animation
@@ -161,7 +162,7 @@ class _ThoughtsSectionState extends State<ThoughtsSection>
                               color: widget.isStreaming
                                   ? AppTheme.primaryColor.withValues(alpha: 0.1)
                                   : Colors.grey.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm),
                             ),
                             child: Icon(
                               widget.isStreaming
@@ -176,13 +177,13 @@ class _ThoughtsSectionState extends State<ThoughtsSection>
                         );
                       },
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppDimensions.spacingSm),
                     // Title
                     Expanded(
                       child: Text(
                         widget.isStreaming ? 'Thinking...' : 'Thoughts',
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: AppTheme.holyCowTextSize,
                           fontWeight: FontWeight.w600,
                           color: widget.isStreaming
                               ? AppTheme.primaryColor
@@ -214,20 +215,20 @@ class _ThoughtsSectionState extends State<ThoughtsSection>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Divider(height: 1),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppDimensions.spacingMd),
                   // Show steps if available
                   if (steps.isNotEmpty) ...[
                     ...steps.map((step) => _buildThoughtStep(step)),
-                    if (widget.isStreaming) const SizedBox(height: 8),
+                    if (widget.isStreaming) const SizedBox(height: AppDimensions.spacingSm),
                   ],
                   // Show placeholder if no steps and not streaming
                   if (steps.isEmpty && !widget.isStreaming) ...[
                     Container(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingSm),
                       child: Text(
                         'No thinking steps recorded',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: AppTheme.holyCowTextSize,
                           color: Colors.grey[600],
                           fontStyle: FontStyle.italic,
                         ),
@@ -245,7 +246,7 @@ class _ThoughtsSectionState extends State<ThoughtsSection>
 
   Widget _buildThoughtStep(ThoughtStep step) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: AppDimensions.paddingMd),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -256,7 +257,7 @@ class _ThoughtsSectionState extends State<ThoughtsSection>
             margin: const EdgeInsets.only(right: 12, top: 2),
             decoration: BoxDecoration(
               color: _getStepColor(step.type).withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
             ),
             child: Icon(
               _getStepIcon(step.type),
@@ -273,7 +274,7 @@ class _ThoughtsSectionState extends State<ThoughtsSection>
                 Text(
                   step.message,
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: AppTheme.holyCowTextSize,
                     color: Colors.grey[800],
                     height: 1.3,
                   ),
@@ -281,25 +282,25 @@ class _ThoughtsSectionState extends State<ThoughtsSection>
 
                 // Show metadata information if available
                 if (step.metadata != null && step.metadata!.isNotEmpty) ...[
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppDimensions.spacingXs),
                   _buildMetadataInfo(step),
                 ],
 
                 // Step query if available
                 if (step.query != null && step.query!.isNotEmpty) ...[
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppDimensions.spacingXs),
                   Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.blue[50],
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(AppDimensions.radiusSmMd),
                       border: Border.all(color: Colors.blue[200]!, width: 0.5),
                     ),
                     child: Text(
                       '"${step.query}"',
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: AppTheme.holyCowTextSize,
                         color: Colors.blue[700],
                         fontStyle: FontStyle.italic,
                       ),
@@ -309,7 +310,7 @@ class _ThoughtsSectionState extends State<ThoughtsSection>
 
                 // Results with collapsible display if available
                 if (step.results != null && step.results!.isNotEmpty) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppDimensions.spacingSm),
                   _buildCollapsibleResults(step.results!),
                 ],
 
@@ -370,13 +371,13 @@ class _ThoughtsSectionState extends State<ThoughtsSection>
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           decoration: BoxDecoration(
             color: Colors.indigo[50],
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
             border: Border.all(color: Colors.indigo[300]!, width: 0.5),
           ),
           child: Text(
             'Combined $mergedCount steps',
             style: TextStyle(
-              fontSize: 10,
+              fontSize: AppTheme.holyCowTextSize,
               color: Colors.indigo[700],
               fontWeight: FontWeight.w600,
             ),
@@ -393,13 +394,13 @@ class _ThoughtsSectionState extends State<ThoughtsSection>
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           decoration: BoxDecoration(
             color: Colors.green[50],
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
             border: Border.all(color: Colors.green[300]!, width: 0.5),
           ),
           child: Text(
             '$totalSources sources',
             style: TextStyle(
-              fontSize: 10,
+              fontSize: AppTheme.holyCowTextSize,
               color: Colors.green[700],
               fontWeight: FontWeight.w600,
             ),
@@ -418,13 +419,13 @@ class _ThoughtsSectionState extends State<ThoughtsSection>
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           decoration: BoxDecoration(
             color: Colors.purple[50],
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
             border: Border.all(color: Colors.purple[300]!, width: 0.5),
           ),
           child: Text(
             searchIndex != null ? 'Round $round' : 'Round $round',
             style: TextStyle(
-              fontSize: 9,
+              fontSize: AppTheme.holyCowTextSize,
               color: Colors.purple[600],
               fontWeight: FontWeight.w500,
             ),
@@ -441,14 +442,14 @@ class _ThoughtsSectionState extends State<ThoughtsSection>
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           decoration: BoxDecoration(
             color: _getConfidenceColor(confidence).withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
             border:
                 Border.all(color: _getConfidenceColor(confidence), width: 0.5),
           ),
           child: Text(
             '${(confidence * 100).round()}% confident',
             style: TextStyle(
-              fontSize: 10,
+              fontSize: AppTheme.holyCowTextSize,
               color: _getConfidenceColor(confidence),
               fontWeight: FontWeight.w500,
             ),
@@ -464,13 +465,13 @@ class _ThoughtsSectionState extends State<ThoughtsSection>
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           decoration: BoxDecoration(
             color: Colors.green[50],
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
             border: Border.all(color: Colors.green[300]!, width: 0.5),
           ),
           child: Text(
             '${metadata['results_count']} search results',
             style: TextStyle(
-              fontSize: 10,
+              fontSize: AppTheme.holyCowTextSize,
               color: Colors.green[700],
               fontWeight: FontWeight.w500,
             ),
@@ -516,7 +517,7 @@ class _ThoughtsSectionState extends State<ThoughtsSection>
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.blue[50],
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusSmMd),
                   border: Border.all(color: Colors.blue[200]!, width: 0.5),
                 ),
                 child: Row(
@@ -527,11 +528,11 @@ class _ThoughtsSectionState extends State<ThoughtsSection>
                       size: 14,
                       color: Colors.blue[600],
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: AppDimensions.spacingXs),
                     Text(
                       'View ${results.length} search results',
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: AppTheme.holyCowTextSize,
                         color: Colors.blue[600],
                         fontWeight: FontWeight.w500,
                       ),
@@ -543,12 +544,12 @@ class _ThoughtsSectionState extends State<ThoughtsSection>
 
             // Collapsible results
             if (isExpanded) ...[
-              const SizedBox(height: 6),
+              const SizedBox(height: AppDimensions.spacingSmMd),
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(AppDimensions.paddingSm),
                 decoration: BoxDecoration(
                   color: Colors.grey[50],
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
                   border: Border.all(color: Colors.grey[200]!, width: 0.5),
                 ),
                 child: Column(
@@ -567,15 +568,15 @@ class _ThoughtsSectionState extends State<ThoughtsSection>
 
   Widget _buildResultItem(SearchResult result) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: AppDimensions.paddingSm),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusSmMd),
         border: Border.all(color: Colors.grey[300]!, width: 0.8),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             blurRadius: 2,
             offset: const Offset(0, 1),
           ),
@@ -588,26 +589,26 @@ class _ThoughtsSectionState extends State<ThoughtsSection>
           Text(
             result.title,
             style: TextStyle(
-              fontSize: 11,
+              fontSize: AppTheme.holyCowTextSize,
               fontWeight: FontWeight.w600,
               color: Colors.blue[700],
             ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppDimensions.spacingXs),
           // Snippet
           Text(
             result.snippet,
             style: TextStyle(
-              fontSize: 9,
+              fontSize: AppTheme.holyCowTextSize,
               color: Colors.grey[700],
               height: 1.3,
             ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppDimensions.spacingSmMd),
           // FULL LINK - This was missing!
           Row(
             children: [
@@ -616,12 +617,12 @@ class _ThoughtsSectionState extends State<ThoughtsSection>
                 size: 12,
                 color: Colors.green[600],
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: AppDimensions.spacingXs),
               Expanded(
                 child: Text(
                   result.link,
                   style: TextStyle(
-                    fontSize: 9,
+                    fontSize: AppTheme.holyCowTextSize,
                     color: Colors.green[600],
                     fontWeight: FontWeight.w500,
                     decoration: TextDecoration.underline,
@@ -632,12 +633,12 @@ class _ThoughtsSectionState extends State<ThoughtsSection>
               ),
             ],
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: AppDimensions.spacingXxs),
           // Domain
           Text(
             'Source: ${result.displayLink}',
             style: TextStyle(
-              fontSize: 8,
+              fontSize: AppTheme.holyCowTextSize,
               color: Colors.grey[500],
               fontStyle: FontStyle.italic,
             ),

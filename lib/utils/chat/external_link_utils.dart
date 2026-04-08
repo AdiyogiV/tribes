@@ -30,7 +30,9 @@ class ExternalLinkPreview {
     try {
       final uri = Uri.parse(url);
       siteName = uri.host.replaceFirst('www.', '');
-    } catch (_) {}
+    } catch (_) {
+      AppLogger.w('ExternalLinkPreview: failed to parse URL domain', category: LogCategory.general);
+    }
 
     return ExternalLinkPreview(
       url: url,
@@ -40,6 +42,19 @@ class ExternalLinkPreview {
       siteName: siteName,
       favicon: null, // metadata_fetch doesn't provide favicon
       type: 'link',
+    );
+  }
+
+  /// Create from a JSON map (e.g. cached or serialised preview data).
+  factory ExternalLinkPreview.fromJson(Map<String, dynamic> json) {
+    return ExternalLinkPreview(
+      url: json['url'] ?? '',
+      title: json['title'] ?? 'Link',
+      description: json['description'],
+      image: json['image'],
+      siteName: json['siteName'] ?? 'Link',
+      favicon: json['favicon'],
+      type: json['type'] ?? 'link',
     );
   }
 

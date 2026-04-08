@@ -1,6 +1,6 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Shared card style for all notification tiles: full width, no border/radius/shadow.
 /// Same as "started following you" tile: transparent when read, subtle tint when unread.
@@ -44,7 +44,7 @@ class NotificationTileCard extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingMd),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -53,17 +53,17 @@ class NotificationTileCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     leading,
-                    const SizedBox(width: 12),
+                    const SizedBox(width: AppDimensions.spacingMd),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           content,
-                          const SizedBox(height: 4),
+                          const SizedBox(height: AppDimensions.spacingXs),
                           Text(
                             timestamp,
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: AppTheme.holyCowTextSize,
                               color: primaryColor.withValues(alpha: 0.5),
                             ),
                           ),
@@ -71,13 +71,13 @@ class NotificationTileCard extends StatelessWidget {
                       ),
                     ),
                     if (trailing != null) ...[
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppDimensions.spacingSm),
                       trailing!,
                     ],
                   ],
                 ),
                 if (actions != null) ...[
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppDimensions.spacingMd),
                   actions!,
                 ],
               ],
@@ -129,7 +129,7 @@ class UnifiedNotificationCard extends StatelessWidget {
             Text(
               title,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: AppTheme.holyCowTextSize,
                 fontWeight: FontWeight.w600,
                 color: textColor,
                 height: 1.3,
@@ -138,11 +138,11 @@ class UnifiedNotificationCard extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
             if (subtitle != null && subtitle!.isNotEmpty) ...[
-              const SizedBox(height: 2),
+              const SizedBox(height: AppDimensions.spacingXxs),
               Text(
                 subtitle!,
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: AppTheme.holyCowTextSize,
                   color: secondaryColor,
                   height: 1.3,
                 ),

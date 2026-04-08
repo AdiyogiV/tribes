@@ -1,3 +1,4 @@
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 import 'package:flutter/material.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 
@@ -17,7 +18,7 @@ class ProfileLoadingSkeleton extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         children: [
-          const SizedBox(height: 24),
+          const SizedBox(height: AppDimensions.spacingXxl),
           // Avatar skeleton
           Container(
             width: 100,
@@ -27,7 +28,7 @@ class ProfileLoadingSkeleton extends StatelessWidget {
               shape: BoxShape.circle,
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: AppDimensions.spacingXl),
           // Name skeleton
           Container(
             width: 150,
@@ -37,7 +38,7 @@ class ProfileLoadingSkeleton extends StatelessWidget {
               borderRadius: BorderRadius.circular(11),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppDimensions.spacingMdSm),
           // Username skeleton
           Container(
             width: 100,
@@ -62,16 +63,16 @@ class ProfileLoadingSkeleton extends StatelessWidget {
                       height: 20,
                       decoration: BoxDecoration(
                         color: placeholderDark,
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm),
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: AppDimensions.spacingSmMd),
                     Container(
                       width: 56,
                       height: 12,
                       decoration: BoxDecoration(
                         color: placeholder,
-                        borderRadius: BorderRadius.circular(6),
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusSmMd),
                       ),
                     ),
                   ],
@@ -99,7 +100,7 @@ class ProfileLoadingSkeleton extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.spacingLg),
           // Action buttons skeleton
           Container(
             width: 200,

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:aurogram/utils/logging/app_logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -101,7 +102,7 @@ class MobilePlatformServices implements PlatformServices {
       );
       return info?.file?.path;
     } catch (e) {
-      debugPrint('Video compression failed: $e');
+      AppLogger.w('MobilePlatformServices: Video compression failed: $e', category: LogCategory.media);
       return null;
     }
   }
@@ -132,7 +133,7 @@ class MobilePlatformServices implements PlatformServices {
   
   @override
   Future<void> vibrate({int duration = 500}) async {
-    final hasVibrator = await Vibration.hasVibrator() ?? false;
+    final hasVibrator = await Vibration.hasVibrator();
     if (hasVibrator) {
       await Vibration.vibrate(duration: duration);
     }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/widgets/astrology/cosmic_share_card.dart';
 import 'package:aurogram/widgets/astrology/insight_share_card.dart';
@@ -41,19 +42,19 @@ class CosmicCardPreviewSheet extends StatelessWidget {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppDimensions.spacingMd),
           Flexible(
             child: SingleChildScrollView(
               child: Transform.scale(
                 scale: 0.85,
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
                   child: card,
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppDimensions.spacingMd),
           Padding(
             padding: EdgeInsets.fromLTRB(24, 0, 24, bottomPadding + 12),
             child: Column(
@@ -68,9 +69,9 @@ class CosmicCardPreviewSheet extends StatelessWidget {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryColor,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingMdLg),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusMdLg),
                       ),
                       textStyle: const TextStyle(
                         fontSize: 16,
@@ -80,7 +81,7 @@ class CosmicCardPreviewSheet extends StatelessWidget {
                   ),
                 ),
                 if (onAddToStory != null) ...[
-                  const SizedBox(height: 10),
+                  const SizedBox(height: AppDimensions.spacingMdSm),
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
@@ -91,9 +92,9 @@ class CosmicCardPreviewSheet extends StatelessWidget {
                         foregroundColor: AppTheme.primaryColor,
                         side: BorderSide(
                             color: AppTheme.primaryColor.withValues(alpha: 0.5)),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingMdLg),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(AppDimensions.radiusMdLg),
                         ),
                       ),
                     ),
@@ -148,7 +149,7 @@ class GramCardPreviewSheet extends StatelessWidget {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppDimensions.spacingMd),
           Text(
             'Invite to $spaceName',
             style: TextStyle(
@@ -157,19 +158,19 @@ class GramCardPreviewSheet extends StatelessWidget {
               color: AppTheme.primaryColor,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppDimensions.spacingMd),
           Flexible(
             child: SingleChildScrollView(
               child: Transform.scale(
                 scale: 0.85,
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
                   child: card,
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppDimensions.spacingMd),
           Padding(
             padding: EdgeInsets.fromLTRB(24, 0, 24, bottomPadding + 12),
             child: Column(
@@ -186,14 +187,14 @@ class GramCardPreviewSheet extends StatelessWidget {
                           foregroundColor: AppTheme.primaryColor,
                           side: BorderSide(
                               color: AppTheme.primaryColor.withValues(alpha: 0.5)),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingMdLg),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(AppDimensions.radiusMdLg),
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: AppDimensions.spacingMd),
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: onShareCard,
@@ -202,9 +203,9 @@ class GramCardPreviewSheet extends StatelessWidget {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primaryColor,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingMdLg),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(AppDimensions.radiusMdLg),
                           ),
                           textStyle: const TextStyle(
                             fontSize: 15,
@@ -216,7 +217,7 @@ class GramCardPreviewSheet extends StatelessWidget {
                   ],
                 ),
                 if (onAddToStory != null) ...[
-                  const SizedBox(height: 10),
+                  const SizedBox(height: AppDimensions.spacingMdSm),
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
@@ -227,9 +228,9 @@ class GramCardPreviewSheet extends StatelessWidget {
                         foregroundColor: AppTheme.primaryColor,
                         side: BorderSide(
                             color: AppTheme.primaryColor.withValues(alpha: 0.5)),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingMdLg),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(AppDimensions.radiusMdLg),
                         ),
                       ),
                     ),
@@ -280,7 +281,7 @@ class AnonymousLinkPreviewSheet extends StatelessWidget {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppDimensions.spacingMd),
           Text(
             'Share your anonymous link',
             style: TextStyle(
@@ -289,19 +290,19 @@ class AnonymousLinkPreviewSheet extends StatelessWidget {
               color: AppTheme.primaryColor,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppDimensions.spacingMd),
           Flexible(
             child: SingleChildScrollView(
               child: Transform.scale(
                 scale: 0.85,
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
                   child: card,
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppDimensions.spacingMd),
           Padding(
             padding: EdgeInsets.fromLTRB(24, 0, 24, bottomPadding + 12),
             child: Row(
@@ -315,14 +316,14 @@ class AnonymousLinkPreviewSheet extends StatelessWidget {
                       foregroundColor: AppTheme.primaryColor,
                       side: BorderSide(
                           color: AppTheme.primaryColor.withValues(alpha: 0.5)),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingMdLg),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusMdLg),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppDimensions.spacingMd),
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: onShareCard,
@@ -331,9 +332,9 @@ class AnonymousLinkPreviewSheet extends StatelessWidget {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryColor,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingMdLg),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusMdLg),
                       ),
                       textStyle: const TextStyle(
                         fontSize: 15,
@@ -389,7 +390,7 @@ class InsightCardPreviewSheet extends StatelessWidget {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppDimensions.spacingMd),
           Text(
             'Share Your Insight',
             style: TextStyle(
@@ -398,7 +399,7 @@ class InsightCardPreviewSheet extends StatelessWidget {
               color: AppTheme.primaryColor,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppDimensions.spacingXs),
           Text(
             'Show friends what the stars say',
             style: TextStyle(
@@ -406,19 +407,19 @@ class InsightCardPreviewSheet extends StatelessWidget {
               color: Colors.grey[600],
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.spacingLg),
           Flexible(
             child: SingleChildScrollView(
               child: Transform.scale(
                 scale: 0.85,
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
                   child: card,
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.spacingLg),
           Padding(
             padding: EdgeInsets.fromLTRB(24, 0, 24, bottomPadding + 12),
             child: Column(
@@ -435,14 +436,14 @@ class InsightCardPreviewSheet extends StatelessWidget {
                           foregroundColor: AppTheme.primaryColor,
                           side: BorderSide(
                               color: AppTheme.primaryColor.withValues(alpha: 0.5)),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingMdLg),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(AppDimensions.radiusMdLg),
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: AppDimensions.spacingMd),
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: onShareCard,
@@ -451,9 +452,9 @@ class InsightCardPreviewSheet extends StatelessWidget {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primaryColor,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingMdLg),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(AppDimensions.radiusMdLg),
                           ),
                           textStyle: const TextStyle(
                             fontSize: 15,
@@ -465,7 +466,7 @@ class InsightCardPreviewSheet extends StatelessWidget {
                   ],
                 ),
                 if (onAddToStory != null) ...[
-                  const SizedBox(height: 10),
+                  const SizedBox(height: AppDimensions.spacingMdSm),
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
@@ -476,9 +477,9 @@ class InsightCardPreviewSheet extends StatelessWidget {
                         foregroundColor: AppTheme.primaryColor,
                         side: BorderSide(
                             color: AppTheme.primaryColor.withValues(alpha: 0.5)),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingMdLg),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(AppDimensions.radiusMdLg),
                         ),
                       ),
                     ),
@@ -529,7 +530,7 @@ class CompatibilityCardPreviewSheet extends StatelessWidget {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppDimensions.spacingMd),
           Text(
             title,
             style: TextStyle(
@@ -538,19 +539,19 @@ class CompatibilityCardPreviewSheet extends StatelessWidget {
               color: AppTheme.primaryColor,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppDimensions.spacingMd),
           Flexible(
             child: SingleChildScrollView(
               child: Transform.scale(
                 scale: 0.85,
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
                   child: card,
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppDimensions.spacingMd),
           Padding(
             padding: EdgeInsets.fromLTRB(24, 0, 24, bottomPadding + 12),
             child: SizedBox(
@@ -562,9 +563,9 @@ class CompatibilityCardPreviewSheet extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryColor,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingMdLg),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusMdLg),
                   ),
                   textStyle: const TextStyle(
                     fontSize: 16,

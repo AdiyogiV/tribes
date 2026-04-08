@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/utils/time_display.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Widget that shows a quoted post preview within another post
 class QuotedPostPreview extends StatelessWidget {
@@ -30,18 +31,18 @@ class QuotedPostPreview extends StatelessWidget {
         margin: const EdgeInsets.only(top: 12),
         decoration: BoxDecoration(
           border: Border.all(
-            color: AppTheme.textSecondaryColor.withOpacity(0.2),
+            color: AppTheme.textSecondaryColor.withValues(alpha: 0.2),
             width: 1.5,
           ),
-          borderRadius: BorderRadius.circular(12),
-          color: AppTheme.cardColor.withOpacity(0.3),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          color: AppTheme.cardColor.withValues(alpha: 0.3),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Author header
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(AppDimensions.paddingMd),
               child: Row(
                 children: [
                   Icon(
@@ -49,7 +50,7 @@ class QuotedPostPreview extends StatelessWidget {
                     size: 14,
                     color: AppTheme.textSecondaryColor,
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: AppDimensions.spacingSmMd),
                   Expanded(
                     child: Text(
                       authorName,
@@ -63,7 +64,7 @@ class QuotedPostPreview extends StatelessWidget {
                     ),
                   ),
                   if (timestamp != null) ...[
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppDimensions.spacingSm),
                     Text(
                       TimeDisplay.getRelativeTime(timestamp.toDate()),
                       style: TextStyle(
@@ -95,7 +96,7 @@ class QuotedPostPreview extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     if (title != null && content != null)
-                      const SizedBox(height: 4),
+                      const SizedBox(height: AppDimensions.spacingXs),
                     if (content != null)
                       Text(
                         content,

@@ -16,7 +16,8 @@ import 'package:aurogram/pages/ayurveda/widgets/ayurveda_reset_overlay.dart';
 import 'package:aurogram/pages/ayurveda/widgets/ayurveda_details_skeleton.dart';
 import 'package:aurogram/pages/ayurveda/widgets/dosha_dashboard_card.dart';
 import 'package:aurogram/pages/ayurveda/widgets/consolidated_cards.dart';
-import 'package:aurogram/pages/ayurveda/widgets/ai_recommendations_card.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/widgets/common/snack_bar_service.dart';
 
 /// Main Ayurveda details page
 /// Shows Prakriti profile, current Vikriti, health insights, and recommendations
@@ -182,37 +183,19 @@ class _AyurvedaDetailsPageState extends State<AyurvedaDetailsPage> {
           });
 
           // Show success message
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Ayurveda profile reset successfully'),
-              backgroundColor: Colors.green.shade600,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          showCustomSnackBar(context, message: 'Ayurveda profile reset successfully', backgroundColor: Colors.green.shade600, behavior: SnackBarBehavior.floating);
 
           // Recalculate vikriti
           _calculateVikriti();
         } else {
           setState(() => _isResetting = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Failed to reset profile'),
-              backgroundColor: Colors.red.shade600,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          showCustomSnackBar(context, message: 'Failed to reset profile', backgroundColor: Colors.red.shade600, behavior: SnackBarBehavior.floating);
         }
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isResetting = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red.shade600,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        showCustomSnackBar(context, message: 'Error: $e', backgroundColor: Colors.red.shade600, behavior: SnackBarBehavior.floating);
       }
     }
   }
@@ -232,17 +215,17 @@ class _AyurvedaDetailsPageState extends State<AyurvedaDetailsPage> {
       context: context,
       builder: (context) => Dialog(
         backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.all(16),
+        insetPadding: const EdgeInsets.all(AppDimensions.paddingLg),
         child: Material(
           color: isDark ? Theme.of(context).colorScheme.surface : Colors.white,
           elevation: 3,
           shadowColor: Colors.black.withValues(alpha: 0.18),
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusXxl),
           child: Container(
             constraints: const BoxConstraints(maxWidth: 420),
             child: SingleChildScrollView(
               child: Padding(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(AppDimensions.paddingXxl),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -250,10 +233,10 @@ class _AyurvedaDetailsPageState extends State<AyurvedaDetailsPage> {
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.all(AppDimensions.paddingMd),
                           decoration: BoxDecoration(
                             color: c.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(AppDimensions.radiusMdLg),
                           ),
                           child: Icon(
                             Icons.spa_rounded,
@@ -261,7 +244,7 @@ class _AyurvedaDetailsPageState extends State<AyurvedaDetailsPage> {
                             color: c,
                           ),
                         ),
-                        const SizedBox(width: 16),
+                        const SizedBox(width: AppDimensions.spacingLg),
                         Expanded(
                           child: Text(
                             title,
@@ -283,9 +266,9 @@ class _AyurvedaDetailsPageState extends State<AyurvedaDetailsPage> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppDimensions.spacingMd),
                     Container(height: 1, color: dividerColor),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: AppDimensions.spacingMdLg),
                     SelectableText(
                       message,
                       style: TextStyle(
@@ -466,7 +449,7 @@ class _AyurvedaDetailsPageState extends State<AyurvedaDetailsPage> {
               color: AppTheme.primaryColor,
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: AppDimensions.spacingXl),
           Text(
             'Ayurveda Profile',
             style: TextStyle(
@@ -474,7 +457,7 @@ class _AyurvedaDetailsPageState extends State<AyurvedaDetailsPage> {
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppDimensions.spacingSm),
           Text(
             'Complete your astrology profile to unlock personalized Ayurveda insights based on your birth chart.',
             textAlign: TextAlign.center,
@@ -551,15 +534,6 @@ class _AyurvedaDetailsPageState extends State<AyurvedaDetailsPage> {
               ),
 
               SizedBox(height: spacing),
-
-              // Card 3: AI-Powered Personalized Recommendations
-              // Disabled temporarily; keep implementation for later.
-              if (false) ...[
-                AIRecommendationsCard(
-                  isDark: isDark,
-                ),
-                SizedBox(height: spacing),
-              ],
 
               // Card 4: Static Tips (Collapsible - fallback/reference)
               CollapsibleRecommendationsCard(

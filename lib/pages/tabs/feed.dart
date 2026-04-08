@@ -1,40 +1,27 @@
 import 'dart:async';
-import 'dart:ui';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/foundation.dart'
-    show kIsWeb, kDebugMode, ValueListenable;
+    show kDebugMode, ValueListenable;
 import 'package:provider/provider.dart';
-import 'package:aurogram/pages/helpers/gram_creation_page.dart'
-    show SpaceCreationPage;
 import 'package:aurogram/utils/media_type_selector.dart';
 import 'package:aurogram/widgets/dialogs/login_bottom_sheet.dart';
 import 'package:aurogram/services/feed_service.dart';
-import 'package:aurogram/services/story_service.dart';
 import 'package:aurogram/services/data/post_db_service.dart';
 import 'package:aurogram/services/feed_layout_cache.dart';
-import 'package:aurogram/services/video_prewarm_service.dart';
 import 'package:aurogram/services/batch_data_loader.dart';
-import 'package:aurogram/controllers/feed_controller.dart';
+import 'package:aurogram/pages/tabs/feed/feed_controller.dart';
 import 'package:aurogram/utils/feed_performance_monitor.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
-import 'package:aurogram/utils/theme/app_theme.dart';
-import 'package:aurogram/utils/theme/header_style.dart';
 import 'package:aurogram/utils/responsive.dart';
-import 'package:aurogram/widgets/cosmic_dashboard.dart';
-import 'package:aurogram/pages/thread_view.dart';
 import 'package:aurogram/pages/stories/story_composer_page.dart';
-import 'package:aurogram/pages/stories/story_viewer_page.dart';
-import 'package:aurogram/widgets/post_switcher.dart';
-import 'package:aurogram/widgets/stories/story_ring.dart';
-import 'package:aurogram/widgets/preview_boxes/gram_preview_box.dart';
-import 'package:aurogram/widgets/ui/size_reporting_widget.dart';
 import 'package:aurogram/services/analytics_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show ScrollDirection;
-import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
+import 'package:aurogram/pages/tabs/feed/feed_creation_dialog.dart';
+import 'package:aurogram/pages/tabs/feed/feed_desktop_layout.dart';
+import 'package:aurogram/pages/tabs/feed/feed_mobile_layout.dart';
+import 'package:aurogram/pages/tabs/feed/feed_batch_preloader.dart';
 
 class _FeedAnchor {
   final String postId;
@@ -80,6 +67,7 @@ class _FeedState extends State<Feed> {
   final PostDbService _postDbService = PostDbService();
   final FeedLayoutCache _layoutCache = FeedLayoutCache();
   final BatchDataLoader _batchLoader = BatchDataLoader();
+  late final FeedBatchPreloader _preloader;
 
   List<String> feed = [];
   bool initialized = false;
@@ -98,7 +86,6 @@ class _FeedState extends State<Feed> {
   // Limit feed size to prevent unbounded growth and cache mismatches
   static const int _maxFeedSize = 100;
   static const int _preloadAheadCount = 16;
-  static int get _prewarmAheadCount => kIsWeb ? 6 : 2;
 
   /// ValueNotifier so scroll-to-top button updates without setState (no full Feed rebuild during scroll).
   final ValueNotifier<bool> _showScrollToTopNotifier =
@@ -122,6 +109,10 @@ class _FeedState extends State<Feed> {
   @override
   void initState() {
     super.initState();
+    _preloader = FeedBatchPreloader(
+      postDbService: _postDbService,
+      batchLoader: _batchLoader,
+    );
     _scrollController.addListener(_onScroll);
 
     // Start performance monitoring session (debug only)
@@ -169,107 +160,18 @@ class _FeedState extends State<Feed> {
 
   // ViewportTracker removed - using simple VisibilityDetector pattern instead
 
-  /// Preload post data ahead of viewport for instant rendering
-  /// This fetches post documents from Firestore and caches them in PostDbService
-  /// so when Post widgets build, their data is already available
-  Future<List<String>> _preloadPostData(int startIndex, int count,
-      {List<String>? postIds}) async {
-    // Use provided postIds or fall back to feed list
-    final feedList = postIds ?? feed;
-
-    if (startIndex >= feedList.length) return [];
-
-    final startTime = DateTime.now();
-    final endIndex = (startIndex + count).clamp(0, feedList.length);
-    final postsToPreload = feedList.sublist(startIndex, endIndex);
-    final validPostIds = <String>[];
-
-    if (kDebugMode) {
-      AppLogger.i(
-        '⏳ Preload START',
-        category: LogCategory.performance,
-        data: {'start': startIndex, 'count': postsToPreload.length},
-      );
-    }
-
-    // Use batch getPosts method for optimal parallel loading
-    final results = await _postDbService.getPosts(postsToPreload);
-    for (final postId in postsToPreload) {
-      final snapshot = results[postId];
-      if (snapshot == null || !snapshot.exists) {
-        _postDbService.markPostAsMissing(postId);
-        _postDbService.cleanupMissingPostReferences(postId);
-        continue;
-      }
-      final data = snapshot.data() as Map<String, dynamic>?;
-      if (data == null) {
-        _postDbService.markPostAsMissing(postId);
-        _postDbService.cleanupMissingPostReferences(postId);
-        continue;
-      }
-      final uploading = data['uploading'] as bool? ?? false;
-      final hasRequired = data['timestamp'] != null &&
-          data['author'] != null &&
-          data['space'] != null;
-      if (!hasRequired && !uploading) {
-        _postDbService.markPostAsMissing(postId);
-        _postDbService.cleanupMissingPostReferences(postId);
-        continue;
-      }
-      validPostIds.add(postId);
-
-      final postType = data['postType'] as String? ?? 'video';
-      final videoUrl = data['video'] as String?;
-      if (postType == 'video' &&
-          videoUrl != null &&
-          videoUrl.isNotEmpty &&
-          !uploading) {
-        VideoPrewarmService().prewarm(postId, videoUrl);
-      }
-    }
-    final successCount = results.values.where((doc) => doc != null).length;
-    final errorCount = results.values.where((doc) => doc == null).length;
-
-    final endTime = DateTime.now();
-    final durationMs = endTime.difference(startTime).inMilliseconds;
-
-    if (kDebugMode) {
-      AppLogger.i(
-        '✅ Preload COMPLETE',
-        category: LogCategory.performance,
-        data: {
-          'start': startIndex,
-          'total': postsToPreload.length,
-          'success': successCount,
-          'errors': errorCount,
-          'took_ms': durationMs,
-          'avg_ms_per_post':
-              (durationMs / postsToPreload.length).toStringAsFixed(1),
-          'validCount': validPostIds.length,
-        },
-      );
-    }
-
-    // NEW: Batch load counters for these posts (like/reply counts)
-    // This loads all counters in parallel instead of one-by-one in each post widget
+  /// Preload post data + batch load counters via FeedBatchPreloader.
+  Future<List<String>> _preloadAndCountPosts(int startIndex, int count,
+      {required List<String> postIds}) async {
+    final validPostIds = await _preloader.preloadPostData(
+      startIndex, count, postIds: postIds,
+    );
     if (validPostIds.isNotEmpty) {
       try {
         final feedController = context.read<FeedController>();
-        await feedController.batchLoadCounters(validPostIds);
-
-        if (kDebugMode) {
-          AppLogger.i(
-            '✅ Batch counter load complete',
-            category: LogCategory.performance,
-            data: {'count': validPostIds.length},
-          );
-        }
-      } catch (e) {
-        // FeedController not available or error - posts will load counters individually
-        AppLogger.w('Batch counter load failed', data: {'error': e.toString()});
-      }
+        await _preloader.batchLoadCounters(validPostIds, feedController);
+      } catch (_) {}
     }
-
     return validPostIds;
   }
 
@@ -363,7 +265,7 @@ class _FeedState extends State<Feed> {
             },
           );
         }
-        _preloadPostData(preloadStartIndex, _preloadAheadCount).catchError((e) {
+        _preloader.preloadPostData(preloadStartIndex, _preloadAheadCount, postIds: feed).catchError((e) {
           // Silently handle preload errors
           return <String>[];
         });
@@ -415,82 +317,14 @@ class _FeedState extends State<Feed> {
     _showCreateSelectionDialog();
   }
 
-  void _showCreateSelectionDialog() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (BuildContext context) => Container(
-        decoration: BoxDecoration(
-          color: isDark ? Colors.black : Colors.white,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Handle bar
-                Container(
-                  margin: const EdgeInsets.only(bottom: 20),
-                  height: 4,
-                  width: 36,
-                  decoration: BoxDecoration(
-                    color: (isDark ? Colors.white : Colors.black)
-                        .withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-
-                // Post option
-                _CreationOptionCard(
-                  icon: CupertinoIcons.square_grid_2x2,
-                  title: 'Create Post',
-                  subtitle: 'Share photos, videos, or notes',
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFF6366F1), // Indigo
-                      Color(0xFFEC4899), // Pink
-                    ],
-                  ),
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    _createPost();
-                  },
-                ),
-
-                const SizedBox(height: 24),
-
-                // Story option
-                _CreationOptionCard(
-                  icon: CupertinoIcons.camera_fill,
-                  title: 'Create Story',
-                  subtitle: 'Share moments that disappear in 24h',
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFF0EA5E9), // Sky blue
-                      Color(0xFF10B981), // Green
-                    ],
-                  ),
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    _createStory();
-                  },
-                ),
-
-                const SizedBox(height: 20),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
+  void _showCreateSelectionDialog() async {
+    final choice = await showCreateSelectionDialog(context);
+    if (!mounted || choice == null) return;
+    if (choice == 'post') {
+      _createPost();
+    } else if (choice == 'story') {
+      _createStory();
+    }
   }
 
   void _createPost() {
@@ -548,72 +382,14 @@ class _FeedState extends State<Feed> {
         // This eliminates the "User" → "Real Name" flicker
         AppLogger.i('📥 Feed: Preloading first 15 posts BEFORE setState',
             category: LogCategory.performance);
-        final validFirstBatch = await _preloadPostData(0, 15, postIds: postIds);
+        final validFirstBatch = await _preloadAndCountPosts(0, 15, postIds: postIds);
         final preloadCompleteTime = DateTime.now();
 
-        // NEW: Batch load user/space data for all posts BEFORE rendering
-        // Extract author/space IDs from preloaded posts and load in bulk
-        if (validFirstBatch.isNotEmpty) {
-          try {
-            final feedController = context.read<FeedController>();
-            final userIds = <String>{};
-            final spaceIds = <String>{};
-
-            for (final postId in validFirstBatch) {
-              final cached = _postDbService.peekPost(postId);
-              if (cached != null && cached.exists) {
-                final data = cached.data() as Map<String, dynamic>?;
-                if (data != null) {
-                  final authorId = data['author'] as String?;
-                  final spaceId = data['space'] as String?;
-                  if (authorId != null) userIds.add(authorId);
-                  if (spaceId != null) spaceIds.add(spaceId);
-                }
-              }
-            }
-
-            // Load all users and spaces in parallel
-            final userDataFuture =
-                _batchLoader.batchLoadUsers(userIds.toList());
-            final spaceDataFuture =
-                _batchLoader.batchLoadSpaces(spaceIds.toList());
-            final results =
-                await Future.wait([userDataFuture, spaceDataFuture]);
-
-            final userData = results[0] as Map<String, UserData>;
-            final spaceData = results[1] as Map<String, SpaceData>;
-
-            // Store in FeedController for instant access when Posts build
-            for (final postId in validFirstBatch) {
-              final cached = _postDbService.peekPost(postId);
-              if (cached != null && cached.exists) {
-                final data = cached.data() as Map<String, dynamic>?;
-                if (data != null) {
-                  final authorId = data['author'] as String?;
-                  final spaceId = data['space'] as String?;
-                  if (authorId != null && userData.containsKey(authorId)) {
-                    feedController.setUserData(postId, userData[authorId]!);
-                  }
-                  if (spaceId != null && spaceData.containsKey(spaceId)) {
-                    feedController.setSpaceData(postId, spaceData[spaceId]!);
-                  }
-                }
-              }
-            }
-
-            AppLogger.i(
-              '✓ Feed: User/space data loaded',
-              category: LogCategory.performance,
-              data: {
-                'users': userData.length,
-                'spaces': spaceData.length,
-              },
-            );
-          } catch (e) {
-            AppLogger.w('Error batch loading user/space data',
-                data: {'error': e.toString()});
-          }
-        }
+        // Batch load user/space data BEFORE rendering to avoid flicker
+        try {
+          final feedController = context.read<FeedController>();
+          await _preloader.batchLoadUserSpaceData(validFirstBatch, feedController);
+        } catch (_) {}
 
         AppLogger.i(
           '✓ Feed: Preload complete, now triggering rebuild',
@@ -681,59 +457,13 @@ class _FeedState extends State<Feed> {
         AppLogger.i('📥 LoadMore: Preloading ${morePosts.length} posts',
             category: LogCategory.performance);
         final validMorePosts =
-            await _preloadPostData(0, morePosts.length, postIds: morePosts);
+            await _preloadAndCountPosts(0, morePosts.length, postIds: morePosts);
 
-        // NEW: Batch load user/space data for new posts BEFORE rendering
-        if (validMorePosts.isNotEmpty) {
-          try {
-            final feedController = context.read<FeedController>();
-            final userIds = <String>{};
-            final spaceIds = <String>{};
-
-            for (final postId in validMorePosts) {
-              final cached = _postDbService.peekPost(postId);
-              if (cached != null && cached.exists) {
-                final data = cached.data() as Map<String, dynamic>?;
-                if (data != null) {
-                  final authorId = data['author'] as String?;
-                  final spaceId = data['space'] as String?;
-                  if (authorId != null) userIds.add(authorId);
-                  if (spaceId != null) spaceIds.add(spaceId);
-                }
-              }
-            }
-
-            final userDataFuture =
-                _batchLoader.batchLoadUsers(userIds.toList());
-            final spaceDataFuture =
-                _batchLoader.batchLoadSpaces(spaceIds.toList());
-            final results =
-                await Future.wait([userDataFuture, spaceDataFuture]);
-
-            final userData = results[0] as Map<String, UserData>;
-            final spaceData = results[1] as Map<String, SpaceData>;
-
-            for (final postId in validMorePosts) {
-              final cached = _postDbService.peekPost(postId);
-              if (cached != null && cached.exists) {
-                final data = cached.data() as Map<String, dynamic>?;
-                if (data != null) {
-                  final authorId = data['author'] as String?;
-                  final spaceId = data['space'] as String?;
-                  if (authorId != null && userData.containsKey(authorId)) {
-                    feedController.setUserData(postId, userData[authorId]!);
-                  }
-                  if (spaceId != null && spaceData.containsKey(spaceId)) {
-                    feedController.setSpaceData(postId, spaceData[spaceId]!);
-                  }
-                }
-              }
-            }
-          } catch (e) {
-            AppLogger.w('Error batch loading user/space data on loadMore',
-                data: {'error': e.toString()});
-          }
-        }
+        // Batch load user/space data for new posts BEFORE rendering
+        try {
+          final feedController = context.read<FeedController>();
+          await _preloader.batchLoadUserSpaceData(validMorePosts, feedController);
+        } catch (_) {}
 
         AppLogger.i('✓ LoadMore: Preload complete',
             category: LogCategory.performance);
@@ -849,59 +579,13 @@ class _FeedState extends State<Feed> {
         // Preload first 15 posts BEFORE setState - pass postIds directly
         AppLogger.i('📥 Refresh: Preloading first 15 posts',
             category: LogCategory.performance);
-        final validFirstBatch = await _preloadPostData(0, 15, postIds: postIds);
+        final validFirstBatch = await _preloadAndCountPosts(0, 15, postIds: postIds);
 
-        // NEW: Batch load user/space data BEFORE rendering (same as initial load)
-        if (validFirstBatch.isNotEmpty) {
-          try {
-            final feedController = context.read<FeedController>();
-            final userIds = <String>{};
-            final spaceIds = <String>{};
-
-            for (final postId in validFirstBatch) {
-              final cached = _postDbService.peekPost(postId);
-              if (cached != null && cached.exists) {
-                final data = cached.data() as Map<String, dynamic>?;
-                if (data != null) {
-                  final authorId = data['author'] as String?;
-                  final spaceId = data['space'] as String?;
-                  if (authorId != null) userIds.add(authorId);
-                  if (spaceId != null) spaceIds.add(spaceId);
-                }
-              }
-            }
-
-            final userDataFuture =
-                _batchLoader.batchLoadUsers(userIds.toList());
-            final spaceDataFuture =
-                _batchLoader.batchLoadSpaces(spaceIds.toList());
-            final results =
-                await Future.wait([userDataFuture, spaceDataFuture]);
-
-            final userData = results[0] as Map<String, UserData>;
-            final spaceData = results[1] as Map<String, SpaceData>;
-
-            for (final postId in validFirstBatch) {
-              final cached = _postDbService.peekPost(postId);
-              if (cached != null && cached.exists) {
-                final data = cached.data() as Map<String, dynamic>?;
-                if (data != null) {
-                  final authorId = data['author'] as String?;
-                  final spaceId = data['space'] as String?;
-                  if (authorId != null && userData.containsKey(authorId)) {
-                    feedController.setUserData(postId, userData[authorId]!);
-                  }
-                  if (spaceId != null && spaceData.containsKey(spaceId)) {
-                    feedController.setSpaceData(postId, spaceData[spaceId]!);
-                  }
-                }
-              }
-            }
-          } catch (e) {
-            AppLogger.w('Error batch loading user/space data on refresh',
-                data: {'error': e.toString()});
-          }
-        }
+        // Batch load user/space data BEFORE rendering
+        try {
+          final feedController = context.read<FeedController>();
+          await _preloader.batchLoadUserSpaceData(validFirstBatch, feedController);
+        } catch (_) {}
 
         AppLogger.i('✓ Refresh: Preload complete',
             category: LogCategory.performance);
@@ -943,756 +627,55 @@ class _FeedState extends State<Feed> {
       );
     }
 
-    // Mobile layout - scroll-to-top chevron above tab bar; bar position from notifier so only button rebuilds
-    final padding = MediaQuery.of(context).padding.bottom;
-    const scrollButtonBaseBottom = 16.0;
-    final barHiddenNotifier = widget.barHiddenNotifier;
-
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: Stack(
-        children: [
-          // Full-width scroll view with optimized cache for web
-          CustomScrollView(
-            controller: _scrollController,
-            physics: const BouncingScrollPhysics(
-              parent: AlwaysScrollableScrollPhysics(),
-            ),
-            cacheExtent: kIsWeb
-                ? 8000
-                : 6000, // VERY large cache for smooth scroll-back with highly variable post heights
-            slivers: [
-              // Standard app header
-              AppHeaderStyle.buildStandardHeader(
-                context: context,
-                title: 'aurogram',
-                showSearchField: false,
-                backgroundStyle: HeaderBackgroundStyle.gradient,
-                isRefreshing: _isRefreshing,
-                pinned: false,
-                leadingWidget: IconButton(
-                  onPressed: _addPost,
-                  icon: Icon(
-                    CupertinoIcons.plus,
-                    color:
-                        isDark ? AppTheme.primaryColor : AppTheme.primaryColor,
-                    size: AppHeaderStyle.headerIconSize,
-                  ),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-                actionButton: IconButton(
-                  onPressed: () => CosmicDashboard.show(context),
-                  icon: Icon(
-                    Icons.notifications_outlined,
-                    color:
-                        isDark ? AppTheme.primaryColor : AppTheme.primaryColor,
-                    size: AppHeaderStyle.headerIconSize,
-                  ),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-              ),
-
-              // Pull to refresh
-              CupertinoSliverRefreshControl(
-                onRefresh: _handleRefresh,
-                builder: (context, refreshState, pulledExtent,
-                    refreshTriggerPullDistance, refreshIndicatorExtent) {
-                  return const SizedBox.shrink();
-                },
-              ),
-
-              // Story ring (logged-in only)
-              if (user != null)
-                SliverToBoxAdapter(
-                  key: ValueKey(_storyRingRefreshKey),
-                  child: Transform.translate(
-                    offset: const Offset(0, -12),
-                    child: StoryRing(
-                      forceRefresh: _storyRingForceRefresh,
-                      onAddStory: () async {
-                        final result = await Navigator.of(context).push<bool>(
-                          MaterialPageRoute(
-                            builder: (_) => const StoryComposerPage(),
-                          ),
-                        );
-                        if (result == true && mounted) {
-                          setState(() {
-                            _storyRingRefreshKey++;
-                            _storyRingForceRefresh = false;
-                          });
-                        }
-                      },
-                      onViewUserStories: (userId) async {
-                        final storyService = StoryService();
-                        final userIds =
-                            await storyService.getUsersWithStories();
-                        final idx = userIds.indexOf(userId);
-                        if (!mounted) return;
-                        await Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => StoryViewerPage(
-                              userIds: userIds,
-                              initialUserIndex: idx >= 0 ? idx : 0,
-                            ),
-                          ),
-                        );
-                        if (mounted) {
-                          setState(() {
-                            _storyRingRefreshKey++;
-                            _storyRingForceRefresh = false;
-                          });
-                        }
-                      },
-                    ),
-                  ),
-                ),
-
-              // Divider after stories
-              if (user != null)
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 2),
-                    child: Divider(
-                      height: 1,
-                      thickness: 0.33,
-                      color: AppTheme.primaryColor.withOpacity(0.12),
-                    ),
-                  ),
-                ),
-
-              // Main content – skeleton while loading, then empty or feed.
-              // Key each branch so Flutter replaces the sliver instead of updating in place.
-              if (!initialized && feed.isEmpty)
-                SliverPadding(
-                  key: const ValueKey('feed_skeleton'),
-                  padding: const EdgeInsets.fromLTRB(
-                      0, 0, 0, AppHeaderStyle.contentBottomPadding),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) => _buildSkeletonItem(context),
-                      childCount: 3,
-                    ),
-                  ),
-                )
-              else if (feed.isEmpty)
-                SliverToBoxAdapter(
-                  key: const ValueKey('feed_empty'),
-                  child: SizedBox(
-                    height: MediaQuery.of(context).size.height - 200,
-                    child: _buildEmptyState(context),
-                  ),
-                )
-              else
-                SliverPadding(
-                  key: const ValueKey('feed_posts'),
-                  padding: const EdgeInsets.fromLTRB(
-                      0, 0, 0, AppHeaderStyle.contentBottomPadding),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        // Loading indicator at end
-                        if (index == feed.length) {
-                          return const SizedBox(height: 60);
-                        }
-
-                        final postId = feed[index];
-                        final shouldPrewarmVideo =
-                            index >= _estimatedVisibleIndex &&
-                                index <=
-                                    _estimatedVisibleIndex + _prewarmAheadCount;
-
-                        // Rely on Flutter's native cacheExtent (8000px) + massive pool (40 controllers)
-                        // SelectiveKeepAlive caused scroll position instability with variable heights
-                        final isLastPost = index == feed.length - 1;
-                        return RepaintBoundary(
-                          child: SizeReportingWidget(
-                            onSizeChange: (size) {
-                              _layoutCache.updateHeight(postId, size.height);
-                            },
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                PostSwitcher(
-                                  key: ValueKey(postId),
-                                  postId: postId,
-                                  itemIndex: index,
-                                  onOpenThread: (id) =>
-                                      Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) => ThreadView(postId: id),
-                                    ),
-                                  ),
-                                  enableVideoAutoplay: true,
-                                  prewarmVideo: shouldPrewarmVideo,
-                                ),
-                                if (!isLastPost)
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                        top: 2, bottom: 4),
-                                    child: Divider(
-                                      height: 1,
-                                      thickness: 0.33,
-                                      color: AppTheme.primaryColor
-                                          .withOpacity(0.12),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                      childCount:
-                          feed.length + (_feedService.hasMorePosts ? 1 : 0),
-                      addRepaintBoundaries: true,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-
-          // Scroll to top button - aligned above profile avatar in tab bar (moved left from edge)
-          Positioned(
-            right: 32,
-            bottom: scrollButtonBaseBottom + padding,
-            child: barHiddenNotifier != null
-                ? ValueListenableBuilder<bool>(
-                    valueListenable: barHiddenNotifier,
-                    builder: (context, barHidden, _) {
-                      return TweenAnimationBuilder<double>(
-                        key: ValueKey(barHidden),
-                        tween: Tween(
-                            begin: barHidden ? 0.0 : 1.0,
-                            end: barHidden ? 1.0 : 0.0),
-                        duration: const Duration(milliseconds: 600),
-                        curve: Curves.easeInOut,
-                        builder: (context, t, child) => Transform.translate(
-                          offset: Offset(0, 80 * t),
-                          child: child,
-                        ),
-                        child: _buildScrollToTopButton(isDark),
-                      );
-                    },
-                  )
-                : _buildScrollToTopButton(isDark),
-          ),
-        ],
-      ),
+    // Mobile layout - delegated to FeedMobileLayout widget
+    return FeedMobileLayout(
+      isDark: isDark,
+      user: user,
+      scrollController: _scrollController,
+      feed: feed,
+      initialized: initialized,
+      isRefreshing: _isRefreshing,
+      storyRingRefreshKey: _storyRingRefreshKey,
+      storyRingForceRefresh: _storyRingForceRefresh,
+      estimatedVisibleIndex: _estimatedVisibleIndex,
+      feedService: _feedService,
+      layoutCache: _layoutCache,
+      showScrollToTopNotifier: _showScrollToTopNotifier,
+      barHiddenNotifier: widget.barHiddenNotifier,
+      onAddPost: _addPost,
+      onRefresh: _handleRefresh,
+      onScrollToTop: _scrollToTop,
+      onStoryRefresh: (key, force) => setState(() {
+        _storyRingRefreshKey = key;
+        _storyRingForceRefresh = force;
+      }),
     );
   }
 
-  Widget _buildScrollToTopButton(bool isDark) {
-    final theme = Theme.of(context);
-    final Color barBase = isDark ? AppTheme.cardDarkColor : Colors.white;
-    return ValueListenableBuilder<bool>(
-      valueListenable: _showScrollToTopNotifier,
-      builder: (context, show, _) {
-        return AnimatedSlide(
-          duration: const Duration(milliseconds: 300),
-          offset: show ? Offset.zero : const Offset(0, 2),
-          child: AnimatedOpacity(
-            duration: const Duration(milliseconds: 300),
-            opacity: show ? 1.0 : 0.0,
-            child: IgnorePointer(
-              ignoring: !show,
-              child: GestureDetector(
-                onTap: _scrollToTop,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(18),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: _scrollToTop,
-                        borderRadius: BorderRadius.circular(18),
-                        child: Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(18),
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: isDark
-                                  ? [
-                                      barBase.withValues(alpha: 0.75),
-                                      barBase.withValues(alpha: 0.70),
-                                    ]
-                                  : [
-                                      barBase.withValues(alpha: 0.90),
-                                      barBase.withValues(alpha: 0.85),
-                                    ],
-                            ),
-                            border: isDark
-                                ? Border.all(
-                                    color: Colors.white.withValues(alpha: 0.12),
-                                    width: 1.0,
-                                  )
-                                : null,
-                          ),
-                          child: Icon(
-                            CupertinoIcons.chevron_up,
-                            color: theme.colorScheme.primary,
-                            size: 18,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  /// Build desktop layout - header scrolls up with content, aligned with sidebar
+  /// Build desktop layout - delegates to FeedDesktopLayout widget.
   Widget _buildDesktopLayout(bool isDark) {
-    return Stack(
-      children: [
-        LayoutBuilder(
-          builder: (context, constraints) {
-            return CustomScrollView(
-              controller: _scrollController,
-              physics: const AlwaysScrollableScrollPhysics(),
-              cacheExtent:
-                  8000, // VERY large cache for smooth scroll-back with highly variable post heights
-              slivers: [
-                AppHeaderStyle.buildWideLayoutHeaderSliver(
-                  context,
-                  title: 'Feed',
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Plus icon button for creating posts
-                      GestureDetector(
-                        onTap: _addPost,
-                        behavior: HitTestBehavior.opaque,
-                        child: Padding(
-                          padding: const EdgeInsets.all(8),
-                          child: Icon(
-                            CupertinoIcons.plus,
-                            size: 22,
-                            color: isDark
-                                ? AppTheme.primaryColor
-                                : AppTheme.primaryColor,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Refresh button
-                      _isRefreshing
-                          ? SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                    AppTheme.primaryColor),
-                              ),
-                            )
-                          : GestureDetector(
-                              onTap: _handleRefresh,
-                              behavior: HitTestBehavior.opaque,
-                              child: Padding(
-                                padding: const EdgeInsets.all(8),
-                                child: Icon(
-                                  Icons.refresh_rounded,
-                                  size: 22,
-                                  color: isDark
-                                      ? Colors.white.withValues(alpha: 0.6)
-                                      : Colors.black.withValues(alpha: 0.5),
-                                ),
-                              ),
-                            ),
-                    ],
-                  ),
-                ),
-                // Story ring (logged-in only)
-                if (user != null)
-                  SliverToBoxAdapter(
-                    key: ValueKey(_storyRingRefreshKey),
-                    child: Transform.translate(
-                      offset: const Offset(0, -12),
-                      child: StoryRing(
-                        forceRefresh: _storyRingForceRefresh,
-                        onAddStory: () async {
-                          final result = await Navigator.of(context).push<bool>(
-                            MaterialPageRoute(
-                              builder: (_) => const StoryComposerPage(),
-                            ),
-                          );
-                          if (result == true && mounted) {
-                            setState(() {
-                              _storyRingRefreshKey++;
-                              _storyRingForceRefresh = false;
-                            });
-                          }
-                        },
-                        onViewUserStories: (userId) async {
-                          final storyService = StoryService();
-                          final userIds =
-                              await storyService.getUsersWithStories();
-                          final idx = userIds.indexOf(userId);
-                          if (!mounted) return;
-                          await Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => StoryViewerPage(
-                                userIds: userIds,
-                                initialUserIndex: idx >= 0 ? idx : 0,
-                              ),
-                            ),
-                          );
-                          if (mounted) {
-                            setState(() {
-                              _storyRingRefreshKey++;
-                              _storyRingForceRefresh = false;
-                            });
-                          }
-                        },
-                      ),
-                    ),
-                  ),
-                // Divider after stories
-                if (user != null)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 2),
-                      child: Divider(
-                        height: 1,
-                        thickness: 0.33,
-                        color: AppTheme.primaryColor.withOpacity(0.12),
-                      ),
-                    ),
-                  ),
-                // Content – key each branch so sliver is replaced, not updated in place
-                if (!initialized && feed.isEmpty)
-                  SliverPadding(
-                    key: const ValueKey('feed_skeleton'),
-                    padding: EdgeInsets.zero,
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) => _buildSkeletonItem(context),
-                        childCount: 3,
-                      ),
-                    ),
-                  )
-                else if (feed.isEmpty)
-                  SliverToBoxAdapter(
-                    key: const ValueKey('feed_empty'),
-                    child: SizedBox(
-                      height: MediaQuery.of(context).size.height - 200,
-                      child: _buildEmptyState(context),
-                    ),
-                  )
-                else
-                  SliverPadding(
-                    key: const ValueKey('feed_posts'),
-                    padding: EdgeInsets.zero,
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          if (index == feed.length) {
-                            return const SizedBox(height: 60);
-                          }
-                          final postId = feed[index];
-                          final shouldPrewarmVideo = index >=
-                                  _estimatedVisibleIndex &&
-                              index <=
-                                  _estimatedVisibleIndex + _prewarmAheadCount;
-                          final isLastPost = index == feed.length - 1;
-
-                          // Rely on Flutter's native cacheExtent (8000px) + massive pool (40 controllers)
-                          // SelectiveKeepAlive caused scroll position instability with variable heights
-                          return RepaintBoundary(
-                            child: SizeReportingWidget(
-                              onSizeChange: (size) {
-                                _layoutCache.updateHeight(
-                                  postId,
-                                  size.height,
-                                );
-                              },
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  PostSwitcher(
-                                    key: ValueKey(postId),
-                                    postId: postId,
-                                    itemIndex: index,
-                                    onOpenThread: (id) =>
-                                        Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) => ThreadView(postId: id),
-                                      ),
-                                    ),
-                                    enableVideoAutoplay: true,
-                                    prewarmVideo: shouldPrewarmVideo,
-                                  ),
-                                  if (!isLastPost)
-                                    Padding(
-                                      padding: const EdgeInsets.only(
-                                          top: 2, bottom: 4),
-                                      child: Divider(
-                                        height: 1,
-                                        thickness: 0.33,
-                                        color: AppTheme.primaryColor
-                                            .withOpacity(0.12),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                        childCount:
-                            feed.length + (_feedService.hasMorePosts ? 1 : 0),
-                        addRepaintBoundaries: true,
-                      ),
-                    ),
-                  ),
-
-                // Bottom padding
-                const SliverToBoxAdapter(child: SizedBox(height: 60)),
-              ],
-            );
-          },
-        ),
-
-        // Scroll to top button (transparent toolbox style)
-        Positioned(
-          right: 35,
-          bottom: 16,
-          child: _buildScrollToTopButton(isDark),
-        ),
-      ],
+    return FeedDesktopLayout(
+      isDark: isDark,
+      user: user,
+      scrollController: _scrollController,
+      feed: feed,
+      initialized: initialized,
+      isRefreshing: _isRefreshing,
+      storyRingRefreshKey: _storyRingRefreshKey,
+      storyRingForceRefresh: _storyRingForceRefresh,
+      estimatedVisibleIndex: _estimatedVisibleIndex,
+      feedService: _feedService,
+      layoutCache: _layoutCache,
+      showScrollToTopNotifier: _showScrollToTopNotifier,
+      onAddPost: _addPost,
+      onRefresh: _handleRefresh,
+      onScrollToTop: _scrollToTop,
+      onStoryRefresh: (key, force) => setState(() {
+        _storyRingRefreshKey = key;
+        _storyRingForceRefresh = force;
+      }),
     );
   }
 
-  /// Same post-card skeleton as PostSwitcher – appears immediately while feed loads
-  Widget _buildSkeletonItem(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final cardWidth = screenWidth.clamp(0.0, 500.0);
-    return Center(
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: cardWidth),
-        child: const PostBoxSkeleton(),
-      ),
-    );
-  }
 
-  Widget _buildEmptyState(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          const SizedBox(height: 40),
-
-          Icon(
-            CupertinoIcons.sparkles,
-            size: 64,
-            color: AppTheme.primaryColor.withValues(alpha: 0.5),
-          ),
-
-          const SizedBox(height: 24),
-
-          Text(
-            'Welcome to Aurogram!',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w600,
-              color: isDark ? AppTheme.textDarkColor : AppTheme.textLightColor,
-            ),
-          ),
-
-          const SizedBox(height: 8),
-
-          Text(
-            'Create or join a gram to start seeing posts',
-            style: TextStyle(
-              fontSize: 14,
-              color: isDark
-                  ? AppTheme.textSecondaryDarkColor
-                  : AppTheme.textSecondaryLightColor,
-            ),
-            textAlign: TextAlign.center,
-          ),
-
-          const SizedBox(height: 32),
-
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => SpaceCreationPage()),
-              );
-            },
-            icon: const Icon(Icons.add, size: 20),
-            label: const Text('Create Gram'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryColor,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 40),
-
-          // Discover groups
-          _buildDiscoverGroups(context, isDark),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDiscoverGroups(BuildContext context, bool isDark) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('spaces')
-          .where('spaceType', whereIn: [0, 1])
-          .limit(10)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return const SizedBox.shrink();
-        }
-
-        final publicSpaces = snapshot.data!.docs.where((doc) {
-          final data = doc.data() as Map<String, dynamic>;
-          final spaceType = data['spaceType'] as int? ?? 3;
-          final limitedVisibility = data['limitedVisibility'] as bool? ?? false;
-          return (spaceType == 0 || spaceType == 1) && !limitedVisibility;
-        }).toList();
-
-        if (publicSpaces.isEmpty) {
-          return const SizedBox.shrink();
-        }
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Discover Grams',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color:
-                    isDark ? AppTheme.textDarkColor : AppTheme.textLightColor,
-              ),
-            ),
-            const SizedBox(height: 12),
-            ...publicSpaces.map((doc) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: GramPreviewBox(gram: doc.id),
-                )),
-          ],
-        );
-      },
-    );
-  }
-}
-
-/// Individual creation option card - reused from CreationHubPage
-class _CreationOptionCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final Gradient gradient;
-  final VoidCallback onTap;
-
-  const _CreationOptionCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.gradient,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 140,
-        decoration: BoxDecoration(
-          gradient: gradient,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.primaryColor.withValues(alpha: 0.3),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(24),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Row(
-                children: [
-                  // Icon
-                  Container(
-                    width: 64,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Icon(
-                      icon,
-                      color: Colors.white,
-                      size: 32,
-                    ),
-                  ),
-                  const SizedBox(width: 20),
-                  // Text content
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          title,
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          subtitle,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.white.withValues(alpha: 0.9),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Arrow icon
-                  Icon(
-                    CupertinoIcons.chevron_right,
-                    color: Colors.white.withValues(alpha: 0.8),
-                    size: 24,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Position indicator for horizontal carousels (dot indicators)
 class DotIndicator extends StatelessWidget {
@@ -88,7 +89,7 @@ class FeedPositionText extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.1),
@@ -134,7 +135,7 @@ class ReplyCountIndicator extends StatelessWidget {
           size: 14,
           color: AppTheme.primaryColor.withValues(alpha: 0.7),
         ),
-        const SizedBox(width: 4),
+        const SizedBox(width: AppDimensions.spacingXs),
         Text(
           '$replyCount ${replyCount == 1 ? 'reply' : 'replies'}',
           style: TextStyle(
@@ -144,7 +145,7 @@ class ReplyCountIndicator extends StatelessWidget {
           ),
         ),
         if (showSwipeHint) ...[
-          const SizedBox(width: 6),
+          const SizedBox(width: AppDimensions.spacingSmMd),
           Icon(
             Icons.swipe,
             size: 12,

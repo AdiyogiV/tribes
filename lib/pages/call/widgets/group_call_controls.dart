@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 class GroupCallControls extends StatelessWidget {
   final bool isAudioMuted;
@@ -142,7 +144,7 @@ class _ControlButton extends StatelessWidget {
                   size: 24,
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: AppDimensions.spacingSmMd),
               Text(
                 label,
                 style: TextStyle(
@@ -182,11 +184,11 @@ class _EndCallButton extends StatelessWidget {
                 gradient: const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Color(0xFFFF5F5F), Color(0xFFE53935)],
+                  colors: [Color(0xFFFF5F5F), AppTheme.dangerRed],
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFE53935).withValues(alpha: 0.4),
+                    color: AppTheme.dangerRed.withValues(alpha: 0.4),
                     blurRadius: 16,
                     offset: const Offset(0, 6),
                   ),
@@ -194,7 +196,7 @@ class _EndCallButton extends StatelessWidget {
               ),
               child: const Icon(Icons.call_end, color: Colors.white, size: 28),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: AppDimensions.spacingSmMd),
             Text(
               'Leave',
               style: TextStyle(

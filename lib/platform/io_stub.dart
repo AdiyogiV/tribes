@@ -1,6 +1,7 @@
 /// Stub for dart:io on web
 /// Provides minimal File/Directory classes for conditional compilation
 /// All methods return safe defaults since file operations aren't available on web
+library;
 
 // Base class must be defined first
 class FileSystemEntity {
@@ -18,7 +19,7 @@ class FileSystemEntity {
 }
 
 class File extends FileSystemEntity {
-  File(String path) : super(path);
+  File(super.path);
   
   bool existsSync() => false;
   
@@ -48,7 +49,7 @@ class File extends FileSystemEntity {
 }
 
 class Directory extends FileSystemEntity {
-  Directory(String path) : super(path);
+  Directory(super.path);
   
   bool existsSync() => false;
   

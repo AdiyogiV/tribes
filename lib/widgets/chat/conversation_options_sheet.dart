@@ -1,9 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:aurogram/widgets/ui/common_widgets.dart';
 import 'package:aurogram/services/chat/space_chat_service.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/utils/responsive.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/widgets/common/snack_bar_service.dart';
 
 /// Bottom sheet for conversation management options (pin, mute, archive)
 class ConversationOptionsSheet extends StatefulWidget {
@@ -34,10 +37,9 @@ class ConversationOptionsSheet extends StatefulWidget {
     bool isArchived = false,
     VoidCallback? onSettingsChanged,
   }) {
-    return showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => ConversationOptionsSheet(
+    return AppBottomSheet.show(
+      context,
+      child: ConversationOptionsSheet(
         conversationId: conversationId,
         conversationName: conversationName,
         initialIsPinned: isPinned,
@@ -208,22 +210,12 @@ class _ConversationOptionsSheetState extends State<ConversationOptionsSheet> {
 
   void _showError(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: AppTheme.errorColor,
-      ),
-    );
+    showCustomSnackBar(context, message: message, backgroundColor: AppTheme.errorColor);
   }
 
   void _showSuccess(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: AppTheme.primaryColor,
-      ),
-    );
+    showCustomSnackBar(context, message: message, backgroundColor: AppTheme.primaryColor);
   }
 
   @override
@@ -271,7 +263,7 @@ class _ConversationOptionsSheetState extends State<ConversationOptionsSheet> {
 
               // Header
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppDimensions.paddingLg),
                 child: Text(
                   widget.conversationName,
                   style: TextStyle(
@@ -322,7 +314,7 @@ class _ConversationOptionsSheetState extends State<ConversationOptionsSheet> {
                 isDestructive: !_isArchived,
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: AppDimensions.spacingLg),
             ],
           ),
         ),
@@ -364,7 +356,7 @@ class _OptionTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: (isActive ? AppTheme.primaryColor : destructiveColor)
               .withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm),
         ),
         child: Icon(
           icon,

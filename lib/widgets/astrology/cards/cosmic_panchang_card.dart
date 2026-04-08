@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Card to display Panchang information (Nakshatra, Yoga, Karana)
 /// Matches astrology details page card styling
@@ -35,24 +36,25 @@ class CosmicPanchangCard extends StatelessWidget {
       color: cardColor,
       elevation: 2,
       shadowColor: Colors.black.withValues(alpha: 0.2),
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppDimensions.paddingLg),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
             // Header - Title Case, matches astrology details page
             Text(
               'Panchang',
+              textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: AppTheme.holyCowTextSize,
                 fontWeight: FontWeight.w700,
                 color: c,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppDimensions.spacingMd),
             // Items in row
             Row(
               children: items.map((item) {
@@ -61,18 +63,19 @@ class CosmicPanchangCard extends StatelessWidget {
                     children: [
                       Text(
                         item.key,
+                        textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: AppTheme.holyCowTextSize,
                           fontWeight: FontWeight.w600,
                           color: c.withValues(alpha: 0.5),
                           letterSpacing: 0.3,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: AppDimensions.spacingXs),
                       Text(
                         item.value,
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: AppTheme.holyCowTextSize,
                           fontWeight: FontWeight.w700,
                           color: c,
                         ),

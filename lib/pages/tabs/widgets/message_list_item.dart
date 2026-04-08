@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:aurogram/models/dm_conversation.dart';
 import 'package:aurogram/services/chat/space_chat_service.dart';
 import 'package:aurogram/models/contact_match.dart';
 

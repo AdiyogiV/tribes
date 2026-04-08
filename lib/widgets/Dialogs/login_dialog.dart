@@ -1,3 +1,4 @@
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:aurogram/pages/login/login.dart';
@@ -19,7 +20,7 @@ class LoginDialog extends StatelessWidget {
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const SizedBox(height: 16),
+                const SizedBox(height: AppDimensions.spacingLg),
                 SizedBox(
                   height: 100,
                   child: Hero(
@@ -27,7 +28,7 @@ class LoginDialog extends StatelessWidget {
                     child: AppTitle(),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppDimensions.spacingLg),
                 Text(
                   "Login to unlock all features and interact with community!",
                   style: TextStyle(
@@ -37,7 +38,7 @@ class LoginDialog extends StatelessWidget {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppDimensions.spacingXxl),
               ],
             ),
             actions: <Widget>[

@@ -3,7 +3,6 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:aurogram/models/contact_match.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
@@ -13,8 +12,6 @@ class ContactService {
   ContactService._();
   static final instance = ContactService._();
 
-  final _firestore = FirebaseFirestore.instance;
-  final _auth = FirebaseAuth.instance;
   final _functions = FirebaseFunctions.instanceFor(region: 'asia-southeast2');
 
   // Cache version - bump this when normalization logic changes to invalidate old cache
@@ -464,11 +461,4 @@ class ContactService {
   }
 }
 
-/// Helper class to store contact data during sync
-class _ContactData {
-  final String name;
-  final String phone;
-  
-  _ContactData(this.name, this.phone);
-}
 

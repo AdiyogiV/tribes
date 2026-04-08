@@ -51,7 +51,7 @@ class AuthService extends ChangeNotifier {
     // Don't call _handleAuthStateChanges immediately - wait for markReady()
     // Just store the current user for when we're ready
     _pendingAuthUser = _auth.currentUser;
-    print('🔐 AUTH: AuthService created, deferring auth check until ready');
+    AppLogger.d('AuthService: created, deferring auth check until ready', category: LogCategory.auth);
   }
 
   /// Mark the auth service as ready to process auth state changes.
@@ -59,7 +59,7 @@ class AuthService extends ChangeNotifier {
   void markReady() {
     if (_initializationReady) return;
     _initializationReady = true;
-    print('🔐 AUTH: markReady called, processing pending auth state');
+    AppLogger.d('AuthService: markReady called, processing pending auth state', category: LogCategory.auth);
     AppLogger.i('🔐 AuthService marked ready, processing pending auth',
         category: LogCategory.auth);
     // Now process the pending auth state
@@ -177,13 +177,11 @@ class AuthService extends ChangeNotifier {
 
   // Private helper method to handle auth state changes
   Future<void> _handleAuthStateChanges(User? firebaseUser) async {
-    // CRITICAL: Use print for immediate sync output to debug startup issues
-    print(
-        '🔐 AUTH: _handleAuthStateChanges called - hasUser: ${firebaseUser != null}, uid: ${firebaseUser?.uid}, status: $_status, ready: $_initializationReady');
+    AppLogger.d('AuthService: _handleAuthStateChanges called - hasUser: ${firebaseUser != null}, uid: ${firebaseUser?.uid}, status: $_status, ready: $_initializationReady', category: LogCategory.auth);
 
     // Store the user for later processing if not ready yet
     if (!_initializationReady) {
-      print('🔐 AUTH: Not ready yet, storing pending user');
+      AppLogger.d('AuthService: Not ready yet, storing pending user', category: LogCategory.auth);
       _pendingAuthUser = firebaseUser;
       // Set basic user info even if not ready, but don't check registration
       if (firebaseUser != null) {
@@ -239,7 +237,7 @@ class AuthService extends ChangeNotifier {
 
       // Prevent duplicate checkRegistration calls
       if (_isCheckingRegistration) {
-        print('🔐 AUTH: Already checking registration, skipping');
+        AppLogger.d('AuthService: Already checking registration, skipping', category: LogCategory.auth);
         AppLogger.i('🔐 Already checking registration, skipping',
             category: LogCategory.auth);
         if (userChanged && shouldNotify) {
@@ -249,48 +247,46 @@ class AuthService extends ChangeNotifier {
       }
 
       // Only check registration if user changed or status needs updating
-      print(
-          '🔐 AUTH: Checking condition - userChanged: $userChanged, status: $_status');
+      AppLogger.d('AuthService: Checking condition - userChanged: $userChanged, status: $_status', category: LogCategory.auth);
       if (userChanged ||
           _status == Status.Undetermined ||
           _status == Status.Authenticating) {
         bool updateStatusCalled = false;
         try {
           _isCheckingRegistration = true;
-          print('🔐 AUTH: Starting checkRegistration...');
+          AppLogger.d('AuthService: Starting checkRegistration...', category: LogCategory.auth);
           AppLogger.i('🔐 Starting checkRegistration...',
               category: LogCategory.auth);
 
           // Add timeout to prevent infinite loading if Firestore call hangs
           // Reduced to 10s for faster failure - checkRegistration has 5s internal timeout
-          print('🔐 AUTH: Calling checkRegistration with 10s outer timeout...');
+          AppLogger.d('AuthService: Calling checkRegistration with 10s outer timeout...', category: LogCategory.auth);
           isUserNew = await locator<UserService>().checkRegistration().timeout(
             const Duration(seconds: 10),
             onTimeout: () {
-              print(
-                  '🔐 AUTH: OUTER TIMEOUT - checkRegistration took too long (10s)');
+              AppLogger.w('AuthService: OUTER TIMEOUT - checkRegistration took too long (10s)', category: LogCategory.auth);
               AppLogger.w('🔐 Auth check timed out after 10s',
                   category: LogCategory.auth);
               throw TimeoutException('checkRegistration timed out');
             },
           );
 
-          print('🔐 AUTH: checkRegistration returned - isUserNew: $isUserNew');
+          AppLogger.d('AuthService: checkRegistration returned - isUserNew: $isUserNew', category: LogCategory.auth);
           AppLogger.i('🔐 checkRegistration completed',
               category: LogCategory.auth, data: {'isUserNew': isUserNew});
           await updateStatusBasedOnNewUserFlag(isUserNew);
-          print('🔐 AUTH: updateStatusBasedOnNewUserFlag completed');
+          AppLogger.d('AuthService: updateStatusBasedOnNewUserFlag completed', category: LogCategory.auth);
           updateStatusCalled = true;
         } catch (e, stackTrace) {
-          print('🔐 AUTH: Auth state check FAILED with error: $e');
-          print('🔐 AUTH: stackTrace: $stackTrace');
+          AppLogger.e('AuthService: Auth state check FAILED with error: $e', category: LogCategory.auth);
+          AppLogger.e('AuthService: stackTrace: $stackTrace', category: LogCategory.auth);
           AppLogger.e('🔐 Auth state check failed',
               category: LogCategory.auth, error: e);
 
           // Check if user was deleted
           if (e.toString().contains('deleted') ||
               e.toString().contains('Account has been deleted')) {
-            print('🔐 AUTH: User is deleted, signing out');
+            AppLogger.w('AuthService: User is deleted, signing out', category: LogCategory.auth);
             AppLogger.w('🔐 User is deleted, signing out',
                 category: LogCategory.auth);
             // Sign out deleted user - this will trigger _handleAuthStateChanges with null user
@@ -300,13 +296,12 @@ class AuthService extends ChangeNotifier {
 
           // On other errors, assume existing user to prevent showing InitUser page
           isUserNew = false;
-          print(
-              '🔐 AUTH: Setting isUserNew=false and calling updateStatusBasedOnNewUserFlag');
+          AppLogger.d('AuthService: Setting isUserNew=false and calling updateStatusBasedOnNewUserFlag', category: LogCategory.auth);
           await updateStatusBasedOnNewUserFlag(isUserNew);
           updateStatusCalled = true;
         } finally {
           _isCheckingRegistration = false;
-          print('🔐 AUTH: _isCheckingRegistration set to false');
+          AppLogger.d('AuthService: _isCheckingRegistration set to false', category: LogCategory.auth);
         }
 
         if (updateStatusCalled) {

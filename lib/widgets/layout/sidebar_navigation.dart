@@ -1,12 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
-import 'package:aurogram/widgets/user_avatar.dart';
+import 'package:aurogram/widgets/common/user_avatar.dart';
 import 'package:aurogram/utils/dependency_injection.dart';
 import 'package:aurogram/services/auth_service.dart';
 import 'package:aurogram/pages/helpers/user_settings.dart';
 import 'package:aurogram/widgets/cosmic_dashboard.dart';
 import 'package:aurogram/pages/login/login.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Desktop sidebar navigation for web/tablet
 /// Shows navigation items vertically with icons and labels
@@ -105,7 +106,7 @@ class _SidebarNavigationState extends State<SidebarNavigation>
             // App branding/logo
             _buildHeader(isDark),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: AppDimensions.spacingLg),
 
             // Navigation items
             Expanded(
@@ -176,10 +177,10 @@ class _SidebarNavigationState extends State<SidebarNavigation>
         width: iconSize,
         height: iconSize,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
           child: Image.asset(
             'assets/images/icon_transparent.png',
             width: iconSize,
@@ -226,7 +227,7 @@ class _SidebarNavigationState extends State<SidebarNavigation>
                   logoWidget,
                   // Title - only show when fully expanded
                   if (!widget.isCollapsed && isFullyExpanded) ...[
-                    const SizedBox(width: 14),
+                    const SizedBox(width: AppDimensions.spacingMdLg),
                     Expanded(
                       child: Text(
                         'Aurogram',
@@ -244,7 +245,7 @@ class _SidebarNavigationState extends State<SidebarNavigation>
               ),
               // Tab-specific action button (when provided)
               if (widget.tabActionBuilder != null) ...[
-                const SizedBox(height: 16),
+                const SizedBox(height: AppDimensions.spacingLg),
                 widget.tabActionBuilder!(widget.isCollapsed),
               ],
             ],
@@ -338,7 +339,7 @@ class _SidebarNavigationState extends State<SidebarNavigation>
           // Divider
           Container(
             height: 1,
-            margin: const EdgeInsets.only(bottom: 12),
+            margin: const EdgeInsets.only(bottom: AppDimensions.paddingMd),
             color: isDark
                 ? Colors.white.withValues(alpha: 0.08)
                 : Colors.black.withValues(alpha: 0.06),
@@ -436,7 +437,7 @@ class _SidebarNavigationState extends State<SidebarNavigation>
                 : (isDark
                     ? Colors.white.withValues(alpha: 0.05)
                     : Colors.black.withValues(alpha: 0.03)),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm),
           ),
           child: Row(
             mainAxisAlignment: widget.isCollapsed
@@ -452,7 +453,7 @@ class _SidebarNavigationState extends State<SidebarNavigation>
               ),
               // Label - only show when fully expanded
               if (!widget.isCollapsed && isFullyExpanded) ...[
-                const SizedBox(width: 12),
+                const SizedBox(width: AppDimensions.spacingMd),
                 Expanded(
                   child: Text(
                     label,
@@ -530,7 +531,7 @@ class _SidebarNavItem extends StatefulWidget {
 class _SidebarNavItemState extends State<_SidebarNavItem> {
   // Hover effects disabled to avoid mouse_tracker re-entrancy on web.
   static const bool _disableHover = true;
-  bool _isHovered = false;
+  final bool _isHovered = false;
 
   @override
   Widget build(BuildContext context) {
@@ -561,7 +562,7 @@ class _SidebarNavItemState extends State<_SidebarNavItem> {
                             ? Colors.white.withValues(alpha: 0.05)
                             : Colors.black.withValues(alpha: 0.03))
                         : Colors.transparent)),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
             border: widget.isSelected
                 ? Border.all(
                     color: activeColor.withValues(alpha: 0.3),
@@ -603,7 +604,7 @@ class _SidebarNavItemState extends State<_SidebarNavItem> {
                             horizontal: 5, vertical: 2),
                         decoration: BoxDecoration(
                           color: AppTheme.errorColor,
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm),
                         ),
                         constraints:
                             const BoxConstraints(minWidth: 18, minHeight: 16),
@@ -625,7 +626,7 @@ class _SidebarNavItemState extends State<_SidebarNavItem> {
 
               // Label and badge count - only show when fully expanded (not during transition)
               if (!widget.isCollapsed && isFullyExpanded) ...[
-                const SizedBox(width: 14),
+                const SizedBox(width: AppDimensions.spacingMdLg),
                 Expanded(
                   child: Text(
                     widget.label,
@@ -645,7 +646,7 @@ class _SidebarNavItemState extends State<_SidebarNavItem> {
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
                       color: AppTheme.errorColor,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                     ),
                     child: Text(
                       widget.badgeCount > 99
@@ -673,7 +674,7 @@ class _SidebarNavItemState extends State<_SidebarNavItem> {
         verticalOffset: 0,
         decoration: BoxDecoration(
           color: widget.isDark ? Colors.grey[800] : Colors.grey[700],
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
         ),
         textStyle: const TextStyle(
           color: Colors.white,

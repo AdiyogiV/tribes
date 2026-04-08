@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/utils/astrology/zodiac_traits.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// A beautiful shareable card displaying user's cosmic profile (Rising, Sun, Moon)
 /// Designed to be captured as an image for social sharing
@@ -39,9 +41,9 @@ class CosmicShareCard extends StatelessWidget {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Color(0xFF1a1a2e),
-            Color(0xFF0f1624),
-            Color(0xFF0a0e17),
+            AppTheme.darkGradientBase,
+            AppTheme.darkGradientMid,
+            AppTheme.darkGradientDeep,
           ],
         ),
       ),
@@ -60,25 +62,25 @@ class CosmicShareCard extends StatelessWidget {
               letterSpacing: 0.5,
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: AppDimensions.spacingXl),
 
           // Three sign cards
           _buildSignCard(
             icon: '↑',
-            iconColor: const Color(0xFF7FFFD4),
+            iconColor: AppTheme.aquamarine,
             placement: 'Rising',
             meaning: 'How others see you',
             sign: risingSign,
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppDimensions.spacingMdSm),
           _buildSignCard(
             icon: '☉',
-            iconColor: const Color(0xFFFFD700),
+            iconColor: AppTheme.goldColor,
             placement: 'Sun',
             meaning: 'Your core identity',
             sign: sunSign,
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppDimensions.spacingMdSm),
           _buildSignCard(
             icon: '☽',
             iconColor: const Color(0xFFE8E8E8),
@@ -124,10 +126,10 @@ class CosmicShareCard extends StatelessWidget {
     final traits = ZodiacTraits.getTraits(sign);
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppDimensions.paddingMd),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -139,7 +141,7 @@ class CosmicShareCard extends StatelessWidget {
                 icon,
                 style: TextStyle(fontSize: 20, color: iconColor),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppDimensions.spacingSm),
               Text(
                 placement,
                 style: TextStyle(
@@ -160,7 +162,7 @@ class CosmicShareCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppDimensions.spacingSmMd),
           // Bottom row: Meaning + Traits
           Row(
             children: [
@@ -180,7 +182,7 @@ class CosmicShareCard extends StatelessWidget {
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
                       color: iconColor.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(AppDimensions.radiusSmMd),
                     ),
                     child: Text(
                       trait,
@@ -205,7 +207,7 @@ class CosmicShareCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusSmMd),
               child: Image.asset(
                 'assets/images/icon_transparent.png',
                 width: 28,
@@ -213,7 +215,7 @@ class CosmicShareCard extends StatelessWidget {
                 fit: BoxFit.contain,
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppDimensions.spacingSm),
             Text(
               'Aurogram',
               style: TextStyle(
@@ -225,7 +227,7 @@ class CosmicShareCard extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: AppDimensions.spacingSmMd),
         Text(
           'discover your cosmic self',
           style: TextStyle(

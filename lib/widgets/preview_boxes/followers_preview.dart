@@ -12,7 +12,7 @@ class FollowersPreview extends StatefulWidget {
   final bool? showName;
   final bool? isSelected;
   const FollowersPreview(
-      {super.key, this.uid, required this.showName, @required this.isSelected});
+      {super.key, this.uid, required this.showName, required this.isSelected});
 
   @override
   _FollowersPreviewState createState() => _FollowersPreviewState();

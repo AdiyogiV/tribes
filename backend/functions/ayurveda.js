@@ -11,6 +11,7 @@ import { Timestamp, FieldValue } from "firebase-admin/firestore";
 import { db } from "../lib/firebase.js";
 import { geminiApiKey } from "../lib/secrets.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { AI_MODELS } from "../lib/config.js";
 import {
     calculatePrakriti,
     calculateVikriti,
@@ -32,45 +33,12 @@ import {
     calculateAshtakavarga,
     getTransitBinduScore,
 } from "./vedic_analysis.js";
+import { extractAscendantDegree as extractAscendantDegreeFromAstroData } from "../lib/astro_helpers.js";
 
 const VIKRITI_TRANSIT_MAX_SHIFT = 12; // keep low-impact: transits refine, don't override
 
 function getTodayDateKeyUTC() {
     return DateTime.now().setZone("UTC").toFormat("yyyy-MM-dd");
-}
-
-function extractAscendantDegreeFromAstroData(astroData) {
-    // Prefer processedPlanets (normalized)
-    const pp = astroData?.processedPlanets;
-    if (Array.isArray(pp)) {
-        const lagna = pp.find(
-            (p) =>
-                (p?.name === "Lagna" || p?.name === "Ascendant") &&
-                (p?.fullDegree != null || p?.full_degree != null),
-        );
-        if (lagna?.fullDegree != null) return lagna.fullDegree;
-        if (lagna?.full_degree != null) return lagna.full_degree;
-    }
-
-    // Fallback to raw birth chart output
-    const out = astroData?.birthChartData?.output;
-    const outObj = Array.isArray(out) ? out[0] : out;
-    if (outObj && typeof outObj === "object") {
-        const asc =
-            outObj["0"] ||
-            outObj.Ascendant ||
-            outObj.ascendant ||
-            Object.values(outObj).find(
-                (p) =>
-                    p &&
-                    typeof p === "object" &&
-                    (p.name?.toLowerCase?.() === "ascendant" || p.name?.toLowerCase?.() === "lagna"),
-            );
-        const deg = asc?.fullDegree || asc?.full_degree || asc?.longitude;
-        if (deg != null) return deg;
-    }
-
-    return null;
 }
 
 function buildNatalPlanetsForAspects(astroData) {
@@ -793,8 +761,6 @@ function getPlanetsInHouse(astroData, houseNumber) {
 // Uses Gemini to generate personalized wellness advice
 // ============================================================================
 
-const GEMINI_MODEL = "gemini-2.0-flash";
-
 /**
  * Get AI-powered Ayurveda recommendations based on user's profile and current state
  */
@@ -872,7 +838,7 @@ export const getAyurvedaRecommendations = onCall({
 
         const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({
-            model: GEMINI_MODEL,
+            model: AI_MODELS.GEMINI_FLASH,
             generationConfig: {
                 temperature: 0.7,
                 maxOutputTokens: 1024,

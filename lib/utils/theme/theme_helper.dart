@@ -1,6 +1,7 @@
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Helper class to provide consistent theme styling throughout the app
 class ThemeHelper {
@@ -118,7 +119,7 @@ class ThemeHelper {
   /// Get standard card decoration (light mode default)
   static BoxDecoration get cardDecoration => BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.06),
@@ -144,23 +145,23 @@ class ThemeHelper {
       fillColor: const Color(0xFFF5F2ED),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFE0D8CC)),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        borderSide: const BorderSide(color: AppTheme.borderLightColor),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFE0D8CC)),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        borderSide: const BorderSide(color: AppTheme.borderLightColor),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
         borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
         borderSide: const BorderSide(color: AppTheme.errorColor, width: 1),
       ),
       focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
         borderSide: const BorderSide(color: AppTheme.errorColor, width: 2),
       ),
       hintStyle: hintStyle,
@@ -188,7 +189,7 @@ class ThemeHelper {
         foregroundColor: Colors.white,
         elevation: 2,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       );
@@ -198,7 +199,7 @@ class ThemeHelper {
         foregroundColor: AppTheme.primaryColor,
         side: BorderSide(color: AppTheme.primaryColor, width: 1.5),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       );
@@ -207,9 +208,9 @@ class ThemeHelper {
   static ButtonStyle get textButtonStyle => TextButton.styleFrom(
         foregroundColor: AppTheme.primaryColor,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingSm),
       );
 
   /// Get standard floating action button theme
@@ -218,7 +219,7 @@ class ThemeHelper {
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
         elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusLg)),
       );
 
   /// Get standardized app bar theme (light mode default)
@@ -280,15 +281,15 @@ class ThemeHelper {
         fillColor: Colors.white,
         hintStyle: TextStyle(color: AppTheme.textSecondaryLightColor),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
           borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
           borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
         ),
         contentPadding:
@@ -332,7 +333,7 @@ class ThemeHelper {
     final isDark = isDarkMode(context);
     return BoxDecoration(
       color: isDark ? AppTheme.cardDarkColor : AppTheme.cardLightColor,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
       boxShadow: [
         BoxShadow(
           color: isDark 
@@ -353,7 +354,7 @@ class ThemeHelper {
       foregroundColor: isDark ? const Color(0xFF1C1410) : Colors.white,
       elevation: 2,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
     );
@@ -425,7 +426,7 @@ class ThemeHelper {
       color: isDark 
           ? Colors.white.withValues(alpha: 0.05) 
           : Colors.white,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
       border: Border.all(
         color: brown.withValues(alpha: isDark ? 0.3 : 0.2),
         width: 1,

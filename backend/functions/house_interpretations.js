@@ -11,11 +11,7 @@ import { logger } from "../lib/firebase.js";
 import { geminiApiKey } from "../lib/secrets.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { HOUSE_SIGNIFICATIONS } from "../lib/constants.js";
-
-// ============================================================================
-// CONFIGURATION
-// ============================================================================
-const GEMINI_MODEL = "gemini-2.0-flash";
+import { AI_MODELS } from "../lib/config.js";
 
 const ZODIAC_SIGNS = [
     "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
@@ -301,7 +297,7 @@ async function generateAIInterpretations(houseContexts, lagnaSign, astroData) {
 
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
-        model: GEMINI_MODEL,
+        model: AI_MODELS.GEMINI_FLASH,
         generationConfig: {
             temperature: 0.7,
             maxOutputTokens: 4000,

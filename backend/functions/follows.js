@@ -2,19 +2,20 @@ import { onDocumentCreated, onDocumentDeleted, onDocumentUpdated } from "firebas
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { db, FieldValue, logger } from "../lib/firebase.js";
 import { withIdempotency } from "../lib/idempotency.js";
+import { isBlockedEitherWay as _isBlockedEitherWay } from "../lib/utils.js";
 import { awardAura } from "./aura.js";
 import { AURA_POINTS } from "../lib/constants.js";
 
 /**
  * Follow System - Backend Handlers
- * 
+ *
  * Architecture:
  * - Frontend writes to: userFollowing/{userId}/following/{targetId} with status='pending'
  * - Backend handles:
  *   - If target is public: immediately set status='following', create follower record, update counts
  *   - If target is private: keep status='pending', send follow request notification
  *   - On approval: set status='following', create follower record, update counts
- * 
+ *
  * This keeps the frontend light and ensures data integrity.
  */
 
@@ -32,33 +33,9 @@ async function isPrivateProfile(userId) {
     }
 }
 
-/**
- * Check if either user has blocked the other
- * @returns {boolean} true if either user has blocked the other
- */
+/** @see ../lib/utils.js — consolidated blocking utility */
 async function isBlockedEitherWay(userId1, userId2) {
-    try {
-        const [user1BlockedUser2, user2BlockedUser1] = await Promise.all([
-            db.collection("blocks")
-                .doc(userId1)
-                .collection("blocked")
-                .doc(userId2)
-                .get(),
-            db.collection("blocks")
-                .doc(userId2)
-                .collection("blocked")
-                .doc(userId1)
-                .get(),
-        ]);
-        return user1BlockedUser2.exists || user2BlockedUser1.exists;
-    } catch (error) {
-        logger.warn("Error checking block status", {
-            userId1,
-            userId2,
-            error: error.message,
-        });
-        return false; // Default to not blocked on error
-    }
+    return _isBlockedEitherWay(db, userId1, userId2);
 }
 
 /**

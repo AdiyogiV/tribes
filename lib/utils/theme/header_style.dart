@@ -6,6 +6,7 @@ import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/utils/theme/theme_helper.dart';
 import 'package:aurogram/pages/helpers/flash.dart';
 import 'package:aurogram/widgets/cosmic_dashboard.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Header background style options
 enum HeaderBackgroundStyle {
@@ -140,10 +141,6 @@ class AppHeaderStyle {
     bool isRefreshing = false,
     bool enableLogoTap = true,
   }) {
-    // Logo center aligned with chat card avatar center
-    const double sideWidth = 90.0;
-    const double horizontalPadding = 7.0;
-
     // Build the logo widget (no shimmer - stays normal)
     // Wrapped in Builder to get context for CosmicDashboard
     Widget logoWidget = Builder(
@@ -182,38 +179,43 @@ class AppHeaderStyle {
             ),
           );
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        // Left logo area with fixed width (or custom leading widget)
-        SizedBox(
-          width: sideWidth,
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Padding(
-              padding: const EdgeInsets.only(left: horizontalPadding),
-              child: leadingWidget ?? logoWidget,
+    // Use LayoutBuilder to match tab bar spacing (spaceEvenly with 4 × 64px items)
+    // This ensures header icons align vertically with tab bar and input toolbar icons.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final totalWidth = constraints.maxWidth;
+        // Tab bar uses spaceEvenly with 4 items of 64px each
+        // gap = (totalWidth - 4*64) / 5
+        final gap = (totalWidth - 4 * 64) / 5;
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Left gap + icon area — aligned with first tab bar icon
+            SizedBox(width: gap),
+            SizedBox(
+              width: 64,
+              child: Center(
+                child: leadingWidget ?? logoWidget,
+              ),
             ),
-          ),
-        ),
-        // Centered title
-        Expanded(
-          child: Center(
-            child: titleWidget,
-          ),
-        ),
-        // Right action area with same width as left for perfect symmetry
-        SizedBox(
-          width: sideWidth,
-          child: Align(
-            alignment: Alignment.centerRight,
-            child: Padding(
-              padding: const EdgeInsets.only(right: horizontalPadding),
-              child: actionButton ?? const SizedBox.shrink(),
+            // Centered title
+            Expanded(
+              child: Center(
+                child: titleWidget,
+              ),
             ),
-          ),
-        ),
-      ],
+            // Right action area — aligned with last tab bar icon
+            SizedBox(
+              width: 64,
+              child: Center(
+                child: actionButton ?? const SizedBox.shrink(),
+              ),
+            ),
+            SizedBox(width: gap),
+          ],
+        );
+      },
     );
   }
 
@@ -458,7 +460,7 @@ class AppHeaderStyle {
           color: isDark
               ? surface.withValues(alpha: 0.7)
               : Colors.white.withValues(alpha: 0.9),
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusXxl),
           boxShadow: [
             BoxShadow(
               color: isDark
@@ -491,15 +493,15 @@ class AppHeaderStyle {
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusXxl),
               borderSide: BorderSide.none,
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusXxl),
               borderSide: BorderSide.none,
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusXxl),
               borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
             ),
             filled: true,
@@ -541,7 +543,7 @@ class AppHeaderStyle {
       height: 32,
       margin: const EdgeInsets.only(left: 4),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
         boxShadow: [
           BoxShadow(
             color: AppTheme.primaryColor.withValues(alpha: 0.2),
@@ -559,7 +561,7 @@ class AppHeaderStyle {
           textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
           minimumSize: const Size(0, 32),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
           ),
         ),
         onPressed: onPressed,
@@ -583,7 +585,7 @@ class AppHeaderStyle {
           color: color ?? AppTheme.primaryColor, size: headerIconSize),
       onPressed: onPressed,
       tooltip: tooltip,
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(AppDimensions.paddingSm),
       constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
     );
   }

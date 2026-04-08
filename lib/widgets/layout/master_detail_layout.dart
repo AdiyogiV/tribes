@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:aurogram/utils/responsive.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// A responsive master-detail layout that shows:
 /// - On desktop: Side-by-side panels (master list + detail view)
@@ -128,7 +129,7 @@ class MasterDetailLayout extends StatelessWidget {
               size: 80,
               color: AppTheme.primaryColor.withValues(alpha: 0.3),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppDimensions.spacingXxl),
             Text(
               'Select a conversation',
               style: TextStyle(
@@ -139,7 +140,7 @@ class MasterDetailLayout extends StatelessWidget {
                     : Colors.black.withValues(alpha: 0.5),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppDimensions.spacingSm),
             Text(
               'Choose from your existing conversations\nor start a new one',
               textAlign: TextAlign.center,
@@ -289,7 +290,7 @@ class ListPanel extends StatelessWidget {
           if (header != null) header!,
           if (searchBar != null)
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(AppDimensions.paddingMd),
               child: searchBar,
             ),
           Expanded(child: child),

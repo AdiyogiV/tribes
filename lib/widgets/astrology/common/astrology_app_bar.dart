@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Shared app bar component for astrology pages
 /// Provides consistent styling with optional gradient background
@@ -29,7 +30,7 @@ class AstrologyAppBar extends StatelessWidget {
       bottom: false,
       child: Container(
         height: 60,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
         child: Row(
           children: [
             IconButton(
@@ -39,7 +40,7 @@ class AstrologyAppBar extends StatelessWidget {
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppDimensions.spacingSm),
             Expanded(
               child: Center(
                 child: Text(
@@ -69,9 +70,9 @@ class AstrologyAppBar extends StatelessWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              accentColor.withOpacity(0.15),
-              accentColor.withOpacity(0.08),
-              accentColor.withOpacity(0.04),
+              accentColor.withValues(alpha: 0.15),
+              accentColor.withValues(alpha: 0.08),
+              accentColor.withValues(alpha: 0.04),
               Colors.transparent,
             ],
             stops: const [0.0, 0.3, 0.6, 1.0],

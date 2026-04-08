@@ -1,11 +1,13 @@
 import 'dart:async';
+import 'package:aurogram/widgets/ui/common_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:aurogram/services/chat/space_chat_service.dart';
 import 'package:aurogram/services/user_service.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
-import 'package:aurogram/widgets/user_avatar.dart';
+import 'package:aurogram/widgets/common/user_avatar.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 class ShareableContent {
   final String type;
@@ -65,13 +67,9 @@ class ChatPickerBottomSheet extends StatefulWidget {
     bool allowMultiSelect = false,
     String? initialMessage,
   }) {
-    return showModalBottomSheet<ChatPickerResult>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      enableDrag: true,
-      isDismissible: true,
-      builder: (context) => ChatPickerBottomSheet(
+    return AppBottomSheet.show<ChatPickerResult>(
+      context,
+      child: ChatPickerBottomSheet(
         content: content,
         allowMultiSelect: allowMultiSelect,
         initialMessage: initialMessage,
@@ -337,7 +335,7 @@ class _ChatPickerBottomSheetState extends State<ChatPickerBottomSheet> {
 
   Widget _buildHeader(bool isDark) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppDimensions.paddingLg),
       child: Row(
         children: [
           Text(
@@ -363,7 +361,7 @@ class _ChatPickerBottomSheetState extends State<ChatPickerBottomSheet> {
 
   Widget _buildSearch(bool isDark) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
       child: TextField(
         controller: _searchController,
         onChanged: (v) => setState(() => _searchQuery = v),
@@ -374,11 +372,11 @@ class _ChatPickerBottomSheetState extends State<ChatPickerBottomSheet> {
           fillColor:
               isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[100],
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm),
             borderSide: BorderSide.none,
           ),
           contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingMd),
         ),
       ),
     );
@@ -386,7 +384,7 @@ class _ChatPickerBottomSheetState extends State<ChatPickerBottomSheet> {
 
   Widget _buildList(bool isDark) {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const AppLoadingIndicator();
     }
 
     final filtered = _filtered;
@@ -400,7 +398,7 @@ class _ChatPickerBottomSheetState extends State<ChatPickerBottomSheet> {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingSm),
       itemCount: filtered.length,
       itemBuilder: (context, i) {
         final conv = filtered[i];
@@ -485,14 +483,14 @@ class _ChatPickerBottomSheetState extends State<ChatPickerBottomSheet> {
                   ? Colors.white.withValues(alpha: 0.1)
                   : Colors.grey[100],
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm),
                 borderSide: BorderSide.none,
               ),
               contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingMd),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppDimensions.spacingMd),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -500,9 +498,9 @@ class _ChatPickerBottomSheetState extends State<ChatPickerBottomSheet> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryColor,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
+                padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingMdLg),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm),
                 ),
               ),
               child: Text(

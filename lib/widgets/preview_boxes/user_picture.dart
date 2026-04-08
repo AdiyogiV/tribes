@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/services/cache_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -10,7 +11,7 @@ class UserPicture extends StatefulWidget {
   @override
   final Key? key;
 
-  const UserPicture({@required this.displayPicture, this.key}) : super(key: key);
+  const UserPicture({required this.displayPicture, this.key}) : super(key: key);
 
   @override
   _UserPictureState createState() => _UserPictureState();
@@ -65,15 +66,15 @@ class _UserPictureState extends State<UserPicture> {
                     width: double.infinity,
                     height: double.infinity,
                     placeholder: (context, url) => Container(
-                      color: const Color(0xFFF0EDE8), // Warm skeleton color
+                      color: AppTheme.skeletonLightColor, // Warm skeleton color
                     ),
                     errorWidget: (context, url, error) => Container(
-                      color: const Color(0xFFF0EDE8),
+                      color: AppTheme.skeletonLightColor,
                       child: const Icon(Icons.person, color: Color(0xFFBDBDBD)),
                     ),
                   )
                 : Container(
-                    color: const Color(0xFFF0EDE8),
+                    color: AppTheme.skeletonLightColor,
                     child: const Icon(Icons.person, color: Color(0xFFBDBDBD)),
                   ),
           ),
@@ -97,7 +98,7 @@ class _UserPictureState extends State<UserPicture> {
                   height: double.infinity,
                 )
               : Container(
-                  color: const Color(0xFFF0EDE8), // Warm skeleton color
+                  color: AppTheme.skeletonLightColor, // Warm skeleton color
                   child: const Icon(Icons.person, color: Color(0xFFBDBDBD)),
                 ),
         ),

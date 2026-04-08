@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
 import 'package:intl/intl.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Page to display user's saved insights
 class SavedInsightsPage extends StatelessWidget {
@@ -26,7 +27,7 @@ class SavedInsightsPage extends StatelessWidget {
               bottom: false,
               child: Container(
                 height: 60,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
                 child: Row(
                   children: [
                     // Back button
@@ -86,7 +87,7 @@ class SavedInsightsPage extends StatelessWidget {
                 }
 
                 return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
                   child: Column(
                     children: docs.map((doc) {
                       final data = doc.data() as Map<String, dynamic>;
@@ -115,12 +116,12 @@ class SavedInsightsPage extends StatelessWidget {
 
   Widget _buildLoadingState() {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppDimensions.paddingLg),
       child: Column(
         children: List.generate(
           3,
           (index) => const Padding(
-            padding: EdgeInsets.only(bottom: 12),
+            padding: EdgeInsets.only(bottom: AppDimensions.paddingMd),
             child: SkeletonCard(height: 120),
           ),
         ),
@@ -134,13 +135,13 @@ class SavedInsightsPage extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const SizedBox(height: 60),
+          const SizedBox(height: AppDimensions.spacingHero),
           Icon(
             Icons.bookmark_outline,
             size: 64,
             color: brown.withValues(alpha: 0.3),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.spacingLg),
           Text(
             'No saved insights yet',
             style: TextStyle(
@@ -149,7 +150,7 @@ class SavedInsightsPage extends StatelessWidget {
               color: brown.withValues(alpha: 0.7),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppDimensions.spacingSm),
           Text(
             'Tap Save on any insight card to keep it here',
             textAlign: TextAlign.center,
@@ -169,13 +170,13 @@ class SavedInsightsPage extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const SizedBox(height: 60),
+          const SizedBox(height: AppDimensions.spacingHero),
           Icon(
             Icons.error_outline,
             size: 48,
             color: brown.withValues(alpha: 0.5),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.spacingLg),
           Text(
             'Could not load saved insights',
             style: TextStyle(
@@ -215,15 +216,15 @@ class SavedInsightsPage extends StatelessWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: AppDimensions.paddingMd),
       child: Material(
         color: isDark ? AppTheme.cardDarkColor : AppTheme.cardLightColor,
         elevation: 2,
         shadowColor: Colors.black.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppDimensions.paddingLg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -243,7 +244,7 @@ class SavedInsightsPage extends StatelessWidget {
                           ),
                         ),
                         if (dateInfo.isNotEmpty) ...[
-                          const SizedBox(height: 4),
+                          const SizedBox(height: AppDimensions.spacingXs),
                           Text(
                             dateInfo,
                             style: TextStyle(
@@ -260,7 +261,7 @@ class SavedInsightsPage extends StatelessWidget {
                   GestureDetector(
                     onTap: () => _deleteInsight(context, docId, brown),
                     child: Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(AppDimensions.paddingSm),
                       child: Icon(
                         Icons.close,
                         size: 18,
@@ -272,7 +273,7 @@ class SavedInsightsPage extends StatelessWidget {
               ),
 
               if (content.isNotEmpty) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: AppDimensions.spacingMd),
                 Text(
                   content,
                   style: TextStyle(

@@ -1,3 +1,4 @@
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -5,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:aurogram/models/story.dart';
 import 'package:aurogram/services/story_service.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
-import 'package:aurogram/widgets/user_avatar.dart';
+import 'package:aurogram/widgets/common/user_avatar.dart';
 import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
 
 /// Horizontal strip of story avatars: "Your story" first, then users with active stories.
@@ -82,7 +83,9 @@ class _StoryRingState extends State<StoryRing> {
           for (final story in stories) {
             if (!mounted) break;
             if (story.mediaUrl.isEmpty ||
-                story.mediaType != StoryMediaType.image) continue;
+                story.mediaType != StoryMediaType.image) {
+              continue;
+            }
 
             try {
               // Use CachedNetworkImageProvider and precache
@@ -165,7 +168,7 @@ class _StoryRingState extends State<StoryRing> {
               isAdd: !hasStories,
               hasStories: hasStories,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppDimensions.spacingXs),
             SizedBox(
               width: _ringWidth,
               height: 16,
@@ -208,7 +211,7 @@ class _StoryRingState extends State<StoryRing> {
               hasUnviewed: hasUnviewed,
               isAdd: false,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppDimensions.spacingXs),
             SizedBox(
               width: _ringWidth,
               height: 16,

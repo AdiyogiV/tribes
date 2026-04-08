@@ -1,3 +1,4 @@
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:aurogram/utils/config/app_config.dart';
@@ -243,7 +244,7 @@ class AppInitializer {
             mainAxisSize: MainAxisSize.min,
             children: [
               const Icon(Icons.error_outline, color: Colors.red, size: 36),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppDimensions.spacingLg),
               const Text(
                 'An error occurred',
                 style: TextStyle(
@@ -251,7 +252,7 @@ class AppInitializer {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppDimensions.spacingSm),
               Text(
                 kDebugMode
                     ? details.exception.toString()

@@ -3,16 +3,17 @@ import 'package:aurogram/services/data/post_db_service.dart';
 import 'package:aurogram/utils/dependency_injection.dart';
 import 'package:aurogram/services/user_service.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/utils/time_display.dart';
-import 'package:aurogram/pages/thread_view.dart';
+import 'package:aurogram/pages/content/thread_view.dart';
 import 'package:aurogram/widgets/preview_boxes/preview_box.dart';
-import 'package:aurogram/widgets/user_avatar.dart';
+import 'package:aurogram/widgets/common/user_avatar.dart';
 import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
 import 'package:aurogram/widgets/notifications/unified_notification_card.dart';
+import 'package:aurogram/widgets/common/snack_bar_service.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 class LikeTile extends StatefulWidget {
   final Map<String, dynamic>? data;
@@ -151,7 +152,9 @@ class _LikeTileState extends State<LikeTile> {
     if (widget.data?['timestamp'] != null) {
       try {
         return TimeDisplay.getCompactTimestamp(widget.data!['timestamp'].toDate());
-      } catch (_) {}
+      } catch (_) {
+        AppLogger.w('LikeTile: failed to parse timestamp', category: LogCategory.general);
+      }
     }
     return date;
   }
@@ -160,7 +163,7 @@ class _LikeTileState extends State<LikeTile> {
   Widget build(BuildContext context) {
     if (!ready) {
       return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+        padding: EdgeInsets.symmetric(vertical: AppDimensions.paddingXs, horizontal: AppDimensions.paddingLg),
         child: SkeletonListItem(height: 70),
       );
     }
@@ -182,7 +185,7 @@ class _LikeTileState extends State<LikeTile> {
               width: 50,
               height: 50,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
                 border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.2), width: 1),
               ),
               child: ClipRRect(
@@ -197,14 +200,7 @@ class _LikeTileState extends State<LikeTile> {
             CupertinoPageRoute(builder: (context) => ThreadView(postId: widget.data!['postId'])),
           );
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Post or space information is unavailable'),
-              duration: const Duration(seconds: 2),
-              behavior: SnackBarBehavior.fixed,
-              backgroundColor: AppTheme.errorColor,
-            ),
-          );
+          showCustomSnackBar(context, message: 'Post or space information is unavailable', duration: const Duration(seconds: 2), backgroundColor: AppTheme.errorColor);
         }
       },
     );

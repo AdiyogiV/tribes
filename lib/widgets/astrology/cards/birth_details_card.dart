@@ -4,6 +4,8 @@ import 'package:aurogram/models/astrology_profile.dart';
 import 'package:aurogram/pages/astrology/astrology_setup_page.dart';
 import 'package:aurogram/utils/astrology/astrology_formatters.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/widgets/common/snack_bar_service.dart';
 
 /// Displays birth details - aligned with samvat card style
 class BirthDetailsCard extends StatelessWidget {
@@ -35,12 +37,12 @@ class BirthDetailsCard extends StatelessWidget {
       color: cardColor,
       elevation: 2,
       shadowColor: Colors.black.withValues(alpha: 0.2),
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
       child: InkWell(
         onTap: onEditPressed ?? () => _editProfile(context),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
         child: Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppDimensions.paddingLg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -64,13 +66,13 @@ class BirthDetailsCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppDimensions.spacingMd),
               // Date
               _buildComponent(
                 'Date',
                 '$weekday, ${birthDate.day} $monthName ${birthDate.year}',
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppDimensions.spacingSm),
               // Time
               _buildComponent(
                 'Time',
@@ -78,7 +80,7 @@ class BirthDetailsCard extends StatelessWidget {
                     ? '$formattedTime • ${profile.timeZone}'
                     : formattedTime,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppDimensions.spacingSm),
               // Place
               _buildComponent('Place', profile.birthPlace ?? '—'),
             ],
@@ -127,12 +129,7 @@ class BirthDetailsCard extends StatelessWidget {
     );
 
     if (result == true && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Birth details updated'),
-          duration: Duration(seconds: 2),
-        ),
-      );
+      showCustomSnackBar(context, message: 'Birth details updated', duration: const Duration(seconds: 2));
     }
   }
 }

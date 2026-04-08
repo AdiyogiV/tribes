@@ -23,7 +23,7 @@ import 'package:aurogram/services/speech_recognition_service.dart';
 import 'package:aurogram/services/audio_input_service.dart';
 import 'package:aurogram/services/ai/ai_chat_service.dart';
 import 'package:aurogram/services/location_service.dart';
-import 'package:aurogram/controllers/feed_controller.dart';
+import 'package:aurogram/pages/tabs/feed/feed_controller.dart';
 import 'package:aurogram/utils/app_initializer.dart';
 import 'tabs.dart';
 import 'package:aurogram/utils/memory/memory_manager.dart';
@@ -522,7 +522,7 @@ Future<void> _completeAuthSetup() async {
 
     // Signal AuthService to start processing auth state
     // This triggers checkRegistration() which may make Firestore calls
-    print('🔐 MAIN: Marking AuthService as ready (background)');
+    AppLogger.d('Main: Marking AuthService as ready (background)', category: LogCategory.auth);
     locator<AuthService>().markReady();
 
     _initialDependenciesLoaded = true;
@@ -537,14 +537,16 @@ Future<void> _completeAuthSetup() async {
     // Try to mark auth ready anyway
     try {
       locator<AuthService>().markReady();
-    } catch (_) {}
+    } catch (_) {
+      AppLogger.w('Main: failed to mark auth ready after error', category: LogCategory.general);
+    }
   }
 }
 
 /// Configure Firestore settings for optimal performance
 void _configureFirestoreSettings() {
   try {
-    print('🔐 MAIN: Configuring Firestore settings');
+    AppLogger.d('Main: Configuring Firestore settings', category: LogCategory.database);
     // Adjust cache size based on platform
     int cacheSizeBytes;
     if (kIsWeb) {
@@ -563,12 +565,12 @@ void _configureFirestoreSettings() {
       ignoreUndefinedProperties: true,
     );
 
-    print('🔐 MAIN: Firestore configured successfully');
+    AppLogger.d('Main: Firestore configured successfully', category: LogCategory.database);
     AppLogger.d('Firestore configured with optimized settings',
         category: LogCategory.database,
         data: {'cacheSizeBytes': cacheSizeBytes, 'isWeb': kIsWeb});
   } catch (e) {
-    print('🔐 MAIN: Firestore configuration failed: $e');
+    AppLogger.w('Main: Firestore configuration failed: $e', category: LogCategory.database);
     AppLogger.w('Failed to configure Firestore, using defaults',
         category: LogCategory.database, data: {'error': e.toString()});
   }
@@ -738,8 +740,8 @@ class AppRootState extends State<AppRoot> with WidgetsBindingObserver {
       // Set up message callback for user notifications
       _callService.setMessageCallback((message) {
         final navigatorState = widget.navigatorKey.currentState;
-        if (navigatorState != null && navigatorState.context != null) {
-          ScaffoldMessenger.of(navigatorState.context!).showSnackBar(
+        if (navigatorState != null) {
+          ScaffoldMessenger.of(navigatorState.context).showSnackBar(
             SnackBar(
               content: Text(message),
               duration: const Duration(seconds: 3),

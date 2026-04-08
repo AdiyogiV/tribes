@@ -1,4 +1,6 @@
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/widgets/ui/common_widgets.dart';
 import 'package:flutter/material.dart';
 
 class GroupCallJoiningView extends StatelessWidget {
@@ -33,7 +35,7 @@ class GroupCallJoiningView extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppDimensions.spacingXxl),
           Text(
             'Joining $spaceName...',
             style: const TextStyle(
@@ -43,14 +45,9 @@ class GroupCallJoiningView extends StatelessWidget {
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: 24,
-            height: 24,
-            child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
-              strokeWidth: 2,
-            ),
+          const SizedBox(height: AppDimensions.spacingLg),
+          AppLoadingIndicator(
+            strokeWidth: 2,
           ),
         ],
       ),

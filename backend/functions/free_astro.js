@@ -10,14 +10,15 @@ import {
     calculateHouseFromDegree,
 } from "./vedic_analysis.js";
 import { freeAstrologyApiKey } from "../lib/secrets.js";
-import { GANDMOOL_NAKSHATRAS, FREE_ASTROLOGY_API } from "../lib/constants.js";
+import { GANDMOOL_NAKSHATRAS, FREE_ASTROLOGY_API, ZODIAC_SIGNS, NAKSHATRAS } from "../lib/constants.js";
 import {
     calculateCosmicMatch,
     calculateLifePhaseSync,
     normalizeNakshatra,
     normalizeSign,
 } from "../lib/vedic_compatibility.js";
-import { safeParseJson } from "../lib/utils.js";
+import { safeParseJson, checkBlockedDetailed } from "../lib/utils.js";
+import { extractApiOutput, parseApiTimeString } from "../lib/astro_helpers.js";
 
 // ============================================================================
 // FreeAstrologyAPI Configuration
@@ -112,78 +113,10 @@ const callFreeAstroSafe = async (endpoint, payload) => {
     }
 };
 
-// Parse FreeAstrologyAPI time string format: "{starts_at: 2023-03-20 07:52:14, ends_at: 2023-03-20 09:22:52}"
-const parseTimeString = (timeStr) => {
-    if (!timeStr || typeof timeStr !== "string") return null;
+// parseApiTimeString imported from lib/astro_helpers.js
+const parseTimeString = parseApiTimeString;
 
-    try {
-        // Try JSON parse first
-        const jsonParsed = safeParseJson(timeStr);
-        if (jsonParsed) return jsonParsed;
-
-        // Parse the string format: "{starts_at: ..., ends_at: ...}"
-        const cleaned = timeStr.trim().replace(/^\{|\}$/g, "");
-        const parts = cleaned.split(/,/);
-        const result = {};
-
-        for (const part of parts) {
-            const colonIndex = part.indexOf(":");
-            if (colonIndex === -1) continue;
-
-            const key = part.substring(0, colonIndex).trim();
-            const value = part.substring(colonIndex + 1).trim();
-
-            // Remove quotes if present
-            const cleanValue = value.replace(/^["']|["']$/g, "");
-            result[key] = cleanValue;
-        }
-
-        return Object.keys(result).length > 0 ? result : null;
-    } catch (error) {
-        logger.warn("⚠️ Failed to parse time string:", error.message);
-        return null;
-    }
-};
-
-const unwrapOutputPayload = (input, { maxDepth = 3 } = {}) => {
-    let current = input;
-    for (let depth = 0; depth < maxDepth; depth += 1) {
-        if (current == null) break;
-
-        if (typeof current === "string") {
-            const parsed = safeParseJson(current);
-            if (parsed == null) {
-                break;
-            }
-            current = parsed;
-            continue;
-        }
-
-        if (typeof current === "object") {
-            return current;
-        }
-
-        break;
-    }
-    return (typeof current === "object" && current !== null) ? current : null;
-};
-
-const extractApiOutput = (response) => {
-    if (!response) return null;
-    if (typeof response === "object" && !Array.isArray(response)) {
-        if (Object.prototype.hasOwnProperty.call(response, "output")) {
-            const parsed = unwrapOutputPayload(response.output);
-            if (parsed && typeof parsed === "object") {
-                return parsed;
-            }
-        }
-        return response;
-    }
-    if (typeof response === "string") {
-        return unwrapOutputPayload(response);
-    }
-    return null;
-};
+// extractApiOutput and unwrapJsonOutput are imported from lib/astro_helpers.js and lib/utils.js
 
 /**
  * Parse a dasha date string to a JavaScript Date object.
@@ -1066,19 +999,9 @@ export const runAstroFlow = async ({
     // Final result is ready - no need to log success
 
     if (shouldFetchPlanets && planetData) {
-        const vedicSigns = [
-            "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
-            "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces",
-        ];
-
-        const nakshatras = [
-            "Ashwini", "Bharani", "Krittika", "Rohini", "Mrigashira",
-            "Ardra", "Punarvasu", "Pushya", "Ashlesha", "Magha",
-            "Purva Phalguni", "Uttara Phalguni", "Hasta", "Chitra",
-            "Swati", "Vishakha", "Anuradha", "Jyeshtha", "Mula",
-            "Purva Ashadha", "Uttara Ashadha", "Shravana", "Dhanishta",
-            "Shatabhisha", "Purva Bhadrapada", "Uttara Bhadrapada", "Revati",
-        ];
+        // Use centralized constants from lib/constants.js
+        const vedicSigns = ZODIAC_SIGNS;
+        const nakshatras = NAKSHATRAS;
 
         const planetsOutput = Array.isArray(planetData.output) ?
             planetData.output[0] :
@@ -1379,6 +1302,27 @@ export const runAstroFlow = async ({
                     structuredData: true,
                     error: weekdayError.message,
                 });
+            }
+
+            // Merge samvatInfo fields into panchangData so panchang always has
+            // lunar month and Vikram Samvat year (these come from separate API calls
+            // stored in samvatInfo but are needed together with tithi/nakshatra)
+            if (samvatInfo && panchangData) {
+                if (!panchangData.lunar_month_full_name && samvatInfo.lunar_month_full_name) {
+                    panchangData.lunar_month_full_name = samvatInfo.lunar_month_full_name;
+                }
+                if (!panchangData.lunar_month_name && samvatInfo.lunar_month_name) {
+                    panchangData.lunar_month_name = samvatInfo.lunar_month_name;
+                }
+                if (!panchangData.vikram_chaitradi_number && samvatInfo.vikram_chaitradi_number) {
+                    panchangData.vikram_chaitradi_number = samvatInfo.vikram_chaitradi_number;
+                }
+                if (!panchangData.vikram_chaitradi_year_name && samvatInfo.vikram_chaitradi_year_name) {
+                    panchangData.vikram_chaitradi_year_name = samvatInfo.vikram_chaitradi_year_name;
+                }
+                if (!panchangData.saka_salivahana_number && samvatInfo.saka_salivahana_number) {
+                    panchangData.saka_salivahana_number = samvatInfo.saka_salivahana_number;
+                }
             }
 
             if (Object.keys(panchangData).filter((k) => panchangData[k] != null).length === 0) {
@@ -2164,37 +2108,15 @@ export const invalidateCompatibilityCache = async (userId) => {
     }
 };
 
-// Helper function to check if either user has blocked the other
+/** @see ../lib/utils.js — consolidated blocking utility */
 const checkBlockedStatus = async (userId1, userId2) => {
-    try {
-        // Check both directions in parallel
-        const [user1BlockedUser2, user2BlockedUser1] = await Promise.all([
-            db.collection("blocks")
-                .doc(userId1)
-                .collection("blocked")
-                .doc(userId2)
-                .get(),
-            db.collection("blocks")
-                .doc(userId2)
-                .collection("blocked")
-                .doc(userId1)
-                .get(),
-        ]);
-
-        return {
-            isBlocked: user1BlockedUser2.exists || user2BlockedUser1.exists,
-            blockerIsCurrentUser: user1BlockedUser2.exists,
-            blockerIsOtherUser: user2BlockedUser1.exists,
-        };
-    } catch (error) {
-        logger.warn("Error checking block status", {
-            userId1,
-            userId2,
-            error: error.message,
-        });
-        // Default to not blocked on error (fail open for UX, blocks are secondary)
-        return { isBlocked: false, blockerIsCurrentUser: false, blockerIsOtherUser: false };
-    }
+    const result = await checkBlockedDetailed(db, userId1, userId2);
+    // Map to legacy field names used by callers in this file
+    return {
+        isBlocked: result.isBlocked,
+        blockerIsCurrentUser: result.blockerIsUser1,
+        blockerIsOtherUser: result.blockerIsUser2,
+    };
 };
 
 // Helper function to check mutual follow status

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 const String _kDefaultHeading = 'SEND ME SOMETHING';
 // NGL-style gradient: pink to purple
@@ -143,7 +144,7 @@ class SecretMessageCard extends StatelessWidget {
                       constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                     ),
                   if (onReport != null || onBlock != null) ...[
-                    if (onDelete != null) const SizedBox(width: 4),
+                    if (onDelete != null) const SizedBox(width: AppDimensions.spacingXs),
                     IconButton(
                       onPressed: () => _showMenu(context),
                       icon: Icon(
@@ -212,7 +213,7 @@ class _ReplyButton extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onPressed,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
           child: Row(
@@ -333,7 +334,7 @@ class AnonymousMessageStoryCard extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 18),
                   decoration: BoxDecoration(
                     color: Colors.black,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -347,7 +348,7 @@ class AnonymousMessageStoryCard extends StatelessWidget {
                           BlendMode.srcIn,
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppDimensions.spacingMd),
                       Text(
                         'Reply',
                         style: TextStyle(

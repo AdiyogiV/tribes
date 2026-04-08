@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
+import 'package:aurogram/utils/logging/app_logger.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:aurogram/pages/call/models/ui_participant.dart';
 import 'package:aurogram/pages/call/widgets/group_call_controls.dart';
@@ -11,6 +12,8 @@ import 'package:aurogram/pages/call/widgets/group_call_top_bar.dart';
 import 'package:aurogram/services/group_call_service.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/widgets/common/snack_bar_service.dart';
 
 /// Group call screen using Agora RTC
 /// Video call by default - users can turn camera off for audio-only
@@ -126,9 +129,7 @@ class _GroupCallScreenState extends State<GroupCallScreen>
 
     _groupCallService.onError = (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error), backgroundColor: Colors.red),
-        );
+        showCustomSnackBar(context, message: error, backgroundColor: Colors.red);
       }
     };
 
@@ -155,7 +156,9 @@ class _GroupCallScreenState extends State<GroupCallScreen>
           displayName = userData['name'] ?? userData['nickname'] ?? 'You';
           avatarUrl = userData['imageUrl'];
         }
-      } catch (_) {}
+      } catch (_) {
+        AppLogger.w('GroupCallScreen: failed to fetch local user data', category: LogCategory.general);
+      }
     }
 
     if (mounted) {
@@ -223,7 +226,9 @@ class _GroupCallScreenState extends State<GroupCallScreen>
             return;
           }
         }
-      } catch (_) {}
+      } catch (_) {
+        AppLogger.w('GroupCallScreen: failed to resolve remote participant', category: LogCategory.general);
+      }
     }
 
     // Fallback if not found
@@ -357,7 +362,7 @@ class _GroupCallScreenState extends State<GroupCallScreen>
         _leave();
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFF0D0D0D),
+        backgroundColor: AppTheme.callBackground,
         body: SafeArea(
           child: Stack(
             children: [
@@ -501,12 +506,12 @@ class _GroupCallScreenState extends State<GroupCallScreen>
       return Column(
         children: [
           Expanded(child: _buildVideoTile(participants[0], engine)),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppDimensions.spacingSm),
           Expanded(
             child: Row(
               children: [
                 Expanded(child: _buildVideoTile(participants[1], engine)),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppDimensions.spacingSm),
                 Expanded(child: _buildVideoTile(participants[2], engine)),
               ],
             ),
@@ -520,12 +525,12 @@ class _GroupCallScreenState extends State<GroupCallScreen>
     return Column(
       children: [
         for (int row = 0; row < rows; row++) ...[
-          if (row > 0) const SizedBox(height: 8),
+          if (row > 0) const SizedBox(height: AppDimensions.spacingSm),
           Expanded(
             child: Row(
               children: [
                 for (int col = 0; col < columns; col++) ...[
-                  if (col > 0) const SizedBox(width: 8),
+                  if (col > 0) const SizedBox(width: AppDimensions.spacingSm),
                   Expanded(
                     child: participantIndex < count
                         ? _buildVideoTile(
@@ -549,11 +554,11 @@ class _GroupCallScreenState extends State<GroupCallScreen>
 
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF1A1A2E),
+        color: AppTheme.darkGradientBase,
         borderRadius: BorderRadius.circular(isFullScreen ? 0 : 16),
         border: Border.all(
           color: isSpeaking
-              ? const Color(0xFF4CAF50)
+              ? AppTheme.activeGreen
               : participant.isLocal
                   ? AppTheme.primaryColor.withValues(alpha: 0.5)
                   : Colors.white.withValues(alpha: 0.1),
@@ -562,7 +567,7 @@ class _GroupCallScreenState extends State<GroupCallScreen>
         boxShadow: isSpeaking
             ? [
                 BoxShadow(
-                  color: const Color(0xFF4CAF50).withValues(alpha: 0.3),
+                  color: AppTheme.activeGreen.withValues(alpha: 0.3),
                   blurRadius: 12,
                   spreadRadius: 2,
                 ),
@@ -605,7 +610,7 @@ class _GroupCallScreenState extends State<GroupCallScreen>
                   children: [
                     _buildParticipantAvatar(
                         participant, isFullScreen ? 100 : 60),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppDimensions.spacingMd),
                     Text(
                       participant.isLocal ? 'You' : participant.displayName,
                       style: TextStyle(
@@ -630,7 +635,7 @@ class _GroupCallScreenState extends State<GroupCallScreen>
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.6),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -667,7 +672,7 @@ class _GroupCallScreenState extends State<GroupCallScreen>
                         return Container(
                           padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF4CAF50)
+                            color: AppTheme.activeGreen
                                 .withValues(alpha: _speakingAnimation.value),
                             shape: BoxShape.circle,
                           ),
@@ -713,11 +718,11 @@ class _GroupCallScreenState extends State<GroupCallScreen>
         ? participant.displayName[0].toUpperCase()
         : 'U';
     final colors = [
-      const Color(0xFF6366F1),
-      const Color(0xFF8B5CF6),
-      const Color(0xFFEC4899),
+      AppTheme.indigoColor,
+      AppTheme.cosmicPurple,
+      AppTheme.pinkAccent,
       const Color(0xFF14B8A6),
-      const Color(0xFFF59E0B),
+      AppTheme.amberAccent,
     ];
     final color = colors[participant.agoraUid % colors.length];
 

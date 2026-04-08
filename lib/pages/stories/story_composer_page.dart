@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:aurogram/widgets/ui/common_widgets.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -10,6 +11,7 @@ import 'package:aurogram/models/story.dart';
 import 'package:aurogram/services/story_service.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Story composer: camera/gallery when opened from ring; or pre-filled image bytes from "Add to Story" share.
 /// Shows a preview (Instagram-like) before posting; user taps "Share to story" to upload.
@@ -138,7 +140,9 @@ class _StoryComposerPageState extends State<StoryComposerPage>
   Future<void> _postFromPreview() async {
     if (_previewBytes == null ||
         _previewMediaType == null ||
-        FirebaseAuth.instance.currentUser == null) return;
+        FirebaseAuth.instance.currentUser == null) {
+      return;
+    }
     setState(() {
       _posting = true;
       _error = null;
@@ -160,7 +164,7 @@ class _StoryComposerPageState extends State<StoryComposerPage>
           content: Row(
             children: [
               Icon(Icons.check_circle, color: Colors.white, size: 20),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppDimensions.spacingMd),
               const Expanded(
                 child: Text(
                   'Your story was posted',
@@ -172,9 +176,9 @@ class _StoryComposerPageState extends State<StoryComposerPage>
           backgroundColor: AppTheme.successColor,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
           ),
-          margin: const EdgeInsets.all(16),
+          margin: const EdgeInsets.all(AppDimensions.paddingLg),
         ),
       );
       Navigator.of(context).pop(true);
@@ -185,7 +189,7 @@ class _StoryComposerPageState extends State<StoryComposerPage>
           content: Row(
             children: [
               Icon(Icons.error_outline, color: Colors.white, size: 20),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppDimensions.spacingMd),
               const Expanded(
                 child: Text(
                   'Could not post story. Try again.',
@@ -197,9 +201,9 @@ class _StoryComposerPageState extends State<StoryComposerPage>
           backgroundColor: Theme.of(context).colorScheme.error,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
           ),
-          margin: const EdgeInsets.all(16),
+          margin: const EdgeInsets.all(AppDimensions.paddingLg),
         ),
       );
     }
@@ -263,7 +267,7 @@ class _StoryComposerPageState extends State<StoryComposerPage>
                   children: [
                     Icon(Icons.broken_image,
                         size: 64, color: Colors.white.withValues(alpha: 0.7)),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppDimensions.spacingLg),
                     Text(
                       'Could not load image',
                       style: TextStyle(
@@ -311,17 +315,17 @@ class _StoryComposerPageState extends State<StoryComposerPage>
                 padding: const EdgeInsets.only(right: 8),
                 child: Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd, vertical: AppDimensions.paddingSm),
                   decoration: BoxDecoration(
                     color: AppTheme.errorColor.withValues(alpha: 0.9),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(Icons.error_outline,
                           color: Colors.white, size: 16),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: AppDimensions.spacingSmMd),
                       Text(
                         _error!,
                         style: const TextStyle(
@@ -356,7 +360,7 @@ class _StoryComposerPageState extends State<StoryComposerPage>
                                 Icon(Icons.videocam_rounded,
                                     size: 64,
                                     color: Colors.white.withValues(alpha: 0.7)),
-                                const SizedBox(height: 16),
+                                const SizedBox(height: AppDimensions.spacingLg),
                                 Text(
                                   'Video selected',
                                   style: TextStyle(
@@ -412,7 +416,7 @@ class _StoryComposerPageState extends State<StoryComposerPage>
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
                             ),
                           ),
                           child: const Text(
@@ -424,22 +428,15 @@ class _StoryComposerPageState extends State<StoryComposerPage>
                           ),
                         ),
                       ),
-                      const SizedBox(width: 16),
+                      const SizedBox(width: AppDimensions.spacingLg),
                       Expanded(
                         flex: 2,
                         child: FilledButton.icon(
                           onPressed: _posting ? null : _postFromPreview,
                           icon: _posting
-                              ? SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.5,
-                                    color: Colors.white,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white,
-                                    ),
-                                  ),
+                              ? const AppLoadingIndicator(
+                                  size: 20,
+                                  color: Colors.white,
                                 )
                               : const Icon(Icons.send_rounded, size: 22),
                           label: Text(
@@ -455,7 +452,7 @@ class _StoryComposerPageState extends State<StoryComposerPage>
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
                             ),
                             elevation: 0,
                           ),
@@ -511,7 +508,7 @@ class _StoryComposerPageState extends State<StoryComposerPage>
                     ],
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppDimensions.spacingSm),
                 // Description
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -530,7 +527,7 @@ class _StoryComposerPageState extends State<StoryComposerPage>
                 const Spacer(),
                 // Action buttons
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingXxl),
                   child: Column(
                     children: [
                       _ModernPickButton(
@@ -539,13 +536,13 @@ class _StoryComposerPageState extends State<StoryComposerPage>
                         subtitle: 'Take a photo',
                         gradient: const LinearGradient(
                           colors: [
-                            Color(0xFFE53935), // Red
+                            AppTheme.dangerRed, // Red
                             Color(0xFFC62828), // Darker red
                           ],
                         ),
                         onTap: () => _pickImage(ImageSource.camera),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: AppDimensions.spacingLg),
                       _ModernPickButton(
                         icon: Icons.photo_library_rounded,
                         label: 'Gallery',
@@ -558,7 +555,7 @@ class _StoryComposerPageState extends State<StoryComposerPage>
                         ),
                         onTap: () => _pickImage(ImageSource.gallery),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: AppDimensions.spacingLg),
                       _ModernPickButton(
                         icon: Icons.videocam_rounded,
                         label: 'Record Video',
@@ -571,7 +568,7 @@ class _StoryComposerPageState extends State<StoryComposerPage>
                         ),
                         onTap: _recordVideo,
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: AppDimensions.spacingLg),
                       _ModernPickButton(
                         icon: Icons.video_library_rounded,
                         label: 'Video from Gallery',
@@ -592,12 +589,12 @@ class _StoryComposerPageState extends State<StoryComposerPage>
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
                   child: Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(AppDimensions.paddingLg),
                     decoration: BoxDecoration(
                       color: isDark
                           ? Colors.white.withValues(alpha: 0.08)
                           : Colors.black.withValues(alpha: 0.04),
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
                       border: Border.all(
                         color: isDark
                             ? Colors.white.withValues(alpha: 0.1)
@@ -612,7 +609,7 @@ class _StoryComposerPageState extends State<StoryComposerPage>
                           color: AppTheme.primaryColor,
                           size: 20,
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: AppDimensions.spacingMd),
                         Expanded(
                           child: Text(
                             'Stories disappear after 24 hours',
@@ -633,10 +630,10 @@ class _StoryComposerPageState extends State<StoryComposerPage>
                   Padding(
                     padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
                     child: Container(
-                      padding: const EdgeInsets.all(14),
+                      padding: const EdgeInsets.all(AppDimensions.paddingMdLg),
                       decoration: BoxDecoration(
                         color: AppTheme.errorColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                         border: Border.all(
                           color: AppTheme.errorColor.withValues(alpha: 0.3),
                           width: 1,
@@ -649,7 +646,7 @@ class _StoryComposerPageState extends State<StoryComposerPage>
                             color: AppTheme.errorColor,
                             size: 20,
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: AppDimensions.spacingMd),
                           Expanded(
                             child: Text(
                               _error!,
@@ -695,12 +692,12 @@ class _ModernPickButton extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
         child: Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(AppDimensions.paddingXl),
           decoration: BoxDecoration(
             gradient: gradient,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
             boxShadow: [
               BoxShadow(
                 color: gradient.colors.first.withValues(alpha: 0.3),
@@ -712,10 +709,10 @@ class _ModernPickButton extends StatelessWidget {
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(AppDimensions.paddingMd),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                 ),
                 child: Icon(
                   icon,
@@ -723,7 +720,7 @@ class _ModernPickButton extends StatelessWidget {
                   size: 28,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: AppDimensions.spacingLg),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -737,7 +734,7 @@ class _ModernPickButton extends StatelessWidget {
                         letterSpacing: -0.3,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppDimensions.spacingXs),
                     Text(
                       subtitle,
                       style: TextStyle(

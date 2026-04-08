@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:aurogram/pages/spaces/invite_landing_page.dart';
-import 'package:aurogram/pages/thread_view.dart';
+import 'package:aurogram/pages/content/thread_view.dart';
 import 'package:aurogram/pages/tabs/user_profile.dart';
 import 'package:aurogram/pages/send_me_something/send_composer_screen.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';

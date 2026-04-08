@@ -17,6 +17,7 @@ import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
 import 'package:aurogram/widgets/preview_boxes/user_preview_box.dart';
 import 'package:aurogram/utils/dependency_injection.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 class SpaceInviteTile extends StatefulWidget {
   final String? space;
@@ -117,15 +118,15 @@ class _SpaceInviteTileState extends State<SpaceInviteTile> {
   Widget build(BuildContext context) {
     if (isLoading) {
       return const Padding(
-        padding: EdgeInsets.all(8),
+        padding: EdgeInsets.all(AppDimensions.paddingSm),
         child: SkeletonListItem(height: 80),
       );
     }
 
     return Container(
-      padding: EdgeInsets.all(8),
+      padding: EdgeInsets.all(AppDimensions.paddingSm),
       child: Material(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm),
         elevation: 1,
         color: AppTheme.scaffoldLightColor,
         child: Row(
@@ -157,7 +158,7 @@ class _SpaceInviteTileState extends State<SpaceInviteTile> {
                     "$username invited you to join $name",
                     style: TextStyle(
                       fontWeight: FontWeight.w400,
-                      fontSize: 14,
+                      fontSize: AppTheme.holyCowTextSize,
                       color: AppTheme.textLightColor,
                     ),
                     textAlign: TextAlign.center,

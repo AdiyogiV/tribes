@@ -19,7 +19,7 @@ class PlatformVoiceRecorder {
     if (_isInitialized) return true;
 
     try {
-      _recorder = FlutterSoundRecorder(logLevel: Level.nothing);
+      _recorder = FlutterSoundRecorder(logLevel: Level.off);
       await _recorder!.openRecorder();
       _isInitialized = true;
       AppLogger.d('Mobile voice recorder initialized',
@@ -108,7 +108,9 @@ class PlatformVoiceRecorder {
         if (file.existsSync()) {
           file.deleteSync();
         }
-      } catch (_) {}
+      } catch (_) {
+        AppLogger.w('VoiceRecorderMobile: failed to delete recording file', category: LogCategory.general);
+      }
     }
     _recordingPath = null;
   }

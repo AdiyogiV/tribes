@@ -14,41 +14,8 @@ import 'package:permission_handler/permission_handler.dart'
 import 'package:aurogram/platform/agora_web_helper_stub.dart'
     if (dart.library.html) 'package:aurogram/platform/agora_web_helper.dart'
     as agora_web;
-
-/// Participant info for group calls
-class GroupCallParticipant {
-  final int agoraUid;
-  final String oderId;
-  final String displayName;
-  final String? avatarUrl;
-  bool isAudioMuted;
-  bool isVideoMuted;
-
-  GroupCallParticipant({
-    required this.agoraUid,
-    required this.oderId,
-    required this.displayName,
-    this.avatarUrl,
-    this.isAudioMuted = false,
-    this.isVideoMuted = false,
-  });
-
-  GroupCallParticipant copyWith({
-    String? displayName,
-    String? avatarUrl,
-    bool? isAudioMuted,
-    bool? isVideoMuted,
-  }) {
-    return GroupCallParticipant(
-      agoraUid: agoraUid,
-      oderId: oderId,
-      displayName: displayName ?? this.displayName,
-      avatarUrl: avatarUrl ?? this.avatarUrl,
-      isAudioMuted: isAudioMuted ?? this.isAudioMuted,
-      isVideoMuted: isVideoMuted ?? this.isVideoMuted,
-    );
-  }
-}
+import 'package:aurogram/models/group_call_participant.dart';
+export 'package:aurogram/models/group_call_participant.dart';
 
 /// GroupCallService - Agora-based group calling for grams
 class GroupCallService {
@@ -145,7 +112,10 @@ class GroupCallService {
                 AppLogger.w('🧹 Removing legacy stale participant: ${p['displayName']}', category: LogCategory.general);
                 return false;
               }
-            } catch (_) {}
+            } catch (_) {
+              AppLogger.w('GroupCallService: failed to parse joinedAt timestamp',
+                  category: LogCategory.general);
+            }
           }
           return true; // Keep if we can't determine staleness
         }
@@ -156,7 +126,10 @@ class GroupCallService {
             AppLogger.w('🧹 Removing stale participant: ${p['displayName']}', category: LogCategory.general);
             return false;
           }
-        } catch (_) {}
+        } catch (_) {
+          AppLogger.w('GroupCallService: failed to parse heartbeat timestamp during stale check',
+              category: LogCategory.general);
+        }
         return true;
       }).toList();
 
@@ -539,7 +512,10 @@ class GroupCallService {
         if (userData != null) {
           senderName = userData['name'] ?? userData['nickname'] ?? 'User';
         }
-      } catch (_) {}
+      } catch (_) {
+        AppLogger.w('GroupCallService: failed to fetch sender name for call summary',
+            category: LogCategory.general);
+      }
 
       // Format duration
       final durationStr = _formatDuration(duration);
@@ -744,7 +720,10 @@ class GroupCallService {
                     AppLogger.w('Removing stale participant: ${p['displayName']}', category: LogCategory.general);
                     return true;
                   }
-                } catch (_) {}
+                } catch (_) {
+                  AppLogger.w('GroupCallService: failed to parse heartbeat timestamp during join',
+                      category: LogCategory.general);
+                }
               }
               return false;
             });
@@ -783,7 +762,10 @@ class GroupCallService {
                   AppLogger.w('Removing stale participant during leave: ${p['displayName']}', category: LogCategory.general);
                   return true;
                 }
-              } catch (_) {}
+              } catch (_) {
+                AppLogger.w('GroupCallService: failed to parse heartbeat timestamp during leave',
+                    category: LogCategory.general);
+              }
             }
             return false;
           });
@@ -849,7 +831,10 @@ class GroupCallService {
                   AppLogger.w('Heartbeat cleanup: removing stale ${p['displayName']}', category: LogCategory.general);
                   return false;
                 }
-              } catch (_) {}
+              } catch (_) {
+                AppLogger.w('GroupCallService: failed to parse heartbeat timestamp during cleanup',
+                    category: LogCategory.general);
+              }
             }
             return true;
           }).toList();

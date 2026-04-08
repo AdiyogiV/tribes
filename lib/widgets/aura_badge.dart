@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// A simple widget that displays a user's aura score (like Snapscore)
 class AuraBadge extends StatelessWidget {
@@ -26,7 +27,7 @@ class AuraBadge extends StatelessWidget {
           color: color ?? AppTheme.primaryColor,
           size: fontSize * 1.2,
         ),
-        SizedBox(width: 4),
+        SizedBox(width: AppDimensions.spacingXs),
         Text(
           auraScore.toString(),
           style: TextStyle(
@@ -58,32 +59,32 @@ class AuraScoreCard extends StatelessWidget {
 
     return Material(
       color: Colors.transparent,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
       elevation: isDark ? 0 : 2,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
         child: Container(
           padding: EdgeInsets.symmetric(vertical: 24, horizontal: 20),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: isDark
                   ? [
-                      AppTheme.primaryColor.withOpacity(0.15),
-                      AppTheme.primaryColor.withOpacity(0.08),
+                      AppTheme.primaryColor.withValues(alpha: 0.15),
+                      AppTheme.primaryColor.withValues(alpha: 0.08),
                     ]
                   : [
-                      AppTheme.primaryColor.withOpacity(0.08),
-                      AppTheme.primaryColor.withOpacity(0.03),
+                      AppTheme.primaryColor.withValues(alpha: 0.08),
+                      AppTheme.primaryColor.withValues(alpha: 0.03),
                     ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
             border: Border.all(
               color: isDark
-                  ? AppTheme.primaryColor.withOpacity(0.3)
-                  : AppTheme.primaryColor.withOpacity(0.2),
+                  ? AppTheme.primaryColor.withValues(alpha: 0.3)
+                  : AppTheme.primaryColor.withValues(alpha: 0.2),
               width: 1.5,
             ),
           ),
@@ -91,9 +92,9 @@ class AuraScoreCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                padding: EdgeInsets.all(8),
+                padding: EdgeInsets.all(AppDimensions.paddingSm),
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryColor.withOpacity(0.2),
+                  color: AppTheme.primaryColor.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -102,7 +103,7 @@ class AuraScoreCard extends StatelessWidget {
                   size: 28,
                 ),
               ),
-              SizedBox(width: 16),
+              SizedBox(width: AppDimensions.spacingLg),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
@@ -118,7 +119,7 @@ class AuraScoreCard extends StatelessWidget {
                       letterSpacing: 0.5,
                     ),
                   ),
-                  SizedBox(height: 2),
+                  SizedBox(height: AppDimensions.spacingXxs),
                   Text(
                     auraScore.toString(),
                     style: TextStyle(
@@ -163,10 +164,10 @@ class AuraScoreCompact extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: AppTheme.primaryColor.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(12),
+        color: AppTheme.primaryColor.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
         border: Border.all(
-          color: AppTheme.primaryColor.withOpacity(0.3),
+          color: AppTheme.primaryColor.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -178,7 +179,7 @@ class AuraScoreCompact extends StatelessWidget {
             color: AppTheme.primaryColor,
             size: 16,
           ),
-          SizedBox(width: 4),
+          SizedBox(width: AppDimensions.spacingXs),
           Text(
             auraScore.toString(),
             style: TextStyle(

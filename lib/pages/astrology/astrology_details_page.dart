@@ -14,6 +14,7 @@ import 'package:aurogram/widgets/astrology/cards/astrology_cards.dart';
 import 'package:aurogram/widgets/astrology/dialogs/astrology_dialogs.dart';
 import 'package:aurogram/widgets/astrology/common/astrology_common.dart';
 import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Minimal astrology details - clean, fast, focused
 class AstrologyDetailsPage extends StatefulWidget {
@@ -59,7 +60,7 @@ class _AstrologyDetailsPageState extends State<AstrologyDetailsPage> {
                     bottom: false,
                     child: Container(
                       height: 60,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
                       child: Row(
                         children: [
                           // Back button
@@ -152,24 +153,21 @@ class _AstrologyDetailsPageState extends State<AstrologyDetailsPage> {
 
   Widget _buildAstroSkeleton() {
     final colors = SkeletonColors.fromContext(context);
-    final screenWidth = MediaQuery.of(context).size.width;
-    final planetCardWidth = (screenWidth - 32 - 24) / 3;
-
     return ShimmerBox(
       child: SingleChildScrollView(
         physics: const NeverScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 8),
+            const SizedBox(height: AppDimensions.spacingSm),
 
             // 1. Birth Details Card - matches BirthDetailsCard exactly
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppDimensions.paddingLg),
               decoration: BoxDecoration(
                 color: colors.base,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -189,10 +187,10 @@ class _AstrologyDetailsPageState extends State<AstrologyDetailsPage> {
                           height: 16,
                           decoration: BoxDecoration(
                               color: colors.shimmer,
-                              borderRadius: BorderRadius.circular(4))),
+                              borderRadius: BorderRadius.circular(AppDimensions.radiusXs))),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppDimensions.spacingMd),
                   // Date row
                   Row(
                     children: [
@@ -201,17 +199,17 @@ class _AstrologyDetailsPageState extends State<AstrologyDetailsPage> {
                           height: 12,
                           decoration: BoxDecoration(
                               color: colors.shimmer,
-                              borderRadius: BorderRadius.circular(6))),
+                              borderRadius: BorderRadius.circular(AppDimensions.radiusSmMd))),
                       const Spacer(),
                       Container(
                           width: 160,
                           height: 13,
                           decoration: BoxDecoration(
                               color: colors.highlight,
-                              borderRadius: BorderRadius.circular(6))),
+                              borderRadius: BorderRadius.circular(AppDimensions.radiusSmMd))),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppDimensions.spacingSm),
                   // Time row
                   Row(
                     children: [
@@ -220,17 +218,17 @@ class _AstrologyDetailsPageState extends State<AstrologyDetailsPage> {
                           height: 12,
                           decoration: BoxDecoration(
                               color: colors.shimmer,
-                              borderRadius: BorderRadius.circular(6))),
+                              borderRadius: BorderRadius.circular(AppDimensions.radiusSmMd))),
                       const Spacer(),
                       Container(
                           width: 120,
                           height: 13,
                           decoration: BoxDecoration(
                               color: colors.highlight,
-                              borderRadius: BorderRadius.circular(6))),
+                              borderRadius: BorderRadius.circular(AppDimensions.radiusSmMd))),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppDimensions.spacingSm),
                   // Place row
                   Row(
                     children: [
@@ -239,28 +237,28 @@ class _AstrologyDetailsPageState extends State<AstrologyDetailsPage> {
                           height: 12,
                           decoration: BoxDecoration(
                               color: colors.shimmer,
-                              borderRadius: BorderRadius.circular(6))),
+                              borderRadius: BorderRadius.circular(AppDimensions.radiusSmMd))),
                       const Spacer(),
                       Container(
                           width: 140,
                           height: 13,
                           decoration: BoxDecoration(
                               color: colors.highlight,
-                              borderRadius: BorderRadius.circular(6))),
+                              borderRadius: BorderRadius.circular(AppDimensions.radiusSmMd))),
                     ],
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppDimensions.spacingMd),
 
             // 2. Vedic Samvat Card - horizontal scrollable card
             Container(
-              width: screenWidth - 32,
-              padding: const EdgeInsets.all(16),
+              width: MediaQuery.of(context).size.width - 32,
+              padding: const EdgeInsets.all(AppDimensions.paddingLg),
               decoration: BoxDecoration(
                 color: colors.base,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -272,7 +270,7 @@ class _AstrologyDetailsPageState extends State<AstrologyDetailsPage> {
                       decoration: BoxDecoration(
                           color: colors.highlight,
                           borderRadius: BorderRadius.circular(7))),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppDimensions.spacingMd),
                   // Year info
                   Row(
                     children: [
@@ -281,31 +279,31 @@ class _AstrologyDetailsPageState extends State<AstrologyDetailsPage> {
                           height: 28,
                           decoration: BoxDecoration(
                               color: colors.shimmer,
-                              borderRadius: BorderRadius.circular(8))),
-                      const SizedBox(width: 12),
+                              borderRadius: BorderRadius.circular(AppDimensions.radiusSm))),
+                      const SizedBox(width: AppDimensions.spacingMd),
                       Container(
                           width: 100,
                           height: 16,
                           decoration: BoxDecoration(
                               color: colors.highlight,
-                              borderRadius: BorderRadius.circular(8))),
+                              borderRadius: BorderRadius.circular(AppDimensions.radiusSm))),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppDimensions.spacingMd),
                   // Moon phase strip placeholder
                   Container(
                     height: 60,
                     decoration: BoxDecoration(
                       color: colors.shimmer,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppDimensions.spacingMd),
                   // Details rows
                   ...List.generate(
                       3,
                       (_) => Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.only(bottom: AppDimensions.paddingSm),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -315,21 +313,21 @@ class _AstrologyDetailsPageState extends State<AstrologyDetailsPage> {
                                     decoration: BoxDecoration(
                                         color: colors.shimmer,
                                         borderRadius:
-                                            BorderRadius.circular(6))),
+                                            BorderRadius.circular(AppDimensions.radiusSmMd))),
                                 Container(
                                     width: 100,
                                     height: 12,
                                     decoration: BoxDecoration(
                                         color: colors.highlight,
                                         borderRadius:
-                                            BorderRadius.circular(6))),
+                                            BorderRadius.circular(AppDimensions.radiusSmMd))),
                               ],
                             ),
                           )),
                 ],
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppDimensions.spacingMd),
 
             // 3. Core Triad - horizontal planet cards (height: 100)
             SizedBox(
@@ -340,10 +338,10 @@ class _AstrologyDetailsPageState extends State<AstrologyDetailsPage> {
                     (index) => Expanded(
                           child: Container(
                             margin: EdgeInsets.only(right: index < 2 ? 12 : 0),
-                            padding: const EdgeInsets.all(12),
+                            padding: const EdgeInsets.all(AppDimensions.paddingMd),
                             decoration: BoxDecoration(
                               color: colors.base,
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -356,7 +354,7 @@ class _AstrologyDetailsPageState extends State<AstrologyDetailsPage> {
                                         color: colors.highlight,
                                         borderRadius:
                                             BorderRadius.circular(7))),
-                                const SizedBox(height: 8),
+                                const SizedBox(height: AppDimensions.spacingSm),
                                 // Sign
                                 Container(
                                     width: 40,
@@ -364,7 +362,7 @@ class _AstrologyDetailsPageState extends State<AstrologyDetailsPage> {
                                     decoration: BoxDecoration(
                                         color: colors.shimmer,
                                         borderRadius:
-                                            BorderRadius.circular(6))),
+                                            BorderRadius.circular(AppDimensions.radiusSmMd))),
                                 const Spacer(),
                                 // Nakshatra
                                 Container(
@@ -380,7 +378,7 @@ class _AstrologyDetailsPageState extends State<AstrologyDetailsPage> {
                         )),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppDimensions.spacingMd),
 
             // 4. Dasha Cards - horizontal scrollable
             SizedBox(
@@ -391,10 +389,10 @@ class _AstrologyDetailsPageState extends State<AstrologyDetailsPage> {
                     (index) => Expanded(
                           child: Container(
                             margin: EdgeInsets.only(right: index < 2 ? 12 : 0),
-                            padding: const EdgeInsets.all(12),
+                            padding: const EdgeInsets.all(AppDimensions.paddingMd),
                             decoration: BoxDecoration(
                               color: colors.base,
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -407,15 +405,15 @@ class _AstrologyDetailsPageState extends State<AstrologyDetailsPage> {
                                         color: colors.shimmer,
                                         borderRadius:
                                             BorderRadius.circular(5))),
-                                const SizedBox(height: 8),
+                                const SizedBox(height: AppDimensions.spacingSm),
                                 Container(
                                     width: 40,
                                     height: 16,
                                     decoration: BoxDecoration(
                                         color: colors.highlight,
                                         borderRadius:
-                                            BorderRadius.circular(8))),
-                                const SizedBox(height: 6),
+                                            BorderRadius.circular(AppDimensions.radiusSm))),
+                                const SizedBox(height: AppDimensions.spacingSmMd),
                                 Container(
                                     width: 50,
                                     height: 10,
@@ -429,7 +427,7 @@ class _AstrologyDetailsPageState extends State<AstrologyDetailsPage> {
                         )),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppDimensions.spacingMd),
 
             // 5. Kundali Chart - square diamond shape
             AspectRatio(
@@ -437,14 +435,14 @@ class _AstrologyDetailsPageState extends State<AstrologyDetailsPage> {
               child: Container(
                 decoration: BoxDecoration(
                   color: colors.base,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
                 ),
                 child: CustomPaint(
                   painter: _KundaliSkeletonPainter(colors),
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppDimensions.spacingMd),
 
             // 6. Yogas section - horizontal cards
             SizedBox(
@@ -455,10 +453,10 @@ class _AstrologyDetailsPageState extends State<AstrologyDetailsPage> {
                     (index) => Expanded(
                           child: Container(
                             margin: EdgeInsets.only(right: index < 1 ? 12 : 0),
-                            padding: const EdgeInsets.all(14),
+                            padding: const EdgeInsets.all(AppDimensions.paddingMdLg),
                             decoration: BoxDecoration(
                               color: colors.base,
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -471,8 +469,8 @@ class _AstrologyDetailsPageState extends State<AstrologyDetailsPage> {
                                         decoration: BoxDecoration(
                                             color: colors.shimmer,
                                             borderRadius:
-                                                BorderRadius.circular(6))),
-                                    const SizedBox(width: 8),
+                                                BorderRadius.circular(AppDimensions.radiusSmMd))),
+                                    const SizedBox(width: AppDimensions.spacingSm),
                                     Expanded(
                                         child: Container(
                                             height: 14,
@@ -482,7 +480,7 @@ class _AstrologyDetailsPageState extends State<AstrologyDetailsPage> {
                                                     BorderRadius.circular(7)))),
                                   ],
                                 ),
-                                const SizedBox(height: 10),
+                                const SizedBox(height: AppDimensions.spacingMdSm),
                                 Container(
                                     width: double.infinity,
                                     height: 10,
@@ -490,7 +488,7 @@ class _AstrologyDetailsPageState extends State<AstrologyDetailsPage> {
                                         color: colors.shimmer,
                                         borderRadius:
                                             BorderRadius.circular(5))),
-                                const SizedBox(height: 6),
+                                const SizedBox(height: AppDimensions.spacingSmMd),
                                 Container(
                                     width: 80,
                                     height: 10,
@@ -585,7 +583,7 @@ extension _AstrologyDetailsPageContent on _AstrologyDetailsPageState {
           padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
           child: Column(
             children: [
-              const SizedBox(height: 8),
+              const SizedBox(height: AppDimensions.spacingSm),
 
               // Birth details
               BirthDetailsCard(profile: p, onEditPressed: _edit),

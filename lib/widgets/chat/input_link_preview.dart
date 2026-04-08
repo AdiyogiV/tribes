@@ -1,8 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:aurogram/widgets/ui/common_widgets.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/utils/chat/external_link_utils.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Link preview card shown above input when URL is detected
 class InputLinkPreview extends StatelessWidget {
@@ -30,7 +32,7 @@ class InputLinkPreview extends StatelessWidget {
           color: isDark
               ? AppTheme.cardDarkColor.withValues(alpha: 0.95)
               : Colors.white.withValues(alpha: 0.95),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
           border: Border.all(
             color: AppTheme.primaryColor.withValues(alpha: 0.15),
             width: 1,
@@ -53,17 +55,12 @@ class InputLinkPreview extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: Row(
         children: [
-          SizedBox(
-            width: 16,
-            height: 16,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation(
-                AppTheme.primaryColor.withValues(alpha: 0.5),
-              ),
-            ),
+          AppLoadingIndicator(
+            size: 16,
+            strokeWidth: 2,
+            color: AppTheme.primaryColor.withValues(alpha: 0.5),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: AppDimensions.spacingMdSm),
           Text(
             'Loading preview...',
             style: TextStyle(
@@ -137,7 +134,7 @@ class InputLinkPreview extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: AppDimensions.spacingXxs),
                   // Title
                   Text(
                     p.title,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 void showCustomSnackBar(
   BuildContext context, {
@@ -30,7 +31,7 @@ void showCustomSnackBar(
       behavior: effectiveBehavior,
       margin: effectiveMargin,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
       ),
       action: action,
     ),

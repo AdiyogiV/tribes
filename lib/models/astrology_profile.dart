@@ -35,7 +35,10 @@ class AstrologyProfile {
   final Map<String, dynamic>? birthChartData;
   final String? chartSvgUrl; // Chart SVG from API
   final List<String>? yogas;
-  final Map<String, dynamic>? samvatInfo;
+  /// Samvat info for the user's BIRTH DATE (Vikram year, lunar month, etc.)
+  /// NOT today's date! For today's Vedic date, use DailyInsight.astrologicalData['todaySamvat']
+  /// Firestore key: 'samvatInfo' (kept for backward compatibility)
+  final Map<String, dynamic>? birthSamvatInfo;
   
   // Pre-processed display data (calculated on backend)
   final List<Map<String, dynamic>>? processedPlanets; // Pre-processed planet data for UI
@@ -86,7 +89,7 @@ class AstrologyProfile {
     this.birthChartData,
     this.chartSvgUrl,
     this.yogas,
-    this.samvatInfo,
+    this.birthSamvatInfo,
     this.processedPlanets,
     this.doshas,
     this.yogasDetailed,
@@ -163,7 +166,8 @@ class AstrologyProfile {
           : null,
       chartSvgUrl: map['chartSvgUrl'],
       yogas: map['yogas'] != null ? List<String>.from(map['yogas']) : null,
-      samvatInfo: map['samvatInfo'] != null
+      // Firestore key stays 'samvatInfo' for backward compat — this is BIRTH date samvat
+      birthSamvatInfo: map['samvatInfo'] != null
           ? Map<String, dynamic>.from(
               map['samvatInfo'] as Map<String, dynamic>,
             )
@@ -254,7 +258,7 @@ class AstrologyProfile {
       'birthChartData': birthChartData,
       'chartSvgUrl': chartSvgUrl,
       'yogas': yogas,
-      'samvatInfo': samvatInfo,
+      'samvatInfo': birthSamvatInfo, // Firestore key stays 'samvatInfo'
       'processedPlanets': processedPlanets,
       'doshas': doshas,
       'yogasDetailed': yogasDetailed,
@@ -300,7 +304,7 @@ class AstrologyProfile {
     Map<String, dynamic>? birthChartData,
     String? chartSvgUrl,
     List<String>? yogas,
-    Map<String, dynamic>? samvatInfo,
+    Map<String, dynamic>? birthSamvatInfo,
     List<Map<String, dynamic>>? processedPlanets,
     Map<String, dynamic>? doshas,
     Map<String, dynamic>? yogasDetailed,
@@ -340,7 +344,7 @@ class AstrologyProfile {
       birthChartData: birthChartData ?? this.birthChartData,
       chartSvgUrl: chartSvgUrl ?? this.chartSvgUrl,
       yogas: yogas ?? this.yogas,
-      samvatInfo: samvatInfo ?? this.samvatInfo,
+      birthSamvatInfo: birthSamvatInfo ?? this.birthSamvatInfo,
       processedPlanets: processedPlanets ?? this.processedPlanets,
       doshas: doshas ?? this.doshas,
       yogasDetailed: yogasDetailed ?? this.yogasDetailed,

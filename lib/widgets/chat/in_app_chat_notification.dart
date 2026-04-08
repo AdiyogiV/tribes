@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:async';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Beautiful in-app chat notification banner (like WhatsApp/iMessage)
 class InAppChatNotification extends StatefulWidget {
@@ -89,13 +90,13 @@ class _InAppChatNotificationState extends State<InAppChatNotification>
         child: Material(
           color: Colors.transparent,
           child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            margin: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd, vertical: AppDimensions.paddingSm),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 20,
                   offset: const Offset(0, 4),
                 ),
@@ -108,7 +109,7 @@ class _InAppChatNotificationState extends State<InAppChatNotification>
                 widget.onTap?.call();
               },
               child: Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(AppDimensions.paddingMd),
                 child: Row(
                   children: [
                     // Avatar
@@ -155,7 +156,7 @@ class _InAppChatNotificationState extends State<InAppChatNotification>
                               ),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: AppDimensions.spacingMd),
                     // Content
                     Expanded(
                       child: Column(
@@ -173,7 +174,7 @@ class _InAppChatNotificationState extends State<InAppChatNotification>
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: AppDimensions.spacingXs),
                           // Body
                           Text(
                             widget.body,

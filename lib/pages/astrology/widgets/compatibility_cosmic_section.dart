@@ -4,6 +4,7 @@ import 'package:aurogram/services/share_service.dart';
 import 'package:aurogram/widgets/astrology/compatibility_share_cards.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 class CompatibilityCosmicSection extends StatelessWidget {
   final CosmicMatch cosmic;
@@ -55,7 +56,7 @@ class CompatibilityCosmicSection extends StatelessWidget {
                   letterSpacing: 0.5,
                 ),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: AppDimensions.spacingSmMd),
               Icon(
                 Icons.help_outline_rounded,
                 size: 16,
@@ -64,7 +65,7 @@ class CompatibilityCosmicSection extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppDimensions.spacingLg),
         Text(
           '${cosmic.score}%',
           style: TextStyle(
@@ -75,14 +76,14 @@ class CompatibilityCosmicSection extends StatelessWidget {
             letterSpacing: -1,
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: AppDimensions.spacingXl),
         Material(
           elevation: 2,
           shadowColor: Colors.black.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
           color: Colors.white,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingSm),
             child: Text(
               CompatibilityLabelUtils.getCreativeCosmicLabel(cosmic.label),
               style: TextStyle(
@@ -102,7 +103,7 @@ class CompatibilityCosmicSection extends StatelessWidget {
             color: accentColor.withValues(alpha: 0.4),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppDimensions.spacingLg),
         _buildShareButton(
           context: context,
           onTap: () => _shareCosmicVibe(context),
@@ -125,7 +126,7 @@ class CompatibilityCosmicSection extends StatelessWidget {
           elevation: 0,
           padding: const EdgeInsets.symmetric(vertical: 12),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
           ),
         ),
         child: const Text(
@@ -167,10 +168,10 @@ class CompatibilityCosmicSection extends StatelessWidget {
       color: cardColor,
       elevation: 2,
       shadowColor: Colors.black.withValues(alpha: 0.15),
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(AppDimensions.radiusMdLg),
       child: InkWell(
         onTap: () => _showPillarDetails(context, pillar),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMdLg),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
           child: Column(
@@ -184,7 +185,7 @@ class CompatibilityCosmicSection extends StatelessWidget {
                   color: accentColor,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppDimensions.spacingXs),
               Text(
                 displayName,
                 style: TextStyle(
@@ -412,7 +413,7 @@ class CompatibilityCosmicSection extends StatelessWidget {
                 ),
                 textAlign: TextAlign.center,
               ),
-            if (subtitle.isNotEmpty) const SizedBox(height: 12),
+            if (subtitle.isNotEmpty) const SizedBox(height: AppDimensions.spacingMd),
             if (description.isNotEmpty)
               Text(
                 description,
@@ -423,7 +424,7 @@ class CompatibilityCosmicSection extends StatelessWidget {
                 ),
                 textAlign: TextAlign.center,
               ),
-            if (description.isNotEmpty) const SizedBox(height: 12),
+            if (description.isNotEmpty) const SizedBox(height: AppDimensions.spacingMd),
             Text(
               explanation,
               style: TextStyle(

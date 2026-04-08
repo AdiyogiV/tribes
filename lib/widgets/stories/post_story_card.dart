@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/widgets/ui/common_widgets.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:aurogram/models/post.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Instagram-style post card for stories.
 /// Shows author header (avatar + username) + post content.
@@ -16,7 +19,7 @@ class PostStoryCard extends StatelessWidget {
     required this.post,
     required this.authorName,
     this.authorAvatar,
-    this.backgroundColor = const Color(0xFF000000),
+    this.backgroundColor = AppTheme.pitchBlack,
   });
 
   @override
@@ -24,20 +27,20 @@ class PostStoryCard extends StatelessWidget {
     return Container(
       width: 414,
       height: 736,
-      color: const Color(0xFF000000), // Explicit pitch black
+      color: AppTheme.pitchBlack, // Explicit pitch black
       child: Column(
         children: [
           // Top spacing - reduced for better fit
-          const SizedBox(height: 60),
+          const SizedBox(height: AppDimensions.spacingHero),
           
           // Post card - Instagram-style white card
           Expanded(
             child: Center(
               child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16), // Match header padding
+                margin: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg), // Match header padding
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.3),
@@ -66,7 +69,7 @@ class PostStoryCard extends StatelessWidget {
           ),
           
           // Bottom spacing - reduced for better fit
-          const SizedBox(height: 60),
+          const SizedBox(height: AppDimensions.spacingHero),
         ],
       ),
     );
@@ -97,13 +100,10 @@ class PostStoryCard extends StatelessWidget {
                 placeholder: (_, __) => CircleAvatar(
                   radius: 16,
                   backgroundColor: Colors.grey[300],
-                  child: const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.grey,
-                    ),
+                  child: const AppLoadingIndicator(
+                    size: 16,
+                    strokeWidth: 2,
+                    color: Colors.grey,
                   ),
                 ),
                 errorWidget: (_, __, ___) => CircleAvatar(
@@ -133,7 +133,7 @@ class PostStoryCard extends StatelessWidget {
                 ),
               ),
             ),
-          const SizedBox(width: 10),
+          const SizedBox(width: AppDimensions.spacingMdSm),
           
           // Author name
           Expanded(
@@ -168,10 +168,8 @@ class PostStoryCard extends StatelessWidget {
               fit: BoxFit.cover,
               placeholder: (_, __) => Container(
                 color: Colors.black,
-                child: const Center(
-                  child: CircularProgressIndicator(
-                    color: Colors.white54,
-                  ),
+                child: const AppLoadingIndicator(
+                  color: Colors.white54,
                 ),
               ),
               errorWidget: (_, __, ___) => Container(
@@ -205,7 +203,7 @@ class PostStoryCard extends StatelessWidget {
     }
     
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppDimensions.paddingLg),
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border(
@@ -230,7 +228,7 @@ class PostStoryCard extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
-          if (hasTitle && hasContent) const SizedBox(height: 6),
+          if (hasTitle && hasContent) const SizedBox(height: AppDimensions.spacingSmMd),
           if (hasContent)
             Text(
               post.content!,

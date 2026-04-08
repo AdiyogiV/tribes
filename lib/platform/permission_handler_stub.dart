@@ -6,6 +6,7 @@
 /// This stub exists for API compatibility but should not be relied upon
 /// for actual permission checking on web. Use navigator.mediaDevices.getUserMedia()
 /// directly for media permissions on web.
+library;
 
 enum PermissionStatus {
   denied,

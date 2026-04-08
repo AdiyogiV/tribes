@@ -190,7 +190,7 @@ class BatchDataLoader {
 
       if (!doc.exists) return null;
 
-      final data = doc.data() as Map<String, dynamic>?;
+      final data = doc.data();
       if (data == null) return null;
 
       final userData = UserData(
@@ -241,7 +241,7 @@ class BatchDataLoader {
 
       if (!doc.exists) return null;
 
-      final data = doc.data() as Map<String, dynamic>?;
+      final data = doc.data();
       if (data == null) return null;
 
       final spaceData = SpaceData(

@@ -1,4 +1,4 @@
-import 'package:aurogram/controllers/feed_controller.dart';
+import 'package:aurogram/pages/tabs/feed/feed_controller.dart';
 import 'package:aurogram/services/video_controller_pool.dart';
 import 'package:aurogram/services/audio_player_pool.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';

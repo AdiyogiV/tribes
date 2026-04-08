@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'package:aurogram/pages/login/login.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/widgets/universal/transparent_toolbox.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Minimal login bottom sheet
 class LoginBottomSheet extends StatefulWidget {
@@ -89,7 +90,7 @@ class _LoginBottomSheetState extends State<LoginBottomSheet>
               child: FadeTransition(
                 opacity: _fadeAnimation,
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusXxl),
                   child: Image.asset(
                     'assets/images/icon_transparent.png',
                     width: 120,
@@ -129,7 +130,7 @@ class _LoginBottomSheetState extends State<LoginBottomSheet>
                                       color: AppTheme.primaryColor,
                                       size: AppTheme.iconSizeS,
                                     ),
-                                    const SizedBox(width: 10),
+                                    const SizedBox(width: AppDimensions.spacingMdSm),
                                     Text(
                                       'Login to Continue',
                                       style: TextStyle(

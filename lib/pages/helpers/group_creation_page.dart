@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +13,8 @@ import 'package:aurogram/utils/logging/app_logger.dart';
 
 // Conditional import for dart:io
 import 'dart:io' if (dart.library.html) 'package:aurogram/platform/io_stub.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/widgets/common/snack_bar_service.dart';
 
 class SpaceCreationPage extends StatefulWidget {
   const SpaceCreationPage({super.key});
@@ -149,8 +150,7 @@ class SpaceCreationPageState extends State<SpaceCreationPage>
       _isLoading = false;
       _progressMessage = "Error: ${error.toString()}";
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to create group. Please try again.")));
+    showCustomSnackBar(context, message: "Failed to create group. Please try again.");
   }
 
   @override
@@ -179,7 +179,7 @@ class SpaceCreationPageState extends State<SpaceCreationPage>
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           PulsingDots(size: 10),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.spacingLg),
           Text(_progressMessage, textAlign: TextAlign.center),
         ],
       ),
@@ -198,21 +198,21 @@ class SpaceCreationPageState extends State<SpaceCreationPage>
               child: ListView(
                 padding: EdgeInsets.symmetric(horizontal: 20, vertical: 24),
                 children: [
-                  SizedBox(height: 24),
+                  SizedBox(height: AppDimensions.spacingXxl),
                   _buildImagePicker(),
-                  SizedBox(height: 40),
+                  SizedBox(height: AppDimensions.spacingLargeSection),
                   _buildNameField(),
-                  SizedBox(height: 20),
+                  SizedBox(height: AppDimensions.spacingXl),
                   _buildDescriptionField(),
-                  SizedBox(height: 24),
+                  SizedBox(height: AppDimensions.spacingXxl),
                   Divider(),
-                  SizedBox(height: 24),
+                  SizedBox(height: AppDimensions.spacingXxl),
                   _buildGroupTypeSelector(),
-                  SizedBox(height: 8),
+                  SizedBox(height: AppDimensions.spacingSm),
                   _buildGroupTypeWarning(),
-                  SizedBox(height: 24),
+                  SizedBox(height: AppDimensions.spacingXxl),
                   _buildPostingPermissionSelector(),
-                  SizedBox(height: 24),
+                  SizedBox(height: AppDimensions.spacingXxl),
                   Divider(),
                   SizedBox(height: 500), // Space for FAB
                 ],
@@ -311,15 +311,15 @@ class SpaceCreationPageState extends State<SpaceCreationPage>
 
   Widget _buildGroupTypeWarning() {
     return Container(
-      padding: EdgeInsets.all(8),
+      padding: EdgeInsets.all(AppDimensions.paddingSm),
       decoration: BoxDecoration(
         color: AppTheme.warningColor.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
       ),
       child: Row(
         children: [
           Icon(CupertinoIcons.info_circle, color: AppTheme.warningColor),
-          SizedBox(width: 8),
+          SizedBox(width: AppDimensions.spacingSm),
           Expanded(
             child: Text(
               'Gram type is permanent, it cannot be changed later.',
@@ -370,10 +370,10 @@ class SpaceCreationPageState extends State<SpaceCreationPage>
           title,
           style: ThemeHelper.subheadingStyle,
         ),
-        SizedBox(height: 8),
+        SizedBox(height: AppDimensions.spacingSm),
         Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
             border: Border.all(color: AppTheme.primaryLightColor),
           ),
           child: Row(
@@ -391,7 +391,7 @@ class SpaceCreationPageState extends State<SpaceCreationPage>
                         color: isSelected
                             ? option.color.withValues(alpha: 0.2)
                             : AppTheme.scaffoldLightColor,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -400,7 +400,7 @@ class SpaceCreationPageState extends State<SpaceCreationPage>
                               color: isSelected
                                   ? option.color
                                   : AppTheme.textLightColor),
-                          SizedBox(width: 8),
+                          SizedBox(width: AppDimensions.spacingSm),
                           Text(
                             option.label,
                             style: TextStyle(
@@ -419,7 +419,7 @@ class SpaceCreationPageState extends State<SpaceCreationPage>
             }).toList(),
           ),
         ),
-        SizedBox(height: 8),
+        SizedBox(height: AppDimensions.spacingSm),
         Text(
           description,
           style: TextStyle(color: AppTheme.textLightColor, fontSize: 14),

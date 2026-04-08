@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Utility class for insight card type styling
 /// Used by both InsightShareCard and DailyInsightPage share options
@@ -22,8 +24,8 @@ class InsightCardTypeStyle {
     return const InsightCardTypeStyle(
       icon: Icons.nights_stay_outlined,
       label: "DAILY INSIGHT",
-      accentColor: Color(0xFF7FFFD4), // Aqua
-      gradientColors: [Color(0xFF1a1a2e), Color(0xFF0f1624), Color(0xFF0a0e17)],
+      accentColor: AppTheme.aquamarine, // Aqua
+      gradientColors: [AppTheme.darkGradientBase, AppTheme.darkGradientMid, AppTheme.darkGradientDeep],
     );
   }
 }
@@ -70,7 +72,7 @@ class InsightShareCard extends StatelessWidget {
         children: [
           // Card type badge
           _buildCardTypeBadge(),
-          const SizedBox(height: 20),
+          const SizedBox(height: AppDimensions.spacingXl),
 
           // Title
           Text(
@@ -84,7 +86,7 @@ class InsightShareCard extends StatelessWidget {
               height: 1.2,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.spacingLg),
 
           // Divider
           Container(
@@ -95,7 +97,7 @@ class InsightShareCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(1),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.spacingLg),
 
           // Content excerpt (cleaned of markdown)
           Text(
@@ -110,12 +112,12 @@ class InsightShareCard extends StatelessWidget {
             maxLines: 5,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppDimensions.spacingXxl),
 
           // User's signs (if available)
           if (moonSign != null || risingSign != null || sunSign != null) ...[
             _buildSignsRow(),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppDimensions.spacingXxl),
           ],
 
           // Branding
@@ -127,10 +129,10 @@ class InsightShareCard extends StatelessWidget {
 
   Widget _buildCardTypeBadge() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingSm),
       decoration: BoxDecoration(
         color: _style.accentColor.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
         border: Border.all(
           color: _style.accentColor.withValues(alpha: 0.3),
           width: 1,
@@ -144,7 +146,7 @@ class InsightShareCard extends StatelessWidget {
             size: 16,
             color: _style.accentColor,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppDimensions.spacingSm),
           Text(
             _style.label,
             style: TextStyle(
@@ -175,10 +177,10 @@ class InsightShareCard extends StatelessWidget {
     if (signs.isEmpty) return const SizedBox.shrink();
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingMd),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
         border: Border.all(
           color: Colors.white.withValues(alpha: 0.1),
           width: 1,
@@ -187,7 +189,7 @@ class InsightShareCard extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: signs
-            .expand((w) => [w, const SizedBox(width: 16)])
+            .expand((w) => [w, const SizedBox(width: AppDimensions.spacingLg)])
             .toList()
           ..removeLast(),
       ),
@@ -205,7 +207,7 @@ class InsightShareCard extends StatelessWidget {
             color: _style.accentColor,
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppDimensions.spacingXs),
         Text(
           sign,
           style: const TextStyle(
@@ -234,13 +236,13 @@ class InsightShareCard extends StatelessWidget {
           height: 1,
           color: Colors.white.withValues(alpha: 0.1),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppDimensions.spacingLg),
         // App logo + name
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusSmMd),
               child: Image.asset(
                 'assets/images/icon_transparent.png',
                 width: 24,
@@ -248,7 +250,7 @@ class InsightShareCard extends StatelessWidget {
                 fit: BoxFit.contain,
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: AppDimensions.spacingMdSm),
             const Text(
               'Aurogram',
               style: TextStyle(
@@ -260,7 +262,7 @@ class InsightShareCard extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: AppDimensions.spacingSmMd),
         Text(
           'Get your personalized reading',
           style: TextStyle(

@@ -5,7 +5,8 @@ import { db, FieldValue, logger } from "../lib/firebase.js";
 import { withIdempotency } from "../lib/idempotency.js";
 import { validateRequest } from "../lib/schemas.js";
 import { z } from "zod";
-import { isPublicSpaceType, SPACE_TYPES } from "../lib/constants.js";
+import { SPACE_TYPES } from "../lib/constants.js";
+import { isPublicSpace } from "../lib/utils.js";
 
 // =============================================================================
 // SCHEMAS
@@ -69,15 +70,7 @@ async function getOriginalPost(postId, contextType, spaceId = null) {
     }
 }
 
-/**
- * Check if space is public (eligible for global feed)
- */
-function isPublicSpace(spaceData) {
-    if (!spaceData) return false;
-    if (spaceData.limitedVisibility === true) return false;
-    if (spaceData.isProfileGram === true) return true;
-    return isPublicSpaceType(spaceData.spaceType);
-}
+// isPublicSpace imported from ../lib/utils.js
 
 /**
  * Validate repost permissions

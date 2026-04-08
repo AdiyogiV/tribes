@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/utils/astrology/planet_utils.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Minimal theme for insight cards - matches astrology details page style
 /// Now integrated with main AppTheme for consistency
@@ -43,7 +44,7 @@ class AstroCardTheme {
   // Standard card decoration - matches Material elevation 2, borderRadius 20
   BoxDecoration get cardDecoration => BoxDecoration(
     color: cardBackground,
-    borderRadius: BorderRadius.circular(20),
+    borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
     boxShadow: [
       BoxShadow(
         color: Colors.black.withValues(alpha: 0.2),
@@ -56,7 +57,7 @@ class AstroCardTheme {
   // Highlighted card decoration (for important insights)
   BoxDecoration get highlightedCardDecoration => BoxDecoration(
     color: cardBackground,
-    borderRadius: BorderRadius.circular(20),
+    borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
     border: Border.all(
       color: isDark 
           ? AppTheme.sunGold.withValues(alpha: 0.3) 
@@ -115,7 +116,7 @@ class AstroCardTheme {
   );
   
   // Spacing - matches birth details card
-  EdgeInsets get cardPadding => const EdgeInsets.all(16);
+  EdgeInsets get cardPadding => const EdgeInsets.all(AppDimensions.paddingLg);
   double get titleContentSpacing => 12;
   
   // Planet symbols - delegated to PlanetUtils for single source of truth

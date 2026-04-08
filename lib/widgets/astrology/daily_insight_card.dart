@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:aurogram/models/daily_insight.dart';
 import 'package:aurogram/services/astrology_service.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 class DailyInsightCard extends StatefulWidget {
   final DailyInsight? insight;
@@ -95,11 +96,11 @@ class _DailyInsightCardState extends State<DailyInsightCard> {
     }
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
+      padding: const EdgeInsets.all(AppDimensions.paddingMd),
       decoration: BoxDecoration(
         color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
         border: Border.all(
           color: isDark
               ? Colors.white.withValues(alpha: 0.1)
@@ -130,7 +131,7 @@ class _DailyInsightCardState extends State<DailyInsightCard> {
               letterSpacing: 0.8,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppDimensions.spacingMd),
           // Insight text - full text, no cutting (uses displayMessage for v3+ compatibility)
           Text(
             widget.insight!.displayMessage,
@@ -143,12 +144,12 @@ class _DailyInsightCardState extends State<DailyInsightCard> {
           ),
           // Action buttons
           if (widget.showActions) ...[
-            const SizedBox(height: 14),
+            const SizedBox(height: AppDimensions.spacingMdLg),
             Container(
               height: 1,
               color: brownColor.withValues(alpha: 0.15),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: AppDimensions.spacingMdSm),
             Row(
               children: [
                 // Reaction buttons
@@ -161,7 +162,7 @@ class _DailyInsightCardState extends State<DailyInsightCard> {
                   brownColor: brownColor,
                   isDark: isDark,
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: AppDimensions.spacingLg),
                 _buildActionButton(
                   icon: _reaction == 'thumbs_down'
                       ? Icons.thumb_down
@@ -215,11 +216,11 @@ class _DailyInsightCardState extends State<DailyInsightCard> {
 
   Widget _buildEmptyCard(bool isDark, Color brownColor) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
+      padding: const EdgeInsets.all(AppDimensions.paddingMd),
       decoration: BoxDecoration(
         color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
         border: Border.all(
           color: isDark
               ? Colors.white.withValues(alpha: 0.1)
@@ -249,7 +250,7 @@ class _DailyInsightCardState extends State<DailyInsightCard> {
               letterSpacing: 0.8,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppDimensions.spacingMd),
           Text(
             'Your personalized guidance will appear here.',
             style: TextStyle(

@@ -1,5 +1,6 @@
 /// Stub for flutter_local_notifications on web
 /// Web uses the Web Notifications API instead
+library;
 
 // Re-export common types that might be used
 class FlutterLocalNotificationsPlugin {

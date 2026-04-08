@@ -19,6 +19,7 @@ import { logger } from "firebase-functions";
 import { DateTime } from "luxon";
 import { db, FieldValue } from "../lib/firebase.js";
 import { freeAstrologyApiKey } from "../lib/secrets.js";
+import { extractApiOutput } from "../lib/astro_helpers.js";
 
 const API_BASE = "https://json.freeastrologyapi.com";
 const PLANETS_ENDPOINT = "/planets";
@@ -40,54 +41,6 @@ const MUHURAT_CACHE_HOURS = 6;
 
 // Important planets for tracking (9 Vedic grahas + 3 outer planets)
 const TRACKED_PLANETS = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu", "Uranus", "Neptune", "Pluto"];
-
-// ============================================================================
-// API HELPERS
-// ============================================================================
-
-const tryParseJson = (input) => {
-    if (typeof input !== "string") return null;
-    try {
-        return JSON.parse(input);
-    } catch {
-        return null;
-    }
-};
-
-const unwrapOutputPayload = (input, { maxDepth = 3 } = {}) => {
-    let current = input;
-    for (let depth = 0; depth < maxDepth; depth += 1) {
-        if (current == null) break;
-        if (typeof current === "string") {
-            const parsed = tryParseJson(current);
-            if (parsed == null) break;
-            current = parsed;
-            continue;
-        }
-        if (typeof current === "object") {
-            return current;
-        }
-        break;
-    }
-    return (typeof current === "object" && current !== null) ? current : null;
-};
-
-const extractApiOutput = (response) => {
-    if (!response) return null;
-    if (typeof response === "object" && !Array.isArray(response)) {
-        if (Object.prototype.hasOwnProperty.call(response, "output")) {
-            const parsed = unwrapOutputPayload(response.output);
-            if (parsed && typeof parsed === "object") {
-                return parsed;
-            }
-        }
-        return response;
-    }
-    if (typeof response === "string") {
-        return unwrapOutputPayload(response);
-    }
-    return null;
-};
 
 const isEmptyPanchang = (value) => {
     if (!value || typeof value !== "object") return true;
@@ -224,13 +177,31 @@ async function fetchPanchangForDate(date) {
     };
 
     try {
+        // Fetch panchang from 3 separate API endpoints
+        // IMPORTANT: Log failures explicitly — silent nulls caused weeks of missing data
+        const fetchWithLogging = async (endpoint, name) => {
+            try {
+                const r = await fetch(`${API_BASE}${endpoint}`, {
+                    method: "POST", headers, body: JSON.stringify(payload),
+                });
+                if (!r.ok) {
+                    logger.warn(`⚠️ Panchang API ${name} returned ${r.status}`, {
+                        endpoint, status: r.status, date: `${date.year}-${date.month}-${date.day}`,
+                    });
+                    return null;
+                }
+                return await r.json();
+            } catch (err) {
+                logger.warn(`⚠️ Panchang API ${name} failed`, {
+                    endpoint, error: String(err), date: `${date.year}-${date.month}-${date.day}`,
+                });
+                return null;
+            }
+        };
         const [samvatRes, lunarRes, tithiRes] = await Promise.all([
-            fetch(`${API_BASE}${SAMVAT_ENDPOINT}`, { method: "POST", headers, body: JSON.stringify(payload) })
-                .then(r => r.ok ? r.json() : null).catch(() => null),
-            fetch(`${API_BASE}${LUNAR_MONTH_ENDPOINT}`, { method: "POST", headers, body: JSON.stringify(payload) })
-                .then(r => r.ok ? r.json() : null).catch(() => null),
-            fetch(`${API_BASE}${TITHI_ENDPOINT}`, { method: "POST", headers, body: JSON.stringify(payload) })
-                .then(r => r.ok ? r.json() : null).catch(() => null),
+            fetchWithLogging(SAMVAT_ENDPOINT, "samvat"),
+            fetchWithLogging(LUNAR_MONTH_ENDPOINT, "lunar_month"),
+            fetchWithLogging(TITHI_ENDPOINT, "tithi"),
         ]);
 
         // Debug: Log raw API responses

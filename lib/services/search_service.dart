@@ -193,7 +193,7 @@ class SearchService {
         return [];
       }
 
-      Future<List<QuerySnapshot>> _executeQueries(
+      Future<List<QuerySnapshot>> executeQueries(
           List<Future<QuerySnapshot>> futures) async {
         if (futures.isEmpty) return [];
         return Future.wait(
@@ -209,9 +209,9 @@ class SearchService {
       }
 
       // Execute primary prefix queries
-      final results = await _executeQueries(queryFutures);
+      final results = await executeQueries(queryFutures);
       final totalDocsPrimary =
-          results.fold<int>(0, (sum, snap) => sum + snap.docs.length);
+          results.fold<int>(0, (acc, snap) => acc + snap.docs.length);
 
       bool usedFallback = false;
       if (totalDocsPrimary < limit && searchLower.isNotEmpty) {
@@ -239,7 +239,7 @@ class SearchService {
                 data: {'query': query, 'error': e.toString()});
           }
         }
-        final fallbackResults = await _executeQueries(fallbackFutures);
+        final fallbackResults = await executeQueries(fallbackFutures);
         results.addAll(fallbackResults);
         usedFallback = fallbackResults.isNotEmpty;
       }
@@ -250,7 +250,7 @@ class SearchService {
             'query': searchLower,
             'queries': results.length,
             'total_docs':
-                results.fold<int>(0, (sum, snap) => sum + snap.docs.length),
+                results.fold<int>(0, (acc, snap) => acc + snap.docs.length),
             'total_docs_primary': totalDocsPrimary,
             'fallback_used': usedFallback,
           });
@@ -427,8 +427,9 @@ class SearchService {
         final spaceType = spaceData['spaceType'] as int? ?? 2;
         final limitedVisibility =
             spaceData['limitedVisibility'] as bool? ?? false;
-        if (spaceType >= 2 || limitedVisibility)
+        if (spaceType >= 2 || limitedVisibility) {
           continue; // Skip private spaces
+        }
 
         final name = spaceData['name'] as String? ?? '';
 

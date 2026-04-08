@@ -1,5 +1,6 @@
 /// Stub implementation of geolocator for web
 /// Web uses browser Geolocation API differently
+library;
 
 enum LocationPermission {
   denied,

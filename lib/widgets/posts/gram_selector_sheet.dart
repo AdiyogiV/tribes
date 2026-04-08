@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:aurogram/widgets/ui/common_widgets.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Bottom sheet for selecting a gram to repost to
 class GramSelectorSheet extends StatefulWidget {
@@ -100,14 +102,14 @@ class _GramSelectorSheetState extends State<GramSelectorSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppTheme.textSecondaryColor.withOpacity(0.3),
+                color: AppTheme.textSecondaryColor.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
 
             // Header
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(AppDimensions.paddingXl),
               child: Row(
                 children: [
                   Text(
@@ -139,7 +141,7 @@ class _GramSelectorSheetState extends State<GramSelectorSheet> {
                     filled: true,
                     fillColor: AppTheme.cardColor,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                       borderSide: BorderSide.none,
                     ),
                   ),
@@ -147,7 +149,7 @@ class _GramSelectorSheetState extends State<GramSelectorSheet> {
                 ),
               ),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: AppDimensions.spacingMd),
 
             // Profile option
             if (widget.showProfileOption)
@@ -165,7 +167,7 @@ class _GramSelectorSheetState extends State<GramSelectorSheet> {
             if (_loading)
               const Padding(
                 padding: EdgeInsets.all(40),
-                child: CircularProgressIndicator(),
+                child: AppLoadingIndicator(),
               )
             else if (_filteredGrams.isEmpty)
               Padding(
@@ -197,7 +199,7 @@ class _GramSelectorSheetState extends State<GramSelectorSheet> {
                 ),
               ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: AppDimensions.spacingXl),
           ],
         ),
       ),
@@ -212,7 +214,7 @@ class _GramSelectorSheetState extends State<GramSelectorSheet> {
   }) {
     return ListTile(
       leading: CircleAvatar(
-        backgroundColor: AppTheme.accentColor.withOpacity(0.1),
+        backgroundColor: AppTheme.accentColor.withValues(alpha: 0.1),
         child: Icon(icon, color: AppTheme.accentColor),
       ),
       title: Text(
@@ -276,11 +278,9 @@ Future<void> showGramSelector({
   required Function(String gramId, String gramName) onGramSelected,
   bool showProfileOption = true,
 }) {
-  return showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (context) => GramSelectorSheet(
+  return AppBottomSheet.show(
+    context,
+    child: GramSelectorSheet(
       onGramSelected: onGramSelected,
       showProfileOption: showProfileOption,
     ),

@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/utils/chat/external_link_utils.dart';
 import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// A card widget that displays external link previews with Open Graph data
 class ExternalLinkPreviewCard extends StatelessWidget {
@@ -32,7 +33,7 @@ class ExternalLinkPreviewCard extends StatelessWidget {
               : (isDark
                   ? Colors.white.withValues(alpha: 0.05)
                   : Colors.black.withValues(alpha: 0.03)),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
           border: Border.all(
             color: isOwnMessage
                 ? Colors.white.withValues(alpha: 0.15)
@@ -77,7 +78,7 @@ class ExternalLinkPreviewCard extends StatelessWidget {
 
         // Content
         Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(AppDimensions.paddingMd),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -128,7 +129,7 @@ class ExternalLinkPreviewCard extends StatelessWidget {
                 ],
               ),
 
-              const SizedBox(height: 6),
+              const SizedBox(height: AppDimensions.spacingSmMd),
 
               // Title
               Text(
@@ -146,7 +147,7 @@ class ExternalLinkPreviewCard extends StatelessWidget {
 
               // Description
               if (preview.description != null) ...[
-                const SizedBox(height: 4),
+                const SizedBox(height: AppDimensions.spacingXs),
                 Text(
                   preview.description!,
                   style: TextStyle(
@@ -181,7 +182,7 @@ class ExternalLinkPreviewCard extends StatelessWidget {
               color: isOwnMessage
                   ? Colors.white.withValues(alpha: 0.15)
                   : AppTheme.primaryColor.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
             ),
             clipBehavior: Clip.antiAlias,
             child: preview.image != null
@@ -203,7 +204,7 @@ class ExternalLinkPreviewCard extends StatelessWidget {
                   ),
           ),
 
-          const SizedBox(width: 10),
+          const SizedBox(width: AppDimensions.spacingMdSm),
 
           // Content
           Expanded(
@@ -222,7 +223,7 @@ class ExternalLinkPreviewCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: AppDimensions.spacingXxs),
                 Text(
                   preview.title,
                   style: TextStyle(
@@ -276,14 +277,14 @@ class ExternalLinkPreviewLoading extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.only(top: 8),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppDimensions.paddingMd),
       decoration: BoxDecoration(
         color: isOwnMessage
             ? Colors.white.withValues(alpha: 0.12)
             : (isDark
                 ? Colors.white.withValues(alpha: 0.05)
                 : Colors.black.withValues(alpha: 0.03)),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
       ),
       child: Row(
         children: [
@@ -292,7 +293,7 @@ class ExternalLinkPreviewLoading extends StatelessWidget {
             height: 48,
             borderRadius: 8,
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppDimensions.spacingMd),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -302,7 +303,7 @@ class ExternalLinkPreviewLoading extends StatelessWidget {
                   height: 10,
                   borderRadius: 4,
                 ),
-                SizedBox(height: 6),
+                SizedBox(height: AppDimensions.spacingSmMd),
                 ShimmerImagePlaceholder(
                   width: double.infinity,
                   height: 14,

@@ -1,7 +1,7 @@
 import 'dart:async';
 // ignore: avoid_web_libraries_in_flutter
 import 'dart:html' as html;
-import 'package:flutter/foundation.dart';
+import 'package:aurogram/utils/logging/app_logger.dart';
 import 'platform_interface.dart';
 
 /// Web implementation of PlatformServices
@@ -59,7 +59,7 @@ class WebPlatformServices implements PlatformServices {
       final permission = await html.Notification.requestPermission();
       return permission == 'granted';
     } catch (e) {
-      debugPrint('Web notification permission error: $e');
+      AppLogger.w('WebPlatformServices: Web notification permission error: $e', category: LogCategory.general);
       return false;
     }
   }
@@ -75,7 +75,7 @@ class WebPlatformServices implements PlatformServices {
         html.Notification(title, body: body);
       }
     } catch (e) {
-      debugPrint('Web notification error: $e');
+      AppLogger.w('WebPlatformServices: Web notification error: $e', category: LogCategory.general);
     }
   }
   
@@ -114,7 +114,7 @@ class WebPlatformServices implements PlatformServices {
       // Use getUserMedia to trigger browser permission prompt
       final mediaDevices = html.window.navigator.mediaDevices;
       if (mediaDevices == null) {
-        debugPrint('MediaDevices not available');
+        AppLogger.w('WebPlatformServices: MediaDevices not available', category: LogCategory.media);
         return false;
       }
       
@@ -130,10 +130,10 @@ class WebPlatformServices implements PlatformServices {
       // Permission granted - stop the stream immediately (we just needed to check)
       stream.getTracks().forEach((track) => track.stop());
       
-      debugPrint('Web media permissions granted (audio: $audio, video: $video)');
+      AppLogger.d('WebPlatformServices: Web media permissions granted (audio: $audio, video: $video)', category: LogCategory.media);
       return true;
     } catch (e) {
-      debugPrint('Web media permission denied or error: $e');
+      AppLogger.w('WebPlatformServices: Web media permission denied or error: $e', category: LogCategory.media);
       return false;
     }
   }
@@ -172,7 +172,7 @@ class WebPlatformServices implements PlatformServices {
       // Fallback: we don't know, assume not granted
       return false;
     } catch (e) {
-      debugPrint('Error checking media permissions: $e');
+      AppLogger.w('WebPlatformServices: Error checking media permissions: $e', category: LogCategory.media);
       return false;
     }
   }

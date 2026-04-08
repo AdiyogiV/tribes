@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:aurogram/models/space.dart';
-import 'package:aurogram/pages/invites.dart';
+import 'package:aurogram/pages/social/invites.dart';
 import 'package:aurogram/services/database_service.dart';
 import 'package:aurogram/services/space_service.dart';
 import 'package:aurogram/utils/time_display.dart';
@@ -12,6 +12,7 @@ import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/widgets/notifications/unified_notification_card.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 class InviteTile extends StatefulWidget {
   final Map? data;
@@ -104,14 +105,14 @@ class _InviteTileState extends State<InviteTile> {
                   }));
                 },
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingMd),
                   child: Row(
                     children: [
                       Container(
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
                           border:
                               Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.2), width: 1),
                         ),
@@ -129,7 +130,7 @@ class _InviteTileState extends State<InviteTile> {
                                 ),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppDimensions.spacingMd),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -137,24 +138,24 @@ class _InviteTileState extends State<InviteTile> {
                             Text(
                               '$inviterName invited you to join $space',
                               style: TextStyle(
-                                fontSize: 15,
+                                fontSize: AppTheme.holyCowTextSize,
                                 fontWeight: FontWeight.w600,
                                 color: AppTheme.textColor,
                                 height: 1.3,
                               ),
                             ),
-                            const SizedBox(height: 3),
+                            const SizedBox(height: AppDimensions.spacingXxxs),
                             Text(
                               date,
                               style: TextStyle(
-                                fontSize: 13,
+                                fontSize: AppTheme.holyCowTextSize,
                                 color: AppTheme.textSecondaryColor,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppDimensions.spacingMd),
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -162,7 +163,7 @@ class _InviteTileState extends State<InviteTile> {
                             width: 40,
                             height: 40,
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(20),
+                              borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
                               border: Border.all(
                                   color: AppTheme.primaryColor.withValues(alpha: 0.2), width: 1),
                             ),
@@ -181,7 +182,7 @@ class _InviteTileState extends State<InviteTile> {
                                     ),
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: AppDimensions.spacingSm),
                           Icon(
                             Icons.chevron_right,
                             color: AppTheme.textSecondaryColor,
@@ -196,7 +197,7 @@ class _InviteTileState extends State<InviteTile> {
             ),
           )
         : const Padding(
-            padding: EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+            padding: EdgeInsets.symmetric(vertical: AppDimensions.paddingXs, horizontal: AppDimensions.paddingLg),
             child: SkeletonListItem(height: 70),
           );
   }

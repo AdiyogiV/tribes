@@ -125,7 +125,9 @@ class LogFileSink {
       for (final e in rotated.sublist(_maxRotatedFiles)) {
         try {
           await e.delete();
-        } catch (_) {}
+        } catch (_) {
+          // Ignore: best-effort cleanup of old log files
+        }
       }
     } catch (_) {
       // Ignore retention errors.

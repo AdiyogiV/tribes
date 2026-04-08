@@ -4,6 +4,7 @@ import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:aurogram/utils/theme/theme_helper.dart';
 import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
 import 'package:aurogram/widgets/preview_boxes/preview_box.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 class GridSpaceView extends StatefulWidget {
   final String? rid;
@@ -50,7 +51,7 @@ class GridSpaceViewState extends State<GridSpaceView> {
           builder: (context, snapshot) {
             if (!snapshot.hasData) {
               return GridView.builder(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(AppDimensions.paddingSm),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 3,
                   mainAxisSpacing: 4,

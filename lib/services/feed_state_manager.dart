@@ -1,5 +1,4 @@
 import 'dart:collection';
-import 'package:video_player/video_player.dart';
 
 /// Lightweight state snapshot for posts (not full widgets)
 /// This is what production apps (Instagram, TikTok) cache

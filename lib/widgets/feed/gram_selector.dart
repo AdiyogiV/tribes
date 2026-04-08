@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:aurogram/widgets/ui/common_widgets.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
 import 'package:aurogram/widgets/preview_boxes/gram_preview_box.dart';
 import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
 import 'package:aurogram/models/space_types.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Selection result from GramSelector
 class GramSelection {
@@ -129,11 +131,9 @@ class _GramSelectorState extends State<GramSelector> {
   }
 
   void _showGramPicker() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _GramPickerSheet(
+    AppBottomSheet.show(
+      context,
+      child: _GramPickerSheet(
         grams: _userGrams,
         selectedGramId: _selectedGramId,
         onGramSelected: (gramId) {
@@ -159,7 +159,7 @@ class _GramSelectorState extends State<GramSelector> {
 
     if (_isLoading) {
       return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingMd),
         child: Row(
           children: List.generate(3, (_) => const Padding(
             padding: EdgeInsets.only(right: 8),
@@ -171,7 +171,7 @@ class _GramSelectorState extends State<GramSelector> {
 
     if (_userGrams.isEmpty) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingMd),
         child: Text(
           'No grams available',
           style: TextStyle(
@@ -189,13 +189,13 @@ class _GramSelectorState extends State<GramSelector> {
         GestureDetector(
           onTap: _showGramPicker,
           child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            margin: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingSm),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
               color: isDark
                   ? Theme.of(context).colorScheme.surface
                   : Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
               border: Border.all(
                 color: AppTheme.primaryColor.withValues(alpha: 0.3),
               ),
@@ -207,7 +207,7 @@ class _GramSelectorState extends State<GramSelector> {
                   size: 20,
                   color: AppTheme.primaryColor,
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: AppDimensions.spacingMdSm),
                 Text(
                   'Post to:',
                   style: TextStyle(
@@ -218,7 +218,7 @@ class _GramSelectorState extends State<GramSelector> {
                         .withValues(alpha: 0.7),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppDimensions.spacingSm),
                 Expanded(
                   child: _selectedGramId != null
                       ? GramPreviewBox(
@@ -266,7 +266,7 @@ class _GramSelectorState extends State<GramSelector> {
                   },
                   activeTrackColor: AppTheme.primaryColor,
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: AppDimensions.spacingMdSm),
                 Expanded(
                   child: Text(
                     'Also show on my profile',
@@ -326,7 +326,7 @@ class _GramPickerSheet extends StatelessWidget {
 
           // Title
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppDimensions.paddingLg),
             child: Text(
               'Select Gram',
               style: TextStyle(
@@ -361,7 +361,7 @@ class _GramPickerSheet extends StatelessWidget {
                       color: isProfile
                           ? AppTheme.primaryColor.withValues(alpha: 0.1)
                           : Colors.grey.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm),
                     ),
                     child: Icon(
                       isProfile ? Icons.person : Icons.eco_outlined,

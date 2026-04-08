@@ -1,6 +1,7 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { db, FieldValue, logger } from "../lib/firebase.js";
 import { checkRateLimit } from "../lib/rate_limiter.js";
+import { normalizeText, containsBlockedText } from "../lib/utils.js";
 
 const MAX_MESSAGE_LENGTH = 200;
 const PREVIEW_LENGTH = 40;
@@ -8,26 +9,9 @@ const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
 const RATE_LIMIT_MAX_PER_IP_RECIPIENT = 10;
 const RATE_LIMIT_MAX_PER_UID = 20;
 
-// Minimal blocklist - expand as needed
-const BLOCKLIST = [
-    "kill yourself",
-    "kys",
-    "suicide",
-];
-
-function normalizeText(text) {
-    return (text || "").trim();
-}
-
 function buildPreview(text) {
     if (!text) return "";
     return text.length > PREVIEW_LENGTH ? `${text.slice(0, PREVIEW_LENGTH)}…` : text;
-}
-
-function containsBlockedText(text) {
-    if (!text) return false;
-    const lower = text.toLowerCase();
-    return BLOCKLIST.some((term) => lower.includes(term));
 }
 
 function getRequestIp(request) {

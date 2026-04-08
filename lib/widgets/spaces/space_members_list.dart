@@ -8,6 +8,7 @@ import 'package:aurogram/widgets/preview_boxes/crew_preview.dart';
 import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
 import 'package:aurogram/pages/tabs/user_profile.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// A reusable component for displaying space members consistently throughout the app
 class SpaceMembersList extends StatefulWidget {
@@ -40,7 +41,7 @@ class SpaceMembersList extends StatefulWidget {
     this.onRoleChanged,
     this.onMemberRemoved,
     this.maxHeight,
-    this.padding = const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    this.padding = const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingSm),
   });
 
   @override
@@ -83,7 +84,7 @@ class _SpaceMembersListState extends State<SpaceMembersList> {
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: List.generate(4, (_) => const Padding(
-                padding: EdgeInsets.only(bottom: 12),
+                padding: EdgeInsets.only(bottom: AppDimensions.paddingMd),
                 child: SkeletonCompactUser(),
               )),
             ),
@@ -131,7 +132,7 @@ class _SpaceMembersListState extends State<SpaceMembersList> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 12),
+                padding: EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -142,7 +143,7 @@ class _SpaceMembersListState extends State<SpaceMembersList> {
                           size: 18,
                           color: Theme.of(context).colorScheme.primary,
                         ),
-                        SizedBox(width: 6),
+                        SizedBox(width: AppDimensions.spacingSmMd),
                         Text(
                           'Members',
                           style: Theme.of(context)
@@ -163,7 +164,7 @@ class _SpaceMembersListState extends State<SpaceMembersList> {
                             .colorScheme
                             .primary
                             .withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
                       ),
                       child: AnimatedSwitcher(
                         duration: const Duration(milliseconds: 200),
@@ -185,9 +186,9 @@ class _SpaceMembersListState extends State<SpaceMembersList> {
                   ],
                 ),
               ),
-              SizedBox(height: 12),
+              SizedBox(height: AppDimensions.spacingMd),
               Divider(),
-              SizedBox(height: 12),
+              SizedBox(height: AppDimensions.spacingMd),
               Flexible(
                 child: Wrap(
                   spacing: 8,

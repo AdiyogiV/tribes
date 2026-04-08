@@ -6,8 +6,10 @@ import 'package:aurogram/pages/spaces/space_chat_screen.dart';
 import 'package:aurogram/models/space.dart';
 import 'package:aurogram/models/space_types.dart';
 import 'package:aurogram/utils/theme/app_theme.dart';
-import 'package:aurogram/widgets/user_avatar.dart';
+import 'package:aurogram/widgets/common/user_avatar.dart';
 import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
+import 'package:aurogram/widgets/common/snack_bar_service.dart';
+import 'package:aurogram/utils/theme/app_dimensions.dart';
 
 /// Instagram-style Message Requests page
 /// Shows pending message requests that require approval
@@ -73,7 +75,7 @@ class _MessageRequestsPageState extends State<MessageRequestsPage> {
                 }
 
                 return ListView.builder(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingSm),
                   itemCount: pendingRequests.length,
                   itemBuilder: (context, index) {
                     return _buildRequestCard(pendingRequests[index], isDark);
@@ -86,11 +88,11 @@ class _MessageRequestsPageState extends State<MessageRequestsPage> {
 
   Widget _buildLoadingState() {
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingSm),
       itemCount: 3,
       itemBuilder: (context, index) {
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingSm),
           child: SkeletonListItem(),
         );
       },
@@ -107,7 +109,7 @@ class _MessageRequestsPageState extends State<MessageRequestsPage> {
             size: 64,
             color: AppTheme.primaryColor.withValues(alpha: 0.3),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.spacingLg),
           Text(
             message,
             style: TextStyle(
@@ -125,7 +127,7 @@ class _MessageRequestsPageState extends State<MessageRequestsPage> {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
         color: isDark ? AppTheme.cardDarkColor : Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
         border: Border.all(
           color: AppTheme.primaryColor.withValues(alpha: 0.15),
           width: 1,
@@ -135,7 +137,7 @@ class _MessageRequestsPageState extends State<MessageRequestsPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppDimensions.paddingLg),
             child: Row(
               children: [
                 // Avatar
@@ -147,7 +149,7 @@ class _MessageRequestsPageState extends State<MessageRequestsPage> {
                       ? request.otherUserId[0].toUpperCase()
                       : 'U',
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppDimensions.spacingMd),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -160,7 +162,7 @@ class _MessageRequestsPageState extends State<MessageRequestsPage> {
                           color: AppTheme.primaryColor,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: AppDimensions.spacingXs),
                       Text(
                         'Wants to send you a message',
                         style: TextStyle(
@@ -182,7 +184,7 @@ class _MessageRequestsPageState extends State<MessageRequestsPage> {
               color: AppTheme.primaryColor.withValues(alpha: 0.1),
             ),
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppDimensions.paddingLg),
               child: Text(
                 request.lastMessageContent!,
                 style: TextStyle(
@@ -197,7 +199,7 @@ class _MessageRequestsPageState extends State<MessageRequestsPage> {
           ],
           // Action buttons
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppDimensions.paddingLg),
             child:               Row(
                 children: [
                   Expanded(
@@ -209,7 +211,7 @@ class _MessageRequestsPageState extends State<MessageRequestsPage> {
                           width: 1.5,
                         ),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
                         ),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
@@ -223,14 +225,14 @@ class _MessageRequestsPageState extends State<MessageRequestsPage> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppDimensions.spacingMd),
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () => _acceptRequest(request),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
                         ),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         elevation: 0,
@@ -280,20 +282,9 @@ class _MessageRequestsPageState extends State<MessageRequestsPage> {
     if (!mounted) return;
 
     if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Message request declined'),
-          backgroundColor: AppTheme.primaryColor,
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      showCustomSnackBar(context, message: 'Message request declined', backgroundColor: AppTheme.primaryColor, duration: const Duration(seconds: 2));
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Failed to decline request'),
-          backgroundColor: AppTheme.errorColor,
-        ),
-      );
+      showCustomSnackBar(context, message: 'Failed to decline request', backgroundColor: AppTheme.errorColor);
     }
   }
 }
