@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:aurogram/utils/logging/app_logger.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
 
 /// Theme mode options
 enum AppThemeMode {

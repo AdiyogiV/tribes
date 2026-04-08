@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:aurogram/utils/logging/app_logger.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
 
 /// Service to manage onboarding/FTUE state
 /// Tracks whether user has seen the first-time experience

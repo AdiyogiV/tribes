@@ -1,12 +1,12 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:aurogram/services/call_service.dart';
-import 'package:aurogram/utils/theme/app_theme.dart';
-import 'package:aurogram/pages/call/call_screen.dart';
-import 'package:aurogram/utils/logging/app_logger.dart';
-import 'package:aurogram/services/follow_service.dart';
-import 'package:aurogram/widgets/common/snack_bar_service.dart';
+import 'package:aurogram/features/calling/domain/call_service.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
+import 'package:aurogram/features/calling/presentation/pages/call_screen.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:aurogram/features/profile/domain/follow_service.dart';
+import 'package:aurogram/shared/presentation/widgets/feedback/snack_bar_service.dart';
 
 /// Compact call button for chat headers
 class CallButton extends StatefulWidget {

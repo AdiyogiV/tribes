@@ -1,6 +1,6 @@
 import 'package:aurogram/pages/helpers/gram_selection_page.dart';
-import 'package:aurogram/utils/theme/app_theme.dart';
-import 'package:aurogram/widgets/dialogs/login_bottom_sheet.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
+import 'package:aurogram/shared/presentation/widgets/dialogs/login_bottom_sheet.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';

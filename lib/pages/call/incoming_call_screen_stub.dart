@@ -1,4 +1,4 @@
 /// Re-export from the real implementation - web now supports calling
 library;
 
-export 'package:aurogram/pages/call/incoming_call_screen.dart';
+export 'package:aurogram/features/calling/presentation/pages/incoming_call_screen.dart';

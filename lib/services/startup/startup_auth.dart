@@ -1,5 +1,5 @@
 import 'package:aurogram/firebase_options.dart';
-import 'package:aurogram/utils/logging/app_logger.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_core/firebase_core.dart';

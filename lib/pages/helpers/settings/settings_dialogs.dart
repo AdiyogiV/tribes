@@ -1,12 +1,12 @@
 import 'package:flutter/cupertino.dart';
-import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:aurogram/utils/theme/app_theme.dart';
-import 'package:aurogram/services/auth_service.dart';
-import 'package:aurogram/services/user_service.dart';
-import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
+import 'package:aurogram/features/auth/auth_service.dart';
+import 'package:aurogram/features/profile/domain/user_service.dart';
+import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
 
 /// Dialog helpers for the UserSettingsPage.
 /// Contains delete account, cache cleared, logout, reauth, and generic dialogs.

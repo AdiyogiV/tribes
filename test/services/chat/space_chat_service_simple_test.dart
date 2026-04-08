@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:aurogram/services/chat/space_chat_service.dart';
+import 'package:aurogram/features/chat/domain/space_chat_service.dart';
 
 void main() {
   group('SpaceChatService Simple Tests (No Firebase)', () {

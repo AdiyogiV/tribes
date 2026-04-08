@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:aurogram/utils/logging/app_logger.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
 
 /// Routes defined for the application
 class AppRoutes {

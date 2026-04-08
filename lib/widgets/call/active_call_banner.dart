@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:aurogram/config/call_ui_config.dart';
-import 'package:aurogram/pages/call/group_call_screen.dart';
-import 'package:aurogram/services/group_call_service.dart';
-import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/core/config/call_ui_config.dart';
+import 'package:aurogram/features/calling/presentation/pages/group_call_screen.dart';
+import 'package:aurogram/features/calling/domain/group_call_service.dart';
+import 'package:aurogram/core/theme/app_dimensions.dart';
 
 /// Banner that shows when there's an active call in a gram
 /// Allows users to easily join an ongoing call

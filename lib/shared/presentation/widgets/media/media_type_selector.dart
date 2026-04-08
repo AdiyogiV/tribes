@@ -1,12 +1,12 @@
-import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:aurogram/widgets/ui/common_widgets.dart';
-import 'package:aurogram/pages/creation/text_composer.dart';
-import 'package:aurogram/pages/creation/video_picker.dart';
-import 'package:aurogram/pages/creation/audio_composer.dart';
-import 'package:aurogram/pages/creation/image_composer.dart';
-import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/shared/presentation/widgets/media/common_widgets.dart';
+import 'package:aurogram/features/creation/pages/text_composer.dart';
+import 'package:aurogram/features/creation/pages/video_picker.dart';
+import 'package:aurogram/features/creation/pages/audio_composer.dart';
+import 'package:aurogram/features/creation/pages/image_composer.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
 
 /// Helper utility for showing media type selection (Video vs Note)
 /// Uses a custom bottom modal with beautiful UI and smooth animations

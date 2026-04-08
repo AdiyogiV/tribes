@@ -2,22 +2,22 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:aurogram/pages/spaces/space_screen.dart';
-import 'package:aurogram/models/space.dart';
-import 'package:aurogram/models/space_types.dart';
-import 'package:aurogram/services/space_service.dart';
-import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
-import 'package:aurogram/utils/theme/app_theme.dart';
-import 'package:aurogram/utils/theme/theme_helper.dart';
-import 'package:aurogram/utils/theme/header_style.dart';
-import 'package:aurogram/utils/logging/app_logger.dart';
+import 'package:aurogram/features/spaces/presentation/pages/space_screen.dart';
+import 'package:aurogram/shared/models/space.dart';
+import 'package:aurogram/shared/models/space_types.dart';
+import 'package:aurogram/features/spaces/domain/space_service.dart';
+import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
+import 'package:aurogram/core/theme/theme_helper.dart';
+import 'package:aurogram/core/theme/header_style.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
 
 // Conditional import for dart:io
 import 'dart:io'
     if (dart.library.html) 'package:aurogram/platform/io_stub.dart';
 import 'package:aurogram/platform/file_helper.dart' as file_helper;
-import 'package:aurogram/utils/theme/app_dimensions.dart';
-import 'package:aurogram/widgets/common/snack_bar_service.dart';
+import 'package:aurogram/core/theme/app_dimensions.dart';
+import 'package:aurogram/shared/presentation/widgets/feedback/snack_bar_service.dart';
 
 class SpaceCreationPage extends StatefulWidget {
   const SpaceCreationPage({super.key});

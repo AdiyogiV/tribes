@@ -27,7 +27,7 @@
 /// ## Usage Example
 ///
 /// ```dart
-/// import 'package:aurogram/widgets/responsive/responsive_widgets.dart';
+/// import 'package:aurogram/shared/presentation/responsive/responsive_widgets.dart';
 ///
 /// // Simple responsive card
 /// ResponsiveCard(

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
 
 /// Main flash/splash screen shown at app startup
 class FlashScreen extends StatefulWidget {

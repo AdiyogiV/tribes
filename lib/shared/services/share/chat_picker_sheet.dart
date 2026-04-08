@@ -1,13 +1,13 @@
 import 'dart:async';
-import 'package:aurogram/widgets/ui/common_widgets.dart';
+import 'package:aurogram/shared/presentation/widgets/media/common_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:aurogram/services/chat/space_chat_service.dart';
-import 'package:aurogram/services/user_service.dart';
-import 'package:aurogram/utils/theme/app_theme.dart';
-import 'package:aurogram/utils/logging/app_logger.dart';
-import 'package:aurogram/widgets/common/user_avatar.dart';
-import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/features/chat/domain/space_chat_service.dart';
+import 'package:aurogram/features/profile/domain/user_service.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:aurogram/shared/presentation/widgets/avatars/user_avatar.dart';
+import 'package:aurogram/core/theme/app_dimensions.dart';
 
 class ShareableContent {
   final String type;

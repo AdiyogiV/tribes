@@ -1,5 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:aurogram/utils/logging/app_logger.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
 
 /// Service to manage anonymous message feature enable/disable preference
 ///

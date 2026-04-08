@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:aurogram/utils/media_type_selector.dart';
-import 'package:aurogram/widgets/preview_boxes/gram_preview_box.dart';
-import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
+import 'package:aurogram/shared/presentation/widgets/media/media_type_selector.dart';
+import 'package:aurogram/features/profile/presentation/widgets/preview_boxes/gram_preview_box.dart';
+import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
 import 'package:flutter/cupertino.dart';
 
 class GroupSelectionPage extends StatefulWidget {

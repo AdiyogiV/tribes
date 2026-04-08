@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/scheduler.dart' as scheduler;
 import 'package:flutter_displaymode/flutter_displaymode.dart';
-import 'package:aurogram/utils/logging/app_logger.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
 
 /// Utility class for optimizing app performance
 class AppPerformance {

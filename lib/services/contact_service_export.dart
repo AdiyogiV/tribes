@@ -1,6 +1,3 @@
-/// Conditional export for ContactService
-/// Uses real implementation on mobile, stub on web
 library;
-
-export 'contact_service.dart'
+export 'package:aurogram/features/profile/domain/contact_service.dart'
     if (dart.library.html) 'contact_service_stub.dart';

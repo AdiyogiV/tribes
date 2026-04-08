@@ -2,8 +2,8 @@ import 'dart:async' show unawaited;
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/foundation.dart';
-import 'package:aurogram/utils/logging/log_sanitizer.dart';
-import 'package:aurogram/utils/logging/log_file_sink.dart';
+import 'package:aurogram/core/logging/log_sanitizer.dart';
+import 'package:aurogram/core/logging/log_file_sink.dart';
 
 /// Log level for categorizing log messages
 enum LogLevel {

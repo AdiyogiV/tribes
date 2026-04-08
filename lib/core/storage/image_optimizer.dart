@@ -1,10 +1,10 @@
 import 'dart:io';
-import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
 import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:aurogram/utils/logging/app_logger.dart';
-import 'package:aurogram/utils/memory/memory_manager.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:aurogram/core/storage/memory_manager.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';

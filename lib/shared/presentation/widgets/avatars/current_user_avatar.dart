@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:aurogram/widgets/common/user_avatar.dart';
+import 'package:aurogram/shared/presentation/widgets/avatars/user_avatar.dart';
 
 /// A convenience widget that displays the current user's avatar
 /// Automatically handles authentication state and provides consistent styling

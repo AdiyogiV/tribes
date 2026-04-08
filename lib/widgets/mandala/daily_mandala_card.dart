@@ -1,13 +1,13 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:aurogram/models/astrology_profile.dart';
-import 'package:aurogram/models/ayurveda_profile.dart';
-import 'package:aurogram/models/daily_insight.dart';
-import 'package:aurogram/services/ayurveda_service.dart';
-import 'package:aurogram/services/sky_positions_service.dart';
-import 'package:aurogram/utils/astrology/astrology_formatters.dart';
-import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/shared/models/astrology_profile.dart';
+import 'package:aurogram/shared/models/ayurveda_profile.dart';
+import 'package:aurogram/shared/models/daily_insight.dart';
+import 'package:aurogram/features/ayurveda/domain/ayurveda_service.dart';
+import 'package:aurogram/features/astrology/domain/sky_positions_service.dart';
+import 'package:aurogram/features/astrology/data/utils/astrology_formatters.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
 
 /// Daily Mandala card - 5-section pie with interactive rotation.
 class DailyMandalaCard extends StatefulWidget {

@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:video_player/video_player.dart';
-import 'package:aurogram/utils/logging/app_logger.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
 
 /// Manages video player instances to prevent memory exhaustion
 /// iOS limits AVPlayer to ~4 concurrent instances, Android MediaCodec is similar

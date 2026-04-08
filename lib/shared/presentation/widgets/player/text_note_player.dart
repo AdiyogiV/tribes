@@ -2,14 +2,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:visibility_detector/visibility_detector.dart';
-import 'package:aurogram/utils/theme/app_theme.dart';
-import 'package:aurogram/widgets/posts/post_header.dart';
-import 'package:aurogram/widgets/posts/post_options_sheet.dart';
-import 'package:aurogram/widgets/posts/post_action_toolbar.dart';
-import 'package:aurogram/widgets/posts/quoted_post_preview.dart';
-import 'package:aurogram/pages/content/thread_view.dart';
-import 'package:aurogram/utils/chat/markdown_utils.dart';
-import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
+import 'package:aurogram/features/feed/presentation/widgets/post_header.dart';
+import 'package:aurogram/features/feed/presentation/widgets/post_options_sheet.dart';
+import 'package:aurogram/features/feed/presentation/widgets/post_action_toolbar.dart';
+import 'package:aurogram/features/feed/presentation/widgets/quoted_post_preview.dart';
+import 'package:aurogram/features/feed/presentation/pages/thread_view.dart';
+import 'package:aurogram/features/chat/domain/markdown_utils.dart';
+import 'package:aurogram/core/theme/app_dimensions.dart';
 
 /// Clean text note player matching TransparentToolbox style
 /// - Card with elevation 4

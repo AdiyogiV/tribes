@@ -1,14 +1,14 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:aurogram/utils/logging/app_logger.dart';
-import 'package:aurogram/models/space.dart';
-import 'package:aurogram/services/space_service.dart';
-import 'package:aurogram/services/data/post_db_service.dart';
-import 'package:aurogram/utils/dependency_injection.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:aurogram/shared/models/space.dart';
+import 'package:aurogram/features/spaces/domain/space_service.dart';
+import 'package:aurogram/features/feed/data/datasources/post_db_service.dart';
+import 'package:aurogram/core/di/injection.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:aurogram/models/space_roles.dart';
+import 'package:aurogram/shared/models/space_roles.dart';
 import 'package:flutter/foundation.dart';
 
 import 'package:aurogram/platform/file_helper.dart' as file_helper;
@@ -141,151 +141,7 @@ class DatabaseService {
     }
   }
 
-  /* // Method moved to SpaceService
-  Future<bool> isExistsSpaceMember(
-    String space,
-    String member,
-  ) async {
-    var role = await FirebaseFirestore.instance
-        .collection('spaceRoles')
-        .doc(space)
-        .collection('roles')
-        .doc(member)
-        .get();
-    if (role.data() != null)
-      return true;
-    else
-      return false;
-  }
-  */
-
-  /* // Method moved to SpaceService
-  Future<bool> addSpaceMember(
-    String space,
-    String member,
-  ) async {
-    var role = 'requested';
-    int spaceType = await getSpaceType(space);
-    // Public: open (0), public (1). Private: private (2), personal (3)
-    if (spaceType == 0 || spaceType == 1) {
-      role = 'member';
-    }
-
-    await FirebaseFirestore.instance
-        .collection('spaceRoles')
-        .doc(space)
-        .collection('roles')
-        .doc(member)
-        .set({
-      'role': '$role',
-      "timestamp": Timestamp.fromDate(DateTime.now()),
-    });
-    await FirebaseFirestore.instance
-        .collection('userSpaces')
-        .doc(member)
-        .collection('spaces')
-        .doc(space)
-        .set({
-      'role': '$role',
-      "timestamp": Timestamp.fromDate(DateTime.now()),
-    }); //owner
-    return true;
-  }
-  */
-
-  /* // Method moved to SpaceService
-  Future<bool> makeAdmin(String space, String userId) async {
-    try {
-      // Check if the user is already an admin or creator
-      DocumentSnapshot roleDoc = await FirebaseFirestore.instance
-          .collection('spaceRoles')
-          .doc(space)
-          .collection('roles')
-          .doc(userId)
-          .get();
-
-      if (!roleDoc.exists) {
-        AppLogger.w('User is not a member of space', 
-            category: LogCategory.general, 
-            data: {'userId': userId, 'spaceId': space});
-        return false;
-      }
-
-      String currentRole = roleDoc['role'];
-      if (currentRole == 'admin' || currentRole == 'creator') {
-        AppLogger.w('User is already an admin or creator', 
-            category: LogCategory.general, 
-            data: {'userId': userId, 'spaceId': space});
-        return false;
-      }
-
-      // Update the user's role to admin in spaceRoles collection
-      await FirebaseFirestore.instance
-          .collection('spaceRoles')
-          .doc(space)
-          .collection('roles')
-          .doc(userId)
-          .update({
-        'role': 'admin',
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-
-      // Update the user's role to admin in userSpaces collection
-      await FirebaseFirestore.instance
-          .collection('userSpaces')
-          .doc(userId)
-          .collection('spaces')
-          .doc(space)
-          .update({
-        'role': 'admin',
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-
-      AppLogger.i('User promoted to admin', 
-          category: LogCategory.general, 
-          data: {'userId': userId, 'spaceId': space});
-      return true;
-    } catch (e) {
-      AppLogger.e('Error making user admin', 
-          category: LogCategory.general, error: e, 
-          data: {'userId': userId, 'spaceId': space});
-      return false;
-    }
-  }
-  */
-
-  /* // Method moved to SpaceService
-  Future<bool> removeSpaceMember(
-    String space,
-    String member,
-  ) async {
-    var role = await FirebaseFirestore.instance
-        .collection('spaceRoles')
-        .doc(space)
-        .collection('roles')
-        .doc(member)
-        .get();
-    if (role.data() == null) return true; //member
-
-    await FirebaseFirestore.instance
-        .collection('spaceRoles')
-        .doc(space)
-        .collection('roles')
-        .doc(member)
-        .delete();
-
-    await FirebaseFirestore.instance
-        .collection('userSpaces')
-        .doc(member)
-        .collection('spaces')
-        .doc(space)
-        .delete();
-
-    return true;
-  }
-  */
-
-  Future<bool> approveSpaceMember(String space, String member) async {
+          Future<bool> approveSpaceMember(String space, String member) async {
     try {
       var role = 'member';
 
@@ -458,14 +314,7 @@ class DatabaseService {
         .get();
   }
 
-  /* // Method moved to SpaceService
-  Future<int> getSpaceType(String spaceId) async {
-    DocumentSnapshot space = await spacesCollection.doc(spaceId).get();
-    return (space.data() as Map<String, dynamic>)['spaceType'];
-  }
-  */
-
-  Future<DocumentSnapshot> getItem(String item) async {
+    Future<DocumentSnapshot> getItem(String item) async {
     return await FirebaseFirestore.instance.collection('items').doc(item).get();
   }
 

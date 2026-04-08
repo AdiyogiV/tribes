@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:aurogram/services/chat/space_chat_service.dart';
-import 'package:aurogram/pages/spaces/space_chat_screen.dart';
-import 'package:aurogram/models/space.dart';
-import 'package:aurogram/models/space_types.dart';
-import 'package:aurogram/utils/theme/app_theme.dart';
-import 'package:aurogram/widgets/common/user_avatar.dart';
-import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
-import 'package:aurogram/widgets/common/snack_bar_service.dart';
-import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/features/chat/domain/space_chat_service.dart';
+import 'package:aurogram/features/spaces/presentation/pages/space_chat_screen.dart';
+import 'package:aurogram/shared/models/space.dart';
+import 'package:aurogram/shared/models/space_types.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
+import 'package:aurogram/shared/presentation/widgets/avatars/user_avatar.dart';
+import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
+import 'package:aurogram/shared/presentation/widgets/feedback/snack_bar_service.dart';
+import 'package:aurogram/core/theme/app_dimensions.dart';
 
 /// Instagram-style Message Requests page
 /// Shows pending message requests that require approval

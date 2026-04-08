@@ -1,11 +1,11 @@
-import 'package:aurogram/services/media/media_compression_service.dart';
+import 'package:aurogram/shared/services/media/media_compression_service.dart';
 import 'package:flutter/material.dart';
-import 'package:aurogram/pages/uploads/uploads_page.dart';
+import 'package:aurogram/features/creation/pages/uploads_page.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
-import 'package:aurogram/utils/logging/app_logger.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
 
 /// A service to manage upload navigation and status tracking
 class UploadManagerService {

@@ -1,8 +1,8 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:aurogram/utils/theme/app_theme.dart';
-import 'package:aurogram/widgets/ui/skeletons/skeleton_base.dart';
-import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
+import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_base.dart';
+import 'package:aurogram/core/theme/app_dimensions.dart';
 
 // =============================================================================
 // CHAT & NOTIFICATION SKELETONS

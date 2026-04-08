@@ -1,9 +1,9 @@
-import 'package:aurogram/utils/theme/app_theme.dart';
-import 'package:aurogram/widgets/ui/glass_container.dart';
-import 'package:aurogram/widgets/common/user_avatar.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
+import 'package:aurogram/shared/presentation/widgets/media/glass_container.dart';
+import 'package:aurogram/shared/presentation/widgets/avatars/user_avatar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/core/theme/app_dimensions.dart';
 
 class TabBottomNav extends StatelessWidget {
   final int selectedIndex;

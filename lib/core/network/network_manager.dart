@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:aurogram/utils/config/app_config.dart';
-import 'package:aurogram/utils/logging/app_logger.dart';
+import 'package:aurogram/core/config/app_config.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:flutter/foundation.dart';
 
 /// Extension on Stream to add debounce functionality

@@ -2,12 +2,12 @@
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
 
-import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/core/theme/app_dimensions.dart';
 
 // Conditional import for web-specific functionality
-import 'package:aurogram/widgets/ui/drop_zone_stub.dart'
+import 'package:aurogram/shared/presentation/widgets/media/drop_zone_stub.dart'
     if (dart.library.html) 'package:aurogram/widgets/ui/drop_zone_web.dart'
     as drop_zone_impl;
 

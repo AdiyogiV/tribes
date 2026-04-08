@@ -1,8 +1,8 @@
 import 'dart:async';
-import 'package:aurogram/utils/logging/app_logger.dart';
-import 'package:aurogram/services/deep_link_service.dart';
-import 'package:aurogram/services/audio_service.dart';
-import 'package:aurogram/services/chat/chat_notification_service.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:aurogram/shared/services/deep_link_service.dart';
+import 'package:aurogram/shared/services/media/audio_service.dart';
+import 'package:aurogram/features/chat/domain/chat_notification_service.dart';
 import 'package:aurogram/services/call_service_export.dart';
 import 'package:aurogram/core/routing/route_names.dart';
 import 'package:aurogram/core/routing/page_factory.dart';
@@ -15,7 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart'
     if (dart.library.html) 'package:aurogram/platform/flutter_local_notifications_stub.dart';
 import 'package:aurogram/platform/platform.dart';
-import 'package:aurogram/widgets/common/snack_bar_service.dart';
+import 'package:aurogram/shared/presentation/widgets/feedback/snack_bar_service.dart';
 
 /// Static callback for background notification tap.
 /// Must be a top-level function.

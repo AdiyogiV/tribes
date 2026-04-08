@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'dart:ui';
-import 'package:aurogram/utils/theme/app_theme.dart';
-import 'package:aurogram/utils/theme/header_style.dart';
-import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
+import 'package:aurogram/core/theme/header_style.dart';
+import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
 import 'package:aurogram/widgets/universal/toolbox/search_content.dart';
 import 'package:aurogram/widgets/universal/toolbox/chat_content.dart';
 import 'package:aurogram/widgets/universal/toolbox/astro_chat_content.dart';
-import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/core/theme/app_dimensions.dart';
 
 // Re-export sub-widgets so existing imports continue to work
 export 'package:aurogram/widgets/universal/toolbox/toolbox_exports.dart';

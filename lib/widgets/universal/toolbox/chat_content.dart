@@ -1,7 +1,7 @@
-import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/widgets/universal/toolbox/chat_namaste_button.dart';
 
 /// Internal chat content widget for TransparentToolbox.chat()

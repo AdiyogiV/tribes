@@ -1,11 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:aurogram/services/post_service.dart';
-import 'package:aurogram/utils/theme/app_theme.dart';
-import 'package:aurogram/widgets/dialogs/report_post_dialog.dart';
-import 'package:aurogram/widgets/dialogs/login_bottom_sheet.dart';
-import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
-import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
+import 'package:aurogram/shared/presentation/widgets/dialogs/report_post_dialog.dart';
+import 'package:aurogram/shared/presentation/widgets/dialogs/login_bottom_sheet.dart';
+import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
+import 'package:aurogram/core/theme/app_dimensions.dart';
 
 class PostDialog extends StatefulWidget {
   final String? post;

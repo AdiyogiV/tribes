@@ -1,4 +1,4 @@
-import 'package:aurogram/models/space_types.dart';
+import 'package:aurogram/shared/models/space_types.dart';
 
 /// Space model for the app.
 /// A Space represents a group/community where users can post content.

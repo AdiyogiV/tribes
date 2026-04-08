@@ -1,12 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:aurogram/services/media/media_compression_service.dart';
-import 'package:aurogram/services/media/media_storage_service.dart';
-import 'package:aurogram/services/data/post_db_service.dart';
-import 'package:aurogram/utils/error_handler.dart';
-import 'package:aurogram/utils/logging/app_logger.dart';
-import 'package:aurogram/services/analytics_service.dart';
+import 'package:aurogram/shared/services/media/media_compression_service.dart';
+import 'package:aurogram/shared/services/media/media_storage_service.dart';
+import 'package:aurogram/features/feed/data/datasources/post_db_service.dart';
+import 'package:aurogram/core/error/error_handler.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:aurogram/shared/services/analytics_service.dart';
 
 import 'package:aurogram/platform/file_helper.dart' as file_helper;
 

@@ -1,6 +1,6 @@
 import 'dart:collection';
 import 'package:just_audio/just_audio.dart';
-import 'package:aurogram/utils/logging/app_logger.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
 
 /// Audio player with metadata
 class PooledAudioPlayer {

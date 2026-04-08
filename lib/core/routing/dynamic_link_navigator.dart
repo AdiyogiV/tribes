@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:aurogram/pages/spaces/invite_landing_page.dart';
-import 'package:aurogram/pages/content/thread_view.dart';
-import 'package:aurogram/pages/tabs/user_profile.dart';
-import 'package:aurogram/pages/send_me_something/send_composer_screen.dart';
-import 'package:aurogram/utils/logging/app_logger.dart';
+import 'package:aurogram/features/spaces/presentation/pages/invite_landing_page.dart';
+import 'package:aurogram/features/feed/presentation/pages/thread_view.dart';
+import 'package:aurogram/features/profile/presentation/pages/user_profile.dart';
+import 'package:aurogram/features/anonymous_messages/pages/send_composer_screen.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
 
 class DynamicLinkNavigator {
   static final GlobalKey<NavigatorState> navigatorKey =

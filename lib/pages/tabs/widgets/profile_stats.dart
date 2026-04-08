@@ -1,4 +1,4 @@
-import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:flutter/material.dart';
 
 class ProfileStatItem extends StatelessWidget {

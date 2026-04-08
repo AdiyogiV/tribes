@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
+import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
 
 /// Full-screen avatar viewer with zoom and pan capabilities
 class FullScreenAvatarViewer extends StatefulWidget {

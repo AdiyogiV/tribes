@@ -1,13 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:aurogram/utils/theme/app_theme.dart';
-import 'package:aurogram/widgets/common/user_avatar.dart';
-import 'package:aurogram/utils/dependency_injection.dart';
-import 'package:aurogram/services/auth_service.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
+import 'package:aurogram/shared/presentation/widgets/avatars/user_avatar.dart';
+import 'package:aurogram/core/di/injection.dart';
+import 'package:aurogram/features/auth/auth_service.dart';
 import 'package:aurogram/pages/helpers/user_settings.dart';
 import 'package:aurogram/widgets/cosmic_dashboard.dart';
-import 'package:aurogram/pages/login/login.dart';
-import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/features/auth/login.dart';
+import 'package:aurogram/core/theme/app_dimensions.dart';
 
 /// Desktop sidebar navigation for web/tablet
 /// Shows navigation items vertically with icons and labels

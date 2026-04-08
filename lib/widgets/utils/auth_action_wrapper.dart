@@ -1,5 +1,5 @@
-import 'package:aurogram/services/auth_service.dart';
-import 'package:aurogram/widgets/dialogs/login_bottom_sheet.dart';
+import 'package:aurogram/features/auth/auth_service.dart';
+import 'package:aurogram/shared/presentation/widgets/dialogs/login_bottom_sheet.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 

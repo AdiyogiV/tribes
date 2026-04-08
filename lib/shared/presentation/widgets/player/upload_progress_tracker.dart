@@ -1,22 +1,22 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:aurogram/services/media/media_compression_service.dart';
+import 'package:aurogram/shared/services/media/media_compression_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:aurogram/services/space_service.dart';
-import 'package:aurogram/models/space.dart';
+import 'package:aurogram/features/spaces/domain/space_service.dart';
+import 'package:aurogram/shared/models/space.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
-import 'package:aurogram/widgets/posts/post.dart';
-import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
-import 'package:aurogram/pages/spaces/space_screen.dart';
+import 'package:aurogram/features/feed/presentation/widgets/post.dart';
+import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
+import 'package:aurogram/features/spaces/presentation/pages/space_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'dart:io';
-import 'package:aurogram/utils/logging/app_logger.dart';
-import 'package:aurogram/utils/theme/app_theme.dart';
-import 'package:aurogram/utils/theme/theme_helper.dart';
-import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
+import 'package:aurogram/core/theme/theme_helper.dart';
+import 'package:aurogram/core/theme/app_dimensions.dart';
 
 class UploadProgressTracker extends StatelessWidget {
   final MediaCompressionService compressionService;

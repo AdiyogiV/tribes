@@ -2,9 +2,9 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:aurogram/utils/logging/app_logger.dart';
-import 'package:aurogram/services/media/media_storage_service.dart';
-import 'package:aurogram/services/audio/audio_recorder.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:aurogram/shared/services/media/media_storage_service.dart';
+import 'package:aurogram/shared/services/media/audio/audio_recorder.dart';
 
 // Conditional imports for mobile-only features
 import 'dart:io' if (dart.library.html) 'package:aurogram/platform/io_stub.dart';

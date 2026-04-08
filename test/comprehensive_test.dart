@@ -16,9 +16,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
 
 // Core imports
-import 'package:aurogram/services/auth_service.dart';
-import 'package:aurogram/services/chat/space_chat_service.dart';
-import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/features/auth/auth_service.dart';
+import 'package:aurogram/features/chat/domain/space_chat_service.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
 
 // =============================================================================
 // TEST METRICS SYSTEM

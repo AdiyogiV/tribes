@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/widgets/universal/transparent_toolbox.dart';
 
 /// Reusable card/tile builders for the settings page.

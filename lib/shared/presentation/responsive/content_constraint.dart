@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:aurogram/utils/responsive.dart';
+import 'package:aurogram/shared/presentation/responsive/responsive.dart';
 
 /// Max-width constraints for different content types
 class ContentMaxWidth {

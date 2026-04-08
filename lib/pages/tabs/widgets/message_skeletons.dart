@@ -1,8 +1,8 @@
-import 'package:aurogram/utils/theme/app_dimensions.dart';
-import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/core/theme/app_dimensions.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:aurogram/utils/theme/header_style.dart';
-import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
+import 'package:aurogram/core/theme/header_style.dart';
+import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
 
 /// Build skeleton loaders for message cards during refresh
 class MessageSkeletons extends StatelessWidget {

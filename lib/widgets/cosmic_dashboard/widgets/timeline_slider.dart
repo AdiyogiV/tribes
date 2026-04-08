@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:aurogram/widgets/ui/common_widgets.dart';
-import 'package:aurogram/utils/theme/app_theme.dart';
-import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/shared/presentation/widgets/media/common_widgets.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
+import 'package:aurogram/core/theme/app_dimensions.dart';
 
 /// Time slider widget for navigating through different dates
 class TimelineSlider extends StatelessWidget {

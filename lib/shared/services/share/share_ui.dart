@@ -1,8 +1,8 @@
-import 'package:aurogram/utils/theme/app_dimensions.dart';
-import 'package:aurogram/utils/theme/app_theme.dart';
-import 'package:aurogram/utils/logging/app_logger.dart';
-import 'package:aurogram/widgets/chat/chat_picker_sheet.dart';
-import 'package:aurogram/services/chat/space_chat_service.dart';
+import 'package:aurogram/core/theme/app_dimensions.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:aurogram/shared/services/share/chat_picker_sheet.dart';
+import 'package:aurogram/features/chat/domain/space_chat_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -10,7 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 
 // Conditional import for web share API
-import 'package:aurogram/services/share/web_share_stub.dart'
+import 'package:aurogram/shared/services/share/web_share_stub.dart'
     if (dart.library.html) 'package:aurogram/services/share/web_share_impl.dart';
 
 class ShareUi {

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
 
 /// A gradient line separator that fades on both ends.
 /// Used as a visual divider between sections/posts.

@@ -1,7 +1,7 @@
 import 'dart:async';
 // ignore: avoid_web_libraries_in_flutter
 import 'dart:html' as html;
-import 'package:aurogram/utils/logging/app_logger.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
 import 'platform_interface.dart';
 
 /// Web implementation of PlatformServices

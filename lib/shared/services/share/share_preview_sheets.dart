@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:aurogram/utils/theme/app_dimensions.dart';
-import 'package:aurogram/utils/theme/app_theme.dart';
-import 'package:aurogram/widgets/astrology/cosmic_share_card.dart';
-import 'package:aurogram/widgets/astrology/insight_share_card.dart';
-import 'package:aurogram/widgets/spaces/gram_share_card.dart';
-import 'package:aurogram/widgets/send_me_something/share_card_builder.dart';
+import 'package:aurogram/core/theme/app_dimensions.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
+import 'package:aurogram/shared/services/share/cosmic_share_card.dart';
+import 'package:aurogram/shared/services/share/insight_share_card.dart';
+import 'package:aurogram/shared/services/share/gram_share_card.dart';
+import 'package:aurogram/features/anonymous_messages/widgets/share_card_builder.dart';
 
 class CosmicCardPreviewSheet extends StatelessWidget {
   final CosmicShareCard card;

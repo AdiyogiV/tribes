@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:aurogram/utils/logging/app_logger.dart';
-import 'package:aurogram/utils/memory/memory_manager.dart';
-import 'package:aurogram/utils/memory/cache_optimizer.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:aurogram/core/storage/memory_manager.dart';
+import 'package:aurogram/core/storage/cache_optimizer.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';

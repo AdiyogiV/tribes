@@ -6,7 +6,7 @@ library;
 
 import 'dart:async';
 import 'dart:js_interop';
-import 'package:aurogram/utils/logging/app_logger.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
 
 /// JavaScript binding for loadAgoraSDK function
 @JS('loadAgoraSDK')

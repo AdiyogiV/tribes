@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:aurogram/services/feed_service.dart';
+import 'package:aurogram/features/feed/domain/feed_service.dart';
 
 /// Unit tests for FeedService
 /// Note: These test the FeedItem data model. Full integration tests 

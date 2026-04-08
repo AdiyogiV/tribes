@@ -1,8 +1,8 @@
-import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:aurogram/pages/login/login.dart';
-import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/features/auth/login.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/widgets/assets/title.dart';
 
 class LoginDialog extends StatelessWidget {

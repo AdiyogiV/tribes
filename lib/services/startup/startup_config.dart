@@ -1,9 +1,9 @@
-import 'package:aurogram/utils/dependency_injection.dart';
-import 'package:aurogram/utils/logging/app_logger.dart';
-import 'package:aurogram/utils/memory/memory_manager.dart';
-import 'package:aurogram/utils/config/app_config.dart';
-import 'package:aurogram/utils/performance/image_optimizer.dart';
-import 'package:aurogram/utils/performance/asset_generator.dart';
+import 'package:aurogram/core/di/injection.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:aurogram/core/storage/memory_manager.dart';
+import 'package:aurogram/core/config/app_config.dart';
+import 'package:aurogram/core/storage/image_optimizer.dart';
+import 'package:aurogram/core/storage/asset_generator.dart';
 import 'package:aurogram/platform/platform.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_remote_config/firebase_remote_config.dart';

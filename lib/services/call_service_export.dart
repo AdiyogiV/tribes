@@ -1,4 +1,2 @@
-/// Export CallService - now works on all platforms including web
 library;
-
-export 'call_service.dart';
+export 'package:aurogram/features/calling/domain/call_service.dart';

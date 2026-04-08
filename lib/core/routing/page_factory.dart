@@ -4,19 +4,19 @@ import 'package:aurogram/core/routing/route_names.dart';
 import 'package:aurogram/models/call.dart';
 
 // ── Page imports (centralized — services must NOT import these) ────────────
-import 'package:aurogram/pages/astrology/daily_insight_page.dart';
-import 'package:aurogram/pages/content/thread_view.dart';
-import 'package:aurogram/pages/spaces/space_screen.dart';
-import 'package:aurogram/pages/spaces/space_chat_screen.dart';
-import 'package:aurogram/pages/tabs/user_profile.dart';
-import 'package:aurogram/pages/social/invites.dart';
-import 'package:aurogram/pages/social/requests.dart';
-import 'package:aurogram/pages/call/group_call_screen.dart';
-import 'package:aurogram/pages/call/incoming_call_screen.dart'
+import 'package:aurogram/features/astrology/presentation/pages/daily_insight_page.dart';
+import 'package:aurogram/features/feed/presentation/pages/thread_view.dart';
+import 'package:aurogram/features/spaces/presentation/pages/space_screen.dart';
+import 'package:aurogram/features/spaces/presentation/pages/space_chat_screen.dart';
+import 'package:aurogram/features/profile/presentation/pages/user_profile.dart';
+import 'package:aurogram/features/profile/presentation/pages/social/invites.dart';
+import 'package:aurogram/features/profile/presentation/pages/social/requests.dart';
+import 'package:aurogram/features/calling/presentation/pages/group_call_screen.dart';
+import 'package:aurogram/features/calling/presentation/pages/incoming_call_screen.dart'
     if (dart.library.html) 'package:aurogram/pages/call/incoming_call_screen_stub.dart';
-import 'package:aurogram/pages/call/call_screen.dart'
+import 'package:aurogram/features/calling/presentation/pages/call_screen.dart'
     if (dart.library.html) 'package:aurogram/pages/call/call_screen_stub.dart';
-import 'package:aurogram/pages/send_me_something/inbox_screen.dart';
+import 'package:aurogram/features/anonymous_messages/pages/inbox_screen.dart';
 
 /// Builds a [Route] for the given [routeName] and [arguments].
 ///

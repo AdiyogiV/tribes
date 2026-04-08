@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:aurogram/utils/responsive.dart';
-import 'package:aurogram/widgets/layout/sidebar_navigation.dart';
+import 'package:aurogram/shared/presentation/responsive/responsive.dart';
+import 'package:aurogram/shared/presentation/widgets/layout/sidebar_navigation.dart';
 
 /// A responsive shell that switches between mobile and wide layouts by width.
 /// - Narrow (e.g. phone, or iPad portrait): Bottom navigation.

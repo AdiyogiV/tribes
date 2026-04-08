@@ -3,10 +3,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
-import 'package:aurogram/services/global_audio_service.dart';
-import 'package:aurogram/utils/theme/app_theme.dart';
-import 'package:aurogram/widgets/player/player_controls.dart';
-import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/shared/services/media/global_audio_service.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
+import 'package:aurogram/shared/presentation/widgets/player/player_controls.dart';
+import 'package:aurogram/core/theme/app_dimensions.dart';
 
 /// Fullscreen video page
 class FullscreenVideoPage extends StatefulWidget {

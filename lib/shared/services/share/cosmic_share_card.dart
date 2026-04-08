@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:aurogram/utils/theme/app_theme.dart';
-import 'package:aurogram/utils/astrology/zodiac_traits.dart';
-import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
+import 'package:aurogram/features/astrology/data/utils/zodiac_traits.dart';
+import 'package:aurogram/core/theme/app_dimensions.dart';
 
 /// A beautiful shareable card displaying user's cosmic profile (Rising, Sun, Moon)
 /// Designed to be captured as an image for social sharing

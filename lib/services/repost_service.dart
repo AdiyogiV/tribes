@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:aurogram/utils/logging/app_logger.dart';
-import 'package:aurogram/services/analytics_service.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:aurogram/shared/services/analytics_service.dart';
 
 /// Service for handling repost and quote post functionality
 /// Uses Cloud Functions for repost operations (Twitter-style reference-only model)

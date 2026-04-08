@@ -4,15 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:provider/provider.dart';
-import 'package:aurogram/utils/theme/app_theme.dart';
-import 'package:aurogram/widgets/posts/post_header.dart';
-import 'package:aurogram/widgets/posts/post_options_sheet.dart';
-import 'package:aurogram/widgets/posts/post_action_toolbar.dart';
-import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
-import 'package:aurogram/services/audio_player_pool.dart';
-import 'package:aurogram/pages/tabs/feed/feed_controller.dart';
-import 'package:aurogram/utils/logging/app_logger.dart';
-import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
+import 'package:aurogram/features/feed/presentation/widgets/post_header.dart';
+import 'package:aurogram/features/feed/presentation/widgets/post_options_sheet.dart';
+import 'package:aurogram/features/feed/presentation/widgets/post_action_toolbar.dart';
+import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
+import 'package:aurogram/shared/services/media/audio_player_pool.dart';
+import 'package:aurogram/features/feed/presentation/pages/feed_controller.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:aurogram/core/theme/app_dimensions.dart';
 
 /// Clean audio player matching TransparentToolbox style
 /// - Card with elevation 4

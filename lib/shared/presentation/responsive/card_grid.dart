@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:aurogram/utils/responsive.dart';
+import 'package:aurogram/shared/presentation/responsive/responsive.dart';
 
 /// A responsive grid layout for cards that adapts column count based on screen size.
 ///

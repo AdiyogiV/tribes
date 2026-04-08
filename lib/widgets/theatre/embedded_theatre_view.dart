@@ -1,22 +1,22 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:aurogram/widgets/ui/common_widgets.dart';
+import 'package:aurogram/shared/presentation/widgets/media/common_widgets.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:aurogram/models/space.dart';
-import 'package:aurogram/utils/theme/app_theme.dart';
-import 'package:aurogram/utils/theme/header_style.dart';
-import 'package:aurogram/utils/logging/app_logger.dart';
-import 'package:aurogram/pages/content/thread_view.dart';
-import 'package:aurogram/widgets/posts/post_switcher.dart';
-import 'package:aurogram/widgets/preview_boxes/gram_picture.dart';
-import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
-import 'package:aurogram/widgets/chat/embedded_chat_view.dart';
+import 'package:aurogram/shared/models/space.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
+import 'package:aurogram/core/theme/header_style.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:aurogram/features/feed/presentation/pages/thread_view.dart';
+import 'package:aurogram/features/feed/presentation/widgets/post_switcher.dart';
+import 'package:aurogram/features/profile/presentation/widgets/preview_boxes/gram_picture.dart';
+import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
+import 'package:aurogram/features/chat/presentation/widgets/embedded_chat_view.dart';
 import 'package:aurogram/widgets/call/group_call_button.dart';
-import 'package:aurogram/pages/spaces/grid_space_view.dart';
-import 'package:aurogram/pages/spaces/edit_space.dart';
-import 'package:aurogram/services/share_service.dart';
-import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/features/spaces/presentation/pages/grid_space_view.dart';
+import 'package:aurogram/features/spaces/presentation/pages/edit_space.dart';
+import 'package:aurogram/shared/services/share/share_service.dart';
+import 'package:aurogram/core/theme/app_dimensions.dart';
 
 /// An embeddable theatre view that displays gram posts in a nested layout.
 /// Unlike Theatre, this doesn't use its own Scaffold and is designed

@@ -1,6 +1,6 @@
 import 'dart:math';
 import 'package:flutter/foundation.dart' show kDebugMode;
-import 'package:aurogram/utils/logging/app_logger.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
 
 /// In-memory cache of rendered post heights for feed layout stability.
 /// Used for prefetch indexing and scroll offset preservation.

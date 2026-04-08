@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:aurogram/utils/logging/app_logger.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
 
 /// Best-effort recovery for Firestore when reads hang or time out.
 /// Keeps attempts throttled to avoid thrashing the SDK.

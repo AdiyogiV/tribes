@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:app_links/app_links.dart';
-import 'package:aurogram/config/api_endpoints.dart';
-import 'package:aurogram/utils/logging/app_logger.dart';
-import 'package:aurogram/utils/navigation/dynamic_link_navigator.dart';
+import 'package:aurogram/core/config/api_endpoints.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:aurogram/core/routing/dynamic_link_navigator.dart';
 
 /// Service for handling deep links (Universal Links, App Links, Custom Schemes)
 ///

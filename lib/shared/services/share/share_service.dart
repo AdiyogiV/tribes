@@ -1,23 +1,23 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:aurogram/widgets/ui/common_widgets.dart';
-import 'package:aurogram/utils/logging/app_logger.dart';
-import 'package:aurogram/services/data/post_db_service.dart';
-import 'package:aurogram/services/analytics_service.dart';
-import 'package:aurogram/services/story_service.dart';
-import 'package:aurogram/services/share/share_links.dart';
-import 'package:aurogram/services/share/share_media.dart';
-import 'package:aurogram/services/share/share_text_builders.dart';
-import 'package:aurogram/services/share/share_ui.dart';
-import 'package:aurogram/widgets/astrology/cosmic_share_card.dart';
-import 'package:aurogram/widgets/astrology/compatibility_share_cards.dart';
-import 'package:aurogram/widgets/astrology/insight_share_card.dart';
-import 'package:aurogram/widgets/spaces/gram_share_card.dart';
-import 'package:aurogram/widgets/share/share_preview_sheets.dart';
-import 'package:aurogram/widgets/chat/chat_picker_sheet.dart';
-import 'package:aurogram/widgets/stories/post_story_card.dart';
-import 'package:aurogram/pages/stories/story_composer_page.dart';
+import 'package:aurogram/shared/presentation/widgets/media/common_widgets.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:aurogram/features/feed/data/datasources/post_db_service.dart';
+import 'package:aurogram/shared/services/analytics_service.dart';
+import 'package:aurogram/features/stories/story_service.dart';
+import 'package:aurogram/shared/services/share/share_links.dart';
+import 'package:aurogram/shared/services/share/share_media.dart';
+import 'package:aurogram/shared/services/share/share_text_builders.dart';
+import 'package:aurogram/shared/services/share/share_ui.dart';
+import 'package:aurogram/shared/services/share/cosmic_share_card.dart';
+import 'package:aurogram/shared/services/share/compatibility_share_cards.dart';
+import 'package:aurogram/shared/services/share/insight_share_card.dart';
+import 'package:aurogram/shared/services/share/gram_share_card.dart';
+import 'package:aurogram/shared/services/share/share_preview_sheets.dart';
+import 'package:aurogram/shared/services/share/chat_picker_sheet.dart';
+import 'package:aurogram/features/stories/widgets/post_story_card.dart';
+import 'package:aurogram/features/stories/pages/story_composer_page.dart';
 
 /// Service for sharing content (posts, profiles, spaces, cosmic connections)
 ///

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:aurogram/utils/theme/app_theme.dart';
-import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
+import 'package:aurogram/core/theme/app_dimensions.dart';
 
 // =============================================================================
 // SKELETON SYSTEM - Clean & Simple

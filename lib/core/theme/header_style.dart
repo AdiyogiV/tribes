@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:aurogram/utils/theme/app_theme.dart';
-import 'package:aurogram/utils/theme/theme_helper.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
+import 'package:aurogram/core/theme/theme_helper.dart';
 import 'package:aurogram/pages/helpers/flash.dart';
 import 'package:aurogram/widgets/cosmic_dashboard.dart';
-import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/core/theme/app_dimensions.dart';
 
 /// Header background style options
 enum HeaderBackgroundStyle {

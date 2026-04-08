@@ -3,8 +3,8 @@
 import 'dart:async';
 import 'dart:js_interop';
 import 'dart:typed_data';
-import 'package:aurogram/services/audio/audio_recorder_interface.dart';
-import 'package:aurogram/utils/logging/app_logger.dart';
+import 'package:aurogram/shared/services/media/audio/audio_recorder_interface.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:web/web.dart' as web;
 
 /// Web implementation of AudioRecorderInterface using MediaRecorder API

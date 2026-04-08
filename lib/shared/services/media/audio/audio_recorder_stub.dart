@@ -1,5 +1,5 @@
 import 'dart:typed_data';
-import 'package:aurogram/services/audio/audio_recorder_interface.dart';
+import 'package:aurogram/shared/services/media/audio/audio_recorder_interface.dart';
 
 /// Stub implementation of AudioRecorderInterface
 /// Used as fallback when no platform-specific implementation is available

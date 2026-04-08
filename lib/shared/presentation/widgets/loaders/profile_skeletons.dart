@@ -1,6 +1,6 @@
-import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:flutter/material.dart';
-import 'package:aurogram/widgets/ui/skeletons/skeleton_base.dart';
+import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_base.dart';
 
 // =============================================================================
 // STORY RING SKELETON: Horizontal list of story avatars

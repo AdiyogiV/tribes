@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:aurogram/utils/theme/app_theme.dart';
-import 'package:aurogram/widgets/ui/common_widgets.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
+import 'package:aurogram/shared/presentation/widgets/media/common_widgets.dart';
 
 /// Empty state for the messages list.
 ///

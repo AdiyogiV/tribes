@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:aurogram/utils/logging/app_logger.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
 
 /// A utility class for optimizing cache and memory usage throughout the app
 class CacheOptimizer {

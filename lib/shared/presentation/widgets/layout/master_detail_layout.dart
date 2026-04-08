@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:aurogram/utils/responsive.dart';
-import 'package:aurogram/utils/theme/app_theme.dart';
-import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/shared/presentation/responsive/responsive.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
+import 'package:aurogram/core/theme/app_dimensions.dart';
 
 /// A responsive master-detail layout that shows:
 /// - On desktop: Side-by-side panels (master list + detail view)

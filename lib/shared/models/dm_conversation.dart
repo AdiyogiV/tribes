@@ -1,4 +1,4 @@
-import 'package:aurogram/models/space_types.dart';
+import 'package:aurogram/shared/models/space_types.dart';
 
 /// Represents a direct message conversation
 class DmConversation {

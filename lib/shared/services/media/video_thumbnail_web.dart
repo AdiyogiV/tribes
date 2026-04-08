@@ -4,7 +4,7 @@ import 'dart:async';
 import 'dart:js_interop';
 import 'dart:typed_data';
 import 'package:web/web.dart' as web;
-import 'package:aurogram/utils/logging/app_logger.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
 
 /// Web implementation for generating video thumbnails using HTML5 canvas
 class VideoThumbnailWeb {

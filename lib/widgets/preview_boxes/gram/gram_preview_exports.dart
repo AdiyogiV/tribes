@@ -1,6 +1,4 @@
-/// Barrel exports for gram preview sub-widgets
 library;
-
-export 'gram_preview_loading.dart';
-export 'gram_preview_actions.dart';
-export 'gram_preview_media.dart';
+export 'package:aurogram/features/profile/presentation/widgets/preview_boxes/gram/gram_preview_loading.dart';
+export 'package:aurogram/features/profile/presentation/widgets/preview_boxes/gram/gram_preview_actions.dart';
+export 'package:aurogram/features/profile/presentation/widgets/preview_boxes/gram/gram_preview_media.dart';

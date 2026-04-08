@@ -2,12 +2,12 @@ import 'dart:async' show unawaited, runZonedGuarded, TimeoutException;
 import 'package:aurogram/firebase_options.dart';
 import 'package:aurogram/services/cache_service.dart';
 import 'package:aurogram/services/startup_service.dart';
-import 'package:aurogram/services/notification_service.dart';
+import 'package:aurogram/features/notifications/domain/notification_service.dart';
 import 'package:aurogram/services/onboarding_service.dart';
-import 'package:aurogram/utils/dependency_injection.dart';
-import 'package:aurogram/utils/logging/app_logger.dart';
-import 'package:aurogram/utils/performance/app_performance.dart';
-import 'package:aurogram/utils/theme/app_theme.dart';
+import 'package:aurogram/core/di/injection.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:aurogram/core/storage/app_performance.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -17,29 +17,28 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:aurogram/providers/theme_provider.dart';
-import 'package:aurogram/services/auth_service.dart';
+import 'package:aurogram/features/auth/auth_service.dart';
 import 'package:aurogram/providers/ai_chat_provider.dart';
-import 'package:aurogram/services/speech_recognition_service.dart';
-import 'package:aurogram/services/audio_input_service.dart';
-import 'package:aurogram/services/ai/ai_chat_service.dart';
-import 'package:aurogram/services/location_service.dart';
-import 'package:aurogram/pages/tabs/feed/feed_controller.dart';
+import 'package:aurogram/shared/services/media/speech_recognition_service.dart';
+import 'package:aurogram/shared/services/media/audio_input_service.dart';
+import 'package:aurogram/features/ai_chat/domain/ai_chat_service.dart';
+import 'package:aurogram/shared/services/location_service.dart';
+import 'package:aurogram/features/feed/presentation/pages/feed_controller.dart';
 import 'package:aurogram/utils/app_initializer.dart';
 import 'tabs.dart';
-import 'package:aurogram/utils/memory/memory_manager.dart';
-import 'package:aurogram/utils/network/network_manager.dart';
-import 'package:aurogram/utils/network/network_optimizer.dart';
-import 'package:aurogram/services/media/media_compression_service.dart';
-import 'package:aurogram/utils/navigation/dynamic_link_navigator.dart';
+import 'package:aurogram/core/storage/memory_manager.dart';
+import 'package:aurogram/core/network/network_manager.dart';
+import 'package:aurogram/core/network/network_optimizer.dart';
+import 'package:aurogram/shared/services/media/media_compression_service.dart';
+import 'package:aurogram/core/routing/dynamic_link_navigator.dart';
 import 'package:aurogram/pages/helpers/flash.dart';
 import 'package:aurogram/platform/platform.dart';
 
 // Conditional imports for mobile-only features
 import 'package:aurogram/services/call_service_export.dart';
-import 'package:aurogram/pages/call/incoming_call_screen.dart'
+import 'package:aurogram/features/calling/presentation/pages/incoming_call_screen.dart'
     if (dart.library.html) 'package:aurogram/pages/call/incoming_call_screen_stub.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart'
-    if (dart.library.html) 'package:aurogram/platform/flutter_local_notifications_stub.dart';
+import 'package:aurogram/core/notifications/fcm_background_handler.dart';
 
 // Global for accessing the navigator during FCM setup
 final GlobalKey<NavigatorState> navigatorKey =
@@ -48,278 +47,9 @@ final GlobalKey<NavigatorState> navigatorKey =
 // Flag to track if initial dependencies are loaded
 bool _initialDependenciesLoaded = false;
 
-/// Firebase Messaging background handler
-/// Must be a top-level function (not a class method)
-/// This is called for DATA-ONLY FCM messages when app is in background
-@pragma('vm:entry-point')
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // Initialize Firebase if needed (for background isolate)
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+// FCM background handler and call notification functions are in
+// lib/core/notifications/fcm_background_handler.dart
 
-  if (kDebugMode) {
-    AppLogger.d(
-      'Background FCM received',
-      category: LogCategory.messaging,
-      data: {'type': message.data['type'], 'data': message.data},
-    );
-  }
-
-  final type = message.data['type'];
-
-  // Handle incoming call notifications in background
-  if (type == 'incoming_call') {
-    await _showIncomingCallNotification(message);
-  }
-
-  // Handle group call notifications in background
-  if (type == 'group_call') {
-    await _showGroupCallNotification(message);
-  }
-}
-
-/// Generate a consistent notification ID from call ID for proper cancellation
-int _getNotificationIdForCall(String callId) {
-  // Use a consistent hash of the call ID to generate notification ID
-  // This allows us to cancel the notification later when call ends
-  return callId.hashCode.abs() % 2147483647; // Keep within 32-bit int range
-}
-
-/// Show incoming call notification when app is in background
-/// This ensures the user sees a high-priority notification for calls
-/// NOTE: This function is only called on mobile platforms (guarded by kIsWeb check)
-@pragma('vm:entry-point')
-Future<void> _showIncomingCallNotification(RemoteMessage message) async {
-  // Skip on web - local notifications not supported
-  if (kIsWeb) return;
-
-  final FlutterLocalNotificationsPlugin localNotifications =
-      FlutterLocalNotificationsPlugin();
-
-  // Initialize local notifications (needed in background isolate)
-  const initSettings = InitializationSettings(
-    android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-    iOS: DarwinInitializationSettings(),
-  );
-  await localNotifications.initialize(initSettings);
-
-  // CRITICAL: Create the notification channel in background isolate
-  // Android requires channel to exist before showing notification
-  // Using v2 channel to ensure fresh creation with action support
-  // Check platform safely for web compatibility
-  final isAndroid = !kIsWeb && PlatformServices.instance.isAndroid;
-  if (isAndroid) {
-    final androidPlugin =
-        localNotifications.resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
-    if (androidPlugin != null) {
-      await androidPlugin.createNotificationChannel(
-        const AndroidNotificationChannel(
-          'call_notifications_v2',
-          'Incoming Calls',
-          description: 'Notifications for incoming voice and video calls',
-          importance: Importance.max,
-          playSound: true,
-          enableVibration: true,
-          showBadge: true,
-        ),
-      );
-    }
-  }
-
-  final data = message.data;
-  final callId = data['callId'] ?? '';
-  final callerName = data['callerName'] ?? data['title'] ?? 'Someone';
-  final callBody = data['body'] ??
-      (data['callType'] == 'video'
-          ? '📹 Incoming video call...'
-          : '📞 Incoming voice call...');
-
-  // Create action buttons for answer and decline
-  // These allow users to respond directly from the notification
-  const answerAction = AndroidNotificationAction(
-    'answer_call',
-    '✓ Answer',
-    showsUserInterface: true, // Opens app when tapped
-    cancelNotification: true,
-    contextual: false,
-  );
-
-  const declineAction = AndroidNotificationAction(
-    'decline_call',
-    '✕ Decline',
-    showsUserInterface: true, // Must open app to properly handle decline
-    cancelNotification: true,
-    contextual: false,
-  );
-
-  // Android notification details - high priority for calls with action buttons
-  const androidDetails = AndroidNotificationDetails(
-    'call_notifications_v2', // New channel ID to force recreation with actions
-    'Incoming Calls',
-    channelDescription: 'Notifications for incoming voice and video calls',
-    importance: Importance.max,
-    priority: Priority.max,
-    category: AndroidNotificationCategory.call,
-    fullScreenIntent: true,
-    ongoing: true, // Keep notification visible until handled
-    autoCancel: false, // Don't auto-cancel, let actions handle it
-    visibility: NotificationVisibility.public,
-    playSound: true,
-    enableVibration: true,
-    timeoutAfter: 60000, // 60 second timeout (matches call service timeout)
-    actions: <AndroidNotificationAction>[
-      answerAction,
-      declineAction
-    ], // Action buttons
-  );
-
-  // iOS notification details with category for actions
-  const iosDetails = DarwinNotificationDetails(
-    presentAlert: true,
-    presentBadge: true,
-    presentSound: true,
-    interruptionLevel: InterruptionLevel.timeSensitive,
-    categoryIdentifier:
-        'incoming_call', // iOS notification category for actions
-  );
-
-  final notificationDetails = NotificationDetails(
-    android: androidDetails,
-    iOS: iosDetails,
-  );
-
-  // Use consistent notification ID based on call ID for later cancellation
-  final notificationId = _getNotificationIdForCall(callId);
-
-  // Show the notification with actions
-  await localNotifications.show(
-    notificationId,
-    callerName,
-    callBody,
-    notificationDetails,
-    payload:
-        'incoming_call:$callId:${data['callerId']}:$callerName:${data['callerAvatar'] ?? ''}:${data['callType'] ?? 'voice'}',
-  );
-
-  if (kDebugMode) {
-    AppLogger.d(
-      'Background: showed incoming call notification',
-      category: LogCategory.messaging,
-      data: {'callerName': callerName, 'notificationId': notificationId},
-    );
-  }
-}
-
-/// Show group call notification when app is in background
-/// This ensures the user sees a notification with Join/Dismiss actions
-/// NOTE: This function is only called on mobile platforms (guarded by kIsWeb check)
-@pragma('vm:entry-point')
-Future<void> _showGroupCallNotification(RemoteMessage message) async {
-  // Skip on web - local notifications not supported
-  if (kIsWeb) return;
-
-  final FlutterLocalNotificationsPlugin localNotifications =
-      FlutterLocalNotificationsPlugin();
-
-  // Initialize local notifications (needed in background isolate)
-  const initSettings = InitializationSettings(
-    android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-    iOS: DarwinInitializationSettings(),
-  );
-  await localNotifications.initialize(initSettings);
-
-  // Create the notification channel in background isolate
-  // Check platform safely for web compatibility
-  final isAndroid = !kIsWeb && PlatformServices.instance.isAndroid;
-  if (isAndroid) {
-    final androidPlugin =
-        localNotifications.resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
-    if (androidPlugin != null) {
-      await androidPlugin.createNotificationChannel(
-        const AndroidNotificationChannel(
-          'group_calls',
-          'Group Calls',
-          description: 'Notifications for group calls in grams',
-          importance: Importance.high,
-          playSound: true,
-          enableVibration: true,
-          showBadge: true,
-        ),
-      );
-    }
-  }
-
-  final data = message.data;
-  final spaceId = data['spaceId'] ?? '';
-  final spaceName = data['spaceName'] ?? data['title'] ?? 'Group';
-  final callerName = data['callerName'] ?? 'Someone';
-  final participantCount = data['participantCount'] ?? '1';
-  final callBody = data['body'] ?? '📞 $callerName started a group call';
-
-  // Create action buttons for Join and Dismiss
-  const joinAction = AndroidNotificationAction(
-    'join_group_call',
-    '📞 Join',
-    showsUserInterface: true, // Opens app when tapped
-    cancelNotification: true,
-  );
-
-  const dismissAction = AndroidNotificationAction(
-    'dismiss_group_call',
-    'Dismiss',
-    showsUserInterface: false,
-    cancelNotification: true,
-  );
-
-  // Android notification details with action buttons
-  const androidDetails = AndroidNotificationDetails(
-    'group_calls',
-    'Group Calls',
-    channelDescription: 'Notifications for group calls in grams',
-    importance: Importance.high,
-    priority: Priority.high,
-    category: AndroidNotificationCategory.call,
-    autoCancel: true,
-    playSound: true,
-    enableVibration: true,
-    actions: <AndroidNotificationAction>[joinAction, dismissAction],
-  );
-
-  // iOS notification details with category for actions
-  const iosDetails = DarwinNotificationDetails(
-    presentAlert: true,
-    presentBadge: true,
-    presentSound: true,
-    interruptionLevel: InterruptionLevel.active,
-    categoryIdentifier: 'group_call',
-  );
-
-  final notificationDetails = NotificationDetails(
-    android: androidDetails,
-    iOS: iosDetails,
-  );
-
-  // Use consistent notification ID based on space ID
-  final notificationId = spaceId.hashCode.abs() % 2147483647;
-
-  // Show the notification with actions
-  await localNotifications.show(
-    notificationId,
-    spaceName,
-    callBody,
-    notificationDetails,
-    payload: 'group_call:$spaceId:$spaceName:$participantCount',
-  );
-
-  if (kDebugMode) {
-    AppLogger.d(
-      'Background: showed group call notification',
-      category: LogCategory.messaging,
-      data: {'spaceName': spaceName, 'notificationId': notificationId},
-    );
-  }
-}
 
 void main() async {
   // Capture startup errors with improved error zone
@@ -502,7 +232,7 @@ Future<void> _initializeMinimalServices() async {
 
   // Register the background message handler (mobile only)
   if (!kIsWeb) {
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   }
 
   // Set up core dependency injection - registers AuthService needed for providers

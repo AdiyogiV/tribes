@@ -1,21 +1,21 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
-import 'package:aurogram/pages/content/theatre.dart';
+import 'package:aurogram/features/feed/presentation/pages/theatre.dart';
 import 'package:aurogram/services/database_service.dart';
-import 'package:aurogram/widgets/preview_boxes/preview_box.dart';
+import 'package:aurogram/features/profile/presentation/widgets/preview_boxes/preview_box.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:aurogram/pages/spaces/space_screen.dart';
-import 'package:aurogram/pages/tabs/user_profile.dart';
-import 'package:aurogram/services/search_service.dart';
+import 'package:aurogram/features/spaces/presentation/pages/space_screen.dart';
+import 'package:aurogram/features/profile/presentation/pages/user_profile.dart';
+import 'package:aurogram/shared/services/search_service.dart';
 // Removed unused import: title.dart
-import 'package:aurogram/widgets/preview_boxes/crew_preview.dart';
-import 'package:aurogram/widgets/preview_boxes/gram_preview_box.dart';
-import 'package:aurogram/utils/theme/app_theme.dart';
-import 'package:aurogram/utils/theme/header_style.dart';
-import 'package:aurogram/utils/responsive.dart';
-import 'package:aurogram/utils/logging/app_logger.dart';
-import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/features/profile/presentation/widgets/preview_boxes/crew_preview.dart';
+import 'package:aurogram/features/profile/presentation/widgets/preview_boxes/gram_preview_box.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
+import 'package:aurogram/core/theme/header_style.dart';
+import 'package:aurogram/shared/presentation/responsive/responsive.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:aurogram/core/theme/app_dimensions.dart';
 
 class Discovery extends StatefulWidget {
   const Discovery({super.key});

@@ -4,8 +4,8 @@ import 'dart:collection';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
-import 'package:aurogram/utils/logging/app_logger.dart';
-import 'package:aurogram/utils/config/app_config.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:aurogram/core/config/app_config.dart';
 
 /// Manages memory usage in the application to prevent OOM issues
 class MemoryManager {

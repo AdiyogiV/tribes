@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
-import 'package:aurogram/widgets/ui/common_widgets.dart';
+import 'package:aurogram/shared/presentation/widgets/media/common_widgets.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
@@ -9,23 +9,23 @@ import 'package:video_player/video_player.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
-import 'package:aurogram/services/audio_service.dart';
-import 'package:aurogram/services/global_audio_service.dart';
+import 'package:aurogram/shared/services/media/audio_service.dart';
+import 'package:aurogram/shared/services/media/global_audio_service.dart';
 import 'package:aurogram/services/feed_video_focus_service.dart';
-import 'package:aurogram/services/video_controller_pool.dart';
+import 'package:aurogram/shared/services/media/video_controller_pool.dart';
 import 'package:aurogram/services/cache_service.dart';
-import 'package:aurogram/pages/tabs/feed/feed_controller.dart';
-import 'package:aurogram/widgets/ui/skeleton_widgets.dart';
-import 'package:aurogram/utils/theme/app_theme.dart';
-import 'package:aurogram/utils/theme/header_style.dart';
-import 'package:aurogram/utils/dependency_injection.dart';
-import 'package:aurogram/utils/logging/app_logger.dart';
-import 'package:aurogram/widgets/posts/post_header.dart';
-import 'package:aurogram/widgets/posts/post_options_sheet.dart';
-import 'package:aurogram/widgets/posts/post_action_toolbar.dart';
-import 'package:aurogram/widgets/player/player_controls.dart';
-import 'package:aurogram/widgets/player/player_fullscreen.dart';
-import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/features/feed/presentation/pages/feed_controller.dart';
+import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
+import 'package:aurogram/core/theme/header_style.dart';
+import 'package:aurogram/core/di/injection.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:aurogram/features/feed/presentation/widgets/post_header.dart';
+import 'package:aurogram/features/feed/presentation/widgets/post_options_sheet.dart';
+import 'package:aurogram/features/feed/presentation/widgets/post_action_toolbar.dart';
+import 'package:aurogram/shared/presentation/widgets/player/player_controls.dart';
+import 'package:aurogram/shared/presentation/widgets/player/player_fullscreen.dart';
+import 'package:aurogram/core/theme/app_dimensions.dart';
 
 /// Optimized video player for feed
 /// - Eager initialization for smooth autoplay

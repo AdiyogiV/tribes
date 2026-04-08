@@ -1,4 +1,4 @@
-import 'package:aurogram/utils/logging/app_logger.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
 
 class AudioService {
   static final AudioService _instance = AudioService._internal();

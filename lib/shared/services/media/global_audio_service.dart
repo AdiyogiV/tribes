@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:aurogram/utils/logging/app_logger.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
 
 /// Global service to manage audio state across all video players
 class GlobalAudioService extends ChangeNotifier {

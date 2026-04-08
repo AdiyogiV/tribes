@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:aurogram/services/user_service.dart';
-import 'package:aurogram/utils/dependency_injection.dart';
-import 'package:aurogram/utils/logging/app_logger.dart';
+import 'package:aurogram/features/profile/domain/user_service.dart';
+import 'package:aurogram/core/di/injection.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
 
 /// Batch data loader with request deduplication
 /// Loads counters, user data, and space data in batches to minimize Firestore queries

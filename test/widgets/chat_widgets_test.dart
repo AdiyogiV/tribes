@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:aurogram/utils/chat/internal_link_utils.dart';
-import 'package:aurogram/utils/chat/external_link_utils.dart';
+import 'package:aurogram/features/chat/domain/internal_link_utils.dart';
+import 'package:aurogram/features/chat/domain/external_link_utils.dart';
 
 void main() {
   group('Chat Widget Logic Tests', () {

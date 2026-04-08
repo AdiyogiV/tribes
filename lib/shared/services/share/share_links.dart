@@ -1,4 +1,4 @@
-import 'package:aurogram/config/api_endpoints.dart';
+import 'package:aurogram/core/config/api_endpoints.dart';
 
 class ShareLinks {
   static const String baseUrl = ApiEndpoints.appBaseUrl;

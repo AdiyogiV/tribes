@@ -5,7 +5,7 @@ import 'dart:js_interop';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:web/web.dart' as web;
-import 'package:aurogram/utils/logging/app_logger.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
 
 /// Web implementation of drop zone using HTML5 drag-and-drop API
 Widget buildDropZone({

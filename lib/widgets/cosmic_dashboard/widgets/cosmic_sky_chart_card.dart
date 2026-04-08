@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:kundali_chart/kundali_chart.dart';
-import 'package:aurogram/utils/astrology/chart_utils.dart';
-import 'package:aurogram/utils/theme/app_theme.dart';
-import 'package:aurogram/utils/logging/app_logger.dart';
+import 'package:aurogram/features/astrology/data/utils/chart_utils.dart';
+import 'package:aurogram/core/theme/app_theme.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/widgets/cosmic_dashboard/widgets/chart_blend_slider.dart';
 import 'package:aurogram/widgets/cosmic_dashboard/widgets/timeline_slider.dart';
-import 'package:aurogram/utils/theme/app_dimensions.dart';
+import 'package:aurogram/core/theme/app_dimensions.dart';
 
 /// Card widget displaying the current sky chart with optional birth chart overlay
 class CosmicSkyChartCard extends StatelessWidget {

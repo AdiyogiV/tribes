@@ -1,7 +1,7 @@
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
-import 'package:aurogram/utils/logging/app_logger.dart';
-import 'package:aurogram/services/media/file_uploader.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:aurogram/shared/services/media/file_uploader.dart';
 
 /// Cross-platform media upload helper
 /// Handles file uploads using bytes on web and file paths on mobile
