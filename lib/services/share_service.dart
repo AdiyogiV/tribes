@@ -16,6 +16,7 @@ import 'package:aurogram/widgets/astrology/insight_share_card.dart';
 import 'package:aurogram/widgets/spaces/gram_share_card.dart';
 import 'package:aurogram/widgets/share/share_preview_sheets.dart';
 import 'package:aurogram/widgets/chat/chat_picker_sheet.dart';
+import 'package:aurogram/widgets/stories/post_story_card.dart';
 import 'package:aurogram/pages/stories/story_composer_page.dart';
 
 /// Service for sharing content (posts, profiles, spaces, cosmic connections)
@@ -129,12 +130,24 @@ class ShareService {
         contentType: 'Post',
         chatShareContent: chatContent,
         onAddToStory: () async {
-          // Render post as story card with Instagram-style black background
-          final bytes = await StoryService().renderPostStoryCard(
-            postId: postId,
+          // Fetch post data and render story card
+          final storyService = StoryService();
+          final data = await storyService.fetchPostStoryData(postId: postId);
+          if (data == null) {
+            if (context.mounted) {
+              ShareUi.showErrorSnackbar(context, 'Failed to create story card');
+            }
+            return;
+          }
+
+          final cardWidget = PostStoryCard(
+            post: data['post'],
+            authorName: data['authorName'] as String,
+            authorAvatar: data['authorAvatar'] as String?,
             backgroundColor: Colors.black,
           );
 
+          final bytes = await storyService.renderStoryCard(cardWidget: cardWidget);
           if (bytes == null) {
             if (context.mounted) {
               ShareUi.showErrorSnackbar(context, 'Failed to create story card');

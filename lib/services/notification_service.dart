@@ -10,15 +10,8 @@ import 'package:aurogram/models/notification.dart';
 import 'package:aurogram/utils/config/app_config.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
 import 'package:aurogram/services/chat/chat_notification_service.dart';
-import 'package:aurogram/pages/astrology/daily_insight_page.dart';
-import 'package:aurogram/pages/content/thread_view.dart';
-import 'package:aurogram/pages/spaces/space_screen.dart';
-import 'package:aurogram/pages/spaces/space_chat_screen.dart';
-import 'package:aurogram/pages/tabs/user_profile.dart';
-import 'package:aurogram/pages/social/invites.dart';
-import 'package:aurogram/pages/social/requests.dart';
-import 'package:aurogram/pages/call/group_call_screen.dart';
-import 'package:aurogram/pages/send_me_something/inbox_screen.dart';
+import 'package:aurogram/core/routing/route_names.dart';
+import 'package:aurogram/core/routing/page_factory.dart';
 import 'package:aurogram/platform/platform.dart';
 
 part 'notification/notification_channels.dart';

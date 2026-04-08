@@ -75,9 +75,7 @@ extension _NotificationNavigation on NotificationService {
   void _navigateToSecretMessagesInbox() {
     if (_navigatorKey?.currentState == null) return;
     _navigatorKey!.currentState!.push(
-      MaterialPageRoute(
-        builder: (context) => const SecretMessagesInboxScreen(),
-      ),
+      PageFactory.route(RouteNames.secretMessagesInbox),
     );
   }
 
@@ -95,18 +93,16 @@ extension _NotificationNavigation on NotificationService {
     chatService.setNavigatorKey(_navigatorKey!);
 
     _navigatorKey!.currentState!.push(
-      MaterialPageRoute(
-        builder: (context) => SpaceChatScreen(
-          spaceId: spaceId,
-          space: null,
-          otherUserId: spaceId.startsWith('dm_')
-              ? spaceId
-                  .split('_')
-                  .where((id) => id != _currentUser?.uid)
-                  .firstOrNull
-              : null,
-        ),
-      ),
+      PageFactory.route(RouteNames.spaceChatScreen, arguments: {
+        'spaceId': spaceId,
+        'space': null,
+        'otherUserId': spaceId.startsWith('dm_')
+            ? spaceId
+                .split('_')
+                .where((id) => id != _currentUser?.uid)
+                .firstOrNull
+            : null,
+      }),
     );
   }
 
@@ -132,13 +128,11 @@ extension _NotificationNavigation on NotificationService {
     }
 
     _navigatorKey!.currentState!.push(
-      MaterialPageRoute(
-        builder: (_) => DailyInsightPage(
-          uid: userId,
-          highlightCardIndex: cardIndex,
-          insightDate: insightDate,
-        ),
-      ),
+      PageFactory.route(RouteNames.dailyInsight, arguments: {
+        'uid': userId,
+        'cardIndex': cardIndex,
+        'insightDate': insightDate,
+      }),
     );
   }
 
@@ -146,15 +140,15 @@ extension _NotificationNavigation on NotificationService {
     if (_navigatorKey?.currentState == null) return;
     if (postId != null && postId.isNotEmpty) {
       _navigatorKey!.currentState!.push(
-        MaterialPageRoute(
-          builder: (_) => ThreadView(postId: postId),
-        ),
+        PageFactory.route(RouteNames.threadView, arguments: {
+          'postId': postId,
+        }),
       );
     } else {
       _navigatorKey!.currentState!.push(
-        MaterialPageRoute(
-          builder: (_) => SpaceScreen(rid: spaceId),
-        ),
+        PageFactory.route(RouteNames.spaceScreen, arguments: {
+          'rid': spaceId,
+        }),
       );
     }
   }
@@ -163,9 +157,9 @@ extension _NotificationNavigation on NotificationService {
     if (_navigatorKey?.currentState == null) return;
 
     _navigatorKey!.currentState!.push(
-      MaterialPageRoute(
-        builder: (_) => UserProfilePage(uid: userId),
-      ),
+      PageFactory.route(RouteNames.userProfile, arguments: {
+        'uid': userId,
+      }),
     );
   }
 
@@ -173,9 +167,9 @@ extension _NotificationNavigation on NotificationService {
     if (_navigatorKey?.currentState == null) return;
 
     _navigatorKey!.currentState!.push(
-      MaterialPageRoute(
-        builder: (_) => SpaceScreen(rid: spaceId),
-      ),
+      PageFactory.route(RouteNames.spaceScreen, arguments: {
+        'rid': spaceId,
+      }),
     );
   }
 
@@ -183,7 +177,7 @@ extension _NotificationNavigation on NotificationService {
     if (_navigatorKey?.currentState == null) return;
 
     _navigatorKey!.currentState!.push(
-      MaterialPageRoute(builder: (_) => const Invites()),
+      PageFactory.route(RouteNames.invites),
     );
   }
 
@@ -191,7 +185,7 @@ extension _NotificationNavigation on NotificationService {
     if (_navigatorKey?.currentState == null) return;
 
     _navigatorKey!.currentState!.push(
-      MaterialPageRoute(builder: (_) => const Requests()),
+      PageFactory.route(RouteNames.requests),
     );
   }
 
@@ -215,12 +209,10 @@ extension _NotificationNavigation on NotificationService {
     }
 
     _navigatorKey!.currentState!.push(
-      MaterialPageRoute(
-        builder: (_) => GroupCallScreen(
-          spaceId: spaceId,
-          spaceName: spaceName,
-        ),
-      ),
+      PageFactory.route(RouteNames.groupCall, arguments: {
+        'spaceId': spaceId,
+        'spaceName': spaceName,
+      }),
     );
   }
 }

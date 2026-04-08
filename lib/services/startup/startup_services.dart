@@ -4,13 +4,8 @@ import 'package:aurogram/services/deep_link_service.dart';
 import 'package:aurogram/services/audio_service.dart';
 import 'package:aurogram/services/chat/chat_notification_service.dart';
 import 'package:aurogram/services/call_service_export.dart';
-import 'package:aurogram/pages/astrology/daily_insight_page.dart';
-import 'package:aurogram/pages/tabs/user_profile.dart';
-import 'package:aurogram/pages/call/incoming_call_screen.dart'
-    if (dart.library.html) 'package:aurogram/pages/call/incoming_call_screen_stub.dart';
-import 'package:aurogram/pages/call/call_screen.dart'
-    if (dart.library.html) 'package:aurogram/pages/call/call_screen_stub.dart';
-import 'package:aurogram/pages/call/group_call_screen.dart';
+import 'package:aurogram/core/routing/route_names.dart';
+import 'package:aurogram/core/routing/page_factory.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -271,21 +266,19 @@ mixin StartupServicesMixin {
 
     if (autoAnswer) {
       _navigatorKey?.currentState?.push(
-        CupertinoPageRoute(
-          builder: (context) => CallScreen(
-            calleeId: callerId,
-            calleeName: callerName,
-            calleeAvatar: callerAvatar,
-            callType: callType == 'video' ? CallType.video : CallType.voice,
-            isIncoming: true,
-          ),
-        ),
+        PageFactory.route(RouteNames.callScreen, arguments: {
+          'calleeId': callerId,
+          'calleeName': callerName,
+          'calleeAvatar': callerAvatar,
+          'callType': callType == 'video' ? CallType.video : CallType.voice,
+          'isIncoming': true,
+        }),
       );
     } else {
       _navigatorKey?.currentState?.push(
-        CupertinoPageRoute(
-          builder: (context) => IncomingCallScreen(call: call),
-        ),
+        PageFactory.route(RouteNames.incomingCall, arguments: {
+          'call': call,
+        }),
       );
     }
   }
@@ -356,13 +349,11 @@ mixin StartupServicesMixin {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       try {
         _navigatorKey?.currentState?.push(
-          MaterialPageRoute(
-            builder: (_) => DailyInsightPage(
-              uid: userId,
-              highlightCardIndex: cardIndex,
-              insightDate: insightDate,
-            ),
-          ),
+          PageFactory.route(RouteNames.dailyInsight, arguments: {
+            'uid': userId,
+            'cardIndex': cardIndex,
+            'insightDate': insightDate,
+          }),
         );
       } catch (e, stack) {
         AppLogger.e('Navigation error',
@@ -496,9 +487,7 @@ mixin StartupServicesMixin {
                     onPressed: () {
                       Navigator.of(context).pop();
                       Navigator.of(context).push(
-                        CupertinoPageRoute(
-                          builder: (_) => UserProfilePage(uid: userId),
-                        ),
+                        PageFactory.route(RouteNames.userProfile, arguments: {'uid': userId}),
                       );
                     },
                   ),
@@ -526,9 +515,7 @@ mixin StartupServicesMixin {
                     onPressed: () {
                       Navigator.of(context).pop();
                       Navigator.of(context).push(
-                        CupertinoPageRoute(
-                          builder: (_) => UserProfilePage(uid: userId),
-                        ),
+                        PageFactory.route(RouteNames.userProfile, arguments: {'uid': userId}),
                       );
                     },
                   ),
@@ -537,9 +524,7 @@ mixin StartupServicesMixin {
                     onPressed: () {
                       Navigator.of(context).pop();
                       Navigator.of(context).push(
-                        CupertinoPageRoute(
-                          builder: (_) => UserProfilePage(uid: userId),
-                        ),
+                        PageFactory.route(RouteNames.userProfile, arguments: {'uid': userId}),
                       );
                     },
                   ),
@@ -605,9 +590,7 @@ mixin StartupServicesMixin {
       );
 
       navigatorKey.currentState!.push(
-        CupertinoPageRoute(
-          builder: (context) => IncomingCallScreen(call: call),
-        ),
+        PageFactory.route(RouteNames.incomingCall, arguments: {'call': call}),
       );
     }
   }
@@ -651,12 +634,10 @@ mixin StartupServicesMixin {
     }
 
     navigatorKey.currentState!.push(
-      CupertinoPageRoute(
-        builder: (_) => GroupCallScreen(
-          spaceId: spaceId,
-          spaceName: spaceName,
-        ),
-      ),
+      PageFactory.route(RouteNames.groupCall, arguments: {
+        'spaceId': spaceId,
+        'spaceName': spaceName,
+      }),
     );
   }
 

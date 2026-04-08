@@ -7,7 +7,6 @@ import 'package:aurogram/models/story.dart';
 import 'package:aurogram/models/post.dart';
 import 'package:aurogram/services/media/media_storage_service.dart';
 import 'package:aurogram/services/share/share_media.dart';
-import 'package:aurogram/widgets/stories/post_story_card.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
 
 /// Service for creating and loading 24h ephemeral stories.
@@ -140,70 +139,68 @@ class StoryService {
     }
   }
 
-  /// Render a post as a story card and return the image bytes for preview.
-  /// Does NOT upload or create story - that happens when user confirms in StoryComposerPage.
-  Future<Uint8List?> renderPostStoryCard({
+  /// Fetch post and author data for rendering a story card.
+  /// Returns a map with 'post', 'authorName', 'authorAvatar' keys,
+  /// or null if the post doesn't exist.
+  Future<Map<String, dynamic>?> fetchPostStoryData({
     required String postId,
-    required Color backgroundColor,
   }) async {
     try {
-      AppLogger.i('Rendering post story card',
-          category: LogCategory.general, data: {'postId': postId});
-
-      // 1. Fetch post document
       final postDoc = await _firestore.collection('posts').doc(postId).get();
       if (!postDoc.exists) {
-        AppLogger.e('StoryService.renderPostStoryCard: post not found',
+        AppLogger.e('StoryService.fetchPostStoryData: post not found',
             category: LogCategory.general, data: {'postId': postId});
         return null;
       }
 
       final post = Post.fromDocument(postDoc);
 
-      // 2. Fetch author info
       final authorDoc = await _firestore.collection('users').doc(post.authorId).get();
       final authorData = authorDoc.data();
-      final authorName = authorData?['name'] as String? ?? 
-          authorData?['nickname'] as String? ?? 
+      final authorName = authorData?['name'] as String? ??
+          authorData?['nickname'] as String? ??
           'Unknown User';
       final authorAvatar = authorData?['displayPicture'] as String?;
 
-      AppLogger.d('Building post story card',
+      return {
+        'post': post,
+        'authorName': authorName,
+        'authorAvatar': authorAvatar,
+      };
+    } catch (e, st) {
+      AppLogger.e('StoryService.fetchPostStoryData failed',
           category: LogCategory.general,
-          data: {
-            'postId': postId,
-            'authorName': authorName,
-            'hasAvatar': authorAvatar != null,
-            'postType': post.postType.name,
-          });
+          error: e,
+          stackTrace: st,
+          data: {'postId': postId});
+      return null;
+    }
+  }
 
-      // 3. Build PostStoryCard widget
-      final cardWidget = PostStoryCard(
-        post: post,
-        authorName: authorName,
-        authorAvatar: authorAvatar,
-        backgroundColor: backgroundColor,
-      );
-
-      // 4. Capture widget to bytes
+  /// Render a pre-built story card widget to image bytes.
+  /// The caller is responsible for constructing the card widget (e.g. PostStoryCard).
+  /// Does NOT upload or create story - that happens when user confirms in StoryComposerPage.
+  Future<Uint8List?> renderStoryCard({
+    required Widget cardWidget,
+  }) async {
+    try {
       final bytes = await ShareMedia.captureWidgetToBytes(card: cardWidget);
       if (bytes == null) {
-        AppLogger.e('StoryService.renderPostStoryCard: widget capture failed',
+        AppLogger.e('StoryService.renderStoryCard: widget capture failed',
             category: LogCategory.general);
         return null;
       }
 
-      AppLogger.d('Post story card rendered',
+      AppLogger.d('Story card rendered',
           category: LogCategory.general,
           data: {'bytesLength': bytes.length});
 
       return bytes;
     } catch (e, st) {
-      AppLogger.e('StoryService.renderPostStoryCard failed',
+      AppLogger.e('StoryService.renderStoryCard failed',
           category: LogCategory.general,
           error: e,
-          stackTrace: st,
-          data: {'postId': postId});
+          stackTrace: st);
       return null;
     }
   }

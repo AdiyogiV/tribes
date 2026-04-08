@@ -6,7 +6,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:aurogram/services/data/space_db_service.dart';
 import 'package:aurogram/utils/logging/app_logger.dart';
 import 'package:aurogram/widgets/chat/in_app_chat_notification.dart';
-import 'package:aurogram/pages/spaces/space_chat_screen.dart';
+import 'package:aurogram/core/routing/route_names.dart';
+import 'package:aurogram/core/routing/page_factory.dart';
 import 'package:aurogram/services/chat/space_chat_service.dart';
 
 class ChatNotificationService {
@@ -156,13 +157,11 @@ class ChatNotificationService {
 
       // Navigate to chat screen
       Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => SpaceChatScreen(
-            spaceId: spaceId,
-            space: space,
-            otherUserId: otherUserId,
-          ),
-        ),
+        PageFactory.route(RouteNames.spaceChatScreen, arguments: {
+          'spaceId': spaceId,
+          'space': space,
+          'otherUserId': otherUserId,
+        }),
       );
 
       AppLogger.i('🔔 Navigation successful', category: LogCategory.messaging);
