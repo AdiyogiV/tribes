@@ -175,6 +175,7 @@ class DiscoveryState extends State<Discovery> {
     // Add listeners for new spaces
     for (final id in spaceIds) {
       if (_discoveryUpdatedSubs.containsKey(id)) continue;
+      // ignore: cancel_subscriptions — stored in _discoveryUpdatedSubs and cancelled in dispose
       final sub = FirebaseFirestore.instance
           .collection('spaces')
           .doc(id)

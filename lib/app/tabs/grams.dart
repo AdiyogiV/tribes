@@ -457,6 +457,7 @@ class GramsState extends State<Grams> with AutomaticKeepAliveClientMixin {
       Future.delayed(Duration(milliseconds: i * 100), () {
         if (!mounted || _updatedSubscriptions.containsKey(id)) return;
 
+        // ignore: cancel_subscriptions — stored in _updatedSubscriptions and cancelled in dispose
         final sub = FirebaseFirestore.instance
             .collection('spaces')
             .doc(id)

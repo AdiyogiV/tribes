@@ -120,9 +120,9 @@ class AppLogger {
 
     // Also print error and stack trace to console for debugging
     if (error != null) {
-      print('  Error: $error');
+      debugPrint('  Error: $error');
       if (stackTrace != null) {
-        print('  StackTrace: $stackTrace');
+        debugPrint('  StackTrace: $stackTrace');
       }
     }
 
@@ -291,7 +291,7 @@ class AppLogger {
 
     // Simple console logging implementation
     final line = '[$timestamp] [$levelTag] [$categoryTag] $message$dataString';
-    print(line);
+    debugPrint(line);
 
     if (_fileLoggingEnabled) {
       // Fire-and-forget to avoid blocking UI.

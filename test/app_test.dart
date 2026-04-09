@@ -1,3 +1,4 @@
+// ignore_for_file: avoid_print
 /// =============================================================================
 /// AUROGRAM APP TESTS
 /// =============================================================================
@@ -33,17 +34,14 @@ import 'package:aurogram/core/theme/app_theme.dart';
 /// Test logger that mimics app logging format for consistent output
 class TestLogger {
   static void section(String name) {
-    // ignore: avoid_print
     print('\n━━━ $name ━━━');
   }
 
   static void pass(String test) {
-    // ignore: avoid_print
     print('  ✓ $test');
   }
 
   static void info(String message) {
-    // ignore: avoid_print
     print('  ℹ $message');
   }
 }

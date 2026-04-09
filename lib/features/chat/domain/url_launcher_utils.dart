@@ -60,7 +60,9 @@ class UrlLauncherUtils {
           HapticFeedback.lightImpact();
         }
       } else {
-        _showUrlError('Cannot open this link', context);
+        if (context.mounted) {
+          _showUrlError('Cannot open this link', context);
+        }
       }
     } catch (e) {
       AppLogger.e('URL launch error: $e');

@@ -184,9 +184,14 @@ class _CallButtonsState extends State<CallButtons> {
       final isMutual = await followService.isMutualFollow(widget.userId);
       
       if (!isMutual) {
-        if (mounted) {
+        if (context.mounted) {
           showCustomSnackBar(context, message: 'You can only call people who follow you back', backgroundColor: AppTheme.errorColor, duration: const Duration(seconds: 3));
         }
+        setState(() => _isStartingCall = false);
+        return;
+      }
+
+      if (!context.mounted) {
         setState(() => _isStartingCall = false);
         return;
       }
@@ -210,7 +215,7 @@ class _CallButtonsState extends State<CallButtons> {
         }
       });
     } catch (e) {
-      if (mounted) {
+      if (context.mounted) {
         showCustomSnackBar(context, message: 'Cannot start call: ${e.toString()}', backgroundColor: AppTheme.errorColor, duration: const Duration(seconds: 3));
       }
       setState(() => _isStartingCall = false);

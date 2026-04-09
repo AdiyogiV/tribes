@@ -168,6 +168,7 @@ class _FeedState extends State<Feed> {
     );
     if (validPostIds.isNotEmpty) {
       try {
+        if (!mounted) return validPostIds;
         final feedController = context.read<FeedController>();
         await _preloader.batchLoadCounters(validPostIds, feedController);
       } catch (_) {}
@@ -387,6 +388,7 @@ class _FeedState extends State<Feed> {
 
         // Batch load user/space data BEFORE rendering to avoid flicker
         try {
+          if (!mounted) return;
           final feedController = context.read<FeedController>();
           await _preloader.batchLoadUserSpaceData(validFirstBatch, feedController);
         } catch (_) {}
@@ -416,6 +418,7 @@ class _FeedState extends State<Feed> {
 
         // Trim old states from FeedController to prevent unbounded growth
         try {
+          if (!mounted) return;
           final feedController = context.read<FeedController>();
           feedController.trimStatesForFeed(feed);
         } catch (e) {
@@ -461,6 +464,7 @@ class _FeedState extends State<Feed> {
 
         // Batch load user/space data for new posts BEFORE rendering
         try {
+          if (!mounted) return;
           final feedController = context.read<FeedController>();
           await _preloader.batchLoadUserSpaceData(validMorePosts, feedController);
         } catch (_) {}
@@ -538,6 +542,7 @@ class _FeedState extends State<Feed> {
 
         // Trim old states from FeedController after pagination
         try {
+          if (!mounted) return;
           final feedController = context.read<FeedController>();
           feedController.trimStatesForFeed(feed);
         } catch (e) {
@@ -583,6 +588,7 @@ class _FeedState extends State<Feed> {
 
         // Batch load user/space data BEFORE rendering
         try {
+          if (!mounted) return;
           final feedController = context.read<FeedController>();
           await _preloader.batchLoadUserSpaceData(validFirstBatch, feedController);
         } catch (_) {}

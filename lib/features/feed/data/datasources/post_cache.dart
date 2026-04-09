@@ -158,6 +158,7 @@ mixin PostCacheMixin {
     await removeRealTimeListener(postId);
 
     try {
+      // ignore: cancel_subscriptions — stored in _realtimeListeners and cancelled in removeRealTimeListener
       final subscription = firestore
           .collection('posts')
           .doc(postId)

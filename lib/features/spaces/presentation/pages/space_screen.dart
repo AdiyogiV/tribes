@@ -272,6 +272,7 @@ class SpaceScreenState extends State<SpaceScreen> {
     } catch (e) {
       AppLogger.e('Error joining space',
           category: LogCategory.general, data: {'error': e.toString()});
+      if (!mounted) return;
       showCustomSnackBar(context, message: 'Failed to join space. Please try again.', behavior: SnackBarBehavior.fixed);
     }
   }

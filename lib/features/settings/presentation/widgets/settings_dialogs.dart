@@ -583,6 +583,7 @@ class SettingsDialogs {
     try {
       bool success = await userService.deleteUser();
       if (success) {
+        if (!context.mounted) return;
         await _handleSuccessfulDeletion(context);
       }
     } catch (e) {

@@ -477,6 +477,7 @@ class VideoPickerState extends State<VideoPicker> {
           }
 
           if (widget.isProfilePost) {
+            if (!mounted) return;
             Navigator.of(context).popUntil((route) => route.isFirst);
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -512,8 +513,10 @@ class VideoPickerState extends State<VideoPicker> {
             }
           }
 
+          if (!mounted) return;
           Navigator.of(context).popUntil((route) => route.isFirst);
           if (targetSpaceId != null && targetSpaceId.isNotEmpty) {
+            if (!mounted) return;
             Navigator.of(context, rootNavigator: true).push(
               MaterialPageRoute(
                 builder: (context) =>

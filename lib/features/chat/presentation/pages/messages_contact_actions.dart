@@ -77,6 +77,7 @@ Future<ContactSyncResult?> syncContactsWithUI({
     onResult(result, true);
 
     // Show success feedback
+    if (!context.mounted) return result;
     if (result.hasPermission && !result.isEmpty) {
       final onAppCount = result.onApp.length;
       final message = onAppCount > 0
@@ -96,7 +97,7 @@ Future<ContactSyncResult?> syncContactsWithUI({
     return result;
   } catch (e) {
     AppLogger.e('Error syncing contacts', category: LogCategory.ui, error: e);
-    if (isMounted()) {
+    if (isMounted() && context.mounted) {
       setLoading(false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

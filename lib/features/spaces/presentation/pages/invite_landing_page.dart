@@ -238,6 +238,7 @@ class InviteLandingPageState extends State<InviteLandingPage> {
           .addInviteeToSpace(widget.space!, currentUser.uid);
           
       if (success) {
+        if (!mounted) return;
         Navigator.of(context, rootNavigator: true).pushReplacement(
           CupertinoPageRoute(
             builder: (context) => SpaceScreen(rid: widget.space!),

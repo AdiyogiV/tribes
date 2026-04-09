@@ -71,6 +71,7 @@ class PostDialogState extends State<PostDialog> {
 
     bool success = await _postService.deleteSpacePost(widget.post!);
 
+    if (!mounted) return;
     Navigator.of(context).pop(); // Close the loading dialog
     _showResultDialog(success);
   }

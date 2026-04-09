@@ -18,7 +18,7 @@ import 'package:aurogram/core/theme/app_dimensions.dart';
 
 class AddSpacesMember extends StatefulWidget {
   final String? space;
-  final spaceMembers;
+  final List<dynamic>? spaceMembers;
   const AddSpacesMember({super.key, required this.space, this.spaceMembers});
 
   @override

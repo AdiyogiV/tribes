@@ -198,6 +198,7 @@ class _ConversationOptionsSheetState extends State<ConversationOptionsSheet> {
       await _chatService.archiveConversation(widget.conversationId, newValue);
       widget.onSettingsChanged?.call();
       if (newValue) {
+        if (!mounted) return;
         Navigator.pop(context);
         _showSuccess('Conversation archived');
       }

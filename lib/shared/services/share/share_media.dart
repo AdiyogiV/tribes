@@ -166,7 +166,9 @@ class ShareMedia {
           });
         } catch (fallbackError) {
           AppLogger.e('Fallback share failed for $label', error: fallbackError);
-          ShareUi.showErrorSnackbar(context, 'Failed to share to Instagram');
+          if (context.mounted) {
+            ShareUi.showErrorSnackbar(context, 'Failed to share to Instagram');
+          }
         }
       } else {
         ShareUi.showErrorSnackbar(context, 'Failed to share to Instagram');

@@ -123,6 +123,7 @@ class ShareService {
       );
 
       // Show share options
+      if (!context.mounted) return;
       await ShareUi.showShareOptions(
         context: context,
         shareText: shareText,
@@ -176,7 +177,9 @@ class ShareService {
       );
     } catch (e) {
       AppLogger.e('Error sharing post', error: e);
-      ShareUi.showErrorSnackbar(context, 'Failed to share');
+      if (context.mounted) {
+        ShareUi.showErrorSnackbar(context, 'Failed to share');
+      }
     }
   }
 
@@ -217,7 +220,9 @@ class ShareService {
       );
     } catch (e) {
       AppLogger.e('Error sharing profile', error: e);
-      ShareUi.showErrorSnackbar(context, 'Failed to share');
+      if (context.mounted) {
+        ShareUi.showErrorSnackbar(context, 'Failed to share');
+      }
     }
   }
 
@@ -265,7 +270,9 @@ class ShareService {
       );
     } catch (e) {
       AppLogger.e('Error sharing cosmic profile', error: e);
-      ShareUi.showErrorSnackbar(context, 'Failed to share');
+      if (context.mounted) {
+        ShareUi.showErrorSnackbar(context, 'Failed to share');
+      }
     }
   }
 
@@ -306,7 +313,9 @@ class ShareService {
       );
     } catch (e) {
       AppLogger.e('Error sharing space', error: e);
-      ShareUi.showErrorSnackbar(context, 'Failed to share');
+      if (context.mounted) {
+        ShareUi.showErrorSnackbar(context, 'Failed to share');
+      }
     }
   }
 
@@ -599,7 +608,9 @@ class ShareService {
       );
     } catch (e) {
       AppLogger.e('Error sharing insight', error: e);
-      ShareUi.showErrorSnackbar(context, 'Failed to share');
+      if (context.mounted) {
+        ShareUi.showErrorSnackbar(context, 'Failed to share'); // ignore: use_build_context_synchronously
+      }
     }
   }
 

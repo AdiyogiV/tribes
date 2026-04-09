@@ -196,6 +196,7 @@ class _SpaceInviteTileState extends State<SpaceInviteTile> {
                     await DatabaseService()
                         .approveSpaceMember(widget.space!, user!.uid);
                     await widget.onRefresh?.call();
+                    if (!context.mounted) return;
                     Navigator.of(context)
                         .push(CupertinoPageRoute(builder: (context) {
                       return SpaceScreen(rid: widget.space!);

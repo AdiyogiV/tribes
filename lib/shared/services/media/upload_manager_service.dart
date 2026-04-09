@@ -213,6 +213,7 @@ class UploadManagerService {
       if (!_isUploadsPageShowing) {
         _isUploadsPageShowing = true;
 
+        if (!context.mounted) return false;
         // Get the navigator context cautiously
         final navigator = Navigator.of(context, rootNavigator: true);
 

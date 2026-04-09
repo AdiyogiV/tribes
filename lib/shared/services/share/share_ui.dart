@@ -30,6 +30,8 @@ class ShareUi {
       }
 
       // Web Share API not available or failed, show simplified dialog
+      if (!context.mounted) return;
+      // ignore: use_build_context_synchronously — guarded by context.mounted above
       await _showWebShareDialog(
           context, shareUrl, contentType, chatShareContent);
       return;

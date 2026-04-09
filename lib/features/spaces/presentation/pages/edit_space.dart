@@ -341,6 +341,7 @@ class EditSpaceState extends State<EditSpace>
   }
 
   void _cancelRequest() {
+    final stateContext = context;
     showCupertinoDialog(
       context: context,
       builder: (BuildContext context) => CupertinoAlertDialog(
@@ -356,11 +357,11 @@ class EditSpaceState extends State<EditSpace>
             onPressed: () async {
               Navigator.of(context).pop();
               await locator<SpaceDbService>().removeSpaceMember(widget.space!, user!.uid);
-              if (mounted) {
+              if (stateContext.mounted) {
                 setState(() {
                   role = null;
                 });
-                showCustomSnackBar(context, message: 'Join request cancelled', backgroundColor: Colors.orange, duration: const Duration(seconds: 2));
+                showCustomSnackBar(stateContext, message: 'Join request cancelled', backgroundColor: Colors.orange, duration: const Duration(seconds: 2)); // ignore: use_build_context_synchronously
                 getSpaceBox();
               }
             },
@@ -405,6 +406,7 @@ class EditSpaceState extends State<EditSpace>
       // Ignore error, just use 0
     }
 
+    if (!mounted) return;
     ShareService.showGramCardPreview(
       context: context,
       spaceId: widget.space!,

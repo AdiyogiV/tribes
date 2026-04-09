@@ -155,6 +155,8 @@ class ChatNotificationService {
           category: LogCategory.messaging,
           data: {'spaceId': spaceId, 'isDM': isDM, 'otherUserId': otherUserId});
 
+      if (!context.mounted) return;
+
       // Navigate to chat screen
       Navigator.of(context).push(
         PageFactory.route(RouteNames.spaceChatScreen, arguments: {
