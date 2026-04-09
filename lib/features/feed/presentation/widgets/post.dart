@@ -33,6 +33,79 @@ import 'package:aurogram/core/theme/app_dimensions.dart';
 // Re-export for backward compatibility (callers importing post.dart get these)
 export 'package:aurogram/features/feed/presentation/widgets/post_data.dart';
 
+/// Immutable value holding auxiliary display data that arrives asynchronously.
+/// Extracted from _PostState so updates only rebuild affected subtrees via
+/// ValueListenableBuilder instead of triggering a full Post rebuild.
+class PostAuxData {
+  final UserData? userData;
+  final SpaceData? spaceData;
+  final UserData? reposterUserData;
+  final UserData? originalAuthorUserData;
+  final PostData? originalPostData;
+  final String? reposterName;
+  final String? reposterId;
+  final DocumentSnapshot? repostSnapshot;
+  final double? imageAspectRatio;
+
+  const PostAuxData({
+    this.userData,
+    this.spaceData,
+    this.reposterUserData,
+    this.originalAuthorUserData,
+    this.originalPostData,
+    this.reposterName,
+    this.reposterId,
+    this.repostSnapshot,
+    this.imageAspectRatio,
+  });
+
+  PostAuxData copyWith({
+    UserData? userData,
+    SpaceData? spaceData,
+    UserData? reposterUserData,
+    UserData? originalAuthorUserData,
+    PostData? originalPostData,
+    String? reposterName,
+    String? reposterId,
+    DocumentSnapshot? repostSnapshot,
+    double? imageAspectRatio,
+    // Nullable sentinel overrides (use Object? trick to allow setting to null)
+    bool clearReposterUserData = false,
+    bool clearOriginalAuthorUserData = false,
+    bool clearOriginalPostData = false,
+    bool clearReposterName = false,
+    bool clearReposterId = false,
+    bool clearRepostSnapshot = false,
+  }) {
+    return PostAuxData(
+      userData: userData ?? this.userData,
+      spaceData: spaceData ?? this.spaceData,
+      reposterUserData: clearReposterUserData ? null : (reposterUserData ?? this.reposterUserData),
+      originalAuthorUserData: clearOriginalAuthorUserData ? null : (originalAuthorUserData ?? this.originalAuthorUserData),
+      originalPostData: clearOriginalPostData ? null : (originalPostData ?? this.originalPostData),
+      reposterName: clearReposterName ? null : (reposterName ?? this.reposterName),
+      reposterId: clearReposterId ? null : (reposterId ?? this.reposterId),
+      repostSnapshot: clearRepostSnapshot ? null : (repostSnapshot ?? this.repostSnapshot),
+      imageAspectRatio: imageAspectRatio ?? this.imageAspectRatio,
+    );
+  }
+}
+
+/// Immutable value holding reply section data.
+class PostReplyData {
+  final int replyCount;
+  final QuerySnapshot? replySnapshot;
+
+  const PostReplyData({this.replyCount = 0, this.replySnapshot});
+
+  PostReplyData copyWith({int? replyCount, QuerySnapshot? replySnapshot}) {
+    return PostReplyData(
+      replyCount: replyCount ?? this.replyCount,
+      replySnapshot: replySnapshot ?? this.replySnapshot,
+    );
+  }
+}
+
 /// Main post widget - displays the current post content and owns the full block
 /// (header, content, toolbar, caption, optional reply section, time).
 class Post extends StatefulWidget {
@@ -77,33 +150,18 @@ class _PostState extends State<Post> with TickerProviderStateMixin {
   final PostDbService _postDbService = locator<PostDbService>();
   final BatchDataLoader _batchLoader = locator<BatchDataLoader>();
 
+  // --- Structural state (changes trigger full rebuild - rare) ---
   PostData? _data;
   bool _loading = true;
   bool _missing = false;
-
-  int _replyCount = 0;
-  QuerySnapshot? _replySnapshot;
   String? _replyTo; // Parent post ID if this is a reply
   ParentPostData _parentData = ParentPostData.empty;
 
-  // Store user/space data to pass to children
-  UserData? _userData;
-  SpaceData? _spaceData;
-
-  // Repost handling: original post data and reposter info
-  PostData? _originalPostData;
-  UserData? _reposterUserData;
-  UserData? _originalAuthorUserData;
-  String?
-      _reposterName; // Store reposter name from document for immediate display
-  String? _reposterId; // Store reposter ID for navigation
-
-  // New architecture: repost data from reposts collection
-  DocumentSnapshot?
-      _repostSnapshot; // Repost document if this post was reposted
-
-  // Image aspect ratio for image posts (fetched before rendering)
-  double? _imageAspectRatio;
+  // --- Hot-path auxiliary state (ValueNotifier - only rebuilds subtrees) ---
+  final ValueNotifier<PostAuxData> _auxNotifier =
+      ValueNotifier<PostAuxData>(const PostAuxData());
+  final ValueNotifier<PostReplyData> _replyNotifier =
+      ValueNotifier<PostReplyData>(const PostReplyData());
 
   StreamSubscription<PostUpdateEvent>? _postUpdateSubscription;
 
@@ -121,24 +179,30 @@ class _PostState extends State<Post> with TickerProviderStateMixin {
       try {
         final feedController = context.read<FeedController>();
         final state = feedController.getPostState(widget.post!);
-        _replyCount = state.replyCount;
+        _replyNotifier.value = PostReplyData(replyCount: state.replyCount);
 
         // Also restore user/space data from FeedController if cached
-        _userData = feedController.getUserData(widget.post!);
-        _spaceData = feedController.getSpaceData(widget.post!);
+        final cachedUser = feedController.getUserData(widget.post!);
+        final cachedSpace = feedController.getSpaceData(widget.post!);
+        if (cachedUser != null || cachedSpace != null) {
+          _auxNotifier.value = _auxNotifier.value.copyWith(
+            userData: cachedUser,
+            spaceData: cachedSpace,
+          );
+        }
 
         if (kDebugMode &&
             widget.itemIndex != null &&
             widget.itemIndex! < 20 &&
-            (_userData != null || _spaceData != null)) {
+            (cachedUser != null || cachedSpace != null)) {
           AppLogger.d(
             'Post: restored user/space data from FeedController',
             category: LogCategory.performance,
             data: {
               'index': widget.itemIndex,
               'postId': widget.post!.substring(0, 4),
-              'hasUserData': _userData != null,
-              'hasSpaceData': _spaceData != null,
+              'hasUserData': cachedUser != null,
+              'hasSpaceData': cachedSpace != null,
             },
           );
         }
@@ -158,29 +222,36 @@ class _PostState extends State<Post> with TickerProviderStateMixin {
         // Extract reposter name from cached document for reposts
         if (_data?.isRepost == true) {
           final cachedData = cached.data() as Map<String, dynamic>?;
-          _reposterName = cachedData?['authorName'] as String?;
+          final cachedReposterName = cachedData?['authorName'] as String?;
+          if (cachedReposterName != null) {
+            _auxNotifier.value = _auxNotifier.value.copyWith(
+              reposterName: cachedReposterName,
+            );
+          }
         }
 
         // If we don't have user/space data yet, try to load it immediately (non-blocking)
-        if (_userData == null && _data?.author != null) {
+        if (_auxNotifier.value.userData == null && _data?.author != null) {
           _batchLoader.loadUser(_data!.author!).then((userData) {
             if (mounted && userData != null) {
-              setState(() {
-                if (_data?.isRepost == true) {
-                  _reposterUserData = userData;
-                } else {
-                  _userData = userData;
-                }
-              });
+              if (_data?.isRepost == true) {
+                _auxNotifier.value = _auxNotifier.value.copyWith(
+                  reposterUserData: userData,
+                );
+              } else {
+                _auxNotifier.value = _auxNotifier.value.copyWith(
+                  userData: userData,
+                );
+              }
             }
           });
         }
-        if (_spaceData == null && _data?.space != null) {
+        if (_auxNotifier.value.spaceData == null && _data?.space != null) {
           _batchLoader.loadSpace(_data!.space!).then((spaceData) {
             if (mounted && spaceData != null) {
-              setState(() {
-                _spaceData = spaceData;
-              });
+              _auxNotifier.value = _auxNotifier.value.copyWith(
+                spaceData: spaceData,
+              );
             }
           });
         }
@@ -197,13 +268,11 @@ class _PostState extends State<Post> with TickerProviderStateMixin {
                     .loadUser(_data!.originalAuthorId!)
                     .then((originalAuthorData) {
                   if (mounted) {
-                    setState(() {
-                      _originalPostData = originalData;
-                      _originalAuthorUserData = originalAuthorData;
-                      if (originalAuthorData != null) {
-                        _userData = originalAuthorData;
-                      }
-                    });
+                    _auxNotifier.value = _auxNotifier.value.copyWith(
+                      originalPostData: originalData,
+                      originalAuthorUserData: originalAuthorData,
+                      userData: originalAuthorData,
+                    );
                   }
                 });
               }
@@ -219,8 +288,8 @@ class _PostState extends State<Post> with TickerProviderStateMixin {
               'index': widget.itemIndex,
               'postId': widget.post!.substring(0, 4),
               'type': _data?.postType,
-              'hasUserData': _userData != null,
-              'hasSpaceData': _spaceData != null,
+              'hasUserData': _auxNotifier.value.userData != null,
+              'hasSpaceData': _auxNotifier.value.spaceData != null,
             },
           );
         }
@@ -256,12 +325,16 @@ class _PostState extends State<Post> with TickerProviderStateMixin {
     if (widget.post != null && mounted) {
       try {
         final feedController = context.read<FeedController>();
-        feedController.updateReplyCount(widget.post!, _replyCount);
+        feedController.updateReplyCount(
+            widget.post!, _replyNotifier.value.replyCount);
         feedController.onPostDisposed(widget.post!);
       } catch (e) {
         // FeedController not available or context invalid
       }
     }
+
+    _auxNotifier.dispose();
+    _replyNotifier.dispose();
 
     super.dispose();
   }
@@ -434,6 +507,7 @@ class _PostState extends State<Post> with TickerProviderStateMixin {
       }
 
       String? reposterNameFromDoc;
+      String? reposterIdFromDoc;
       if (repostsQueryFuture != null && results.length > resultIndex) {
         final repostsSnapshot = results[resultIndex] as QuerySnapshot?;
         if (repostsSnapshot != null && repostsSnapshot.docs.isNotEmpty) {
@@ -444,20 +518,15 @@ class _PostState extends State<Post> with TickerProviderStateMixin {
           if (originalPostId != null && originalPostId == widget.post) {
             reposterNameFromDoc = repostData['reposterName'] as String?;
             final reposterId = repostData['reposterId'] as String?;
-
-            if (reposterId != null) {
-              _reposterId = reposterId;
-            }
+            reposterIdFromDoc = reposterId;
 
             if (reposterId != null && reposterId != userData?.uid) {
               _batchLoader.loadUser(reposterId).then((reposterUserData) {
                 if (mounted) {
-                  setState(() {
-                    _reposterUserData = reposterUserData;
-                    if (reposterUserData?.displayName != null) {
-                      _reposterName = reposterUserData!.displayName;
-                    }
-                  });
+                  _auxNotifier.value = _auxNotifier.value.copyWith(
+                    reposterUserData: reposterUserData,
+                    reposterName: reposterUserData?.displayName,
+                  );
                 }
               });
             }
@@ -482,47 +551,66 @@ class _PostState extends State<Post> with TickerProviderStateMixin {
       if (imageUrl != null && imageUrl.isNotEmpty) {
         ImageOptimizer.getImageAspectRatio(imageUrl).then((aspectRatio) {
           if (mounted) {
-            setState(() {
-              _imageAspectRatio = aspectRatio;
-            });
+            _auxNotifier.value = _auxNotifier.value.copyWith(
+              imageAspectRatio: aspectRatio,
+            );
           }
         }).catchError((_) {});
       }
 
       if (mounted) {
+        // Structural state: triggers full rebuild (needed for layout changes)
         setState(() {
           _data = finalData;
           _replyTo = replyToId;
           _parentData = parentData;
-          if (finalData.isRepost) {
-            _reposterUserData = userData;
-            _originalAuthorUserData = originalAuthorData;
-            _userData = originalAuthorData ?? userData;
-            _originalPostData = originalPostData;
-            _reposterName = reposterName ?? userData?.displayName;
-            _reposterId = data.author;
-            _repostSnapshot = null;
-          } else {
-            _userData = userData;
-            _repostSnapshot = repostSnapshot;
-            if (repostSnapshot != null && reposterNameFromDoc != null) {
-              _reposterName = reposterNameFromDoc;
-            } else if (repostSnapshot == null) {
-              _reposterUserData = null;
-              _originalAuthorUserData = null;
-              _originalPostData = null;
-              _reposterName = null;
-              _reposterId = null;
-            }
-          }
-          _spaceData = spaceData;
-          if (replySnap != null) {
-            _replyCount = replySnap.docs.length;
-            _replySnapshot = replySnap;
-          }
           _loading = isIncomplete;
           _missing = false;
         });
+
+        // Auxiliary display data: only rebuilds wrapped subtrees
+        if (finalData.isRepost) {
+          _auxNotifier.value = _auxNotifier.value.copyWith(
+            reposterUserData: userData,
+            originalAuthorUserData: originalAuthorData,
+            userData: originalAuthorData ?? userData,
+            originalPostData: originalPostData,
+            reposterName: reposterName ?? userData?.displayName,
+            reposterId: data.author,
+            clearRepostSnapshot: true,
+            spaceData: spaceData,
+          );
+        } else {
+          if (repostSnapshot != null && reposterNameFromDoc != null) {
+            _auxNotifier.value = _auxNotifier.value.copyWith(
+              userData: userData,
+              repostSnapshot: repostSnapshot,
+              reposterName: reposterNameFromDoc,
+              reposterId: reposterIdFromDoc,
+              spaceData: spaceData,
+            );
+          } else if (repostSnapshot == null) {
+            _auxNotifier.value = PostAuxData(
+              userData: userData,
+              spaceData: spaceData,
+            );
+          } else {
+            _auxNotifier.value = _auxNotifier.value.copyWith(
+              userData: userData,
+              repostSnapshot: repostSnapshot,
+              reposterId: reposterIdFromDoc,
+              spaceData: spaceData,
+            );
+          }
+        }
+
+        // Reply data: only rebuilds reply section
+        if (replySnap != null) {
+          _replyNotifier.value = PostReplyData(
+            replyCount: replySnap.docs.length,
+            replySnapshot: replySnap,
+          );
+        }
 
         if (widget.post != null) {
           try {
@@ -663,73 +751,81 @@ class _PostState extends State<Post> with TickerProviderStateMixin {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (repostedByIndicator != null) repostedByIndicator,
-          _buildContent(_data!),
+          // Content subtree rebuilds only when aux data changes (user/space/repost info)
+          ValueListenableBuilder<PostAuxData>(
+            valueListenable: _auxNotifier,
+            builder: (context, aux, _) => _buildContent(_data!, aux),
+          ),
           if (widget.showReplySection)
-            AnimatedSize(
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeOut,
-              alignment: Alignment.topCenter,
-              child: _replyCount > 0
-                  ? Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const SizedBox(height: AppDimensions.spacingXs),
-                        InkWell(
-                          onTap: () {
-                            final postIdToView = (_data?.isRepost == true &&
-                                    _data?.originalPostId != null)
-                                ? _data!.originalPostId!
-                                : widget.post;
-                            if (postIdToView != null &&
-                                widget.onReplySelected != null) {
-                              widget.onReplySelected!(postIdToView);
-                            }
-                          },
-                          borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 4),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  _replyCount == 1
-                                      ? 'View one reply'
-                                      : 'View $_replyCount replies',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w400,
-                                    color: AppTheme.primaryColor
-                                        .withValues(alpha: 0.7),
+            // Reply section rebuilds only when reply count/snapshot changes
+            ValueListenableBuilder<PostReplyData>(
+              valueListenable: _replyNotifier,
+              builder: (context, replyData, _) => AnimatedSize(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOut,
+                alignment: Alignment.topCenter,
+                child: replyData.replyCount > 0
+                    ? Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const SizedBox(height: AppDimensions.spacingXs),
+                          InkWell(
+                            onTap: () {
+                              final postIdToView = (_data?.isRepost == true &&
+                                      _data?.originalPostId != null)
+                                  ? _data!.originalPostId!
+                                  : widget.post;
+                              if (postIdToView != null &&
+                                  widget.onReplySelected != null) {
+                                widget.onReplySelected!(postIdToView);
+                              }
+                            },
+                            borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 4),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    replyData.replyCount == 1
+                                        ? 'View one reply'
+                                        : 'View ${replyData.replyCount} replies',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w400,
+                                      color: AppTheme.primaryColor
+                                          .withValues(alpha: 0.7),
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: AppDimensions.spacingXs),
-                                Icon(
-                                  CupertinoIcons.chevron_right,
-                                  size: 14,
-                                  color: AppTheme.primaryColor
-                                      .withValues(alpha: 0.6),
-                                ),
-                              ],
+                                  const SizedBox(width: AppDimensions.spacingXs),
+                                  Icon(
+                                    CupertinoIcons.chevron_right,
+                                    size: 14,
+                                    color: AppTheme.primaryColor
+                                        .withValues(alpha: 0.6),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: AppDimensions.spacingXs),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: PostReplies(
-                            post: (_data?.isRepost == true &&
-                                    _data?.originalPostId != null)
-                                ? _data!.originalPostId!
-                                : widget.post,
-                            onReplySelected: widget.onReplySelected,
-                            initialReplies: _replySnapshot,
+                          const SizedBox(height: AppDimensions.spacingXs),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: PostReplies(
+                              post: (_data?.isRepost == true &&
+                                      _data?.originalPostId != null)
+                                  ? _data!.originalPostId!
+                                  : widget.post,
+                              onReplySelected: widget.onReplySelected,
+                              initialReplies: replyData.replySnapshot,
+                            ),
                           ),
-                        ),
-                      ],
-                    )
-                  : const SizedBox.shrink(),
+                        ],
+                      )
+                    : const SizedBox.shrink(),
+              ),
             ),
           if (_data?.timestamp != null) _buildTimeRow(),
         ],
@@ -762,9 +858,10 @@ class _PostState extends State<Post> with TickerProviderStateMixin {
           onTap: () => post_actions.handlePostRepost(context,
               postId: widget.post,
               data: _data,
-              userData: _userData,
+              userData: _auxNotifier.value.userData,
               onDone: () {
-                if (mounted) setState(() {});
+                // No-op: repost completion does not require a rebuild.
+                // The repost indicator will update via _auxNotifier if needed.
               })),
       ContextMenuItems.quote(
           onTap: () => post_actions.handlePostQuote(context, widget.post)),
@@ -778,21 +875,23 @@ class _PostState extends State<Post> with TickerProviderStateMixin {
   }
 
   /// Unified post body: one layout for all types (header + media + toolbar + caption).
-  Widget _buildContent(PostData data) {
+  /// Receives [aux] from ValueListenableBuilder so only this subtree rebuilds
+  /// when auxiliary data (user, space, repost info, image aspect ratio) arrives.
+  Widget _buildContent(PostData data, PostAuxData aux) {
     final isProfile = data.contextType == 'profile' ||
         (data.space != null && data.space == data.author);
 
-    final displayData = (data.isRepost && _originalPostData != null)
-        ? _originalPostData!
+    final displayData = (data.isRepost && aux.originalPostData != null)
+        ? aux.originalPostData!
         : data;
 
-    final displayAuthor = (data.isRepost && _originalAuthorUserData != null)
+    final displayAuthor = (data.isRepost && aux.originalAuthorUserData != null)
         ? data.originalAuthorId ?? data.author
         : data.author;
 
-    final displayUserData = (data.isRepost && _originalAuthorUserData != null)
-        ? _originalAuthorUserData
-        : _userData;
+    final displayUserData = (data.isRepost && aux.originalAuthorUserData != null)
+        ? aux.originalAuthorUserData
+        : aux.userData;
 
     final replyIndicator =
         widget.showReplyIndicator && _replyTo != null && _replyTo!.isNotEmpty
@@ -807,14 +906,14 @@ class _PostState extends State<Post> with TickerProviderStateMixin {
             : null;
 
     final reposterDisplayName = data.isRepost
-        ? (_reposterUserData?.displayName ?? _reposterName ?? 'Someone')
-        : (_reposterUserData?.displayName ?? _reposterName);
+        ? (aux.reposterUserData?.displayName ?? aux.reposterName ?? 'Someone')
+        : (aux.reposterUserData?.displayName ?? aux.reposterName);
 
     final bool showRepostIndicator = data.isRepost ||
-        (_repostSnapshot != null && reposterDisplayName != null);
+        (aux.repostSnapshot != null && reposterDisplayName != null);
     final String? originalAuthorNameForIndicator = data.isRepost
         ? data.originalAuthorName
-        : (_originalAuthorUserData?.displayName ??
+        : (aux.originalAuthorUserData?.displayName ??
             displayUserData?.displayName);
 
     final repostIndicator = showRepostIndicator && reposterDisplayName != null
@@ -822,15 +921,15 @@ class _PostState extends State<Post> with TickerProviderStateMixin {
                 originalAuthorNameForIndicator.isNotEmpty
             ? RepostIndicator(
                 reposterName: reposterDisplayName,
-                reposterAvatar: _reposterUserData?.photoUrl,
+                reposterAvatar: aux.reposterUserData?.photoUrl,
                 originalAuthorName: originalAuthorNameForIndicator,
-                reposterId: _reposterId,
+                reposterId: aux.reposterId,
               )
             : RepostIndicator(
                 reposterName: reposterDisplayName,
-                reposterAvatar: _reposterUserData?.photoUrl,
+                reposterAvatar: aux.reposterUserData?.photoUrl,
                 originalAuthorName: 'original post',
-                reposterId: _reposterId,
+                reposterId: aux.reposterId,
               ))
         : null;
 
@@ -843,7 +942,7 @@ class _PostState extends State<Post> with TickerProviderStateMixin {
         : null;
 
     final contentPostId = (data.isRepost &&
-            _originalPostData != null &&
+            aux.originalPostData != null &&
             data.originalPostId != null)
         ? data.originalPostId!
         : widget.post;
@@ -855,8 +954,8 @@ class _PostState extends State<Post> with TickerProviderStateMixin {
       isProfile: isProfile,
       contentAfterHeader: contentAfterHeader,
       displayUserData: displayUserData,
-      spaceData: _spaceData,
-      imageAspectRatio: _imageAspectRatio,
+      spaceData: aux.spaceData,
+      imageAspectRatio: aux.imageAspectRatio,
       itemIndex: widget.itemIndex,
       itemDepth: widget.itemDepth,
       enableVideoAutoplay: widget.enableVideoAutoplay,
@@ -877,7 +976,7 @@ class _PostState extends State<Post> with TickerProviderStateMixin {
           isProfilePost: isProfile,
           onMoreTap: () => _showPostOptions(context),
           userData: displayUserData,
-          spaceData: _spaceData,
+          spaceData: aux.spaceData,
         ),
         mediaWidget,
         PostActionToolbar(

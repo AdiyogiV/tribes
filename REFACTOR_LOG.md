@@ -237,9 +237,68 @@ Total barrels (including Phase 2): 518
 
 ---
 
+## Phase 7: Part File Conversion + Security + Dynamic Link Fix
+
+**Commit**: `948f232`
+
+- Converted 5 services from `part`/`part of` to standalone `import`/`export`:
+  AstrologyService (3 parts), NotificationService (4 parts), UserService (4 parts),
+  SpaceService (4 parts), MediaCompressionService (3 parts)
+- Removed hardcoded Agora App ID — use `String.fromEnvironment` with `--dart-define`
+- Updated DynamicLinkNavigator to use PageFactory/RouteNames (last architecture violation)
+- Deleted 18 legacy part-file stubs from lib/services/
+
+---
+
+## Phase 8: Infrastructure Improvements
+
+**Commit**: `5d168e1`
+
+- Created `FirestoreRefs` — centralized Firestore collection references (17 collections)
+- Created `AiChatStateReader` abstract interface for cross-feature AI chat access
+- Moved `feed_controller.dart` from presentation/pages/ to domain/ (correct layer)
+- Fixed broken conditional import paths for web call screen stubs
+- Created proper `call_screen_stub.dart` + `incoming_call_screen_stub.dart` in platform/
+- Removed last direct page import from main.dart (IncomingCallScreen → PageFactory)
+- Deleted orphaned stubs and empty legacy directories (`lib/services/`, `lib/config/`)
+
+---
+
+## Phase 9: main.dart Decomposition (621 → 3 lines)
+
+**Commit**: `9419c37`
+
+| New File | Lines | Responsibility |
+|----------|-------|----------------|
+| main.dart | 3 | `void main() => AppBootstrap.run();` |
+| app/app_bootstrap.dart | 240 | Two-phase Firebase/DI initialization |
+| app/app_providers.dart | 63 | MultiProvider setup with fallback logic |
+| app/app_root.dart | 220 | MaterialApp + lifecycle + deferred init |
+
+---
+
+## Phase 10: Code Quality + God Class Decomposition
+
+**Commit**: `94faf36`
+
+### Lint Improvements
+- Enabled strict lints: `avoid_print`, `use_build_context_synchronously`, `cancel_subscriptions`
+- Fixed 34 `use_build_context_synchronously` violations with proper mounted checks
+- Replaced `print()` with `debugPrint()` in AppLogger
+- Issues reduced: 102 → 16 (all remaining are pre-existing: deprecated APIs, package:web)
+
+### God Class Splits
+| Original File | Lines | Split Into |
+|--------------|-------|------------|
+| group_call_service.dart | 999 | core + group_call_signaling + group_call_media |
+| call_service.dart | 956 | core + call/call_operations |
+| audio_input_service.dart | 943 | core + models + permissions + recording_handler |
+
+---
+
 ## Final Summary
 
-**Total restructure**: 6 phases
+**Total restructure**: 10 phases
 - **Phase 0**: Baseline metrics and cleanup
 - **Phase 1**: Service→Page coupling broken (PageFactory + RouteNames)
 - **Phase 2**: Core/ and Shared/ extraction (130 files)
@@ -247,22 +306,39 @@ Total barrels (including Phase 2): 518
 - **Phase 4**: Barrel cleanup (518 barrels deleted, 2403 imports updated)
 - **Phase 5**: God class decomposition (main.dart, database_service)
 - **Phase 6**: Complete legacy migration (91 more barrels, app/ layer, settings feature)
+- **Phase 7**: Part file conversion, Agora security, dynamic link routing fix
+- **Phase 8**: Infrastructure (FirestoreRefs, AiChatState interface, stub fixes)
+- **Phase 9**: main.dart decomposition (621 → 3 lines)
+- **Phase 10**: Code quality (strict lints) + god class decomposition (3 more services)
 
 **Final Architecture**:
 ```
 lib/
-  core/          32 files  — routing, theme, config, DI, storage, logging, notifications, startup
-  shared/       133 files  — cross-feature models, services, widgets, providers, utils
-  features/     434 files  — 15 feature modules
-  app/           20 files  — tab infrastructure, navigation shell
-  platform/      25 files  — web/io/stub implementations
-  services/      20 files  — part-file comments + platform stubs (irreducible minimum)
+  main.dart        3 lines  — single entry point
+  app/            23 files  — bootstrap, providers, root, tab navigation
+  core/           32 files  — routing, theme, config, DI, storage, logging, startup
+  shared/        138 files  — cross-feature models, services, widgets, providers, utils
+  features/      434 files  — 15 feature modules
+  platform/       27 files  — web/io/stub implementations
 ```
+
+**Zero legacy directories** — `lib/services/`, `lib/pages/`, `lib/widgets/`, `lib/models/`,
+`lib/config/`, `lib/providers/`, `lib/utils/` ALL deleted.
 
 **15 Feature Modules**:
 auth, onboarding, ai_chat, spaces, chat, calling, stories, creation,
 anonymous_messages, ayurveda, astrology, notifications, feed, profile, settings
 
-**Quality**: 0 errors, 238/238 tests passing, 17 issues (all info/warnings) — matches baseline throughout all 6 phases.
+**Quality**: 0 errors, 238/238 tests passing, 16 issues (all pre-existing info/warnings).
 
-**File count**: 668 .dart files (down from 1,195 at peak barrel count).
+**Definition of Done Checklist**:
+- [x] All legacy directories deleted
+- [x] main.dart under 50 lines (3 lines!)
+- [x] Zero service-to-page/widget imports
+- [x] Agora App ID NOT in source code
+- [x] Strict lints enabled (avoid_print, use_build_context_synchronously)
+- [ ] Zero files over 500 lines (14 remain 800-1033 lines — pages/widgets, not services)
+- [ ] go_router migration (deferred — requires full route table testing)
+- [ ] json_serializable (deferred — pub get network issue)
+- [ ] Test coverage 60%+ on services (infrastructure created, incremental coverage ongoing)
+- [ ] All dependencies pinned (deferred to release preparation)
