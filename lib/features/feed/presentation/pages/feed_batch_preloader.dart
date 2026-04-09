@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:aurogram/features/feed/data/datasources/post_db_service.dart';
 import 'package:aurogram/shared/services/media/video_prewarm_service.dart';
 import 'package:aurogram/shared/services/batch_data_loader.dart';
-import 'package:aurogram/features/feed/presentation/pages/feed_controller.dart';
+import 'package:aurogram/features/feed/domain/feed_controller.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 
 /// Encapsulates the feed post preloading and batch user/space data loading logic

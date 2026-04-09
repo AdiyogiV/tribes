@@ -13,9 +13,9 @@ import 'package:aurogram/features/profile/presentation/pages/social/invites.dart
 import 'package:aurogram/features/profile/presentation/pages/social/requests.dart';
 import 'package:aurogram/features/calling/presentation/pages/group_call_screen.dart';
 import 'package:aurogram/features/calling/presentation/pages/incoming_call_screen.dart'
-    if (dart.library.html) 'package:aurogram/pages/call/incoming_call_screen_stub.dart';
+    if (dart.library.html) 'package:aurogram/platform/incoming_call_screen_stub.dart';
 import 'package:aurogram/features/calling/presentation/pages/call_screen.dart'
-    if (dart.library.html) 'package:aurogram/pages/call/call_screen_stub.dart';
+    if (dart.library.html) 'package:aurogram/platform/call_screen_stub.dart';
 import 'package:aurogram/features/anonymous_messages/pages/inbox_screen.dart';
 import 'package:aurogram/features/anonymous_messages/pages/send_composer_screen.dart';
 import 'package:aurogram/features/spaces/presentation/pages/invite_landing_page.dart';

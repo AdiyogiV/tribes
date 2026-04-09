@@ -22,7 +22,7 @@ import 'package:aurogram/shared/services/media/speech_recognition_service.dart';
 import 'package:aurogram/shared/services/media/audio_input_service.dart';
 import 'package:aurogram/features/ai_chat/domain/ai_chat_service.dart';
 import 'package:aurogram/shared/services/location_service.dart';
-import 'package:aurogram/features/feed/presentation/pages/feed_controller.dart';
+import 'package:aurogram/features/feed/domain/feed_controller.dart';
 import 'package:aurogram/core/startup/app_initializer.dart';
 import 'package:aurogram/app/tabs/tab_handler.dart';
 import 'package:aurogram/core/storage/memory_manager.dart';
@@ -36,8 +36,8 @@ import 'package:aurogram/features/ai_chat/domain/ai_chat_provider.dart';
 
 // Conditional imports for mobile-only features
 import 'package:aurogram/features/calling/domain/call_service.dart';
-import 'package:aurogram/features/calling/presentation/pages/incoming_call_screen.dart'
-    if (dart.library.html) 'package:aurogram/pages/call/incoming_call_screen_stub.dart';
+import 'package:aurogram/core/routing/page_factory.dart';
+import 'package:aurogram/core/routing/route_names.dart';
 import 'package:aurogram/core/notifications/fcm_background_handler.dart';
 
 // Global for accessing the navigator during FCM setup
@@ -503,11 +503,9 @@ class AppRootState extends State<AppRoot> with WidgetsBindingObserver {
         AppLogger.i('📞 Navigating to IncomingCallScreen',
             category: LogCategory.general);
 
-        // Navigate to incoming call screen
+        // Navigate to incoming call screen via PageFactory
         navigatorState.push(
-          MaterialPageRoute(
-            builder: (context) => IncomingCallScreen(call: call),
-          ),
+          PageFactory.route(RouteNames.incomingCall, arguments: {'call': call}),
         );
 
         AppLogger.i('📞 Navigation to IncomingCallScreen completed',

@@ -9,7 +9,7 @@ import 'package:aurogram/features/feed/domain/feed_service.dart';
 import 'package:aurogram/features/feed/data/datasources/post_db_service.dart';
 import 'package:aurogram/features/feed/domain/feed_layout_cache.dart';
 import 'package:aurogram/shared/services/batch_data_loader.dart';
-import 'package:aurogram/features/feed/presentation/pages/feed_controller.dart';
+import 'package:aurogram/features/feed/domain/feed_controller.dart';
 import 'package:aurogram/features/feed/data/feed_performance_monitor.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/shared/presentation/responsive/responsive.dart';

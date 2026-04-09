@@ -13,7 +13,7 @@ import 'package:aurogram/shared/services/database_service.dart';
 import 'package:aurogram/features/feed/data/datasources/post_db_service.dart';
 import 'package:aurogram/features/feed/domain/repost_service.dart';
 import 'package:aurogram/shared/services/share/share_service.dart';
-import 'package:aurogram/features/feed/presentation/pages/feed_controller.dart';
+import 'package:aurogram/features/feed/domain/feed_controller.dart';
 
 /// Shared post action toolbar: like, reply, link?, repost, share.
 /// Used by all post types (video, audio, text, image) for a single place to maintain behavior and UI.

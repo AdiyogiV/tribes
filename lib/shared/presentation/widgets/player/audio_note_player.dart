@@ -10,7 +10,7 @@ import 'package:aurogram/features/feed/presentation/widgets/post_options_sheet.d
 import 'package:aurogram/features/feed/presentation/widgets/post_action_toolbar.dart';
 import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
 import 'package:aurogram/shared/services/media/audio_player_pool.dart';
-import 'package:aurogram/features/feed/presentation/pages/feed_controller.dart';
+import 'package:aurogram/features/feed/domain/feed_controller.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 
