@@ -1,17 +1,22 @@
 /// Agora Configuration for Group Calls
-/// 
+///
 /// To get your credentials:
 /// 1. Go to https://console.agora.io/
 /// 2. Create a new project (or select existing)
 /// 3. Copy the App ID
 /// 4. Enable App Certificate for token authentication (required for production)
-/// 
+///
 /// Free Tier: 10,000 minutes/month for both audio and video
 class AgoraConfig {
   AgoraConfig._(); // Private constructor
-  
-  /// Your Agora App ID from the Agora Console
-  static const String appId = '89a0a2f0e6c9488fbc657ec4c1dac6eb';
+
+  /// Agora App ID — loaded from environment at build time.
+  /// Pass via: --dart-define=AGORA_APP_ID=your_id
+  /// Falls back to empty string if not provided (will fail gracefully).
+  static const String appId = String.fromEnvironment(
+    'AGORA_APP_ID',
+    defaultValue: '',
+  );
   
   /// Whether to use token authentication (recommended for production)
   /// Token is generated server-side via Firebase Cloud Function

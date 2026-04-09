@@ -5,19 +5,17 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:aurogram/shared/models/space_roles.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:aurogram/shared/models/space_types.dart';
 import 'package:aurogram/shared/models/space.dart';
-import 'package:aurogram/core/storage/memory_manager.dart';
 import 'package:aurogram/core/network/network_manager.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/shared/services/analytics_service.dart';
 
 import 'package:aurogram/platform/file_helper.dart' as file_helper;
 
-part 'space/_space_crud.dart';
-part 'space/_space_members.dart';
-part 'space/_space_delete.dart';
-part 'space/_space_query.dart';
+export 'space/_space_crud.dart';
+export 'space/_space_members.dart';
+export 'space/_space_delete.dart';
+export 'space/_space_query.dart';
 
 typedef ProgressCallback = void Function(String message);
 

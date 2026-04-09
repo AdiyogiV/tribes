@@ -1,4 +1,11 @@
-part of '../user_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:aurogram/platform/file_helper.dart' as file_helper;
+
+import '../user_service.dart';
 
 /// Extension on [UserService] for profile management, account deletion, and re-authentication.
 extension UserProfile on UserService {
@@ -154,7 +161,7 @@ extension UserProfile on UserService {
     try {
       // Store deletion metadata for audit trail and Cloud Function reference
       // Cloud Function (onUserDeleted) will update this with completion status
-      await _storeDeletedUserReference();
+      await storeDeletedUserReference();
 
       AppLogger.i('Initiating account deletion for user: ${user!.uid}',
           category: LogCategory.auth);
@@ -179,7 +186,7 @@ extension UserProfile on UserService {
       // CRITICAL FIX: Remove deletedUsers record on failure to prevent permanent login block
       AppLogger.w('Auth deletion failed, rolling back deletedUsers record',
           category: LogCategory.auth);
-      await _removeDeletedUserReference();
+      await removeDeletedUserReference();
 
       AppLogger.e('Firebase Auth error during deletion',
           category: LogCategory.auth, error: e);
@@ -192,7 +199,7 @@ extension UserProfile on UserService {
       AppLogger.w(
           'Account deletion failed, rolling back deletedUsers record',
           category: LogCategory.general);
-      await _removeDeletedUserReference();
+      await removeDeletedUserReference();
 
       AppLogger.e('Error during account deletion',
           category: LogCategory.general, error: e);

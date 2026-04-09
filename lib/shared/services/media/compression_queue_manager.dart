@@ -1,4 +1,13 @@
-part of 'media_compression_service.dart';
+import 'dart:async';
+import 'dart:io';
+import 'dart:convert';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
+
+import 'media_compression_service.dart';
 
 /// Queue management: add/remove/process items, progress tracking,
 /// cancellation, migration, and cleanup.
@@ -61,7 +70,7 @@ extension CompressionQueueManager on MediaCompressionService {
       await prefs.setStringList(MediaCompressionService.COMPRESSION_QUEUE_KEY, queue);
 
       // Store initial progress information
-      Map<String, dynamic> progressMap = _getProgressMap(prefs);
+      Map<String, dynamic> progressMap = getProgressMap(prefs);
       progressMap[post] = {
         'status': 'queued',
         'progress': 0,
@@ -70,7 +79,7 @@ extension CompressionQueueManager on MediaCompressionService {
         'thumbnailPath': thumbnailPath,
         'space': fetchedSpace,
       };
-      await _saveProgressMap(prefs, progressMap);
+      await saveProgressMap(prefs, progressMap);
 
       AppLogger.d('Post added to compression queue',
           category: LogCategory.general,
@@ -90,7 +99,7 @@ extension CompressionQueueManager on MediaCompressionService {
   // ── Progress map helpers ──────────────────────────────────────────────────
 
   /// Get a map of all compression progress information.
-  Map<String, dynamic> _getProgressMap(SharedPreferences prefs) {
+  Map<String, dynamic> getProgressMap(SharedPreferences prefs) {
     String progressJson = prefs.getString(MediaCompressionService.COMPRESSION_PROGRESS_KEY) ?? '{}';
     try {
       return Map<String, dynamic>.from(jsonDecode(progressJson));
@@ -104,7 +113,7 @@ extension CompressionQueueManager on MediaCompressionService {
   }
 
   /// Save the progress map to shared preferences.
-  Future<void> _saveProgressMap(
+  Future<void> saveProgressMap(
       SharedPreferences prefs, Map<String, dynamic> progressMap) async {
     try {
       await prefs.setString(MediaCompressionService.COMPRESSION_PROGRESS_KEY, jsonEncode(progressMap));
@@ -120,7 +129,7 @@ extension CompressionQueueManager on MediaCompressionService {
   Future<List<Map<String, dynamic>>> getUploadProgress() async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      Map<String, dynamic> progressMap = _getProgressMap(prefs);
+      Map<String, dynamic> progressMap = getProgressMap(prefs);
       bool hasUpdates = false;
 
       List<Map<String, dynamic>> result = [];
@@ -149,7 +158,7 @@ extension CompressionQueueManager on MediaCompressionService {
             }
 
             if (!fileExists) {
-              String? storageUrl = await _tryGetStorageUrl(postId);
+              String? storageUrl = await tryGetStorageUrl(postId);
               if (storageUrl != null) {
                 thumbnailPath = storageUrl;
                 data['thumbnailPath'] = storageUrl;
@@ -183,7 +192,7 @@ extension CompressionQueueManager on MediaCompressionService {
 
       // Save updates to preferences if needed
       if (hasUpdates) {
-        await _saveProgressMap(prefs, progressMap);
+        await saveProgressMap(prefs, progressMap);
       }
 
       // Sort by timestamp (newest first)
@@ -199,9 +208,9 @@ extension CompressionQueueManager on MediaCompressionService {
   }
 
   /// Try to get the storage URL for a post's thumbnail.
-  Future<String?> _tryGetStorageUrl(String postId) async {
+  Future<String?> tryGetStorageUrl(String postId) async {
     try {
-      final doc = await _firestore.collection('posts').doc(postId).get();
+      final doc = await firestoreInstance.collection('posts').doc(postId).get();
       if (doc.exists && doc.data() != null) {
         final thumbnailUrl = doc.data()?['thumbnail'] as String?;
         if (thumbnailUrl != null && thumbnailUrl.startsWith('http')) {
@@ -231,7 +240,7 @@ extension CompressionQueueManager on MediaCompressionService {
   Future<Map<String, dynamic>?> getPostProgress(String postId) async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      Map<String, dynamic> progressMap = _getProgressMap(prefs);
+      Map<String, dynamic> progressMap = getProgressMap(prefs);
       if (progressMap.containsKey(postId)) {
         return {
           'postId': postId,
@@ -250,11 +259,11 @@ extension CompressionQueueManager on MediaCompressionService {
   // ── Progress updates ──────────────────────────────────────────────────────
 
   /// Updates progress for a specific post.
-  Future<void> _updateProgress(
+  Future<void> updateProgress(
       String postId, String status, int progress) async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      Map<String, dynamic> progressMap = _getProgressMap(prefs);
+      Map<String, dynamic> progressMap = getProgressMap(prefs);
 
       if (progressMap.containsKey(postId)) {
         final currentProgress = progressMap[postId]['progress'] ?? 0;
@@ -266,7 +275,7 @@ extension CompressionQueueManager on MediaCompressionService {
           progressMap[postId]['lastUpdated'] =
               DateTime.now().millisecondsSinceEpoch;
 
-          await _saveProgressMap(prefs, progressMap);
+          await saveProgressMap(prefs, progressMap);
 
           // EVENT-DRIVEN: Emit progress event for real-time updates
           final progressEvent = UploadProgressEvent(
@@ -275,7 +284,7 @@ extension CompressionQueueManager on MediaCompressionService {
             progress: progress,
             timestamp: DateTime.now(),
           );
-          _progressController.add(progressEvent);
+          progressController.add(progressEvent);
 
           // If completed or failed, emit completion event
           if (status == 'completed' ||
@@ -288,7 +297,7 @@ extension CompressionQueueManager on MediaCompressionService {
               timestamp: DateTime.now(),
               uploadData: Map<String, dynamic>.from(progressMap[postId]),
             );
-            _completionController.add(completionEvent);
+            completionController.add(completionEvent);
           }
 
           if (kDebugMode) {
@@ -310,13 +319,13 @@ extension CompressionQueueManager on MediaCompressionService {
   }
 
   /// Remove progress entry for completed upload.
-  Future<void> _clearProgressEntry(String postId, {bool success = true}) async {
+  Future<void> clearProgressEntry(String postId, {bool success = true}) async {
     try {
-      await _updateProgress(
+      await updateProgress(
           postId, success ? 'completed' : 'failed', success ? 100 : 0);
 
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      Map<String, dynamic> progressMap = _getProgressMap(prefs);
+      Map<String, dynamic> progressMap = getProgressMap(prefs);
 
       if (progressMap.containsKey(postId)) {
         progressMap[postId]['status'] = success ? 'completed' : 'failed';
@@ -324,7 +333,7 @@ extension CompressionQueueManager on MediaCompressionService {
         progressMap[postId]['completedTimestamp'] =
             DateTime.now().millisecondsSinceEpoch;
 
-        await _saveProgressMap(prefs, progressMap);
+        await saveProgressMap(prefs, progressMap);
 
         AppLogger.i('Progress entry marked',
             category: LogCategory.general,
@@ -346,7 +355,7 @@ extension CompressionQueueManager on MediaCompressionService {
   Future<void> cleanupOldCompletedUploads() async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      Map<String, dynamic> progressMap = _getProgressMap(prefs);
+      Map<String, dynamic> progressMap = getProgressMap(prefs);
 
       final now = DateTime.now().millisecondsSinceEpoch;
       const oneHourInMs = 60 * 60 * 1000;
@@ -358,7 +367,7 @@ extension CompressionQueueManager on MediaCompressionService {
         return isCompleted && (now - completedTime > oneHourInMs);
       });
 
-      await _saveProgressMap(prefs, progressMap);
+      await saveProgressMap(prefs, progressMap);
     } catch (e) {
       AppLogger.w('Error cleaning up old completed uploads',
           category: LogCategory.general, data: {'error': e.toString()});
@@ -369,11 +378,11 @@ extension CompressionQueueManager on MediaCompressionService {
   Future<void> removeProgressEntry(String postId) async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      Map<String, dynamic> progressMap = _getProgressMap(prefs);
+      Map<String, dynamic> progressMap = getProgressMap(prefs);
 
       if (progressMap.containsKey(postId)) {
         progressMap.remove(postId);
-        await _saveProgressMap(prefs, progressMap);
+        await saveProgressMap(prefs, progressMap);
       }
     } catch (e) {
       FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
@@ -387,17 +396,17 @@ extension CompressionQueueManager on MediaCompressionService {
   void processCompressionQueue() async {
     AppLogger.d('Processing compression queue started',
         category: LogCategory.general,
-        data: {'isProcessing': MediaCompressionService._isProcessingQueue});
+        data: {'isProcessing': MediaCompressionService.isProcessingQueue});
 
-    if (MediaCompressionService._isProcessingQueue) {
-      MediaCompressionService._shouldProcessAgain = true;
+    if (MediaCompressionService.isProcessingQueue) {
+      MediaCompressionService.shouldProcessAgain = true;
       AppLogger.d('Queue already processing, marking for retry',
           category: LogCategory.general);
       return;
     }
 
-    MediaCompressionService._isProcessingQueue = true;
-    MediaCompressionService._shouldProcessAgain = false;
+    MediaCompressionService.isProcessingQueue = true;
+    MediaCompressionService.shouldProcessAgain = false;
 
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -409,7 +418,7 @@ extension CompressionQueueManager on MediaCompressionService {
       if (queue.isEmpty) {
         AppLogger.d('Compression queue is empty, stopping processing',
             category: LogCategory.general);
-        MediaCompressionService._isProcessingQueue = false;
+        MediaCompressionService.isProcessingQueue = false;
         return;
       }
 
@@ -427,7 +436,7 @@ extension CompressionQueueManager on MediaCompressionService {
             'videoPath': item['videoPath']
           });
 
-      await _compressAndUploadVideo(
+      await compressAndUploadVideo(
         item['post'],
         item['videoPath'],
         item['thumbnailPath'],
@@ -453,8 +462,8 @@ extension CompressionQueueManager on MediaCompressionService {
       FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
           reason: 'Error processing compression queue');
     } finally {
-      MediaCompressionService._isProcessingQueue = false;
-      if (MediaCompressionService._shouldProcessAgain) {
+      MediaCompressionService.isProcessingQueue = false;
+      if (MediaCompressionService.shouldProcessAgain) {
         processCompressionQueue();
       }
     }
@@ -484,10 +493,10 @@ extension CompressionQueueManager on MediaCompressionService {
       }).toList();
 
       await prefs.setStringList(MediaCompressionService.COMPRESSION_QUEUE_KEY, queue);
-      await _updateProgress(postId, 'cancelled', 0);
+      await updateProgress(postId, 'cancelled', 0);
 
       try {
-        await _firestore.collection('posts').doc(postId).delete();
+        await firestoreInstance.collection('posts').doc(postId).delete();
       } catch (e) {
         AppLogger.w('Error deleting cancelled post from Firestore',
             category: LogCategory.general,
@@ -506,7 +515,7 @@ extension CompressionQueueManager on MediaCompressionService {
   // ── Failure handling ──────────────────────────────────────────────────────
 
   /// Handles failed compression attempts.
-  Future<void> _handleFailedCompression(
+  Future<void> handleFailedCompression(
     String post,
     String videoPath,
     String thumbnailPath,
@@ -561,8 +570,8 @@ extension CompressionQueueManager on MediaCompressionService {
             category: LogCategory.general,
             data: {'postId': post, 'attempts': attempts});
 
-        await _postDbService.updatePostStatus(post, false);
-        await _clearProgressEntry(post, success: false);
+        await postDbService.updatePostStatus(post, false);
+        await clearProgressEntry(post, success: false);
 
         try {
           await File(videoPath).delete();
@@ -621,7 +630,7 @@ extension CompressionQueueManager on MediaCompressionService {
   Future<void> migrateAndCleanupUploads() async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      Map<String, dynamic> progressMap = _getProgressMap(prefs);
+      Map<String, dynamic> progressMap = getProgressMap(prefs);
       bool hasUpdates = false;
 
       List<String> postsToRemove = [];
@@ -648,7 +657,7 @@ extension CompressionQueueManager on MediaCompressionService {
 
         if (status == 'completed') {
           migrationTasks.add(() async {
-            final url = await _tryGetStorageUrl(postId);
+            final url = await tryGetStorageUrl(postId);
             if (url != null) {
               progressMap[postId]['thumbnailPath'] = url;
               hasUpdates = true;
@@ -685,7 +694,7 @@ extension CompressionQueueManager on MediaCompressionService {
             }
 
             if (!exists) {
-              final url = await _tryGetStorageUrl(postId);
+              final url = await tryGetStorageUrl(postId);
               if (url != null) {
                 progressMap[postId]['thumbnailPath'] = url;
                 hasUpdates = true;
@@ -710,7 +719,7 @@ extension CompressionQueueManager on MediaCompressionService {
       }
 
       if (hasUpdates || postsToRemove.isNotEmpty) {
-        await _saveProgressMap(prefs, progressMap);
+        await saveProgressMap(prefs, progressMap);
         AppLogger.i('Migration completed',
             category: LogCategory.general,
             data: {
@@ -729,7 +738,7 @@ extension CompressionQueueManager on MediaCompressionService {
   /// Update a post's URL after upload completion.
   Future<void> updatePostUrlInProgress(String postId, String? spaceId) async {
     try {
-      final postRef = _firestore.collection('posts').doc(postId);
+      final postRef = firestoreInstance.collection('posts').doc(postId);
       final postDoc = await postRef.get();
 
       if (!postDoc.exists || postDoc.data() == null) {
@@ -739,7 +748,7 @@ extension CompressionQueueManager on MediaCompressionService {
       }
 
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      Map<String, dynamic> progressMap = _getProgressMap(prefs);
+      Map<String, dynamic> progressMap = getProgressMap(prefs);
 
       if (progressMap.containsKey(postId)) {
         progressMap[postId]['postUrl'] = postId;
@@ -747,7 +756,7 @@ extension CompressionQueueManager on MediaCompressionService {
         progressMap[postId]['completedTimestamp'] =
             DateTime.now().millisecondsSinceEpoch;
 
-        await _saveProgressMap(prefs, progressMap);
+        await saveProgressMap(prefs, progressMap);
       }
     } catch (e) {
       AppLogger.w('Error updating post URL in progress',
@@ -760,7 +769,7 @@ extension CompressionQueueManager on MediaCompressionService {
   Future<void> markUploadAsComplete(String postId, String? spaceId) async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      Map<String, dynamic> progressMap = _getProgressMap(prefs);
+      Map<String, dynamic> progressMap = getProgressMap(prefs);
 
       if (progressMap.containsKey(postId)) {
         await updatePostUrlInProgress(postId, spaceId);
@@ -771,7 +780,7 @@ extension CompressionQueueManager on MediaCompressionService {
             DateTime.now().millisecondsSinceEpoch;
         progressMap[postId]['spaceId'] = spaceId;
 
-        await _saveProgressMap(prefs, progressMap);
+        await saveProgressMap(prefs, progressMap);
       }
     } catch (e) {
       AppLogger.w('Error marking upload as complete',
@@ -785,7 +794,7 @@ extension CompressionQueueManager on MediaCompressionService {
       {String? error}) async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      Map<String, dynamic> progressMap = _getProgressMap(prefs);
+      Map<String, dynamic> progressMap = getProgressMap(prefs);
 
       if (progressMap.containsKey(postId)) {
         var data = Map<String, dynamic>.from(progressMap[postId]);
@@ -801,7 +810,7 @@ extension CompressionQueueManager on MediaCompressionService {
         }
 
         progressMap[postId] = data;
-        await _saveProgressMap(prefs, progressMap);
+        await saveProgressMap(prefs, progressMap);
       }
     } catch (e) {
       AppLogger.w('Error updating upload status',

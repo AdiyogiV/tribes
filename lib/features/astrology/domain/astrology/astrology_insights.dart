@@ -1,4 +1,9 @@
-part of '../astrology_service.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:aurogram/shared/models/daily_insight.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
+
+import '../astrology_service.dart';
 
 /// Daily insight streaming, fetching, generation, feedback, and
 /// first-reading / current-times-reading methods for [AstrologyService].

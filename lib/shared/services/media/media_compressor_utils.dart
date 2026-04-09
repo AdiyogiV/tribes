@@ -1,4 +1,15 @@
-part of 'media_compression_service.dart';
+import 'dart:io';
+import 'dart:math';
+import 'package:path_provider/path_provider.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:video_compress/video_compress.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:aurogram/core/network/network_optimizer.dart';
+import 'package:aurogram/core/di/injection.dart';
+import 'package:image/image.dart' as img;
+
+import 'media_compression_service.dart';
 
 /// Image compression, video compression (public API), thumbnail generation,
 /// file helpers, adaptive quality selection, and temp file management.
@@ -299,18 +310,18 @@ extension MediaCompressorUtils on MediaCompressionService {
 
   /// Create a temporary file with specified extension.
   Future<File> _createTempFile(String extension) async {
-    _tempDir ??= await getTemporaryDirectory();
+    tempDir ??= await getTemporaryDirectory();
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final random = Random().nextInt(10000);
-    return File('${_tempDir!.path}/media_${timestamp}_$random$extension');
+    return File('${tempDir!.path}/media_${timestamp}_$random$extension');
   }
 
   /// Clean up temporary files.
   Future<void> cleanupTempFiles() async {
     try {
-      _tempDir ??= await getTemporaryDirectory();
+      tempDir ??= await getTemporaryDirectory();
 
-      final tempFiles = _tempDir!.listSync().where((entity) =>
+      final tempFiles = tempDir!.listSync().where((entity) =>
           entity is File &&
           entity.path.contains('media_') &&
           (entity.path.endsWith('.jpg') || entity.path.endsWith('.mp4')));
@@ -344,7 +355,7 @@ extension MediaCompressorUtils on MediaCompressionService {
   Future<Tuple2<int, int>?> _getImageDimensions(File imageFile) async {
     try {
       final bytes = await imageFile.readAsBytes();
-      final dimensions = await compute(_decodeImageDimensions, bytes);
+      final dimensions = await compute(decodeImageDimensions, bytes);
       return dimensions;
     } catch (e) {
       AppLogger.w(
@@ -360,11 +371,11 @@ extension MediaCompressorUtils on MediaCompressionService {
   Future<int> _getOptimalImageQuality(int? requestedQuality) async {
     if (requestedQuality != null) {
       return requestedQuality.clamp(
-          MediaCompressionService._minImageQuality.toInt(), MediaCompressionService._maxImageQuality.toInt());
+          MediaCompressionService.minImageQuality.toInt(), MediaCompressionService.maxImageQuality.toInt());
     }
 
-    if (!_adaptiveCompressionEnabled) {
-      return MediaCompressionService._defaultImageQuality;
+    if (!adaptiveCompressionEnabled) {
+      return MediaCompressionService.defaultImageQuality;
     }
 
     try {
@@ -372,8 +383,8 @@ extension MediaCompressorUtils on MediaCompressionService {
         final networkOptimizer = locator<NetworkOptimizer>();
         final qualityFactor = networkOptimizer.getOptimalImageQuality();
 
-        final range = MediaCompressionService._maxImageQuality - MediaCompressionService._minImageQuality;
-        final quality = (MediaCompressionService._minImageQuality + (range * qualityFactor)).round();
+        final range = MediaCompressionService.maxImageQuality - MediaCompressionService.minImageQuality;
+        final quality = (MediaCompressionService.minImageQuality + (range * qualityFactor)).round();
 
         return quality;
       }
@@ -381,7 +392,7 @@ extension MediaCompressorUtils on MediaCompressionService {
       // Ignore errors and use default
     }
 
-    return MediaCompressionService._defaultImageQuality;
+    return MediaCompressionService.defaultImageQuality;
   }
 
   /// Determine optimal video quality based on network conditions.
@@ -390,8 +401,8 @@ extension MediaCompressorUtils on MediaCompressionService {
       return _getVideoQualityFromResolution(targetQuality);
     }
 
-    if (!_adaptiveCompressionEnabled) {
-      return _getVideoQualityFromResolution(MediaCompressionService._defaultVideoQuality);
+    if (!adaptiveCompressionEnabled) {
+      return _getVideoQualityFromResolution(MediaCompressionService.defaultVideoQuality);
     }
 
     try {
@@ -414,7 +425,7 @@ extension MediaCompressorUtils on MediaCompressionService {
       // Ignore errors and use default
     }
 
-    return _getVideoQualityFromResolution(MediaCompressionService._defaultVideoQuality);
+    return _getVideoQualityFromResolution(MediaCompressionService.defaultVideoQuality);
   }
 
   /// Convert resolution to VideoQuality enum.

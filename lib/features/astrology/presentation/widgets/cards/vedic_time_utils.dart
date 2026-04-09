@@ -154,8 +154,8 @@ class VedicTimeUtils {
     return null;
   }
 
-  /// Build numeric Vedic date: "month/paksha/tithi/year"
-  /// Example: "6/2/1/2083"
+  /// Build numeric Vedic date: "tithi/paksha/month/year" (smallest → largest, like DD/MM/YYYY)
+  /// Example: "6/2/2/2083" (Shashthi/Krishna/Vaishakha/2083)
   static String? buildVedicNumericDate(Map<String, dynamic>? samvat) {
     if (samvat == null) return null;
 

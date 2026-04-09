@@ -1,4 +1,12 @@
-part of '../notification_service.dart';
+import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
+import 'package:aurogram/core/config/app_config.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:aurogram/platform/platform.dart';
+
+import '../notification_service.dart';
 
 /// FCM token registration, Firestore persistence, unread-count tracking,
 /// and notification CRUD operations.
@@ -11,7 +19,7 @@ extension NotificationTokens on NotificationService {
   // ── Token registration ─────────────────────────────────────────────────────
 
   /// Register FCM token with retry for iOS APNs and support for web.
-  Future<void> _registerFCMToken() async {
+  Future<void> registerFCMToken() async {
     try {
       String? token;
 
@@ -80,7 +88,7 @@ extension NotificationTokens on NotificationService {
       }
 
       if (token != null) {
-        await _saveTokenToFirestore(token);
+        await saveTokenToFirestore(token);
         AppLogger.i(
           'FCM token registered successfully${kIsWeb ? ' (web)' : ''}',
           category: LogCategory.messaging,
@@ -95,12 +103,12 @@ extension NotificationTokens on NotificationService {
   }
 
   /// Save FCM token to Firestore (supports multi-device).
-  Future<void> _saveTokenToFirestore(String token) async {
-    final uid = _currentUser?.uid;
+  Future<void> saveTokenToFirestore(String token) async {
+    final uid = currentUser?.uid;
     if (uid == null) return;
 
     try {
-      final userDoc = _firestore.collection('users').doc(uid);
+      final userDoc = firestore.collection('users').doc(uid);
       final snapshot = await userDoc.get();
 
       if (snapshot.exists) {
@@ -139,7 +147,7 @@ extension NotificationTokens on NotificationService {
 
   /// Force register FCM token – call this if token wasn't registered initially.
   Future<void> forceRegisterToken() async {
-    await _registerFCMToken();
+    await registerFCMToken();
   }
 
   /// Force re-register the FCM token (for debugging/fixing).
@@ -147,7 +155,7 @@ extension NotificationTokens on NotificationService {
     try {
       AppLogger.i('🔔 Force re-registering FCM token...',
           category: LogCategory.messaging);
-      await _registerFCMToken();
+      await registerFCMToken();
       return true;
     } catch (e) {
       AppLogger.e('🔔 Force re-register failed: $e',
@@ -159,19 +167,19 @@ extension NotificationTokens on NotificationService {
   // ── Unread count ───────────────────────────────────────────────────────────
 
   /// Start listening to unread notification count.
-  void _startUnreadCountListener() {
-    final uid = _currentUser?.uid;
+  void startUnreadCountListener() {
+    final uid = currentUser?.uid;
     if (uid == null) return;
 
-    _firestore
+    firestore
         .collection('notifications')
         .doc(uid)
         .collection('notifications')
         .where('read', isEqualTo: false)
         .snapshots()
         .listen((snapshot) {
-      _unreadCount = snapshot.docs.length;
-      _unreadCountController.add(_unreadCount);
+      unreadCountValue = snapshot.docs.length;
+      unreadCountController.add(unreadCountValue);
     });
   }
 
@@ -179,11 +187,11 @@ extension NotificationTokens on NotificationService {
 
   /// Mark a single notification as read.
   Future<void> markAsRead(String notificationId) async {
-    final uid = _currentUser?.uid;
+    final uid = currentUser?.uid;
     if (uid == null) return;
 
     try {
-      await _firestore
+      await firestore
           .collection('notifications')
           .doc(uid)
           .collection('notifications')
@@ -197,12 +205,12 @@ extension NotificationTokens on NotificationService {
 
   /// Mark all notifications as read.
   Future<void> markAllAsRead() async {
-    final uid = _currentUser?.uid;
+    final uid = currentUser?.uid;
     if (uid == null) return;
 
     try {
-      final batch = _firestore.batch();
-      final unread = await _firestore
+      final batch = firestore.batch();
+      final unread = await firestore
           .collection('notifications')
           .doc(uid)
           .collection('notifications')
@@ -222,14 +230,14 @@ extension NotificationTokens on NotificationService {
 
   /// Delete notifications older than 30 days.
   Future<void> cleanupOldNotifications() async {
-    final uid = _currentUser?.uid;
+    final uid = currentUser?.uid;
     if (uid == null) return;
 
     try {
       final thirtyDaysAgo = DateTime.now().subtract(const Duration(days: 30));
-      final batch = _firestore.batch();
+      final batch = firestore.batch();
 
-      final oldNotifications = await _firestore
+      final oldNotifications = await firestore
           .collection('notifications')
           .doc(uid)
           .collection('notifications')
@@ -287,9 +295,9 @@ extension NotificationTokens on NotificationService {
           fcmToken != null ? '${fcmToken.substring(0, 20)}...' : 'NULL';
       diagnostics['hasFcmToken'] = fcmToken != null;
 
-      final uid = _currentUser?.uid;
+      final uid = currentUser?.uid;
       if (uid != null && fcmToken != null) {
-        final userDoc = await _firestore.collection('users').doc(uid).get();
+        final userDoc = await firestore.collection('users').doc(uid).get();
         final userData = userDoc.data();
         final savedTokens =
             (userData?['fcmTokens'] as List<dynamic>?)?.cast<String>() ?? [];
@@ -301,9 +309,9 @@ extension NotificationTokens on NotificationService {
         diagnostics['hasLegacyToken'] = legacyToken != null;
       }
 
-      diagnostics['initialized'] = _initialized;
-      diagnostics['permissionsRequested'] = _permissionsRequested;
-      diagnostics['userId'] = _currentUser?.uid ?? 'NOT LOGGED IN';
+      diagnostics['initialized'] = initialized;
+      diagnostics['permissionsRequested'] = permissionsRequestedFlag;
+      diagnostics['userId'] = currentUser?.uid ?? 'NOT LOGGED IN';
     } catch (e) {
       diagnostics['error'] = e.toString();
     }

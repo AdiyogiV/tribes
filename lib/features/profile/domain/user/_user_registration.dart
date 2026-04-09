@@ -1,4 +1,11 @@
-part of '../user_service.dart';
+import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:aurogram/shared/data/firebase/firestore_recovery.dart';
+
+import '../user_service.dart';
 
 /// Extension on [UserService] for registration and authentication checks.
 extension UserRegistration on UserService {

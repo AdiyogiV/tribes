@@ -1,4 +1,8 @@
-part of '../space_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:aurogram/shared/models/space_roles.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
+
+import '../space_service.dart';
 
 /// Extension on [SpaceService] for space and post deletion operations.
 extension SpaceDelete on SpaceService {

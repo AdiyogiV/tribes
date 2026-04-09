@@ -1,4 +1,7 @@
-part of '../user_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
+
+import '../user_service.dart';
 
 /// Extension on [UserService] for user blocking operations.
 extension UserBlock on UserService {

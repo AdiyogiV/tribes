@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:aurogram/features/spaces/presentation/pages/invite_landing_page.dart';
-import 'package:aurogram/features/feed/presentation/pages/thread_view.dart';
-import 'package:aurogram/features/profile/presentation/pages/user_profile.dart';
-import 'package:aurogram/features/anonymous_messages/pages/send_composer_screen.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:aurogram/core/routing/page_factory.dart';
+import 'package:aurogram/core/routing/route_names.dart';
 
 class DynamicLinkNavigator {
   static final GlobalKey<NavigatorState> navigatorKey =
@@ -18,12 +16,10 @@ class DynamicLinkNavigator {
         category: LogCategory.navigation,
         data: {'spaceId': spaceId, 'inviterId': inviterId});
 
-    _navigate(() {
-      return InviteLandingPage(
-        space: spaceId,
-        invitee: inviterId,
-      );
-    });
+    _navigate(
+      RouteNames.spaceInvite,
+      arguments: {'spaceId': spaceId, 'inviterId': inviterId},
+    );
   }
 
   /// Navigate to specific post
@@ -31,7 +27,7 @@ class DynamicLinkNavigator {
     AppLogger.i('🔗 navigateToPost called',
         category: LogCategory.navigation, data: {'postId': postId});
 
-    _navigate(() => ThreadView(postId: postId));
+    _navigate(RouteNames.threadView, arguments: {'postId': postId});
   }
 
   /// Navigate to user profile
@@ -39,7 +35,7 @@ class DynamicLinkNavigator {
     AppLogger.i('🔗 navigateToUserProfile called',
         category: LogCategory.navigation, data: {'userId': userId});
 
-    _navigate(() => UserProfilePage(uid: userId));
+    _navigate(RouteNames.userProfile, arguments: {'uid': userId});
   }
 
   /// Navigate to anonymous message send composer (by slug)
@@ -47,20 +43,20 @@ class DynamicLinkNavigator {
     AppLogger.i('🔗 navigateToSecretMessageSlug called',
         category: LogCategory.navigation, data: {'slug': slug});
 
-    _navigate(() => SecretMessageSendComposer(slug: slug));
+    _navigate(RouteNames.secretMessageSend, arguments: {'slug': slug});
   }
 
   /// Internal navigation helper with retry logic
-  static void _navigate(Widget Function() pageBuilder) {
+  static void _navigate(String routeName, {Map<String, dynamic>? arguments}) {
     // Try immediate navigation
-    if (_tryNavigate(pageBuilder)) {
+    if (_tryNavigate(routeName, arguments: arguments)) {
       return;
     }
 
     // Store pending navigation and retry after delay
     AppLogger.i('🔗 Navigator not ready, scheduling retry',
         category: LogCategory.navigation);
-    _pendingNavigation = _PendingNavigation(pageBuilder);
+    _pendingNavigation = _PendingNavigation(routeName, arguments);
 
     // Retry after delays (app might still be initializing)
     Future.delayed(const Duration(milliseconds: 500), () => _processPending());
@@ -69,7 +65,7 @@ class DynamicLinkNavigator {
   }
 
   /// Try to navigate immediately
-  static bool _tryNavigate(Widget Function() pageBuilder) {
+  static bool _tryNavigate(String routeName, {Map<String, dynamic>? arguments}) {
     try {
       final context = navigatorKey.currentContext;
       if (context == null) {
@@ -80,7 +76,7 @@ class DynamicLinkNavigator {
 
       final navigator = Navigator.of(context);
       navigator.push(
-        MaterialPageRoute(builder: (context) => pageBuilder()),
+        PageFactory.route(routeName, arguments: arguments),
       );
 
       AppLogger.i('🔗 Navigation successful', category: LogCategory.navigation);
@@ -99,7 +95,8 @@ class DynamicLinkNavigator {
     AppLogger.d('🔗 Processing pending navigation',
         category: LogCategory.navigation);
 
-    if (_tryNavigate(_pendingNavigation!.pageBuilder)) {
+    if (_tryNavigate(_pendingNavigation!.routeName,
+        arguments: _pendingNavigation!.arguments)) {
       _pendingNavigation = null;
     }
   }
@@ -111,7 +108,8 @@ class DynamicLinkNavigator {
 }
 
 class _PendingNavigation {
-  final Widget Function() pageBuilder;
+  final String routeName;
+  final Map<String, dynamic>? arguments;
 
-  _PendingNavigation(this.pageBuilder);
+  _PendingNavigation(this.routeName, this.arguments);
 }

@@ -1,18 +1,24 @@
-part of '../notification_service.dart';
+import 'package:aurogram/shared/models/notification.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:aurogram/features/chat/domain/chat_notification_service.dart';
+import 'package:aurogram/core/routing/route_names.dart';
+import 'package:aurogram/core/routing/page_factory.dart';
+
+import '../notification_service.dart';
 
 /// Deep-link navigation and tap routing for all notification types.
-extension _NotificationNavigation on NotificationService {
+extension NotificationNavigation on NotificationService {
   /// Navigate based on notification type.
-  void _navigateForNotification(AppNotification notification) {
+  void navigateForNotification(AppNotification notification) {
     switch (notification.type) {
       case NotificationType.chat:
       case NotificationType.message:
         if (notification.spaceId != null) {
-          _navigateToChatWithRetry(notification.spaceId!);
+          navigateToChatWithRetry(notification.spaceId!);
         }
         break;
       case NotificationType.dailyAstroInsight:
-        _navigateToDailyInsight(
+        navigateToDailyInsight(
           cardIndex: notification.cardIndex,
           insightDate: notification.insightId ?? notification.date,
         );
@@ -21,25 +27,25 @@ extension _NotificationNavigation on NotificationService {
       case NotificationType.like:
       case NotificationType.newSpacePost:
         if (notification.spaceId != null) {
-          _navigateToPost(notification.spaceId!, notification.postId);
+          navigateToPost(notification.spaceId!, notification.postId);
         }
         break;
       case NotificationType.namaste:
         if (notification.authorId != null) {
-          _navigateToProfile(notification.authorId!);
+          navigateToProfile(notification.authorId!);
         }
         break;
       case NotificationType.invite:
-        _navigateToInvites();
+        navigateToInvites();
         break;
       case NotificationType.request:
         if (notification.spaceId != null) {
-          _navigateToRequests(notification.spaceId!);
+          navigateToRequests(notification.spaceId!);
         }
         break;
       case NotificationType.addedToGroup:
         if (notification.spaceId != null) {
-          _navigateToSpace(notification.spaceId!);
+          navigateToSpace(notification.spaceId!);
         }
         break;
       case NotificationType.follow:
@@ -50,7 +56,7 @@ extension _NotificationNavigation on NotificationService {
             notification.data['fromUserId'] as String? ??
             notification.data['authorId'] as String?;
         if (userId != null) {
-          _navigateToProfile(userId);
+          navigateToProfile(userId);
         }
         break;
       case NotificationType.followRequest:
@@ -59,11 +65,11 @@ extension _NotificationNavigation on NotificationService {
             notification.data['fromUserId'] as String? ??
             notification.data['authorId'] as String?;
         if (requestorId != null) {
-          _navigateToProfile(requestorId);
+          navigateToProfile(requestorId);
         }
         break;
       case NotificationType.anonymousMessage:
-        _navigateToSecretMessagesInbox();
+        navigateToSecretMessagesInbox();
         break;
       default:
         break;
@@ -72,52 +78,52 @@ extension _NotificationNavigation on NotificationService {
 
   // ── Individual navigation helpers ─────────────────────────────────────────
 
-  void _navigateToSecretMessagesInbox() {
-    if (_navigatorKey?.currentState == null) return;
-    _navigatorKey!.currentState!.push(
+  void navigateToSecretMessagesInbox() {
+    if (navigatorKey?.currentState == null) return;
+    navigatorKey!.currentState!.push(
       PageFactory.route(RouteNames.secretMessagesInbox),
     );
   }
 
-  void _navigateToChatWithRetry(String spaceId, {int attempt = 0}) {
-    if (_navigatorKey?.currentState == null) {
+  void navigateToChatWithRetry(String spaceId, {int attempt = 0}) {
+    if (navigatorKey?.currentState == null) {
       if (attempt < 10) {
         Future.delayed(Duration(milliseconds: 500 * (attempt + 1)), () {
-          _navigateToChatWithRetry(spaceId, attempt: attempt + 1);
+          navigateToChatWithRetry(spaceId, attempt: attempt + 1);
         });
       }
       return;
     }
 
     final chatService = ChatNotificationService();
-    chatService.setNavigatorKey(_navigatorKey!);
+    chatService.setNavigatorKey(navigatorKey!);
 
-    _navigatorKey!.currentState!.push(
+    navigatorKey!.currentState!.push(
       PageFactory.route(RouteNames.spaceChatScreen, arguments: {
         'spaceId': spaceId,
         'space': null,
         'otherUserId': spaceId.startsWith('dm_')
             ? spaceId
                 .split('_')
-                .where((id) => id != _currentUser?.uid)
+                .where((id) => id != currentUser?.uid)
                 .firstOrNull
             : null,
       }),
     );
   }
 
-  void _navigateToDailyInsight({
+  void navigateToDailyInsight({
     int attempt = 0,
     int? cardIndex,
     String? insightDate,
   }) {
-    final userId = _currentUser?.uid;
+    final userId = currentUser?.uid;
     if (userId == null) return;
 
-    if (_navigatorKey?.currentState == null) {
+    if (navigatorKey?.currentState == null) {
       if (attempt < 5) {
         Future.delayed(Duration(milliseconds: 500 * (attempt + 1)), () {
-          _navigateToDailyInsight(
+          navigateToDailyInsight(
             attempt: attempt + 1,
             cardIndex: cardIndex,
             insightDate: insightDate,
@@ -127,7 +133,7 @@ extension _NotificationNavigation on NotificationService {
       return;
     }
 
-    _navigatorKey!.currentState!.push(
+    navigatorKey!.currentState!.push(
       PageFactory.route(RouteNames.dailyInsight, arguments: {
         'uid': userId,
         'cardIndex': cardIndex,
@@ -136,16 +142,16 @@ extension _NotificationNavigation on NotificationService {
     );
   }
 
-  void _navigateToPost(String spaceId, String? postId) {
-    if (_navigatorKey?.currentState == null) return;
+  void navigateToPost(String spaceId, String? postId) {
+    if (navigatorKey?.currentState == null) return;
     if (postId != null && postId.isNotEmpty) {
-      _navigatorKey!.currentState!.push(
+      navigatorKey!.currentState!.push(
         PageFactory.route(RouteNames.threadView, arguments: {
           'postId': postId,
         }),
       );
     } else {
-      _navigatorKey!.currentState!.push(
+      navigatorKey!.currentState!.push(
         PageFactory.route(RouteNames.spaceScreen, arguments: {
           'rid': spaceId,
         }),
@@ -153,52 +159,52 @@ extension _NotificationNavigation on NotificationService {
     }
   }
 
-  void _navigateToProfile(String userId) {
-    if (_navigatorKey?.currentState == null) return;
+  void navigateToProfile(String userId) {
+    if (navigatorKey?.currentState == null) return;
 
-    _navigatorKey!.currentState!.push(
+    navigatorKey!.currentState!.push(
       PageFactory.route(RouteNames.userProfile, arguments: {
         'uid': userId,
       }),
     );
   }
 
-  void _navigateToSpace(String spaceId) {
-    if (_navigatorKey?.currentState == null) return;
+  void navigateToSpace(String spaceId) {
+    if (navigatorKey?.currentState == null) return;
 
-    _navigatorKey!.currentState!.push(
+    navigatorKey!.currentState!.push(
       PageFactory.route(RouteNames.spaceScreen, arguments: {
         'rid': spaceId,
       }),
     );
   }
 
-  void _navigateToInvites() {
-    if (_navigatorKey?.currentState == null) return;
+  void navigateToInvites() {
+    if (navigatorKey?.currentState == null) return;
 
-    _navigatorKey!.currentState!.push(
+    navigatorKey!.currentState!.push(
       PageFactory.route(RouteNames.invites),
     );
   }
 
-  void _navigateToRequests(String spaceId) {
-    if (_navigatorKey?.currentState == null) return;
+  void navigateToRequests(String spaceId) {
+    if (navigatorKey?.currentState == null) return;
 
-    _navigatorKey!.currentState!.push(
+    navigatorKey!.currentState!.push(
       PageFactory.route(RouteNames.requests),
     );
   }
 
   /// Navigate to group call screen with retry for app startup timing.
-  void _navigateToGroupCall(String spaceId, String spaceName,
+  void navigateToGroupCall(String spaceId, String spaceName,
       {int retryCount = 0}) {
-    if (_navigatorKey?.currentState == null) {
+    if (navigatorKey?.currentState == null) {
       if (retryCount < 15) {
         AppLogger.d(
             'Navigator not ready for group call, retrying... (attempt ${retryCount + 1})',
             category: LogCategory.general);
         Future.delayed(Duration(milliseconds: 500 + (retryCount * 200)), () {
-          _navigateToGroupCall(spaceId, spaceName, retryCount: retryCount + 1);
+          navigateToGroupCall(spaceId, spaceName, retryCount: retryCount + 1);
         });
         return;
       }
@@ -208,7 +214,7 @@ extension _NotificationNavigation on NotificationService {
       return;
     }
 
-    _navigatorKey!.currentState!.push(
+    navigatorKey!.currentState!.push(
       PageFactory.route(RouteNames.groupCall, arguments: {
         'spaceId': spaceId,
         'spaceName': spaceName,

@@ -1,10 +1,20 @@
-part of 'media_compression_service.dart';
+import 'dart:async';
+import 'dart:io';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:path/path.dart' as path;
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:video_compress/video_compress.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
+
+import 'media_compression_service.dart';
 
 /// Core video compression and upload pipeline: compress, upload thumbnail,
 /// upload video, update Firestore, handle replies, clean up.
 extension VideoCompressionPipeline on MediaCompressionService {
   /// Compresses and uploads a video.
-  Future<void> _compressAndUploadVideo(
+  Future<void> compressAndUploadVideo(
       String post,
       String videoPath,
       String thumbnailPath,
@@ -27,7 +37,7 @@ extension VideoCompressionPipeline on MediaCompressionService {
 
     try {
       // Update status to compressing - starting progress
-      await _updateProgress(post, 'compressing', 10);
+      await updateProgress(post, 'compressing', 10);
       currentProgress = 10;
 
       // Intermediate progress updates during compression
@@ -37,7 +47,7 @@ extension VideoCompressionPipeline on MediaCompressionService {
 
         progressTimers.add(Timer(Duration(seconds: delaySeconds), () async {
           if (isProcessing && progress > currentProgress) {
-            await _updateProgress(post, phase, progress);
+            await updateProgress(post, phase, progress);
             currentProgress = progress;
           }
         }));
@@ -57,8 +67,8 @@ extension VideoCompressionPipeline on MediaCompressionService {
           timer.cancel();
         }
 
-        await _updateProgress(post, 'compression_failed', 0);
-        _handleFailedCompression(post, videoPath, thumbnailPath, fetchedSpace,
+        await updateProgress(post, 'compression_failed', 0);
+        handleFailedCompression(post, videoPath, thumbnailPath, fetchedSpace,
             title, replyTo, replyToUid, addToSpaceFeed, link, attempts, userId,
             isProfilePost: isProfilePost);
         return;
@@ -66,14 +76,14 @@ extension VideoCompressionPipeline on MediaCompressionService {
 
       // Compression complete
       if (30 > currentProgress) {
-        await _updateProgress(post, 'uploading_thumbnail', 30);
+        await updateProgress(post, 'uploading_thumbnail', 30);
         currentProgress = 30;
       }
 
       if (35 > currentProgress) {
         progressTimers.add(Timer(Duration(seconds: 1), () async {
           if (isProcessing && 35 > currentProgress) {
-            await _updateProgress(post, 'uploading_thumbnail', 35);
+            await updateProgress(post, 'uploading_thumbnail', 35);
             currentProgress = 35;
           }
         }));
@@ -84,7 +94,7 @@ extension VideoCompressionPipeline on MediaCompressionService {
           category: LogCategory.general,
           data: {'postId': post, 'thumbnailPath': thumbnailPath});
 
-      String? thumbnail = await _storageService.uploadToStorage(
+      String? thumbnail = await storageService.uploadToStorage(
           thumbnailPath, 'posts/$post/thumbnail.jpg');
       if (thumbnail == null) {
         isProcessing = false;
@@ -93,9 +103,9 @@ extension VideoCompressionPipeline on MediaCompressionService {
         }
 
         if (currentProgress < 30) {
-          await _updateProgress(post, 'thumbnail_upload_failed', 30);
+          await updateProgress(post, 'thumbnail_upload_failed', 30);
         } else {
-          await _updateProgress(
+          await updateProgress(
               post, 'thumbnail_upload_failed', currentProgress);
         }
 
@@ -103,7 +113,7 @@ extension VideoCompressionPipeline on MediaCompressionService {
             category: LogCategory.general,
             data: {'postId': post, 'thumbnailPath': thumbnailPath});
 
-        _handleFailedCompression(post, videoPath, thumbnailPath, fetchedSpace,
+        handleFailedCompression(post, videoPath, thumbnailPath, fetchedSpace,
             title, replyTo, replyToUid, addToSpaceFeed, link, attempts, userId,
             isProfilePost: isProfilePost);
         return;
@@ -111,7 +121,7 @@ extension VideoCompressionPipeline on MediaCompressionService {
 
       // Update post thumbnail immediately so UI can show it
       try {
-        await _postDbService.updatePostThumbnail(post, thumbnail);
+        await postDbService.updatePostThumbnail(post, thumbnail);
       } catch (_) {
         AppLogger.w(
             'MediaCompressionService: failed to update post thumbnail',
@@ -120,7 +130,7 @@ extension VideoCompressionPipeline on MediaCompressionService {
 
       // Update progress to video upload
       if (50 > currentProgress) {
-        await _updateProgress(post, 'uploading_video', 50);
+        await updateProgress(post, 'uploading_video', 50);
         currentProgress = 50;
       }
 
@@ -132,7 +142,7 @@ extension VideoCompressionPipeline on MediaCompressionService {
       if (60 > currentProgress) {
         progressTimers.add(Timer(Duration(seconds: 2), () async {
           if (isProcessing && 60 > currentProgress) {
-            await _updateProgress(post, 'uploading_video', 60);
+            await updateProgress(post, 'uploading_video', 60);
             currentProgress = 60;
           }
         }));
@@ -141,14 +151,14 @@ extension VideoCompressionPipeline on MediaCompressionService {
       if (70 > currentProgress) {
         progressTimers.add(Timer(Duration(seconds: 5), () async {
           if (isProcessing && 70 > currentProgress) {
-            await _updateProgress(post, 'uploading_video', 70);
+            await updateProgress(post, 'uploading_video', 70);
             currentProgress = 70;
           }
         }));
       }
 
       // Upload video with progress reporting
-      String? video = await _storageService
+      String? video = await storageService
           .uploadToStorage(compressedVideoPath, 'posts/$post/video.mp4',
               onProgress: (progressPercent) {
         double safePercent = progressPercent;
@@ -160,7 +170,7 @@ extension VideoCompressionPipeline on MediaCompressionService {
 
         final int totalProgress = 50 + ((safePercent / 100.0) * 30.0).round();
         if (totalProgress > currentProgress) {
-          _updateProgress(post, 'uploading_video', totalProgress);
+          updateProgress(post, 'uploading_video', totalProgress);
           currentProgress = totalProgress;
         }
       });
@@ -171,13 +181,13 @@ extension VideoCompressionPipeline on MediaCompressionService {
           timer.cancel();
         }
 
-        await _updateProgress(post, 'video_upload_failed', currentProgress);
+        await updateProgress(post, 'video_upload_failed', currentProgress);
 
         AppLogger.e('Video upload failed',
             category: LogCategory.general,
             data: {'postId': post, 'compressedVideoPath': compressedVideoPath});
 
-        _handleFailedCompression(post, videoPath, thumbnailPath, fetchedSpace,
+        handleFailedCompression(post, videoPath, thumbnailPath, fetchedSpace,
             title, replyTo, replyToUid, addToSpaceFeed, link, attempts, userId,
             isProfilePost: isProfilePost);
         return;
@@ -185,7 +195,7 @@ extension VideoCompressionPipeline on MediaCompressionService {
 
       // 4. Finalizing
       if (90 > currentProgress) {
-        await _updateProgress(post, 'finalizing', 90);
+        await updateProgress(post, 'finalizing', 90);
         currentProgress = 90;
       }
 
@@ -193,7 +203,7 @@ extension VideoCompressionPipeline on MediaCompressionService {
       if (95 > currentProgress) {
         progressTimers.add(Timer(Duration(seconds: 1), () async {
           if (isProcessing && 95 > currentProgress) {
-            await _updateProgress(post, 'finalizing', 95);
+            await updateProgress(post, 'finalizing', 95);
             currentProgress = 95;
           }
         }));
@@ -214,7 +224,7 @@ extension VideoCompressionPipeline on MediaCompressionService {
           });
 
       bool updateSuccess =
-          await _postDbService.updatePostWithMedia(post, video, thumbnail);
+          await postDbService.updatePostWithMedia(post, video, thumbnail);
 
       AppLogger.w(
           updateSuccess
@@ -225,20 +235,20 @@ extension VideoCompressionPipeline on MediaCompressionService {
 
       // Add to appropriate feed
       if (isProfilePost) {
-        await _postDbService.addVideoToUserPosts(
+        await postDbService.addVideoToUserPosts(
             post, title, thumbnail, video, replyTo, link);
       } else if (addToSpaceFeed) {
-        await _postDbService.addToSpaceFeed(
+        await postDbService.addToSpaceFeed(
             fetchedSpace, post, title, thumbnail, video, replyTo, link);
       }
 
       // 6. Handle replies if necessary
       if (replyTo != null) {
-        await _postDbService.addPostReply(
+        await postDbService.addPostReply(
             fetchedSpace, post, title, thumbnail, video, replyTo, link);
 
         if (replyToUid != null && userId != null && replyToUid != userId) {
-          await _postDbService.addUserReply(
+          await postDbService.addUserReply(
               replyToUid, fetchedSpace, post, title, thumbnail, video, link);
         }
       }
@@ -255,11 +265,11 @@ extension VideoCompressionPipeline on MediaCompressionService {
       progressTimers.clear();
 
       // Mark as complete
-      await _updateProgress(post, 'completed', 100);
+      await updateProgress(post, 'completed', 100);
 
       // Update status record for UI
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      Map<String, dynamic> progressMap = _getProgressMap(prefs);
+      Map<String, dynamic> progressMap = getProgressMap(prefs);
 
       if (progressMap.containsKey(post)) {
         progressMap[post]['status'] = 'completed';
@@ -268,7 +278,7 @@ extension VideoCompressionPipeline on MediaCompressionService {
             DateTime.now().millisecondsSinceEpoch;
         progressMap[post]['spaceId'] = fetchedSpace;
 
-        await _saveProgressMap(prefs, progressMap);
+        await saveProgressMap(prefs, progressMap);
       }
 
       // 7. Clean up local files
@@ -300,11 +310,11 @@ extension VideoCompressionPipeline on MediaCompressionService {
         timer.cancel();
       }
 
-      await _updateProgress(post, 'failed', 0);
+      await updateProgress(post, 'failed', 0);
       AppLogger.e('Error in compress and upload pipeline',
           category: LogCategory.general, error: e, data: {'postId': post});
       FirebaseCrashlytics.instance.recordError(e, StackTrace.current);
-      _handleFailedCompression(post, videoPath, thumbnailPath, fetchedSpace,
+      handleFailedCompression(post, videoPath, thumbnailPath, fetchedSpace,
           title, replyTo, replyToUid, addToSpaceFeed, link, attempts, userId);
     }
   }

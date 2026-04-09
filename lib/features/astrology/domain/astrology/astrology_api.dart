@@ -1,4 +1,8 @@
-part of '../astrology_service.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:lat_lng_to_timezone/lat_lng_to_timezone.dart';
+
+import '../astrology_service.dart';
 
 /// Cloud Function calling, auth-token refresh, location search,
 /// and timezone resolution for [AstrologyService].

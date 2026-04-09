@@ -1,4 +1,6 @@
-part of '../user_service.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
+
+import '../user_service.dart';
 
 /// Extension on [UserService] for display name resolution and caching.
 extension UserDisplayName on UserService {

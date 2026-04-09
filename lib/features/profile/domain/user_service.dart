@@ -1,21 +1,15 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:crypto/crypto.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:aurogram/features/profile/domain/contact_service.dart';
-import 'package:aurogram/platform/file_helper.dart' as file_helper;
-import 'package:aurogram/shared/data/firebase/firestore_recovery.dart';
 
-part 'user/_user_display_name.dart';
-part 'user/_user_block.dart';
-part 'user/_user_registration.dart';
-part 'user/_user_profile.dart';
+export 'user/_user_display_name.dart';
+export 'user/_user_block.dart';
+export 'user/_user_registration.dart';
+export 'user/_user_profile.dart';
 
 class UserService {
   final FirebaseAuth auth = FirebaseAuth.instance;
@@ -186,7 +180,7 @@ class UserService {
 
   /// Stores deletion reference for audit trail.
   /// The Cloud Function will update this document with cleanup status.
-  Future<void> _storeDeletedUserReference() async {
+  Future<void> storeDeletedUserReference() async {
     await firestore.collection('deletedUsers').doc(user?.uid).set({
       'phoneNumber': user?.phoneNumber,
       'email': user?.email,
@@ -199,7 +193,7 @@ class UserService {
 
   /// Removes deletion reference if account deletion fails.
   /// This prevents users from being permanently blocked if Auth deletion fails.
-  Future<void> _removeDeletedUserReference() async {
+  Future<void> removeDeletedUserReference() async {
     try {
       await firestore.collection('deletedUsers').doc(user?.uid).delete();
       AppLogger.i('Removed deletedUsers record after failed deletion',

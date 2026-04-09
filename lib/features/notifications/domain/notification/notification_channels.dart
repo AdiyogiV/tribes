@@ -1,54 +1,61 @@
-part of '../notification_service.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart'
+    if (dart.library.html) 'package:aurogram/platform/flutter_local_notifications_stub.dart';
+import 'package:aurogram/shared/models/notification.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:aurogram/platform/platform.dart';
+
+import '../notification_service.dart';
 
 /// Notification channel IDs, names, and Android channel creation.
 /// Also handles iOS notification categories for call actions.
-extension _NotificationChannels on NotificationService {
+extension NotificationChannels on NotificationService {
   // ── Android Channel IDs ────────────────────────────────────────────────────
-  static const String _chatChannelId = 'chat_messages';
-  static const String _chatChannelName = 'Chat Messages';
-  static const String _chatChannelDesc =
+  static const String chatChannelId = 'chat_messages';
+  static const String chatChannelName = 'Chat Messages';
+  static const String chatChannelDesc =
       'Notifications for new chat messages';
 
-  static const String _socialChannelId = 'social_notifications';
-  static const String _socialChannelName = 'Social Activity';
-  static const String _socialChannelDesc =
+  static const String socialChannelId = 'social_notifications';
+  static const String socialChannelName = 'Social Activity';
+  static const String socialChannelDesc =
       'Likes, replies, and other social notifications';
 
-  static const String _gramChannelId = 'gram_notifications';
-  static const String _gramChannelName = 'Gram Updates';
-  static const String _gramChannelDesc =
+  static const String gramChannelId = 'gram_notifications';
+  static const String gramChannelName = 'Gram Updates';
+  static const String gramChannelDesc =
       'Invites, requests, and gram updates';
 
-  static const String _astroChannelId = 'astro_insights';
-  static const String _astroChannelName = 'Daily Insights';
-  static const String _astroChannelDesc =
+  static const String astroChannelId = 'astro_insights';
+  static const String astroChannelName = 'Daily Insights';
+  static const String astroChannelDesc =
       'Your personalized astrology insights';
 
-  static const String _generalChannelId = 'general_notifications';
-  static const String _generalChannelName = 'General';
-  static const String _generalChannelDesc = 'General app notifications';
+  static const String generalChannelId = 'general_notifications';
+  static const String generalChannelName = 'General';
+  static const String generalChannelDesc = 'General app notifications';
 
-  static const String _callChannelId = 'call_notifications';
-  static const String _callChannelName = 'Incoming Calls';
-  static const String _callChannelDesc =
+  static const String callChannelId = 'call_notifications';
+  static const String callChannelName = 'Incoming Calls';
+  static const String callChannelDesc =
       'Voice and video call notifications';
 
-  static const String _groupCallChannelId = 'group_calls';
-  static const String _groupCallChannelName = 'Group Calls';
-  static const String _groupCallChannelDesc =
+  static const String groupCallChannelId = 'group_calls';
+  static const String groupCallChannelName = 'Group Calls';
+  static const String groupCallChannelDesc =
       'Notifications for group calls in grams';
 
   // ── iOS / Local notification action IDs ───────────────────────────────────
-  static const String _actionAcceptCall = 'accept_call';
-  static const String _actionRejectCall = 'reject_call';
-  static const String _actionJoinGroupCall = 'join_group_call';
-  static const String _actionDismissGroupCall = 'dismiss_group_call';
+  static const String actionAcceptCall = 'accept_call';
+  static const String actionRejectCall = 'reject_call';
+  static const String actionJoinGroupCall = 'join_group_call';
+  static const String actionDismissGroupCall = 'dismiss_group_call';
 
   // ── Initialisation ─────────────────────────────────────────────────────────
 
   /// Initialise flutter_local_notifications with iOS categories and Android
   /// channels. Does NOT request permissions.
-  Future<void> _initializeLocalNotifications() async {
+  Future<void> initializeLocalNotifications() async {
     const androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
@@ -65,12 +72,12 @@ extension _NotificationChannels on NotificationService {
           'incoming_call',
           actions: [
             DarwinNotificationAction.plain(
-              _actionAcceptCall,
+              actionAcceptCall,
               'Accept',
               options: {DarwinNotificationActionOption.foreground},
             ),
             DarwinNotificationAction.plain(
-              _actionRejectCall,
+              actionRejectCall,
               'Reject',
               options: {DarwinNotificationActionOption.destructive},
             ),
@@ -84,12 +91,12 @@ extension _NotificationChannels on NotificationService {
           'group_call',
           actions: [
             DarwinNotificationAction.plain(
-              _actionJoinGroupCall,
+              actionJoinGroupCall,
               'Join',
               options: {DarwinNotificationActionOption.foreground},
             ),
             DarwinNotificationAction.plain(
-              _actionDismissGroupCall,
+              actionDismissGroupCall,
               'Dismiss',
               options: {},
             ),
@@ -106,31 +113,31 @@ extension _NotificationChannels on NotificationService {
       iOS: iosSettings,
     );
 
-    await _localNotifications.initialize(
+    await localNotifications.initialize(
       initSettings,
-      onDidReceiveNotificationResponse: _handleLocalNotificationTap,
+      onDidReceiveNotificationResponse: handleLocalNotificationTap,
       onDidReceiveBackgroundNotificationResponse:
-          _backgroundNotificationHandler,
+          backgroundNotificationHandler,
     );
 
     if (!kIsWeb && PlatformServices.instance.isAndroid) {
-      await _createNotificationChannels();
+      await createNotificationChannels();
     }
   }
 
   /// Create all Android notification channels.
-  Future<void> _createNotificationChannels() async {
+  Future<void> createNotificationChannels() async {
     final androidPlugin =
-        _localNotifications.resolvePlatformSpecificImplementation<
+        localNotifications.resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>();
 
     if (androidPlugin == null) return;
 
     await androidPlugin
         .createNotificationChannel(const AndroidNotificationChannel(
-      _chatChannelId,
-      _chatChannelName,
-      description: _chatChannelDesc,
+      chatChannelId,
+      chatChannelName,
+      description: chatChannelDesc,
       importance: Importance.high,
       playSound: true,
       enableVibration: true,
@@ -139,9 +146,9 @@ extension _NotificationChannels on NotificationService {
 
     await androidPlugin
         .createNotificationChannel(const AndroidNotificationChannel(
-      _socialChannelId,
-      _socialChannelName,
-      description: _socialChannelDesc,
+      socialChannelId,
+      socialChannelName,
+      description: socialChannelDesc,
       importance: Importance.high,
       playSound: true,
       enableVibration: true,
@@ -150,9 +157,9 @@ extension _NotificationChannels on NotificationService {
 
     await androidPlugin
         .createNotificationChannel(const AndroidNotificationChannel(
-      _gramChannelId,
-      _gramChannelName,
-      description: _gramChannelDesc,
+      gramChannelId,
+      gramChannelName,
+      description: gramChannelDesc,
       importance: Importance.high,
       playSound: true,
       enableVibration: true,
@@ -161,9 +168,9 @@ extension _NotificationChannels on NotificationService {
 
     await androidPlugin
         .createNotificationChannel(const AndroidNotificationChannel(
-      _astroChannelId,
-      _astroChannelName,
-      description: _astroChannelDesc,
+      astroChannelId,
+      astroChannelName,
+      description: astroChannelDesc,
       importance: Importance.high,
       playSound: true,
       enableVibration: true,
@@ -172,9 +179,9 @@ extension _NotificationChannels on NotificationService {
 
     await androidPlugin
         .createNotificationChannel(const AndroidNotificationChannel(
-      _generalChannelId,
-      _generalChannelName,
-      description: _generalChannelDesc,
+      generalChannelId,
+      generalChannelName,
+      description: generalChannelDesc,
       importance: Importance.defaultImportance,
       playSound: true,
       showBadge: true,
@@ -183,9 +190,9 @@ extension _NotificationChannels on NotificationService {
     // Max priority – enables full-screen intent for incoming calls.
     await androidPlugin
         .createNotificationChannel(const AndroidNotificationChannel(
-      _callChannelId,
-      _callChannelName,
-      description: _callChannelDesc,
+      callChannelId,
+      callChannelName,
+      description: callChannelDesc,
       importance: Importance.max,
       playSound: true,
       enableVibration: true,
@@ -194,9 +201,9 @@ extension _NotificationChannels on NotificationService {
 
     await androidPlugin
         .createNotificationChannel(const AndroidNotificationChannel(
-      _groupCallChannelId,
-      _groupCallChannelName,
-      description: _groupCallChannelDesc,
+      groupCallChannelId,
+      groupCallChannelName,
+      description: groupCallChannelDesc,
       importance: Importance.high,
       playSound: true,
       enableVibration: true,
@@ -209,53 +216,53 @@ extension _NotificationChannels on NotificationService {
 
   // ── Channel / name helpers ─────────────────────────────────────────────────
 
-  String _getChannelIdForType(NotificationType type) {
+  String getChannelIdForType(NotificationType type) {
     switch (type) {
       case NotificationType.chat:
       case NotificationType.message:
-        return _chatChannelId;
+        return chatChannelId;
       case NotificationType.reply:
       case NotificationType.like:
       case NotificationType.namaste:
       case NotificationType.newSpacePost:
-        return _socialChannelId;
+        return socialChannelId;
       case NotificationType.invite:
       case NotificationType.request:
       case NotificationType.addedToGroup:
-        return _gramChannelId;
+        return gramChannelId;
       case NotificationType.dailyAstroInsight:
-        return _astroChannelId;
+        return astroChannelId;
       case NotificationType.incomingCall:
       case NotificationType.missedCall:
-        return _callChannelId;
+        return callChannelId;
       default:
-        return _generalChannelId;
+        return generalChannelId;
     }
   }
 
-  String _getChannelNameForType(NotificationType type) {
+  String getChannelNameForType(NotificationType type) {
     switch (type) {
       case NotificationType.chat:
       case NotificationType.message:
-        return _chatChannelName;
+        return chatChannelName;
       case NotificationType.reply:
       case NotificationType.like:
       case NotificationType.namaste:
       case NotificationType.newSpacePost:
-        return _socialChannelName;
+        return socialChannelName;
       case NotificationType.invite:
       case NotificationType.request:
       case NotificationType.addedToGroup:
-        return _gramChannelName;
+        return gramChannelName;
       case NotificationType.dailyAstroInsight:
-        return _astroChannelName;
+        return astroChannelName;
       case NotificationType.incomingCall:
       case NotificationType.missedCall:
-        return _callChannelName;
+        return callChannelName;
       case NotificationType.anonymousMessage:
-        return _generalChannelName;
+        return generalChannelName;
       default:
-        return _generalChannelName;
+        return generalChannelName;
     }
   }
 }

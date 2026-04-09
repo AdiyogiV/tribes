@@ -17,6 +17,8 @@ import 'package:aurogram/features/calling/presentation/pages/incoming_call_scree
 import 'package:aurogram/features/calling/presentation/pages/call_screen.dart'
     if (dart.library.html) 'package:aurogram/pages/call/call_screen_stub.dart';
 import 'package:aurogram/features/anonymous_messages/pages/inbox_screen.dart';
+import 'package:aurogram/features/anonymous_messages/pages/send_composer_screen.dart';
+import 'package:aurogram/features/spaces/presentation/pages/invite_landing_page.dart';
 
 /// Builds a [Route] for the given [routeName] and [arguments].
 ///
@@ -114,6 +116,23 @@ class PageFactory {
       case RouteNames.secretMessagesInbox:
         return MaterialPageRoute(
           builder: (_) => const SecretMessagesInboxScreen(),
+          settings: RouteSettings(name: routeName, arguments: arguments),
+        );
+
+      case RouteNames.secretMessageSend:
+        return MaterialPageRoute(
+          builder: (_) => SecretMessageSendComposer(
+            slug: args['slug'] as String? ?? '',
+          ),
+          settings: RouteSettings(name: routeName, arguments: arguments),
+        );
+
+      case RouteNames.spaceInvite:
+        return MaterialPageRoute(
+          builder: (_) => InviteLandingPage(
+            space: args['spaceId'] as String? ?? '',
+            invitee: args['inviterId'] as String?,
+          ),
           settings: RouteSettings(name: routeName, arguments: arguments),
         );
 

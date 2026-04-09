@@ -39,6 +39,10 @@ class RouteNames {
 
   // ── Anonymous Messages ───────────────────────────────────────────────
   static const secretMessagesInbox = '/anonymous/inbox';
+  static const secretMessageSend = '/anonymous/send';
+
+  // ── Spaces (invitations) ────────────────────────────────────────
+  static const spaceInvite = '/space/invite';
 
   // ── Stories ──────────────────────────────────────────────────────────
   static const storyComposer = '/stories/compose';

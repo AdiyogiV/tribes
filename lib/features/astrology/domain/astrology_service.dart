@@ -3,16 +3,14 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:aurogram/shared/models/astrology_profile.dart';
-import 'package:aurogram/shared/models/daily_insight.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
-import 'package:lat_lng_to_timezone/lat_lng_to_timezone.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-part 'astrology/astrology_api.dart';
-part 'astrology/astrology_insights.dart';
-part 'astrology/astrology_caching.dart';
+import 'astrology/astrology_api.dart';
+
+export 'astrology/astrology_api.dart';
+export 'astrology/astrology_insights.dart';
+export 'astrology/astrology_caching.dart';
 
 class AstrologyService {
   AstrologyService._();

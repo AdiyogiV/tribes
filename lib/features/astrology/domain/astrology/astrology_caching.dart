@@ -1,4 +1,7 @@
-part of '../astrology_service.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../astrology_service.dart';
 
 /// Local prediction caching, template-based predictions, and user
 /// engagement data for [AstrologyService].

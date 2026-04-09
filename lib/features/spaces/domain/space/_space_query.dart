@@ -1,4 +1,11 @@
-part of '../space_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:aurogram/shared/models/space_types.dart';
+import 'package:aurogram/shared/models/space.dart';
+import 'package:aurogram/core/storage/memory_manager.dart';
+import 'package:aurogram/core/network/network_manager.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
+
+import '../space_service.dart';
 
 /// Extension on [SpaceService] for querying, validation, cache management, and streams.
 extension SpaceQuery on SpaceService {

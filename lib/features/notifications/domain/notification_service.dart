@@ -7,17 +7,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart'
     if (dart.library.html) 'package:aurogram/platform/flutter_local_notifications_stub.dart';
 import 'package:aurogram/shared/models/notification.dart';
-import 'package:aurogram/core/config/app_config.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
-import 'package:aurogram/features/chat/domain/chat_notification_service.dart';
-import 'package:aurogram/core/routing/route_names.dart';
-import 'package:aurogram/core/routing/page_factory.dart';
 import 'package:aurogram/platform/platform.dart';
 
-part 'notification/notification_channels.dart';
-part 'notification/notification_tokens.dart';
-part 'notification/notification_handler.dart';
-part 'notification/notification_navigation.dart';
+import 'notification/notification_channels.dart';
+import 'notification/notification_tokens.dart';
+import 'notification/notification_handler.dart';
+
+export 'notification/notification_channels.dart';
+export 'notification/notification_tokens.dart';
+export 'notification/notification_handler.dart';
+export 'notification/notification_navigation.dart';
 
 /// Centralized notification service for handling all push notifications
 class NotificationService {
@@ -47,7 +47,6 @@ class NotificationService {
       StreamController<int>.broadcast();
 
   // Getters
-  User? get _currentUser => _auth.currentUser;
   Stream<AppNotification> get notificationStream =>
       _notificationStreamController.stream;
   Stream<int> get unreadCountStream => _unreadCountController.stream;
@@ -55,6 +54,21 @@ class NotificationService {
 
   // Track if permissions have been requested
   bool _permissionsRequested = false;
+
+  // ── Public accessors for extension files ──────────────────────────────────
+  FirebaseFirestore get firestore => _firestore;
+  FlutterLocalNotificationsPlugin get localNotifications => _localNotifications;
+  GlobalKey<NavigatorState>? get navigatorKey => _navigatorKey;
+  User? get currentUser => _auth.currentUser;
+  StreamController<AppNotification> get notificationStreamController =>
+      _notificationStreamController;
+  int get unreadCountValue => _unreadCount;
+  set unreadCountValue(int value) => _unreadCount = value;
+  StreamController<int> get unreadCountController => _unreadCountController;
+  String? get currentRoute => _currentRoute;
+  String? get currentChatSpaceId => _currentChatSpaceId;
+  bool get initialized => _initialized;
+  bool get permissionsRequestedFlag => _permissionsRequested;
 
   /// Initialize the notification service WITHOUT requesting permissions.
   /// Permissions should be requested later at a contextual moment.
@@ -65,16 +79,16 @@ class NotificationService {
 
     try {
       // Initialize local notifications with channels
-      await _initializeLocalNotifications();
+      await initializeLocalNotifications();
 
       // Set up FCM handlers (work even without permission)
-      _setupFCMHandlers();
+      setupFCMHandlers();
 
       // Listen for token refresh
-      FirebaseMessaging.instance.onTokenRefresh.listen(_saveTokenToFirestore);
+      FirebaseMessaging.instance.onTokenRefresh.listen(saveTokenToFirestore);
 
       // Start listening to unread count
-      _startUnreadCountListener();
+      startUnreadCountListener();
 
       _initialized = true;
       AppLogger.i('NotificationService initialized (permissions deferred)',
@@ -108,7 +122,7 @@ class NotificationService {
         _permissionsRequested = true;
 
         // Register token in background to not block initialization
-        unawaited(_registerFCMToken());
+        unawaited(registerFCMToken());
       } else if (kIsWeb) {
         AppLogger.i(
             'Web: Permissions not granted, will request when appropriate',
@@ -187,7 +201,7 @@ class NotificationService {
               settings.authorizationStatus == AuthorizationStatus.provisional;
 
       if (granted) {
-        await _registerFCMToken();
+        await registerFCMToken();
       }
 
       return granted;
@@ -239,7 +253,7 @@ class NotificationService {
 
 /// Background notification handler (must be top-level).
 @pragma('vm:entry-point')
-void _backgroundNotificationHandler(NotificationResponse response) {
+void backgroundNotificationHandler(NotificationResponse response) {
   if (kDebugMode) {
     AppLogger.d(
       'Background notification tapped',
@@ -249,8 +263,8 @@ void _backgroundNotificationHandler(NotificationResponse response) {
   }
 
   // Store the response for when the app fully initializes
-  _pendingBackgroundNotification = response;
+  pendingBackgroundNotification = response;
 }
 
 /// Pending notification from background tap - checked on app initialization.
-NotificationResponse? _pendingBackgroundNotification;
+NotificationResponse? pendingBackgroundNotification;

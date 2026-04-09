@@ -1,12 +1,22 @@
-part of '../notification_service.dart';
+import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart'
+    if (dart.library.html) 'package:aurogram/platform/flutter_local_notifications_stub.dart';
+import 'package:aurogram/shared/models/notification.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:aurogram/features/chat/domain/chat_notification_service.dart';
+
+import '../notification_service.dart';
 
 /// Handles incoming FCM and local notifications: foreground display,
 /// call notifications, suppression logic, parsing, and action-button handling.
-extension _NotificationHandler on NotificationService {
+extension NotificationHandler on NotificationService {
   // ── FCM setup ─────────────────────────────────────────────────────────────
 
   /// Set up FCM message handlers.
-  void _setupFCMHandlers() {
+  void setupFCMHandlers() {
     // Foreground messages
     FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
 
@@ -39,7 +49,7 @@ extension _NotificationHandler on NotificationService {
   Future<void> _checkLocalNotificationLaunch() async {
     try {
       final launchDetails =
-          await _localNotifications.getNotificationAppLaunchDetails();
+          await localNotifications.getNotificationAppLaunchDetails();
       if (launchDetails?.didNotificationLaunchApp == true &&
           launchDetails?.notificationResponse != null) {
         final payload = launchDetails!.notificationResponse!.payload ?? '';
@@ -51,7 +61,7 @@ extension _NotificationHandler on NotificationService {
 
         // Handle with retry since navigator might not be ready
         Future.delayed(const Duration(milliseconds: 500), () {
-          _handleLocalNotificationTap(launchDetails.notificationResponse!);
+          handleLocalNotificationTap(launchDetails.notificationResponse!);
         });
       }
     } catch (e) {
@@ -62,16 +72,16 @@ extension _NotificationHandler on NotificationService {
 
   /// Check for pending background notification and handle it.
   void _checkPendingBackgroundNotification() {
-    if (_pendingBackgroundNotification != null) {
+    if (pendingBackgroundNotification != null) {
       AppLogger.i('Processing pending background notification',
           category: LogCategory.messaging,
-          data: {'payload': _pendingBackgroundNotification!.payload});
+          data: {'payload': pendingBackgroundNotification!.payload});
 
       // Handle after a short delay to ensure app is fully initialized
       Future.delayed(const Duration(milliseconds: 500), () {
-        if (_pendingBackgroundNotification != null) {
-          _handleLocalNotificationTap(_pendingBackgroundNotification!);
-          _pendingBackgroundNotification = null;
+        if (pendingBackgroundNotification != null) {
+          handleLocalNotificationTap(pendingBackgroundNotification!);
+          pendingBackgroundNotification = null;
         }
       });
     }
@@ -132,7 +142,7 @@ extension _NotificationHandler on NotificationService {
     }
 
     // Emit to stream for in-app handling
-    _notificationStreamController.add(notification);
+    notificationStreamController.add(notification);
 
     // Show appropriate notification based on type
     if (notification.isChatNotification) {
@@ -185,13 +195,13 @@ extension _NotificationHandler on NotificationService {
       timeoutAfter: 60000,
       actions: [
         AndroidNotificationAction(
-          _NotificationChannels._actionAcceptCall,
+          NotificationChannels.actionAcceptCall,
           'Accept',
           showsUserInterface: true,
           cancelNotification: true,
         ),
         AndroidNotificationAction(
-          _NotificationChannels._actionRejectCall,
+          NotificationChannels.actionRejectCall,
           'Reject',
           showsUserInterface: false,
           cancelNotification: true,
@@ -216,7 +226,7 @@ extension _NotificationHandler on NotificationService {
     final notificationId = callId.hashCode.abs() % 2147483647;
 
     try {
-      await _localNotifications.show(
+      await localNotifications.show(
         notificationId,
         callerName,
         callBody,
@@ -266,9 +276,9 @@ extension _NotificationHandler on NotificationService {
 
     // Android notification with action buttons
     final androidDetails = AndroidNotificationDetails(
-      _NotificationChannels._groupCallChannelId,
-      _NotificationChannels._groupCallChannelName,
-      channelDescription: _NotificationChannels._groupCallChannelDesc,
+      NotificationChannels.groupCallChannelId,
+      NotificationChannels.groupCallChannelName,
+      channelDescription: NotificationChannels.groupCallChannelDesc,
       importance: Importance.high,
       priority: Priority.high,
       category: AndroidNotificationCategory.call,
@@ -277,13 +287,13 @@ extension _NotificationHandler on NotificationService {
       autoCancel: true,
       actions: [
         AndroidNotificationAction(
-          _NotificationChannels._actionJoinGroupCall,
+          NotificationChannels.actionJoinGroupCall,
           'Join',
           showsUserInterface: true,
           cancelNotification: true,
         ),
         AndroidNotificationAction(
-          _NotificationChannels._actionDismissGroupCall,
+          NotificationChannels.actionDismissGroupCall,
           'Dismiss',
           showsUserInterface: false,
           cancelNotification: true,
@@ -308,7 +318,7 @@ extension _NotificationHandler on NotificationService {
     final notificationId = spaceId.hashCode.abs() % 2147483647;
 
     try {
-      await _localNotifications.show(
+      await localNotifications.show(
         notificationId,
         spaceName,
         callBody,
@@ -332,13 +342,13 @@ extension _NotificationHandler on NotificationService {
     // Suppress chat notifications if viewing that chat
     if (notification.isChatNotification &&
         notification.spaceId != null &&
-        _currentChatSpaceId == notification.spaceId) {
+        currentChatSpaceId == notification.spaceId) {
       return true;
     }
 
     // Suppress astro notifications if on astro page
     if (notification.isAstroNotification &&
-        _currentRoute?.contains('insight') == true) {
+        currentRoute?.contains('insight') == true) {
       return true;
     }
 
@@ -355,13 +365,13 @@ extension _NotificationHandler on NotificationService {
         category: LogCategory.messaging,
         data: {'type': notification.type.value});
 
-    _navigateForNotification(notification);
+    navigateForNotification(notification);
   }
 
   /// Handle notification tap with retry for cold starts.
   void _handleNotificationTapWithRetry(RemoteMessage message,
       {int attempt = 0}) {
-    if (_navigatorKey?.currentState == null) {
+    if (navigatorKey?.currentState == null) {
       if (attempt < 15) {
         Future.delayed(Duration(milliseconds: 500 + (attempt * 200)), () {
           _handleNotificationTapWithRetry(message, attempt: attempt + 1);
@@ -379,7 +389,7 @@ extension _NotificationHandler on NotificationService {
   }
 
   /// Handle local notification tap or action button press.
-  void _handleLocalNotificationTap(NotificationResponse response) {
+  void handleLocalNotificationTap(NotificationResponse response) {
     // Handle action button presses
     if (response.actionId != null && response.actionId!.isNotEmpty) {
       _handleNotificationAction(response.actionId!, response.payload);
@@ -409,7 +419,7 @@ extension _NotificationHandler on NotificationService {
       case NotificationType.chat:
       case NotificationType.message:
         if (parts.length > 1) {
-          _navigateToChatWithRetry(parts[1]);
+          navigateToChatWithRetry(parts[1]);
         }
         break;
       case NotificationType.dailyAstroInsight:
@@ -422,31 +432,31 @@ extension _NotificationHandler on NotificationService {
         if (parts.length > 2 && parts[2].isNotEmpty) {
           insightDate = parts[2];
         }
-        _navigateToDailyInsight(cardIndex: cardIndex, insightDate: insightDate);
+        navigateToDailyInsight(cardIndex: cardIndex, insightDate: insightDate);
         break;
       case NotificationType.reply:
       case NotificationType.like:
       case NotificationType.newSpacePost:
         if (parts.length > 2) {
-          _navigateToPost(parts[1], parts[2]); // spaceId, postId
+          navigateToPost(parts[1], parts[2]); // spaceId, postId
         }
         break;
       case NotificationType.namaste:
         if (parts.length > 1) {
-          _navigateToProfile(parts[1]); // userId
+          navigateToProfile(parts[1]); // userId
         }
         break;
       case NotificationType.invite:
-        _navigateToInvites();
+        navigateToInvites();
         break;
       case NotificationType.request:
         if (parts.length > 1) {
-          _navigateToRequests(parts[1]); // spaceId
+          navigateToRequests(parts[1]); // spaceId
         }
         break;
       case NotificationType.addedToGroup:
         if (parts.length > 1) {
-          _navigateToSpace(parts[1]); // spaceId
+          navigateToSpace(parts[1]); // spaceId
         }
         break;
       case NotificationType.follow:
@@ -454,11 +464,11 @@ extension _NotificationHandler on NotificationService {
       case NotificationType.followRequest:
       case NotificationType.mutualFollow:
         if (parts.length > 1) {
-          _navigateToProfile(parts[1]); // userId
+          navigateToProfile(parts[1]); // userId
         }
         break;
       case NotificationType.anonymousMessage:
-        _navigateToSecretMessagesInbox();
+        navigateToSecretMessagesInbox();
         break;
       default:
         break;
@@ -489,8 +499,8 @@ extension _NotificationHandler on NotificationService {
 
   /// Show local notification based on type.
   Future<void> _showLocalNotification(AppNotification notification) async {
-    final channelId = _getChannelIdForType(notification.type);
-    final channelName = _getChannelNameForType(notification.type);
+    final channelId = getChannelIdForType(notification.type);
+    final channelName = getChannelNameForType(notification.type);
 
     final androidDetails = AndroidNotificationDetails(
       channelId,
@@ -518,7 +528,7 @@ extension _NotificationHandler on NotificationService {
     // Create payload for tap handling
     final payload = _createPayloadForNotification(notification);
 
-    await _localNotifications.show(
+    await localNotifications.show(
       notification.id.hashCode,
       notification.displayTitle,
       notification.displayBody,
@@ -585,28 +595,28 @@ extension _NotificationHandler on NotificationService {
 
     // Normalize legacy action IDs from older notification handlers
     final normalizedActionId = switch (actionId) {
-      'answer_call' => _NotificationChannels._actionAcceptCall,
-      'decline_call' => _NotificationChannels._actionRejectCall,
+      'answer_call' => NotificationChannels.actionAcceptCall,
+      'decline_call' => NotificationChannels.actionRejectCall,
       _ => actionId,
     };
 
     switch (normalizedActionId) {
-      case _NotificationChannels._actionAcceptCall:
+      case NotificationChannels.actionAcceptCall:
         if (payload != null && payload.startsWith('incoming_call:')) {
           _handleAcceptCall(payload);
         }
         break;
-      case _NotificationChannels._actionRejectCall:
+      case NotificationChannels.actionRejectCall:
         if (payload != null && payload.startsWith('incoming_call:')) {
           _handleRejectCall(payload);
         }
         break;
-      case _NotificationChannels._actionJoinGroupCall:
+      case NotificationChannels.actionJoinGroupCall:
         if (payload != null && payload.startsWith('group_call:')) {
           _handleGroupCallTap(payload);
         }
         break;
-      case _NotificationChannels._actionDismissGroupCall:
+      case NotificationChannels.actionDismissGroupCall:
         // Just dismiss - do nothing
         AppLogger.d('Group call notification dismissed',
             category: LogCategory.general);
@@ -645,7 +655,7 @@ extension _NotificationHandler on NotificationService {
         data: {'callId': callId, 'callerName': callerName});
 
     // Cancel the notification
-    _localNotifications.cancel(callId.hashCode.abs() % 2147483647);
+    localNotifications.cancel(callId.hashCode.abs() % 2147483647);
 
     AppLogger.i('Bringing app to foreground for call',
         category: LogCategory.general);
@@ -663,7 +673,7 @@ extension _NotificationHandler on NotificationService {
         category: LogCategory.general, data: {'callId': callId});
 
     // Cancel the notification
-    _localNotifications.cancel(callId.hashCode.abs() % 2147483647);
+    localNotifications.cancel(callId.hashCode.abs() % 2147483647);
 
     // Update call status to rejected in Firestore
     _rejectCallInFirestore(callId);
@@ -672,7 +682,7 @@ extension _NotificationHandler on NotificationService {
   /// Reject call by updating Firestore.
   Future<void> _rejectCallInFirestore(String callId) async {
     try {
-      await _firestore.collection('calls').doc(callId).update({
+      await firestore.collection('calls').doc(callId).update({
         'status': 'rejected',
         'endedAt': FieldValue.serverTimestamp(),
       });
@@ -705,9 +715,9 @@ extension _NotificationHandler on NotificationService {
         });
 
     // Cancel the notification
-    _localNotifications.cancel(spaceId.hashCode.abs() % 2147483647);
+    localNotifications.cancel(spaceId.hashCode.abs() % 2147483647);
 
     // Navigate to group call screen with retry
-    _navigateToGroupCall(spaceId, spaceName, retryCount: retryCount);
+    navigateToGroupCall(spaceId, spaceName, retryCount: retryCount);
   }
 }

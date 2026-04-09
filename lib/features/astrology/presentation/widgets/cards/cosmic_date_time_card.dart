@@ -5,7 +5,6 @@ import 'package:aurogram/shared/presentation/widgets/media/common_widgets.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cards/vedic_time_utils.dart';
-import 'package:aurogram/features/astrology/presentation/widgets/cards/moon_phase_strip.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cards/vedic_clock_painter.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 
@@ -66,7 +65,6 @@ class _CosmicDateTimeCardState extends State<CosmicDateTimeCard> {
     int? tithiNumber = _extractTithiNumber(samvat);
     final pakshaRaw = _extractPaksha(samvat);
     final paksha = pakshaRaw.isNotEmpty ? pakshaRaw : 'shukla';
-    final hasMoonPhase = tithiNumber != null && pakshaRaw.isNotEmpty;
 
     // Log once per session when data arrives
     if (samvat != null && !_loggedMoonPhase) {
@@ -191,27 +189,28 @@ class _CosmicDateTimeCardState extends State<CosmicDateTimeCard> {
                   ],
                 ),
               ),
-              // 5. Moon Phase Strip — edge to edge, no horizontal padding
-              if (hasMoonPhase) ...[
-                ClipRRect(
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(AppDimensions.radiusXl),
-                    bottomRight: Radius.circular(AppDimensions.radiusXl),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.only(
-                      top: AppDimensions.paddingSm,
-                      bottom: AppDimensions.paddingSm,
-                    ),
-                    child: MoonPhaseStrip(
-                      tithiNumber: tithiNumber,
-                      paksha: paksha,
-                      isDark: isDark,
-                    ),
-                  ),
-                ),
-              ] else
-                const SizedBox(height: AppDimensions.paddingLg),
+              // 5. Moon Phase Strip — hidden for now
+              // TODO: Re-enable moon phase strip
+              // if (hasMoonPhase) ...[
+              //   ClipRRect(
+              //     borderRadius: const BorderRadius.only(
+              //       bottomLeft: Radius.circular(AppDimensions.radiusXl),
+              //       bottomRight: Radius.circular(AppDimensions.radiusXl),
+              //     ),
+              //     child: Padding(
+              //       padding: const EdgeInsets.only(
+              //         top: AppDimensions.paddingSm,
+              //         bottom: AppDimensions.paddingSm,
+              //       ),
+              //       child: MoonPhaseStrip(
+              //         tithiNumber: tithiNumber,
+              //         paksha: paksha,
+              //         isDark: isDark,
+              //       ),
+              //     ),
+              //   ),
+              // ] else
+              const SizedBox(height: AppDimensions.paddingLg),
             ],
           ),
         ),
@@ -231,7 +230,7 @@ class _CosmicDateTimeCardState extends State<CosmicDateTimeCard> {
   }
 }
 
-/// Bottom sheet explaining Vedic time concepts
+/// Bottom sheet explaining Vedic time and date concepts
 class VedicTimeInfoSheet extends StatelessWidget {
   final bool isDark;
   final Color brown;
@@ -245,75 +244,158 @@ class VedicTimeInfoSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppTheme.primaryColor;
-    
+
     return Container(
       margin: const EdgeInsets.all(AppDimensions.paddingLg),
-      padding: const EdgeInsets.all(AppDimensions.paddingXl),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.75,
+      ),
       decoration: BoxDecoration(
         color: isDark ? AppTheme.sheetDarkColor : Colors.white,
         borderRadius: BorderRadius.circular(AppDimensions.radiusXxl),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(
-            'Understanding Vedic Time',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: AppTheme.holyCowTextSize,
-              fontWeight: FontWeight.w700,
-              color: c,
+          // Fixed header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppDimensions.paddingXl,
+              AppDimensions.paddingXl,
+              AppDimensions.paddingXl,
+              0,
+            ),
+            child: Text(
+              'Vedic Time & Calendar',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: AppTheme.holyCowTextSize,
+                fontWeight: FontWeight.w700,
+                color: c,
+              ),
             ),
           ),
-          const SizedBox(height: AppDimensions.spacingLg),
-          _buildInfoItem(
-            title: 'Prahar',
-            description:
-                'A 3-hour time division. There are 8 Prahars in a full day (sunrise to sunrise), numbered Pratham through Ashtam.',
+          const SizedBox(height: AppDimensions.spacingMd),
+          // Scrollable content
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.paddingXl,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // — THE CLOCK —
+                  _buildSectionHeader('The Vedic Clock', c),
+                  const SizedBox(height: 8),
+                  _buildInfoItem(
+                    title: 'Prahar (Watch)',
+                    description:
+                        'The Vedic day is divided into 8 Prahars of ~3 hours each, starting at sunrise. '
+                        'Each Prahar has a traditional name:\n'
+                        'Purvanha (morning) \u2022 Madhyanha (midday) \u2022 Aparanha (afternoon) \u2022 '
+                        'Sayanha (evening) \u2022 Pradosha (dusk) \u2022 Nishitha (midnight) \u2022 '
+                        'Triyama (late night) \u2022 Usha (dawn)',
+                  ),
+                  _buildInfoItem(
+                    title: 'Ghati',
+                    description:
+                        'One day (sunrise to sunrise) = 60 Ghati. '
+                        'Each Ghati = 24 minutes. Think of it like the "hour" on a Vedic clock, '
+                        'but with 60 divisions instead of 24.',
+                  ),
+                  _buildInfoItem(
+                    title: 'Pala',
+                    description:
+                        'Each Ghati = 60 Pala. One Pala = 24 seconds. '
+                        'Like "minutes" on a Vedic clock. '
+                        'So Ghati:Pala is like Hours:Minutes \u2014 a clean base-60 system.',
+                  ),
+                  // — THE CALENDAR —
+                  _buildSectionHeader('The Vedic Calendar', c),
+                  const SizedBox(height: 8),
+                  _buildInfoItem(
+                    title: 'Masa (Month)',
+                    description:
+                        'The Hindu year has 12 lunar months starting from Chaitra (March\u2013April). '
+                        'Months follow the Moon\'s cycle, not the Sun. '
+                        'Month 1 = Chaitra, Month 2 = Vaishakha, and so on through Month 12 = Phalguna.',
+                  ),
+                  _buildInfoItem(
+                    title: 'Paksha (Fortnight)',
+                    description:
+                        'Each month has two halves of 15 days. '
+                        'Shukla Paksha (1) = bright/waxing half, new moon \u2192 full moon. '
+                        'Krishna Paksha (2) = dark/waning half, full moon \u2192 new moon.',
+                  ),
+                  _buildInfoItem(
+                    title: 'Tithi (Lunar Day)',
+                    description:
+                        'Each Paksha has 15 Tithis (lunar days), named Pratipada (1st) through '
+                        'Purnima (15th full moon) or Amavasya (new moon). '
+                        'Unlike solar days, Tithis can be 19\u201326 hours long.',
+                  ),
+                  _buildInfoItem(
+                    title: 'Samvatsara (Year)',
+                    description:
+                        'Vikram Samvat is the traditional Hindu calendar year, ~57 years ahead of the Gregorian year. '
+                        'Each year also has a name from a 60-year cycle (like Siddharthi, Raudri, etc.).',
+                  ),
+                  // — THE DATE FORMAT —
+                  _buildSectionHeader('Reading the Vedic Date', c),
+                  const SizedBox(height: 8),
+                  _buildInfoItem(
+                    title: 'Numeric Format',
+                    description:
+                        'The numeric date reads as Month / Paksha / Tithi / Year.\n\n'
+                        'For example: 2/2/6/2083 means\n'
+                        '\u2022 Month 2 (Vaishakha)\n'
+                        '\u2022 Paksha 2 (Krishna \u2014 waning moon)\n'
+                        '\u2022 Tithi 6 (Shashthi \u2014 6th lunar day)\n'
+                        '\u2022 Year 2083 (Vikram Samvat)\n\n'
+                        'It maps directly to the text line above it: '
+                        'Vaishakha Krishna Shashthi.',
+                    isLast: true,
+                  ),
+                ],
+              ),
+            ),
           ),
-          _buildInfoItem(
-            title: 'Ghati',
-            description:
-                'A Ghati equals 24 minutes. One day has 60 Ghati. Used in astrological calculations and muhurat timing.',
-          ),
-          _buildInfoItem(
-            title: 'Pala',
-            description:
-                'A Pala is 24 seconds (1/60th of a Ghati). The smallest commonly used Vedic time unit.',
-          ),
-          _buildInfoItem(
-            title: 'Tithi',
-            description:
-                'The lunar day based on Moon\'s position relative to Sun. Each lunar month has 30 Tithis.',
-          ),
-          _buildInfoItem(
-            title: 'Paksha',
-            description:
-                'The lunar fortnight. Shukla Paksha is the waxing half (new moon to full moon). Krishna Paksha is the waning half.',
-          ),
-          _buildInfoItem(
-            title: 'Vikram Samvat',
-            description:
-                'The traditional Hindu calendar year, approximately 57 years ahead of the Gregorian calendar.',
-            isLast: true,
-          ),
-          const SizedBox(height: AppDimensions.spacingLg),
-          SizedBox(
-            width: double.infinity,
-            child: TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                'Got it',
-                style: TextStyle(
-                  fontSize: AppTheme.holyCowTextSize,
-                  fontWeight: FontWeight.w600,
-                  color: c,
+          // Fixed footer button
+          Padding(
+            padding: const EdgeInsets.all(AppDimensions.paddingLg),
+            child: SizedBox(
+              width: double.infinity,
+              child: TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  'Got it',
+                  style: TextStyle(
+                    fontSize: AppTheme.holyCowTextSize,
+                    fontWeight: FontWeight.w600,
+                    color: c,
+                  ),
                 ),
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, Color c) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: Text(
+        title,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: AppTheme.holyCowTextSize + 1,
+          fontWeight: FontWeight.w700,
+          color: c.withValues(alpha: 0.5),
+          letterSpacing: 0.5,
+        ),
       ),
     );
   }
@@ -324,7 +406,7 @@ class VedicTimeInfoSheet extends StatelessWidget {
     bool isLast = false,
   }) {
     final c = AppTheme.primaryColor;
-    
+
     return Padding(
       padding: EdgeInsets.only(bottom: isLast ? 0 : 12),
       child: Column(
