@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show QuerySnapshot;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/logging/app_logger.dart';

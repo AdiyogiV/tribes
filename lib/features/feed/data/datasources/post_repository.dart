@@ -63,5 +63,5 @@ abstract class PostRepository {
   Future<void> clearCompressionQueue();
 
   /// Processes the compression queue
-  Future<void> processCompressionQueue();
+  void processCompressionQueue();
 }

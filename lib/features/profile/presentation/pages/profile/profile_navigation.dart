@@ -1,16 +1,8 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:aurogram/features/settings/presentation/pages/user_settings.dart';
+import 'package:go_router/go_router.dart';
 import 'package:aurogram/shared/presentation/widgets/dialogs/login_bottom_sheet.dart';
-import 'package:aurogram/features/profile/presentation/pages/edit_user_profile.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
-import 'package:aurogram/features/profile/presentation/pages/social/invites.dart';
-import 'package:aurogram/features/notifications/presentation/pages/notifications.dart';
-import 'package:aurogram/features/profile/presentation/pages/social/aura_leaderboard.dart';
-import 'package:aurogram/features/profile/presentation/pages/social/namaste_history.dart';
-import 'package:aurogram/features/profile/presentation/pages/social/followers_following_page.dart';
 import 'package:aurogram/shared/presentation/widgets/media/media_type_selector.dart';
-import 'package:aurogram/features/stories/pages/story_composer_page.dart';
 import 'package:aurogram/features/profile/presentation/pages/profile/profile_creation_dialog.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -24,24 +16,17 @@ mixin ProfileNavigation<T extends StatefulWidget> on State<T> {
 
   void openStatsPage({int initialTabIndex = 0}) {
     if (navUid == null) return;
-    Navigator.push(
-      context,
-      CupertinoPageRoute(
-        builder: (context) => FollowersFollowingPage(
-          userId: navUid!,
-          userName: navCachedProfileData?['name'] as String?,
-          initialTabIndex: initialTabIndex,
-        ),
-      ),
+    context.push(
+      '/user/connections/$navUid',
+      extra: {
+        'userName': navCachedProfileData?['name'] as String?,
+        'initialTabIndex': initialTabIndex,
+      },
     );
   }
 
   void openLeaderboard() {
-    Navigator.of(context, rootNavigator: true).push(
-      CupertinoPageRoute(
-        builder: (context) => AuraLeaderboardPage(),
-      ),
-    );
+    context.push('/leaderboard');
   }
 
   void showProfileOptions() {
@@ -96,9 +81,7 @@ mixin ProfileNavigation<T extends StatefulWidget> on State<T> {
   }
 
   void showSettings() {
-    Navigator.of(context, rootNavigator: true).push(
-      CupertinoPageRoute(builder: (context) => UserSettingsPage()),
-    );
+    context.push('/settings');
   }
 
   void editProfile() async {
@@ -106,20 +89,14 @@ mixin ProfileNavigation<T extends StatefulWidget> on State<T> {
       showLoginBottomSheet(context);
       return;
     }
-    final result = await Navigator.of(context, rootNavigator: true).push(
-      CupertinoPageRoute(
-        builder: (context) => EditProfile(uid: navUid!),
-      ),
-    );
+    final result = await context.push('/profile/edit/$navUid');
     if (result == true) {
       navHandleRefresh();
     }
   }
 
   void showInvites() {
-    Navigator.of(context, rootNavigator: true).push(
-      CupertinoPageRoute(builder: (context) => Invites()),
-    );
+    context.push('/invites');
   }
 
   void addPost() {
@@ -147,29 +124,17 @@ mixin ProfileNavigation<T extends StatefulWidget> on State<T> {
   }
 
   void createStory() async {
-    final result = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
-        builder: (_) => const StoryComposerPage(),
-      ),
-    );
+    final result = await context.push('/stories/compose');
     if (result == true && mounted) {
       // Story was posted, could refresh profile if needed
     }
   }
 
   void openNotifications() {
-    Navigator.of(context).push(
-      CupertinoPageRoute(
-        builder: (context) => Notifications(),
-      ),
-    );
+    context.push('/notifications');
   }
 
   void openNamasteHistory() {
-    Navigator.of(context, rootNavigator: true).push(
-      CupertinoPageRoute(
-        builder: (context) => NamasteHistoryPage(),
-      ),
-    );
+    context.push('/namaste/history');
   }
 }

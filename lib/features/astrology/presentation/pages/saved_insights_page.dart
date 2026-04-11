@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show QuerySnapshot;
+import 'package:aurogram/core/di/injection.dart';
+import 'package:aurogram/shared/data/repositories/user_repository.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
 import 'package:intl/intl.dart';
@@ -65,8 +67,7 @@ class SavedInsightsPage extends StatelessWidget {
           // Content
           SliverToBoxAdapter(
             child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('users')
+              stream: locator<UserRepository>().collection
                   .doc(uid)
                   .collection('savedInsights')
                   .orderBy('savedAt', descending: true)
@@ -322,8 +323,7 @@ class SavedInsightsPage extends StatelessWidget {
     );
 
     if (confirmed == true) {
-      await FirebaseFirestore.instance
-          .collection('users')
+      await locator<UserRepository>().collection
           .doc(uid)
           .collection('savedInsights')
           .doc(docId)

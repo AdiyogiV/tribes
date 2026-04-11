@@ -1,5 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show DocumentSnapshot, QuerySnapshot;
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:aurogram/features/spaces/domain/space_service.dart';
 import 'package:aurogram/shared/presentation/widgets/media/media_type_selector.dart';
 import 'package:aurogram/features/profile/presentation/widgets/preview_boxes/gram_preview_box.dart';
 import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
@@ -14,13 +15,18 @@ class GramSelectionPage extends StatefulWidget {
 
 class GramSelectionPageState extends State<GramSelectionPage> {
   User? _user;
-  late CollectionReference _userSpacesCollection;
+  Stream<QuerySnapshot>? _spacesStream;
 
   @override
   void initState() {
     super.initState();
     _user = FirebaseAuth.instance.currentUser;
-    _userSpacesCollection = FirebaseFirestore.instance.collection('userSpaces');
+    if (_user != null) {
+      _spacesStream = SpaceService().getSpacesByUserStream(
+        _user!.uid,
+        roles: ['member', 'owner', 'creator'],
+      );
+    }
   }
 
   @override
@@ -42,11 +48,7 @@ class GramSelectionPageState extends State<GramSelectionPage> {
       ),
       child: SafeArea(
         child: StreamBuilder<QuerySnapshot>(
-          stream: _userSpacesCollection
-              .doc(_user!.uid)
-              .collection('spaces')
-              .where('role',
-                  whereIn: ['member', 'owner', 'creator']).snapshots(),
+          stream: _spacesStream,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return ListView.builder(

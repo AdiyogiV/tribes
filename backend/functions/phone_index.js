@@ -8,6 +8,7 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { normalizePhone, normalizePhoneMultiple, hashPhone } from "../lib/phone_utils.js";
+import { requireAuth } from "../lib/auth_utils.js";
 
 const db = getFirestore();
 
@@ -25,11 +26,8 @@ export const migratePhoneIndex = onCall(
         memory: "512MiB",
     },
     async (request) => {
-        // Only allow authenticated admins (or remove this check for one-time run)
-        if (!request.auth) {
-            throw new HttpsError("unauthenticated", "Must be authenticated");
-        }
-        
+        requireAuth(request, "migrate phone index");
+
         logger.info("Starting phoneIndex migration...");
         
         const usersSnapshot = await db.collection("users").get();
@@ -123,11 +121,9 @@ export const indexUserPhone = onCall({
     region: "asia-southeast2",
     invoker: "public", // Allow client apps to invoke
 }, async (request) => {
-    if (!request.auth) {
-        throw new HttpsError("unauthenticated", "Must be authenticated");
-    }
-    
-    const userId = request.data.userId || request.auth.uid;
+    const callerUid = requireAuth(request, "index user phone");
+
+    const userId = request.data.userId || callerUid;
     
     // Get user document
     const userDoc = await db.collection("users").doc(userId).get();
@@ -170,10 +166,8 @@ export const migratePhoneIndexEnhanced = onCall(
         memory: "512MiB",
     },
     async (request) => {
-        if (!request.auth) {
-            throw new HttpsError("unauthenticated", "Must be authenticated");
-        }
-        
+        requireAuth(request, "migrate phone index enhanced");
+
         logger.info("Starting ENHANCED phoneIndex migration...");
         
         const usersSnapshot = await db.collection("users").get();
@@ -256,10 +250,8 @@ export const debugUserPhoneIndex = onCall(
         region: "asia-southeast2",
     },
     async (request) => {
-        if (!request.auth) {
-            throw new HttpsError("unauthenticated", "Must be authenticated");
-        }
-        
+        requireAuth(request, "debug user phone index");
+
         const { userId, phone } = request.data;
         
         const results = {

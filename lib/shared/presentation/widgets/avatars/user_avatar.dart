@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:aurogram/core/storage/image_optimizer.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:aurogram/shared/data/repositories/user_repository.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/shared/services/cache_service.dart';
@@ -128,10 +128,7 @@ class UserAvatar extends StatelessWidget {
 
     try {
       // Fetch from Firestore if not in cache
-      final snapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .get();
+      final snapshot = await locator<UserRepository>().getUser(userId);
 
       if (snapshot.exists) {
         final userData = snapshot.data();

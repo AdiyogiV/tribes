@@ -60,14 +60,7 @@ class JainCalendarCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            'Vira Nirvana Samvat',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.primaryColor,
-            ),
-          ),
+          buildCalendarHeader('Vira Nirvana Samvat'),
           const SizedBox(height: AppDimensions.spacingMd),
           // Numerical date
           if (lunarMonthNumber != null && tithiNumber != null)
@@ -133,16 +126,7 @@ class JainCalendarCard extends StatelessWidget {
             ),
           if (tithiNumber != null && paksha != null) const SizedBox(height: AppDimensions.spacingMd),
           // Note
-          Text(
-            'Lunisolar calendar • Epoch: Mahavira Nirvana (527 BCE)',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              fontStyle: FontStyle.italic,
-              color: AppTheme.primaryColor.withValues(alpha: 0.5),
-              height: 1.4,
-            ),
-          ),
+          buildCalendarFooter('Lunisolar calendar • Epoch: Mahavira Nirvana (527 BCE)'),
         ],
       ),
     );

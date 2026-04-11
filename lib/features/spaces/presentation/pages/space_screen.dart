@@ -4,15 +4,14 @@ import 'package:aurogram/shared/presentation/widgets/flash.dart';
 import 'package:aurogram/shared/presentation/widgets/dialogs/login_bottom_sheet.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:aurogram/shared/models/space.dart';
 import 'package:aurogram/shared/models/space_roles.dart';
 import 'package:aurogram/shared/models/space_types.dart';
 import 'package:aurogram/shared/presentation/widgets/media/media_type_selector.dart';
-import 'package:aurogram/features/spaces/presentation/pages/edit_space.dart';
 import 'package:aurogram/features/spaces/presentation/pages/grid_space_view.dart';
-import 'package:aurogram/features/spaces/presentation/pages/space_chat_screen.dart';
 import 'package:aurogram/features/feed/presentation/pages/theatre.dart';
 import 'package:aurogram/features/spaces/domain/space_service.dart';
 import 'package:aurogram/shared/services/share/share_service.dart';
@@ -140,10 +139,7 @@ class SpaceScreenState extends State<SpaceScreen> {
         if (snapshot.data == false) {
           // Navigate to EditSpace for non-members of private/personal spaces
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            Navigator.of(context).pushReplacement(
-              CupertinoPageRoute(
-                  builder: (context) => EditSpace(space: widget.rid)),
-            );
+            context.pushReplacement('/space/edit/${widget.rid}');
           });
           return FlashScreen();
         }
@@ -295,10 +291,7 @@ class SpaceScreenState extends State<SpaceScreen> {
   }
 
   void _navigateToEditSpace() {
-    Navigator.push(
-      context,
-      CupertinoPageRoute(builder: (context) => EditSpace(space: widget.rid)),
-    );
+    context.push('/space/edit/${widget.rid}');
   }
 
   void _shareGram() {
@@ -324,15 +317,9 @@ class SpaceScreenState extends State<SpaceScreen> {
       return;
     }
 
-    Navigator.push(
-      context,
-      CupertinoPageRoute(
-        builder: (context) => SpaceChatScreen(
-          spaceId: widget.rid,
-          space: space!,
-        ),
-      ),
-    );
+    context.push('/space/chat/${widget.rid}', extra: {
+      'space': space!,
+    });
   }
 
   Widget _buildErrorWidget() {

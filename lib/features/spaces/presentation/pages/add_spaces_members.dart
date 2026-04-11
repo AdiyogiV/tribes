@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show DocumentSnapshot;
 import 'package:drag_select_grid_view/drag_select_grid_view.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';

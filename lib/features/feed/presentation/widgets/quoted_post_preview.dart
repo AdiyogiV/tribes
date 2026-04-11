@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/shared/utils/time_display.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
 import 'package:aurogram/core/theme/app_dimensions.dart';
 
 /// Widget that shows a quoted post preview within another post

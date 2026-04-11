@@ -9,6 +9,9 @@ import 'package:aurogram/core/startup/app_initializer.dart';
 import 'package:aurogram/core/network/network_optimizer.dart';
 import 'package:aurogram/shared/services/media/media_compression_service.dart';
 import 'package:aurogram/core/routing/dynamic_link_navigator.dart';
+import 'package:aurogram/shared/services/watch_service.dart';
+import 'package:aurogram/features/ayurveda/domain/ayurveda_service.dart';
+import 'package:aurogram/features/astrology/domain/sky_positions_service.dart';
 import 'package:aurogram/platform/platform.dart';
 import 'package:aurogram/features/auth/auth_service.dart';
 import 'package:aurogram/core/notifications/fcm_background_handler.dart';
@@ -82,8 +85,10 @@ class AppBootstrap {
       PaintingBinding.instance.imageCache.maximumSize = 100;
       PaintingBinding.instance.imageCache.maximumSizeBytes = 50 * 1024 * 1024;
     } else {
-      PaintingBinding.instance.imageCache.maximumSize = 10;
-      PaintingBinding.instance.imageCache.maximumSizeBytes = 5 * 1024 * 1024;
+      // 50 images / 30MB — prevents constant re-decoding during scroll.
+      // iOS may further tune in _configureIOSRendering; Android keeps these.
+      PaintingBinding.instance.imageCache.maximumSize = 50;
+      PaintingBinding.instance.imageCache.maximumSizeBytes = 30 * 1024 * 1024;
     }
     if (kReleaseMode && !kIsWeb) {
       PaintingBinding.instance.imageCache.clear();
@@ -110,15 +115,16 @@ class AppBootstrap {
           androidProvider: AndroidProvider.playIntegrity,
           appleProvider: AppleProvider.deviceCheck,
         );
-        try {
-          final token = await FirebaseAppCheck.instance.getToken(true);
+        // Token fetch is a network round-trip — fire-and-forget to avoid
+        // blocking runApp(). Firebase SDK will cache the token automatically.
+        unawaited(FirebaseAppCheck.instance.getToken(true).then((token) {
           AppLogger.i('Firebase App Check activated',
               category: LogCategory.general, data: {'hasToken': token != null});
-        } catch (tokenError) {
+        }).catchError((tokenError) {
           AppLogger.w('Firebase App Check token fetch failed',
               category: LogCategory.general,
               data: {'error': tokenError.toString()});
-        }
+        }));
       } catch (e) {
         AppLogger.w('Firebase App Check activation failed: $e',
             category: LogCategory.general, data: {'error': e.toString()});
@@ -213,12 +219,97 @@ class AppBootstrap {
           locator<MediaCompressionService>().migrateAndCleanupUploads();
         }
 
+        // Initialize Apple Watch companion bridge (iOS only, no-op elsewhere)
+        WatchService.instance.initialize();
+        AyurvedaService().listenForWatchNadi();
+
+        // Proactively load sky positions and send to watch.
+        // This ensures applicationContext is populated BEFORE the watch
+        // requests fullSync (watch waits 4s after launch).
+        unawaited(_sendSkyToWatch());
+
         startupService.reportStartupPerformance();
         AppInitializer.safelyRunBackgroundTasks(startupService);
       } catch (e) {
         AppLogger.e('Error during background initialization: $e');
       }
     }));
+  }
+
+  // ── Watch sky sync ─────────────────────────────────────────────────────
+
+  /// Load sky positions, muhurat, and panchang from cache/backend
+  /// and push to watch via applicationContext BEFORE the watch asks.
+  /// Also listens for fullSync requests at the app level.
+  static Future<void> _sendSkyToWatch() async {
+    try {
+      final skyService = SkyPositionsService();
+
+      // 1) Sky positions
+      final skyOk = await skyService.fetchPositions();
+      if (skyOk) {
+        final positions = skyService.getPositionsForDate(DateTime.now());
+        if (positions != null && positions.isNotEmpty) {
+          AppLogger.i('Bootstrap: Sending sky to watch',
+              category: LogCategory.general,
+              data: {'planetCount': positions.length});
+          await WatchService.instance.sendSkyPositions(positions);
+        }
+
+        // Also send panchang if available
+        final panchang = skyService.getTodayPanchang();
+        if (panchang != null) {
+          AppLogger.i('Bootstrap: Sending panchang to watch',
+              category: LogCategory.general);
+          await WatchService.instance.sendPanchang(panchang);
+        }
+      } else {
+        AppLogger.w('Bootstrap: Sky fetch failed — watch will have no sky data',
+            category: LogCategory.general);
+      }
+
+      // 2) Muhurat (global, fetched separately)
+      final muhuratOk = await skyService.fetchGlobalMuhurat();
+      if (muhuratOk) {
+        final muhurat = skyService.globalMuhurat;
+        if (muhurat != null) {
+          final windows = WatchService.extractMuhuratWindows(muhurat);
+          if (windows.isNotEmpty) {
+            AppLogger.i('Bootstrap: Sending muhurat to watch',
+                category: LogCategory.general,
+                data: {'windowCount': windows.length});
+            await WatchService.instance.sendMuhurat(windows);
+          }
+        }
+      }
+
+      // 3) Listen for watch fullSync requests at the app level.
+      // This ensures the watch gets data even if CosmicDashboard is not mounted.
+      WatchService.instance.onWatchData.listen((data) {
+        if (data['request'] == 'fullSync') {
+          AppLogger.i('Bootstrap: Watch requested fullSync',
+              category: LogCategory.general);
+          final pos = skyService.getPositionsForDate(DateTime.now());
+          if (pos != null && pos.isNotEmpty) {
+            WatchService.instance.sendSkyPositions(pos);
+          }
+          final muh = skyService.globalMuhurat;
+          if (muh != null) {
+            final wins = WatchService.extractMuhuratWindows(muh);
+            if (wins.isNotEmpty) {
+              WatchService.instance.sendMuhurat(wins);
+            }
+          }
+          final pan = skyService.getTodayPanchang();
+          if (pan != null) {
+            WatchService.instance.sendPanchang(pan);
+          }
+        }
+      });
+    } catch (e) {
+      AppLogger.w('Bootstrap: Failed to send data to watch',
+          category: LogCategory.general, data: {'error': e.toString()});
+    }
   }
 
   // ── Fallback ───────────────────────────────────────────────────────────

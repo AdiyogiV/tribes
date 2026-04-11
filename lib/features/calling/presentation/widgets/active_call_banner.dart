@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:aurogram/core/routing/route_names.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:go_router/go_router.dart';
 import 'package:aurogram/core/config/call_ui_config.dart';
-import 'package:aurogram/features/calling/presentation/pages/group_call_screen.dart';
 import 'package:aurogram/features/calling/domain/group_call_service.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 
@@ -183,13 +184,9 @@ class _ActiveCallBannerState extends State<ActiveCallBanner> with SingleTickerPr
   void _joinCall() {
     HapticFeedback.mediumImpact();
     
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => GroupCallScreen(
-          spaceId: widget.spaceId,
-          spaceName: widget.spaceName,
-        ),
-      ),
+    context.push(
+      '${RouteNames.groupCall}/${widget.spaceId}',
+      extra: {'spaceName': widget.spaceName},
     );
   }
 }
@@ -261,13 +258,9 @@ class ActiveCallIndicator extends StatelessWidget {
   void _openCall(BuildContext context) {
     HapticFeedback.lightImpact();
     
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => GroupCallScreen(
-          spaceId: spaceId,
-          spaceName: spaceName,
-        ),
-      ),
+    context.push(
+      '${RouteNames.groupCall}/$spaceId',
+      extra: {'spaceName': spaceName},
     );
   }
 }

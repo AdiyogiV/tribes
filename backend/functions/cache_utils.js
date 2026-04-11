@@ -38,186 +38,12 @@ const CACHE_COLLECTION = "astroCache";
 const KNOWLEDGE_COLLECTION = "astroKnowledge";
 const CURRENT_COLLECTION = "astroCurrent";
 
-// Reduced TTLs for fresher data
-const TRANSIT_CACHE_TTL_HOURS = 6;  // Was 24 - now refresh more often
-const AI_CACHE_TTL_HOURS = 4;       // Was 24 - insights refresh 4x daily
-const SEARCH_CACHE_TTL_HOURS = 12;  // Was 24 - search context is less critical
+const SEARCH_CACHE_TTL_HOURS = 12;
 
 // TTL constants for different cache tiers
 const TTL_FOREVER = -1; // Never expires
-const TTL_DAILY = 24; // 1 day in hours
 const TTL_WEEKLY = 168; // 7 days in hours
-const TTL_MONTHLY = 720; // 30 days in hours
 
-/**
- * Generate hash for latitude/longitude (0.1° precision for grouping)
- */
-export function generateLatLngHash(lat, lng) {
-    if (lat == null || lng == null) return null;
-    // Round to 0.1° precision (approximately 11km)
-    const roundedLat = Math.round(lat * 10) / 10;
-    const roundedLng = Math.round(lng * 10) / 10;
-    return `${roundedLat.toFixed(1)}_${roundedLng.toFixed(1)}`;
-}
-
-/**
- * Generate chart signature for caching AI insights
- * Format: {sunSign}_{moonSign}_{lagna}_{nakshatra}
- */
-export function generateChartSignature(userAstroData) {
-    const sunSign = (userAstroData.sunSign || "").replace(/\s+/g, "_");
-    const moonSign = (userAstroData.moonSign || "").replace(/\s+/g, "_");
-    const lagna = (userAstroData.ascendant || userAstroData.lagna || "").replace(/\s+/g, "_");
-    const nakshatra = (userAstroData.nakshatra || userAstroData.moonNakshatra || "").replace(/\s+/g, "_");
-
-    return `${sunSign}_${moonSign}_${lagna}_${nakshatra}`.toLowerCase();
-}
-
-/**
- * Get cached transit/panchang data for a location and date
- * Returns null if cache miss or expired
- */
-export async function getCachedTransitData(date, lat, lng) {
-    try {
-        const latLngHash = generateLatLngHash(lat, lng);
-        if (!latLngHash) return null;
-
-        // Use colon instead of slash to avoid Firestore path issues
-        const cacheKey = `transits:daily:${date}:${latLngHash}`;
-        const cacheDoc = await db.collection(CACHE_COLLECTION).doc(cacheKey).get();
-
-        if (!cacheDoc.exists) {
-            return null;
-        }
-
-        const cacheData = cacheDoc.data();
-        const cachedAt = cacheData.cachedAt?.toDate();
-        if (!cachedAt) return null;
-
-        const hoursSinceCache = DateTime.now().diff(DateTime.fromJSDate(cachedAt), "hours").hours;
-        if (hoursSinceCache >= TRANSIT_CACHE_TTL_HOURS) {
-            // Cache expired, delete it
-            await cacheDoc.ref.delete();
-            return null;
-        }
-
-        logger.info("Cache hit for transit data", {
-            structuredData: true,
-            cacheKey,
-            hoursSinceCache: Math.round(hoursSinceCache * 10) / 10,
-        });
-
-        return cacheData.data;
-    } catch (error) {
-        logger.warn("Error checking transit cache", {
-            structuredData: true,
-            error: String(error),
-        });
-        return null;
-    }
-}
-
-/**
- * Cache transit/panchang data for a location and date
- */
-export async function cacheTransitData(date, lat, lng, data) {
-    try {
-        const latLngHash = generateLatLngHash(lat, lng);
-        if (!latLngHash) return;
-
-        // Use colon instead of slash to avoid Firestore path issues
-        const cacheKey = `transits:daily:${date}:${latLngHash}`;
-        await db.collection(CACHE_COLLECTION).doc(cacheKey).set({
-            data,
-            cachedAt: new Date(),
-            ttlHours: TRANSIT_CACHE_TTL_HOURS,
-        });
-
-        logger.info("Cached transit data", {
-            structuredData: true,
-            cacheKey,
-        });
-    } catch (error) {
-        logger.warn("Error caching transit data", {
-            structuredData: true,
-            error: String(error),
-        });
-    }
-}
-
-/**
- * Get cached AI insight for a chart signature and date
- * Returns null if cache miss or expired
- */
-export async function getCachedAIInsight(chartSignature, date, transitHash) {
-    try {
-        if (!chartSignature) return null;
-
-        // Include transit hash to invalidate when transits change significantly
-        // Use colon instead of slash to avoid Firestore path issues
-        // CACHE_VERSION prefix to invalidate old cached insights with old prompt format
-        const cacheKey = `ai-insights:${CACHE_VERSION}:daily:${date}:${chartSignature}_${transitHash || "default"}`;
-        const cacheDoc = await db.collection(CACHE_COLLECTION).doc(cacheKey).get();
-
-        if (!cacheDoc.exists) {
-            return null;
-        }
-
-        const cacheData = cacheDoc.data();
-        const cachedAt = cacheData.cachedAt?.toDate();
-        if (!cachedAt) return null;
-
-        const hoursSinceCache = DateTime.now().diff(DateTime.fromJSDate(cachedAt), "hours").hours;
-        if (hoursSinceCache >= AI_CACHE_TTL_HOURS) {
-            // Cache expired, delete it
-            await cacheDoc.ref.delete();
-            return null;
-        }
-
-        logger.info("Cache hit for AI insight", {
-            structuredData: true,
-            cacheKey,
-            hoursSinceCache: Math.round(hoursSinceCache * 10) / 10,
-        });
-
-        return cacheData.data;
-    } catch (error) {
-        logger.warn("Error checking AI cache", {
-            structuredData: true,
-            error: String(error),
-        });
-        return null;
-    }
-}
-
-/**
- * Cache AI insight for a chart signature and date
- */
-export async function cacheAIInsight(chartSignature, date, transitHash, insight) {
-    try {
-        if (!chartSignature) return;
-
-        // Use colon instead of slash to avoid Firestore path issues
-        // CACHE_VERSION prefix to invalidate old cached insights with old prompt format
-        const cacheKey = `ai-insights:${CACHE_VERSION}:daily:${date}:${chartSignature}_${transitHash || "default"}`;
-        await db.collection(CACHE_COLLECTION).doc(cacheKey).set({
-            data: insight,
-            cachedAt: new Date(),
-            ttlHours: AI_CACHE_TTL_HOURS,
-            version: CACHE_VERSION,
-        });
-
-        logger.info("Cached AI insight", {
-            structuredData: true,
-            cacheKey,
-        });
-    } catch (error) {
-        logger.warn("Error caching AI insight", {
-            structuredData: true,
-            error: String(error),
-        });
-    }
-}
 
 /**
  * Get cached Google Search context for a date
@@ -283,28 +109,6 @@ export async function cacheSearchContext(date, context) {
             error: String(error),
         });
     }
-}
-
-/**
- * Generate transit hash for cache invalidation
- * Simple hash based on major transit positions
- */
-export function generateTransitHash(transits) {
-    if (!transits || Object.keys(transits).length === 0) return "default";
-
-    // Use positions of major planets for hash
-    const majorPlanets = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu"];
-    const hashParts = majorPlanets
-        .map(planet => {
-            const planetData = transits[planet];
-            if (!planetData) return null;
-            const sign = planetData.sign || "";
-            const house = planetData.house || "";
-            return `${planet}:${sign}:${house}`;
-        })
-        .filter(Boolean);
-
-    return hashParts.join("|").substring(0, 100); // Limit length
 }
 
 // =============================================================================
@@ -613,6 +417,7 @@ export async function clearAllCaches() {
     }
 }
 
+
 /**
  * Clear AI insight caches only (preserves transit/location caches)
  * Use when changing AI prompts or insight formats
@@ -622,10 +427,10 @@ export async function clearAIInsightCaches() {
     const BATCH_SIZE = 500;
     try {
         let deletedCount = 0;
-        
+
         const cacheDocs = await db.collection(CACHE_COLLECTION).get();
         const aiInsightDocs = cacheDocs.docs.filter((doc) => doc.id.startsWith("ai-insights:"));
-        
+
         for (let i = 0; i < aiInsightDocs.length; i += BATCH_SIZE) {
             const batch = db.batch();
             const chunk = aiInsightDocs.slice(i, i + BATCH_SIZE);
@@ -633,12 +438,12 @@ export async function clearAIInsightCaches() {
             await batch.commit();
             deletedCount += chunk.length;
         }
-        
-        logger.info("🗑️ AI insight caches cleared", {
+
+        logger.info("AI insight caches cleared", {
             structuredData: true,
             deletedCount,
         });
-        
+
         return { deletedCount, success: true };
     } catch (error) {
         logger.error("Error clearing AI insight caches", {
@@ -658,12 +463,12 @@ export async function clearOldVersionedCaches() {
     const BATCH_SIZE = 500;
     try {
         let deletedCount = 0;
-        
+
         const cacheDocs = await db.collection(CACHE_COLLECTION).get();
-        const oldVersionDocs = cacheDocs.docs.filter((doc) => 
+        const oldVersionDocs = cacheDocs.docs.filter((doc) =>
             doc.id.startsWith("ai-insights:") && !doc.id.includes(`:${CACHE_VERSION}:`)
         );
-        
+
         for (let i = 0; i < oldVersionDocs.length; i += BATCH_SIZE) {
             const batch = db.batch();
             const chunk = oldVersionDocs.slice(i, i + BATCH_SIZE);
@@ -671,13 +476,13 @@ export async function clearOldVersionedCaches() {
             await batch.commit();
             deletedCount += chunk.length;
         }
-        
-        logger.info("🗑️ Old versioned caches cleared", {
+
+        logger.info("Old versioned caches cleared", {
             structuredData: true,
             deletedCount,
             currentVersion: CACHE_VERSION,
         });
-        
+
         return { deletedCount, success: true, currentVersion: CACHE_VERSION };
     } catch (error) {
         logger.error("Error clearing old versioned caches", {

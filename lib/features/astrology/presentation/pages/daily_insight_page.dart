@@ -6,9 +6,8 @@ import 'package:aurogram/shared/models/astrology_profile.dart';
 import 'package:aurogram/features/astrology/domain/astrology_service.dart';
 import 'package:aurogram/features/notifications/domain/notification_service.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/insight_cards/insight_card.dart';
-import 'package:aurogram/features/astrology/presentation/pages/saved_insights_page.dart';
+import 'package:go_router/go_router.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/astro_chat_input.dart';
-import 'package:aurogram/features/astrology/presentation/pages/astro_chat_page.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/features/astrology/data/utils/astrology_context_builder.dart';
@@ -172,14 +171,10 @@ class _DailyInsightPageState extends State<DailyInsightPage> {
 
       HapticFeedback.lightImpact();
 
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => AstroChatPage(
-            astrologyContext: astroContext,
-            initialMessage: text,
-          ),
-        ),
-      );
+      context.push('/astrology/chat', extra: {
+        'astrologyContext': astroContext,
+        'initialMessage': text,
+      });
     } catch (e) {
       AppLogger.e('Error opening astro chat', error: e);
     }
@@ -210,11 +205,7 @@ class _DailyInsightPageState extends State<DailyInsightPage> {
 
   void _openSavedInsights() {
     HapticFeedback.lightImpact();
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => SavedInsightsPage(uid: widget.uid),
-      ),
-    );
+    context.push('/astrology/saved/${widget.uid}');
   }
 
   @override

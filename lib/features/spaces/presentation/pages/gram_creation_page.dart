@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:aurogram/features/spaces/presentation/pages/space_screen.dart';
 import 'package:aurogram/shared/models/space.dart';
 import 'package:aurogram/shared/models/space_types.dart';
 import 'package:aurogram/features/spaces/domain/space_service.dart';
@@ -131,8 +131,7 @@ class SpaceCreationPageState extends State<SpaceCreationPage>
   }
 
   void _navigateToSpaceScreen(String spaceId) {
-    Navigator.of(context).pushReplacement(
-        CupertinoPageRoute(builder: (context) => SpaceScreen(rid: spaceId)));
+    context.pushReplacement('/space/$spaceId');
   }
 
   void _handleError(dynamic error) {

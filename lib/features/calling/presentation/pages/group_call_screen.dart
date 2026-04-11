@@ -12,6 +12,8 @@ import 'package:aurogram/features/calling/presentation/widgets/group_call_top_ba
 import 'package:aurogram/features/calling/domain/group_call_service.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:aurogram/core/di/injection.dart';
+import 'package:aurogram/shared/data/repositories/user_repository.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/shared/presentation/widgets/feedback/snack_bar_service.dart';
 
@@ -150,8 +152,7 @@ class _GroupCallScreenState extends State<GroupCallScreen>
 
     if (userId != null) {
       try {
-        final userDoc = await _firestore.collection('users').doc(userId).get();
-        final userData = userDoc.data();
+        final userData = await locator<UserRepository>().getUserData(userId);
         if (userData != null) {
           displayName = userData['name'] ?? userData['nickname'] ?? 'You';
           avatarUrl = userData['imageUrl'];

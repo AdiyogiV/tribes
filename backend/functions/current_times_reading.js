@@ -1,6 +1,7 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { db, FieldValue, logger } from "../lib/firebase.js";
 import { geminiApiKey } from "../lib/secrets.js";
+import { requireAuth } from "../lib/auth_utils.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { AI_MODELS } from "../lib/config.js";
 
@@ -37,11 +38,7 @@ export const generateCurrentTimesReading = onCall(
         invoker: "public",
     },
     async (request) => {
-        if (!request.auth) {
-            throw new HttpsError("unauthenticated", "Must be authenticated");
-        }
-
-        const uid = request.auth.uid;
+        const uid = requireAuth(request, "generate current times reading");
         const startTime = Date.now();
         logger.info("📖 generateCurrentTimesReading invoked", { uid });
 

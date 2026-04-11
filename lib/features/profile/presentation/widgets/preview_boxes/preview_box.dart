@@ -1,13 +1,13 @@
 import 'dart:io'
     if (dart.library.html) 'package:aurogram/platform/io_stub.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:aurogram/shared/services/cache_service.dart';
 import 'package:flutter/material.dart';
 import 'package:aurogram/core/di/injection.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/header_style.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:aurogram/shared/data/repositories/user_repository.dart';
 
 // Extracted sub-widgets
 import 'parts/preview_box_parts.dart';
@@ -150,10 +150,7 @@ class _PreviewBoxState extends State<PreviewBox>
         compact: widget.compact,
       );
 
-  final CollectionReference usersCollection =
-      FirebaseFirestore.instance.collection('users');
-  final CollectionReference spacesCollection =
-      FirebaseFirestore.instance.collection('spaces');
+  UserRepository get _userRepo => locator<UserRepository>();
 
   @override
   void initState() {
@@ -279,15 +276,10 @@ class _PreviewBoxState extends State<PreviewBox>
       }
 
       if (widget.author != null) {
-        DocumentSnapshot authordocuments =
-            await usersCollection.doc(widget.author).get();
-        if (authordocuments.exists) {
-          final data = authordocuments.data() as Map<String, dynamic>?;
-          final authorPicUrl = data?['displayPicture'];
-          if (authorPicUrl != null && authorPicUrl.toString().isNotEmpty) {
-            final cacheService = locator<CacheService>();
-            authorPicture = await cacheService.getFile(authorPicUrl);
-          }
+        final authorPicUrl = await _userRepo.getPhotoUrl(widget.author!);
+        if (authorPicUrl != null && authorPicUrl.isNotEmpty) {
+          final cacheService = locator<CacheService>();
+          authorPicture = await cacheService.getFile(authorPicUrl);
         }
       }
 
@@ -366,14 +358,9 @@ class _PreviewBoxState extends State<PreviewBox>
   Future<void> _initializePreviewWeb() async {
     try {
       if (widget.author != null) {
-        DocumentSnapshot authordocuments =
-            await usersCollection.doc(widget.author).get();
-        if (authordocuments.exists) {
-          final data = authordocuments.data() as Map<String, dynamic>?;
-          final authorPicUrl = data?['displayPicture'];
-          if (authorPicUrl != null && authorPicUrl.toString().isNotEmpty) {
-            _webAuthorPicUrl = authorPicUrl.toString();
-          }
+        final authorPicUrl = await _userRepo.getPhotoUrl(widget.author!);
+        if (authorPicUrl != null && authorPicUrl.isNotEmpty) {
+          _webAuthorPicUrl = authorPicUrl;
         }
       }
 

@@ -3,6 +3,7 @@ import UIKit
 import Firebase
 import FirebaseMessaging
 import UserNotifications
+import WatchConnectivity
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
@@ -42,8 +43,83 @@ import UserNotifications
     // Set messaging delegate
     Messaging.messaging().delegate = self
     
+    // Activate WatchConnectivity for watch companion app
+    WatchSessionManager.shared.activate()
+    setupWatchPlatformChannel()
+
     GeneratedPluginRegistrant.register(with: self)
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+
+  // MARK: - Watch Platform Channel
+
+  /// Sets up the Flutter ↔ Watch bridge via platform channel.
+  /// Flutter sends data via "com.canay.dhaara/watch" method channel.
+  private func setupWatchPlatformChannel() {
+    guard let controller = window?.rootViewController as? FlutterViewController else { return }
+
+    let channel = FlutterMethodChannel(name: "com.canay.dhaara/watch",
+                                        binaryMessenger: controller.binaryMessenger)
+
+    channel.setMethodCallHandler { [weak self] (call, result) in
+      guard let _ = self else { return }
+      let watchManager = WatchSessionManager.shared
+
+      switch call.method {
+      case "sendPanchang":
+        if let args = call.arguments as? [String: Any] {
+          watchManager.sendPanchang(args)
+          result(true)
+        } else {
+          result(FlutterError(code: "INVALID_ARGS", message: "Expected map", details: nil))
+        }
+
+      case "sendProfile":
+        if let args = call.arguments as? [String: Any] {
+          watchManager.sendProfile(args)
+          result(true)
+        } else {
+          result(FlutterError(code: "INVALID_ARGS", message: "Expected map", details: nil))
+        }
+
+      case "sendInsight":
+        if let args = call.arguments as? [String: Any] {
+          watchManager.sendInsight(args)
+          result(true)
+        } else {
+          result(FlutterError(code: "INVALID_ARGS", message: "Expected map", details: nil))
+        }
+
+      case "sendMuhurat":
+        if let args = call.arguments as? [String: Any] {
+          watchManager.sendMuhurat(args)
+          result(true)
+        } else {
+          result(FlutterError(code: "INVALID_ARGS", message: "Expected map", details: nil))
+        }
+
+      case "sendSky":
+        if let args = call.arguments as? [String: Any] {
+          watchManager.sendSky(args)
+          result(true)
+        } else {
+          result(FlutterError(code: "INVALID_ARGS", message: "Expected map", details: nil))
+        }
+
+      case "isWatchPaired":
+        result(watchManager.isWatchAvailable)
+
+      default:
+        result(FlutterMethodNotImplemented)
+      }
+    }
+
+    // Forward watch data back to Flutter
+    WatchSessionManager.shared.onWatchData = { data in
+      DispatchQueue.main.async {
+        channel.invokeMethod("onWatchData", arguments: data)
+      }
+    }
   }
   
   // MARK: - APNs Token Registration

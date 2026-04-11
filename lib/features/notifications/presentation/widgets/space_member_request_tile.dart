@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:aurogram/features/profile/presentation/pages/user_profile.dart';
+import 'package:go_router/go_router.dart';
+import 'package:aurogram/core/routing/route_names.dart';
 import 'package:aurogram/core/di/injection.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/shared/presentation/widgets/avatars/user_avatar.dart';
@@ -127,12 +128,7 @@ class _SpaceMemberRequestTileState extends State<SpaceMemberRequestTile> {
 
   void _openProfile() {
     if (widget.uid.isEmpty) return;
-    Navigator.push(
-      context,
-      CupertinoPageRoute(
-        builder: (context) => UserProfilePage(uid: widget.uid),
-      ),
-    );
+    context.push('${RouteNames.userProfile}/${widget.uid}');
   }
 
   @override

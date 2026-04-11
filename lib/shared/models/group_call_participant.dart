@@ -1,4 +1,9 @@
-/// Participant info for group calls
+import 'package:json_annotation/json_annotation.dart';
+
+part 'group_call_participant.g.dart';
+
+/// Participant info for group calls with generated JSON serialization.
+@JsonSerializable()
 class GroupCallParticipant {
   final int agoraUid;
   final String oderId;
@@ -15,6 +20,11 @@ class GroupCallParticipant {
     this.isAudioMuted = false,
     this.isVideoMuted = false,
   });
+
+  factory GroupCallParticipant.fromJson(Map<String, dynamic> json) =>
+      _$GroupCallParticipantFromJson(json);
+
+  Map<String, dynamic> toJson() => _$GroupCallParticipantToJson(this);
 
   GroupCallParticipant copyWith({
     String? displayName,

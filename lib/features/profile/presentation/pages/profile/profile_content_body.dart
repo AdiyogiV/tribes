@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show QueryDocumentSnapshot, QuerySnapshot;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:aurogram/core/theme/header_style.dart';
@@ -6,10 +6,6 @@ import 'package:aurogram/shared/models/astrology_profile.dart';
 import 'package:aurogram/shared/models/daily_insight.dart';
 import 'package:aurogram/shared/models/ayurveda_profile.dart';
 import 'package:aurogram/features/profile/domain/follow_service.dart';
-import 'package:aurogram/features/astrology/presentation/pages/astrology_details_page.dart';
-import 'package:aurogram/features/astrology/presentation/pages/astrology_setup_page.dart';
-import 'package:aurogram/features/astrology/presentation/pages/daily_insight_page.dart';
-import 'package:aurogram/features/ayurveda/presentation/pages/ayurveda_details_page.dart';
 import 'package:aurogram/features/profile/presentation/pages/profile/profile_hero_section.dart';
 import 'package:aurogram/features/profile/presentation/pages/profile/profile_stats_cards.dart';
 import 'package:aurogram/features/profile/presentation/pages/profile/profile_astrology_card.dart';
@@ -18,6 +14,8 @@ import 'package:aurogram/features/profile/presentation/pages/profile/profile_ayu
 import 'package:aurogram/features/profile/presentation/pages/profile/profile_compatibility_card.dart';
 import 'package:aurogram/features/profile/presentation/pages/profile/profile_posts_section.dart';
 import 'package:aurogram/features/profile/presentation/pages/profile/profile_follow_request_banner.dart';
+import 'package:go_router/go_router.dart';
+import 'package:aurogram/core/routing/route_names.dart';
 
 /// Builds the main profile content body (hero, cards, posts).
 /// Used by both mobile and desktop layouts.
@@ -179,11 +177,7 @@ class ProfileContentBody extends StatelessWidget {
                   astrologyProfileFuture: astrologyProfileFuture,
                   dailyInsightStream: dailyInsightStream,
                   onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => DailyInsightPage(uid: uid!),
-                      ),
-                    );
+                    context.push(RouteNames.dailyInsight, extra: {'uid': uid!});
                   },
                 ),
                 SizedBox(height: AppHeaderStyle.cardVerticalGap),
@@ -196,19 +190,11 @@ class ProfileContentBody extends StatelessWidget {
                   isOwnProfile: isOwnProfile,
                   astrologyProfileFuture: astrologyProfileFuture,
                   onTapDetails: () {
-                    Navigator.of(context, rootNavigator: true).push(
-                      CupertinoPageRoute(
-                        builder: (context) => AstrologyDetailsPage(uid: uid!),
-                      ),
-                    );
+                    context.push('/astrology/details/$uid');
                   },
                   onTapRetry: onRetryAstrology,
                   onTapSetup: () {
-                    Navigator.of(context, rootNavigator: true).push(
-                      CupertinoPageRoute(
-                        builder: (context) => const AstrologySetupPage(),
-                      ),
-                    );
+                    context.push('/astrology/setup');
                   },
                 ),
 
@@ -223,11 +209,7 @@ class ProfileContentBody extends StatelessWidget {
                   cachedAyurvedaProfile: cachedAyurvedaProfile,
                   onAyurvedaProfileChanged: onAyurvedaProfileChanged,
                   onOpenDetails: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => AyurvedaDetailsPage(uid: uid!),
-                      ),
-                    );
+                    context.push('/ayurveda/details/$uid');
                   },
                 ),
               ],

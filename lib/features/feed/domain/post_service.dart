@@ -4,7 +4,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:aurogram/shared/services/media/media_compression_service.dart';
 import 'package:aurogram/shared/services/media/media_storage_service.dart';
 import 'package:aurogram/features/feed/data/datasources/post_db_service.dart';
-import 'package:aurogram/core/error/error_handler.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/shared/services/analytics_service.dart';
 
@@ -57,7 +56,7 @@ class PostService {
     String? link, {
     bool isProfilePost = false,
   }) async {
-    return await ErrorHandler.execute<String?>(() async {
+    try {
       if (user == null) {
         throw Exception('User not authenticated');
       }
@@ -151,7 +150,10 @@ class PostService {
       );
 
       return post;
-    }, 'Error adding space post', defaultValue: null);
+    } catch (e, stack) {
+      AppLogger.e('Error adding space post', category: LogCategory.general, error: e, stackTrace: stack);
+      return null;
+    }
   }
 
   /// Adds a new video post from bytes (for web uploads)
@@ -177,7 +179,7 @@ class PostService {
     bool isProfilePost = false,
     String videoExtension = 'mp4',
   }) async {
-    return await ErrorHandler.execute<String?>(() async {
+    try {
       if (user == null) {
         throw Exception('User not authenticated');
       }
@@ -249,7 +251,7 @@ class PostService {
           replyTo,
           link,
         );
-        
+
         // Notify original post author
         if (replyToUid != null && replyToUid != user!.uid) {
           await _postDbService.createReplyNotification(
@@ -281,7 +283,10 @@ class PostService {
       );
 
       return post;
-    }, 'Error adding space post from bytes', defaultValue: null);
+    } catch (e, stack) {
+      AppLogger.e('Error adding space post from bytes', category: LogCategory.general, error: e, stackTrace: stack);
+      return null;
+    }
   }
 
   /// Adds a new audio post to a space
@@ -305,7 +310,7 @@ class PostService {
     bool addToSpaceFeed, {
     bool isProfilePost = false,
   }) async {
-    return await ErrorHandler.execute<String?>(() async {
+    try {
       if (user == null) {
         throw Exception('User not authenticated');
       }
@@ -359,53 +364,64 @@ class PostService {
           });
 
       return post;
-    }, 'Error adding audio post', defaultValue: null);
+    } catch (e, stack) {
+      AppLogger.e('Error adding audio post', category: LogCategory.general, error: e, stackTrace: stack);
+      return null;
+    }
   }
 
   /// Updates the upload status of a post
   Future<bool> updatePostStatus(String postId, bool uploading) async {
-    return await ErrorHandler.execute<bool>(
-        () => _postDbService.updatePostStatus(postId, uploading),
-        'Error updating post status',
-        defaultValue: false);
+    try {
+      return await _postDbService.updatePostStatus(postId, uploading);
+    } catch (e, stack) {
+      AppLogger.e('Error updating post status', category: LogCategory.general, error: e, stackTrace: stack);
+      return false;
+    }
   }
 
   /// Starts the compression queue processing
-  Future<void> processCompressionQueue() async {
-    await ErrorHandler.execute(
-        () async => _compressionService.processCompressionQueue(),
-        'Error processing compression queue');
+  void processCompressionQueue() {
+    try {
+      _compressionService.processCompressionQueue();
+    } catch (e, stack) {
+      AppLogger.e('Error processing compression queue', category: LogCategory.general, error: e, stackTrace: stack);
+    }
   }
 
   /// Adds a post to a space feed
   Future<bool> addToSpaceFeed(String fetchedSpace, String post, String? title,
       String thumbnail, String video, String? replyTo, String? link) async {
-    return await ErrorHandler.execute<bool>(
-        () => _postDbService.addToSpaceFeed(
-            fetchedSpace, post, title, thumbnail, video, replyTo, link),
-        'Error adding to space feed',
-        defaultValue: false);
+    try {
+      return await _postDbService.addToSpaceFeed(
+          fetchedSpace, post, title, thumbnail, video, replyTo, link);
+    } catch (e, stack) {
+      AppLogger.e('Error adding to space feed', category: LogCategory.general, error: e, stackTrace: stack);
+      return false;
+    }
   }
 
   /// Adds a reply to a post
   Future<bool> addPostReply(String fetchedSpace, String post, String? title,
       String thumbnail, String video, String replyTo, String? link) async {
-    return await ErrorHandler.execute<bool>(
-        () => _postDbService.addPostReply(
-            fetchedSpace, post, title, thumbnail, video, replyTo, link),
-        'Error adding post reply',
-        defaultValue: false);
+    try {
+      return await _postDbService.addPostReply(
+          fetchedSpace, post, title, thumbnail, video, replyTo, link);
+    } catch (e, stack) {
+      AppLogger.e('Error adding post reply', category: LogCategory.general, error: e, stackTrace: stack);
+      return false;
+    }
   }
 
   // SECTION: Post Deletion
 
   /// Deletes a post and all its associated data
   Future<bool> deleteSpacePost(String postId) async {
-    return await ErrorHandler.execute<bool>(() async {
+    try {
       DocumentSnapshot postDoc = await _postDbService.getPost(postId);
 
       if (!postDoc.exists) {
-        ErrorHandler.logInfo('Post does not exist');
+        AppLogger.i('Post does not exist', category: LogCategory.general);
         return false;
       }
 
@@ -466,16 +482,19 @@ class PostService {
       await _storageService.deleteStorageFile('posts/$postId/thumbnail.jpg');
       await _storageService.deleteStorageFile('posts/$postId/video.mp4');
 
-      ErrorHandler.logInfo('Post deleted successfully');
+      AppLogger.i('Post deleted successfully', category: LogCategory.general);
       return true;
-    }, 'Error deleting post', defaultValue: false);
+    } catch (e, stack) {
+      AppLogger.e('Error deleting post', category: LogCategory.general, error: e, stackTrace: stack);
+      return false;
+    }
   }
 
   // SECTION: Post Moderation
 
   /// Reports a post for inappropriate content
   Future<bool> reportPost(String postId, String reason) async {
-    return await ErrorHandler.execute<bool>(() async {
+    try {
       if (user == null) return false;
       await _firestore.collection('reports').add({
         'postId': postId,
@@ -484,24 +503,31 @@ class PostService {
         'timestamp': FieldValue.serverTimestamp(),
       });
       return true;
-    }, 'Error reporting post', defaultValue: false);
+    } catch (e, stack) {
+      AppLogger.e('Error reporting post', category: LogCategory.general, error: e, stackTrace: stack);
+      return false;
+    }
   }
 
   // SECTION: Queue Management
 
   /// Clears the compression queue
   Future<void> clearCompressionQueue() async {
-    await ErrorHandler.execute(
-        () async => _compressionService.clearCompressionQueue(),
-        'Error clearing compression queue');
+    try {
+      await _compressionService.clearCompressionQueue();
+    } catch (e, stack) {
+      AppLogger.e('Error clearing compression queue', category: LogCategory.general, error: e, stackTrace: stack);
+    }
   }
 
   /// Gets the size of the compression queue
   Future<int> getCompressionQueueSize() async {
-    return await ErrorHandler.execute<int>(
-        () => _compressionService.getCompressionQueueSize(),
-        'Error getting compression queue size',
-        defaultValue: 0);
+    try {
+      return await _compressionService.getCompressionQueueSize();
+    } catch (e, stack) {
+      AppLogger.e('Error getting compression queue size', category: LogCategory.general, error: e, stackTrace: stack);
+      return 0;
+    }
   }
 
   // SECTION: Helper Methods

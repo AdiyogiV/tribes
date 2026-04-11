@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:aurogram/features/feed/domain/feed_service.dart';
 import 'package:aurogram/features/feed/domain/feed_layout_cache.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/header_style.dart';
-import 'package:aurogram/features/feed/presentation/pages/thread_view.dart';
 import 'package:aurogram/features/feed/presentation/widgets/post_switcher.dart';
 import 'package:aurogram/shared/presentation/widgets/layout/size_reporting_widget.dart';
 import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
@@ -81,11 +81,7 @@ List<Widget> buildFeedContentSlivers({
                       key: ValueKey(postId),
                       postId: postId,
                       itemIndex: index,
-                      onOpenThread: (id) => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => ThreadView(postId: id),
-                        ),
-                      ),
+                      onOpenThread: (id) => context.push('/thread/$id'),
                       enableVideoAutoplay: true,
                       prewarmVideo: shouldPrewarmVideo,
                     ),

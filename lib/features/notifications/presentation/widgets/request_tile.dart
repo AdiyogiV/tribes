@@ -1,9 +1,9 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show DocumentSnapshot;
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:aurogram/shared/models/space.dart';
-import 'package:aurogram/features/profile/presentation/pages/social/requests.dart';
-import 'package:aurogram/shared/services/database_service.dart';
+import 'package:aurogram/shared/data/repositories/user_repository.dart';
+import 'package:aurogram/core/di/injection.dart';
 import 'package:aurogram/features/spaces/domain/space_service.dart';
 import 'package:aurogram/shared/utils/time_display.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
@@ -25,8 +25,6 @@ class RequestTile extends StatefulWidget {
 }
 
 class _RequestTileState extends State<RequestTile> {
-  final CollectionReference postCollection =
-      FirebaseFirestore.instance.collection('posts');
   String requestorName = 'Unknown';
   String requestorAvatar = '';
   String space = 'Unknown Space';
@@ -70,7 +68,7 @@ class _RequestTileState extends State<RequestTile> {
       requestorAvatar = notificationRequestorAvatar ?? '';
     } else if (widget.data?['requestor'] != null) {
       // Fallback: fetch from user document (legacy notifications)
-      requestorDoc = await DatabaseService().getUser(widget.data!['requestor']);
+      requestorDoc = await locator<UserRepository>().getUser(widget.data!['requestor']);
       if (requestorDoc != null && requestorDoc!.exists) {
         requestorName = requestorDoc!.get('name')?.toString() ?? 'Someone';
         requestorAvatar = requestorDoc!.get('displayPicture')?.toString() ?? '';
@@ -112,10 +110,7 @@ class _RequestTileState extends State<RequestTile> {
               child: InkWell(
                 onTap: () {
                   if (widget.data?['space'] != null) {
-                    Navigator.of(context, rootNavigator: true)
-                        .push(CupertinoPageRoute(builder: (context) {
-                      return Requests(space: widget.data!['space']);
-                    }));
+                    context.push('/requests', extra: {'space': widget.data!['space']});
                   } else {
                     showCustomSnackBar(context, message: 'Gram information is unavailable', backgroundColor: AppTheme.errorColor, duration: const Duration(seconds: 2), behavior: SnackBarBehavior.fixed);
                   }

@@ -27,6 +27,20 @@ class RouteNames {
 
   // ── Astrology ────────────────────────────────────────────────────────
   static const dailyInsight = '/astrology/insight';
+  static const astrologyDetails = '/astrology/details';
+  static const astrologySetup = '/astrology/setup';
+  static const astroChatPage = '/astrology/chat';
+
+  // ── Ayurveda ────────────────────────────────────────────────────────
+  static const ayurvedaDetails = '/ayurveda/details';
+  static const vikritiCheckin = '/ayurveda/checkin';
+
+  // ── AI Chat ─────────────────────────────────────────────────────────
+  static const aiChat = '/ai/chat';
+  static const recentConversations = '/ai/conversations';
+
+  // ── Cosmic Dashboard ────────────────────────────────────────────────
+  static const cosmicDashboard = '/cosmic/dashboard';
 
   // ── Calling ──────────────────────────────────────────────────────────
   static const callScreen = '/call';
@@ -36,10 +50,17 @@ class RouteNames {
   // ── Social ───────────────────────────────────────────────────────────
   static const invites = '/invites';
   static const requests = '/requests';
+  static const followersFollowing = '/user/connections';
+  static const auraLeaderboard = '/leaderboard';
 
   // ── Anonymous Messages ───────────────────────────────────────────────
   static const secretMessagesInbox = '/anonymous/inbox';
+  static const secretMessagesGetLink = '/anonymous/get-link';
   static const secretMessageSend = '/anonymous/send';
+
+  // ── Spaces (settings & members) ──────────────────────────────────
+  static const editSpace = '/space/edit';
+  static const addSpaceMembers = '/space/members/add';
 
   // ── Spaces (invitations) ────────────────────────────────────────
   static const spaceInvite = '/space/invite';
@@ -52,4 +73,33 @@ class RouteNames {
 
   // ── Settings ─────────────────────────────────────────────────────────
   static const settings = '/settings';
+
+  // ── Profile editing ─────────────────────────────────────────────────
+  static const editProfile = '/profile/edit';
+
+  // ── Namaste History ─────────────────────────────────────────────────
+  static const namasteHistory = '/namaste/history';
+
+  // ── Uploads ─────────────────────────────────────────────────────────
+  static const uploads = '/uploads';
+
+  // ── Ayurveda (refinement) ────────────────────────────────────────────
+  static const prakritiRefinement = '/ayurveda/prakriti-refinement';
+
+  // ── Space Creation ──────────────────────────────────────────────────
+  static const spaceCreation = '/space/create';
+
+  // ── Stories (viewer) ────────────────────────────────────────────────
+  static const storyViewer = '/stories/view';
+
+  // ── Media ───────────────────────────────────────────────────────────
+  static const mediaGallery = '/media/gallery';
+  static const videoPlayer = '/media/video';
+
+  // ── Astrology (additional) ──────────────────────────────────────────
+  static const savedInsights = '/astrology/saved';
+  static const compatibilityDetails = '/astrology/compatibility';
+
+  // ── Onboarding ──────────────────────────────────────────────────────
+  static const onboardingComplete = '/onboarding/complete';
 }

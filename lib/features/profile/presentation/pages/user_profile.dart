@@ -1,8 +1,11 @@
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'dart:async';
 import 'package:aurogram/shared/presentation/widgets/media/common_widgets.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show DocumentSnapshot, QuerySnapshot, QueryDocumentSnapshot;
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:aurogram/core/di/injection.dart';
+import 'package:aurogram/features/feed/data/datasources/post_db_service.dart';
+import 'package:aurogram/shared/data/repositories/user_repository.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -39,7 +42,7 @@ class UserProfilePage extends StatefulWidget {
 class UserProfilePageState extends State<UserProfilePage>
     with SingleTickerProviderStateMixin, ProfileUserInteractions, ProfileFollowLogic, ProfileNavigation, ProfileAstrologyLogic {
   final _user = FirebaseAuth.instance.currentUser;
-  final _userCollection = FirebaseFirestore.instance.collection('users');
+  final UserRepository _userRepo = locator<UserRepository>();
   bool _isRefreshing = false;
   final AuraService _auraService = AuraService();
   Map<String, dynamic>? _cachedProfileData;
@@ -167,7 +170,7 @@ class UserProfilePageState extends State<UserProfilePage>
 
   Stream<DocumentSnapshot>? _getUserStream() {
     if (widget.uid == null) return null;
-    return _userCollection.doc(widget.uid).snapshots();
+    return _userRepo.userStream(widget.uid!);
   }
 
   @override
@@ -215,24 +218,14 @@ class UserProfilePageState extends State<UserProfilePage>
   void _initProfilePostsStream() {
     if (widget.uid == null) return;
     final uid = widget.uid!;
-    final col = FirebaseFirestore.instance.collection('posts');
     // All profile posts (originals + reposts); we filter client-side for Posts tab so
     // documents without isRepost (older posts) are included. Firestore isNotEqualTo
     // excludes missing fields, so originals would disappear otherwise.
-    _profilePostsStream = col
-        .where('author', isEqualTo: uid)
-        .where('contextType', isEqualTo: 'profile')
-        .orderBy('timestamp', descending: true)
-        .limit(50)
-        .snapshots();
+    _profilePostsStream =
+        locator<PostDbService>().streamProfilePosts(uid, limit: 50);
     // Reposts only
-    _profileRepostsStream = col
-        .where('author', isEqualTo: uid)
-        .where('contextType', isEqualTo: 'profile')
-        .where('isRepost', isEqualTo: true)
-        .orderBy('timestamp', descending: true)
-        .limit(12)
-        .snapshots();
+    _profileRepostsStream = locator<PostDbService>()
+        .streamProfilePosts(uid, limit: 12, repostsOnly: true);
   }
 
   // _loadFollowData delegated to ProfileFollowLogic.loadFollowData
@@ -280,7 +273,7 @@ class UserProfilePageState extends State<UserProfilePage>
     try {
       // Fetch fresh data in parallel
       await Future.wait([
-        _userCollection.doc(widget.uid).get(),
+        _userRepo.getUser(widget.uid!),
         loadFollowData(forceRefresh: true), // Refresh follow counts
       ]);
 

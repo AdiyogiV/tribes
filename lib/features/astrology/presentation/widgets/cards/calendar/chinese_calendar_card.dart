@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cards/moon_phase_strip.dart';
 import 'package:chinese_lunar_calendar/chinese_lunar_calendar.dart';
 import 'calendar_card_helpers.dart';
@@ -258,32 +257,10 @@ class ChineseCalendarCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            'Chinese Lunar Calendar',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.primaryColor,
-            ),
-          ),
+          buildCalendarHeader('Chinese Lunar Calendar'),
           const SizedBox(height: AppDimensions.spacingMd),
           // Zodiac display with element (e.g., "Wood Dragon Year")
-          Row(
-            children: [
-              Flexible(
-                child: Text(
-                  '$zodiacElement $zodiacEnglish Year',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.primaryColor,
-                    height: 1.2,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ),
-            ],
-          ),
+          buildCalendarMainDate('$zodiacElement $zodiacEnglish Year'),
           const SizedBox(height: AppDimensions.spacingLg),
           // Traditional Chinese Year
           buildDateComponent(
@@ -314,16 +291,7 @@ class ChineseCalendarCard extends StatelessWidget {
           ),
           const SizedBox(height: AppDimensions.spacingMd),
           // Note
-          Text(
-            'Lunisolar • Epoch: Yellow Emperor (2697 BCE)',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              fontStyle: FontStyle.italic,
-              color: AppTheme.primaryColor.withValues(alpha: 0.5),
-              height: 1.4,
-            ),
-          ),
+          buildCalendarFooter('Lunisolar • Epoch: Yellow Emperor (2697 BCE)'),
         ],
       ),
     );

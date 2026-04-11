@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:aurogram/shared/presentation/widgets/media/common_widgets.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:aurogram/shared/models/astrology_profile.dart';
@@ -23,12 +24,10 @@ import 'package:aurogram/features/astrology/presentation/widgets/cards/upcoming_
 import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/widgets/cosmic_sky_chart_card.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/cosmic_dashboard_data.dart';
-import 'package:aurogram/features/astrology/presentation/pages/astrology_details_page.dart';
-import 'package:aurogram/features/ayurveda/presentation/pages/ayurveda_details_page.dart';
-import 'package:aurogram/features/ayurveda/presentation/pages/vikriti_checkin_page.dart';
 import 'package:aurogram/app/tabs.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/shared/presentation/widgets/feedback/snack_bar_service.dart';
+import 'package:aurogram/shared/services/watch_service.dart';
 
 /// Feature flag to enable/disable mandala
 const bool _kShowMandala = false;
@@ -54,10 +53,7 @@ class CosmicDashboard extends StatefulWidget {
     }
 
     HapticFeedback.mediumImpact();
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const CosmicDashboard()),
-    );
+    context.push('/cosmic/dashboard');
   }
 
   static void _showUnauthenticatedPrompt(BuildContext context) {
@@ -129,9 +125,18 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
   // Consolidated loading state
   DashboardLoadingState _loadingState = const DashboardLoadingState();
 
+  // Watch data dedup — avoid resending on every widget rebuild
+  String? _lastSentPanchangKey;
+  String? _lastSentProfileKey;
+  String? _lastSentInsightKey;
+  int? _lastSentMuhuratHash;
+  int? _lastSentSkyHash;
+
   // Transit overlay state
   bool _showTransitOverlay = false;
   double _chartBlendValue = 0.0;
+
+  StreamSubscription<Map<String, dynamic>>? _watchSyncSub;
 
   @override
   void initState() {
@@ -140,14 +145,106 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
     _loadSkyPositions();
     _loadUpcomingEvents();
     _loadGlobalMuhurat();
+
+    // Listen for watch fullSync requests and respond with current sky data
+    _watchSyncSub = WatchService.instance.onWatchData.listen((data) {
+      AppLogger.i('CosmicDashboard: Watch data received',
+          category: LogCategory.ui,
+          data: {'keys': data.keys.toList(), 'isSkyLoaded': _loadingState.isSkyLoaded});
+      if (data['request'] == 'fullSync') {
+        if (_loadingState.isSkyLoaded) {
+          final positions = _skyService.getPositionsForDate(DateTime.now());
+          AppLogger.i('CosmicDashboard: fullSync - sky positions lookup',
+              category: LogCategory.ui,
+              data: {'hasPositions': positions != null, 'count': positions?.length ?? 0});
+          if (positions != null && positions.isNotEmpty) {
+            _lastSentSkyHash = null; // Force re-send
+            _sendWatchSkyIfChanged(positions);
+          }
+        } else {
+          AppLogger.w('CosmicDashboard: fullSync requested but sky not loaded yet',
+              category: LogCategory.ui);
+        }
+      }
+    });
   }
 
   @override
   void dispose() {
+    _watchSyncSub?.cancel();
     _sliderValueNotifier.dispose();
     _sliderDateNotifier.dispose();
     super.dispose();
   }
+
+  // ─────────────────────────────────────────────────────────────
+  // Watch Data Sync (deduped, fire-and-forget)
+  // ─────────────────────────────────────────────────────────────
+
+  void _sendWatchPanchangIfChanged(Map<String, dynamic>? panchang) {
+    if (panchang == null) return;
+    final key = '${panchang['tithi_name'] ?? panchang['name']}'
+        '_${panchang['lunar_month_name'] ?? panchang['lunar_month_full_name']}';
+    if (key == _lastSentPanchangKey) return;
+    _lastSentPanchangKey = key;
+    unawaited(WatchService.instance.sendPanchang(panchang));
+  }
+
+  void _sendWatchProfileIfChanged(AyurvedaProfile? profile) {
+    if (profile?.prakriti == null) return;
+    final p = profile!.prakriti!;
+    final key = '${p.type}_${p.vata}_${p.pitta}_${p.kapha}';
+    if (key == _lastSentProfileKey) return;
+    _lastSentProfileKey = key;
+    unawaited(WatchService.instance.sendProfile(
+      prakritiType: p.type,
+      vata: p.vata,
+      pitta: p.pitta,
+      kapha: p.kapha,
+    ));
+  }
+
+  void _sendWatchInsightIfChanged(DailyInsight? insight) {
+    if (insight == null) return;
+    final key = '${insight.displayTheme}_${insight.displayMessage.hashCode}';
+    if (key == _lastSentInsightKey) return;
+    _lastSentInsightKey = key;
+    unawaited(WatchService.instance.sendInsight(
+      theme: insight.displayTheme,
+      message: insight.displayMessage,
+    ));
+  }
+
+  void _sendWatchSkyIfChanged(Map<String, dynamic>? positions) {
+    if (positions == null || positions.isEmpty) {
+      AppLogger.w('CosmicDashboard: _sendWatchSkyIfChanged skipped - no positions',
+          category: LogCategory.ui);
+      return;
+    }
+    final hash = positions.hashCode;
+    if (hash == _lastSentSkyHash) return;
+    _lastSentSkyHash = hash;
+    AppLogger.i('CosmicDashboard: Sending sky to watch',
+        category: LogCategory.ui,
+        data: {'planetCount': positions.length});
+    unawaited(WatchService.instance.sendSkyPositions(positions));
+  }
+
+  void _sendWatchMuhuratIfChanged(Map<String, dynamic>? muhurat) {
+    if (muhurat == null || muhurat.isEmpty) return;
+    final hash = muhurat.hashCode;
+    if (hash == _lastSentMuhuratHash) return;
+    _lastSentMuhuratHash = hash;
+
+    // Extract today's muhurat windows into simple list for watch
+    final windows = WatchService.extractMuhuratWindows(muhurat);
+    if (windows.isNotEmpty) {
+      unawaited(WatchService.instance.sendMuhurat(windows));
+    }
+  }
+
+  // Muhurat window extraction and time conversion moved to
+  // WatchService.extractMuhuratWindows() for reuse by bootstrap.
 
   // ─────────────────────────────────────────────────────────────
   // Data Loading Methods
@@ -205,6 +302,17 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
         AppLogger.i('CosmicDashboard: Sky positions loaded successfully',
             category: LogCategory.ui,
             data: {'availableDays': _skyService.availableDays});
+
+        // Send sky positions to watch immediately after loading
+        // (don't wait for StreamBuilder tree which may be blocked by Firestore)
+        final now = DateTime.now();
+        final positions = _skyService.getPositionsForDate(now);
+        if (positions != null && positions.isNotEmpty) {
+          AppLogger.i('CosmicDashboard: Sending sky to watch after load',
+              category: LogCategory.ui,
+              data: {'planetCount': positions.length});
+          _sendWatchSkyIfChanged(positions);
+        }
       } else {
         AppLogger.w('CosmicDashboard: Failed to load sky positions',
             category: LogCategory.ui,
@@ -412,8 +520,16 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
       },
     );
 
+    // ── Send live data to Apple Watch (fire-and-forget, deduped) ──
+    _sendWatchProfileIfChanged(ayurvedaProfile);
+    _sendWatchInsightIfChanged(insight);
+
+    // Send sky positions to watch
+    _sendWatchSkyIfChanged(currentPositions);
+
     // Global muhurat (same for all users, calculated at Ujjain)
     final globalMuhurat = _skyService.globalMuhurat;
+    _sendWatchMuhuratIfChanged(globalMuhurat);
     final cardColor = isDark ? const Color(0xFF1A1A1C) : Colors.white;
 
     // Responsive: use LayoutBuilder for width-aware padding
@@ -491,6 +607,7 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
                   if (insightPanchang != null) merged.addAll(insightPanchang);
                   if (globalPanchang != null) merged.addAll(globalPanchang);
                   final todayPanchang = merged.isNotEmpty ? merged : null;
+                  _sendWatchPanchangIfChanged(todayPanchang);
                   return CosmicDateTimeCard(
                     samvat: todayPanchang,
                     brown: brown,
@@ -631,12 +748,7 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
                   brown: brown,
                   onFullChart: () {
                     if (profile != null) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => AstrologyDetailsPage(uid: _user!.uid),
-                        ),
-                      );
+                      context.push('/astrology/details/${_user!.uid}');
                     }
                   },
                   onAskAI: () {
@@ -762,12 +874,7 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
       return;
     }
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => AstrologyDetailsPage(uid: _user!.uid),
-      ),
-    );
+    context.push('/astrology/details/${_user!.uid}');
   }
 
   void _openAyurvedaDetails(AyurvedaProfile? profile) {
@@ -777,12 +884,7 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
       return;
     }
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => AyurvedaDetailsPage(uid: _user!.uid),
-      ),
-    );
+    context.push('/ayurveda/details/${_user!.uid}');
   }
 
   void _openRitualCheckin(
@@ -792,15 +894,10 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
       return;
     }
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => VikritiCheckInPage(
-          ayurvedaProfile: ayurvedaProfile,
-          astroProfile: astroProfile,
-        ),
-      ),
-    );
+    context.push('/ayurveda/checkin', extra: {
+      'ayurvedaProfile': ayurvedaProfile,
+      'astroProfile': astroProfile,
+    });
   }
 
   void _shareMandala(DailyInsight? insight, AstrologyProfile? profile) {

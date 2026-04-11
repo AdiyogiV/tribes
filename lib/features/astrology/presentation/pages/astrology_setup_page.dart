@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
@@ -13,7 +14,6 @@ import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/shared/presentation/responsive/responsive.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:aurogram/features/onboarding/presentation/pages/onboarding_complete.dart';
 import 'package:aurogram/features/astrology/presentation/pages/setup/date_picker_section.dart';
 import 'package:aurogram/features/astrology/presentation/pages/setup/form_card_widget.dart';
 import 'package:aurogram/features/astrology/presentation/pages/setup/gender_selector_section.dart';
@@ -815,14 +815,10 @@ class _AstrologySetupPageState extends State<AstrologySetupPage> {
           // Push to cards reveal page (both for new setup and updates)
           // For updates: isUpdate=true shows card reveal then returns
           // For new setup: isUpdate=false shows full onboarding flow
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => OnboardingComplete(
-                hasBirthDetails: true,
-                isUpdate: !isNewSetup,
-              ),
-            ),
-          );
+          context.push('/onboarding/complete', extra: {
+            'hasBirthDetails': true,
+            'isUpdate': !isNewSetup,
+          });
         }
       }
 

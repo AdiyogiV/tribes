@@ -6,6 +6,7 @@ import tzLookup from "tz-lookup";
 import { DateTime } from "luxon";
 
 import { db, FieldValue } from "../lib/firebase.js";
+import { requireAuth } from "../lib/auth_utils.js";
 import { runAstroFlow, invalidateCompatibilityCache } from "./free_astro.js";
 import { freeAstrologyApiKey, geminiApiKey } from "../lib/secrets.js";
 import { generateHouseInterpretations } from "./house_interpretations.js";
@@ -135,14 +136,7 @@ export const syncAstroProfile = onCall({
     maxInstances: 2,
     invoker: "public", // Allow client apps to invoke (Firebase Auth handles actual auth)
 }, async (request) => {
-    if (!request.auth) {
-        throw new HttpsError(
-            "unauthenticated",
-            "Must be authenticated to refresh astrology data",
-        );
-    }
-
-    const uid = request.auth.uid;
+    const uid = requireAuth(request, "refresh astrology data");
     const data = request.data;
     logger.info("🧭 syncAstroProfile invoked", JSON.stringify({ uid, data }));
 

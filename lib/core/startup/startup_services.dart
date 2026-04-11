@@ -5,7 +5,7 @@ import 'package:aurogram/shared/services/media/audio_service.dart';
 import 'package:aurogram/features/chat/domain/chat_notification_service.dart';
 import 'package:aurogram/features/calling/domain/call_service.dart';
 import 'package:aurogram/core/routing/route_names.dart';
-import 'package:aurogram/core/routing/page_factory.dart';
+import 'package:aurogram/core/routing/app_router.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -265,21 +265,15 @@ mixin StartupServicesMixin {
     await cancelCallNotification(callId);
 
     if (autoAnswer) {
-      _navigatorKey?.currentState?.push(
-        PageFactory.route(RouteNames.callScreen, arguments: {
-          'calleeId': callerId,
-          'calleeName': callerName,
-          'calleeAvatar': callerAvatar,
-          'callType': callType == 'video' ? CallType.video : CallType.voice,
-          'isIncoming': true,
-        }),
-      );
+      appRouter.push(RouteNames.callScreen, extra: {
+        'calleeId': callerId,
+        'calleeName': callerName,
+        'calleeAvatar': callerAvatar,
+        'callType': callType == 'video' ? CallType.video : CallType.voice,
+        'isIncoming': true,
+      });
     } else {
-      _navigatorKey?.currentState?.push(
-        PageFactory.route(RouteNames.incomingCall, arguments: {
-          'call': call,
-        }),
-      );
+      appRouter.push(RouteNames.incomingCall, extra: call);
     }
   }
 
@@ -348,13 +342,11 @@ mixin StartupServicesMixin {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       try {
-        _navigatorKey?.currentState?.push(
-          PageFactory.route(RouteNames.dailyInsight, arguments: {
-            'uid': userId,
-            'cardIndex': cardIndex,
-            'insightDate': insightDate,
-          }),
-        );
+        appRouter.push(RouteNames.dailyInsight, extra: {
+          'uid': userId,
+          'cardIndex': cardIndex,
+          'insightDate': insightDate,
+        });
       } catch (e, stack) {
         AppLogger.e('Navigation error',
             category: LogCategory.messaging, error: e, stackTrace: stack);
@@ -486,9 +478,7 @@ mixin StartupServicesMixin {
                     child: const Text('View Profile'),
                     onPressed: () {
                       Navigator.of(context).pop();
-                      Navigator.of(context).push(
-                        PageFactory.route(RouteNames.userProfile, arguments: {'uid': userId}),
-                      );
+                      appRouter.push('${RouteNames.userProfile}/$userId');
                     },
                   ),
               ],
@@ -514,18 +504,14 @@ mixin StartupServicesMixin {
                     child: const Text('See Compatibility'),
                     onPressed: () {
                       Navigator.of(context).pop();
-                      Navigator.of(context).push(
-                        PageFactory.route(RouteNames.userProfile, arguments: {'uid': userId}),
-                      );
+                      appRouter.push('${RouteNames.userProfile}/$userId');
                     },
                   ),
                   CupertinoDialogAction(
                     child: const Text('See Profile'),
                     onPressed: () {
                       Navigator.of(context).pop();
-                      Navigator.of(context).push(
-                        PageFactory.route(RouteNames.userProfile, arguments: {'uid': userId}),
-                      );
+                      appRouter.push('${RouteNames.userProfile}/$userId');
                     },
                   ),
                 ],
@@ -589,9 +575,7 @@ mixin StartupServicesMixin {
         status: 'ringing',
       );
 
-      navigatorKey.currentState!.push(
-        PageFactory.route(RouteNames.incomingCall, arguments: {'call': call}),
-      );
+      appRouter.push(RouteNames.incomingCall, extra: call);
     }
   }
 
@@ -633,11 +617,9 @@ mixin StartupServicesMixin {
       return;
     }
 
-    navigatorKey.currentState!.push(
-      PageFactory.route(RouteNames.groupCall, arguments: {
-        'spaceId': spaceId,
-        'spaceName': spaceName,
-      }),
+    appRouter.push(
+      '${RouteNames.groupCall}/$spaceId',
+      extra: {'spaceName': spaceName},
     );
   }
 

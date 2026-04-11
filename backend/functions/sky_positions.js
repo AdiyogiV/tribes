@@ -19,7 +19,8 @@ import { logger } from "firebase-functions";
 import { DateTime } from "luxon";
 import { db, FieldValue } from "../lib/firebase.js";
 import { freeAstrologyApiKey } from "../lib/secrets.js";
-import { extractApiOutput } from "../lib/astro_helpers.js";
+import { extractApiOutput, parseApiTimeString } from "../lib/astro_helpers.js";
+import { parseMuhuratDay, processUnifiedTimeline } from "../lib/muhurat_helpers.js";
 
 const API_BASE = "https://json.freeastrologyapi.com";
 const PLANETS_ENDPOINT = "/planets";
@@ -47,35 +48,8 @@ const isEmptyPanchang = (value) => {
     return Object.keys(value).length === 0;
 };
 
-// Parse FreeAstrologyAPI time string format: "{starts_at: 2023-03-20 07:52:14, ends_at: 2023-03-20 09:22:52}"
-const parseTimeString = (timeStr) => {
-    if (!timeStr || typeof timeStr !== "string") return null;
-
-    try {
-        // Try JSON parse first
-        const jsonParsed = tryParseJson(timeStr);
-        if (jsonParsed) return jsonParsed;
-
-        const cleaned = timeStr.trim().replace(/^\{|\}$/g, "");
-        const parts = cleaned.split(/,/);
-        const result = {};
-
-        for (const part of parts) {
-            const colonIndex = part.indexOf(":");
-            if (colonIndex === -1) continue;
-
-            const key = part.substring(0, colonIndex).trim();
-            const value = part.substring(colonIndex + 1).trim();
-            const cleanValue = value.replace(/^["']|["']$/g, "");
-            result[key] = cleanValue;
-        }
-
-        return Object.keys(result).length > 0 ? result : null;
-    } catch (error) {
-        logger.warn("⚠️ Failed to parse time string:", error.message);
-        return null;
-    }
-};
+// Use canonical parseApiTimeString from lib/astro_helpers.js (previously duplicated here with a bug)
+const parseTimeString = parseApiTimeString;
 
 /**
  * Fetch planetary positions from FreeAstrologyAPI for a specific date
@@ -313,132 +287,7 @@ async function fetchMuhuratForDate(date) {
     return response.json();
 }
 
-const parseMuhuratDay = (parsedMuhurat) => {
-    const dayData = {};
-
-    if (parsedMuhurat.rahu_kaalam_data) {
-        dayData.rahuKala = parseTimeString(parsedMuhurat.rahu_kaalam_data);
-        dayData.rahu_kala = dayData.rahuKala;
-    }
-    if (parsedMuhurat.gulika_kalam_data) {
-        dayData.gulikaKala = parseTimeString(parsedMuhurat.gulika_kalam_data);
-        dayData.gulika_kala = dayData.gulikaKala;
-    }
-    if (parsedMuhurat.yama_gandam_data) {
-        dayData.yamaganda = parseTimeString(parsedMuhurat.yama_gandam_data);
-        dayData.yamagandaKala = dayData.yamaganda;
-    }
-    if (parsedMuhurat.varjyam_data) {
-        dayData.varjyam = parseTimeString(parsedMuhurat.varjyam_data);
-    }
-
-    if (parsedMuhurat.abhijit_data) {
-        dayData.abhijit = parseTimeString(parsedMuhurat.abhijit_data);
-    }
-    if (parsedMuhurat.amrit_kaal_data) {
-        dayData.amrit = parseTimeString(parsedMuhurat.amrit_kaal_data);
-        dayData.amritKaal = dayData.amrit;
-    }
-    if (parsedMuhurat.brahma_muhurat_data) {
-        dayData.brahmaMuhurat = parseTimeString(parsedMuhurat.brahma_muhurat_data);
-    }
-    if (parsedMuhurat.dur_muhurat_data) {
-        const durParsed = parseTimeString(parsedMuhurat.dur_muhurat_data);
-        dayData.durMuhurat = durParsed || parsedMuhurat.dur_muhurat_data;
-    }
-
-    return dayData;
-};
-
-const processUnifiedTimeline = (daysData, timeZoneId) => {
-    const events = [];
-    const sortedDateKeys = Object.keys(daysData).sort();
-
-    if (sortedDateKeys.length === 0) return { events: [], startTime: 0, endTime: 0 };
-
-    const firstDateKey = sortedDateKeys[0];
-    const [refYear, refMonth, refDay] = firstDateKey.split("-").map(Number);
-    const refDate = DateTime.fromObject(
-        { year: refYear, month: refMonth, day: refDay },
-        { zone: timeZoneId },
-    );
-
-    const timeToAbsoluteMinutes = (timeData) => {
-        if (!timeData || typeof timeData !== "object") return null;
-
-        const startsAt = timeData.starts_at || timeData.startsAt;
-        const endsAt = timeData.ends_at || timeData.endsAt;
-        if (!startsAt || !endsAt) return null;
-
-        try {
-            const startDt = DateTime.fromISO(startsAt.replace(" ", "T"), { zone: timeZoneId });
-            const endDt = DateTime.fromISO(endsAt.replace(" ", "T"), { zone: timeZoneId });
-            if (!startDt.isValid || !endDt.isValid) return null;
-
-            const startMinutes = Math.floor(startDt.diff(refDate.startOf("day"), "minutes").minutes);
-            const endMinutes = Math.floor(endDt.diff(refDate.startOf("day"), "minutes").minutes);
-            return { start: startMinutes, end: endMinutes };
-        } catch {
-            return null;
-        }
-    };
-
-    for (const dateKey of sortedDateKeys) {
-        const dayData = daysData[dateKey];
-        if (!dayData) continue;
-
-        const inauspiciousTypes = [
-            { key: "rahuKala", name: "Rahu Kala", fallback: "rahu_kala" },
-            { key: "gulikaKala", name: "Gulika Kala", fallback: "gulika_kala" },
-            { key: "yamaganda", name: "Yamaganda", fallback: "yamagandaKala" },
-            { key: "varjyam", name: "Varjyam", fallback: null },
-        ];
-
-        for (const type of inauspiciousTypes) {
-            const timeData = dayData[type.key] || (type.fallback ? dayData[type.fallback] : null);
-            const range = timeToAbsoluteMinutes(timeData);
-            if (range) {
-                events.push({
-                    name: type.name,
-                    start: range.start,
-                    end: range.end,
-                    type: "inauspicious",
-                    dateKey,
-                });
-            }
-        }
-
-        const auspiciousTypes = [
-            { key: "abhijit", name: "Abhijit Muhurat" },
-            { key: "amrit", name: "Amrit Kaal", fallback: "amritKaal" },
-            { key: "brahmaMuhurat", name: "Brahma Muhurat" },
-        ];
-
-        for (const type of auspiciousTypes) {
-            const timeData = dayData[type.key] || (type.fallback ? dayData[type.fallback] : null);
-            const range = timeToAbsoluteMinutes(timeData);
-            if (range) {
-                events.push({
-                    name: type.name,
-                    start: range.start,
-                    end: range.end,
-                    type: "auspicious",
-                    dateKey,
-                });
-            }
-        }
-    }
-
-    const minStart = events.length ? Math.min(...events.map((e) => e.start)) : 0;
-    const maxEnd = events.length ? Math.max(...events.map((e) => e.end)) : 0;
-
-    return {
-        events,
-        startTime: Math.max(0, Math.floor(minStart / 60) * 60),
-        endTime: Math.ceil(maxEnd / 60) * 60,
-        dateKeys: sortedDateKeys,
-    };
-};
+// parseMuhuratDay and processUnifiedTimeline imported from lib/muhurat_helpers.js
 
 // ============================================================================
 // UPCOMING EVENTS CALCULATION (Sign Ingresses, Retrogrades)

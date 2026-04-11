@@ -122,6 +122,56 @@ const YOGAKARAKA = {
 
 // GANDMOOL_NAKSHATRAS imported from lib/constants.js
 
+
+// ============================================================================
+// SCORING CONSTANTS
+// Extracted from inline magic numbers for maintainability and documentation
+// ============================================================================
+
+/**
+ * Dignity scores used in calculatePlanetDignity()
+ * Scale: 0 (weakest) to 100 (strongest)
+ * Based on traditional Shadbala proportional strengths
+ */
+const DIGNITY_SCORES = {
+    EXALTED_BASE: 100,        // Maximum possible score at exact exaltation degree
+    EXALTED_PENALTY_PER_DEG: 1.5, // Score reduction per degree from exact exaltation
+    EXALTED_MIN: 85,          // Floor for exalted planets (even far from exact degree)
+    DEBILITATED_BASE: 15,     // Base score at exact debilitation degree
+    DEBILITATED_GAIN_PER_DEG: 1.5, // Score gain per degree from exact debilitation
+    DEBILITATED_MAX: 30,      // Ceiling for debilitated planets
+    MOOL_TRIKONA: 80,         // Mool Trikona dignity score
+    OWN_SIGN: 75,             // Planet in own sign (Swakshetra)
+    FRIENDLY: 60,             // Planet in sign of friend
+    NEUTRAL: 50,              // Planet in neutral sign (also default/unknown)
+    ENEMY: 35,                // Planet in sign of enemy
+};
+
+/**
+ * Aspect strength values for calculateAspect()
+ * Higher = stronger influence between the two planets
+ */
+const ASPECT_STRENGTHS = {
+    CONJUNCTION: 10,
+    OPPOSITION: 8,
+    TRINE: 6,
+    SQUARE: 5,
+    SEXTILE: 4,
+    ORB_DEGREES: 10,          // Standard orb for all aspects
+    MIN_STRENGTH_THRESHOLD: 4, // Minimum strength to include in results
+};
+
+/**
+ * Transit significance scores for calculateTransitSignificance()
+ */
+const TRANSIT_SCORES = {
+    MAJOR_HOUSE: 10,          // Kendra houses (1, 4, 7, 10)
+    SECONDARY_HOUSE: 7,       // Trikona + 2nd/11th houses (2, 5, 9, 11)
+    TERTIARY_HOUSE: 3,        // Dusthana + minor houses (3, 6, 8, 12)
+    SLOW_PLANET_BONUS: 5,     // Extra weight for Saturn, Jupiter, Rahu, Ketu
+    LAGNA_ASPECT: 10,         // Aspect to Ascendant
+};
+
 /**
  * Nakshatra list for reference (27 nakshatras)
  */
@@ -301,58 +351,57 @@ export function doesPlanetAspect(aspectingPlanet, aspectingDegree, aspectedDegre
  * - Debilitated (Neecha): Weakest
  */
 export function calculatePlanetDignity(planetName, signName, degreeInSign = 15) {
-    if (!planetName || !signName) return { dignity: "unknown", score: 50 };
-    
+    if (!planetName || !signName) return { dignity: "unknown", score: DIGNITY_SCORES.NEUTRAL };
+
     const pName = planetName.toString();
     const sName = signName.toString().toLowerCase();
-    
+
     // Check exaltation
     const exalt = EXALTATION_DEGREES[pName];
     if (exalt && exalt.sign.toLowerCase() === sName) {
-        // Calculate how close to exact exaltation degree
         const distFromExact = Math.abs(degreeInSign - exalt.degree);
-        const score = 100 - (distFromExact * 1.5); // Lose 1.5 points per degree from exact
-        return { dignity: "exalted", score: Math.max(85, score), isExalted: true };
+        const score = DIGNITY_SCORES.EXALTED_BASE - (distFromExact * DIGNITY_SCORES.EXALTED_PENALTY_PER_DEG);
+        return { dignity: "exalted", score: Math.max(DIGNITY_SCORES.EXALTED_MIN, score), isExalted: true };
     }
-    
+
     // Check debilitation
     const debil = DEBILITATION_DEGREES[pName];
     if (debil && debil.sign.toLowerCase() === sName) {
         const distFromExact = Math.abs(degreeInSign - debil.degree);
-        const score = 15 + (distFromExact * 1.5); // Gain 1.5 points per degree from exact
-        return { dignity: "debilitated", score: Math.min(30, score), isDebilitated: true };
+        const score = DIGNITY_SCORES.DEBILITATED_BASE + (distFromExact * DIGNITY_SCORES.DEBILITATED_GAIN_PER_DEG);
+        return { dignity: "debilitated", score: Math.min(DIGNITY_SCORES.DEBILITATED_MAX, score), isDebilitated: true };
     }
-    
+
     // Check Mool Trikona
     const mool = MOOL_TRIKONA[pName];
     if (mool && mool.sign.toLowerCase() === sName) {
         if (degreeInSign >= mool.from && degreeInSign <= mool.to) {
-            return { dignity: "mool_trikona", score: 80, isMoolTrikona: true };
+            return { dignity: "mool_trikona", score: DIGNITY_SCORES.MOOL_TRIKONA, isMoolTrikona: true };
         }
     }
-    
+
     // Check own sign
     const rulership = PLANET_RULERSHIP[pName];
     if (rulership && rulership.some(s => s.toLowerCase() === sName)) {
-        return { dignity: "own_sign", score: 75, isOwnSign: true };
+        return { dignity: "own_sign", score: DIGNITY_SCORES.OWN_SIGN, isOwnSign: true };
     }
-    
+
     // Check friendship based on sign lord
     const signLord = getSignLord(signName);
     if (signLord && PLANET_FRIENDSHIPS[pName]) {
         const friendships = PLANET_FRIENDSHIPS[pName];
         if (friendships.friends.includes(signLord)) {
-            return { dignity: "friendly", score: 60 };
+            return { dignity: "friendly", score: DIGNITY_SCORES.FRIENDLY };
         }
         if (friendships.enemies.includes(signLord)) {
-            return { dignity: "enemy", score: 35 };
+            return { dignity: "enemy", score: DIGNITY_SCORES.ENEMY };
         }
         if (friendships.neutral.includes(signLord)) {
-            return { dignity: "neutral", score: 50 };
+            return { dignity: "neutral", score: DIGNITY_SCORES.NEUTRAL };
         }
     }
-    
-    return { dignity: "neutral", score: 50 };
+
+    return { dignity: "neutral", score: DIGNITY_SCORES.NEUTRAL };
 }
 
 /**
@@ -495,11 +544,12 @@ export function calculateAspect(degree1, degree2) {
     const angle = Math.min(diff, 360 - diff);
 
     // Using traditional Vedic conjunction orb
-    if (angle < 10) return { type: "conjunction", angle, strength: 10 };
-    if (Math.abs(angle - 180) < 10) return { type: "opposition", angle, strength: 8 };
-    if (Math.abs(angle - 120) < 10) return { type: "trine", angle, strength: 6 };
-    if (Math.abs(angle - 90) < 10) return { type: "square", angle, strength: 5 };
-    if (Math.abs(angle - 60) < 10) return { type: "sextile", angle, strength: 4 };
+    const orb = ASPECT_STRENGTHS.ORB_DEGREES;
+    if (angle < orb) return { type: "conjunction", angle, strength: ASPECT_STRENGTHS.CONJUNCTION };
+    if (Math.abs(angle - 180) < orb) return { type: "opposition", angle, strength: ASPECT_STRENGTHS.OPPOSITION };
+    if (Math.abs(angle - 120) < orb) return { type: "trine", angle, strength: ASPECT_STRENGTHS.TRINE };
+    if (Math.abs(angle - 90) < orb) return { type: "square", angle, strength: ASPECT_STRENGTHS.SQUARE };
+    if (Math.abs(angle - 60) < orb) return { type: "sextile", angle, strength: ASPECT_STRENGTHS.SEXTILE };
 
     return null;
 }
@@ -569,7 +619,7 @@ export function calculateTransitAspects(natalChart, transits) {
             if (natalDegree == null) return;
 
             const aspect = calculateAspect(transitDegree, natalDegree);
-            if (aspect && aspect.strength >= 4) { // Only significant aspects
+            if (aspect && aspect.strength >= ASPECT_STRENGTHS.MIN_STRENGTH_THRESHOLD) { // Only significant aspects
                 aspects.push({
                     transitPlanet,
                     natalPlanet,
@@ -598,23 +648,23 @@ export function calculateTransitSignificance(transitData, natalPlanet, planetNam
     if (houseNumber) {
         // Major houses (1, 4, 7, 10) are more significant
         if ([1, 4, 7, 10].includes(houseNumber)) {
-            score += 10;
+            score += TRANSIT_SCORES.MAJOR_HOUSE;
         } else if ([2, 5, 9, 11].includes(houseNumber)) {
-            score += 7;
+            score += TRANSIT_SCORES.SECONDARY_HOUSE;
         } else {
-            score += 3;
+            score += TRANSIT_SCORES.TERTIARY_HOUSE;
         }
     }
 
     // Planet importance (slow planets are more significant)
     const slowPlanets = ["Saturn", "Jupiter", "Rahu", "Ketu"];
     if (slowPlanets.includes(planetName)) {
-        score += 5;
+        score += TRANSIT_SCORES.SLOW_PLANET_BONUS;
     }
 
     // Aspect to Lagna (most significant)
     if (transitData.aspectsToLagna) {
-        score += 10;
+        score += TRANSIT_SCORES.LAGNA_ASPECT;
     }
 
     return score;

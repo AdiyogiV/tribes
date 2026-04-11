@@ -2,18 +2,12 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 
-/// Vedic analog clock showing Ghati/Pala hands with Prahar background.
-///
-/// Layout (center → edge):
-///   0.00 → 0.68  Prahar background segments + labels
-///   0.72 → 0.92  Ghati tick marks (60 marks) + ☀ at 12 o'clock
-///   Hands reach into Ghati ring area
-///   Sunrise (6 AM) at 12 o'clock = 0 Ghati
+/// Minimal Vedic clock — transparent background, bold white lines only.
+/// Matches watchOS VedicClockView exactly.
 class VedicClockPainter extends CustomPainter {
   final DateTime time;
   final Color primaryColor;
   final bool isDark;
-
   VedicClockPainter({
     required this.time,
     required this.primaryColor,
@@ -22,270 +16,215 @@ class VedicClockPainter extends CustomPainter {
 
   static const _sunriseHour = 6;
 
-  // Prahar names
-  // Traditional Prahar names (8 watches of the day, starting at sunrise)
   static const _praharNames = [
-    'purvanha',   // early morning (6–9 AM)
-    'madhyanha',  // midday (9 AM–12 PM)
-    'aparanha',   // afternoon (12–3 PM)
-    'sayanha',    // evening (3–6 PM)
-    'pradosha',   // early night (6–9 PM)
-    'nishitha',   // midnight (9 PM–12 AM)
-    'triyama',    // late night (12–3 AM)
-    'usha',       // dawn (3–6 AM)
+    'purvanha', 'madhyanha', 'aparanha', 'sayanha',
+    'pradosha', 'nishitha', 'triyama', 'usha',
   ];
+
+  /// Base clock color — white on dark backgrounds, warm brown on light.
+  Color get _clockColor => isDark ? Colors.white : const Color(0xFF5A3D34);
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2;
 
-    // Vedic time from sunrise
     final hour = time.hour;
     final minute = time.minute;
     final second = time.second;
     var secondsFromSunrise = (hour - _sunriseHour) * 3600 + minute * 60 + second;
     if (secondsFromSunrise < 0) secondsFromSunrise += 86400;
 
-    final ghati = secondsFromSunrise / 1440.0; // 0–60
-    final pala = (secondsFromSunrise % 1440) / 24.0; // 0–60
+    final ghati = secondsFromSunrise / 1440.0;
+    final pala = (secondsFromSunrise % 1440) / 24.0;
+    final praharIndex = _currentPraharIndex();
 
     canvas.save();
     canvas.translate(center.dx, center.dy);
 
-    _drawPraharSegments(canvas, radius);
-    _drawGhatiRing(canvas, radius);
+    _drawPraharRing(canvas, radius, praharIndex);
+    _drawGhatiRing(canvas, radius, ghati, pala);
     _drawHands(canvas, radius, ghati, pala);
     _drawCenterDot(canvas, radius);
 
     canvas.restore();
   }
 
-  // ── Prahar segments (inner area) ──────────────────────────
+  // ── Prahar ring — spokes from center to 70% + labels ──
 
-  void _drawPraharSegments(Canvas canvas, double radius) {
-    final segR = radius * 0.76;
-    const sweep = math.pi / 4; // 45°
+  void _drawPraharRing(Canvas canvas, double radius, int currentIdx) {
+    final ringR = radius * 0.76;
+    final spokeEnd = ringR * 0.70;
 
+    // 8 divider spokes from center + labels
+    const sweep = math.pi / 4;
     for (int i = 0; i < 8; i++) {
-      final start = -math.pi / 2 + i * sweep;
+      final angle = -math.pi / 2 + i * sweep;
 
-      final isDay = i < 4;
-      final alpha = isDark ? 0.12 : 0.08;
-      final color = isDay
-          ? Color.lerp(
-              const Color(0xFFFFA726),
-              const Color(0xFFFF7043),
-              i / 4.0,
-            )!.withValues(alpha: alpha + (i == 0 ? 0.04 : 0))
-          : Color.lerp(
-              const Color(0xFF5C6BC0),
-              const Color(0xFF283593),
-              (i - 4) / 4.0,
-            )!.withValues(alpha: alpha + (i == 4 ? 0.02 : 0));
-
-      canvas.drawArc(
-        Rect.fromCircle(center: Offset.zero, radius: segR),
-        start,
-        sweep,
-        true,
-        Paint()..color = color,
-      );
-
-      // Segment border
-      canvas.drawArc(
-        Rect.fromCircle(center: Offset.zero, radius: segR),
-        start,
-        sweep,
-        true,
+      // Spoke from center to 70% of ring
+      canvas.drawLine(
+        Offset.zero,
+        Offset(spokeEnd * math.cos(angle), spokeEnd * math.sin(angle)),
         Paint()
-          ..color = primaryColor.withValues(alpha: isDark ? 0.06 : 0.05)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 0.5,
+          ..color = _clockColor.withValues(alpha: 0.30)
+          ..strokeWidth = 1.2
+          ..strokeCap = StrokeCap.round,
       );
 
-      // Prahar label
-      final mid = start + sweep / 2;
-      final lr = segR * 0.72;
+      // Large number at midpoint of segment
+      final mid = angle + sweep / 2;
+      final lr = ringR * 0.58;
+      final isCurrent = i == currentIdx;
+
       _drawLabel(
-        canvas,
-        _praharNames[i],
-        lr * math.cos(mid),
-        lr * math.sin(mid),
-        radius * 0.055,
-        primaryColor.withValues(alpha: isDark ? 0.55 : 0.45),
-        FontWeight.w300,
+        canvas, '${i + 1}',
+        lr * math.cos(mid), lr * math.sin(mid),
+        radius * 0.08,
+        _clockColor.withValues(alpha: isCurrent ? 0.50 : 0.25),
+        FontWeight.w600,
+      );
+    }
+  }
+
+  int _currentPraharIndex() {
+    var h = time.hour - _sunriseHour;
+    if (h < 0) h += 24;
+    return (h ~/ 3).clamp(0, 7);
+  }
+
+  // ── Ghati ring — outer circle, sun, tracker, time + ghati labels ──
+
+  void _drawGhatiRing(Canvas canvas, double radius, double ghati, double pala) {
+    final outerR = radius * 0.92;
+    final labelR = radius * 0.75;
+
+    // Sun icon disabled — kept for reuse
+    // _drawSunIcon(canvas, 0, -labelR, radius * 0.065);
+
+    // Ghati tracker — sun color, tracks around dial
+    final trackerAngle = -math.pi / 2 + (ghati / 60.0) * 2 * math.pi;
+    final trackerDist = math.min(ghati, 60 - ghati);
+    if (trackerDist >= 3) {
+      _drawLabel(
+        canvas, '${ghati.toInt()}',
+        labelR * math.cos(trackerAngle), labelR * math.sin(trackerAngle),
+        radius * 0.15,
+        const Color(0xFFFFD64F),
+        FontWeight.w800,
       );
     }
 
-    // Ring around prahar area
-    canvas.drawCircle(
-      Offset.zero,
-      segR,
-      Paint()
-        ..color = primaryColor.withValues(alpha: isDark ? 0.10 : 0.08)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 0.8,
-    );
-  }
+    // Pala tracker — same ring as ghati, same size, white; hides when near ghati
+    final palaAngle = -math.pi / 2 + (pala / 60.0) * 2 * math.pi;
+    final palaDist = (pala - ghati).abs();
+    final palaNearGhati = math.min(palaDist, 60 - palaDist) < 4;
+    if (!palaNearGhati) {
+      _drawLabel(
+        canvas, '${pala.toInt()}',
+        labelR * math.cos(palaAngle), labelR * math.sin(palaAngle),
+        radius * 0.15,
+        _clockColor,
+        FontWeight.w800,
+      );
+    }
 
-  // ── Ghati marks (outer ring, fills to edge) ────────────────
+    // Time-of-day labels
+    final timeLabels = <List<dynamic>>[];
+    for (final pair in timeLabels) {
+      final gPos = pair[0] as double;
+      final label = pair[1] as String;
+      final angle = -math.pi / 2 + (gPos / 60.0) * 2 * math.pi;
 
-  void _drawGhatiRing(Canvas canvas, double radius) {
-    final outerR = radius * 0.92;
-    final innerR = radius * 0.80;
-    final labelR = radius * 0.84; // visually centered in ring gap (0.80–0.92)
+      final dist = (gPos - ghati).abs() % 60;
+      final nearTracker = math.min(dist, 60 - dist) < 3;
+      if (nearTracker) continue;
 
-    // Outer ring line
-    canvas.drawCircle(
-      Offset.zero,
-      outerR,
-      Paint()
-        ..color = primaryColor.withValues(alpha: isDark ? 0.12 : 0.10)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.0,
-    );
+      _drawLabel(
+        canvas, label,
+        labelR * math.cos(angle), labelR * math.sin(angle),
+        radius * 0.08,
+        _clockColor.withValues(alpha: 0.25),
+        FontWeight.w600,
+      );
+    }
 
-    for (int g = 0; g < 60; g++) {
+    // Ghati number labels every 5
+    const ghatiLabels = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
+    for (final g in ghatiLabels) {
       final angle = -math.pi / 2 + (g / 60.0) * 2 * math.pi;
-      final isMajor = g % 5 == 0;
-      final hasNumberLabel = g % 15 == 0 && g > 0;
-      final isSunrise = g == 0;
 
-      // Skip tick where label or sunrise symbol sits
-      if (!hasNumberLabel && !isSunrise) {
-        final tickLen = isMajor
-            ? (outerR - innerR) * 0.6
-            : (outerR - innerR) * 0.25;
-        final tickStart = outerR - tickLen;
+      final dist = ((g - ghati) % 60).abs();
+      final nearTracker = math.min(dist, 60 - dist) < 3;
+      if (nearTracker) continue;
 
-        canvas.drawLine(
-          Offset(tickStart * math.cos(angle), tickStart * math.sin(angle)),
-          Offset(outerR * math.cos(angle), outerR * math.sin(angle)),
-          Paint()
-            ..color = primaryColor.withValues(alpha: isMajor ? 0.50 : 0.18)
-            ..strokeWidth = isMajor ? 1.2 : 0.5
-            ..strokeCap = StrokeCap.round,
-        );
-      }
-
-      // Sun at 0 Ghati (sunrise / 12 o'clock) — drawn as golden circle + rays
-      if (isSunrise) {
-        _drawSunIcon(canvas, labelR * math.cos(angle), labelR * math.sin(angle), radius * 0.038);
-      }
-
-      // Number label every 10 Ghati
-      if (hasNumberLabel) {
-        _drawLabel(
-          canvas,
-          '$g',
-          labelR * math.cos(angle),
-          labelR * math.sin(angle),
-          radius * 0.058,
-          primaryColor.withValues(alpha: 0.70),
-          FontWeight.w600,
-        );
-      }
+      _drawLabel(
+        canvas, '$g',
+        labelR * math.cos(angle), labelR * math.sin(angle),
+        radius * 0.08,
+        _clockColor.withValues(alpha: 0.25),
+        FontWeight.w600,
+      );
     }
   }
 
   // ── Hands ─────────────────────────────────────────────────
 
   void _drawHands(Canvas canvas, double radius, double ghati, double pala) {
-    // Pala hand — long, thin
+    // Pala — long
     final palaAngle = -math.pi / 2 + (pala / 60.0) * 2 * math.pi;
-    _drawHand(canvas,
-      angle: palaAngle,
-      length: radius * 0.68,
-      tail: radius * 0.10,
-      width: 1.5,
-      color: primaryColor.withValues(alpha: 0.6),
-    );
+    _drawHand(canvas, angle: palaAngle, length: radius * 0.55, tail: radius * 0.30,
+              width: 2.0, color: _clockColor.withValues(alpha: 0.85));
 
-    // Ghati hand — short, thick
+    // Ghati — short, bold
     final ghatiAngle = -math.pi / 2 + (ghati / 60.0) * 2 * math.pi;
-    _drawHand(canvas,
-      angle: ghatiAngle,
-      length: radius * 0.52,
-      tail: radius * 0.08,
-      width: 2.8,
-      color: primaryColor.withValues(alpha: 0.85),
-    );
+    _drawHand(canvas, angle: ghatiAngle, length: radius * 0.52, tail: radius * 0.08,
+              width: 6.5, color: _clockColor);
   }
 
   void _drawHand(Canvas canvas, {
-    required double angle,
-    required double length,
-    required double tail,
-    required double width,
-    required Color color,
+    required double angle, required double length, required double tail,
+    required double width, required Color color,
   }) {
     canvas.drawLine(
       Offset(-tail * math.cos(angle), -tail * math.sin(angle)),
       Offset(length * math.cos(angle), length * math.sin(angle)),
-      Paint()
-        ..color = color
-        ..strokeWidth = width
-        ..strokeCap = StrokeCap.round,
+      Paint()..color = color..strokeWidth = width..strokeCap = StrokeCap.round,
     );
   }
 
-  // ── Sun icon (golden circle + rays) ────────────────────────
+  // ── Sun icon ──────────────────────────────────────────────
 
   void _drawSunIcon(Canvas canvas, double cx, double cy, double r) {
-    const sunColor = Color(0xFFFFC107); // warm golden yellow
-    final corePaint = Paint()..color = sunColor;
-    final rayPaint = Paint()
-      ..color = sunColor.withValues(alpha: 0.8)
-      ..strokeWidth = r * 0.22
-      ..strokeCap = StrokeCap.round;
-
+    const sunColor = Color(0xFFFFD64F);
     canvas.save();
     canvas.translate(cx, cy);
-
-    // Core circle
-    canvas.drawCircle(Offset.zero, r * 0.55, corePaint);
-
-    // 8 rays
+    canvas.drawCircle(Offset.zero, r * 0.55, Paint()..color = sunColor);
     for (int i = 0; i < 8; i++) {
-      final angle = (i / 8.0) * 2 * math.pi;
-      final innerR = r * 0.7;
-      final outerR = r;
+      final a = (i / 8.0) * 2 * math.pi;
       canvas.drawLine(
-        Offset(innerR * math.cos(angle), innerR * math.sin(angle)),
-        Offset(outerR * math.cos(angle), outerR * math.sin(angle)),
-        rayPaint,
+        Offset(r * 0.7 * math.cos(a), r * 0.7 * math.sin(a)),
+        Offset(r * math.cos(a), r * math.sin(a)),
+        Paint()..color = sunColor.withValues(alpha: 0.85)..strokeWidth = r * 0.24..strokeCap = StrokeCap.round,
       );
     }
-
     canvas.restore();
   }
 
   // ── Center dot ────────────────────────────────────────────
 
   void _drawCenterDot(Canvas canvas, double radius) {
-    canvas.drawCircle(Offset.zero, radius * 0.03,
-        Paint()..color = primaryColor.withValues(alpha: 0.5));
-    canvas.drawCircle(Offset.zero, radius * 0.015,
-        Paint()..color = primaryColor);
+    canvas.drawCircle(Offset.zero, radius * 0.040, Paint()..color = _clockColor.withValues(alpha: 0.80));
+    canvas.drawCircle(Offset.zero, radius * 0.020, Paint()..color = _clockColor);
   }
 
-  // ── Label helper ──────────────────────────────────────────
+  // ── Label ─────────────────────────────────────────────────
 
   void _drawLabel(Canvas canvas, String text, double x, double y,
       double fontSize, Color color, FontWeight weight) {
     final tp = TextPainter(
-      text: TextSpan(
-        text: text,
-        style: TextStyle(
-          fontSize: fontSize,
-          fontWeight: weight,
-          color: color,
-        ),
-      ),
+      text: TextSpan(text: text, style: TextStyle(fontSize: fontSize, fontWeight: weight, color: color)),
       textDirection: TextDirection.ltr,
     )..layout();
-
     canvas.save();
     canvas.translate(x, y);
     tp.paint(canvas, Offset(-tp.width / 2, -tp.height / 2));
@@ -294,35 +233,23 @@ class VedicClockPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant VedicClockPainter oldDelegate) =>
-      oldDelegate.time != time ||
-      oldDelegate.isDark != isDark ||
-      oldDelegate.primaryColor != primaryColor;
+      oldDelegate.time != time || oldDelegate.isDark != isDark || oldDelegate.primaryColor != primaryColor;
 }
 
-/// Widget wrapper for VedicClockPainter
+/// Widget wrapper
 class VedicClockWidget extends StatelessWidget {
   final DateTime time;
   final bool isDark;
   final double size;
 
-  const VedicClockWidget({
-    super.key,
-    required this.time,
-    required this.isDark,
-    this.size = 300,
-  });
+  const VedicClockWidget({super.key, required this.time, required this.isDark, this.size = 300});
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: size,
-      height: size,
+      width: size, height: size,
       child: CustomPaint(
-        painter: VedicClockPainter(
-          time: time,
-          primaryColor: AppTheme.primaryColor,
-          isDark: isDark,
-        ),
+        painter: VedicClockPainter(time: time, primaryColor: AppTheme.primaryColor, isDark: isDark),
       ),
     );
   }

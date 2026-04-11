@@ -1,7 +1,7 @@
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:aurogram/features/auth/login.dart';
+import 'package:go_router/go_router.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/shared/presentation/widgets/assets/title.dart';
 
@@ -45,9 +45,7 @@ class LoginDialog extends StatelessWidget {
               CupertinoDialogAction(
                 onPressed: () {
                   Navigator.of(context).pop();
-                  Navigator.of(context).push(CupertinoPageRoute(
-                    builder: (context) => LoginPage(),
-                  ));
+                  context.push('/login');
                 },
                 isDestructiveAction: false,
                 textStyle: TextStyle(color: AppTheme.primaryColor),

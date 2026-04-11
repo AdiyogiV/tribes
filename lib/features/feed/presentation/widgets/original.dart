@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
+import 'package:aurogram/core/di/injection.dart';
+import 'package:aurogram/features/feed/data/datasources/post_db_service.dart';
 import 'package:aurogram/shared/presentation/widgets/player/main_player.dart';
 import 'package:aurogram/shared/presentation/widgets/player/text_note_player.dart';
 import 'package:aurogram/shared/presentation/widgets/player/audio_note_player.dart';
@@ -38,9 +40,6 @@ class _OriginalState extends State<Original> {
   int? durationInSeconds;
   Timestamp? timestamp;
 
-  final CollectionReference postCollection =
-      FirebaseFirestore.instance.collection('posts');
-
   @override
   void initState() {
     super.initState();
@@ -54,7 +53,7 @@ class _OriginalState extends State<Original> {
     }
 
     try {
-      final snapshot = await postCollection.doc(widget.post).get();
+      final snapshot = await locator<PostDbService>().getPost(widget.post);
       if (snapshot.exists) {
         final data = snapshot.data() as Map<String, dynamic>?;
         if (data != null) {

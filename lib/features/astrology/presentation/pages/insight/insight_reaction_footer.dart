@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show FieldValue;
+import 'package:aurogram/core/di/injection.dart';
+import 'package:aurogram/shared/data/repositories/user_repository.dart';
 import 'package:aurogram/shared/models/daily_insight.dart';
 import 'package:aurogram/shared/models/astrology_profile.dart';
 import 'package:aurogram/shared/services/share/share_service.dart';
@@ -194,8 +196,7 @@ class _InsightReactionFooterState extends State<InsightReactionFooter> {
     });
 
     try {
-      final docRef = FirebaseFirestore.instance
-          .collection('users')
+      final docRef = locator<UserRepository>().collection
           .doc(widget.uid)
           .collection('savedInsights')
           .doc('${widget.insightDate}_${widget.cardIndex}');

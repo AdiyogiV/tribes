@@ -475,12 +475,6 @@ export const awardManualAura = onCall({
         throw new HttpsError("unauthenticated", "Must be authenticated");
     }
 
-    // TODO: Add admin check here
-    // const isAdmin = await checkIfAdmin(adminUserId);
-    // if (!isAdmin) {
-    //     throw new HttpsError("permission-denied", "Admin access required");
-    // }
-
     if (!userId || !points || !reason) {
         throw new HttpsError("invalid-argument", "Missing required parameters: userId, points, reason");
     }
@@ -494,41 +488,5 @@ export const awardManualAura = onCall({
         throw new HttpsError("internal", "Failed to award aura");
     }
 });
-
-/**
- * Scheduled Cloud Function: Daily aura streak bonus (optional feature)
- * Uncomment and configure if you want to implement daily login streaks
- */
-// export const dailyAuraStreakBonus = onSchedule("every day 00:00", async () => {
-//   const db = getFirestore();
-//   const yesterday = new Date();
-//   yesterday.setDate(yesterday.getDate() - 1);
-//   yesterday.setHours(0, 0, 0, 0);
-//
-//   try {
-//     // Find users who were active yesterday
-//     const activeUsersSnapshot = await db
-//       .collection("users")
-//       .where("lastActiveDate", ">=", yesterday)
-//       .get();
-//
-//     const batch = db.batch();
-//     let count = 0;
-//
-//     for (const userDoc of activeUsersSnapshot.docs) {
-//       await awardAura(
-//         userDoc.id,
-//         5, // Daily streak bonus
-//         "Daily login streak",
-//         { action: "daily_streak" }
-//       );
-//       count++;
-//     }
-//
-//     logger.info(`Awarded daily streak bonus to ${count} users`);
-//   } catch (error) {
-//     logger.error("Error awarding daily streak bonus:", error);
-//   }
-// });
 
 

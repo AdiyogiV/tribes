@@ -1,8 +1,11 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:aurogram/features/profile/presentation/pages/user_profile.dart';
+import 'package:go_router/go_router.dart';
+import 'package:aurogram/core/di/injection.dart';
+import 'package:aurogram/core/routing/route_names.dart';
+import 'package:aurogram/shared/data/repositories/user_repository.dart';
 import 'package:aurogram/shared/utils/time_display.dart';
 import 'package:aurogram/shared/presentation/widgets/avatars/user_avatar.dart';
 import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
@@ -50,10 +53,7 @@ class _MutualFollowTileState extends State<MutualFollowTile> {
 
       if (_fromUserId.isNotEmpty) {
         try {
-          final userDoc = await FirebaseFirestore.instance
-              .collection('users')
-              .doc(_fromUserId)
-              .get();
+          final userDoc = await locator<UserRepository>().getUser(_fromUserId);
           if (userDoc.exists) {
             final data = userDoc.data();
             _fromUserName = data?['name']?.toString() ?? _fromUserName;
@@ -77,12 +77,7 @@ class _MutualFollowTileState extends State<MutualFollowTile> {
   void _openProfile() {
     if (_fromUserId.isEmpty) return;
     HapticFeedback.selectionClick();
-    Navigator.push(
-      context,
-      CupertinoPageRoute(
-        builder: (context) => UserProfilePage(uid: _fromUserId),
-      ),
-    );
+    context.push('${RouteNames.userProfile}/$_fromUserId');
   }
 
   @override

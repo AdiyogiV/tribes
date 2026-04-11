@@ -1,9 +1,12 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show DocumentSnapshot, Timestamp;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:aurogram/features/profile/presentation/pages/user_profile.dart';
+import 'package:go_router/go_router.dart';
+import 'package:aurogram/core/di/injection.dart';
+import 'package:aurogram/core/routing/route_names.dart';
 import 'package:aurogram/features/profile/domain/follow_service.dart';
+import 'package:aurogram/shared/data/repositories/user_repository.dart';
 import 'package:aurogram/shared/utils/time_display.dart';
 import 'package:aurogram/shared/presentation/widgets/avatars/user_avatar.dart';
 import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
@@ -58,7 +61,7 @@ class _FollowTileState extends State<FollowTile> {
       if (_fromUserId.isNotEmpty) {
         try {
           final results = await Future.wait([
-            FirebaseFirestore.instance.collection('users').doc(_fromUserId).get(),
+            locator<UserRepository>().getUser(_fromUserId),
             _followService.isFollowing(_fromUserId),
           ]);
 
@@ -123,12 +126,7 @@ class _FollowTileState extends State<FollowTile> {
 
   void _openProfile() {
     if (_fromUserId.isEmpty) return;
-    Navigator.push(
-      context,
-      CupertinoPageRoute(
-        builder: (context) => UserProfilePage(uid: _fromUserId),
-      ),
-    );
+    context.push('${RouteNames.userProfile}/$_fromUserId');
   }
 
   @override

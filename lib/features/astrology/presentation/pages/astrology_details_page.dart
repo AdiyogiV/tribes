@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:aurogram/shared/models/astrology_profile.dart';
 import 'package:aurogram/features/astrology/domain/astrology_service.dart';
 import 'package:aurogram/shared/services/share/share_service.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/features/astrology/data/utils/astrology_utils.dart';
-import 'package:aurogram/features/astrology/presentation/pages/astrology_setup_page.dart';
-import 'package:aurogram/features/astrology/presentation/pages/astro_chat_page.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/kundali_chart.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/astro_chat_input.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cards/astrology_cards.dart';
@@ -663,18 +661,14 @@ extension _AstrologyDetailsPageContent on _AstrologyDetailsPageState {
     _focusNode.unfocus();
     HapticFeedback.lightImpact();
 
-    Navigator.push(
-        context,
-        CupertinoPageRoute(
-          builder: (_) =>
-              AstroChatPage(astrologyContext: ctx, initialMessage: text),
-        ));
+    context.push('/astrology/chat', extra: {
+      'astrologyContext': ctx,
+      'initialMessage': text,
+    });
   }
 
   Future<void> _edit() async {
-    await Navigator.of(context, rootNavigator: true).push(
-      CupertinoPageRoute(builder: (_) => const AstrologySetupPage()),
-    );
+    await context.push('/astrology/setup');
   }
 
   void _shareCosmicProfile() {

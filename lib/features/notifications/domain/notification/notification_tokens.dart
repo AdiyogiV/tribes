@@ -167,19 +167,40 @@ extension NotificationTokens on NotificationService {
   // ── Unread count ───────────────────────────────────────────────────────────
 
   /// Start listening to unread notification count.
+  ///
+  /// Uses Firestore count() aggregation to avoid downloading full document
+  /// bodies. Polls every 30 seconds for a lightweight count update.
+  /// Safe to call multiple times — cancels any previous timer first.
   void startUnreadCountListener() {
     final uid = currentUser?.uid;
     if (uid == null) return;
 
+    // Cancel any existing timer to prevent duplicates on re-init
+    unreadCountTimer?.cancel();
+
+    // Initial fetch + periodic polling via count() aggregation
+    _fetchAndEmitUnreadCount(uid);
+    unreadCountTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      _fetchAndEmitUnreadCount(uid);
+    });
+  }
+
+  /// Fetch unread count via aggregation query (no document bodies downloaded).
+  void _fetchAndEmitUnreadCount(String uid) {
     firestore
         .collection('notifications')
         .doc(uid)
         .collection('notifications')
         .where('read', isEqualTo: false)
-        .snapshots()
-        .listen((snapshot) {
-      unreadCountValue = snapshot.docs.length;
-      unreadCountController.add(unreadCountValue);
+        .count()
+        .get()
+        .then((snapshot) {
+      final count = snapshot.count ?? 0;
+      unreadCountValue = count;
+      unreadCountController.add(count);
+    }).catchError((e) {
+      AppLogger.w('Unread count aggregation failed',
+          category: LogCategory.general, data: {'error': e.toString()});
     });
   }
 
@@ -204,12 +225,13 @@ extension NotificationTokens on NotificationService {
   }
 
   /// Mark all notifications as read.
+  ///
+  /// Chunks writes in batches of 500 to respect Firestore's WriteBatch limit.
   Future<void> markAllAsRead() async {
     final uid = currentUser?.uid;
     if (uid == null) return;
 
     try {
-      final batch = firestore.batch();
       final unread = await firestore
           .collection('notifications')
           .doc(uid)
@@ -217,11 +239,15 @@ extension NotificationTokens on NotificationService {
           .where('read', isEqualTo: false)
           .get();
 
-      for (final doc in unread.docs) {
-        batch.update(doc.reference, {'read': true});
+      const batchLimit = 500;
+      for (var i = 0; i < unread.docs.length; i += batchLimit) {
+        final batch = firestore.batch();
+        final chunk = unread.docs.skip(i).take(batchLimit);
+        for (final doc in chunk) {
+          batch.update(doc.reference, {'read': true});
+        }
+        await batch.commit();
       }
-
-      await batch.commit();
     } catch (e) {
       AppLogger.e('Failed to mark all notifications as read',
           category: LogCategory.messaging, error: e);

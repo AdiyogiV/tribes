@@ -4,9 +4,8 @@ import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/shared/presentation/widgets/avatars/user_avatar.dart';
 import 'package:aurogram/core/di/injection.dart';
 import 'package:aurogram/features/auth/auth_service.dart';
-import 'package:aurogram/features/settings/presentation/pages/user_settings.dart';
+import 'package:go_router/go_router.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard.dart';
-import 'package:aurogram/features/auth/login.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 
 /// Desktop sidebar navigation for web/tablet
@@ -351,10 +350,7 @@ class _SidebarNavigationState extends State<SidebarNavigation>
             icon: Icons.settings_outlined,
             label: 'Settings',
             onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                    builder: (context) => const UserSettingsPage()),
-              );
+              context.push('/settings');
             },
           ),
 
@@ -368,10 +364,7 @@ class _SidebarNavigationState extends State<SidebarNavigation>
                     icon: Icons.login,
                     label: 'Sign In',
                     onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                            builder: (context) => const LoginPage()),
-                      );
+                      context.push('/login');
                     },
                     isPrimary: true,
                   ),

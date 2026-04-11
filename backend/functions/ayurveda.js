@@ -8,6 +8,7 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions";
 import { Timestamp, FieldValue } from "firebase-admin/firestore";
+import { requireAuth } from "../lib/auth_utils.js";
 import { db } from "../lib/firebase.js";
 import { geminiApiKey } from "../lib/secrets.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -286,11 +287,7 @@ export const resetAyurvedaProfile = onCall({
     region: "asia-southeast2",
     invoker: "public", // Allow client apps to invoke (Firebase Auth handles actual auth)
 }, async (request) => {
-    if (!request.auth) {
-        throw new HttpsError("unauthenticated", "Must be authenticated");
-    }
-
-    const uid = request.auth.uid;
+    const uid = requireAuth(request, "reset Ayurveda profile");
     logger.info("🌿 Manual Ayurveda profile reset requested", { uid });
 
     try {
@@ -353,11 +350,7 @@ export const calculateAyurvedaProfile = onCall({
     region: "asia-southeast2",
     invoker: "public", // Allow client apps to invoke (Firebase Auth handles actual auth)
 }, async (request) => {
-    if (!request.auth) {
-        throw new HttpsError("unauthenticated", "Must be authenticated");
-    }
-
-    const uid = request.auth.uid;
+    const uid = requireAuth(request, "calculate Ayurveda profile");
     logger.info("🌿 Calculating Ayurveda profile", { uid });
 
     try {
@@ -461,11 +454,7 @@ export const calculateCurrentVikriti = onCall({
     region: "asia-southeast2",
     invoker: "public", // Allow client apps to invoke (Firebase Auth handles actual auth)
 }, async (request) => {
-    if (!request.auth) {
-        throw new HttpsError("unauthenticated", "Must be authenticated");
-    }
-
-    const uid = request.auth.uid;
+    const uid = requireAuth(request, "calculate current vikriti");
     const { symptoms } = request.data || {};
 
     try {
@@ -772,11 +761,7 @@ export const getAyurvedaRecommendations = onCall({
     secrets: [geminiApiKey],
     enforceAppCheck: false, // Disabled until Flutter client enables FirebaseAppCheck
 }, async (request) => {
-    if (!request.auth) {
-        throw new HttpsError("unauthenticated", "Must be authenticated");
-    }
-
-    const uid = request.auth.uid;
+    const uid = requireAuth(request, "get Ayurveda recommendations");
     logger.info("🌿 Generating AI Ayurveda recommendations", { uid });
 
     try {

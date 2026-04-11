@@ -8,8 +8,9 @@ import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/storage/memory_manager.dart';
 import 'package:aurogram/core/network/network_manager.dart';
-import 'package:aurogram/core/routing/page_factory.dart';
+import 'package:aurogram/core/routing/app_router.dart';
 import 'package:aurogram/core/routing/route_names.dart';
+import 'package:go_router/go_router.dart';
 import 'package:aurogram/core/startup/startup_service.dart';
 import 'package:aurogram/shared/services/cache_service.dart';
 import 'package:aurogram/shared/providers/theme_provider.dart';
@@ -17,7 +18,6 @@ import 'package:aurogram/shared/presentation/widgets/flash.dart';
 import 'package:aurogram/features/notifications/domain/notification_service.dart';
 import 'package:aurogram/features/calling/domain/call_service.dart';
 import 'package:aurogram/platform/platform.dart';
-import 'package:aurogram/app/tabs/tab_handler.dart';
 import 'package:aurogram/app/app_bootstrap.dart' show initialDependenciesLoaded;
 
 /// Root widget — MaterialApp + lifecycle observer + deferred init.
@@ -37,12 +37,14 @@ class AppRoot extends StatefulWidget {
 
 class AppRootState extends State<AppRoot> with WidgetsBindingObserver {
   bool _appInitialized = false;
+  late final GoRouter _router;
   final NotificationService _notificationService = NotificationService();
   final CallService _callService = CallService();
 
   @override
   void initState() {
     super.initState();
+    _router = createAppRouter(widget.navigatorKey);
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) => _initializeApp());
   }
@@ -76,19 +78,34 @@ class AppRootState extends State<AppRoot> with WidgetsBindingObserver {
 
   Future<void> _initializeNotifications() async {
     try {
-      await _initializeCallService();
       if (!kIsWeb && PlatformServices.instance.isMobile) {
-        await _notificationService.initialize(widget.navigatorKey);
-        await widget.startupService.setupFirebaseMessaging(widget.navigatorKey);
-      } else if (kIsWeb) {
-        AppLogger.i(
-            'Web platform: CallService initialized, skipping mobile notifications',
-            category: LogCategory.messaging);
+        // CallService is independent — run it in parallel with notification setup.
+        // NotificationService and FCM setup share state (FCM token listeners,
+        // local notification plugin), so they must run sequentially.
+        await Future.wait([
+          _initializeCallService(),
+          _initializeNotificationServices(),
+        ]);
+      } else {
+        // Web: only call service, no mobile notifications
+        await _initializeCallService();
+        if (kIsWeb) {
+          AppLogger.i(
+              'Web platform: CallService initialized, skipping mobile notifications',
+              category: LogCategory.messaging);
+        }
       }
     } catch (e) {
       AppLogger.w('Notification init error',
           category: LogCategory.messaging, data: {'error': e.toString()});
     }
+  }
+
+  /// Sequential notification init — NotificationService registers FCM handlers
+  /// and token listeners, then setupFirebaseMessaging handles remaining FCM config.
+  Future<void> _initializeNotificationServices() async {
+    await _notificationService.initialize(widget.navigatorKey);
+    await widget.startupService.setupFirebaseMessaging(widget.navigatorKey);
   }
 
   Future<void> _initializeCallService() async {
@@ -118,16 +135,12 @@ class AppRootState extends State<AppRoot> with WidgetsBindingObserver {
               'isWeb': kIsWeb,
             });
 
-        final nav = widget.navigatorKey.currentState;
-        if (nav == null) {
-          AppLogger.e('📞 Cannot show incoming call: Navigator state is null!',
-              category: LogCategory.general);
-          return;
+        try {
+          appRouter.push(RouteNames.incomingCall, extra: call);
+        } catch (e) {
+          AppLogger.e('📞 Cannot show incoming call: navigation failed',
+              category: LogCategory.general, error: e);
         }
-
-        nav.push(
-          PageFactory.route(RouteNames.incomingCall, arguments: {'call': call}),
-        );
       };
 
       AppLogger.i('📞 CallService fully initialized',
@@ -192,21 +205,24 @@ class AppRootState extends State<AppRoot> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     final isDark = Provider.of<ThemeProvider>(context).isDarkMode;
-    return MaterialApp(
-      navigatorKey: widget.navigatorKey,
+    return MaterialApp.router(
+      routerConfig: _router,
       title: 'Aurogram',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.getMaterialTheme(isDarkMode: isDark),
-      builder: (context, child) => CupertinoTheme(
-        data: AppTheme.getCupertinoTheme(isDarkMode: isDark),
-        child: MediaQuery(
-          data: MediaQuery.of(context).copyWith(
-            textScaler: TextScaler.linear(1.0),
+      builder: (context, child) {
+        // Show splash screen until deferred init completes (typically one frame)
+        final content = _appInitialized ? child! : const FlashScreen();
+        return CupertinoTheme(
+          data: AppTheme.getCupertinoTheme(isDarkMode: isDark),
+          child: MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+              textScaler: TextScaler.linear(1.0),
+            ),
+            child: content,
           ),
-          child: child!,
-        ),
-      ),
-      home: _appInitialized ? TabHandler() : const FlashScreen(),
+        );
+      },
     );
   }
 

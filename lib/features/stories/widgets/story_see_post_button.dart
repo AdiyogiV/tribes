@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:aurogram/features/feed/presentation/pages/thread_view.dart';
+import 'package:go_router/go_router.dart';
+import 'package:aurogram/core/routing/route_names.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 
 /// Centered "See post" button overlaid on story cards that originated from a post.
@@ -29,11 +30,7 @@ class StorySeePostButton extends StatelessWidget {
               onHide();
               await Future.delayed(const Duration(milliseconds: 100));
               if (context.mounted) {
-                await Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => ThreadView(postId: postId),
-                  ),
-                );
+                context.push('${RouteNames.threadView}/$postId');
               }
             },
             child: Container(

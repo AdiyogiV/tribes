@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:aurogram/features/stories/story_service.dart';
-import 'package:aurogram/features/stories/pages/story_composer_page.dart';
-import 'package:aurogram/features/stories/pages/story_viewer_page.dart';
 import 'package:aurogram/features/stories/widgets/story_ring.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 
@@ -30,11 +29,7 @@ class FeedStoryRow extends StatelessWidget {
         child: StoryRing(
           forceRefresh: storyRingForceRefresh,
           onAddStory: () async {
-            final result = await Navigator.of(context).push<bool>(
-              MaterialPageRoute(
-                builder: (_) => const StoryComposerPage(),
-              ),
-            );
+            final result = await context.push<bool>('/stories/compose');
             if (result == true && context.mounted) {
               onStoryRefresh(storyRingRefreshKey + 1, false);
             }
@@ -44,14 +39,10 @@ class FeedStoryRow extends StatelessWidget {
             final userIds = await storyService.getUsersWithStories();
             final idx = userIds.indexOf(userId);
             if (!context.mounted) return;
-            await Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => StoryViewerPage(
-                  userIds: userIds,
-                  initialUserIndex: idx >= 0 ? idx : 0,
-                ),
-              ),
-            );
+            await context.push('/stories/view', extra: {
+              'userIds': userIds,
+              'initialUserIndex': idx >= 0 ? idx : 0,
+            });
             if (context.mounted) {
               onStoryRefresh(storyRingRefreshKey + 1, false);
             }

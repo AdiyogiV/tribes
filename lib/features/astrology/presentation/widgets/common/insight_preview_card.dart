@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:aurogram/core/routing/route_names.dart';
 import 'package:aurogram/shared/models/daily_insight.dart';
 import 'package:aurogram/features/astrology/domain/astrology_service.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/features/astrology/data/utils/astrology_formatters.dart';
-import 'package:aurogram/features/astrology/presentation/pages/daily_insight_page.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 
 /// Compact insight preview card shown on the astrology details page
@@ -32,11 +33,9 @@ class InsightPreviewCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
       child: InkWell(
         onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => DailyInsightPage(uid: uid),
-            ),
-          );
+          context.push(RouteNames.dailyInsight, extra: {
+            'uid': uid,
+          });
         },
         borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
         child: Container(

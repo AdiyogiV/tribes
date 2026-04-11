@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:go_router/go_router.dart';
 import 'package:aurogram/features/chat/domain/space_chat_service.dart';
-import 'package:aurogram/features/spaces/presentation/pages/space_chat_screen.dart';
+import 'package:aurogram/core/routing/route_names.dart';
 import 'package:aurogram/shared/models/space.dart';
 import 'package:aurogram/shared/models/space_types.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
@@ -734,14 +735,9 @@ class _MessagesPageState extends State<MessagesPage>
       limitedVisibility: false,
     );
 
-    Navigator.of(context).push(
-      CupertinoPageRoute(
-        builder: (context) => SpaceChatScreen(
-          spaceId: request.id,
-          space: space,
-          otherUserId: request.otherUserId,
-        ),
-      ),
+    context.push(
+      '${RouteNames.spaceChatScreen}/${request.id}',
+      extra: {'space': space, 'otherUserId': request.otherUserId},
     );
   }
 

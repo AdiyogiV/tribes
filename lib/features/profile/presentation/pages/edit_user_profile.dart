@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:aurogram/features/profile/domain/user_service.dart';
+import 'package:aurogram/core/di/injection.dart';
+import 'package:aurogram/shared/data/repositories/user_repository.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -38,7 +40,6 @@ class EditProfileState extends State<EditProfile> {
   bool _saving = false;
   bool _loading = true;
 
-  final _userCollection = FirebaseFirestore.instance.collection('users');
   final _nicknamesCollection =
       FirebaseFirestore.instance.collection('nicknames');
 
@@ -57,7 +58,7 @@ class EditProfileState extends State<EditProfile> {
 
   Future<void> _load() async {
     final results = await Future.wait([
-      _userCollection.doc(widget.uid).get(),
+      locator<UserRepository>().getUser(widget.uid!),
       _nicknamesCollection.doc('pairs').get(),
     ]);
 

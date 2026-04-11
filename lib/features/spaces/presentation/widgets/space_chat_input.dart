@@ -6,7 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:aurogram/core/di/injection.dart';
+import 'package:aurogram/shared/data/repositories/user_repository.dart';
 import 'package:aurogram/features/chat/domain/space_chat_service.dart';
 import 'package:aurogram/shared/services/media/media_upload_helper.dart';
 import 'package:aurogram/shared/services/media/voice_recorder_controller.dart';
@@ -626,7 +627,7 @@ class _SpaceChatInputAreaState extends State<SpaceChatInputArea> {
     String userName = 'You';
     String? userAvatar;
     try {
-      final userDoc = await FirebaseFirestore.instance.collection('users').doc(currentUser.uid).get();
+      final userDoc = await locator<UserRepository>().getUser(currentUser.uid);
       if (userDoc.exists) {
         final data = userDoc.data();
         userName = data?['name'] ?? data?['nickname'] ?? 'You';

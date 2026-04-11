@@ -1,19 +1,19 @@
 import 'dart:async';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
 import 'package:aurogram/shared/models/space.dart';
 import 'package:aurogram/features/chat/domain/space_chat_service.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
-import 'package:aurogram/features/profile/presentation/pages/user_profile.dart';
-import 'package:aurogram/features/spaces/presentation/pages/space_screen.dart';
+import 'package:aurogram/core/di/injection.dart';
+import 'package:aurogram/shared/data/repositories/user_repository.dart';
+import 'package:go_router/go_router.dart';
+import 'package:aurogram/core/routing/route_names.dart';
 import 'package:aurogram/features/chat/domain/chat_notification_service.dart';
 import 'package:aurogram/features/calling/presentation/widgets/active_call_banner.dart';
 import 'package:aurogram/features/spaces/presentation/widgets/space_chat_input.dart';
-import 'package:aurogram/features/spaces/presentation/widgets/media_gallery_page.dart';
 import 'package:aurogram/features/chat/presentation/widgets/message_search_sheet.dart';
 import 'package:aurogram/features/chat/presentation/widgets/embedded/embedded.dart';
 
@@ -196,10 +196,8 @@ class EmbeddedChatViewState extends State<EmbeddedChatView>
 
   void _listenToOnlineStatus() {
     if (widget.otherUserId == null) return;
-    _onlineStatusSubscription = FirebaseFirestore.instance
-        .collection('users')
-        .doc(widget.otherUserId)
-        .snapshots()
+    _onlineStatusSubscription = locator<UserRepository>()
+        .userStream(widget.otherUserId!)
         .listen((snapshot) {
       if (snapshot.exists && mounted) {
         final data = snapshot.data();
@@ -218,10 +216,8 @@ class EmbeddedChatViewState extends State<EmbeddedChatView>
     }
     setState(() => _isLoadingName = true);
     try {
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(widget.otherUserId!)
-          .get();
+      final userDoc = await locator<UserRepository>()
+          .getUser(widget.otherUserId!);
       if (userDoc.exists && mounted) {
         final userData = userDoc.data();
         final name = userData?['name'] as String? ??
@@ -300,27 +296,16 @@ class EmbeddedChatViewState extends State<EmbeddedChatView>
 
   void _navigateToHeader() {
     if (isDMConversation && widget.otherUserId != null) {
-      Navigator.of(context).push(
-        CupertinoPageRoute(
-            builder: (context) => UserProfilePage(uid: widget.otherUserId)),
-      );
+      context.push('${RouteNames.userProfile}/${widget.otherUserId}');
     } else if (!isDMConversation) {
-      Navigator.of(context).push(
-        CupertinoPageRoute(
-            builder: (context) => SpaceScreen(rid: widget.spaceId)),
-      );
+      context.push('${RouteNames.spaceScreen}/${widget.spaceId}');
     }
   }
 
   void _openMediaGallery() {
-    Navigator.of(context).push(
-      CupertinoPageRoute(
-        builder: (context) => MediaGalleryPage(
-          spaceId: widget.spaceId,
-          title: _displayName ?? 'Media',
-        ),
-      ),
-    );
+    context.push('/media/gallery/${widget.spaceId}', extra: {
+      'title': _displayName ?? 'Media',
+    });
   }
 
   void _openMessageSearch() {

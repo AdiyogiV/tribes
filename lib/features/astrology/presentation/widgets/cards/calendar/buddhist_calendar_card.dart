@@ -75,14 +75,7 @@ class BuddhistCalendarCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            'Buddhist Era',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.primaryColor,
-            ),
-          ),
+          buildCalendarHeader('Buddhist Era'),
           const SizedBox(height: AppDimensions.spacingMd),
           // Main year display
           Row(
@@ -145,16 +138,7 @@ class BuddhistCalendarCard extends StatelessWidget {
             ),
           if (tithiNumber != null && paksha != null) const SizedBox(height: AppDimensions.spacingMd),
           // Note
-          Text(
-            'Lunisolar calendar • Epoch: Parinibbana (543 BCE)',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              fontStyle: FontStyle.italic,
-              color: AppTheme.primaryColor.withValues(alpha: 0.5),
-              height: 1.4,
-            ),
-          ),
+          buildCalendarFooter('Lunisolar calendar • Epoch: Parinibbana (543 BCE)'),
         ],
       ),
     );

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
+import 'package:aurogram/core/routing/route_names.dart';
 import 'package:aurogram/shared/models/ayurveda_profile.dart';
 import 'package:aurogram/shared/models/astrology_profile.dart';
 import 'package:aurogram/features/ayurveda/domain/ayurveda_service.dart';
@@ -8,9 +10,6 @@ import 'package:aurogram/features/astrology/domain/astrology_service.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/features/astrology/data/utils/astrology_context_builder.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/astro_chat_input.dart';
-import 'package:aurogram/features/ayurveda/presentation/pages/vikriti_checkin_page.dart';
-import 'package:aurogram/features/ayurveda/presentation/pages/prakriti_refinement_page.dart';
-import 'package:aurogram/features/astrology/presentation/pages/astro_chat_page.dart';
 import 'package:aurogram/features/ayurveda/presentation/widgets/ayurveda_details_header.dart';
 import 'package:aurogram/features/ayurveda/presentation/widgets/ayurveda_reset_overlay.dart';
 import 'package:aurogram/features/ayurveda/presentation/widgets/ayurveda_details_skeleton.dart';
@@ -124,23 +123,20 @@ class _AyurvedaDetailsPageState extends State<AyurvedaDetailsPage> {
     }
   }
 
-  void _openCheckIn() {
+  void _openCheckIn() async {
     if (_profile == null || _astroProfile == null) return;
 
     HapticFeedback.lightImpact();
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => VikritiCheckInPage(
-          ayurvedaProfile: _profile!,
-          astroProfile: _astroProfile!,
-          onComplete: (vikriti) {
-            if (mounted && vikriti != null) {
-              setState(() => _vikriti = vikriti);
-            }
-          },
-        ),
-      ),
+    final vikriti = await context.push<VikritiData?>(
+      RouteNames.vikritiCheckin,
+      extra: {
+        'ayurvedaProfile': _profile!,
+        'astroProfile': _astroProfile!,
+      },
     );
+    if (mounted && vikriti != null) {
+      setState(() => _vikriti = vikriti);
+    }
   }
 
   /// Show confirmation dialog and reset Ayurveda profile
@@ -418,15 +414,14 @@ class _AyurvedaDetailsPageState extends State<AyurvedaDetailsPage> {
     _focusNode.unfocus();
     HapticFeedback.lightImpact();
 
-    Navigator.push(
-        context,
-        CupertinoPageRoute(
-          builder: (_) => AstroChatPage(
-            astrologyContext: wellnessContext,
-            initialMessage: text,
-            chatSource: 'wellness',
-          ),
-        ));
+    context.push(
+      RouteNames.astroChatPage,
+      extra: {
+        'astrologyContext': wellnessContext,
+        'initialMessage': text,
+        'chatSource': 'wellness',
+      },
+    );
   }
 
   Widget _buildNoProfile(BuildContext context) {
@@ -556,16 +551,11 @@ class _AyurvedaDetailsPageState extends State<AyurvedaDetailsPage> {
     if (_profile?.prakriti == null) return;
 
     HapticFeedback.lightImpact();
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => PrakritiRefinementPage(
-          predictedPrakriti: _profile!.prakriti!,
-          onComplete: (refinedPrakriti) {
-            // Profile will update automatically via stream
-            // No need to manually refresh
-          },
-        ),
-      ),
+    context.push(
+      RouteNames.prakritiRefinement,
+      extra: {
+        'predictedPrakriti': _profile!.prakriti!,
+      },
     );
   }
 }

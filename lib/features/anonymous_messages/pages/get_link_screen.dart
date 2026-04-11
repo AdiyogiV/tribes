@@ -8,7 +8,8 @@ import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/shared/presentation/widgets/dialogs/login_bottom_sheet.dart';
 import 'package:aurogram/shared/presentation/widgets/universal/transparent_toolbox.dart';
 import 'package:aurogram/features/anonymous_messages/anonymous_message_settings_service.dart';
-import 'package:aurogram/features/settings/presentation/pages/user_settings.dart';
+import 'package:go_router/go_router.dart';
+import 'package:aurogram/core/routing/route_names.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/shared/presentation/widgets/feedback/snack_bar_service.dart';
 
@@ -149,11 +150,7 @@ class _SecretMessagesGetLinkScreenState
                     const SizedBox(height: AppDimensions.spacingSection),
                     ElevatedButton(
                       onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => const UserSettingsPage(),
-                          ),
-                        );
+                        context.push(RouteNames.settings);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,

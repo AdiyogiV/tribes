@@ -1,11 +1,11 @@
 import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
+import 'package:aurogram/shared/services/database_service.dart';
 
 class FollowersPreview extends StatefulWidget {
   final String? uid;
@@ -19,8 +19,6 @@ class FollowersPreview extends StatefulWidget {
 }
 
 class _FollowersPreviewState extends State<FollowersPreview> {
-  final CollectionReference spacesCollection =
-      FirebaseFirestore.instance.collection('spaces');
   File? userPicture;
   String? userPictureUrl; // For web
   String name = '';
@@ -33,8 +31,7 @@ class _FollowersPreviewState extends State<FollowersPreview> {
   }
 
   Future<void> getData() async {
-    DocumentSnapshot authordocuments =
-        await spacesCollection.doc(widget.uid).get();
+    final authordocuments = await DatabaseService().getSpace(widget.uid!);
     name = authordocuments['name'];
 
     username = authordocuments['nickname'];

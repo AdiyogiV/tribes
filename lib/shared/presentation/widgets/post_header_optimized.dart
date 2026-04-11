@@ -1,8 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:aurogram/features/profile/presentation/pages/user_profile.dart';
-import 'package:aurogram/features/spaces/presentation/pages/space_screen.dart';
+import 'package:go_router/go_router.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/shared/services/batch_data_loader.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
@@ -190,15 +189,11 @@ class PostHeaderOptimized extends StatelessWidget {
 
   void _navigateToProfile(BuildContext context) {
     if (uid == null) return;
-    Navigator.of(context).push(
-      CupertinoPageRoute(builder: (_) => UserProfilePage(uid: uid)),
-    );
+    context.push('/user/$uid');
   }
 
   void _navigateToSpace(BuildContext context) {
     if (space == null) return;
-    Navigator.of(context).push(
-      CupertinoPageRoute(builder: (_) => SpaceScreen(rid: space!)),
-    );
+    context.push('/space/$space');
   }
 }

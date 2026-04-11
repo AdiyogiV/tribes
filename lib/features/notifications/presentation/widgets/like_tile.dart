@@ -1,17 +1,15 @@
-import 'package:aurogram/shared/services/database_service.dart';
+import 'package:flutter/material.dart';
 import 'package:aurogram/features/feed/data/datasources/post_db_service.dart';
 import 'package:aurogram/core/di/injection.dart';
-import 'package:aurogram/features/profile/domain/user_service.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show DocumentSnapshot;
+import 'package:go_router/go_router.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
-import 'package:aurogram/shared/utils/time_display.dart';
-import 'package:aurogram/features/feed/presentation/pages/thread_view.dart';
 import 'package:aurogram/features/profile/presentation/widgets/preview_boxes/preview_box.dart';
 import 'package:aurogram/shared/presentation/widgets/avatars/user_avatar.dart';
 import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/features/notifications/presentation/widgets/unified_notification_card.dart';
+import 'package:aurogram/features/notifications/presentation/widgets/notification_data_mixin.dart';
 import 'package:aurogram/shared/presentation/widgets/feedback/snack_bar_service.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 
@@ -24,7 +22,7 @@ class LikeTile extends StatefulWidget {
   _LikeTileState createState() => _LikeTileState();
 }
 
-class _LikeTileState extends State<LikeTile> {
+class _LikeTileState extends State<LikeTile> with NotificationDataMixin {
   String author = 'Unknown';
   String likerId = '';
   String space = 'Unknown Space';
@@ -41,19 +39,16 @@ class _LikeTileState extends State<LikeTile> {
 
   Future<void> _fetchData() async {
     try {
-      // Try to fetch data, but show notification even if some data is missing
-      // Don't delete notifications - show with fallback data instead
+      likerId = widget.data?['liker']?.toString() ?? '';
 
       await Future.wait([
         _fetchUserInfo(),
-        _fetchSpaceInfo(),
-        _fetchDateInfo(),
+        _fetchSpaceAndDateInfo(),
         _fetchPostInfo(),
       ]);
     } catch (e) {
       AppLogger.e('Error fetching like notification data',
           category: LogCategory.general, data: {'error': e.toString()});
-      // Show notification with fallback data instead of hiding it
       if (author == 'Unknown') author = 'Someone';
       if (space == 'Unknown Space') space = 'A Space';
     } finally {
@@ -66,66 +61,18 @@ class _LikeTileState extends State<LikeTile> {
   }
 
   Future<void> _fetchUserInfo() async {
-    if (widget.data?['liker'] != null) {
-      likerId = widget.data!['liker'].toString();
-
-      // Use likerName from notification data if available (fast path)
-      final notificationLikerName = widget.data?['likerName']?.toString();
-      final notificationLikerPic =
-          widget.data?['likerDisplayPicture']?.toString();
-
-      if (notificationLikerName != null &&
-          notificationLikerName.isNotEmpty &&
-          notificationLikerName != 'Someone') {
-        author = notificationLikerName;
-        leadingURL = notificationLikerPic ?? '';
-      } else {
-        // Fallback: fetch from user document (legacy notifications or missing data)
-        try {
-          final userService = locator<UserService>();
-          author = await userService.getUserDisplayName(widget.data!['liker']);
-
-          // Get avatar separately
-          DocumentSnapshot? user = await DatabaseService()
-              .getUser(widget.data!['liker'])
-              .timeout(Duration(seconds: 5));
-          if (user.exists) {
-            leadingURL = user.get('displayPicture')?.toString() ?? '';
-          }
-        } catch (e) {
-          // Error fetching user - getUserDisplayName already handles deleted users correctly
-          // Use generic fallback instead of assuming deleted
-          author = widget.data?['likerName']?.toString() ?? 'User';
-        }
-      }
+    if (likerId.isNotEmpty) {
+      // Use mixin helpers — handles fast-path from notification data + Firestore fallback
+      author = await fetchUserDisplayName(likerId, widget.data);
+      leadingURL = (await fetchUserAvatar(likerId)) ?? '';
     }
   }
 
-  Future<void> _fetchSpaceInfo() async {
-    if (widget.data?['space'] != null) {
-      try {
-        DocumentSnapshot? spaceDoc = await DatabaseService()
-            .getSpace(widget.data!['space'])
-            .timeout(Duration(seconds: 5));
-        if (spaceDoc.exists) {
-          space = spaceDoc.get('name')?.toString() ?? 'A Space';
-        }
-      } catch (e) {
-        // Use fallback
-        space = widget.data?['spaceName']?.toString() ?? 'A Gram';
-      }
-    }
-  }
-
-  Future<void> _fetchDateInfo() async {
-    if (widget.data?['timestamp'] != null) {
-      try {
-        date =
-            TimeDisplay.getCompactTimestamp(widget.data!['timestamp'].toDate());
-      } catch (e) {
-        date = 'Recently';
-      }
-    }
+  Future<void> _fetchSpaceAndDateInfo() async {
+    final spaceId = widget.data?['space']?.toString();
+    space = await fetchSpaceName(spaceId,
+        fallbackName: widget.data?['spaceName']?.toString() ?? 'A Gram');
+    date = parseNotificationTimestamp(widget.data);
   }
 
   Future<void> _fetchPostInfo() async {
@@ -139,24 +86,12 @@ class _LikeTileState extends State<LikeTile> {
           trailingURL = data['thumbnail']?.toString() ?? '';
         }
       } catch (e) {
-        // Post might be deleted, but we'll still show the notification
-        // Use thumbnail from notification data if available
+        // Post might be deleted, use thumbnail from notification data if available
         if (widget.data?['thumbnail'] != null) {
           trailingURL = widget.data!['thumbnail'].toString();
         }
       }
     }
-  }
-
-  String get _timestamp {
-    if (widget.data?['timestamp'] != null) {
-      try {
-        return TimeDisplay.getCompactTimestamp(widget.data!['timestamp'].toDate());
-      } catch (_) {
-        AppLogger.w('LikeTile: failed to parse timestamp', category: LogCategory.general);
-      }
-    }
-    return date;
   }
 
   @override
@@ -179,7 +114,7 @@ class _LikeTileState extends State<LikeTile> {
       ),
       title: '$author liked your post',
       subtitle: spaceSubtitle,
-      timestamp: _timestamp,
+      timestamp: date,
       trailing: trailingURL.isNotEmpty
           ? Container(
               width: 50,
@@ -196,9 +131,7 @@ class _LikeTileState extends State<LikeTile> {
           : null,
       onTap: () {
         if (widget.data?['postId'] != null) {
-          Navigator.of(context, rootNavigator: true).push(
-            CupertinoPageRoute(builder: (context) => ThreadView(postId: widget.data!['postId'])),
-          );
+          context.push('/post/${widget.data!['postId']}');
         } else {
           showCustomSnackBar(context, message: 'Post or space information is unavailable', duration: const Duration(seconds: 2), backgroundColor: AppTheme.errorColor);
         }

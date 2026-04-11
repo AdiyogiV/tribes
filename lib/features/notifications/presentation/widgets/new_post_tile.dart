@@ -1,11 +1,10 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show DocumentSnapshot;
 import 'package:flutter/material.dart';
-import 'package:aurogram/features/feed/presentation/pages/thread_view.dart';
-import 'package:aurogram/features/spaces/presentation/pages/space_screen.dart';
+import 'package:go_router/go_router.dart';
 import 'package:aurogram/shared/services/database_service.dart';
 import 'package:aurogram/features/feed/data/datasources/post_db_service.dart';
 import 'package:aurogram/core/di/injection.dart';
+import 'package:aurogram/shared/data/repositories/user_repository.dart';
 import 'package:aurogram/features/profile/domain/user_service.dart';
 import 'package:aurogram/shared/utils/time_display.dart';
 import 'package:aurogram/features/profile/presentation/widgets/preview_boxes/gram_picture.dart';
@@ -28,8 +27,6 @@ class NewPostTile extends StatefulWidget {
 }
 
 class _NewPostTileState extends State<NewPostTile> {
-  final CollectionReference postCollection =
-      FirebaseFirestore.instance.collection('posts');
   String author = 'Unknown Author';
   String authorId = '';
   String authorDp = '';
@@ -101,7 +98,7 @@ class _NewPostTileState extends State<NewPostTile> {
                 await userService.getUserDisplayName(widget.data!['author']);
 
             // Get avatar separately
-            DocumentSnapshot? user = await DatabaseService()
+            DocumentSnapshot? user = await locator<UserRepository>()
                 .getUser(widget.data!['author'])
                 .timeout(Duration(seconds: 5));
             if (user.exists) {
@@ -202,10 +199,7 @@ class _NewPostTileState extends State<NewPostTile> {
         child: InkWell(
           onTap: () {
             if (widget.data?['postId'] != null) {
-              Navigator.of(context, rootNavigator: true)
-                  .push(CupertinoPageRoute(builder: (context) {
-                return ThreadView(postId: widget.data!['postId']);
-              }));
+              context.push('/post/${widget.data!['postId']}');
             } else {
               showCustomSnackBar(context, message: 'Post information is unavailable', duration: const Duration(seconds: 2), backgroundColor: AppTheme.errorColor);
             }
@@ -291,12 +285,7 @@ class _NewPostTileState extends State<NewPostTile> {
                             GestureDetector(
                               onTap: () {
                                 if (widget.data?['space'] != null) {
-                                  Navigator.of(context, rootNavigator: true)
-                                      .push(CupertinoPageRoute(
-                                          builder: (context) {
-                                    return SpaceScreen(
-                                        rid: widget.data!['space']);
-                                  }));
+                                  context.push('/space/${widget.data!['space']}');
                                 }
                               },
                               child: Container(
@@ -396,11 +385,7 @@ class _NewPostTileState extends State<NewPostTile> {
                           GestureDetector(
                             onTap: () {
                               if (widget.data?['postId'] != null) {
-                                Navigator.of(context, rootNavigator: true).push(
-                                    CupertinoPageRoute(builder: (context) {
-                                  return ThreadView(
-                                      postId: widget.data!['postId']);
-                                }));
+                                context.push('/post/${widget.data!['postId']}');
                               }
                             },
                             child: Container(

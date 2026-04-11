@@ -1,8 +1,11 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:aurogram/features/astrology/presentation/pages/daily_insight_page.dart';
+import 'package:aurogram/core/di/injection.dart';
+import 'package:aurogram/shared/data/repositories/notification_repository.dart';
+import 'package:go_router/go_router.dart';
+import 'package:aurogram/core/routing/route_names.dart';
 import 'package:aurogram/shared/utils/time_display.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
@@ -49,39 +52,27 @@ class _DailyInsightTileState extends State<DailyInsightTile> {
 
     _markAsRead();
 
-    Navigator.of(context, rootNavigator: true).push(
-      CupertinoPageRoute(
-        builder: (context) => DailyInsightPage(
-          uid: userId,
-          highlightCardIndex: _cardIndex,
-          insightDate: _date.isNotEmpty ? _date : null,
-        ),
-      ),
+    context.push(
+      RouteNames.dailyInsight,
+      extra: {
+        'uid': userId,
+        'cardIndex': _cardIndex,
+        'insightDate': _date.isNotEmpty ? _date : null,
+      },
     );
   }
 
   Future<void> _markAsRead() async {
     if (_isRead) return;
-    
+
     final userId = FirebaseAuth.instance.currentUser?.uid;
     final notificationId = widget.data?['id'] as String?;
-    
+
     if (userId == null || notificationId == null) return;
 
-    try {
-      await FirebaseFirestore.instance
-          .collection('notifications')
-          .doc(userId)
-          .collection('notifications')
-          .doc(notificationId)
-          .update({'read': true});
-      
-      if (mounted) {
-        setState(() => _isRead = true);
-      }
-    } catch (e) {
-      AppLogger.e('Failed to mark notification as read',
-          category: LogCategory.general, error: e);
+    await locator<NotificationRepository>().markAsRead(userId, notificationId);
+    if (mounted) {
+      setState(() => _isRead = true);
     }
   }
 

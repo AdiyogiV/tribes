@@ -1,12 +1,13 @@
 import 'package:flutter/cupertino.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:go_router/go_router.dart';
 import 'package:aurogram/shared/models/space.dart';
 import 'package:aurogram/shared/models/space_types.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:aurogram/core/di/injection.dart';
+import 'package:aurogram/shared/data/repositories/user_repository.dart';
+import 'package:aurogram/core/routing/route_names.dart';
 import 'package:aurogram/shared/presentation/responsive/responsive.dart';
 import 'package:aurogram/features/chat/domain/space_chat_service.dart';
-import 'package:aurogram/features/spaces/presentation/pages/space_chat_screen.dart';
-import 'package:aurogram/features/profile/presentation/pages/user_profile.dart';
 import 'package:aurogram/shared/presentation/widgets/dialogs/login_bottom_sheet.dart';
 
 /// Opens a DM conversation in the appropriate layout (mobile push or desktop inline).
@@ -25,10 +26,8 @@ Future<void> openConversation({
   if (isDM) {
     otherUserId = conversation.otherUserId;
     try {
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(conversation.otherUserId)
-          .get();
+      final userDoc = await locator<UserRepository>()
+          .getUser(conversation.otherUserId);
 
       if (userDoc.exists) {
         final userData = userDoc.data();
@@ -62,25 +61,16 @@ Future<void> openConversation({
   if (Responsive.isWideLayout(context)) {
     onDesktopSelect(conversation.id, space, otherUserId);
   } else {
-    Navigator.of(context).push(
-      CupertinoPageRoute(
-        builder: (context) => SpaceChatScreen(
-          spaceId: conversation.id,
-          space: space,
-          otherUserId: otherUserId,
-        ),
-      ),
+    context.push(
+      '${RouteNames.spaceChatScreen}/${conversation.id}',
+      extra: {'space': space, 'otherUserId': otherUserId},
     );
   }
 }
 
 /// Opens a user's profile page.
 void openProfile(BuildContext context, String userId) {
-  Navigator.of(context, rootNavigator: true).push(
-    CupertinoPageRoute(
-      builder: (context) => UserProfilePage(uid: userId),
-    ),
-  );
+  context.push('${RouteNames.userProfile}/$userId');
 }
 
 /// Starts a new conversation with a user (or opens existing one).
@@ -105,10 +95,7 @@ Future<void> startConversationWithUser({
     // Fetch actual user data to get the correct name
     String actualUserName = userName;
     try {
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .get();
+      final userDoc = await locator<UserRepository>().getUser(userId);
 
       if (userDoc.exists) {
         final userData = userDoc.data();
@@ -145,14 +132,9 @@ Future<void> startConversationWithUser({
     if (Responsive.isWideLayout(context)) {
       onDesktopSelect(conversationId, space, userId);
     } else {
-      Navigator.of(context).push(
-        CupertinoPageRoute(
-          builder: (context) => SpaceChatScreen(
-            spaceId: conversationId,
-            space: space,
-            otherUserId: userId,
-          ),
-        ),
+      context.push(
+        '${RouteNames.spaceChatScreen}/$conversationId',
+        extra: {'space': space, 'otherUserId': userId},
       );
     }
   } catch (e) {

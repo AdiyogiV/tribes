@@ -1,7 +1,11 @@
 import 'package:flutter/foundation.dart';
+import 'package:json_annotation/json_annotation.dart';
+
+part 'contact_match.g.dart';
 
 /// Represents a device contact that may or may not be on the app.
 @immutable
+@JsonSerializable()
 class ContactMatch {
   final String name;
   final String phoneNumber; // Display phone number
@@ -15,8 +19,13 @@ class ContactMatch {
     this.userId,
   });
 
+  factory ContactMatch.fromJson(Map<String, dynamic> json) =>
+      _$ContactMatchFromJson(json);
+
+  Map<String, dynamic> toJson() => _$ContactMatchToJson(this);
+
   bool get isOnApp => userId != null;
-  
+
   /// Get formatted phone number for display
   String get displayPhone => phoneNumber;
 
@@ -33,6 +42,7 @@ class ContactMatch {
 
 /// Result of contact sync operation.
 @immutable
+@JsonSerializable()
 class ContactSyncResult {
   final List<ContactMatch> onApp;
   final List<ContactMatch> notOnApp;
@@ -45,6 +55,11 @@ class ContactSyncResult {
     this.hasPermission = true,
     this.error,
   });
+
+  factory ContactSyncResult.fromJson(Map<String, dynamic> json) =>
+      _$ContactSyncResultFromJson(json);
+
+  Map<String, dynamic> toJson() => _$ContactSyncResultToJson(this);
 
   factory ContactSyncResult.permissionDenied() => const ContactSyncResult(
         hasPermission: false,

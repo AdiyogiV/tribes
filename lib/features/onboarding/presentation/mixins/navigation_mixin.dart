@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:aurogram/shared/presentation/widgets/media/common_widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -7,11 +8,9 @@ import 'package:aurogram/features/auth/auth_service.dart';
 import 'package:aurogram/features/astrology/domain/astrology_service.dart';
 import 'package:aurogram/features/notifications/domain/notification_service.dart';
 import 'package:aurogram/features/onboarding/domain/onboarding_service.dart';
-import 'package:aurogram/features/astrology/presentation/pages/daily_insight_page.dart';
-import 'package:aurogram/features/astrology/presentation/pages/astrology_details_page.dart';
-import 'package:aurogram/features/ayurveda/presentation/pages/ayurveda_details_page.dart';
 import 'package:aurogram/features/onboarding/domain/onboarding_constants.dart';
 import 'package:aurogram/features/onboarding/presentation/widgets/onboarding_dialogs.dart';
+import 'package:aurogram/core/routing/route_names.dart';
 
 /// Provides navigation helpers for the onboarding flow.
 ///
@@ -63,11 +62,7 @@ mixin NavigationMixin<T extends StatefulWidget> on State<T> {
     if (navIsUpdate) {
       Navigator.of(context).pop();
       Navigator.of(context).pop(true);
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => DailyInsightPage(uid: uid),
-        ),
-      );
+      context.push(RouteNames.dailyInsight, extra: {'uid': uid});
       return;
     }
 
@@ -85,11 +80,7 @@ mixin NavigationMixin<T extends StatefulWidget> on State<T> {
     authService.updateStatusBasedOnNewUserFlag(false, initialTabIndex: 0);
 
     Navigator.of(context).popUntil((route) => route.isFirst);
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => DailyInsightPage(uid: uid),
-      ),
-    );
+    context.push(RouteNames.dailyInsight, extra: {'uid': uid});
   }
 
   void navigateToAstroDetails() async {
@@ -123,11 +114,7 @@ mixin NavigationMixin<T extends StatefulWidget> on State<T> {
     authService.updateStatusBasedOnNewUserFlag(false, initialTabIndex: 3);
 
     Navigator.of(context).popUntil((route) => route.isFirst);
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => AstrologyDetailsPage(uid: uid),
-      ),
-    );
+    context.push('${RouteNames.astrologyDetails}/$uid');
   }
 
   void navigateToAyurveda() async {
@@ -146,11 +133,7 @@ mixin NavigationMixin<T extends StatefulWidget> on State<T> {
     if (navIsUpdate) {
       Navigator.of(context).pop();
       Navigator.of(context).pop(true);
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => AyurvedaDetailsPage(uid: uid),
-        ),
-      );
+      context.push('${RouteNames.ayurvedaDetails}/$uid');
       return;
     }
 
@@ -163,11 +146,7 @@ mixin NavigationMixin<T extends StatefulWidget> on State<T> {
     authService.updateStatusBasedOnNewUserFlag(false, initialTabIndex: 3);
 
     Navigator.of(context).popUntil((route) => route.isFirst);
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => AyurvedaDetailsPage(uid: uid),
-      ),
-    );
+    context.push('${RouteNames.ayurvedaDetails}/$uid');
   }
 
   /// Show contextual notification permission prompt.

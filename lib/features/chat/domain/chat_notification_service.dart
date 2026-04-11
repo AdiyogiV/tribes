@@ -7,7 +7,7 @@ import 'package:aurogram/features/feed/data/datasources/space_db_service.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/features/chat/presentation/widgets/in_app_chat_notification.dart';
 import 'package:aurogram/core/routing/route_names.dart';
-import 'package:aurogram/core/routing/page_factory.dart';
+import 'package:aurogram/core/routing/app_router.dart';
 import 'package:aurogram/features/chat/domain/space_chat_service.dart';
 
 class ChatNotificationService {
@@ -157,13 +157,13 @@ class ChatNotificationService {
 
       if (!context.mounted) return;
 
-      // Navigate to chat screen
-      Navigator.of(context).push(
-        PageFactory.route(RouteNames.spaceChatScreen, arguments: {
-          'spaceId': spaceId,
+      // Navigate to chat screen via GoRouter
+      appRouter.push(
+        '${RouteNames.spaceChatScreen}/$spaceId',
+        extra: {
           'space': space,
           'otherUserId': otherUserId,
-        }),
+        },
       );
 
       AppLogger.i('🔔 Navigation successful', category: LogCategory.messaging);

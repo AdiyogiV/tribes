@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
+import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:aurogram/shared/models/chat_message.dart';
@@ -13,7 +14,6 @@ import 'package:aurogram/features/chat/presentation/widgets/external_link_previe
 import 'package:aurogram/features/chat/presentation/widgets/link_preview_card.dart';
 import 'package:aurogram/features/chat/presentation/widgets/voice_message_widget.dart';
 import 'package:aurogram/features/spaces/presentation/widgets/fullscreen_image_viewer.dart';
-import 'video_player_screen.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 
 /// Builds message body content (text, media, audio, shared content) for chat tiles.
@@ -170,11 +170,7 @@ class MessageBodyBuilder {
   }
 
   static void _playVideo(BuildContext context, String videoUrl) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => VideoPlayerScreen(videoUrl: videoUrl),
-      ),
-    );
+    context.push('/media/video', extra: {'videoUrl': videoUrl});
   }
 
   /// Builds text content with optional link preview (internal or external)

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
+import 'package:aurogram/core/theme/app_dimensions.dart';
 
 /// Extract tithi number from samvat data (normalized to 1-15)
 int? extractTithiNumber(Map<String, dynamic>? samvat) {
@@ -60,6 +61,77 @@ String? extractPaksha(Map<String, dynamic>? samvat) {
   }
 
   return paksha.isNotEmpty ? paksha : null;
+}
+
+// =============================================================================
+// SHARED CALENDAR CARD LAYOUT BUILDERS
+// Eliminates duplicate styling across Buddhist, Chinese, Islamic, Jewish, Jain cards
+// =============================================================================
+
+/// Builds the standard calendar card header (e.g. "Buddhist Era", "Islamic Calendar (Hijri)")
+Widget buildCalendarHeader(String title) {
+  return Text(
+    title,
+    style: TextStyle(
+      fontSize: 14,
+      fontWeight: FontWeight.w700,
+      color: AppTheme.primaryColor,
+      height: 1.2,
+    ),
+  );
+}
+
+/// Builds the prominent main date display (e.g. "BE 2568", "15 Ramadan 1445")
+/// [mainText] is the large date string; [suffix] is an optional smaller era notation (AH, AM, etc.)
+Widget buildCalendarMainDate(String mainText, {String? suffix}) {
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.baseline,
+    textBaseline: TextBaseline.alphabetic,
+    children: [
+      Flexible(
+        child: Text(
+          mainText,
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            color: AppTheme.primaryColor,
+            height: 1.2,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ),
+      if (suffix != null) ...[
+        const SizedBox(width: 6),
+        Text(
+          suffix,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.primaryColor.withValues(alpha: 0.7),
+          ),
+        ),
+      ],
+    ],
+  );
+}
+
+/// Builds the standard footer note (e.g. "Lunisolar calendar • Epoch: ...")
+Widget buildCalendarFooter(String note) {
+  return Text(
+    note,
+    style: TextStyle(
+      fontSize: 11,
+      fontWeight: FontWeight.w500,
+      fontStyle: FontStyle.italic,
+      color: AppTheme.primaryColor.withValues(alpha: 0.5),
+      height: 1.3,
+    ),
+  );
+}
+
+/// Standard vertical gap between calendar card sections
+SizedBox calendarSectionGap({bool large = false}) {
+  return SizedBox(height: large ? AppDimensions.spacingLg : AppDimensions.spacingMd);
 }
 
 /// Helper widget to build date component rows

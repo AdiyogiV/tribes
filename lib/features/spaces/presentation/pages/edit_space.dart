@@ -1,17 +1,15 @@
 import 'package:flutter/foundation.dart';
 import 'package:aurogram/shared/models/space_types.dart';
-import 'package:aurogram/features/spaces/presentation/pages/space_screen.dart';
 import 'package:aurogram/shared/presentation/widgets/dialogs/login_bottom_sheet.dart';
 import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:aurogram/shared/models/space.dart';
 import 'package:aurogram/shared/models/space_roles.dart';
-import 'package:aurogram/features/profile/presentation/pages/social/requests.dart';
-import 'package:aurogram/features/spaces/presentation/pages/add_spaces_members.dart';
 import 'package:aurogram/shared/services/cache_service.dart';
 import 'package:aurogram/shared/services/database_service.dart';
 import 'package:aurogram/features/feed/data/datasources/space_db_service.dart';
@@ -263,10 +261,7 @@ class EditSpaceState extends State<EditSpace>
       final spaceService = locator<SpaceService>();
       bool success = await spaceService.clearAllPostsInSpace(widget.space!);
       if (success && mounted) {
-        Navigator.of(context).pushReplacement(
-          CupertinoPageRoute(
-              builder: (context) => SpaceScreen(rid: widget.space!)),
-        );
+        context.pushReplacement('/space/${widget.space!}');
       } else {
         throw Exception("Failed to delete gram");
       }
@@ -283,9 +278,7 @@ class EditSpaceState extends State<EditSpace>
   }
 
   void _showRequests() {
-    Navigator.of(context).push(
-      CupertinoPageRoute(builder: (context) => Requests(space: widget.space!)),
-    );
+    context.push('/requests', extra: {'space': widget.space!});
   }
 
   void _leaveSpace() {
@@ -384,10 +377,7 @@ class EditSpaceState extends State<EditSpace>
   }
 
   void _inviteMembers() {
-    Navigator.of(context).push(
-      CupertinoPageRoute(
-          builder: (context) => AddSpacesMember(space: widget.space!)),
-    );
+    context.push('/space/members/add/${widget.space!}');
   }
 
   Future<void> _shareLink() async {

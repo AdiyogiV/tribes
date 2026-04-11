@@ -145,8 +145,11 @@ export const submitAnonymousMessage = onCall(
             stack: errStack,
             name: error?.name,
         });
-        // Log to console so it appears in Cloud Logging
-        console.error("[submitAnonymousMessage] internal error:", errMsg, errStack);
+        logger.error("[submitAnonymousMessage] internal error", {
+            structuredData: true,
+            error: errMsg,
+            stack: errStack,
+        });
 
         throw new HttpsError("internal", "UNKNOWN");
     }

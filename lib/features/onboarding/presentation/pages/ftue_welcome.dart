@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show FieldValue;
+import 'package:aurogram/core/di/injection.dart';
+import 'package:aurogram/shared/data/repositories/user_repository.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
@@ -11,8 +13,7 @@ import 'package:aurogram/features/auth/auth_service.dart';
 import 'package:aurogram/features/onboarding/domain/onboarding_service.dart';
 import 'package:aurogram/shared/services/analytics_service.dart';
 import 'package:aurogram/features/astrology/domain/sky_positions_service.dart';
-import 'package:aurogram/features/astrology/presentation/pages/astrology_setup_page.dart';
-import 'package:aurogram/features/auth/login.dart';
+import 'package:go_router/go_router.dart';
 import 'package:aurogram/features/onboarding/presentation/widgets/zodiac_wheel_painter.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 
@@ -81,9 +82,7 @@ class _FtueWelcomeState extends State<FtueWelcome>
     setState(() => _isNavigating = true);
     HapticFeedback.mediumImpact();
 
-    await Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => LoginPage()),
-    );
+    await context.push('/login');
 
     // User came back from login - check if they logged in
     if (mounted) {
@@ -103,9 +102,7 @@ class _FtueWelcomeState extends State<FtueWelcome>
     // Navigate to astrology setup page
     // For new setups, AstrologySetupPage will push OnboardingComplete directly
     // User can navigate back through the flow if needed
-    await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => const AstrologySetupPage()),
-    );
+    await context.push('/astrology/setup');
 
     // User backed out of the flow - stay on FTUE
     if (mounted) {
@@ -141,7 +138,7 @@ class _FtueWelcomeState extends State<FtueWelcome>
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+        locator<UserRepository>().updateUser(user.uid, {
           'ftueCompleted': true,
           'ftueCompletedAt': FieldValue.serverTimestamp(),
         }).catchError((_) {});

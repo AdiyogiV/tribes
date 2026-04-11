@@ -1,6 +1,6 @@
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show QueryDocumentSnapshot;
 import 'package:aurogram/shared/models/dm_conversation.dart';
 import 'package:aurogram/shared/models/contact_match.dart';
 import 'package:aurogram/core/theme/app_theme.dart';

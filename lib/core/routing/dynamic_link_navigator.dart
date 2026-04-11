@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
-import 'package:aurogram/core/routing/page_factory.dart';
+import 'package:aurogram/core/routing/app_router.dart';
 import 'package:aurogram/core/routing/route_names.dart';
 
 class DynamicLinkNavigator {
@@ -17,8 +17,8 @@ class DynamicLinkNavigator {
         data: {'spaceId': spaceId, 'inviterId': inviterId});
 
     _navigate(
-      RouteNames.spaceInvite,
-      arguments: {'spaceId': spaceId, 'inviterId': inviterId},
+      '${RouteNames.spaceInvite}/$spaceId',
+      extra: {'inviterId': inviterId},
     );
   }
 
@@ -27,7 +27,7 @@ class DynamicLinkNavigator {
     AppLogger.i('🔗 navigateToPost called',
         category: LogCategory.navigation, data: {'postId': postId});
 
-    _navigate(RouteNames.threadView, arguments: {'postId': postId});
+    _navigate('${RouteNames.threadView}/$postId');
   }
 
   /// Navigate to user profile
@@ -35,7 +35,7 @@ class DynamicLinkNavigator {
     AppLogger.i('🔗 navigateToUserProfile called',
         category: LogCategory.navigation, data: {'userId': userId});
 
-    _navigate(RouteNames.userProfile, arguments: {'uid': userId});
+    _navigate('${RouteNames.userProfile}/$userId');
   }
 
   /// Navigate to anonymous message send composer (by slug)
@@ -43,20 +43,20 @@ class DynamicLinkNavigator {
     AppLogger.i('🔗 navigateToSecretMessageSlug called',
         category: LogCategory.navigation, data: {'slug': slug});
 
-    _navigate(RouteNames.secretMessageSend, arguments: {'slug': slug});
+    _navigate('${RouteNames.secretMessageSend}/$slug');
   }
 
   /// Internal navigation helper with retry logic
-  static void _navigate(String routeName, {Map<String, dynamic>? arguments}) {
+  static void _navigate(String path, {Object? extra}) {
     // Try immediate navigation
-    if (_tryNavigate(routeName, arguments: arguments)) {
+    if (_tryNavigate(path, extra: extra)) {
       return;
     }
 
     // Store pending navigation and retry after delay
     AppLogger.i('🔗 Navigator not ready, scheduling retry',
         category: LogCategory.navigation);
-    _pendingNavigation = _PendingNavigation(routeName, arguments);
+    _pendingNavigation = _PendingNavigation(path, extra);
 
     // Retry after delays (app might still be initializing)
     Future.delayed(const Duration(milliseconds: 500), () => _processPending());
@@ -64,21 +64,10 @@ class DynamicLinkNavigator {
     Future.delayed(const Duration(seconds: 2), () => _processPending());
   }
 
-  /// Try to navigate immediately
-  static bool _tryNavigate(String routeName, {Map<String, dynamic>? arguments}) {
+  /// Try to navigate immediately via GoRouter
+  static bool _tryNavigate(String path, {Object? extra}) {
     try {
-      final context = navigatorKey.currentContext;
-      if (context == null) {
-        AppLogger.d('🔗 Navigator context is null',
-            category: LogCategory.navigation);
-        return false;
-      }
-
-      final navigator = Navigator.of(context);
-      navigator.push(
-        PageFactory.route(routeName, arguments: arguments),
-      );
-
+      appRouter.push(path, extra: extra);
       AppLogger.i('🔗 Navigation successful', category: LogCategory.navigation);
       return true;
     } catch (e) {
@@ -95,8 +84,8 @@ class DynamicLinkNavigator {
     AppLogger.d('🔗 Processing pending navigation',
         category: LogCategory.navigation);
 
-    if (_tryNavigate(_pendingNavigation!.routeName,
-        arguments: _pendingNavigation!.arguments)) {
+    if (_tryNavigate(_pendingNavigation!.path,
+        extra: _pendingNavigation!.extra)) {
       _pendingNavigation = null;
     }
   }
@@ -108,8 +97,8 @@ class DynamicLinkNavigator {
 }
 
 class _PendingNavigation {
-  final String routeName;
-  final Map<String, dynamic>? arguments;
+  final String path;
+  final Object? extra;
 
-  _PendingNavigation(this.routeName, this.arguments);
+  _PendingNavigation(this.path, this.extra);
 }

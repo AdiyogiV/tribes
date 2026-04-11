@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cards/moon_phase_strip.dart';
 import 'package:kosher_dart/kosher_dart.dart';
 import 'calendar_card_helpers.dart';
@@ -201,42 +200,10 @@ class JewishCalendarCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            'Hebrew Calendar',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.primaryColor,
-            ),
-          ),
+          buildCalendarHeader('Hebrew Calendar'),
           const SizedBox(height: AppDimensions.spacingMd),
           // Main date display
-          Row(
-            children: [
-              Flexible(
-                child: Text(
-                  '$day $monthName $year',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.primaryColor,
-                    height: 1.2,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ),
-              const SizedBox(width: AppDimensions.spacingSm),
-              Text(
-                'AM',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.primaryColor.withValues(alpha: 0.7),
-                  height: 1.3,
-                ),
-              ),
-            ],
-          ),
+          buildCalendarMainDate('$day $monthName $year', suffix: 'AM'),
           const SizedBox(height: AppDimensions.spacingLg),
           // Jewish Holiday (if any)
           if (holidayName != null) ...[
@@ -282,16 +249,7 @@ class JewishCalendarCard extends StatelessWidget {
           ),
           const SizedBox(height: AppDimensions.spacingMd),
           // Note
-          Text(
-            'Lunisolar calendar • Epoch: Creation (3761 BCE)',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              fontStyle: FontStyle.italic,
-              color: AppTheme.primaryColor.withValues(alpha: 0.5),
-              height: 1.4,
-            ),
-          ),
+          buildCalendarFooter('Lunisolar calendar • Epoch: Creation (3761 BCE)'),
         ],
       ),
     );

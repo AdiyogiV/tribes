@@ -1,21 +1,30 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:json_annotation/json_annotation.dart';
+import 'package:aurogram/shared/data/converters/timestamp_converter.dart';
+
+part 'call.g.dart';
 
 /// Call state enum with intermediate states for better conflict resolution
 enum CallState {
   idle,
   ringing, // Outgoing call ringing
   incoming, // Incoming call
-  answering, // NEW: Device is answering (intermediate state)
+  answering, // Device is answering (intermediate state)
   connecting, // Call connecting
   connected, // Call active
-  ending, // NEW: Call is ending (intermediate state)
+  ending, // Call is ending (intermediate state)
   ended, // Call ended
 }
 
 /// Call type enum
-enum CallType { voice, video }
+enum CallType {
+  @JsonValue('voice')
+  voice,
+  @JsonValue('video')
+  video,
+}
 
-/// Call model
+/// Call model with generated JSON serialization.
+@JsonSerializable()
 class Call {
   final String id;
   final String callerId;
@@ -25,9 +34,12 @@ class Call {
   final String calleeName;
   final String? calleeAvatar;
   final CallType type;
+  @TimestampConverter()
   final DateTime createdAt;
   final String status; // 'ringing', 'answered', 'ended', 'missed', 'rejected'
+  @NullableTimestampConverter()
   final DateTime? answeredAt;
+  @NullableTimestampConverter()
   final DateTime? endedAt;
 
   Call({
@@ -45,38 +57,19 @@ class Call {
     this.endedAt,
   });
 
-  factory Call.fromJson(Map<String, dynamic> json) {
-    return Call(
-      id: json['id'] ?? '',
-      callerId: json['callerId'] ?? '',
-      callerName: json['callerName'] ?? 'Unknown',
-      callerAvatar: json['callerAvatar'],
-      calleeId: json['calleeId'] ?? '',
-      calleeName: json['calleeName'] ?? 'Unknown',
-      calleeAvatar: json['calleeAvatar'],
-      type: json['type'] == 'video' ? CallType.video : CallType.voice,
-      createdAt: (json['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      status: json['status'] ?? 'ringing',
-      answeredAt: (json['answeredAt'] as Timestamp?)?.toDate(),
-      endedAt: (json['endedAt'] as Timestamp?)?.toDate(),
-    );
-  }
+  factory Call.fromJson(Map<String, dynamic> json) => _$CallFromJson({
+        ...json,
+        // Provide defaults for required fields from Firestore
+        'id': json['id'] ?? '',
+        'callerId': json['callerId'] ?? '',
+        'callerName': json['callerName'] ?? 'Unknown',
+        'calleeId': json['calleeId'] ?? '',
+        'calleeName': json['calleeName'] ?? 'Unknown',
+        'type': json['type'] ?? 'voice',
+        'status': json['status'] ?? 'ringing',
+      });
 
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'callerId': callerId,
-        'callerName': callerName,
-        'callerAvatar': callerAvatar,
-        'calleeId': calleeId,
-        'calleeName': calleeName,
-        'calleeAvatar': calleeAvatar,
-        'type': type == CallType.video ? 'video' : 'voice',
-        'createdAt': Timestamp.fromDate(createdAt),
-        'status': status,
-        'answeredAt':
-            answeredAt != null ? Timestamp.fromDate(answeredAt!) : null,
-        'endedAt': endedAt != null ? Timestamp.fromDate(endedAt!) : null,
-      };
+  Map<String, dynamic> toJson() => _$CallToJson(this);
 
   bool get isVideo => type == CallType.video;
   bool get isVoice => type == CallType.voice;

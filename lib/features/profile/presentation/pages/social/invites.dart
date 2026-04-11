@@ -1,11 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:aurogram/shared/presentation/widgets/media/common_widgets.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:aurogram/shared/data/repositories/user_repository.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:aurogram/features/spaces/presentation/pages/space_screen.dart';
-import 'package:aurogram/features/profile/presentation/pages/user_profile.dart';
 import 'package:aurogram/shared/services/database_service.dart';
 import 'package:aurogram/features/spaces/domain/space_service.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
@@ -15,6 +14,7 @@ import 'package:aurogram/core/di/injection.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/shared/presentation/widgets/feedback/snack_bar_service.dart';
+import 'package:go_router/go_router.dart';
 
 class Invites extends StatefulWidget {
   const Invites({
@@ -324,11 +324,9 @@ class _InviteCardState extends State<_InviteCard> {
       }
 
       if (widget.inviterId != null) {
-        final userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(widget.inviterId)
-            .get();
-        
+        final userDoc = await locator<UserRepository>()
+            .getUser(widget.inviterId!);
+
         if (mounted && userDoc.exists) {
           final userData = userDoc.data()!;
           setState(() {
@@ -371,11 +369,7 @@ class _InviteCardState extends State<_InviteCard> {
       widget.onRefresh();
 
       if (mounted) {
-        Navigator.of(context).pushReplacement(
-          CupertinoPageRoute(
-            builder: (context) => SpaceScreen(rid: widget.spaceId),
-          ),
-        );
+        context.push('/space/${widget.spaceId}');
       }
     } catch (e) {
       AppLogger.e('Error accepting invite',
@@ -467,12 +461,7 @@ class _InviteCardState extends State<_InviteCard> {
                   GestureDetector(
                     onTap: widget.inviterId != null
                         ? () {
-                            Navigator.of(context).push(
-                              CupertinoPageRoute(
-                                builder: (context) =>
-                                    UserProfilePage(uid: widget.inviterId!),
-                              ),
-                            );
+                            context.push('/user/profile/${widget.inviterId!}');
                           }
                         : null,
                     child: Container(
@@ -543,12 +532,7 @@ class _InviteCardState extends State<_InviteCard> {
                   // Gram picture preview
                   GestureDetector(
                     onTap: () {
-                      Navigator.of(context).push(
-                        CupertinoPageRoute(
-                          builder: (context) =>
-                              SpaceScreen(rid: widget.spaceId),
-                        ),
-                      );
+                      context.push('/space/${widget.spaceId}');
                     },
                     child: Container(
                       width: 56,

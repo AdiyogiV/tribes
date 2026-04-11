@@ -37,6 +37,9 @@ class NotificationService {
   String? _currentRoute;
   String? _currentChatSpaceId;
 
+  // Timer for periodic unread-count polling (set by NotificationTokens extension)
+  Timer? unreadCountTimer;
+
   // Stream controllers for notification events
   final StreamController<AppNotification> _notificationStreamController =
       StreamController<AppNotification>.broadcast();
@@ -246,6 +249,8 @@ class NotificationService {
 
   /// Dispose resources.
   void dispose() {
+    unreadCountTimer?.cancel();
+    unreadCountTimer = null;
     _notificationStreamController.close();
     _unreadCountController.close();
   }

@@ -9,7 +9,8 @@ import 'package:aurogram/shared/utils/time_display.dart';
 import 'package:aurogram/features/anonymous_messages/widgets/message_card.dart';
 import 'package:aurogram/features/anonymous_messages/widgets/share_card_builder.dart';
 import 'package:aurogram/shared/presentation/widgets/dialogs/login_bottom_sheet.dart';
-import 'package:aurogram/features/anonymous_messages/pages/get_link_screen.dart';
+import 'package:go_router/go_router.dart';
+import 'package:aurogram/core/routing/route_names.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/shared/presentation/widgets/feedback/snack_bar_service.dart';
 
@@ -256,11 +257,7 @@ class _SecretMessagesInboxScreenState extends State<SecretMessagesInboxScreen> {
             const SizedBox(height: AppDimensions.spacingLg),
             ElevatedButton(
               onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const SecretMessagesGetLinkScreen(),
-                  ),
-                );
+                context.push(RouteNames.secretMessagesGetLink);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryColor,

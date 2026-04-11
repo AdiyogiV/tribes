@@ -2,9 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:aurogram/shared/presentation/widgets/media/common_widgets.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:aurogram/features/feed/presentation/pages/thread_view.dart';
-import 'package:aurogram/features/stories/pages/story_composer_page.dart';
-import 'package:aurogram/features/stories/pages/story_viewer_page.dart';
+import 'package:go_router/go_router.dart';
 import 'package:aurogram/features/feed/domain/feed_service.dart';
 import 'package:aurogram/features/feed/domain/feed_layout_cache.dart';
 import 'package:aurogram/features/stories/story_service.dart';
@@ -125,11 +123,7 @@ class FeedDesktopLayout extends StatelessWidget {
                         forceRefresh: storyRingForceRefresh,
                         onAddStory: () async {
                           final result =
-                              await Navigator.of(context).push<bool>(
-                            MaterialPageRoute(
-                              builder: (_) => const StoryComposerPage(),
-                            ),
-                          );
+                              await context.push<bool>('/stories/compose');
                           if (result == true && context.mounted) {
                             onStoryRefresh(
                                 storyRingRefreshKey + 1, false);
@@ -141,14 +135,10 @@ class FeedDesktopLayout extends StatelessWidget {
                               await storyService.getUsersWithStories();
                           final idx = userIds.indexOf(userId);
                           if (!context.mounted) return;
-                          await Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => StoryViewerPage(
-                                userIds: userIds,
-                                initialUserIndex: idx >= 0 ? idx : 0,
-                              ),
-                            ),
-                          );
+                          await context.push('/stories/view', extra: {
+                            'userIds': userIds,
+                            'initialUserIndex': idx >= 0 ? idx : 0,
+                          });
                           if (context.mounted) {
                             onStoryRefresh(
                                 storyRingRefreshKey + 1, false);
@@ -223,11 +213,7 @@ class FeedDesktopLayout extends StatelessWidget {
                                     postId: postId,
                                     itemIndex: index,
                                     onOpenThread: (id) =>
-                                        Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) => ThreadView(postId: id),
-                                      ),
-                                    ),
+                                        context.push('/thread/$id'),
                                     enableVideoAutoplay: true,
                                     prewarmVideo: shouldPrewarmVideo,
                                   ),

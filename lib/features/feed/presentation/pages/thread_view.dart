@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:go_router/go_router.dart';
 import 'package:aurogram/core/di/injection.dart';
 import 'package:aurogram/features/feed/data/datasources/post_db_service.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
@@ -243,11 +244,7 @@ class _ThreadViewState extends State<ThreadView> {
   }
 
   void _onReplyInThread(String replyId) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => ThreadView(postId: replyId),
-      ),
-    );
+    context.push('/thread/$replyId');
   }
 
   @override

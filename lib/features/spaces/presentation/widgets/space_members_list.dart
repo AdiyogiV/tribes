@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show QuerySnapshot;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:aurogram/shared/services/database_service.dart';
@@ -6,9 +6,9 @@ import 'package:aurogram/features/feed/data/datasources/space_db_service.dart';
 import 'package:aurogram/core/di/injection.dart';
 import 'package:aurogram/features/profile/presentation/widgets/preview_boxes/crew_preview.dart';
 import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
-import 'package:aurogram/features/profile/presentation/pages/user_profile.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
+import 'package:go_router/go_router.dart';
 
 /// A reusable component for displaying space members consistently throughout the app
 class SpaceMembersList extends StatefulWidget {
@@ -219,12 +219,7 @@ class _SpaceMembersListState extends State<SpaceMembersList> {
   }
 
   void _navigateToUserProfile(String userId) {
-    Navigator.push(
-      context,
-      CupertinoPageRoute(
-        builder: (context) => UserProfilePage(uid: userId),
-      ),
-    );
+    context.push('/user/profile/$userId');
   }
 
   void _showAdminOptions(String userId, String currentRole) {

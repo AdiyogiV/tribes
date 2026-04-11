@@ -1,5 +1,4 @@
 import 'package:aurogram/core/theme/app_dimensions.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,17 +7,15 @@ import 'package:aurogram/features/chat/domain/space_chat_service.dart';
 import 'package:aurogram/features/profile/domain/namaste_service.dart';
 import 'package:aurogram/features/calling/domain/call_service.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
-import 'package:aurogram/features/profile/presentation/pages/user_profile.dart';
-import 'package:aurogram/features/spaces/presentation/pages/space_screen.dart';
 import 'package:aurogram/features/chat/presentation/widgets/message_search_sheet.dart';
 import 'package:aurogram/features/chat/presentation/widgets/conversation_options_sheet.dart';
 import 'package:get_it/get_it.dart';
 
-import 'media_gallery_page.dart';
 import 'space_chat_message_options.dart';
 import 'space_chat_reactions_sheet.dart';
 import 'space_chat_dialogs.dart';
 import 'package:aurogram/shared/presentation/widgets/feedback/snack_bar_service.dart';
+import 'package:go_router/go_router.dart';
 
 /// Non-widget action methods extracted from [SpaceChatScreenState].
 ///
@@ -83,27 +80,16 @@ mixin SpaceChatActionsMixin<T extends StatefulWidget> on State<T> {
 
   void navigateToHeader() {
     if (actionIsDMConversation && actionOtherUserId != null) {
-      Navigator.of(context).push(
-        CupertinoPageRoute(
-            builder: (context) => UserProfilePage(uid: actionOtherUserId)),
-      );
+      context.push('/user/profile/$actionOtherUserId');
     } else if (!actionIsDMConversation) {
-      Navigator.of(context).push(
-        CupertinoPageRoute(
-            builder: (context) => SpaceScreen(rid: actionSpaceId)),
-      );
+      context.push('/space/$actionSpaceId');
     }
   }
 
   void openMediaGallery() {
-    Navigator.of(context).push(
-      CupertinoPageRoute(
-        builder: (context) => MediaGalleryPage(
-          spaceId: actionSpaceId,
-          title: actionDisplayName ?? 'Media',
-        ),
-      ),
-    );
+    context.push('/media/gallery/$actionSpaceId', extra: {
+      'title': actionDisplayName ?? 'Media',
+    });
   }
 
   void openMessageSearch() {

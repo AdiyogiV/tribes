@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
 import 'package:aurogram/shared/presentation/widgets/media/common_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';

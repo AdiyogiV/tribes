@@ -3,7 +3,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:aurogram/core/routing/route_names.dart';
 import 'package:aurogram/core/di/injection.dart';
 import 'package:aurogram/shared/services/cache_service.dart';
 import 'package:aurogram/features/profile/domain/user_service.dart';
@@ -12,7 +14,6 @@ import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/header_style.dart';
 import 'package:aurogram/shared/presentation/responsive/responsive.dart';
 import 'package:aurogram/shared/providers/theme_provider.dart';
-import 'package:aurogram/features/creation/pages/uploads_page.dart';
 import 'package:aurogram/shared/presentation/widgets/dialogs/login_bottom_sheet.dart';
 import 'package:aurogram/shared/presentation/widgets/universal/transparent_toolbox.dart';
 import 'package:aurogram/features/anonymous_messages/anonymous_message_settings_service.dart';
@@ -200,11 +201,7 @@ class UserSettingsPageState extends State<UserSettingsPage> {
                                 subtitle: 'View upload progress',
                                 isDesktop: isDesktop,
                                 onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    CupertinoPageRoute(
-                                        builder: (context) => UploadsPage()),
-                                  );
+                                  context.push(RouteNames.uploads);
                                 },
                               ),
                               const SizedBox(height: AppDimensions.spacingMd),

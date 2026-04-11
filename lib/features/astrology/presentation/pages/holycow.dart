@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
@@ -19,8 +20,6 @@ import 'package:aurogram/shared/services/media/audio_input_service.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/cosmic_dashboard_data.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard.dart';
 import 'package:aurogram/shared/presentation/widgets/media/glass_container.dart';
-import 'package:aurogram/features/ai_chat/presentation/pages/ai_chat_page.dart';
-import 'package:aurogram/features/ai_chat/presentation/pages/recent_conversations_page.dart';
 import 'package:aurogram/features/astrology/presentation/pages/holycow/holycow_desktop_layout.dart';
 import 'package:aurogram/features/astrology/presentation/pages/holycow/holycow_empty_states.dart';
 import 'package:aurogram/features/astrology/presentation/pages/holycow/holycow_cosmic_content.dart';
@@ -128,18 +127,12 @@ class HolyCowPageState extends State<HolyCowPage>
     _inputFocusNode.unfocus();
     HapticFeedback.lightImpact();
 
-    Navigator.of(context).push(
-      CupertinoPageRoute(
-        builder: (_) => AiChatPage(initialMessage: text),
-      ),
-    );
+    context.push('/ai/chat', extra: {'initialMessage': text});
   }
 
   void _openNewChat() {
     HapticFeedback.lightImpact();
-    Navigator.of(context).push(
-      CupertinoPageRoute(builder: (_) => const AiChatPage()),
-    );
+    context.push('/ai/chat');
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -167,11 +160,7 @@ class HolyCowPageState extends State<HolyCowPage>
       onResult: (AudioInputResult result) {
         // Recording finished — navigate to AiChatPage with the voice result
         if (!mounted) return;
-        Navigator.of(context).push(
-          CupertinoPageRoute(
-            builder: (_) => AiChatPage(initialVoiceResult: result),
-          ),
-        );
+        context.push('/ai/chat', extra: {'initialVoiceResult': result});
       },
       onTranscriptUpdate: (String transcript) {
         AppLogger.d('Dashboard transcript: "$transcript"',
@@ -195,19 +184,11 @@ class HolyCowPageState extends State<HolyCowPage>
 
   void _showRecentConversations() {
     HapticFeedback.lightImpact();
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => RecentConversationsPage(
-          onConversationSelected: (conversationId) {
-            Navigator.of(context).push(
-              CupertinoPageRoute(
-                builder: (_) => AiChatPage(conversationId: conversationId),
-              ),
-            );
-          },
-        ),
-      ),
-    );
+    context.push('/ai/conversations', extra: {
+      'onConversationSelected': (String conversationId) {
+        context.push('/ai/chat', extra: {'conversationId': conversationId});
+      },
+    });
   }
 
   // ─────────────────────────────────────────────────────────────

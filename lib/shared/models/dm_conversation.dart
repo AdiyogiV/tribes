@@ -1,11 +1,18 @@
+import 'package:json_annotation/json_annotation.dart';
 import 'package:aurogram/shared/models/space_types.dart';
+import 'package:aurogram/shared/data/converters/timestamp_converter.dart';
 
-/// Represents a direct message conversation
+part 'dm_conversation.g.dart';
+
+/// Represents a direct message conversation with generated JSON serialization.
+@JsonSerializable()
 class DmConversation {
   final String id;
   final String otherUserId;
   final List<String> participants;
+  @TimestampConverter()
   final DateTime lastActivity;
+  @TimestampConverter()
   final DateTime createdAt;
   final String? lastMessageContent;
   final String? lastMessageSenderId;
@@ -22,6 +29,7 @@ class DmConversation {
   final bool isPinned;
   final bool isMuted;
   final bool isArchived;
+  @NullableTimestampConverter()
   final DateTime? mutedUntil;
   // Message request status: 'pending', 'accepted', 'declined' (null = accepted for backward compat)
   final String? status;
@@ -48,6 +56,11 @@ class DmConversation {
     this.status,
     this.requestedBy,
   });
+
+  factory DmConversation.fromJson(Map<String, dynamic> json) =>
+      _$DmConversationFromJson(json);
+
+  Map<String, dynamic> toJson() => _$DmConversationToJson(this);
 
   /// Create a copy with updated fields
   DmConversation copyWith({

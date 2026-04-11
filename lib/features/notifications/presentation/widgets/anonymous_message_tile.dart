@@ -1,10 +1,10 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:aurogram/core/routing/route_names.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/shared/utils/time_display.dart';
 import 'package:aurogram/features/notifications/presentation/widgets/unified_notification_card.dart';
-import 'package:aurogram/features/anonymous_messages/pages/inbox_screen.dart';
 
 class AnonymousMessageTile extends StatelessWidget {
   final Map<String, dynamic>? data;
@@ -40,11 +40,7 @@ class AnonymousMessageTile extends StatelessWidget {
       timestamp: TimeDisplay.getCompactTimestamp(dateTime),
       isRead: isRead,
       onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => const SecretMessagesInboxScreen(),
-          ),
-        );
+        context.push(RouteNames.secretMessagesInbox);
       },
     );
   }

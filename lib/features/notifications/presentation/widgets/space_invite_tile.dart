@@ -1,14 +1,11 @@
 import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:aurogram/shared/models/space.dart';
-import 'package:aurogram/features/spaces/presentation/pages/space_screen.dart';
-import 'package:aurogram/features/profile/presentation/pages/user_profile.dart';
 import 'package:aurogram/shared/services/cache_service.dart';
 import 'package:aurogram/shared/services/database_service.dart';
 import 'package:aurogram/features/spaces/domain/space_service.dart';
@@ -17,6 +14,7 @@ import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.da
 import 'package:aurogram/features/profile/presentation/widgets/preview_boxes/user_preview_box.dart';
 import 'package:aurogram/core/di/injection.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:aurogram/shared/data/repositories/user_repository.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 
 class SpaceInviteTile extends StatefulWidget {
@@ -35,8 +33,6 @@ class _SpaceInviteTileState extends State<SpaceInviteTile> {
   String username = 'Unknown User';
   File? spacePicture;
   String? spacePictureUrl; // For web
-  final CollectionReference usersCollection =
-      FirebaseFirestore.instance.collection('users');
   User? user = FirebaseAuth.instance.currentUser;
   bool isLoading = true;
 
@@ -49,9 +45,8 @@ class _SpaceInviteTileState extends State<SpaceInviteTile> {
   Future<void> fetchData() async {
     try {
       if (widget.inviter != null) {
-        DocumentSnapshot userDocument =
-            await DatabaseService().getUser(widget.inviter!);
-        username = userDocument.get('name') as String? ?? 'Unknown User';
+        final userName = await locator<UserRepository>().getDisplayName(widget.inviter!);
+        username = userName;
       }
 
       if (widget.space != null) {
@@ -136,10 +131,7 @@ class _SpaceInviteTileState extends State<SpaceInviteTile> {
               child: GestureDetector(
                 onTap: () {
                   if (widget.inviter != null) {
-                    Navigator.of(context)
-                        .push(CupertinoPageRoute(builder: (context) {
-                      return UserProfilePage(uid: widget.inviter);
-                    }));
+                    context.push('/user/${widget.inviter}');
                   }
                 },
                 child: Padding(
@@ -171,10 +163,7 @@ class _SpaceInviteTileState extends State<SpaceInviteTile> {
               child: GestureDetector(
                 onTap: () {
                   if (widget.space != null) {
-                    Navigator.of(context)
-                        .push(CupertinoPageRoute(builder: (context) {
-                      return SpaceScreen(rid: widget.space!);
-                    }));
+                    context.push('/space/${widget.space!}');
                   }
                 },
                 child: Padding(
@@ -197,10 +186,7 @@ class _SpaceInviteTileState extends State<SpaceInviteTile> {
                         .approveSpaceMember(widget.space!, user!.uid);
                     await widget.onRefresh?.call();
                     if (!context.mounted) return;
-                    Navigator.of(context)
-                        .push(CupertinoPageRoute(builder: (context) {
-                      return SpaceScreen(rid: widget.space!);
-                    }));
+                    context.push('/space/${widget.space!}');
                   }
                 },
                 child: Icon(

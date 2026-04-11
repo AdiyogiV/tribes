@@ -1,4 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:async' show StreamSubscription;
+import 'package:cloud_firestore/cloud_firestore.dart' show DocumentSnapshot;
+import 'package:aurogram/core/di/injection.dart';
+import 'package:aurogram/shared/data/repositories/notification_repository.dart';
 import 'package:aurogram/features/notifications/presentation/widgets/added_to_gram_tile.dart';
 import 'package:aurogram/features/notifications/presentation/widgets/daily_insight_tile.dart';
 import 'package:aurogram/features/notifications/presentation/widgets/group_call_tile.dart';
@@ -58,15 +61,13 @@ class Notifications extends StatefulWidget {
 }
 
 class NotificationsState extends State<Notifications> {
-  final CollectionReference _notificationsCollection =
-      FirebaseFirestore.instance.collection('notifications');
+  final NotificationRepository _notifRepo = locator<NotificationRepository>();
   final NotificationService _notificationService = NotificationService();
   final ScrollController _scrollController = ScrollController();
-  
+
   User? user = FirebaseAuth.instance.currentUser;
-  
+
   // Pagination
-  static const int _pageSize = 20;
   bool _hasMore = true;
   bool _isLoading = false;
   bool _isRefreshing = false;
@@ -80,6 +81,7 @@ class NotificationsState extends State<Notifications> {
   
   // Unread count
   int _unreadCount = 0;
+  StreamSubscription<int>? _unreadCountSub;
 
   @override
   void initState() {
@@ -91,6 +93,7 @@ class NotificationsState extends State<Notifications> {
 
   @override
   void dispose() {
+    _unreadCountSub?.cancel();
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
@@ -105,16 +108,12 @@ class NotificationsState extends State<Notifications> {
 
   void _listenToUnreadCount() {
     if (user == null) return;
-    
-    _notificationsCollection
-        .doc(user!.uid)
-        .collection('notifications')
-        .where('read', isEqualTo: false)
-        .snapshots()
-        .listen((snapshot) {
+
+    _unreadCountSub?.cancel();
+    _unreadCountSub = _notifRepo.unreadCountStream(user!.uid).listen((count) {
       if (mounted) {
         setState(() {
-          _unreadCount = snapshot.docs.length;
+          _unreadCount = count;
         });
       }
     });
@@ -138,37 +137,19 @@ class NotificationsState extends State<Notifications> {
     }
 
     try {
-      Query query = _notificationsCollection
-          .doc(user!.uid)
-          .collection('notifications')
-          .orderBy('timestamp', descending: true)
-          .limit(_pageSize);
+      final page = await _notifRepo.getNotifications(
+        user!.uid,
+        unreadOnly: _currentFilter == NotificationFilter.unread,
+      );
 
-      // Apply filter
-      query = _applyFilter(query);
-
-      final snapshot = await query.get();
-
-      if (snapshot.docs.isEmpty) {
-        setState(() {
-          _hasMore = false;
-          _isLoading = false;
-          _isRefreshing = false;
-        });
-        return;
-      }
-
-      final rawNotifications = snapshot.docs
-          .map((doc) => AppNotification.fromFirestore(doc))
-          .toList();
-      
       // Apply client-side filtering (e.g., exclude astro from "All")
-      final newNotifications = _filterNotificationsClientSide(rawNotifications);
+      final newNotifications =
+          _filterNotificationsClientSide(page.notifications);
 
       setState(() {
         _notifications = newNotifications;
-        _lastDocument = snapshot.docs.last;
-        _hasMore = snapshot.docs.length >= _pageSize;
+        _lastDocument = page.lastDocument;
+        _hasMore = page.hasMore;
         _isLoading = false;
         _isRefreshing = false;
       });
@@ -189,52 +170,26 @@ class NotificationsState extends State<Notifications> {
     setState(() => _isLoading = true);
 
     try {
-      Query query = _notificationsCollection
-          .doc(user!.uid)
-          .collection('notifications')
-          .orderBy('timestamp', descending: true)
-          .startAfterDocument(_lastDocument!)
-          .limit(_pageSize);
+      final page = await _notifRepo.getNotifications(
+        user!.uid,
+        startAfter: _lastDocument,
+        unreadOnly: _currentFilter == NotificationFilter.unread,
+      );
 
-      // Apply filter
-      query = _applyFilter(query);
-
-      final snapshot = await query.get();
-
-      if (snapshot.docs.isEmpty) {
-        setState(() {
-          _hasMore = false;
-          _isLoading = false;
-        });
-        return;
-      }
-
-      final rawNotifications = snapshot.docs
-          .map((doc) => AppNotification.fromFirestore(doc))
-          .toList();
-      
       // Apply client-side filtering (e.g., exclude astro from "All")
-      final newNotifications = _filterNotificationsClientSide(rawNotifications);
+      final newNotifications =
+          _filterNotificationsClientSide(page.notifications);
 
       setState(() {
         _notifications.addAll(newNotifications);
-        _lastDocument = snapshot.docs.last;
-        _hasMore = snapshot.docs.length >= _pageSize;
+        _lastDocument = page.lastDocument;
+        _hasMore = page.hasMore;
         _isLoading = false;
       });
     } catch (e) {
       AppLogger.e('Error loading more notifications',
           category: LogCategory.general, error: e);
       setState(() => _isLoading = false);
-    }
-  }
-
-  Query _applyFilter(Query query) {
-    switch (_currentFilter) {
-      case NotificationFilter.unread:
-        return query.where('read', isEqualTo: false);
-      case NotificationFilter.all:
-        return query;
     }
   }
 

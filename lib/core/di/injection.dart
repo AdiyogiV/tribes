@@ -34,6 +34,8 @@ import 'package:aurogram/shared/services/location_service.dart';
 import 'package:aurogram/shared/services/media/audio_input_service.dart';
 import 'package:aurogram/shared/services/batch_data_loader.dart';
 import 'package:aurogram/core/routing/dynamic_link_navigator.dart';
+import 'package:aurogram/shared/data/repositories/user_repository.dart';
+import 'package:aurogram/shared/data/repositories/notification_repository.dart';
 
 // Global GetIt instance
 final GetIt locator = GetIt.instance;
@@ -96,6 +98,20 @@ Future<void> setupCoreDependencies() async {
     locator.registerSingleton<NetworkOptimizer>(NetworkOptimizer());
 
     // Timer coordination removed - replaced with event-driven architecture
+
+    // Register UserRepository early — single source of truth for user lookups
+    if (!locator.isRegistered<UserRepository>()) {
+      locator.registerLazySingleton<UserRepository>(
+        () => UserRepository(),
+        dispose: (repo) => repo.dispose(),
+      );
+    }
+
+    // Register NotificationRepository — wraps notifications subcollection
+    if (!locator.isRegistered<NotificationRepository>()) {
+      locator.registerLazySingleton<NotificationRepository>(
+          () => NotificationRepository());
+    }
 
     // Register UserService early as AuthService depends on it
     if (!locator.isRegistered<UserService>()) {
@@ -289,3 +305,4 @@ PostRepository get postRepository => locator<PostRepository>();
 AuthService get authService => locator<AuthService>();
 PostService get postService => locator<PostService>();
 UserService get userService => locator<UserService>();
+UserRepository get userRepo => locator<UserRepository>();

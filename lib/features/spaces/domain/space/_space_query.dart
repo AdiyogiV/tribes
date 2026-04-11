@@ -191,14 +191,21 @@ extension SpaceQuery on SpaceService {
   }
 
   /// Gets a stream of space roles/references for a specific user.
-  Stream<QuerySnapshot> getSpacesByUserStream(String userId) {
-    // Directly return the stream from the userSpaces collection
-    return userSpaces
+  ///
+  /// Optionally filter by [roles] (e.g., `['member', 'owner', 'creator']`).
+  Stream<QuerySnapshot> getSpacesByUserStream(String userId,
+      {List<String>? roles}) {
+    Query query = userSpaces
         .doc(userId)
         .collection('spaces')
-        .orderBy('timestamp', descending: true)
-        .snapshots();
-    // Note: Error handling for streams is typically done in the listener (StreamBuilder/Consumer)
+        .orderBy('timestamp', descending: true);
+
+    if (roles != null && roles.isNotEmpty) {
+      query = query.where('role', whereIn: roles);
+    }
+
+    return query.snapshots();
+    // Note: Error handling for streams is typically done in the listener
   }
 
   /// Gets a list of space roles/references for a specific user once.

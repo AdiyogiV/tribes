@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cards/moon_phase_strip.dart';
 import 'package:hijri_date/hijri_date.dart';
 import 'package:hijri_date/moon_phases.dart' as hijri_moon;
@@ -117,40 +116,10 @@ class IslamicCalendarCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            'Islamic Calendar (Hijri)',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.primaryColor,
-            ),
-          ),
+          buildCalendarHeader('Islamic Calendar (Hijri)'),
           const SizedBox(height: AppDimensions.spacingMd),
           // Main date display
-          Row(
-            children: [
-              Text(
-                '$day $monthName $year',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.primaryColor,
-                  height: 1.2,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const SizedBox(width: AppDimensions.spacingMdSm),
-              Text(
-                'AH',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.primaryColor.withValues(alpha: 0.7),
-                  height: 1.3,
-                ),
-              ),
-            ],
-          ),
+          buildCalendarMainDate('$day $monthName $year', suffix: 'AH'),
           const SizedBox(height: AppDimensions.spacingLg),
           // Islamic Event (if any)
           if (eventName != null) ...[
@@ -191,16 +160,7 @@ class IslamicCalendarCard extends StatelessWidget {
           ),
           const SizedBox(height: AppDimensions.spacingMd),
           // Note
-          Text(
-            'Lunar calendar • Epoch: Hijra (622 CE)',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              fontStyle: FontStyle.italic,
-              color: AppTheme.primaryColor.withValues(alpha: 0.5),
-              height: 1.4,
-            ),
-          ),
+          buildCalendarFooter('Lunar calendar • Epoch: Hijra (622 CE)'),
         ],
       ),
     );

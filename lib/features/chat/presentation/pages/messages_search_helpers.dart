@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show FieldPath, QueryDocumentSnapshot;
 import 'package:aurogram/shared/models/dm_conversation.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/shared/services/search_service.dart';
+import 'package:aurogram/core/di/injection.dart';
+import 'package:aurogram/shared/data/repositories/user_repository.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 
 /// Batch prefetches user names for DM conversations to avoid repeated Firestore calls.
@@ -25,8 +27,8 @@ Future<void> prefetchUserNames(
   for (var i = 0; i < unknownUserIds.length; i += 10) {
     final chunk = unknownUserIds.skip(i).take(10).toList();
     try {
-      final docs = await FirebaseFirestore.instance
-          .collection('users')
+      final docs = await locator<UserRepository>()
+          .collection
           .where(FieldPath.documentId, whereIn: chunk)
           .get();
 

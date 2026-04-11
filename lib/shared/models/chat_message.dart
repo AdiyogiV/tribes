@@ -1,5 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:json_annotation/json_annotation.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:aurogram/shared/data/converters/timestamp_converter.dart';
+
+part 'chat_message.g.dart';
 
 enum MessageStatus { sending, sent, delivered }
 
@@ -27,6 +31,7 @@ class MentionableUser {
   });
 }
 
+@JsonSerializable()
 class ChatMessage {
   final String id;
   final String spaceId;
@@ -42,9 +47,13 @@ class ChatMessage {
   final String? replyTo;
   final Map<String, String> reactions; // userId -> reactionType
   final List<String> readBy;
+  @TimestampConverter()
   final DateTime timestamp;
+  @NullableTimestampConverter()
   final DateTime? editedAt;
+  @NullableTimestampConverter()
   final DateTime? deletedAt;
+  @JsonKey(includeFromJson: false, includeToJson: false)
   final MessageStatus status;
 
   // Call-specific fields (for messageType == 'call')
@@ -56,6 +65,7 @@ class ChatMessage {
   // Shared content fields (for messageType == 'shared_content')
   final Map<String, dynamic>?
       sharedContent; // {type, id, title, subtitle, imageUrl, authorName}
+  @JsonKey(defaultValue: false)
   final bool isForwarded; // true if message was forwarded
   final String? forwardedFrom; // Original message ID if forwarded
 
@@ -88,45 +98,57 @@ class ChatMessage {
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
     try {
-      // Simple status - just sent or delivered (no read receipts)
-      MessageStatus status = MessageStatus.delivered;
-      final senderId = json['senderId'] ?? '';
+      // Provide defaults for required fields that may be missing from Firestore
+      final safeJson = {
+        'id': json['id'] ?? '',
+        'spaceId': json['spaceId'] ?? '',
+        'senderId': json['senderId'] ?? '',
+        'senderName': json['senderName'] ?? '',
+        'content': json['content'] ?? '',
+        'messageType': json['messageType'] ?? 'text',
+        'reactions': json['reactions'] ?? <String, dynamic>{},
+        'readBy': json['readBy'] ?? <dynamic>[],
+        'timestamp': json['timestamp'] ?? Timestamp.now(),
+        ...json, // overlay actual values on top of defaults
+        // Re-apply defaults for keys that were explicitly null in json
+        if (json['id'] == null) 'id': '',
+        if (json['spaceId'] == null) 'spaceId': '',
+        if (json['senderId'] == null) 'senderId': '',
+        if (json['senderName'] == null) 'senderName': '',
+        if (json['content'] == null) 'content': '',
+        if (json['messageType'] == null) 'messageType': 'text',
+        if (json['reactions'] == null) 'reactions': <String, dynamic>{},
+        if (json['readBy'] == null) 'readBy': <dynamic>[],
+        if (json['timestamp'] == null) 'timestamp': Timestamp.now(),
+      };
 
+      final message = _$ChatMessageFromJson(safeJson);
+      // Always override status to delivered (no read receipts in this model)
       return ChatMessage(
-        id: json['id'] ?? '',
-        spaceId: json['spaceId'] ?? '',
-        senderId: senderId,
-        senderName: json['senderName'] ?? '',
-        senderAvatar: json['senderAvatar'],
-        content: json['content'] ?? '',
-        messageType: json['messageType'] ?? 'text',
-        mediaUrl: json['mediaUrl'],
-        thumbnailUrl: json['thumbnailUrl'],
-        fileSize: json['fileSize'],
-        replyTo: json['replyTo'],
-        reactions: Map<String, String>.from(json['reactions'] ?? {}),
-        readBy: List<String>.from(json['readBy'] ?? []),
-        timestamp: json['timestamp'] != null
-            ? (json['timestamp'] as Timestamp).toDate()
-            : DateTime.now(),
-        editedAt: json['editedAt'] != null
-            ? (json['editedAt'] as Timestamp).toDate()
-            : null,
-        deletedAt: json['deletedAt'] != null
-            ? (json['deletedAt'] as Timestamp).toDate()
-            : null,
-        status: status,
-        // Call-specific fields
-        callType: json['callType'],
-        callStatus: json['callStatus'],
-        callDuration: json['callDuration'],
-        isOutgoing: json['isOutgoing'],
-        // Shared content fields
-        sharedContent: json['sharedContent'] != null
-            ? Map<String, dynamic>.from(json['sharedContent'])
-            : null,
-        isForwarded: json['isForwarded'] ?? false,
-        forwardedFrom: json['forwardedFrom'],
+        id: message.id,
+        spaceId: message.spaceId,
+        senderId: message.senderId,
+        senderName: message.senderName,
+        senderAvatar: message.senderAvatar,
+        content: message.content,
+        messageType: message.messageType,
+        mediaUrl: message.mediaUrl,
+        thumbnailUrl: message.thumbnailUrl,
+        fileSize: message.fileSize,
+        replyTo: message.replyTo,
+        reactions: message.reactions,
+        readBy: message.readBy,
+        timestamp: message.timestamp,
+        editedAt: message.editedAt,
+        deletedAt: message.deletedAt,
+        status: MessageStatus.delivered,
+        callType: message.callType,
+        callStatus: message.callStatus,
+        callDuration: message.callDuration,
+        isOutgoing: message.isOutgoing,
+        sharedContent: message.sharedContent,
+        isForwarded: message.isForwarded,
+        forwardedFrom: message.forwardedFrom,
       );
     } catch (e) {
       AppLogger.e('Error parsing ChatMessage from JSON',
@@ -148,42 +170,25 @@ class ChatMessage {
   }
 
   Map<String, dynamic> toJson() {
-    final json = {
-      'id': id,
-      'spaceId': spaceId,
-      'senderId': senderId,
-      'senderName': senderName,
-      'senderAvatar': senderAvatar,
-      'content': content,
-      'messageType': messageType,
-      'mediaUrl': mediaUrl,
-      'thumbnailUrl': thumbnailUrl,
-      'fileSize': fileSize,
-      'replyTo': replyTo,
-      'reactions': reactions,
-      'readBy': readBy,
-      'timestamp': Timestamp.fromDate(timestamp),
-      'editedAt': editedAt != null ? Timestamp.fromDate(editedAt!) : null,
-      'deletedAt': deletedAt != null ? Timestamp.fromDate(deletedAt!) : null,
-    };
+    final json = _$ChatMessageToJson(this);
 
-    // Add call-specific fields if this is a call message
-    if (messageType == 'call') {
-      json['callType'] = callType;
-      json['callStatus'] = callStatus;
-      json['callDuration'] = callDuration;
-      json['isOutgoing'] = isOutgoing;
+    // Add call-specific fields only for call messages
+    if (messageType != 'call') {
+      json.remove('callType');
+      json.remove('callStatus');
+      json.remove('callDuration');
+      json.remove('isOutgoing');
     }
 
-    // Add shared content fields if this is a shared content message
-    if (messageType == 'shared_content' && sharedContent != null) {
-      json['sharedContent'] = sharedContent;
+    // Remove shared content fields if not a shared content message
+    if (messageType != 'shared_content' || sharedContent == null) {
+      json.remove('sharedContent');
     }
 
-    // Add forwarded fields if this is a forwarded message
-    if (isForwarded) {
-      json['isForwarded'] = true;
-      json['forwardedFrom'] = forwardedFrom;
+    // Only include forwarded fields if this is a forwarded message
+    if (!isForwarded) {
+      json.remove('isForwarded');
+      json.remove('forwardedFrom');
     }
 
     return json;

@@ -1,6 +1,7 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { db, FieldValue, logger } from "../lib/firebase.js";
 import { DateTime } from "luxon";
+import { requireAuth } from "../lib/auth_utils.js";
 
 /**
  * Track insight view for streak calculation
@@ -11,14 +12,7 @@ export const trackInsightView = onCall({
     memory: "256MiB",
     invoker: "public", // Allow client apps to invoke (Firebase Auth handles actual auth)
 }, async (request) => {
-    if (!request.auth) {
-        throw new HttpsError(
-            "unauthenticated",
-            "Must be authenticated to track insight view",
-        );
-    }
-
-    const userId = request.auth.uid;
+    const userId = requireAuth(request, "track insight view");
     const { insightId, date } = request.data || {};
 
     if (!insightId && !date) {
@@ -118,14 +112,7 @@ export const submitInsightFeedback = onCall({
     memory: "256MiB",
     invoker: "public", // Allow client apps to invoke (Firebase Auth handles actual auth)
 }, async (request) => {
-    if (!request.auth) {
-        throw new HttpsError(
-            "unauthenticated",
-            "Must be authenticated to submit feedback",
-        );
-    }
-
-    const userId = request.auth.uid;
+    const userId = requireAuth(request, "submit feedback");
     const { insightId, date, feedback, rating } = request.data || {};
 
     if (!insightId && !date) {
@@ -199,14 +186,7 @@ export const toggleFavoriteInsight = onCall({
     memory: "256MiB",
     invoker: "public", // Allow client apps to invoke (Firebase Auth handles actual auth)
 }, async (request) => {
-    if (!request.auth) {
-        throw new HttpsError(
-            "unauthenticated",
-            "Must be authenticated to toggle favorite",
-        );
-    }
-
-    const userId = request.auth.uid;
+    const userId = requireAuth(request, "toggle favorite");
     const { insightId, date } = request.data || {};
 
     if (!insightId && !date) {
@@ -281,14 +261,7 @@ export const getUserEngagement = onCall({
     memory: "256MiB",
     invoker: "public", // Allow client apps to invoke (Firebase Auth handles actual auth)
 }, async (request) => {
-    if (!request.auth) {
-        throw new HttpsError(
-            "unauthenticated",
-            "Must be authenticated to get engagement data",
-        );
-    }
-
-    const userId = request.auth.uid;
+    const userId = requireAuth(request, "get engagement data");
 
     try {
         const userDoc = await db.collection("users").doc(userId).get();

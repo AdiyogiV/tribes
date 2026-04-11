@@ -1,10 +1,14 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:aurogram/features/profile/presentation/pages/user_profile.dart';
+import 'package:go_router/go_router.dart';
+import 'package:aurogram/core/di/injection.dart';
+import 'package:aurogram/core/routing/route_names.dart';
+import 'package:aurogram/shared/data/repositories/user_repository.dart';
+import 'package:aurogram/shared/data/repositories/notification_repository.dart';
 import 'package:aurogram/shared/utils/time_display.dart';
 import 'package:aurogram/shared/presentation/widgets/avatars/user_avatar.dart';
 import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
@@ -58,10 +62,7 @@ class _FollowRequestTileState extends State<FollowRequestTile> {
       // If we have a fromUserId, try to get latest user info
       if (_fromUserId.isNotEmpty) {
         try {
-          final userDoc = await FirebaseFirestore.instance
-              .collection('users')
-              .doc(_fromUserId)
-              .get();
+          final userDoc = await locator<UserRepository>().getUser(_fromUserId);
           if (userDoc.exists) {
             final data = userDoc.data();
             _fromUserName = data?['name']?.toString() ?? _fromUserName;
@@ -166,31 +167,16 @@ class _FollowRequestTileState extends State<FollowRequestTile> {
   }
 
   void _markAsRead() {
-    try {
-      final notificationId = widget.data?['id']?.toString();
-      final userId = _getCurrentUserId();
-      if (notificationId != null && userId.isNotEmpty) {
-        FirebaseFirestore.instance
-            .collection('notifications')
-            .doc(userId)
-            .collection('notifications')
-            .doc(notificationId)
-            .update({'read': true});
-      }
-    } catch (_) {
-      AppLogger.w('FollowRequestTile: failed to mark notification as read',
-          category: LogCategory.general);
+    final notificationId = widget.data?['id']?.toString();
+    final userId = _getCurrentUserId();
+    if (notificationId != null && userId.isNotEmpty) {
+      locator<NotificationRepository>().markAsRead(userId, notificationId);
     }
   }
 
   void _openProfile() {
     if (_fromUserId.isEmpty) return;
-    Navigator.push(
-      context,
-      CupertinoPageRoute(
-        builder: (context) => UserProfilePage(uid: _fromUserId),
-      ),
-    );
+    context.push('${RouteNames.userProfile}/$_fromUserId');
   }
 
   @override

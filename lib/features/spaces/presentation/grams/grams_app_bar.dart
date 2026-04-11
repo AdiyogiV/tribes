@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:aurogram/features/creation/pages/uploads_page.dart';
+import 'package:go_router/go_router.dart';
 import 'package:aurogram/shared/services/media/media_compression_service.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/header_style.dart';
@@ -29,9 +29,7 @@ class GramsUploadIndicator extends StatelessWidget {
         if (activeUploads > 0) {
           return InkWell(
             onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => UploadsPage()),
-              );
+              context.push('/uploads');
             },
             borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
             child: Padding(
@@ -84,9 +82,7 @@ SliverAppBar buildGramsSliverAppBar({
       if (activeUploads > 0) {
         return InkWell(
           onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (context) => UploadsPage()),
-            );
+            context.push('/uploads');
           },
           child: Badge(
             label: Text(

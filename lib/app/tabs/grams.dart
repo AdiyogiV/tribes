@@ -1,7 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
-import 'package:aurogram/features/spaces/presentation/pages/gram_creation_page.dart'
-    show SpaceCreationPage;
 import 'package:aurogram/features/spaces/presentation/grams/gram_skeleton_widgets.dart';
 import 'package:aurogram/features/spaces/presentation/grams/grams_app_bar.dart';
 import 'package:aurogram/features/spaces/presentation/grams/grams_desktop_layout.dart';
@@ -10,7 +8,7 @@ import 'package:aurogram/shared/services/cache_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:aurogram/features/spaces/presentation/pages/space_screen.dart';
+import 'package:go_router/go_router.dart';
 import 'package:aurogram/features/profile/presentation/widgets/preview_boxes/gram_preview_box.dart';
 import 'package:aurogram/features/spaces/domain/space_service.dart';
 import 'package:aurogram/core/di/injection.dart';
@@ -20,7 +18,6 @@ import 'package:aurogram/shared/presentation/widgets/universal/transparent_toolb
 import 'package:aurogram/shared/services/search_service.dart';
 import 'package:aurogram/shared/presentation/responsive/responsive.dart';
 import 'package:aurogram/shared/models/space.dart';
-import 'package:aurogram/features/profile/presentation/pages/social/invites.dart';
 
 class Grams extends StatefulWidget {
   const Grams({super.key});
@@ -367,9 +364,7 @@ class GramsState extends State<Grams> with AutomaticKeepAliveClientMixin {
         if (isWideLayout) {
           _selectGram(id);
         } else {
-          Navigator.of(context, rootNavigator: true).push(
-            CupertinoPageRoute(builder: (context) => SpaceScreen(rid: id)),
-          );
+          context.push('/space/$id');
         }
       },
       child: GramPreviewBox(
@@ -413,9 +408,7 @@ class GramsState extends State<Grams> with AutomaticKeepAliveClientMixin {
         if (isWideLayout) {
           _selectGram(id);
         } else {
-          Navigator.of(context, rootNavigator: true).push(
-            CupertinoPageRoute(builder: (context) => SpaceScreen(rid: id)),
-          );
+          context.push('/space/$id');
         }
       },
       child: GramPreviewBox(
@@ -610,15 +603,12 @@ class GramsState extends State<Grams> with AutomaticKeepAliveClientMixin {
 
   /// Show the gram creation dialog
   void _showCreationDialog() {
-    Navigator.of(context, rootNavigator: true)
-        .push(CupertinoPageRoute(builder: (context) => SpaceCreationPage()));
+    context.push('/space/create');
   }
 
   /// Navigate to gram invites page
   void _showInvites() {
-    Navigator.of(context, rootNavigator: true).push(
-      CupertinoPageRoute(builder: (context) => const Invites()),
-    );
+    context.push('/invites');
   }
 
   Future<void> _handleRefresh() async {

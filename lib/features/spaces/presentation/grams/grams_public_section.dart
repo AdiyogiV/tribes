@@ -1,5 +1,5 @@
 import 'package:aurogram/core/theme/app_dimensions.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show QueryDocumentSnapshot, Timestamp;
 import 'package:flutter/material.dart';
 import 'package:aurogram/features/spaces/presentation/grams/grams_empty_state.dart';
 import 'package:aurogram/shared/services/search_service.dart';

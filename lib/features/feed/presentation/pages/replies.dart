@@ -1,8 +1,10 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show QuerySnapshot;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
+import 'package:aurogram/core/di/injection.dart';
 import 'package:aurogram/core/theme/theme_helper.dart';
+import 'package:aurogram/features/feed/data/datasources/post_db_service.dart';
 import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
 import 'package:aurogram/features/feed/presentation/pages/theatre.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
@@ -16,11 +18,19 @@ class Replies extends StatefulWidget {
 
 class RepliesState extends State<Replies> {
   User? user = FirebaseAuth.instance.currentUser;
-  final CollectionReference userRepliesCollection =
-      FirebaseFirestore.instance.collection('userReplies');
+  Stream<QuerySnapshot>? _repliesStream;
 
   final RefreshController _refreshController =
       RefreshController(initialRefresh: false);
+
+  @override
+  void initState() {
+    super.initState();
+    if (user != null) {
+      _repliesStream = locator<PostDbService>().streamUserReplies(user!.uid);
+    }
+  }
+
   void _onRefresh() async {
     // monitor network fetch\
     // if failed,use refreshFailed()
@@ -43,31 +53,27 @@ class RepliesState extends State<Replies> {
       enablePullDown: true,
       controller: _refreshController,
       header: ThemeHelper.refreshHeader,
-      child: StreamBuilder<QuerySnapshot>(
-          stream: userRepliesCollection
-              .doc(user!.uid)
-              .collection('replies')
-              .orderBy(
-                'timestamp',
-              )
-              .snapshots(),
-          builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-            if (!snapshot.hasData) {
-              return Padding(
-                padding: const EdgeInsets.all(AppDimensions.paddingLg),
-                child: Column(
-                  children: List.generate(3, (_) => const Padding(
-                    padding: EdgeInsets.only(bottom: 16),
-                    child: SkeletonCard(),
-                  )),
-                ),
-              );
-            }
-            return Theatre(
-              initpage: 0,
-              rid: user!.uid,
-            );
-          }),
+      child: _repliesStream == null
+          ? const Center(child: Text('Not signed in'))
+          : StreamBuilder<QuerySnapshot>(
+              stream: _repliesStream,
+              builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                if (!snapshot.hasData) {
+                  return Padding(
+                    padding: const EdgeInsets.all(AppDimensions.paddingLg),
+                    child: Column(
+                      children: List.generate(3, (_) => const Padding(
+                        padding: EdgeInsets.only(bottom: 16),
+                        child: SkeletonCard(),
+                      )),
+                    ),
+                  );
+                }
+                return Theatre(
+                  initpage: 0,
+                  rid: user!.uid,
+                );
+              }),
     );
   }
 }

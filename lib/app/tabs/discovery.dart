@@ -1,12 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
-import 'package:aurogram/features/feed/presentation/pages/theatre.dart';
 import 'package:aurogram/shared/services/database_service.dart';
 import 'package:aurogram/features/profile/presentation/widgets/preview_boxes/preview_box.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:aurogram/features/spaces/presentation/pages/space_screen.dart';
-import 'package:aurogram/features/profile/presentation/pages/user_profile.dart';
+import 'package:go_router/go_router.dart';
 import 'package:aurogram/shared/services/search_service.dart';
 // Removed unused import: title.dart
 import 'package:aurogram/features/profile/presentation/widgets/preview_boxes/crew_preview.dart';
@@ -82,12 +80,7 @@ class DiscoveryState extends State<Discovery> {
                 GestureDetector(
                   key: UniqueKey(),
                   onTap: () {
-                    Navigator.of(context)
-                        .push(CupertinoPageRoute(builder: (context) {
-                      return Theatre(
-                        postId: documents.id,
-                      );
-                    }));
+                    context.push('/post/${documents.id}');
                   },
                   child: Container(
                     padding: EdgeInsets.all(5),
@@ -226,12 +219,7 @@ class DiscoveryState extends State<Discovery> {
         .map((spaceId) => GestureDetector(
               key: ValueKey('disc_$spaceId'),
               onTap: () {
-                Navigator.of(context, rootNavigator: true)
-                    .push(CupertinoPageRoute(builder: (context) {
-                  return SpaceScreen(
-                    rid: spaceId,
-                  );
-                }));
+                context.push('/space/$spaceId');
               },
               child: GramPreviewBox(
                 key: ValueKey('box_$spaceId'),
@@ -256,12 +244,7 @@ class DiscoveryState extends State<Discovery> {
               GestureDetector(
                 key: UniqueKey(),
                 onTap: () {
-                  Navigator.of(context, rootNavigator: true)
-                      .push(CupertinoPageRoute(builder: (context) {
-                    return UserProfilePage(
-                      uid: doc.id,
-                    );
-                  }));
+                  context.push('/user/${doc.id}');
                 },
                 child: CrewPreview(
                   key: UniqueKey(),

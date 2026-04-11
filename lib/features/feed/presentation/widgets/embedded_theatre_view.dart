@@ -1,20 +1,19 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:aurogram/shared/presentation/widgets/media/common_widgets.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:aurogram/shared/models/space.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/header_style.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
-import 'package:aurogram/features/feed/presentation/pages/thread_view.dart';
 import 'package:aurogram/features/feed/presentation/widgets/post_switcher.dart';
 import 'package:aurogram/features/profile/presentation/widgets/preview_boxes/gram_picture.dart';
 import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
 import 'package:aurogram/features/chat/presentation/widgets/embedded_chat_view.dart';
 import 'package:aurogram/features/calling/presentation/widgets/group_call_button.dart';
 import 'package:aurogram/features/spaces/presentation/pages/grid_space_view.dart';
-import 'package:aurogram/features/spaces/presentation/pages/edit_space.dart';
 import 'package:aurogram/shared/services/share/share_service.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 
@@ -241,11 +240,7 @@ class EmbeddedTheatreViewState extends State<EmbeddedTheatreView> {
 
   void _openSettings() {
     HapticFeedback.lightImpact();
-    Navigator.of(context).push(
-      CupertinoPageRoute(
-        builder: (context) => EditSpace(space: widget.spaceId),
-      ),
-    );
+    context.push('/space/edit/${widget.spaceId}');
   }
 
   void _shareGram() {
@@ -557,11 +552,7 @@ class EmbeddedTheatreViewState extends State<EmbeddedTheatreView> {
                 key: ValueKey(postId),
                 postId: postId,
                 itemIndex: index,
-                onOpenThread: (id) => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => ThreadView(postId: id),
-                  ),
-                ),
+                onOpenThread: (id) => context.push('/thread/$id'),
                 enableVideoAutoplay: false,
               ),
 

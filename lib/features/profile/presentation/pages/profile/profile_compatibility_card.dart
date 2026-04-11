@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:aurogram/core/di/injection.dart';
+import 'package:aurogram/shared/data/repositories/user_repository.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/compatibility_badge.dart';
 
@@ -75,10 +76,7 @@ class ProfileCompatibilityCard extends StatelessWidget {
     if (user == null) return {};
 
     try {
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
+      final doc = await locator<UserRepository>().getUser(user.uid);
       if (doc.exists) {
         final data = doc.data();
         return {

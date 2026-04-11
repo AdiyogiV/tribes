@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show DocumentSnapshot, Timestamp;
 import 'package:aurogram/features/feed/data/datasources/post_db_service.dart';
 import 'package:aurogram/core/di/injection.dart';
 import 'package:aurogram/shared/presentation/widgets/player/main_player.dart';

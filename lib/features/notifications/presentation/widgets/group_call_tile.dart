@@ -1,6 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
 import 'package:flutter/cupertino.dart';
-import 'package:aurogram/features/spaces/presentation/pages/space_chat_screen.dart';
+import 'package:go_router/go_router.dart';
+import 'package:aurogram/core/routing/route_names.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/shared/utils/time_display.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
@@ -61,10 +62,9 @@ class GroupCallTile extends StatelessWidget {
       timestamp: _timestamp(),
       onTap: () {
         if (spaceId.isNotEmpty) {
-          Navigator.of(context, rootNavigator: true).push(
-            CupertinoPageRoute(
-              builder: (context) => SpaceChatScreen(spaceId: spaceId),
-            ),
+          context.push(
+            '${RouteNames.spaceChatScreen}/$spaceId',
+            extra: {'space': null, 'otherUserId': null},
           );
         }
       },

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import 'package:aurogram/shared/presentation/widgets/universal/transparent_toolbox.dart';
 import 'package:aurogram/shared/services/media/audio_input_service.dart';
 import 'package:aurogram/features/astrology/presentation/pages/astro_chat_page.dart';
@@ -305,20 +306,16 @@ class _AstroChatInputState extends State<AstroChatInput> {
     final astroContext = widget.astrologyContextBuilder!();
 
     // Navigate to AstroChatPage and process voice there
-    Navigator.of(context).push(
-      CupertinoPageRoute(
-        builder: (context) => AstroChatPage(
-          astrologyContext: astroContext,
-          initialVoiceMessage: InitialVoiceMessage(
-            transcript: result.transcript,
-            localAudioPath: result.localAudioPath,
-            audioUrl: result.audioUrl,
-            durationInSeconds: result.durationInSeconds,
-          ),
-          chatSource: widget.chatSource,
-        ),
+    context.push('/astrology/chat', extra: {
+      'astrologyContext': astroContext,
+      'initialVoiceMessage': InitialVoiceMessage(
+        transcript: result.transcript,
+        localAudioPath: result.localAudioPath,
+        audioUrl: result.audioUrl,
+        durationInSeconds: result.durationInSeconds,
       ),
-    );
+      'chatSource': widget.chatSource,
+    });
   }
 }
 

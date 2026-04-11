@@ -179,7 +179,7 @@ class FirebasePostRepository implements PostRepository {
   }
 
   @override
-  Future<void> processCompressionQueue() {
-    return _postService.processCompressionQueue();
+  void processCompressionQueue() {
+    _postService.processCompressionQueue();
   }
 }

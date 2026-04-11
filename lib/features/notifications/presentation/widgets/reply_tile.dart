@@ -1,9 +1,11 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show DocumentSnapshot;
 import 'package:flutter/material.dart';
-import 'package:aurogram/features/feed/presentation/pages/thread_view.dart';
+import 'package:go_router/go_router.dart';
+import 'package:aurogram/core/routing/route_names.dart';
 import 'package:aurogram/shared/services/database_service.dart';
 import 'package:aurogram/features/feed/data/datasources/post_db_service.dart';
 import 'package:aurogram/core/di/injection.dart';
+import 'package:aurogram/shared/data/repositories/user_repository.dart';
 import 'package:aurogram/features/profile/domain/user_service.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/features/notifications/presentation/widgets/unified_notification_card.dart';
@@ -96,7 +98,7 @@ class _ReplyTileState extends State<ReplyTile> {
                 await userService.getUserDisplayName(repliedPost!['author']);
 
             // Get avatar separately
-            DocumentSnapshot? user = await DatabaseService()
+            DocumentSnapshot? user = await locator<UserRepository>()
                 .getUser(repliedPost!['author'])
                 .timeout(Duration(seconds: 5));
             if (user.exists) {
@@ -117,7 +119,7 @@ class _ReplyTileState extends State<ReplyTile> {
             author = await userService.getUserDisplayName(authorId);
 
             // Get avatar separately
-            DocumentSnapshot? user = await DatabaseService()
+            DocumentSnapshot? user = await locator<UserRepository>()
                 .getUser(authorId)
                 .timeout(Duration(seconds: 5));
             if (user.exists) {
@@ -171,7 +173,7 @@ class _ReplyTileState extends State<ReplyTile> {
         if (widget.data?['author'] != null) {
           authorId = widget.data!['author'].toString();
           try {
-            DocumentSnapshot? user = await DatabaseService()
+            DocumentSnapshot? user = await locator<UserRepository>()
                 .getUser(authorId)
                 .timeout(Duration(seconds: 5));
             if (user.exists) {
@@ -238,11 +240,7 @@ class _ReplyTileState extends State<ReplyTile> {
                   final threadRootId =
                       widget.data?['replyToPost'] ?? widget.data?['postId'];
                   if (threadRootId != null) {
-                    Navigator.of(context, rootNavigator: true).push(
-                      MaterialPageRoute(
-                        builder: (context) => ThreadView(postId: threadRootId),
-                      ),
-                    );
+                    context.push('${RouteNames.threadView}/$threadRootId');
                   }
                 },
                 child: Padding(
@@ -329,14 +327,7 @@ class _ReplyTileState extends State<ReplyTile> {
                                 GestureDetector(
                                   onTap: () {
                                     if (widget.data?['replyToPost'] != null) {
-                                      Navigator.of(context, rootNavigator: true)
-                                          .push(
-                                        MaterialPageRoute(
-                                          builder: (context) => ThreadView(
-                                            postId: widget.data!['replyToPost'],
-                                          ),
-                                        ),
-                                      );
+                                      context.push('${RouteNames.threadView}/${widget.data!['replyToPost']}');
                                     }
                                   },
                                   child: Container(
@@ -438,14 +429,7 @@ class _ReplyTileState extends State<ReplyTile> {
                                         widget.data?['replyToPost'] ??
                                             widget.data?['postId'];
                                     if (threadRootId != null) {
-                                      Navigator.of(context, rootNavigator: true)
-                                          .push(
-                                        MaterialPageRoute(
-                                          builder: (context) => ThreadView(
-                                            postId: threadRootId,
-                                          ),
-                                        ),
-                                      );
+                                      context.push('${RouteNames.threadView}/$threadRootId');
                                     }
                                   },
                                   child: Container(

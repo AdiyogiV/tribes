@@ -7,9 +7,9 @@ import 'package:aurogram/shared/models/space.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
+import 'package:go_router/go_router.dart';
 import 'package:aurogram/features/feed/presentation/widgets/post.dart';
 import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
-import 'package:aurogram/features/spaces/presentation/pages/space_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'dart:io';
@@ -590,14 +590,7 @@ class _UploadCardState extends State<_UploadCard> {
 
     if (spaceId != null && spaceId.isNotEmpty) {
       // Navigate to the space screen with the post ID to show that specific post
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => SpaceScreen(
-            rid: spaceId,
-            postId: postId,
-          ),
-        ),
-      );
+      context.push('/space/$spaceId', extra: postId);
     } else {
       // Fallback if space ID is not available - navigate to post directly
       Navigator.of(context).push(

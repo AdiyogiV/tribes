@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/header_style.dart';
-import 'package:aurogram/features/spaces/presentation/pages/gram_creation_page.dart'
-    show SpaceCreationPage;
 import 'package:aurogram/shared/presentation/widgets/media/common_widgets.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 
@@ -44,12 +43,7 @@ class GramsCreateFirstState extends StatelessWidget {
             'Start a gram and invite your friends to share content together',
         action: ElevatedButton.icon(
           onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => SpaceCreationPage(),
-              ),
-            );
+            context.push('/space/create');
           },
           icon: const Icon(Icons.add),
           label: const Text('Create Gram'),

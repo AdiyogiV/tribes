@@ -10,6 +10,7 @@ import {
     calculateHouseFromDegree,
 } from "./vedic_analysis.js";
 import { freeAstrologyApiKey } from "../lib/secrets.js";
+import { requireAuth } from "../lib/auth_utils.js";
 import { GANDMOOL_NAKSHATRAS, FREE_ASTROLOGY_API, ZODIAC_SIGNS, NAKSHATRAS } from "../lib/constants.js";
 import {
     calculateCosmicMatch,
@@ -19,6 +20,7 @@ import {
 } from "../lib/vedic_compatibility.js";
 import { safeParseJson, checkBlockedDetailed } from "../lib/utils.js";
 import { extractApiOutput, parseApiTimeString } from "../lib/astro_helpers.js";
+import { parseMuhuratDay as _parseMuhuratDay, processUnifiedTimeline as _processUnifiedTimeline } from "../lib/muhurat_helpers.js";
 
 // ============================================================================
 // FreeAstrologyAPI Configuration
@@ -185,14 +187,8 @@ const buildAntarDashas = (source, { fallbackToKey = false, offsetHours = 0 } = {
     return entries;
 };
 
-// Helper to calculate house number from planet and ascendant degrees (1-12)
-const getHouseFromDegrees = (planetDegree, ascDegree) => {
-    if (planetDegree == null || ascDegree == null) return null;
-    // Normalize the difference to get house position
-    let diff = planetDegree - ascDegree;
-    if (diff < 0) diff += 360;
-    return Math.floor(diff / 30) + 1; // Houses are 1-indexed (1-12)
-};
+// Reuse the house calculation from vedic_analysis.js (has defensive bounds checking)
+const getHouseFromDegrees = calculateHouseFromDegree;
 
 // Helper to check if a planet is between Rahu and Ketu (going clockwise from Rahu to Ketu)
 const isPlanetBetweenRahuKetu = (planetDegree, rahuDegree, ketuDegree) => {
@@ -1342,161 +1338,10 @@ export const runAstroFlow = async ({
         const muhuratPayload = payload;
         try {
 
-            // Helper function to parse muhurat data for a single day
-            const parseMuhuratDay = (parsedMuhurat) => {
-                const dayData = {};
+            // parseMuhuratDay imported from lib/muhurat_helpers.js
+            const parseMuhuratDay = _parseMuhuratDay;
 
-                // Parse inauspicious times
-                if (parsedMuhurat.rahu_kaalam_data) {
-                    dayData.rahuKala = parseTimeString(parsedMuhurat.rahu_kaalam_data);
-                    dayData.rahu_kala = dayData.rahuKala;
-                }
-                if (parsedMuhurat.gulika_kalam_data) {
-                    dayData.gulikaKala = parseTimeString(parsedMuhurat.gulika_kalam_data);
-                    dayData.gulika_kala = dayData.gulikaKala;
-                }
-                if (parsedMuhurat.yama_gandam_data) {
-                    dayData.yamaganda = parseTimeString(parsedMuhurat.yama_gandam_data);
-                    dayData.yamagandaKala = dayData.yamaganda;
-                }
-                if (parsedMuhurat.varjyam_data) {
-                    dayData.varjyam = parseTimeString(parsedMuhurat.varjyam_data);
-                }
-
-                // Parse auspicious times
-                if (parsedMuhurat.abhijit_data) {
-                    dayData.abhijit = parseTimeString(parsedMuhurat.abhijit_data);
-                }
-                if (parsedMuhurat.amrit_kaal_data) {
-                    dayData.amrit = parseTimeString(parsedMuhurat.amrit_kaal_data);
-                    dayData.amritKaal = dayData.amrit;
-                }
-                if (parsedMuhurat.brahma_muhurat_data) {
-                    dayData.brahmaMuhurat = parseTimeString(parsedMuhurat.brahma_muhurat_data);
-                }
-                if (parsedMuhurat.dur_muhurat_data) {
-                    const durParsed = parseTimeString(parsedMuhurat.dur_muhurat_data);
-                    if (durParsed) {
-                        dayData.durMuhurat = durParsed;
-                    } else {
-                        dayData.durMuhurat = parsedMuhurat.dur_muhurat_data;
-                    }
-                }
-
-                return dayData;
-            };
-
-            // Process all days into a unified timeline with absolute positions
-            const processUnifiedTimeline = (daysData, referenceTime, timeZoneId) => {
-                const events = [];
-                const sortedDateKeys = Object.keys(daysData).sort();
-
-                if (sortedDateKeys.length === 0) return { events: [], startTime: 0, endTime: 0 };
-
-                // Parse reference date (first day)
-                const firstDateKey = sortedDateKeys[0];
-                const [refYear, refMonth, refDay] = firstDateKey.split("-").map(Number);
-                const refDate = DateTime.fromObject({ year: refYear, month: refMonth, day: refDay }, { zone: timeZoneId });
-
-                // Helper to convert time string to absolute minutes from reference
-                const timeToAbsoluteMinutes = (timeData, dateKey) => {
-                    if (!timeData || typeof timeData !== "object") return null;
-
-                    const startsAt = timeData.starts_at || timeData.startsAt;
-                    const endsAt = timeData.ends_at || timeData.endsAt;
-
-                    if (!startsAt || !endsAt) return null;
-
-                    try {
-                        // Parse datetime strings (format: "2023-03-20 07:52:14")
-                        const startDt = DateTime.fromISO(startsAt.replace(" ", "T"), { zone: timeZoneId });
-                        const endDt = DateTime.fromISO(endsAt.replace(" ", "T"), { zone: timeZoneId });
-
-                        if (!startDt.isValid || !endDt.isValid) return null;
-
-                        // Calculate minutes from reference date start (midnight)
-                        const startMinutes = Math.floor(startDt.diff(refDate.startOf("day"), "minutes").minutes);
-                        const endMinutes = Math.floor(endDt.diff(refDate.startOf("day"), "minutes").minutes);
-
-                        return { start: startMinutes, end: endMinutes };
-                    } catch (e) {
-                        // Time parsing failed - not critical, return null
-                        return null;
-                    }
-                };
-
-                // Process each day's events
-                for (const dateKey of sortedDateKeys) {
-                    const dayData = daysData[dateKey];
-                    if (!dayData) continue;
-
-                    // Process inauspicious times
-                    const inauspiciousTypes = [
-                        { key: "rahuKala", name: "Rahu Kala", fallback: "rahu_kala" },
-                        { key: "gulikaKala", name: "Gulika Kala", fallback: "gulika_kala" },
-                        { key: "yamaganda", name: "Yamaganda", fallback: "yamagandaKala" },
-                        { key: "varjyam", name: "Varjyam", fallback: null },
-                    ];
-
-                    for (const type of inauspiciousTypes) {
-                        const timeData = dayData[type.key] || (type.fallback ? dayData[type.fallback] : null);
-                        const range = timeToAbsoluteMinutes(timeData, dateKey);
-                        if (range) {
-                            events.push({
-                                name: type.name,
-                                start: range.start,
-                                end: range.end,
-                                type: "inauspicious",
-                                dateKey: dateKey,
-                            });
-                        }
-                    }
-
-                    // Process auspicious times
-                    const auspiciousTypes = [
-                        { key: "abhijit", name: "Abhijit Muhurat" },
-                        { key: "amrit", name: "Amrit Kaal", fallback: "amritKaal" },
-                        { key: "brahmaMuhurat", name: "Brahma Muhurat" },
-                    ];
-
-                    for (const type of auspiciousTypes) {
-                        const timeData = dayData[type.key] || (type.fallback ? dayData[type.fallback] : null);
-                        const range = timeToAbsoluteMinutes(timeData, dateKey);
-                        if (range) {
-                            events.push({
-                                name: type.name,
-                                start: range.start,
-                                end: range.end,
-                                type: "auspicious",
-                                dateKey: dateKey,
-                            });
-                        }
-                    }
-                }
-
-                // Sort events by start time
-                events.sort((a, b) => a.start - b.start);
-
-                // Calculate overall time range
-                let startTime = events.length > 0 ? events[0].start : 0;
-                let endTime = events.length > 0 ? events[events.length - 1].end : 0;
-
-                // Round to nearest hour for cleaner display
-                startTime = Math.floor(startTime / 60) * 60;
-                endTime = Math.ceil(endTime / 60) * 60;
-
-                // Ensure reasonable bounds (5 AM to 10 PM per day)
-                startTime = Math.max(startTime, 5 * 60);
-                endTime = Math.min(endTime, (sortedDateKeys.length * 24 * 60) + (22 * 60));
-
-                return {
-                    events: events,
-                    startTime: startTime,
-                    endTime: endTime,
-                    dayCount: sortedDateKeys.length,
-                    dateKeys: sortedDateKeys,
-                };
-            };
+            // processUnifiedTimeline imported from lib/muhurat_helpers.js
 
             // Fetch muhurat for 3 days (today, tomorrow, day after tomorrow)
             muhuratData = {
@@ -1650,7 +1495,7 @@ export const runAstroFlow = async ({
                 }
 
                 // Process all days into a unified timeline with absolute positions
-                muhuratData.unifiedTimeline = processUnifiedTimeline(muhuratData.days, localTime, timeZoneId);
+                muhuratData.unifiedTimeline = _processUnifiedTimeline(muhuratData.days, timeZoneId, { clampBounds: true, includeDayCount: true });
             } else {
                 // Fallback to single day if we can't determine dates
                 const muhuratResponse = await callFreeAstro(GOOD_BAD_TIMES_ENDPOINT, muhuratPayload);
@@ -1789,12 +1634,7 @@ export const freeAstroCalculate = onCall({
     // TODO: Set enforceAppCheck: true after enabling AppCheck in lib/main.dart
 }, async (request) => {
     try {
-        if (!request.auth) {
-            throw new HttpsError(
-                "unauthenticated",
-                "Must be authenticated to request astrology data",
-            );
-        }
+        requireAuth(request, "request astrology data");
 
         const {
             mode = "full",
@@ -2166,15 +2006,9 @@ export const calculateCompatibility = onCall({
     // TODO: Set enforceAppCheck: true after enabling AppCheck in lib/main.dart
 }, async (request) => {
     try {
-        if (!request.auth) {
-            throw new HttpsError(
-                "unauthenticated",
-                "Must be authenticated to calculate compatibility",
-            );
-        }
+        const currentUserId = requireAuth(request, "calculate compatibility");
 
         const { otherUserId } = request.data || {};
-        const currentUserId = request.auth.uid;
 
         if (!otherUserId || typeof otherUserId !== "string") {
             throw new HttpsError(

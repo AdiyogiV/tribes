@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:aurogram/core/theme/app_theme.dart';
 import 'calendar_card_helpers.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 
@@ -72,40 +71,10 @@ class SikhCalendarCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            'Nanakshahi Calendar',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.primaryColor,
-            ),
-          ),
+          buildCalendarHeader('Nanakshahi Calendar'),
           const SizedBox(height: AppDimensions.spacingMd),
           // Main date display
-          Row(
-            children: [
-              Text(
-                '$day $monthName $year',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.primaryColor,
-                  height: 1.2,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const SizedBox(width: AppDimensions.spacingMdSm),
-              Text(
-                'NS',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.primaryColor.withValues(alpha: 0.7),
-                  height: 1.3,
-                ),
-              ),
-            ],
-          ),
+          buildCalendarMainDate('$day $monthName $year', suffix: 'NS'),
           const SizedBox(height: AppDimensions.spacingLg),
           // Sangrand indicator
           if (isSangrand) ...[
@@ -133,16 +102,7 @@ class SikhCalendarCard extends StatelessWidget {
           buildDateComponent('Sal (Year)', '$year NS'),
           const SizedBox(height: AppDimensions.spacingMd),
           // Note about solar calendar
-          Text(
-            'Solar calendar • Epoch: Guru Nanak\'s birth (1469 CE)',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              fontStyle: FontStyle.italic,
-              color: AppTheme.primaryColor.withValues(alpha: 0.5),
-              height: 1.4,
-            ),
-          ),
+          buildCalendarFooter('Solar calendar • Epoch: Guru Nanak\'s birth (1469 CE)'),
         ],
       ),
     );

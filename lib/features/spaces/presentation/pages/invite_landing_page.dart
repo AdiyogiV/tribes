@@ -12,11 +12,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:aurogram/features/auth/handle_login.dart';
-import 'package:aurogram/features/spaces/presentation/pages/space_screen.dart';
 import 'package:aurogram/features/auth/auth_service.dart';
 import 'package:aurogram/features/anonymous_messages/pages/send_composer_screen.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/shared/presentation/widgets/feedback/snack_bar_service.dart';
+import 'package:go_router/go_router.dart';
 
 class InviteLandingPage extends StatefulWidget {
   final String? space;
@@ -239,11 +239,7 @@ class InviteLandingPageState extends State<InviteLandingPage> {
           
       if (success) {
         if (!mounted) return;
-        Navigator.of(context, rootNavigator: true).pushReplacement(
-          CupertinoPageRoute(
-            builder: (context) => SpaceScreen(rid: widget.space!),
-          ),
-        );
+        context.go('/space/${widget.space!}');
       } else {
         _showError('Failed to join. You may already be a member.');
       }
@@ -257,24 +253,16 @@ class InviteLandingPageState extends State<InviteLandingPage> {
   void _previewGram() {
     HapticFeedback.lightImpact();
     if (widget.space == null) return;
-    
-    Navigator.of(context).push(
-      CupertinoPageRoute(
-        builder: (context) => SpaceScreen(rid: widget.space!),
-      ),
-    );
+
+    context.push('/space/${widget.space!}');
   }
 
   void _openGram() {
     HapticFeedback.mediumImpact();
     if (widget.space == null) return;
-    
+
     // Replace current page with gram screen since user is already a member
-    Navigator.of(context, rootNavigator: true).pushReplacement(
-      CupertinoPageRoute(
-        builder: (context) => SpaceScreen(rid: widget.space!),
-      ),
-    );
+    context.go('/space/${widget.space!}');
   }
 
   void _dismiss() {

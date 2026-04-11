@@ -2,7 +2,7 @@ import 'package:aurogram/shared/models/notification.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/features/chat/domain/chat_notification_service.dart';
 import 'package:aurogram/core/routing/route_names.dart';
-import 'package:aurogram/core/routing/page_factory.dart';
+import 'package:aurogram/core/routing/app_router.dart';
 
 import '../notification_service.dart';
 
@@ -80,9 +80,7 @@ extension NotificationNavigation on NotificationService {
 
   void navigateToSecretMessagesInbox() {
     if (navigatorKey?.currentState == null) return;
-    navigatorKey!.currentState!.push(
-      PageFactory.route(RouteNames.secretMessagesInbox),
-    );
+    appRouter.push(RouteNames.secretMessagesInbox);
   }
 
   void navigateToChatWithRetry(String spaceId, {int attempt = 0}) {
@@ -98,17 +96,19 @@ extension NotificationNavigation on NotificationService {
     final chatService = ChatNotificationService();
     chatService.setNavigatorKey(navigatorKey!);
 
-    navigatorKey!.currentState!.push(
-      PageFactory.route(RouteNames.spaceChatScreen, arguments: {
-        'spaceId': spaceId,
+    final otherUserId = spaceId.startsWith('dm_')
+        ? spaceId
+            .split('_')
+            .where((id) => id != currentUser?.uid)
+            .firstOrNull
+        : null;
+
+    appRouter.push(
+      '${RouteNames.spaceChatScreen}/$spaceId',
+      extra: {
         'space': null,
-        'otherUserId': spaceId.startsWith('dm_')
-            ? spaceId
-                .split('_')
-                .where((id) => id != currentUser?.uid)
-                .firstOrNull
-            : null,
-      }),
+        'otherUserId': otherUserId,
+      },
     );
   }
 
@@ -133,66 +133,43 @@ extension NotificationNavigation on NotificationService {
       return;
     }
 
-    navigatorKey!.currentState!.push(
-      PageFactory.route(RouteNames.dailyInsight, arguments: {
+    appRouter.push(
+      RouteNames.dailyInsight,
+      extra: {
         'uid': userId,
         'cardIndex': cardIndex,
         'insightDate': insightDate,
-      }),
+      },
     );
   }
 
   void navigateToPost(String spaceId, String? postId) {
     if (navigatorKey?.currentState == null) return;
     if (postId != null && postId.isNotEmpty) {
-      navigatorKey!.currentState!.push(
-        PageFactory.route(RouteNames.threadView, arguments: {
-          'postId': postId,
-        }),
-      );
+      appRouter.push('${RouteNames.threadView}/$postId');
     } else {
-      navigatorKey!.currentState!.push(
-        PageFactory.route(RouteNames.spaceScreen, arguments: {
-          'rid': spaceId,
-        }),
-      );
+      appRouter.push('${RouteNames.spaceScreen}/$spaceId');
     }
   }
 
   void navigateToProfile(String userId) {
     if (navigatorKey?.currentState == null) return;
-
-    navigatorKey!.currentState!.push(
-      PageFactory.route(RouteNames.userProfile, arguments: {
-        'uid': userId,
-      }),
-    );
+    appRouter.push('${RouteNames.userProfile}/$userId');
   }
 
   void navigateToSpace(String spaceId) {
     if (navigatorKey?.currentState == null) return;
-
-    navigatorKey!.currentState!.push(
-      PageFactory.route(RouteNames.spaceScreen, arguments: {
-        'rid': spaceId,
-      }),
-    );
+    appRouter.push('${RouteNames.spaceScreen}/$spaceId');
   }
 
   void navigateToInvites() {
     if (navigatorKey?.currentState == null) return;
-
-    navigatorKey!.currentState!.push(
-      PageFactory.route(RouteNames.invites),
-    );
+    appRouter.push(RouteNames.invites);
   }
 
   void navigateToRequests(String spaceId) {
     if (navigatorKey?.currentState == null) return;
-
-    navigatorKey!.currentState!.push(
-      PageFactory.route(RouteNames.requests),
-    );
+    appRouter.push(RouteNames.requests);
   }
 
   /// Navigate to group call screen with retry for app startup timing.
@@ -214,11 +191,9 @@ extension NotificationNavigation on NotificationService {
       return;
     }
 
-    navigatorKey!.currentState!.push(
-      PageFactory.route(RouteNames.groupCall, arguments: {
-        'spaceId': spaceId,
-        'spaceName': spaceName,
-      }),
+    appRouter.push(
+      '${RouteNames.groupCall}/$spaceId',
+      extra: {'spaceName': spaceName},
     );
   }
 }

@@ -1,8 +1,8 @@
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/shared/presentation/widgets/avatars/user_avatar.dart';
-import 'package:aurogram/features/profile/presentation/pages/user_profile.dart';
 
 /// Widget that shows repost information at the top of a reposted post
 class RepostIndicator extends StatelessWidget {
@@ -29,11 +29,7 @@ class RepostIndicator extends StatelessWidget {
 
     // Navigate to reposter's profile if reposterId is available
     if (reposterId != null && reposterId!.isNotEmpty) {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => UserProfilePage(uid: reposterId!),
-        ),
-      );
+      context.push('/user/profile/${reposterId!}');
     }
   }
 

@@ -1,11 +1,12 @@
+import 'package:aurogram/core/routing/route_names.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:go_router/go_router.dart';
 import 'package:aurogram/core/config/call_ui_config.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
-import 'package:aurogram/features/calling/presentation/pages/group_call_screen.dart';
 import 'package:aurogram/features/calling/domain/group_call_service.dart';
 
 /// Single group call button for gram chat headers
@@ -101,13 +102,9 @@ class _GroupCallButtonState extends State<GroupCallButton> {
     if (groupCallService.isInCall &&
         groupCallService.activeSpaceId == widget.spaceId) {
       // Already in this call - navigate back to it
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => GroupCallScreen(
-            spaceId: widget.spaceId,
-            spaceName: widget.spaceName,
-          ),
-        ),
+      context.push(
+        '${RouteNames.groupCall}/${widget.spaceId}',
+        extra: {'spaceName': widget.spaceName},
       );
       return;
     }
@@ -132,13 +129,9 @@ class _GroupCallButtonState extends State<GroupCallButton> {
     }
 
     // Navigate to group call screen (start or join)
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => GroupCallScreen(
-          spaceId: widget.spaceId,
-          spaceName: widget.spaceName,
-        ),
-      ),
+    context.push(
+      '${RouteNames.groupCall}/${widget.spaceId}',
+      extra: {'spaceName': widget.spaceName},
     );
   }
 }
@@ -300,13 +293,9 @@ class GroupCallButtonCircle extends StatelessWidget {
       return;
     }
 
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => GroupCallScreen(
-          spaceId: spaceId,
-          spaceName: spaceName,
-        ),
-      ),
+    context.push(
+      '${RouteNames.groupCall}/$spaceId',
+      extra: {'spaceName': spaceName},
     );
   }
 }

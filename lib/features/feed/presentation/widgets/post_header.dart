@@ -2,13 +2,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:aurogram/features/profile/presentation/pages/user_profile.dart';
-import 'package:aurogram/features/spaces/presentation/pages/space_screen.dart';
+import 'package:go_router/go_router.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/header_style.dart';
 import 'package:aurogram/core/di/injection.dart';
 import 'package:aurogram/features/profile/domain/user_service.dart';
 import 'package:aurogram/shared/services/batch_data_loader.dart';
+import 'package:aurogram/shared/data/repositories/user_repository.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 
@@ -30,10 +30,9 @@ class _HeaderCache {
       }
     }
 
-    // Fetch from Firestore (user profiles are public, readable when logged out)
+    // Fetch from UserRepository (user profiles are public, readable when logged out)
     try {
-      final doc =
-          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final doc = await locator<UserRepository>().getUser(uid);
       if (doc.exists) {
         final data = doc.data() ?? {};
         _userCache[uid] = data;
@@ -243,16 +242,12 @@ class PostHeader extends StatelessWidget {
 
   void _navigateToProfile(BuildContext context) {
     if (uid == null) return;
-    Navigator.of(context).push(
-      CupertinoPageRoute(builder: (_) => UserProfilePage(uid: uid)),
-    );
+    context.push('/user/$uid');
   }
 
   void _navigateToSpace(BuildContext context) {
     if (space == null) return;
-    Navigator.of(context).push(
-      CupertinoPageRoute(builder: (_) => SpaceScreen(rid: space!)),
-    );
+    context.push('/space/$space');
   }
 }
 

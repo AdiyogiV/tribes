@@ -1,9 +1,8 @@
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:go_router/go_router.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show DocumentSnapshot;
 import 'package:aurogram/core/theme/app_theme.dart';
-import 'package:aurogram/features/feed/presentation/pages/thread_view.dart';
 import 'package:aurogram/features/profile/presentation/widgets/preview_boxes/preview_box.dart';
 
 /// Indicator showing that a post is a reply to another post
@@ -27,11 +26,7 @@ class ReplyIndicator extends StatelessWidget {
 
   void _navigateToParent(BuildContext context, String? postId) {
     final targetId = postId ?? parentPostId;
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => ThreadView(postId: targetId),
-      ),
-    );
+    context.push('/thread/$targetId');
   }
 
   @override

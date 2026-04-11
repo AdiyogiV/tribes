@@ -2,6 +2,7 @@ import { onSchedule } from "firebase-functions/v2/scheduler";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { onTaskDispatched } from "firebase-functions/v2/tasks";
 import { db, FieldValue, logger } from "../lib/firebase.js";
+import { requireAuth } from "../lib/auth_utils.js";
 import { geminiApiKey, freeAstrologyApiKey } from "../lib/secrets.js";
 import { DateTime } from "luxon";
 import { runAstroFlow } from "./free_astro.js";
@@ -1475,11 +1476,7 @@ export const generateInsightForCurrentUser = onCall({
     // TODO: Set to true after enabling AppCheck in lib/main.dart
     // enforceAppCheck: true,
 }, async (request) => {
-    if (!request.auth) {
-        throw new HttpsError("unauthenticated", "Must be logged in");
-    }
-
-    const userId = request.auth.uid;
+    const userId = requireAuth(request, "get daily astro insights");
     const forceRegenerate = request.data?.forceRegenerate === true;
 
     // Accept current location from client (for accurate today's Vedic date)
@@ -2003,12 +2000,7 @@ export const getAstroInsightSystemHealth = onCall({
     memory: "256MiB",
     invoker: "public", // Allow client apps to invoke (Firebase Auth handles actual auth)
 }, async (request) => {
-    // Only allow authenticated users (or admin check could be added)
-    if (!request.auth) {
-        throw new HttpsError("unauthenticated", "Must be logged in");
-    }
-
-    const userId = request.auth.uid;
+    const userId = requireAuth(request, "get astro insight system health");
 
     try {
         const health = {
@@ -2225,11 +2217,6 @@ export const clearAstroCaches = onCall({
     }
 
     // Optional: Add admin check here if you want to restrict this
-    // const userDoc = await db.collection("users").doc(userId).get();
-    // if (!userDoc.data()?.isAdmin) {
-    //     throw new HttpsError("permission-denied", "Admin only");
-    // }
-
     const mode = request.data?.mode || "old";
 
     logger.info("🗑️ Cache clear requested", {

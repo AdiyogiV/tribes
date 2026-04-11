@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:aurogram/shared/models/ayurveda_profile.dart';
 import 'package:aurogram/shared/models/astrology_profile.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:aurogram/shared/services/watch_service.dart';
 
 /// Service for Ayurveda profile management
 /// Separate from AstrologyService but can use astrology data for calculations
@@ -21,6 +23,54 @@ class AyurvedaService {
 
   // Cache
   static final Map<String, AyurvedaProfile?> _profileCache = {};
+
+  /// Latest Nadi reading from Apple Watch (for Vikriti enrichment).
+  Map<String, dynamic>? _latestNadiReading;
+
+  /// Nadi reading stream subscription.
+  StreamSubscription<Map<String, dynamic>>? _watchSub;
+
+  /// Start listening for Nadi data from Apple Watch.
+  /// Call once after WatchService.initialize().
+  void listenForWatchNadi() {
+    _watchSub?.cancel();
+    _watchSub = WatchService.instance.onWatchData.listen((data) {
+      if (data['type'] == 'nadiReading') {
+        _latestNadiReading = data;
+        AppLogger.d('AyurvedaService: received Nadi reading from watch',
+            category: LogCategory.general,
+            data: {
+              'dominant': data['dominant'],
+              'gati': data['gati'],
+              'hrv': data['hrv'],
+            });
+        // Store to Firestore for historical tracking
+        _storeNadiReading(data);
+      }
+    });
+  }
+
+  /// Get the latest Nadi reading (from Apple Watch).
+  Map<String, dynamic>? get latestNadiReading => _latestNadiReading;
+
+  /// Store Nadi reading to Firestore for long-term analysis.
+  Future<void> _storeNadiReading(Map<String, dynamic> data) async {
+    final uid = _user?.uid;
+    if (uid == null) return;
+    try {
+      await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('nadiReadings')
+          .add({
+        ...data,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      AppLogger.w('AyurvedaService: failed to store Nadi reading',
+          category: LogCategory.general, data: {'error': e.toString()});
+    }
+  }
 
   /// Clear cache for a user
   static void clearCache(String? uid) {

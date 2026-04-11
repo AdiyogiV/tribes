@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
-import 'package:aurogram/features/auth/login.dart';
+import 'package:go_router/go_router.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/shared/presentation/widgets/universal/transparent_toolbox.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
@@ -59,9 +58,7 @@ class _LoginBottomSheetState extends State<LoginBottomSheet>
   void _goToLogin() {
     HapticFeedback.mediumImpact();
     Navigator.of(context).pop();
-    Navigator.of(context).push(
-      CupertinoPageRoute(builder: (_) => LoginPage()),
-    );
+    context.push('/login');
   }
 
   void _dismiss() {

@@ -1,13 +1,13 @@
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:aurogram/features/chat/domain/space_chat_service.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/core/di/injection.dart';
 import 'package:aurogram/features/profile/domain/user_service.dart';
+import 'package:aurogram/shared/data/repositories/user_repository.dart';
 import 'package:aurogram/features/profile/domain/namaste_service.dart';
 import 'package:aurogram/shared/presentation/widgets/feedback/snack_bar_service.dart';
 
@@ -44,10 +44,7 @@ mixin EmbeddedChatActionsMixin<T extends StatefulWidget> on State<T> {
       final cachedName = _senderNameCache[userId]!;
       if (cachedName != 'Deleted User') {
         try {
-          final userDoc = await FirebaseFirestore.instance
-              .collection('users')
-              .doc(userId)
-              .get();
+          final userDoc = await locator<UserRepository>().getUser(userId);
           if (userDoc.exists) {
             return cachedName;
           }

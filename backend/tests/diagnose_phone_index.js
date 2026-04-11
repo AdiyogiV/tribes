@@ -11,6 +11,7 @@ import crypto from "crypto";
 import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
+import { normalizePhone } from "../lib/phone_utils.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -26,40 +27,6 @@ initializeApp({
 
 const db = getFirestore();
 const auth = getAuth();
-
-/**
- * Normalize phone number for consistent hashing
- */
-function normalizePhone(phone) {
-    if (!phone) return null;
-    
-    // Remove all non-digit except leading +
-    let digits = phone.replace(/[^\d+]/g, '');
-    
-    // Must have at least 10 digits
-    const digitCount = digits.replace('+', '').length;
-    if (digitCount < 10) return null;
-    
-    // Ensure country code
-    if (!digits.startsWith('+')) {
-        // Remove leading 0 if present (common in Indian local numbers)
-        if (digits.startsWith('0')) {
-            digits = digits.substring(1);
-        }
-        
-        if (digits.length === 10) {
-            // Assume India (+91) for 10-digit numbers
-            digits = '+91' + digits;
-        } else if (digits.startsWith('91') && digits.length === 12) {
-            digits = '+' + digits;
-        } else if (digits.length > 10) {
-            // Assume it has country code, just add +
-            digits = '+' + digits;
-        }
-    }
-    
-    return digits;
-}
 
 /**
  * Hash phone number for privacy

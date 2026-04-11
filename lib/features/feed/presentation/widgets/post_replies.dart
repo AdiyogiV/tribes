@@ -1,8 +1,10 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show QueryDocumentSnapshot, QuerySnapshot;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:aurogram/features/auth/login.dart';
+import 'package:go_router/go_router.dart';
+import 'package:aurogram/core/di/injection.dart';
+import 'package:aurogram/features/feed/data/datasources/post_db_service.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/features/profile/presentation/widgets/preview_boxes/preview_box.dart';
 import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
@@ -33,14 +35,15 @@ class PostReplies extends StatefulWidget {
 class _PostRepliesState extends State<PostReplies> {
   List<Widget> replies = <Widget>[];
   User? user = FirebaseAuth.instance.currentUser;
-  final CollectionReference postRepliesCollection =
-      FirebaseFirestore.instance.collection('postReplies');
-  final CollectionReference votesCollection =
-      FirebaseFirestore.instance.collection('votes');
+  final PostDbService _postDb = locator<PostDbService>();
+
+  /// Cached future for replies — avoids re-fetch on every rebuild.
+  Future<QuerySnapshot?>? _repliesFuture;
 
   @override
   void initState() {
     super.initState();
+    _initRepliesFuture();
   }
 
   @override
@@ -54,7 +57,14 @@ class _PostRepliesState extends State<PostReplies> {
       return;
     }
 
-    // Post changed or replies updated - let build() handle it
+    // Post changed or replies updated — re-fetch
+    _initRepliesFuture();
+  }
+
+  void _initRepliesFuture() {
+    if (widget.initialReplies == null && widget.post != null) {
+      _repliesFuture = _postDb.getPostReplies(widget.post!);
+    }
   }
 
   /// Thumbnail width from content/card width (same as reply indicator & main app).
@@ -83,10 +93,7 @@ class _PostRepliesState extends State<PostReplies> {
             actions: <Widget>[
               TextButton(
                   onPressed: () {
-                    Navigator.of(context)
-                        .push(CupertinoPageRoute(builder: (context) {
-                      return LoginPage();
-                    }));
+                    context.push('/login');
                   },
                   child: Text(
                     'Login',
@@ -170,15 +177,12 @@ class _PostRepliesState extends State<PostReplies> {
       return _buildThumbnailsFromDocs(docs, contentWidth);
     }
 
+    if (widget.post == null) return const SizedBox.shrink();
     final thumbWidth = _thumbnailWidthFromContent(contentWidth);
-    return FutureBuilder<QuerySnapshot>(
-      future: postRepliesCollection
-          .doc(widget.post)
-          .collection('replies')
-          .orderBy('timestamp', descending: true)
-          .get(),
+    return FutureBuilder<QuerySnapshot?>(
+      future: _repliesFuture,
       builder: (context, snapshot) {
-        if (!snapshot.hasData) {
+        if (!snapshot.hasData || snapshot.data == null) {
           return SizedBox(
             height: thumbWidth + 20,
             child: ListView.builder(
@@ -193,7 +197,8 @@ class _PostRepliesState extends State<PostReplies> {
             ),
           );
         }
-        return _buildThumbnailsFromDocs(snapshot.data!.docs, contentWidth);
+        return _buildThumbnailsFromDocs(
+            snapshot.data!.docs.cast<QueryDocumentSnapshot>(), contentWidth);
       },
     );
   }

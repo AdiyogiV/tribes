@@ -1,6 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
 import 'package:flutter/cupertino.dart';
-import 'package:aurogram/features/profile/presentation/pages/user_profile.dart';
+import 'package:go_router/go_router.dart';
+import 'package:aurogram/core/routing/route_names.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/shared/utils/time_display.dart';
 import 'package:aurogram/features/notifications/presentation/widgets/unified_notification_card.dart';
@@ -51,11 +52,7 @@ class MissedCallTile extends StatelessWidget {
       timestamp: _timestamp(),
       onTap: () {
         if (callerId.isNotEmpty) {
-          Navigator.of(context, rootNavigator: true).push(
-            CupertinoPageRoute(
-              builder: (context) => UserProfilePage(uid: callerId),
-            ),
-          );
+          context.push('${RouteNames.userProfile}/$callerId');
         }
       },
     );

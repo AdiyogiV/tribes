@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:aurogram/core/di/injection.dart';
+import 'package:aurogram/shared/data/repositories/user_repository.dart';
 import 'package:aurogram/features/astrology/domain/astrology_service.dart';
 import 'package:aurogram/features/ayurveda/domain/ayurveda_service.dart';
 import 'package:aurogram/shared/models/astrology_profile.dart';
@@ -199,8 +200,8 @@ mixin DataPollingMixin<T extends StatefulWidget> on State<T> {
         mounted) {
       pollCount++;
       try {
-        final doc =
-            await FirebaseFirestore.instance.collection('users').doc(uid).get();
+        final userRepo = locator<UserRepository>();
+        final doc = await userRepo.getUser(uid);
 
         if (doc.exists) {
           final data = doc.data();
@@ -282,8 +283,8 @@ mixin DataPollingMixin<T extends StatefulWidget> on State<T> {
     if (uid == null || pollingFirstReadingContent != null) return;
 
     try {
-      final doc =
-          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final userRepo = locator<UserRepository>();
+      final doc = await userRepo.getUser(uid);
       if (doc.exists) {
         final data = doc.data();
         final astroData = data?['astrologyData'] as Map<String, dynamic>?;

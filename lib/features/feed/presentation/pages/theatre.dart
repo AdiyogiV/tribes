@@ -1,18 +1,17 @@
 import 'package:aurogram/shared/models/space.dart';
 import 'package:aurogram/shared/presentation/widgets/media/common_widgets.dart';
-import 'package:aurogram/features/feed/presentation/pages/thread_view.dart';
 import 'package:aurogram/features/feed/presentation/widgets/post_switcher.dart';
 import 'package:aurogram/features/profile/presentation/widgets/preview_boxes/gram_picture.dart';
 import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
 import 'package:aurogram/core/config/call_ui_config.dart';
 import 'package:aurogram/features/calling/presentation/widgets/active_call_banner.dart';
-import 'package:aurogram/features/calling/presentation/pages/group_call_screen.dart';
 import 'package:aurogram/features/calling/domain/group_call_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/shared/presentation/responsive/responsive.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
@@ -338,14 +337,7 @@ class TheatreState extends State<Theatre> {
     }
 
     // Navigate to group call screen
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => GroupCallScreen(
-          spaceId: widget.rid!,
-          spaceName: spaceName,
-        ),
-      ),
-    );
+    context.push('/call/group/${widget.rid!}', extra: {'spaceName': spaceName});
   }
 
   @override
@@ -428,11 +420,7 @@ class TheatreState extends State<Theatre> {
                                     postId: postId,
                                     itemIndex: index,
                                     onOpenThread: (id) =>
-                                        Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) => ThreadView(postId: id),
-                                      ),
-                                    ),
+                                        context.push('/thread/$id'),
                                     enableVideoAutoplay: false,
                                   ),
 

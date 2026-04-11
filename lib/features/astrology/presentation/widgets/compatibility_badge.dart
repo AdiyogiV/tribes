@@ -1,13 +1,13 @@
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:go_router/go_router.dart';
 import 'package:aurogram/features/astrology/domain/compatibility_service.dart';
 import 'package:aurogram/features/profile/domain/follow_service.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/shared/presentation/widgets/universal/transparent_toolbox.dart';
 import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
-import 'package:aurogram/features/astrology/presentation/pages/compatibility_details_page.dart';
 
 /// Follow relationship state for contextual messaging
 enum FollowRelationship {
@@ -240,24 +240,20 @@ class _CompatibilityBadgeState extends State<CompatibilityBadge> {
   void _navigateToDetails() {
     if (_result == null) return;
 
-    Navigator.of(context).push(
-      CupertinoPageRoute(
-        builder: (_) => CompatibilityDetailsPage(
-          result: _result!,
-          otherUserId: widget.otherUserId,
-          currentUserName: widget.currentUserName ?? 'Me',
-          otherUserName: widget.otherUserName ?? 'Friend',
-          currentUserPhotoUrl: widget.currentUserPhotoUrl,
-          otherUserPhotoUrl: widget.otherUserPhotoUrl,
-          currentUserSun: widget.currentUserSun,
-          currentUserMoon: widget.currentUserMoon,
-          currentUserRising: widget.currentUserRising,
-          otherUserSun: widget.otherUserSun,
-          otherUserMoon: widget.otherUserMoon,
-          otherUserRising: widget.otherUserRising,
-        ),
-      ),
-    );
+    context.push('/astrology/compatibility', extra: {
+      'result': _result!,
+      'otherUserId': widget.otherUserId,
+      'currentUserName': widget.currentUserName ?? 'Me',
+      'otherUserName': widget.otherUserName ?? 'Friend',
+      'currentUserPhotoUrl': widget.currentUserPhotoUrl,
+      'otherUserPhotoUrl': widget.otherUserPhotoUrl,
+      'currentUserSun': widget.currentUserSun,
+      'currentUserMoon': widget.currentUserMoon,
+      'currentUserRising': widget.currentUserRising,
+      'otherUserSun': widget.otherUserSun,
+      'otherUserMoon': widget.otherUserMoon,
+      'otherUserRising': widget.otherUserRising,
+    });
   }
 
   Widget _buildLoadingContent() {

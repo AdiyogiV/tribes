@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:aurogram/core/di/injection.dart';
+import 'package:aurogram/shared/data/repositories/user_repository.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/shared/presentation/widgets/avatars/user_avatar.dart';
@@ -22,6 +24,7 @@ class _NamasteHistoryPageState extends State<NamasteHistoryPage>
   late TabController _tabController;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final UserRepository _userRepo = locator<UserRepository>();
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
@@ -535,7 +538,7 @@ class _NamasteHistoryPageState extends State<NamasteHistoryPage>
     required bool isDark,
   }) {
     return FutureBuilder<DocumentSnapshot>(
-      future: _firestore.collection('users').doc(userId).get(),
+      future: _userRepo.getUser(userId),
       builder: (context, snapshot) {
         String name = 'Loading...';
         String? displayPicture;
@@ -879,7 +882,7 @@ class _NamasteHistoryPageState extends State<NamasteHistoryPage>
       if (userId == null) continue;
 
       try {
-        final userDoc = await _firestore.collection('users').doc(userId).get();
+        final userDoc = await _userRepo.getUser(userId);
         if (userDoc.exists) {
           final userData = userDoc.data();
           final name = (userData?['name'] ?? '').toString();

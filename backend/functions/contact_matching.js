@@ -13,6 +13,7 @@ import { logger } from "firebase-functions";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
 import { normalizePhoneMultiple, hashPhone, maskPhone } from "../lib/phone_utils.js";
+import { requireAuth } from "../lib/auth_utils.js";
 
 const db = getFirestore();
 
@@ -31,12 +32,7 @@ export const matchContacts = onCall({
     // TODO: Set to true after enabling AppCheck in lib/main.dart
     // enforceAppCheck: true,
 }, async (request) => {
-    // Auth check
-    if (!request.auth) {
-        throw new HttpsError('unauthenticated', 'Must be logged in');
-    }
-    
-    const userId = request.auth.uid;
+    const userId = requireAuth(request, "match contacts");
     const { contacts } = request.data;
     
     if (!contacts || !Array.isArray(contacts)) {
@@ -210,13 +206,10 @@ export const getMatchingInsights = onCall({
     region: "asia-southeast2",
     invoker: "public", // Allow client apps to invoke (admin check inside)
 }, async (request) => {
-    // Only allow admin
-    if (!request.auth) {
-        throw new HttpsError('unauthenticated', 'Must be logged in');
-    }
-    
+    const callerUid = requireAuth(request, "get matching insights");
+
     // Check if user is admin (you can customize this check)
-    const userDoc = await db.collection('users').doc(request.auth.uid).get();
+    const userDoc = await db.collection('users').doc(callerUid).get();
     if (!userDoc.exists || !userDoc.data()?.isAdmin) {
         throw new HttpsError('permission-denied', 'Admin only');
     }
@@ -270,10 +263,8 @@ export const debugPhoneMatch = onCall({
     region: "asia-southeast2",
     invoker: "public", // Allow client apps to invoke
 }, async (request) => {
-    if (!request.auth) {
-        throw new HttpsError('unauthenticated', 'Must be logged in');
-    }
-    
+    requireAuth(request, "debug phone match");
+
     const { phone } = request.data;
     if (!phone) {
         throw new HttpsError('invalid-argument', 'phone is required');

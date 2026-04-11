@@ -41,6 +41,50 @@ mixin PostQueriesMixin {
     }
   }
 
+  // ── Stream queries (used by presentation layer) ────────────────────
+
+  /// Streams all posts for a given space, ordered newest-first.
+  Stream<QuerySnapshot<Map<String, dynamic>>> streamPostsBySpace(
+      String spaceId) {
+    return firestore
+        .collection('posts')
+        .where('space', isEqualTo: spaceId)
+        .orderBy('timestamp', descending: true)
+        .snapshots();
+  }
+
+  /// Streams a user's replies subcollection.
+  Stream<QuerySnapshot<Map<String, dynamic>>> streamUserReplies(String uid) {
+    return firestore
+        .collection('userReplies')
+        .doc(uid)
+        .collection('replies')
+        .orderBy('timestamp')
+        .snapshots();
+  }
+
+  /// Streams profile posts for a user from the `posts` collection.
+  ///
+  /// When [repostsOnly] is true, only returns reposts (isRepost == true).
+  Stream<QuerySnapshot<Map<String, dynamic>>> streamProfilePosts(
+    String uid, {
+    int limit = 50,
+    bool repostsOnly = false,
+  }) {
+    Query<Map<String, dynamic>> query = firestore
+        .collection('posts')
+        .where('author', isEqualTo: uid)
+        .where('contextType', isEqualTo: 'profile')
+        .orderBy('timestamp', descending: true)
+        .limit(limit);
+
+    if (repostsOnly) {
+      query = query.where('isRepost', isEqualTo: true);
+    }
+
+    return query.snapshots();
+  }
+
   /// Adds a post to a space feed
   Future<bool> addToSpaceFeed(
       String space,
