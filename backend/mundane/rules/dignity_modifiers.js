@@ -1,43 +1,47 @@
 /**
  * Dignity & Strength Modifiers — Weight Adjustment System
  *
+ * REUSES existing constants from lib/ — single source of truth.
+ * Adds mundane-specific modifier calculation on top.
+ *
  * Source: Brihat Jataka (Ch.1), Saravali, Parashari principles
- *
- * Planetary dignity modifies the BASE WEIGHT of any effect.
- * A planet in its own sign amplifies its natural effects.
- * A debilitated planet's negative effects are amplified, positive effects weakened.
- *
- * This file provides the lookup tables and the modifier calculation.
  */
 
-// ─── SIGN RULERSHIPS ─────────────────────────────────────────────────────
-export const SIGN_RULERS = {
-    Aries: "Mars", Taurus: "Venus", Gemini: "Mercury", Cancer: "Moon",
-    Leo: "Sun", Virgo: "Mercury", Libra: "Venus", Scorpio: "Mars",
-    Sagittarius: "Jupiter", Capricorn: "Saturn", Aquarius: "Saturn", Pisces: "Jupiter",
-};
+import { PLANET_RULERSHIP } from "../../lib/constants.js";
+import {
+    EXALTATION as EXALT_DATA,
+    DEBILITATION as DEBIL_DATA,
+    MOOL_TRIKONA,
+    COMBUSTION_ORBS,
+} from "../../lib/signal_types.js";
 
-// ─── EXALTATION SIGNS ────────────────────────────────────────────────────
-export const EXALTATION = {
-    Sun: "Aries", Moon: "Taurus", Mars: "Capricorn", Mercury: "Virgo",
-    Jupiter: "Cancer", Venus: "Pisces", Saturn: "Libra",
-    Rahu: "Taurus", Ketu: "Scorpio", // Disputed but commonly used
-};
+// ─── Derived lookups from existing data ──────────────────────────────────
 
-// ─── DEBILITATION SIGNS ──────────────────────────────────────────────────
-export const DEBILITATION = {
-    Sun: "Libra", Moon: "Scorpio", Mars: "Cancer", Mercury: "Pisces",
-    Jupiter: "Capricorn", Venus: "Virgo", Saturn: "Aries",
-    Rahu: "Scorpio", Ketu: "Taurus",
-};
+/** Sign → ruler (inverted from PLANET_RULERSHIP) */
+export const SIGN_RULERS = {};
+for (const [planet, signs] of Object.entries(PLANET_RULERSHIP)) {
+    for (const sign of signs) SIGN_RULERS[sign] = planet;
+}
 
-// ─── MOOLATRIKONA SIGNS (stronger than own sign, weaker than exaltation)
-export const MOOLATRIKONA = {
-    Sun: "Leo", Moon: "Taurus", Mars: "Aries", Mercury: "Virgo",
-    Jupiter: "Sagittarius", Venus: "Libra", Saturn: "Aquarius",
-};
+/** Planet → exaltation sign (extracted from signal_types format) */
+export const EXALTATION = {};
+for (const [planet, data] of Object.entries(EXALT_DATA)) {
+    EXALTATION[planet] = data.sign;
+}
 
-// ─── NATURAL FRIENDSHIPS (Naisargika Maitri) ─────────────────────────────
+/** Planet → debilitation sign */
+export const DEBILITATION = {};
+for (const [planet, data] of Object.entries(DEBIL_DATA)) {
+    DEBILITATION[planet] = data.sign;
+}
+
+/** Planet → moolatrikona sign */
+export const MOOLATRIKONA = {};
+for (const [planet, data] of Object.entries(MOOL_TRIKONA)) {
+    MOOLATRIKONA[planet] = data.sign;
+}
+
+// ─── Natural friendships (not in existing lib — mundane needs these) ─────
 export const FRIENDSHIPS = {
     Sun:     { friends: ["Moon", "Mars", "Jupiter"], neutral: ["Mercury"], enemies: ["Venus", "Saturn"] },
     Moon:    { friends: ["Sun", "Mercury"], neutral: ["Mars", "Jupiter", "Venus", "Saturn"], enemies: [] },
@@ -52,9 +56,6 @@ export const FRIENDSHIPS = {
 
 /**
  * Calculate the dignity state of a planet in a sign.
- * @param {string} planet
- * @param {string} sign
- * @returns {{ state: string, modifier: number, label: string }}
  */
 export function getDignity(planet, sign) {
     if (EXALTATION[planet] === sign) {
@@ -70,7 +71,6 @@ export function getDignity(planet, sign) {
         return { state: "own_sign", modifier: 1.2, label: `${planet} in own sign ${sign}` };
     }
 
-    // Check friendship with sign lord
     const signLord = SIGN_RULERS[sign];
     const rel = FRIENDSHIPS[planet];
     if (rel) {
@@ -86,47 +86,36 @@ export function getDignity(planet, sign) {
 }
 
 /**
- * Get retrograde modifier. Retrograde planets are stronger in mundane
- * (they're closer to Earth, appear brighter).
- * @param {boolean} isRetrograde
- * @returns {number} Modifier (1.0 or 1.2)
+ * Retrograde modifier — retrograde planets are stronger in mundane
+ * (closer to Earth, appear brighter).
  */
 export function getRetrogradeModifier(isRetrograde) {
     return isRetrograde ? 1.2 : 1.0;
 }
 
 /**
- * Get combustion modifier. Planet too close to Sun = weakened.
- * Classical distances vary; we use common values.
- * @param {string} planet
- * @param {number} sunDistance - degrees from Sun
- * @returns {number} Modifier
+ * Combustion modifier — reuses COMBUSTION_ORBS from signal_types.
  */
 export function getCombustionModifier(planet, sunDistance) {
-    const thresholds = {
-        Moon: 12, Mars: 17, Mercury: 14, Jupiter: 11, Venus: 10, Saturn: 15,
-    };
-    const threshold = thresholds[planet];
-    if (!threshold) return 1.0; // Sun, Rahu, Ketu can't be combust
+    const threshold = COMBUSTION_ORBS[planet];
+    if (!threshold) return 1.0;
     if (sunDistance < threshold) return 0.6;
     return 1.0;
 }
 
 /**
- * Calculate combined strength modifier for a planet position.
- * @param {string} planet
- * @param {Object} position - { sign, isRetrograde, sunDistance, ... }
- * @returns {{ totalModifier: number, dignity: Object, details: string[] }}
+ * Combined strength modifier for a planet position.
  */
 export function getStrengthModifier(planet, position) {
-    const { sign, isRetrograde = false, sunDistance = 180 } = position;
+    const { sign, isRetrograde = false, isRetro = false, sunDistance = 180 } = position;
     const details = [];
+    const retro = isRetrograde || isRetro;
 
     const dignity = getDignity(planet, sign);
     details.push(dignity.label);
     let total = dignity.modifier;
 
-    const retroMod = getRetrogradeModifier(isRetrograde);
+    const retroMod = getRetrogradeModifier(retro);
     if (retroMod !== 1.0) {
         details.push(`${planet} retrograde (+20%)`);
         total *= retroMod;
@@ -142,24 +131,17 @@ export function getStrengthModifier(planet, position) {
 }
 
 /**
- * Apply strength modifier to an array of effects.
- * Adjusts each effect's weight by the planet's modifier.
- * Also flips "pos" to "neg" (and vice versa) for debilitated planets.
- * @param {Object[]} effects
- * @param {number} modifier
- * @param {string} dignityState
- * @returns {Object[]}
+ * Apply strength modifier to effects array.
+ * Adjusts weight and flips direction for debilitated/exalted.
  */
 export function applyModifierToEffects(effects, modifier, dignityState) {
     return effects.map(e => {
         const adjusted = { ...e, originalWeight: e.weight, weight: Math.min(1.0, e.weight * modifier) };
 
-        // Debilitated planets: positive effects become weaker, negative amplified
         if (dignityState === "debilitated") {
             if (e.dir === "pos") adjusted.weight = e.weight * 0.4;
             if (e.dir === "neg") adjusted.weight = Math.min(1.0, e.weight * 1.3);
         }
-        // Exalted planets: positive effects amplified, negative softened
         if (dignityState === "exalted") {
             if (e.dir === "pos") adjusted.weight = Math.min(1.0, e.weight * 1.4);
             if (e.dir === "neg") adjusted.weight = e.weight * 0.6;

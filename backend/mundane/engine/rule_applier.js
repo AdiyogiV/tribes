@@ -16,6 +16,7 @@ import { evaluateEclipse } from "../rules/eclipse_effects.js";
 import { getStrengthModifier, applyModifierToEffects } from "../rules/dignity_modifiers.js";
 import { getWorldActivationMap, formatKoormaContext } from "../rules/koorma_chakra.js";
 import { DOMAINS } from "../rules/domains.js";
+import { getSlowPlanetNakshatraThemes, formatNakshatraContext } from "../rules/nakshatra_effects.js";
 
 /**
  * @typedef {Object} SkyState
@@ -99,14 +100,33 @@ export function applyAllRules(skyState) {
         }
     }
 
-    // ── 4. Get geographic activation ───────────────────────────────────
+    // ── 4. Nakshatra sub-themes (slow planets) ─────────────────────────
+    const nakshatraThemes = getSlowPlanetNakshatraThemes(positions);
+    for (const theme of nakshatraThemes) {
+        for (const effect of theme.effects) {
+            allEffects.push({
+                ...effect,
+                weight: Math.min(1.0, effect.weight * theme.intensityMod),
+                originalWeight: effect.weight,
+                planet: theme.planet,
+                sign: positions[theme.planet]?.sign,
+                ruleId: theme.ruleId,
+                source: "Brihat Samhita + Nakshatra lordship",
+                dignityDetails: [`${theme.planet} in ${theme.nakshatra} (${theme.lord}'s nak, pada ${theme.pada})`],
+                category: "nakshatra_sub_theme",
+            });
+        }
+    }
+    const nakshatraText = formatNakshatraContext(positions);
+
+    // ── 5. Get geographic activation ───────────────────────────────────
     const koormaMap = getWorldActivationMap(positions);
     const koormaText = formatKoormaContext(positions);
 
-    // ── 5. Aggregate by domain ─────────────────────────────────────────
+    // ── 6. Aggregate by domain ─────────────────────────────────────────
     const domainScores = aggregateByDomain(allEffects);
 
-    // ── 6. Sort all effects by weight (most significant first) ────────
+    // ── 7. Sort all effects by weight (most significant first) ────────
     allEffects.sort((a, b) => b.weight - a.weight);
 
     return {
@@ -114,10 +134,12 @@ export function applyAllRules(skyState) {
         totalEffects: allEffects.length,
         effects: allEffects,
         conjunctions,
+        nakshatraThemes,
+        nakshatraText,
         domainScores,
         koormaMap,
         koormaText,
-        summary: buildSummary(allEffects, domainScores, conjunctions),
+        summary: buildSummary(allEffects, domainScores, conjunctions, nakshatraThemes),
     };
 }
 
@@ -158,7 +180,7 @@ function aggregateByDomain(effects) {
 /**
  * Build a compact text summary for LLM synthesis context.
  */
-function buildSummary(effects, domainScores, conjunctions) {
+function buildSummary(effects, domainScores, conjunctions, nakshatraThemes = []) {
     const lines = [];
 
     // Top 5 most impactful effects
@@ -181,6 +203,22 @@ function buildSummary(effects, domainScores, conjunctions) {
         for (const c of conjunctions) {
             const war = c.isWar ? " ⚔️ PLANETARY WAR" : c.isClose ? " ⚡ close" : "";
             lines.push(`  ${c.planets.join("+")} in ${c.sign} (${c.separation.toFixed(1)}°)${war}`);
+        }
+    }
+
+    // Nakshatra sub-themes
+    if (nakshatraThemes.length > 0) {
+        lines.push("\n## Nakshatra Sub-Themes");
+        for (const t of nakshatraThemes) {
+            lines.push(`  ${t.planet} in ${t.nakshatra} (${t.lord}'s nak, pada ${t.pada})`);
+            if (t.hasSpecificEffects) {
+                for (const e of t.effects) {
+                    const arrow = e.dir === "pos" ? "↑" : e.dir === "neg" ? "↓" : "↔";
+                    lines.push(`    ${arrow} ${e.desc}`);
+                }
+            } else {
+                lines.push(`    → ${t.lordTheme}`);
+            }
         }
     }
 

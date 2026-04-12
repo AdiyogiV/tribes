@@ -1,7 +1,5 @@
 /**
  * Brihat Samhita Rules Engine — Barrel Export
- *
- * All rules modules in one place. Import from here.
  */
 
 export { KOORMA_CHAKRA, getKoormaRegions, getAffectedRegions, getWorldActivationMap, formatKoormaContext } from "./koorma_chakra.js";
@@ -14,3 +12,4 @@ export {
     SIGN_RULERS, EXALTATION, DEBILITATION, MOOLATRIKONA, FRIENDSHIPS,
     getDignity, getStrengthModifier, applyModifierToEffects,
 } from "./dignity_modifiers.js";
+export { getNakshatraSubTheme, getSlowPlanetNakshatraThemes, formatNakshatraContext } from "./nakshatra_effects.js";
