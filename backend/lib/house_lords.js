@@ -18,46 +18,14 @@
  * Pure math. No LLM. No cost.
  */
 
-const SIGN_NAMES = [
-    "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
-    "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces",
-];
-
-// Sign → House number (fixed Aries ascendant = natural zodiac)
-const SIGN_TO_HOUSE = {
-    aries: 1,    taurus: 2,   gemini: 3,    cancer: 4,
-    leo: 5,      virgo: 6,    libra: 7,     scorpio: 8,
-    sagittarius: 9, capricorn: 10, aquarius: 11, pisces: 12,
-};
-
-// Which signs each planet rules (Vedic — no outer planets)
-const LORDSHIP = {
-    Sun:     ["Leo"],
-    Moon:    ["Cancer"],
-    Mars:    ["Aries", "Scorpio"],
-    Mercury: ["Gemini", "Virgo"],
-    Jupiter: ["Sagittarius", "Pisces"],
-    Venus:   ["Taurus", "Libra"],
-    Saturn:  ["Capricorn", "Aquarius"],
-    Rahu:    ["Aquarius"],  // co-lord (traditional: Saturn rules, Rahu co-rules)
-    Ketu:    ["Scorpio"],   // co-lord (traditional: Mars rules, Ketu co-rules)
-};
-
-// Mundane house significations (what each house governs in world affairs)
-const HOUSE_SIGNIFICATIONS = {
-    1:  "nation, national identity, general public, collective mood",
-    2:  "economy, national wealth, banks, currency, trade",
-    3:  "communications, media, transport, neighbors, short journeys",
-    4:  "land, agriculture, infrastructure, opposition party, homeland",
-    5:  "children, education, speculation, entertainment, diplomacy",
-    6:  "military, health, disease, labor, service, enemies",
-    7:  "foreign affairs, war/peace, treaties, open enemies, partnerships",
-    8:  "death, crisis, taxes, debt, insurance, transformation, secrets",
-    9:  "law, religion, judiciary, philosophy, long journeys, foreign lands",
-    10: "government, ruler, authority, reputation, executive power",
-    11: "parliament, legislature, alliances, gains, aspirations",
-    12: "losses, exile, espionage, hospitals, prisons, foreign settlements",
-};
+import {
+    ZODIAC_SIGNS,
+    PLANET_RULERSHIP,
+    MUNDANE_HOUSES,
+    SIGN_TO_HOUSE,
+    getSignFromLongitude,
+    getSignDegree,
+} from "./constants.js";
 
 /**
  * Get the house number for a given sign (fixed Aries ascendant).
@@ -74,7 +42,7 @@ export function getHouse(sign) {
  * @returns {number[]} Array of house numbers
  */
 export function getLordedHouses(planet) {
-    const signs = LORDSHIP[planet];
+    const signs = PLANET_RULERSHIP[planet];
     if (!signs) return [];
     return signs.map(s => SIGN_TO_HOUSE[s.toLowerCase()]);
 }
@@ -85,21 +53,20 @@ export function getLordedHouses(planet) {
  * @returns {string} Signification text
  */
 export function getHouseSignification(house) {
-    return HOUSE_SIGNIFICATIONS[house] || "";
+    const h = MUNDANE_HOUSES[house];
+    return h ? h.domain : "";
 }
 
 /** Derive sign from longitude if not provided. */
 function getSignFromPos(pos) {
     if (pos?.sign) return pos.sign;
-    if (pos?.longitude != null) return SIGN_NAMES[Math.floor(pos.longitude / 30) % 12];
-    return null;
+    return getSignFromLongitude(pos?.longitude) || null;
 }
 
 /** Derive sign degree from longitude if not provided. */
 function getDegreeFromPos(pos) {
     if (pos?.signDegree != null) return pos.signDegree;
-    if (pos?.longitude != null) return pos.longitude % 30;
-    return null;
+    return getSignDegree(pos?.longitude);
 }
 
 /**
@@ -112,7 +79,7 @@ export function buildHouseLordContext(positions) {
     const placements = [];
 
     for (const [planet, pos] of Object.entries(positions)) {
-        if (!LORDSHIP[planet]) continue;
+        if (!PLANET_RULERSHIP[planet]) continue;
         const sign = getSignFromPos(pos);
         if (!sign) continue;
 
@@ -129,9 +96,9 @@ export function buildHouseLordContext(positions) {
             lordsOf: lordedHouses,
             lordSignifications: lordedHouses.map(h => ({
                 house: h,
-                meaning: HOUSE_SIGNIFICATIONS[h],
+                meaning: MUNDANE_HOUSES[h]?.domain || "",
             })),
-            occupiedSignification: HOUSE_SIGNIFICATIONS[occupiedHouse],
+            occupiedSignification: MUNDANE_HOUSES[occupiedHouse]?.domain || "",
         });
     }
 

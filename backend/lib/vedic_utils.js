@@ -8,7 +8,7 @@
  * Provides:
  *   getNakshatra(longitude)   → { index, name, pada, lord }
  *   getTithi(sunLon, moonLon) → { index, name, paksha }
- *   getPanchanga(positions)   → { tithi, nakshatra, yoga, karana, vara }
+ *   getPanchanga(positions)   → { tithi, nakshatra, yoga, vara }
  */
 
 // =============================================================================
@@ -162,7 +162,7 @@ export function getPanchanga(positions, dateStr) {
     const sun = positions.Sun;
     const moon = positions.Moon;
 
-    if (!sun?.longitude == null || !moon?.longitude == null) {
+    if (sun?.longitude == null || moon?.longitude == null) {
         return null;
     }
 

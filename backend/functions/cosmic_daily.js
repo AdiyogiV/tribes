@@ -28,15 +28,9 @@ import { initMemory, storeMemory, recallMemory, listMemories } from "../lib/agen
 import { fetchNewsHeadlines, formatNewsForPrompt } from "../lib/news_feed.js";
 import { getPanchanga, getNakshatra, getNakshatraMundane } from "../lib/vedic_utils.js";
 import { buildHouseLordContext } from "../lib/house_lords.js";
+import { scanUpcomingTransits } from "../lib/upcoming_transits.js";
+import { ZODIAC_SIGNS, MUNDANE_HOUSES } from "../lib/constants.js";
 
-// =============================================================================
-// ZODIAC SIGNS (natural order)
-// =============================================================================
-
-const ZODIAC_SIGNS = [
-    "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
-    "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces",
-];
 
 // =============================================================================
 // SYSTEM PROMPT
@@ -218,8 +212,6 @@ async function loadSkyAndExtractSignals(dateStr) {
     return { signals, topSignals, diff, positions: todayPos, panchanga, upcoming, houseLords };
 }
 
-import { scanUpcomingTransits } from "../lib/upcoming_transits.js";
-
 // =============================================================================
 // PROMPT BUILDING
 // =============================================================================
@@ -335,7 +327,9 @@ function buildPrompt(dateStr, skyData, newsText, observations, predictions, patt
 function formatSignal(s) {
     const applying = s.applying === true ? " APPLYING" : s.applying === false ? " separating" : "";
     const orb = s.orb != null ? ` (orb: ${s.orb}°)` : "";
-    return `- [★${s.intensity}/10] ${s.type}: ${s.planets.join(" + ")} ${s.aspect || s.dignity || s.stationType || ""}${orb}${applying}\n    Domains: ${(s.domains || []).slice(0, 5).join(", ")}`;
+    const detail = s.aspect || s.dignity || s.stationType || s.yogaName || "";
+    const desc = s.detail?.description ? `\n    ${s.detail.description}` : "";
+    return `- [★${s.intensity}/10] ${s.type}: ${s.planets.join(" + ")} ${detail}${orb}${applying}${desc}\n    Domains: ${(s.domains || []).slice(0, 5).join(", ")}`;
 }
 
 // =============================================================================
@@ -360,8 +354,11 @@ function enrichOutput(output, dateStr, skyData) {
                 lordsOf: p.lordsOf,
             }));
 
+        const mundane = MUNDANE_HOUSES[h] || {};
         houses[h] = {
             sign,
+            name: mundane.name || "",
+            domain: mundane.domain || "",
             planets: planetsInHouse,
         };
     }
@@ -378,7 +375,7 @@ function enrichOutput(output, dateStr, skyData) {
         upcomingTransits: (skyData.upcoming || []).slice(0, 10),
         signalsSummary: skyData.topSignals.slice(0, 8).map(s => ({
             id: s.id, type: s.type, planets: s.planets,
-            aspect: s.aspect, dignity: s.dignity,
+            aspect: s.aspect, dignity: s.dignity, yogaName: s.yogaName,
             intensity: s.intensity, applying: s.applying,
             orb: s.orb, domains: s.domains,
         })),

@@ -174,17 +174,8 @@ export const MOOL_TRIKONA = {
     Saturn: { sign: "Aquarius", from: 0, to: 20 },
 };
 
-export const PLANET_RULERSHIP = {
-    Sun: ["Leo"],
-    Moon: ["Cancer"],
-    Mars: ["Aries", "Scorpio"],
-    Mercury: ["Gemini", "Virgo"],
-    Jupiter: ["Sagittarius", "Pisces"],
-    Venus: ["Taurus", "Libra"],
-    Saturn: ["Capricorn", "Aquarius"],
-    Rahu: ["Aquarius"],     // co-rules with Saturn (some traditions)
-    Ketu: ["Scorpio"],      // co-rules with Mars (some traditions)
-};
+// Re-export from constants — single source of truth
+export { PLANET_RULERSHIP } from "./constants.js";
 
 // =============================================================================
 // COMBUSTION ORBS
@@ -251,11 +242,12 @@ export function calculateIntensity(planets, orb, maxOrb, opts = {}) {
     // Scale to 1-10
     let raw = base * orbFactor;
 
-    // Vedic aspects are always-on background conditions (whole-sign).
-    // They're important but shouldn't outrank tight geometric aspects.
-    // Cap at 6 so they provide context without drowning acute signals.
+    // Vedic special aspects (rashi drishti) are whole-sign, so orb is always 0.
+    // They're important in mundane astrology but shouldn't outrank tight
+    // geometric aspects. Apply a moderate scaling based on planet weight:
+    // heavy pairs (Saturn/Jupiter/Mars) keep high scores, lighter pairs get scaled.
     if (opts.isVedic) {
-        raw = Math.min(raw, 6);
+        raw = Math.min(raw, Math.max(4, maxWeight - 1));
     }
 
     return Math.round(Math.min(10, Math.max(1, raw)));

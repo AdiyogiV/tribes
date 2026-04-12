@@ -36,14 +36,39 @@ import {
     angularSeparation,
 } from "../lib/aspect_calculator.js";
 
+import {
+    ZODIAC_SIGNS,
+    getSignFromLongitude,
+} from "../lib/constants.js";
+
+import { getNakshatra } from "../lib/vedic_utils.js";
+import { detectMundaneYogas } from "../lib/vedic_yogas.js";
+
 // Only Navagraha — no Uranus, Neptune, Pluto
 const NAVAGRAHA_SET = new Set(NAVAGRAHA);
 
-/** Filter positions to only Navagraha planets. */
-function filterNavagraha(positions) {
+/**
+ * Filter positions to Navagraha only AND enrich with derived fields.
+ * Firestore data only has { longitude, signDegree, isRetro }.
+ * We need .sign and .nakshatra for ingresses, dignities, etc.
+ */
+function enrichPositions(positions) {
     if (!positions) return positions;
     return Object.fromEntries(
-        Object.entries(positions).filter(([p]) => NAVAGRAHA_SET.has(p))
+        Object.entries(positions)
+            .filter(([p]) => NAVAGRAHA_SET.has(p))
+            .map(([name, pos]) => {
+                if (!pos || pos.longitude == null) return [name, pos];
+                const nak = getNakshatra(pos.longitude);
+                return [name, {
+                    ...pos,
+                    sign: pos.sign || getSignFromLongitude(pos.longitude),
+                    signDegree: pos.signDegree ?? (pos.longitude % 30),
+                    nakshatra: pos.nakshatra || nak.name,
+                    nakshatraPada: pos.nakshatraPada || nak.pada,
+                    nakshatraLord: pos.nakshatraLord || nak.lord,
+                }];
+            })
     );
 }
 
@@ -98,9 +123,9 @@ export function extractSignals(todayPositions, yesterdayPositions = null, dateSt
     const signals = [];
     const date = dateStr || new Date().toISOString().split("T")[0];
 
-    // Filter to Navagraha only — outer planets don't belong in Vedic analysis
-    const today = filterNavagraha(todayPositions);
-    const yesterday = filterNavagraha(yesterdayPositions);
+    // Enrich positions: filter to Navagraha + derive sign/nakshatra from longitude
+    const today = enrichPositions(todayPositions);
+    const yesterday = enrichPositions(yesterdayPositions);
 
     // ── 1. ASPECTS ──────────────────────────────────────────────────────────
     const aspects = findAllAspects(today, yesterday);
@@ -316,6 +341,9 @@ export function extractSignals(todayPositions, yesterdayPositions = null, dateSt
             }
         }
     }
+
+    // ── 5d. VEDIC MUNDANE YOGAS ──────────────────────────────────────────
+    detectMundaneYogas(today, signals, date);
 
     // ── 6. COMBUSTIONS ──────────────────────────────────────────────────────
     const combustions = findCombustions(today);

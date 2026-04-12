@@ -202,13 +202,13 @@ describe("Aspect Detection", () => {
         assert(sq !== undefined, "Should find square (93° ≈ 90°)");
     });
 
-    it("skips Moon-outer planet aspects", () => {
-        const aspects = findAllAspects(TODAY_POSITIONS);
-        const moonUranus = aspects.find(a =>
-            (a.planet1 === "Moon" && a.planet2 === "Uranus") ||
-            (a.planet1 === "Uranus" && a.planet2 === "Moon")
+    it("extractSignals filters outer planets (Navagraha only)", () => {
+        // Outer planets are in test data but should be excluded by extractSignals
+        const signals = extractSignals(TODAY_POSITIONS, YESTERDAY_POSITIONS, "2026-04-11");
+        const outerPlanets = signals.filter(s =>
+            s.planets.some(p => ["Uranus", "Neptune", "Pluto"].includes(p))
         );
-        assert(moonUranus === undefined, "Should skip Moon-Uranus (noise filter)");
+        assert(outerPlanets.length === 0, "Should filter out Uranus, Neptune, Pluto");
     });
 
     it("sorts aspects by orb tightness", () => {
@@ -521,6 +521,230 @@ describe("Visual Inspection — Full Signal Output", () => {
         console.log(`\n  🔄 Sky Diff:`);
         console.log(`    New: ${diff.stats.new} | Changed: ${diff.stats.changed} | Ended: ${diff.stats.ended} | Active: ${diff.stats.totalActive}`);
         console.log(`    Summary: ${diff.summary}`);
+    });
+});
+
+// =============================================================================
+// TESTS: Vedic Yogas
+// =============================================================================
+
+import { detectMundaneYogas } from "../lib/vedic_yogas.js";
+
+describe("Vedic Mundane Yogas", () => {
+    it("detects Gajakesari when Jupiter in kendra from Moon", () => {
+        // Moon in H5 (Leo), Jupiter in H4 (Cancer) → dist = ((4-5+12)%12) = 11 → NOT kendra
+        // Moon in H1 (Aries), Jupiter in H4 (Cancer) → dist = 4 → kendra!
+        const positions = {
+            Moon: { longitude: 10, sign: "Aries" },   // H1
+            Jupiter: { longitude: 100, sign: "Cancer" }, // H4
+        };
+        const signals = [];
+        detectMundaneYogas(positions, signals, "2026-01-01");
+        const gk = signals.find(s => s.yogaName === "Gajakesari");
+        assert(gk !== undefined, "Should detect Gajakesari Yoga");
+        assert(gk.intensity === 7, `Intensity should be 7, got ${gk.intensity}`);
+    });
+
+    it("does NOT detect Gajakesari when Jupiter not in kendra from Moon", () => {
+        const positions = {
+            Moon: { longitude: 142, sign: "Leo" },     // H5
+            Jupiter: { longitude: 100, sign: "Cancer" }, // H4 → dist from Moon = 11, not kendra
+        };
+        const signals = [];
+        detectMundaneYogas(positions, signals, "2026-01-01");
+        const gk = signals.find(s => s.yogaName === "Gajakesari");
+        assert(gk === undefined, "Should not detect Gajakesari when Jupiter not in kendra from Moon");
+    });
+
+    it("detects Viparita Raja when dusthana lord in another dusthana", () => {
+        // Mercury (H6 lord in Kalpurush) in H8 (Scorpio)
+        const positions = {
+            Mercury: { longitude: 220, sign: "Scorpio" }, // H8
+        };
+        const signals = [];
+        detectMundaneYogas(positions, signals, "2026-01-01");
+        const vr = signals.find(s => s.yogaName === "Viparita Raja");
+        assert(vr !== undefined, "Should detect Viparita Raja Yoga");
+    });
+
+    it("detects Raja Yoga when kendra lord conjoins trikona lord", () => {
+        // Saturn (H10 kendra lord) + Jupiter (H9 trikona lord) both in Pisces (H12)
+        const positions = {
+            Saturn: { longitude: 340, sign: "Pisces" },  // H12
+            Jupiter: { longitude: 345, sign: "Pisces" }, // H12
+        };
+        const signals = [];
+        detectMundaneYogas(positions, signals, "2026-01-01");
+        const raja = signals.find(s => s.yogaName === "Raja Yoga" && s.planets.includes("Saturn"));
+        assert(raja !== undefined, "Should detect Raja Yoga (Saturn-Jupiter)");
+    });
+
+    it("detects Graha Yuddha when two planets within 1 degree", () => {
+        const positions = {
+            Venus: { longitude: 345.5, sign: "Pisces" },
+            Saturn: { longitude: 345.9, sign: "Pisces" },
+        };
+        const signals = [];
+        detectMundaneYogas(positions, signals, "2026-01-01");
+        const war = signals.find(s => s.yogaName === "Graha Yuddha");
+        assert(war !== undefined, "Should detect Graha Yuddha");
+        assert(war.orb <= 1.0, `War orb should be <= 1, got ${war.orb}`);
+    });
+
+    it("does NOT detect Graha Yuddha when planets > 1 degree apart", () => {
+        const positions = {
+            Venus: { longitude: 345.5, sign: "Pisces" },
+            Saturn: { longitude: 347.0, sign: "Pisces" },
+        };
+        const signals = [];
+        detectMundaneYogas(positions, signals, "2026-01-01");
+        const war = signals.find(s => s.yogaName === "Graha Yuddha");
+        assert(war === undefined, "Should not detect war when > 1° apart");
+    });
+});
+
+// =============================================================================
+// TESTS: Position Enrichment (sign/nakshatra derivation)
+// =============================================================================
+
+describe("Position Enrichment (enrichPositions)", () => {
+    it("derives sign from longitude when .sign is missing", () => {
+        // Firestore-like data with no .sign field
+        const rawPositions = {
+            Sun: { longitude: 27.5, signDegree: 27.5, isRetro: false },
+            Jupiter: { longitude: 93.4, signDegree: 3.4, isRetro: false },
+        };
+        const signals = extractSignals(rawPositions, null, "2026-04-11");
+        // If enrichment works, we get signals. If not, we get nothing.
+        assert(signals.length > 0, "Should produce signals from raw positions");
+    });
+
+    it("filters outer planets and enriches Navagraha", () => {
+        const rawPositions = {
+            Sun: { longitude: 27.5 },
+            Uranus: { longitude: 56.1 },
+            Pluto: { longitude: 311.2 },
+        };
+        const signals = extractSignals(rawPositions, null, "2026-04-11");
+        const outerSignals = signals.filter(s =>
+            s.planets.some(p => ["Uranus", "Pluto"].includes(p))
+        );
+        assert(outerSignals.length === 0, "Should exclude outer planets");
+    });
+
+    it("detects ingresses when sign is derived from longitude", () => {
+        // Mercury moves from 29.9° Aries to 0.1° Taurus
+        const yesterday = {
+            Mercury: { longitude: 29.9, isRetro: false },
+            Sun: { longitude: 27.5, isRetro: false },
+        };
+        const today = {
+            Mercury: { longitude: 30.1, isRetro: false },
+            Sun: { longitude: 28.5, isRetro: false },
+        };
+        const signals = extractSignals(today, yesterday, "2026-04-11");
+        const ingress = signals.find(s => s.type === "ingress" && s.planets[0] === "Mercury");
+        assert(ingress !== undefined, "Should detect Mercury ingress from derived sign");
+        assert(ingress.fromSign === "Aries", `fromSign should be Aries, got ${ingress.fromSign}`);
+        assert(ingress.toSign === "Taurus", `toSign should be Taurus, got ${ingress.toSign}`);
+    });
+
+    it("detects dignity changes from derived sign", () => {
+        // Jupiter moves from 89.9° (Gemini) to 90.1° (Cancer = exalted)
+        const yesterday = {
+            Jupiter: { longitude: 89.9, isRetro: false },
+            Sun: { longitude: 27.5, isRetro: false },
+        };
+        const today = {
+            Jupiter: { longitude: 90.1, isRetro: false },
+            Sun: { longitude: 28.5, isRetro: false },
+        };
+        const signals = extractSignals(today, yesterday, "2026-04-11");
+        const dignity = signals.find(s => s.type === "dignity" && s.planets[0] === "Jupiter");
+        assert(dignity !== undefined, "Should detect Jupiter exaltation from derived sign");
+        assert(dignity.dignity === "exalted", `Should be exalted, got ${dignity.dignity}`);
+    });
+});
+
+// =============================================================================
+// TESTS: House Lords
+// =============================================================================
+
+import { buildHouseLordContext, getHouse, getLordedHouses, getHouseSignification } from "../lib/house_lords.js";
+
+describe("House Lords", () => {
+    it("maps sign to correct house (Kalpurush)", () => {
+        assert(getHouse("Aries") === 1, "Aries should be H1");
+        assert(getHouse("Cancer") === 4, "Cancer should be H4");
+        assert(getHouse("Pisces") === 12, "Pisces should be H12");
+    });
+
+    it("returns correct lorded houses", () => {
+        const saturnHouses = getLordedHouses("Saturn");
+        assert(saturnHouses.includes(10) && saturnHouses.includes(11), "Saturn should lord H10 and H11");
+        const sunHouses = getLordedHouses("Sun");
+        assert(sunHouses.length === 1 && sunHouses[0] === 5, "Sun should lord H5 only");
+    });
+
+    it("returns mundane signification for houses", () => {
+        const sig = getHouseSignification(10);
+        assert(sig.includes("government"), `H10 should mention government, got: ${sig}`);
+    });
+
+    it("builds context from raw longitude-only positions", () => {
+        const positions = {
+            Saturn: { longitude: 349.8 },  // Pisces = H12
+            Jupiter: { longitude: 93.4 },  // Cancer = H4
+            Sun: { longitude: 27.5 },      // Aries = H1
+        };
+        const ctx = buildHouseLordContext(positions);
+        assert(ctx.placements.length === 3, `Should have 3 placements, got ${ctx.placements.length}`);
+        const saturn = ctx.placements.find(p => p.planet === "Saturn");
+        assert(saturn.occupiedHouse === 12, `Saturn should be in H12, got ${saturn.occupiedHouse}`);
+        assert(saturn.lordsOf.includes(10), "Saturn should lord H10");
+        assert(ctx.summary.includes("Saturn"), "Summary should mention Saturn");
+    });
+});
+
+// =============================================================================
+// TESTS: Constants (single source of truth)
+// =============================================================================
+
+import { ZODIAC_SIGNS, PLANET_RULERSHIP, MUNDANE_HOUSES, getSignFromLongitude, getHouseFromLongitude } from "../lib/constants.js";
+
+describe("Constants — Single Source of Truth", () => {
+    it("ZODIAC_SIGNS has 12 signs starting with Aries", () => {
+        assert(ZODIAC_SIGNS.length === 12, `Should have 12 signs, got ${ZODIAC_SIGNS.length}`);
+        assert(ZODIAC_SIGNS[0] === "Aries", "First sign should be Aries");
+        assert(ZODIAC_SIGNS[11] === "Pisces", "Last sign should be Pisces");
+    });
+
+    it("PLANET_RULERSHIP covers all 9 Navagraha", () => {
+        const expected = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu"];
+        for (const p of expected) {
+            assert(PLANET_RULERSHIP[p], `${p} should have rulership`);
+        }
+    });
+
+    it("MUNDANE_HOUSES has 12 houses with name + domain", () => {
+        for (let h = 1; h <= 12; h++) {
+            assert(MUNDANE_HOUSES[h], `House ${h} should exist`);
+            assert(MUNDANE_HOUSES[h].name, `House ${h} should have name`);
+            assert(MUNDANE_HOUSES[h].domain, `House ${h} should have domain`);
+        }
+    });
+
+    it("getSignFromLongitude works correctly", () => {
+        assert(getSignFromLongitude(0) === "Aries", "0° = Aries");
+        assert(getSignFromLongitude(30) === "Taurus", "30° = Taurus");
+        assert(getSignFromLongitude(359) === "Pisces", "359° = Pisces");
+        assert(getSignFromLongitude(90) === "Cancer", "90° = Cancer");
+    });
+
+    it("getHouseFromLongitude returns 1-12", () => {
+        assert(getHouseFromLongitude(0) === 1, "0° = H1");
+        assert(getHouseFromLongitude(90) === 4, "90° = H4");
+        assert(getHouseFromLongitude(359) === 12, "359° = H12");
     });
 });
 

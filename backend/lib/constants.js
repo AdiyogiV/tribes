@@ -51,6 +51,7 @@ export const TRADITIONAL_PLANETS = ["Sun", "Moon", "Mars", "Mercury", "Jupiter",
 
 /**
  * House significations in Vedic astrology (Bhava Karakatwa)
+ * Personal (natal chart) perspective.
  */
 export const HOUSE_SIGNIFICATIONS = {
     1: "Self, personality, physical body, appearance, health, longevity",
@@ -66,6 +67,71 @@ export const HOUSE_SIGNIFICATIONS = {
     11: "Gains, income, friends, aspirations, elder siblings, ankles",
     12: "Losses, expenses, spirituality, foreign lands, liberation, feet",
 };
+
+/**
+ * House significations for Mundane (world) astrology — Medini Jyotish.
+ * Kalpurush Kundli: fixed Aries ascendant.
+ */
+export const MUNDANE_HOUSES = {
+    1:  { name: "Lagna",      domain: "nation, national identity, general public, collective mood" },
+    2:  { name: "Dhana",      domain: "economy, national wealth, banks, currency, trade, revenue" },
+    3:  { name: "Sahaja",     domain: "communications, media, transport, neighbors, short journeys" },
+    4:  { name: "Sukha",      domain: "land, agriculture, infrastructure, opposition party, homeland, weather" },
+    5:  { name: "Putra",      domain: "children, education, speculation, entertainment, diplomacy" },
+    6:  { name: "Ripu",       domain: "military, health, disease, labor, service, enemies" },
+    7:  { name: "Yuvati",     domain: "foreign affairs, war/peace, treaties, open enemies, partnerships" },
+    8:  { name: "Randhra",    domain: "death, crisis, taxes, debt, insurance, transformation, secrets" },
+    9:  { name: "Dharma",     domain: "law, religion, judiciary, philosophy, long journeys, foreign lands" },
+    10: { name: "Karma",      domain: "government, ruler, authority, reputation, executive power" },
+    11: { name: "Labha",      domain: "parliament, legislature, alliances, gains, aspirations" },
+    12: { name: "Vyaya",      domain: "losses, exile, espionage, hospitals, prisons, foreign settlements" },
+};
+
+/**
+ * Planet rulership — which signs each planet rules.
+ * Standard Parashari lordship. Rahu/Ketu co-lordship per BPHS.
+ */
+export const PLANET_RULERSHIP = {
+    Sun:     ["Leo"],
+    Moon:    ["Cancer"],
+    Mars:    ["Aries", "Scorpio"],
+    Mercury: ["Gemini", "Virgo"],
+    Jupiter: ["Sagittarius", "Pisces"],
+    Venus:   ["Taurus", "Libra"],
+    Saturn:  ["Capricorn", "Aquarius"],
+    Rahu:    ["Aquarius"],   // co-lord with Saturn
+    Ketu:    ["Scorpio"],    // co-lord with Mars
+};
+
+/**
+ * Sign → house number (fixed Aries ascendant = natural zodiac).
+ * Used by mundane astrology modules.
+ */
+export const SIGN_TO_HOUSE = {
+    aries: 1,    taurus: 2,   gemini: 3,    cancer: 4,
+    leo: 5,      virgo: 6,    libra: 7,     scorpio: 8,
+    sagittarius: 9, capricorn: 10, aquarius: 11, pisces: 12,
+};
+
+// ── Position helpers (derive sign/nakshatra from longitude) ─────────────
+
+/** Get sign name from sidereal longitude. */
+export function getSignFromLongitude(longitude) {
+    if (longitude == null) return null;
+    return ZODIAC_SIGNS[Math.floor(((longitude % 360) + 360) % 360 / 30)];
+}
+
+/** Get sign degree (0-30) from sidereal longitude. */
+export function getSignDegree(longitude) {
+    if (longitude == null) return null;
+    return ((longitude % 360) + 360) % 360 % 30;
+}
+
+/** Get house number (1-12, Kalpurush) from sidereal longitude. */
+export function getHouseFromLongitude(longitude) {
+    if (longitude == null) return null;
+    return Math.floor(((longitude % 360) + 360) % 360 / 30) + 1;
+}
 
 // =============================================================================
 // SPACE TYPES (must match lib/modal/spaceTypes.dart and firestore.rules)
