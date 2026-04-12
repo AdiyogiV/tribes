@@ -1,45 +1,35 @@
 # Mundane Jyotish v2 — Architecture Plan
 
-## Timing Layers (How We Do World Predictions Without Any Nation's Birthday)
+> **See also:** `docs/classical_medini_research.md` for full research on how
+> classical Medini Jyotish actually works (Brihat Samhita rules engine approach).
 
-Classical Medini Jyotish uses **5 independent timing layers** — none require
-a nation's birth chart. Think of them like zoom levels on a map:
+## Core Principle: The Sky IS The Chart
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ Layer 1: ERA (Jupiter-Saturn conjunction, 20 years)              │
-│   Dec 2020 in Capricorn → institutional restructuring era        │
-│   Next: ~2040 in Aquarius                                       │
-│ ┌─────────────────────────────────────────────────────────────────────┐ │
-│ │ Layer 2: YEAR (Mesha Sankranti chart, annual)                   │ │
-│ │   2026: Moon in Shatabhisha → Saturn-ruled year                 │ │
-│ │   Annual Vimshottari dasha (120 yrs compressed to 1 yr)        │ │
-│ │ ┌─────────────────────────────────────────────────────────────────┐ │ │
-│ │ │ Layer 3: ECLIPSE WINDOW (6 months per eclipse)              │ │ │
-│ │ │   Feb 2026 solar eclipse Aquarius-Leo axis                  │ │ │
-│ │ │   Mar 2026 lunar eclipse → defines disruption window        │ │ │
-│ │ │ ┌─────────────────────────────────────────────────────────────┐ │ │ │
-│ │ │ │ Layer 4: WEEK (transit perfections, weekly signals)       │ │ │ │
-│ │ │ │   What aspect perfected? What ingress happened?            │ │ │ │
-│ │ │ │   What changed from last week?                             │ │ │ │
-│ │ │ │ ┌─────────────────────────────────────────────────────────┐ │ │ │ │
-│ │ │ │ │ Layer 5: GEOGRAPHY (Koorma Chakra)                     │ │ │ │ │
-│ │ │ │ │   Saturn in Pisces → Middle East/Oceania under stress    │ │ │ │ │
-│ │ │ │ │   Rahu in Aquarius → Russia/Ethiopia disrupted            │ │ │ │ │
-│ │ │ │ │   Ketu in Leo → France/Italy identity crisis              │ │ │ │ │
-│ │ │ │ └─────────────────────────────────────────────────────────┘ │ │ │ │
-│ │ │ └─────────────────────────────────────────────────────────────┘ │ │ │
-│ │ └─────────────────────────────────────────────────────────────────┘ │ │
-│ └─────────────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────────────────┘
+Varahamihira didn't cast charts for the world. He read the sky directly and
+applied rules from the Brihat Samhita: planet P in sign S → effects E in
+regions R. No special dates. No birth charts. No dashas for nations.
 
-Optional Layer 6: NATION CHARTS (India 1947, USA 1776, etc.)
-  → Adds nation-specific dasha for targeted predictions
-  → Enrichment layer, NOT the foundation
-```
+**The system is a deterministic rules engine:**
+- 108 planet-in-sign effects (BS Ch.5-12)
+- 189 planet-in-nakshatra sub-period effects
+- 36 conjunction pair effects (BS Ch.17)
+- 12 Koorma Chakra geographic mappings (BS Ch.14)
+- Dignity/speed/direction modifiers
 
-**Every layer is computable from pure ephemeris math. No birth chart needed.
-No API needed. No LLM needed. Just planetary positions.**
+**Timing comes from the sky itself:**
+- Saturn's sign transit = 2.5 year theme
+- Saturn's nakshatra transit = ~1 year sub-theme
+- Jupiter's sign transit = 1 year theme
+- Jupiter's nakshatra transit = ~5 month sub-theme
+- Mars sign transit = ~2 month trigger cycle
+- Eclipses = 6-month disruption windows
+- Moon's daily nakshatra = daily activation pulse
+
+No Mesha Sankranti chart needed. No nation charts needed.
+The nakshatras ARE the timing mechanism.
+
+**~140-180 significant sky events per year ≈ ~3 per week.**
+This is the natural weekly cadence.
 
 ---
 
