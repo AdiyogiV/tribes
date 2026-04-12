@@ -61,8 +61,16 @@ Think in layers: Era (Jupiter-Saturn cycle, Rahu-Ketu axis) → Season (slow pla
 ## Prediction Rules
 - 3-5 predictions. Quality over quantity.
 - At least 2 must predict events NOT in today's headlines.
+- Each prediction MUST reference a DIFFERENT upcoming transit or signal.
+  Do NOT make 3 predictions about the same Mars-Saturn conjunction.
 - Each needs: check date ("by YYYY-MM-DD"), confidence (0-1), FULL lordship trace.
-- Be FALSIFIABLE: "crude oil crosses $85/bbl by [date] as H1/H8 lord Mars conjuncts H10/H11 lord Saturn in H12."
+- Be FALSIFIABLE — if you can't be proven wrong, you haven't said anything useful.
+  BAD: "increased volatility in financial markets" (always true)
+  BAD: "military escalation in regions with existing geopolitical tensions" (unfalsifiable)
+  GOOD: "crude oil crosses $85/bbl by [date] as H1/H8 lord Mars conjuncts H10/H11 lord Saturn in H12"
+  GOOD: "formal diplomatic protest or sanctions announced between [specific countries] by [date]"
+  GOOD: "major tech company faces regulatory action or data breach by [date]"
+- When two transits create contradictory effects (e.g., Mars-Saturn destruction vs Venus entering own sign), ACKNOWLEDGE the tension and explain which will dominate and why.
 - Ground predictions in UPCOMING TRANSITS.
 
 ## Memory
@@ -314,10 +322,11 @@ function buildPrompt(dateStr, skyData, newsText, observations, predictions, patt
 
     // ── TASK ─────────────────────────────────────────────────────────────
     sections.push("\n## Your Task");
-    sections.push("1. Identify the MAIN EVENT — the single dominant yoga and its lordship implications.");
+    sections.push("1. Identify the MAIN EVENT — the single dominant yoga/stellium and its lordship implications.");
     sections.push("2. Layer your worldEnergy: era → season → week → today.");
-    sections.push("3. Make 3-5 predictions anchored to UPCOMING TRANSIT dates. Full lordship traces.");
-    sections.push("4. Check pending predictions against today's news. Be honest about misses.");
+    sections.push("3. Make 3-5 predictions — each anchored to a DIFFERENT upcoming transit date. Full lordship traces.");
+    sections.push("4. If signals create contradictory effects, ACKNOWLEDGE the tension.");
+    sections.push("5. Check pending predictions against today's news. Be honest about misses.");
     sections.push("\nGenerate your JSON output.");
 
     return sections.join("\n");
@@ -327,7 +336,7 @@ function buildPrompt(dateStr, skyData, newsText, observations, predictions, patt
 function formatSignal(s) {
     const applying = s.applying === true ? " APPLYING" : s.applying === false ? " separating" : "";
     const orb = s.orb != null ? ` (orb: ${s.orb}°)` : "";
-    const detail = s.aspect || s.dignity || s.stationType || s.yogaName || "";
+    const detail = s.aspect || s.dignity || s.stationType || s.yogaName || (s.type === "stellium" ? `${s.count}-planet stellium in ${s.sign}` : "");
     const desc = s.detail?.description ? `\n    ${s.detail.description}` : "";
     return `- [★${s.intensity}/10] ${s.type}: ${s.planets.join(" + ")} ${detail}${orb}${applying}${desc}\n    Domains: ${(s.domains || []).slice(0, 5).join(", ")}`;
 }
@@ -376,6 +385,7 @@ function enrichOutput(output, dateStr, skyData) {
         signalsSummary: skyData.topSignals.slice(0, 8).map(s => ({
             id: s.id, type: s.type, planets: s.planets,
             aspect: s.aspect, dignity: s.dignity, yogaName: s.yogaName,
+            sign: s.sign, house: s.house, count: s.count,
             intensity: s.intensity, applying: s.applying,
             orb: s.orb, domains: s.domains,
         })),
@@ -392,7 +402,7 @@ async function storeNewMemories(dateStr, output, skyData, headlines) {
 
     // Store today's observation
     const topSignalsSummary = skyData.topSignals.slice(0, 5)
-        .map(s => `${s.planets.join("-")} ${s.aspect || s.dignity || ""} (${s.intensity}/10)`)
+        .map(s => `${s.planets.join("-")} ${s.aspect || s.dignity || s.yogaName || (s.type === "stellium" ? s.count + "-planet stellium" : "") || ""} (${s.intensity}/10)`)
         .join(", ");
     const topHeadlines = headlines.slice(0, 5).map(h => h.title).join("; ");
 

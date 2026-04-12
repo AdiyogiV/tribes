@@ -17,6 +17,7 @@ export const SIGNAL_TYPE = {
     SPEED: "speed",             // planet unusually slow or fast
     ECLIPSE: "eclipse",         // Sun/Moon near Rahu-Ketu axis
     COMBUSTION: "combustion",   // planet too close to Sun
+    STELLIUM: "stellium",       // 3+ planets in same sign
 };
 
 // =============================================================================

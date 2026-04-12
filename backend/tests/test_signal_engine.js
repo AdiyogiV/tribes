@@ -749,6 +749,71 @@ describe("Constants — Single Source of Truth", () => {
 });
 
 // =============================================================================
+// STELLIUM DETECTION
+// =============================================================================
+
+describe("Stellium Detection", () => {
+    it("detects 4-planet stellium in Pisces (H12)", () => {
+        const positions = {
+            Sun: { longitude: 358 },   // Pisces
+            Mars: { longitude: 337 },  // Pisces
+            Mercury: { longitude: 331 }, // Pisces
+            Saturn: { longitude: 342 }, // Pisces
+            Moon: { longitude: 291 },  // Capricorn
+            Jupiter: { longitude: 82 }, // Gemini
+            Venus: { longitude: 21 },  // Aries
+            Rahu: { longitude: 312 },  // Aquarius
+            Ketu: { longitude: 132 },  // Leo
+        };
+        const signals = extractSignals(positions, null, "2026-04-12");
+        const stelliums = signals.filter(s => s.type === "stellium");
+        assert(stelliums.length >= 1, "Should detect at least 1 stellium");
+        const pisces = stelliums.find(s => s.sign === "Pisces");
+        assert(pisces, "Should detect Pisces stellium");
+        assert(pisces.count === 4, `Should be 4-planet stellium, got ${pisces.count}`);
+        assert(pisces.house === 12, `Should be H12, got ${pisces.house}`);
+        assert(pisces.intensity >= 8, `4-planet stellium should be intensity >= 8, got ${pisces.intensity}`);
+    });
+
+    it("does NOT detect stellium with only 2 planets in a sign", () => {
+        const positions = {
+            Sun: { longitude: 358 },   // Pisces
+            Mars: { longitude: 337 },  // Pisces
+            Moon: { longitude: 21 },   // Aries
+            Mercury: { longitude: 50 }, // Taurus
+            Jupiter: { longitude: 82 }, // Gemini
+            Venus: { longitude: 110 },  // Cancer
+            Saturn: { longitude: 150 }, // Virgo
+            Rahu: { longitude: 312 },  // Aquarius
+            Ketu: { longitude: 132 },  // Leo
+        };
+        const signals = extractSignals(positions, null, "2026-04-12");
+        const stelliums = signals.filter(s => s.type === "stellium");
+        assert(stelliums.length === 0, "Should NOT detect stellium with only 2 planets");
+    });
+
+    it("stellium description includes planet names", () => {
+        const positions = {
+            Sun: { longitude: 15 },    // Aries
+            Mars: { longitude: 20 },   // Aries
+            Mercury: { longitude: 25 }, // Aries
+            Moon: { longitude: 100 },
+            Jupiter: { longitude: 200 },
+            Venus: { longitude: 300 },
+            Saturn: { longitude: 250 },
+            Rahu: { longitude: 312 },
+            Ketu: { longitude: 132 },
+        };
+        const signals = extractSignals(positions, null, "2026-04-12");
+        const stellium = signals.find(s => s.type === "stellium");
+        assert(stellium, "Should detect Aries stellium");
+        assert(stellium.detail.description.includes("Sun"), "Description should include Sun");
+        assert(stellium.detail.description.includes("Mars"), "Description should include Mars");
+        assert(stellium.detail.description.includes("Aries"), "Description should include Aries");
+    });
+});
+
+// =============================================================================
 // RESULTS
 // =============================================================================
 

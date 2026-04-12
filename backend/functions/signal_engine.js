@@ -365,7 +365,37 @@ export function extractSignals(todayPositions, yesterdayPositions = null, dateSt
         });
     }
 
-    // ── 7. ECLIPSE PROXIMITY ────────────────────────────────────────────────
+    // ── 7. STELLIUM DETECTION (3+ planets in same sign) ────────────────────
+    const signGroups = {};
+    for (const [planet, pos] of Object.entries(today)) {
+        const sign = pos.sign;
+        if (!sign) continue;
+        if (!signGroups[sign]) signGroups[sign] = [];
+        signGroups[sign].push(planet);
+    }
+    for (const [sign, planets] of Object.entries(signGroups)) {
+        if (planets.length >= 3) {
+            const house = ZODIAC_SIGNS.indexOf(sign) + 1;
+            signals.push({
+                id: makeSignalId(SIGNAL_TYPE.STELLIUM, planets, sign),
+                type: SIGNAL_TYPE.STELLIUM,
+                planets,
+                sign,
+                house,
+                count: planets.length,
+                // 3 planets = 7, 4 = 8, 5+ = 9
+                intensity: Math.min(6 + planets.length, 10),
+                status: SIGNAL_STATUS.ACTIVE,
+                domains: mergeDomains(planets),
+                date,
+                detail: {
+                    description: `${planets.length}-planet stellium in ${sign} (H${house}): ${planets.join(", ")}`,
+                },
+            });
+        }
+    }
+
+    // ── 8. ECLIPSE PROXIMITY ────────────────────────────────────────────────
     const eclipses = findEclipseProximity(today);
     for (const ecl of eclipses) {
         signals.push({
@@ -382,7 +412,7 @@ export function extractSignals(todayPositions, yesterdayPositions = null, dateSt
         });
     }
 
-    // ── 8. SPEED ANOMALIES ──────────────────────────────────────────────────
+    // ── 9. SPEED ANOMALIES ──────────────────────────────────────────────────
     if (yesterday) {
         const speedAnomalies = findSpeedAnomalies(today, yesterday);
         for (const sa of speedAnomalies) {
