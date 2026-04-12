@@ -126,7 +126,11 @@ export function isApplying(lon1Today, lon2Today, lon1Yesterday, lon2Yesterday, a
  * Rahu/Ketu: 5th and 9th (like Jupiter)
  *
  * Returns the house distance if aspecting, null otherwise.
- * Uses 30° per house (whole-sign).
+ *
+ * IMPORTANT: Uses SIGN-BASED (whole-sign / rashi drishti) calculation.
+ * Vedic special aspects are rashi drishti — they depend on which SIGN
+ * the planet occupies, not the exact degree. A planet at 1° Aries and
+ * 29° Aries both aspect the same signs.
  *
  * @param {string} planet1 - Aspecting planet
  * @param {number} lon1 - Aspecting planet longitude
@@ -137,9 +141,10 @@ export function checkVedicSpecialAspect(planet1, lon1, lon2) {
     const specialHouses = VEDIC_SPECIAL_ASPECTS[planet1];
     if (!specialHouses) return null;
 
-    // Calculate house distance (1-12)
-    const diff = directionalDiff(lon1, lon2);
-    const houseDist = Math.floor(diff / 30) + 1;
+    // Sign-based house distance (rashi drishti)
+    const sign1 = Math.floor(normalize(lon1) / 30);
+    const sign2 = Math.floor(normalize(lon2) / 30);
+    const houseDist = ((sign2 - sign1 + 12) % 12) + 1;
 
     if (specialHouses.includes(houseDist)) {
         return houseDist;
@@ -177,13 +182,7 @@ export function findAllAspects(todayPositions, yesterdayPositions = null) {
 
             if (pos1?.longitude == null || pos2?.longitude == null) continue;
 
-            // Skip Moon aspects with outer planets (too many, too fast, low signal)
-            // But keep Moon-Sun (lunations) and Moon-Rahu/Ketu (eclipses)
-            if (p1 === "Moon" && ["Uranus", "Neptune", "Pluto"].includes(p2)) continue;
-            if (p2 === "Moon" && ["Uranus", "Neptune", "Pluto"].includes(p1)) continue;
-
-            // Skip Rahu-Ketu pair — they are ALWAYS in opposition (180° apart by definition)
-            // Reporting this every day is noise, not signal
+            // Skip Rahu-Ketu pair — always in opposition by definition
             if ((p1 === "Rahu" && p2 === "Ketu") || (p1 === "Ketu" && p2 === "Rahu")) continue;
 
             // Check all five major aspect types

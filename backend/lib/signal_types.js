@@ -84,10 +84,10 @@ export const PLANET_WEIGHT = {
     Saturn: 9,      // slowest visible planet, strongest mundane impact
     Rahu: 7,        // shadow planet, karmic significance
     Ketu: 7,
-    Uranus: 6,      // outer planets — significant but not classical Vedic
-    Neptune: 5,
-    Pluto: 5,
 };
+
+/** The nine Vedic planets (Navagraha). No outer planets. */
+export const NAVAGRAHA = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu"];
 
 // =============================================================================
 // VEDIC SPECIAL ASPECTS — house-based aspects unique to Vedic astrology
@@ -223,16 +223,18 @@ export const ECLIPSE_ORB = 18;  // degrees — traditional nodal orb for eclipse
 /**
  * Calculate signal intensity (1-10) based on planet weights and orb tightness.
  *
- * Improved formula: uses the MAX of planet weights (not average) so that
- * heavy planet pairs like Saturn-Jupiter don't get diluted.
- * Adds a pair bonus when BOTH planets are heavy (weight >= 7).
+ * Uses the MAX of planet weights (not average) so that heavy pairs
+ * like Saturn-Jupiter don't get diluted. Adds a pair bonus when
+ * BOTH planets are heavy (weight >= 7).
  *
  * @param {string[]} planets - planet names involved
  * @param {number} orb - degrees from exact (0 = exact)
  * @param {number} maxOrb - maximum orb for this aspect type
+ * @param {Object} [opts] - options
+ * @param {boolean} [opts.isVedic] - if true, cap intensity (vedic aspects are background, not acute)
  * @returns {number} 1-10 intensity
  */
-export function calculateIntensity(planets, orb, maxOrb) {
+export function calculateIntensity(planets, orb, maxOrb, opts = {}) {
     const weights = planets.map(p => PLANET_WEIGHT[p] || 5);
     const maxWeight = Math.max(...weights);
     const minWeight = Math.min(...weights);
@@ -243,11 +245,19 @@ export function calculateIntensity(planets, orb, maxOrb) {
     // Base from heaviest planet + pair bonus
     const base = maxWeight + pairBonus;
 
-    // Orb factor: exact = 1.0, at max orb = 0.15 (was 0.1 — slight boost at wide orbs)
+    // Orb factor: exact = 1.0, at max orb = 0.15
     const orbFactor = maxOrb > 0 ? Math.max(0.15, 1 - (orb / maxOrb) * 0.85) : 1;
 
     // Scale to 1-10
-    const raw = base * orbFactor;
+    let raw = base * orbFactor;
+
+    // Vedic aspects are always-on background conditions (whole-sign).
+    // They're important but shouldn't outrank tight geometric aspects.
+    // Cap at 6 so they provide context without drowning acute signals.
+    if (opts.isVedic) {
+        raw = Math.min(raw, 6);
+    }
+
     return Math.round(Math.min(10, Math.max(1, raw)));
 }
 

@@ -22,6 +22,7 @@ import {
     DEBILITATION,
     MOOL_TRIKONA,
     PLANET_RULERSHIP,
+    NAVAGRAHA,
     calculateIntensity,
     mergeDomains,
     makeSignalId,
@@ -34,6 +35,17 @@ import {
     findSpeedAnomalies,
     angularSeparation,
 } from "../lib/aspect_calculator.js";
+
+// Only Navagraha — no Uranus, Neptune, Pluto
+const NAVAGRAHA_SET = new Set(NAVAGRAHA);
+
+/** Filter positions to only Navagraha planets. */
+function filterNavagraha(positions) {
+    if (!positions) return positions;
+    return Object.fromEntries(
+        Object.entries(positions).filter(([p]) => NAVAGRAHA_SET.has(p))
+    );
+}
 
 // =============================================================================
 // DIGNITY DETECTION
@@ -86,13 +98,14 @@ export function extractSignals(todayPositions, yesterdayPositions = null, dateSt
     const signals = [];
     const date = dateStr || new Date().toISOString().split("T")[0];
 
+    // Filter to Navagraha only — outer planets don't belong in Vedic analysis
+    const today = filterNavagraha(todayPositions);
+    const yesterday = filterNavagraha(yesterdayPositions);
+
     // ── 1. ASPECTS ──────────────────────────────────────────────────────────
-    const aspects = findAllAspects(todayPositions, yesterdayPositions);
+    const aspects = findAllAspects(today, yesterday);
 
     for (const asp of aspects) {
-        // Include Vedic special aspects (Mars 4th/8th, Jupiter 5th/9th, Saturn 3rd/10th)
-        // These are core to Vedic mundane astrology — they carry full weight.
-
         const planets = [asp.planet1, asp.planet2];
         const status = getAspectStatus(asp.orb, asp.maxOrb, asp.applying);
 
@@ -105,7 +118,7 @@ export function extractSignals(todayPositions, yesterdayPositions = null, dateSt
             maxOrb: asp.maxOrb,
             applying: asp.applying,
             status,
-            intensity: calculateIntensity(planets, asp.orb, asp.maxOrb),
+            intensity: calculateIntensity(planets, asp.orb, asp.maxOrb, { isVedic: asp.isVedicSpecial }),
             domains: mergeDomains(planets, asp.aspectType),
             date,
             detail: {
@@ -118,9 +131,9 @@ export function extractSignals(todayPositions, yesterdayPositions = null, dateSt
     }
 
     // ── 2. SIGN INGRESSES (today vs yesterday) ─────────────────────────────
-    if (yesterdayPositions) {
-        for (const [name, todayPos] of Object.entries(todayPositions)) {
-            const yesterdayPos = yesterdayPositions[name];
+    if (yesterday) {
+        for (const [name, todayPos] of Object.entries(today)) {
+            const yesterdayPos = yesterday[name];
             if (!yesterdayPos || !todayPos?.sign || !yesterdayPos?.sign) continue;
 
             if (todayPos.sign !== yesterdayPos.sign) {
@@ -145,9 +158,9 @@ export function extractSignals(todayPositions, yesterdayPositions = null, dateSt
     }
 
     // ── 3. RETROGRADE STATIONS (today vs yesterday) ─────────────────────────
-    if (yesterdayPositions) {
-        for (const [name, todayPos] of Object.entries(todayPositions)) {
-            const yesterdayPos = yesterdayPositions[name];
+    if (yesterday) {
+        for (const [name, todayPos] of Object.entries(today)) {
+            const yesterdayPos = yesterday[name];
             if (!yesterdayPos) continue;
             // Skip shadow planets (always "retrograde" in mean node calculation)
             if (name === "Rahu" || name === "Ketu") continue;
@@ -177,9 +190,9 @@ export function extractSignals(todayPositions, yesterdayPositions = null, dateSt
     }
 
     // ── 4. DIGNITY SHIFTS (today vs yesterday) ──────────────────────────────
-    if (yesterdayPositions) {
-        for (const [name, todayPos] of Object.entries(todayPositions)) {
-            const yesterdayPos = yesterdayPositions[name];
+    if (yesterday) {
+        for (const [name, todayPos] of Object.entries(today)) {
+            const yesterdayPos = yesterday[name];
             if (!yesterdayPos || !todayPos?.sign || !yesterdayPos?.sign) continue;
 
             const todayDignity = getDignity(name, todayPos.sign, todayPos.signDegree);
@@ -206,7 +219,7 @@ export function extractSignals(todayPositions, yesterdayPositions = null, dateSt
     }
 
     // ── 5. CURRENT DIGNITIES (always report, for context) ───────────────────
-    for (const [name, pos] of Object.entries(todayPositions)) {
+    for (const [name, pos] of Object.entries(today)) {
         if (!pos?.sign) continue;
         const dignity = getDignity(name, pos.sign, pos.signDegree);
         if (dignity === "exalted" || dignity === "debilitated") {
@@ -236,11 +249,11 @@ export function extractSignals(todayPositions, yesterdayPositions = null, dateSt
     }
 
     // ── 5b. NAKSHATRA CHANGES (today vs yesterday) ────────────────────────
-    if (yesterdayPositions) {
-        for (const [name, todayPos] of Object.entries(todayPositions)) {
+    if (yesterday) {
+        for (const [name, todayPos] of Object.entries(today)) {
             // Only track slow planets for nakshatra changes (fast ones change too often)
             if (["Moon", "Sun", "Mercury", "Venus"].includes(name)) continue;
-            const yesterdayPos = yesterdayPositions[name];
+            const yesterdayPos = yesterday[name];
             if (!yesterdayPos || !todayPos?.nakshatra || !yesterdayPos?.nakshatra) continue;
 
             if (todayPos.nakshatra !== yesterdayPos.nakshatra) {
@@ -267,15 +280,15 @@ export function extractSignals(todayPositions, yesterdayPositions = null, dateSt
     // ── 5c. MUTUAL RECEPTION (Parivartana Yoga) ─────────────────────────────
     // Two planets in each other's signs — powerful sign exchange
     {
-        const planetNames = Object.keys(todayPositions).filter(
+        const planetNames = Object.keys(today).filter(
             n => PLANET_RULERSHIP[n] // only planets with rulerships
         );
         for (let i = 0; i < planetNames.length; i++) {
             for (let j = i + 1; j < planetNames.length; j++) {
                 const p1 = planetNames[i];
                 const p2 = planetNames[j];
-                const pos1 = todayPositions[p1];
-                const pos2 = todayPositions[p2];
+                const pos1 = today[p1];
+                const pos2 = today[p2];
                 if (!pos1?.sign || !pos2?.sign) continue;
 
                 const p1Rules = (PLANET_RULERSHIP[p1] || []).map(s => s.toLowerCase());
@@ -305,7 +318,7 @@ export function extractSignals(todayPositions, yesterdayPositions = null, dateSt
     }
 
     // ── 6. COMBUSTIONS ──────────────────────────────────────────────────────
-    const combustions = findCombustions(todayPositions);
+    const combustions = findCombustions(today);
     for (const comb of combustions) {
         signals.push({
             id: makeSignalId(SIGNAL_TYPE.COMBUSTION, [comb.planet]),
@@ -325,7 +338,7 @@ export function extractSignals(todayPositions, yesterdayPositions = null, dateSt
     }
 
     // ── 7. ECLIPSE PROXIMITY ────────────────────────────────────────────────
-    const eclipses = findEclipseProximity(todayPositions);
+    const eclipses = findEclipseProximity(today);
     for (const ecl of eclipses) {
         signals.push({
             id: makeSignalId(SIGNAL_TYPE.ECLIPSE, [ecl.luminary, ecl.node]),
@@ -342,8 +355,8 @@ export function extractSignals(todayPositions, yesterdayPositions = null, dateSt
     }
 
     // ── 8. SPEED ANOMALIES ──────────────────────────────────────────────────
-    if (yesterdayPositions) {
-        const speedAnomalies = findSpeedAnomalies(todayPositions, yesterdayPositions);
+    if (yesterday) {
+        const speedAnomalies = findSpeedAnomalies(today, yesterday);
         for (const sa of speedAnomalies) {
             signals.push({
                 id: makeSignalId(SIGNAL_TYPE.SPEED, [sa.planet], sa.anomalyType),

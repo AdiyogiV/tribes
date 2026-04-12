@@ -14,6 +14,7 @@ import { ZODIAC_SIGNS } from "../lib/constants.js";
 const SLOW_PLANETS = ["Mars", "Jupiter", "Saturn", "Rahu", "Ketu"];
 const ALL_PLANETS = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu"];
 const STATION_PLANETS = ["Mars", "Mercury", "Jupiter", "Venus", "Saturn"];
+const SKIP_INGRESS = new Set(["Moon"]); // Moon ingresses are noise (every 2.3 days)
 
 /**
  * Scan future positions to find upcoming significant transits.
@@ -57,7 +58,8 @@ export function scanUpcomingTransits(allPositions, sortedDates, todayIdx, daysAh
 
 function findIngresses(events, pos, prevPos, date, daysAway) {
     for (const planet of ALL_PLANETS) {
-        if (!pos[planet]?.longitude || !prevPos[planet]?.longitude) continue;
+        if (SKIP_INGRESS.has(planet)) continue;
+        if (pos[planet]?.longitude == null || prevPos[planet]?.longitude == null) continue;
         const prevSign = Math.floor(prevPos[planet].longitude / 30);
         const currSign = Math.floor(pos[planet].longitude / 30);
         if (prevSign !== currSign) {
@@ -77,7 +79,7 @@ function findIngresses(events, pos, prevPos, date, daysAway) {
 
 function findStations(events, pos, prevPos, date, daysAway) {
     for (const planet of STATION_PLANETS) {
-        if (!pos[planet]?.longitude || !prevPos[planet]?.longitude) continue;
+        if (pos[planet]?.longitude == null || prevPos[planet]?.longitude == null) continue;
         const wasRetro = prevPos[planet].isRetro || false;
         const isRetro = pos[planet].isRetro || false;
         if (wasRetro !== isRetro) {
@@ -112,8 +114,9 @@ function findAspectPerfections(events, allPositions, sortedDates, todayIdx, endI
                     const sep = angularSeparation(pos[p1].longitude, pos[p2].longitude);
                     const orb = Math.abs(sep - targetAngle);
 
-                    // Found a minimum (orb was decreasing, now increasing) within 10°
-                    if (prevOrb !== null && orb > prevOrb && prevOrb < 10 && d > todayIdx) {
+                    // Found a minimum: skip daysAway=0 (today, not upcoming)
+                    // and wide orbs (barely an aspect)
+                    if (prevOrb !== null && orb > prevOrb && prevOrb < 5 && d > todayIdx && (d - 1) > todayIdx) {
                         events.push({
                             type: "aspect_perfection",
                             date: sortedDates[d - 1],
