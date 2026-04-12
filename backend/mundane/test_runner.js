@@ -9,6 +9,9 @@
  */
 
 import { applyAllRules, detectChanges } from "./engine/rule_applier.js";
+import { buildSkyStateFromRaw } from "./engine/sky_adapter.js";
+import { getSlowPlanetNakshatraThemes, formatNakshatraContext } from "./rules/nakshatra_effects.js";
+import { synthesizeFallback } from "./engine/synthesis_agent.js";
 
 // ── Approximate planetary positions for April 12, 2026 ────────────────
 // Source: Swiss Ephemeris / standard almanac data
@@ -43,16 +46,13 @@ const ACTIVE_ECLIPSES = [
     },
 ];
 
-// ── Run the engine ────────────────────────────────────────────────────
+// ── Build sky state (same as production, but from raw data) ───────────
 console.log("═══════════════════════════════════════════════════════════════");
 console.log("  BRIHAT SAMHITA RULES ENGINE — April 12, 2026");
 console.log("═══════════════════════════════════════════════════════════════\n");
 
-const result = applyAllRules({
-    positions: APRIL_2026_POSITIONS,
-    activeEclipses: ACTIVE_ECLIPSES,
-    date: "2026-04-12",
-});
+const skyState = buildSkyStateFromRaw(APRIL_2026_POSITIONS, "2026-04-12", ACTIVE_ECLIPSES);
+const result = applyAllRules(skyState);
 
 // Print summary
 console.log(result.summary);
@@ -66,6 +66,21 @@ console.log(`\n## Statistics`);
 console.log(`  Total active effects: ${result.totalEffects}`);
 console.log(`  Conjunctions: ${result.conjunctions.length}`);
 console.log(`  Domains affected: ${result.domainScores.length}`);
+
+// Nakshatra sub-themes
+console.log("\n## Nakshatra Sub-Themes (Slow Planets)");
+const nakThemes = getSlowPlanetNakshatraThemes(skyState.positions);
+for (const t of nakThemes) {
+    console.log(`  ${t.planet} in ${t.nakshatra} (${t.lord}'s nak, pada ${t.pada})`);
+    if (t.hasSpecificEffects) {
+        for (const e of t.effects) {
+            const a = e.dir === "pos" ? "↑" : e.dir === "neg" ? "↓" : "↔";
+            console.log(`    ${a} [${e.weight.toFixed(2)}] ${e.desc}`);
+        }
+    } else {
+        console.log(`    → ${t.composedDesc}`);
+    }
+}
 
 // Detailed domain breakdown
 console.log("\n## Full Domain Breakdown");
@@ -81,7 +96,8 @@ for (const d of result.domainScores) {
 console.log("\n## All Active Effects (sorted by weight)");
 for (const e of result.effects) {
     const arrow = e.dir === "pos" ? "↑" : e.dir === "neg" ? "↓" : "↔";
-    const cat = e.category === "slow_transit" ? "SLOW" : e.category === "fast_transit" ? "FAST" : e.category === "conjunction" ? "CONJ" : "ECLP";
+    const CAT_MAP = { slow_transit: "SLOW", fast_transit: "FAST", conjunction: "CONJ", eclipse: "ECLP", nakshatra_sub_theme: "NAK " };
+    const cat = CAT_MAP[e.category] || e.category?.substring(0, 4).toUpperCase() || "????";
     console.log(`  ${arrow} [${e.weight.toFixed(2)}] [${cat}] ${(e.planet + " in " + e.sign).padEnd(22)} → ${e.domain.padEnd(18)} ${e.desc}`);
 }
 
@@ -105,6 +121,24 @@ if (changes.length === 0) {
         const badge = c.significance === "critical" ? "🚨" : c.significance === "major" ? "⚠️" : "📌";
         console.log(`  ${badge} [${c.significance.toUpperCase()}] ${c.desc}`);
     }
+}
+
+// ── Test fallback synthesis ────────────────────────────────────────────
+console.log("\n═══════════════════════════════════════════════════════════════");
+console.log("  FALLBACK SYNTHESIS TEST (no LLM)");
+console.log("═══════════════════════════════════════════════════════════════\n");
+
+const fallback = synthesizeFallback(result);
+console.log(`  Headline: ${fallback.headline}`);
+console.log(`  Domain forecasts: ${fallback.domain_forecasts.length}`);
+console.log(`  Key transits: ${fallback.key_transits.length}`);
+console.log(`  Watch items: ${fallback.watch_items.length}`);
+for (const kt of fallback.key_transits) {
+    console.log(`    🪐 ${kt.transit} (~${kt.duration})`);
+}
+console.log(`  Geographic focus: ${fallback.geographic_focus.length} regions`);
+for (const gf of fallback.geographic_focus.slice(0, 5)) {
+    console.log(`    🌍 ${gf.region}: ${gf.planets.join(", ")}`);
 }
 
 console.log("\n═══════════════════════════════════════════════════════════════");

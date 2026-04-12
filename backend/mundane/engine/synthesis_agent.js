@@ -212,16 +212,14 @@ export function synthesizeFallback(analysisResult) {
     }));
 
     const geographicFocus = [];
-    if (koormaMap) {
-        for (const [sign, data] of Object.entries(koormaMap)) {
-            if (data.planets?.length > 0) {
-                for (const region of (data.regions || [])) {
-                    geographicFocus.push({
-                        region: region.modern,
-                        planets: data.planets,
-                        theme: `${data.planets.join(", ")} transiting ${sign}`,
-                    });
-                }
+    if (koormaMap && Array.isArray(koormaMap)) {
+        for (const activation of koormaMap) {
+            for (const region of (activation.regions || []).filter(r => r.confidence >= 0.6)) {
+                geographicFocus.push({
+                    region: region.name,
+                    planets: activation.planets,
+                    theme: `${activation.planets.join(", ")} transiting ${activation.sign}`,
+                });
             }
         }
     }
