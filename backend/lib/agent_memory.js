@@ -7,7 +7,7 @@
  *
  * Architecture:
  * - Firestore collection `cosmic_memory` stores memories with vector embeddings
- * - Gemini text-embedding-004 generates 768-dim embeddings
+ * - Gemini gemini-embedding-001 generates embeddings (replaces retired text-embedding-004)
  * - Cosine similarity search for semantic recall
  * - Namespaces isolate different memory types
  *
@@ -25,8 +25,8 @@ import { db, logger } from "./firebase.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const MEMORY_COLLECTION = "cosmic_memory";
-const EMBEDDING_MODEL = "text-embedding-004";
-const EMBEDDING_DIMENSION = 768;
+const EMBEDDING_MODEL = "gemini-embedding-001";
+const EMBEDDING_DIMENSION = 3072; // default output size for gemini-embedding-001
 const DEFAULT_TOP_K = 10;
 const MAX_MEMORY_AGE_DAYS = 365; // Keep memories for a year
 
@@ -53,7 +53,7 @@ export function initMemory(geminiApiKeyValue) {
 /**
  * Generate embedding vector for text.
  * @param {string} text - Text to embed
- * @returns {number[]} 768-dimensional embedding vector
+ * @returns {number[]} embedding vector (3072 dims for gemini-embedding-001)
  */
 async function embed(text) {
     if (!embeddingModel) {
@@ -302,18 +302,26 @@ export async function deleteMemory(memoryId) {
 export async function listMemories(namespace, limit = 20) {
     const snapshot = await db.collection(MEMORY_COLLECTION)
         .where("namespace", "==", namespace)
-        .orderBy("createdAt", "desc")
-        .limit(limit)
         .get();
 
-    return snapshot.docs.map(doc => ({
-        id: doc.id,
-        content: doc.data().content,
-        namespace: doc.data().namespace,
-        tags: doc.data().tags || [],
-        metadata: doc.data().metadata || {},
-        createdAt: doc.data().createdAt?.toDate?.() || doc.data().createdAt,
-    }));
+    const rows = snapshot.docs.map(doc => {
+        const d = doc.data();
+        const createdAt = d.createdAt?.toDate?.() || d.createdAt;
+        return {
+            id: doc.id,
+            content: d.content,
+            namespace: d.namespace,
+            tags: d.tags || [],
+            metadata: d.metadata || {},
+            createdAt,
+        };
+    });
+    rows.sort((a, b) => {
+        const ta = a.createdAt instanceof Date ? a.createdAt.getTime() : 0;
+        const tb = b.createdAt instanceof Date ? b.createdAt.getTime() : 0;
+        return tb - ta;
+    });
+    return rows.slice(0, limit);
 }
 
 // =============================================================================

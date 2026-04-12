@@ -116,8 +116,8 @@ export {
     generateDailyNewsDigest,
     testDailyNewsDigest,
 } from "./functions/ai_daily_digest.js";
-// Cosmic Intelligence Agent
+// Cosmic Daily Intelligence
 export {
-    cosmicAgentDaily,
-    cosmicAgentManual,
-} from "./functions/cosmic_agent_runner.js";
+    cosmicDailyScheduled,
+    cosmicDailyManual,
+} from "./functions/cosmic_daily.js";

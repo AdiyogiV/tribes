@@ -308,9 +308,13 @@
       ]
     },
     {
-      "collectionGroup": "global_astro_predictions",
+      "collectionGroup": "cosmic_memory",
       "queryScope": "COLLECTION",
       "fields": [
+        {
+          "fieldPath": "namespace",
+          "order": "ASCENDING"
+        },
         {
           "fieldPath": "createdAt",
           "order": "DESCENDING"
@@ -318,12 +322,16 @@
       ]
     },
     {
-      "collectionGroup": "global_astro_agent_runs",
+      "collectionGroup": "cosmic_memory",
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "startedAt",
-          "order": "DESCENDING"
+          "fieldPath": "namespace",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "ASCENDING"
         }
       ]
     }
