@@ -11,7 +11,6 @@ import 'package:aurogram/features/astrology/presentation/pages/astrology_details
 import 'package:aurogram/features/astrology/presentation/pages/astrology_setup_page.dart';
 import 'package:aurogram/features/astrology/presentation/pages/astro_chat_page.dart';
 import 'package:aurogram/features/ayurveda/presentation/pages/ayurveda_details_page.dart';
-import 'package:aurogram/features/ayurveda/presentation/pages/vikriti_checkin_page.dart';
 import 'package:aurogram/features/ayurveda/presentation/pages/prakriti_refinement_page.dart';
 import 'package:aurogram/features/ai_chat/presentation/pages/ai_chat_page.dart';
 import 'package:aurogram/features/ai_chat/presentation/pages/recent_conversations_page.dart';
@@ -53,6 +52,7 @@ import 'package:aurogram/features/spaces/presentation/widgets/media_gallery_page
 import 'package:aurogram/features/spaces/presentation/widgets/tiles/video_player_screen.dart';
 import 'package:aurogram/features/astrology/presentation/pages/saved_insights_page.dart';
 import 'package:aurogram/features/astrology/presentation/pages/compatibility_details_page.dart';
+import 'package:aurogram/features/astrology/presentation/pages/current_sky_page.dart';
 import 'package:aurogram/features/onboarding/presentation/pages/onboarding_complete.dart';
 
 /// Global app router instance — set once during app startup.
@@ -309,17 +309,6 @@ GoRouter createAppRouter(GlobalKey<NavigatorState> navigatorKey) {
         ),
       ),
 
-      GoRoute(
-        path: RouteNames.vikritiCheckin,
-        name: 'vikritiCheckin',
-        builder: (_, state) {
-          final extra = state.extra as Map<String, dynamic>? ?? {};
-          return VikritiCheckInPage(
-            ayurvedaProfile: extra['ayurvedaProfile'] as AyurvedaProfile,
-            astroProfile: extra['astroProfile'] as AstrologyProfile,
-          );
-        },
-      ),
 
       GoRoute(
         path: RouteNames.prakritiRefinement,
@@ -480,6 +469,18 @@ GoRouter createAppRouter(GlobalKey<NavigatorState> navigatorKey) {
             otherUserSun: extra['otherUserSun'] as String?,
             otherUserMoon: extra['otherUserMoon'] as String?,
             otherUserRising: extra['otherUserRising'] as String?,
+          );
+        },
+      ),
+
+      // ── Current Sky ───────────────────────────────────────────────────
+      GoRoute(
+        path: RouteNames.currentSky,
+        name: 'currentSky',
+        builder: (_, state) {
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          return CurrentSkyPage(
+            uid: extra['uid'] as String? ?? '',
           );
         },
       ),

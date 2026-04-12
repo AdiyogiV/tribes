@@ -38,6 +38,12 @@
 		E6C0B65C8496D6F9AE92FD33 /* InsightView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDCE9BA538A2956C4A0D4ACB /* InsightView.swift */; };
 		E76855332AE0C9563A850423 /* AuroTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE5210EE6CBF4D7119299FA8 /* AuroTheme.swift */; };
 		F6F357E8BAA2BF029B93064B /* NadiMonitorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AFA99A008445D7183012F2E /* NadiMonitorView.swift */; };
+		AA1B2C3D4E5F607182930A01 /* OjasEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B2C3D4E5F607182930B01 /* OjasEngine.swift */; };
+		AA1B2C3D4E5F607182930A02 /* OjasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B2C3D4E5F607182930B02 /* OjasView.swift */; };
+		AA1B2C3D4E5F607182930A03 /* DhatuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B2C3D4E5F607182930B03 /* DhatuView.swift */; };
+		AA1B2C3D4E5F607182930A04 /* DinacharyaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B2C3D4E5F607182930B04 /* DinacharyaView.swift */; };
+		AA1B2C3D4E5F607182930A05 /* RituView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B2C3D4E5F607182930B05 /* RituView.swift */; };
+		AA1B2C3D4E5F607182930A06 /* VedicTimeTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B2C3D4E5F607182930B06 /* VedicTimeTextView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */

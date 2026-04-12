@@ -5,22 +5,23 @@ import SwiftUI
 ///
 /// North Indian chart layout — outer square + inner diamond + corner diagonals = 12 triangular houses.
 /// House 1 (Ascendant) is always the top-center inner diamond triangle.
-/// Houses proceed clockwise: 2 = upper-right outer, 3 = right-upper outer, 4 = right inner, etc.
+/// Houses proceed counterclockwise (matching the kundali_chart Flutter package convention):
+///   1 = top inner, 2 = upper-left outer, 3 = left-upper outer, 4 = left inner, etc.
 ///
 ///       ┌────────┬────────┐
-///       │ \ 12 / │ \ 1  / │
+///       │ \  2 / │ \ 1  / │
 ///       │  \  /  │  \  /  │
-///       │11 \/   │   \/ 2 │
+///       │ 3 \/   │   \/12 │
 ///       │   /\   │   /\   │
 ///       │  /  \  │  /  \  │
-///       │ / 10 \ │ / 3  \ │
+///       │ /  4 \ │ / 11 \ │
 ///       ├────────┼────────┤
-///       │ \ 9  / │ \ 4  / │
+///       │ \  5 / │ \ 10 / │
 ///       │  \  /  │  \  /  │
-///       │ 8 \/   │   \/ 5 │
+///       │ 6 \/   │   \/ 9 │
 ///       │   /\   │   /\   │
 ///       │  /  \  │  /  \  │
-///       │ / 7  \ │ / 6  \ │
+///       │ /  7 \ │ /  8 \ │
 ///       └────────┴────────┘
 struct SkyView: View {
     @EnvironmentObject private var cache: LocalCache
@@ -63,7 +64,8 @@ struct SkyView: View {
                     let size = min(canvasSize.width, canvasSize.height)
 
                     drawDiamondChart(context: context, center: center, size: size)
-                    placePlanets(context: context, center: center, size: size, daysOffset: daysOffset)
+                    placePlanets(
+                        context: context, center: center, size: size, daysOffset: daysOffset)
                 }
                 .frame(width: chartSize, height: chartSize)
                 .position(x: w / 2, y: h / 2)
@@ -105,18 +107,18 @@ struct SkyView: View {
 
     private func houseTextCenter(_ house: Int, center: CGPoint, s: CGFloat) -> CGPoint {
         let p: [(CGFloat, CGFloat)] = [
-            ( 0.000, -0.500),   // 0  — inner top (Ascendant) — kite centroid
-            ( 0.500, -0.860),   // 1  — outer upper-right — pulled UP
-            ( 0.793, -0.500),   // 2  — outer right-upper — incenter
-            ( 0.500,  0.000),   // 3  — inner right — kite centroid
-            ( 0.793,  0.500),   // 4  — outer right-lower — incenter
-            ( 0.500,  0.860),   // 5  — outer lower-right — pulled DOWN
-            ( 0.000,  0.500),   // 6  — inner bottom — kite centroid
-            (-0.500,  0.860),   // 7  — outer lower-left — pulled DOWN
-            (-0.793,  0.500),   // 8  — outer left-lower — incenter
-            (-0.500,  0.000),   // 9  — inner left — kite centroid
-            (-0.793, -0.500),   // 10 — outer left-upper — incenter
-            (-0.500, -0.860),   // 11 — outer upper-left — pulled UP
+            (0.000, -0.500),  // 0  — inner top (Ascendant) — kite centroid
+            (0.500, -0.860),  // 1  — outer upper-right — pulled UP
+            (0.793, -0.500),  // 2  — outer right-upper — incenter
+            (0.500, 0.000),  // 3  — inner right — kite centroid
+            (0.793, 0.500),  // 4  — outer right-lower — incenter
+            (0.500, 0.860),  // 5  — outer lower-right — pulled DOWN
+            (0.000, 0.500),  // 6  — inner bottom — kite centroid
+            (-0.500, 0.860),  // 7  — outer lower-left — pulled DOWN
+            (-0.793, 0.500),  // 8  — outer left-lower — incenter
+            (-0.500, 0.000),  // 9  — inner left — kite centroid
+            (-0.793, -0.500),  // 10 — outer left-upper — incenter
+            (-0.500, -0.860),  // 11 — outer upper-left — pulled UP
         ]
         let (dx, dy) = p[house]
         return CGPoint(x: center.x + s * dx, y: center.y + s * dy)
@@ -130,14 +132,14 @@ struct SkyView: View {
         let lineWidth: CGFloat = 4.0
         let r = s * 0.10  // corner rounding radius for diamond
 
-        let top    = CGPoint(x: center.x,     y: center.y - s)
-        let right  = CGPoint(x: center.x + s, y: center.y)
-        let bottom = CGPoint(x: center.x,     y: center.y + s)
-        let left   = CGPoint(x: center.x - s, y: center.y)
-        let tl     = CGPoint(x: center.x - s, y: center.y - s)
-        let tr     = CGPoint(x: center.x + s, y: center.y - s)
-        let br     = CGPoint(x: center.x + s, y: center.y + s)
-        let bl     = CGPoint(x: center.x - s, y: center.y + s)
+        let top = CGPoint(x: center.x, y: center.y - s)
+        let right = CGPoint(x: center.x + s, y: center.y)
+        let bottom = CGPoint(x: center.x, y: center.y + s)
+        let left = CGPoint(x: center.x - s, y: center.y)
+        let tl = CGPoint(x: center.x - s, y: center.y - s)
+        let tr = CGPoint(x: center.x + s, y: center.y - s)
+        let br = CGPoint(x: center.x + s, y: center.y + s)
+        let bl = CGPoint(x: center.x - s, y: center.y + s)
 
         // Combine all lines into ONE path — no overlap artifacts
         var chart = Path()
@@ -146,8 +148,9 @@ struct SkyView: View {
         // Each corner: approach the point, then curve through it
         // Top → Right
         chart.move(to: CGPoint(x: top.x + r, y: top.y + r))
-        chart.addQuadCurve(to: CGPoint(x: top.x + r, y: top.y + r),
-                           control: top) // dummy to set start
+        chart.addQuadCurve(
+            to: CGPoint(x: top.x + r, y: top.y + r),
+            control: top)  // dummy to set start
         // Build rounded diamond: move to offset before top, curve around each vertex
         chart = Path()
         // Start offset before top (coming from left side)
@@ -161,7 +164,8 @@ struct SkyView: View {
         // Line to before bottom
         chart.addLine(to: CGPoint(x: bottom.x + r * 0.7, y: bottom.y - r * 0.7))
         // Curve around bottom
-        chart.addQuadCurve(to: CGPoint(x: bottom.x - r * 0.7, y: bottom.y - r * 0.7), control: bottom)
+        chart.addQuadCurve(
+            to: CGPoint(x: bottom.x - r * 0.7, y: bottom.y - r * 0.7), control: bottom)
         // Line to before left
         chart.addLine(to: CGPoint(x: left.x + r * 0.7, y: left.y + r * 0.7))
         // Curve around left
@@ -184,7 +188,9 @@ struct SkyView: View {
 
     // MARK: - Place Planets
 
-    private func placePlanets(context: GraphicsContext, center: CGPoint, size: CGFloat, daysOffset: Double = 0) {
+    private func placePlanets(
+        context: GraphicsContext, center: CGPoint, size: CGFloat, daysOffset: Double = 0
+    ) {
         let s = size * 0.47
         let planets = cache.skyPositions
 
@@ -208,14 +214,16 @@ struct SkyView: View {
 
         for planetData in planets {
             guard let name = planetData["name"] as? String,
-                  let longitude = planetData["longitude"] as? Double else { continue }
+                let longitude = planetData["longitude"] as? Double
+            else { continue }
 
             guard let glyph = Self.glyphs[name] else { continue }
 
             let isRetro = planetData["isRetro"] as? Bool ?? false
             let baseDailyMotion = Self.dailyMotion[name] ?? 0.5
             let motion = isRetro ? -baseDailyMotion : baseDailyMotion
-            let adjustedLong = (longitude + motion * daysFraction).truncatingRemainder(dividingBy: 360)
+            let adjustedLong = (longitude + motion * daysFraction).truncatingRemainder(
+                dividingBy: 360)
             let safeLong = adjustedLong < 0 ? adjustedLong + 360 : adjustedLong
 
             let signIndex = Int(safeLong / 30.0) % 12
@@ -224,7 +232,7 @@ struct SkyView: View {
 
         // Colors: white for direct, warm orange for retrograde
         let directColor = Color.white
-        let retroColor = Color(red: 0.68, green: 0.62, blue: 1.0) // subtle indigo on white
+        let retroColor = Color(red: 0.68, green: 0.62, blue: 1.0)  // subtle indigo on white
 
         // Draw planet glyphs in each house
         let fontSize = size * 0.105
@@ -239,7 +247,9 @@ struct SkyView: View {
                 var result = Text("")
                 for (i, (glyph, isRetro)) in items.enumerated() {
                     if i > 0 { result = result + Text(" ") }
-                    result = result + Text(glyph)
+                    result =
+                        result
+                        + Text(glyph)
                         .font(.system(size: fontSize, weight: .heavy))
                         .foregroundColor(isRetro ? retroColor : directColor)
                 }

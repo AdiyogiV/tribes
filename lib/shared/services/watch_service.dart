@@ -147,7 +147,7 @@ class WatchService {
   /// Send sky positions (planet data) to the watch.
   ///
   /// Call this when sky positions are loaded from the backend.
-  /// [positions] is a Map<String, dynamic> where keys are planet names.
+  /// `positions` is a map where keys are planet names.
   Future<void> sendSkyPositions(Map<String, dynamic> positions) async {
     if (positions.isEmpty) return;
     try {
@@ -177,6 +177,27 @@ class WatchService {
       // Not on iOS
     } catch (e) {
       AppLogger.w('WatchService: sendSkyPositions failed',
+          category: LogCategory.general, data: {'error': e.toString()});
+    }
+  }
+
+  /// Send dosha-aware health recommendations to the watch.
+  ///
+  /// Called after the backend analyzes a health snapshot and generates
+  /// personalized guidance. [recs] contains 'dosha', 'items', 'basedOn'.
+  Future<void> sendRecommendations(Map<String, dynamic> recs) async {
+    try {
+      await _channel.invokeMethod('sendRecommendations', {
+        'type': 'recommendations',
+        ...recs,
+      });
+      AppLogger.d('WatchService: sent recommendations to watch',
+          category: LogCategory.general,
+          data: {'dosha': recs['dosha'], 'items': (recs['items'] as List?)?.length ?? 0});
+    } on MissingPluginException {
+      // Not on iOS
+    } catch (e) {
+      AppLogger.w('WatchService: sendRecommendations failed',
           category: LogCategory.general, data: {'error': e.toString()});
     }
   }

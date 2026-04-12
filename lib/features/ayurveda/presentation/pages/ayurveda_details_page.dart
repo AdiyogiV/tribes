@@ -17,6 +17,9 @@ import 'package:aurogram/features/ayurveda/presentation/widgets/dosha_dashboard_
 import 'package:aurogram/features/ayurveda/presentation/widgets/consolidated_cards.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/shared/presentation/widgets/feedback/snack_bar_service.dart';
+import 'package:provider/provider.dart';
+import 'package:aurogram/shared/providers/watch_health_provider.dart';
+import 'package:aurogram/features/ayurveda/presentation/widgets/watch_health_cards.dart';
 
 /// Main Ayurveda details page
 /// Shows Prakriti profile, current Vikriti, health insights, and recommendations
@@ -120,22 +123,6 @@ class _AyurvedaDetailsPageState extends State<AyurvedaDetailsPage> {
       if (mounted) {
         setState(() => _isCalculatingVikriti = false);
       }
-    }
-  }
-
-  void _openCheckIn() async {
-    if (_profile == null || _astroProfile == null) return;
-
-    HapticFeedback.lightImpact();
-    final vikriti = await context.push<VikritiData?>(
-      RouteNames.vikritiCheckin,
-      extra: {
-        'ayurvedaProfile': _profile!,
-        'astroProfile': _astroProfile!,
-      },
-    );
-    if (mounted && vikriti != null) {
-      setState(() => _vikriti = vikriti);
     }
   }
 
@@ -340,7 +327,6 @@ class _AyurvedaDetailsPageState extends State<AyurvedaDetailsPage> {
                         child: AyurvedaDetailsHeader(
                           onBack: () => Navigator.pop(context),
                           showMenu: ayurProfile != null && astroProfile != null,
-                          onCheckIn: _openCheckIn,
                           onReset: _confirmAndResetProfile,
                         ),
                       ),
@@ -483,6 +469,10 @@ class _AyurvedaDetailsPageState extends State<AyurvedaDetailsPage> {
             : 16.0;
         final spacing = screenWidth > 700 ? 16.0 : 12.0;
 
+        // Access watch health data from provider
+        final watchHealth =
+            context.watch<WatchHealthProvider>().healthData;
+
         return Padding(
           padding: EdgeInsets.all(horizontalPadding),
           child: Column(
@@ -494,7 +484,6 @@ class _AyurvedaDetailsPageState extends State<AyurvedaDetailsPage> {
                 vikriti: _vikriti,
                 isCalculating: _isCalculatingVikriti,
                 lastCheckIn: _profile?.lastCheckIn,
-                onCheckIn: _openCheckIn,
                 onInfo: () => _showAyurvedaInfoDialog(
                   title: 'Current Balance (Vikriti)',
                   message:
@@ -509,6 +498,31 @@ class _AyurvedaDetailsPageState extends State<AyurvedaDetailsPage> {
               ),
 
               SizedBox(height: spacing),
+
+              // Watch Health Cards — Ojas, Nadi, Sleep, Body Signals
+              if (watchHealth != null && watchHealth.hasData) ...[
+                // Ojas vitality gauge (hero card from watch)
+                if (watchHealth.ojasScore != null) ...[
+                  OjasScoreCard(data: watchHealth, isDark: isDark),
+                  SizedBox(height: spacing),
+                ],
+
+                // Nadi pulse reading (dosha from HRV)
+                if (watchHealth.nadiDosha != null || watchHealth.hrv != null) ...[
+                  WatchNadiCard(data: watchHealth, isDark: isDark),
+                  SizedBox(height: spacing),
+                ],
+
+                // Sleep breakdown
+                if (watchHealth.sleepHours != null) ...[
+                  SleepSummaryCard(data: watchHealth, isDark: isDark),
+                  SizedBox(height: spacing),
+                ],
+
+                // All body signals
+                BodySignalsCard(data: watchHealth, isDark: isDark),
+                SizedBox(height: spacing),
+              ],
 
               // Card 2: Core Constitution (Prakriti) - permanent profile
               PrakritiHeroCard(

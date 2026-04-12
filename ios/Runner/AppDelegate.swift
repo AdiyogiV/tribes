@@ -106,6 +106,14 @@ import WatchConnectivity
           result(FlutterError(code: "INVALID_ARGS", message: "Expected map", details: nil))
         }
 
+      case "sendRecommendations":
+        if let args = call.arguments as? [String: Any] {
+          watchManager.sendRecommendations(args)
+          result(true)
+        } else {
+          result(FlutterError(code: "INVALID_ARGS", message: "Expected map", details: nil))
+        }
+
       case "isWatchPaired":
         result(watchManager.isWatchAvailable)
 

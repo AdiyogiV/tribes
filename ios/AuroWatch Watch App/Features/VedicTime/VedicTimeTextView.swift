@@ -1,4 +1,4 @@
-import SwiftUI
+rimport SwiftUI
 
 /// Full-screen Vedic time in big bold white text.
 /// Shows Ghati, Pala, Prahar name, and Panchang data from phone sync.

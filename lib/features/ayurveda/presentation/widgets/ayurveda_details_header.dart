@@ -6,14 +6,12 @@ import 'package:aurogram/core/theme/app_dimensions.dart';
 class AyurvedaDetailsHeader extends StatelessWidget {
   final VoidCallback onBack;
   final bool showMenu;
-  final VoidCallback onCheckIn;
   final VoidCallback onReset;
 
   const AyurvedaDetailsHeader({
     super.key,
     required this.onBack,
     required this.showMenu,
-    required this.onCheckIn,
     required this.onReset,
   });
 
@@ -64,30 +62,12 @@ class AyurvedaDetailsHeader extends StatelessWidget {
                       padding: EdgeInsets.zero,
                       onSelected: (value) {
                         switch (value) {
-                          case 'checkin':
-                            onCheckIn();
-                            break;
                           case 'reset':
                             onReset();
                             break;
                         }
                       },
                       itemBuilder: (context) => [
-                        PopupMenuItem(
-                          value: 'checkin',
-                          child: Row(
-                            children: [
-                              Icon(
-                                CupertinoIcons.heart_circle,
-                                size: 20,
-                                color: AppTheme.primaryColor,
-                              ),
-                              const SizedBox(width: AppDimensions.spacingMd),
-                              const Text('Wellness Check-In'),
-                            ],
-                          ),
-                        ),
-                        const PopupMenuDivider(),
                         PopupMenuItem(
                           value: 'reset',
                           child: Row(

@@ -29,4 +29,64 @@ enum AuroTheme {
     static let textPrimary: Double = 1.0
     static let textSecondary: Double = 0.78
     static let textTertiary: Double = 0.55
+
+    // MARK: - Shared Helpers
+
+    /// Map a dosha name to its theme color.
+    static func doshaColor(_ dosha: String) -> Color {
+        switch dosha.lowercased() {
+        case "vata":  return vataColor
+        case "pitta": return pittaColor
+        case "kapha": return kaphaColor
+        default:      return primaryColor
+        }
+    }
+
+    /// Map a Nadi gati (pulse type) to its glyph.
+    static func nadiGlyph(_ gati: String) -> String {
+        switch gati {
+        case "Sarpa":   return "🐍"
+        case "Manduka": return "🐸"
+        case "Hamsa":   return "🦢"
+        default:        return "◉"
+        }
+    }
+
+    /// Map a dosha name to its Nadi glyph (convenience for views that have dosha, not gati).
+    static func doshaGlyph(_ dosha: String) -> String {
+        switch dosha.lowercased() {
+        case "vata":  return "🐍"
+        case "pitta": return "🐸"
+        case "kapha": return "🦢"
+        default:      return "◉"
+        }
+    }
+
+    /// Human-readable relative time string.
+    /// - Parameter style: `.short` → "5m", `.medium` → "5m ago", `.long` → "5 min ago"
+    enum TimeAgoStyle { case short, medium, long }
+
+    static func timeAgo(_ date: Date, style: TimeAgoStyle = .medium) -> String {
+        let mins = Int(-date.timeIntervalSinceNow / 60)
+        switch style {
+        case .short:
+            if mins < 1 { return "now" }
+            if mins < 60 { return "\(mins)m" }
+            let hrs = mins / 60
+            if hrs < 24 { return "\(hrs)h" }
+            return "\(hrs / 24)d"
+        case .medium:
+            if mins < 1 { return "just now" }
+            if mins < 60 { return "\(mins)m ago" }
+            let hrs = mins / 60
+            if hrs < 24 { return "\(hrs)h ago" }
+            return "\(hrs / 24)d ago"
+        case .long:
+            if mins < 1 { return "just now" }
+            if mins < 60 { return "\(mins) min ago" }
+            let hrs = mins / 60
+            if hrs < 24 { return "\(hrs)h ago" }
+            return "\(hrs / 24)d ago"
+        }
+    }
 }

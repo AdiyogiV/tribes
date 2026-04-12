@@ -33,7 +33,6 @@ class RouteNames {
 
   // ── Ayurveda ────────────────────────────────────────────────────────
   static const ayurvedaDetails = '/ayurveda/details';
-  static const vikritiCheckin = '/ayurveda/checkin';
 
   // ── AI Chat ─────────────────────────────────────────────────────────
   static const aiChat = '/ai/chat';
@@ -99,6 +98,7 @@ class RouteNames {
   // ── Astrology (additional) ──────────────────────────────────────────
   static const savedInsights = '/astrology/saved';
   static const compatibilityDetails = '/astrology/compatibility';
+  static const currentSky = '/astrology/current-sky';
 
   // ── Onboarding ──────────────────────────────────────────────────────
   static const onboardingComplete = '/onboarding/complete';

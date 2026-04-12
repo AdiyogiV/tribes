@@ -380,4 +380,5 @@ class ChartUtils {
     final lagnaSignIndex = getLagnaSignIndex(birthChartData);
     return getSignFixedLabels(lagnaSignIndex);
   }
+
 }

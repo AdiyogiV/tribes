@@ -4,6 +4,7 @@ import { defineSecret, defineString } from "firebase-functions/params";
 export const openrouterApiKey = defineSecret("OPENROUTER_API_KEY");
 export const freeAstrologyApiKey = defineSecret("FREE_ASTROLOGY_API_KEY");
 export const geminiApiKey = defineSecret("GEMINI_API_KEY");
+export const tavilyApiKey = defineSecret("TAVILY_API_KEY");
 
 // Agora credentials for group calls
 export const agoraAppCertificate = defineSecret("AGORA_APP_CERTIFICATE");

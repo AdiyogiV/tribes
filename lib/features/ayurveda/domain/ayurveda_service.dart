@@ -35,7 +35,9 @@ class AyurvedaService {
   void listenForWatchNadi() {
     _watchSub?.cancel();
     _watchSub = WatchService.instance.onWatchData.listen((data) {
-      if (data['type'] == 'nadiReading') {
+      final type = data['type'] as String?;
+
+      if (type == 'nadiReading') {
         _latestNadiReading = data;
         AppLogger.d('AyurvedaService: received Nadi reading from watch',
             category: LogCategory.general,
@@ -46,6 +48,24 @@ class AyurvedaService {
             });
         // Store to Firestore for historical tracking
         _storeNadiReading(data);
+      } else if (type == 'healthData') {
+        // Also extract Nadi info from full health payload
+        final nadiDosha = data['nadiDosha'] as String?;
+        if (nadiDosha != null) {
+          _latestNadiReading = {
+            'dominant': nadiDosha,
+            'hrv': data['hrv'],
+          };
+        }
+        AppLogger.d('AyurvedaService: received health data from watch',
+            category: LogCategory.general,
+            data: {
+              'ojas': data['ojasScore'],
+              'nadi': nadiDosha,
+              'signals': (data.keys.toList()..sort()).join(', '),
+            });
+        // Store health snapshot for history
+        _storeHealthSnapshot(data);
       }
     });
   }
@@ -68,6 +88,73 @@ class AyurvedaService {
       });
     } catch (e) {
       AppLogger.w('AyurvedaService: failed to store Nadi reading',
+          category: LogCategory.general, data: {'error': e.toString()});
+    }
+  }
+
+  /// Store a health snapshot from the watch for longitudinal tracking.
+  /// After writing, listens for backend-generated recommendations and
+  /// syncs them back to the watch.
+  Future<void> _storeHealthSnapshot(Map<String, dynamic> data) async {
+    final uid = _user?.uid;
+    if (uid == null) return;
+    try {
+      // Store daily snapshot — one per day, overwrite intraday
+      final today = DateTime.now();
+      final dayKey =
+          '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+      await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('healthSnapshots')
+          .doc(dayKey)
+          .set({
+        ...data,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      // After snapshot is stored, the onHealthSnapshotWrite Cloud Function
+      // generates recommendations and writes them to the user doc.
+      // Sync those recommendations to the watch after a short delay.
+      _syncRecommendationsToWatch(uid);
+    } catch (e) {
+      AppLogger.w('AyurvedaService: failed to store health snapshot',
+          category: LogCategory.general, data: {'error': e.toString()});
+    }
+  }
+
+  /// Fetch latest recommendations from Firestore and send to watch.
+  /// Called after health snapshot write triggers backend analysis.
+  Future<void> _syncRecommendationsToWatch(String uid) async {
+    try {
+      // Wait briefly for the Cloud Function trigger to process
+      await Future.delayed(const Duration(seconds: 5));
+
+      final doc = await _firestore.collection('users').doc(uid).get();
+      final data = doc.data();
+      final recs = data?['ayurvedaData']?['latestRecommendations'];
+      if (recs == null) return;
+
+      final items = (recs['items'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+      if (items.isEmpty) return;
+
+      final watchItems = items
+          .map((r) => <String, dynamic>{
+                'type': r['type'] ?? '',
+                'text': r['text'] ?? '',
+              })
+          .toList();
+      WatchService.instance.sendRecommendations({
+        'dosha': recs['dosha'] ?? '',
+        'items': watchItems,
+        'basedOn': recs['basedOn'] ?? '',
+      });
+
+      AppLogger.d('AyurvedaService: synced recommendations to watch',
+          category: LogCategory.general,
+          data: {'dosha': recs['dosha'], 'count': items.length});
+    } catch (e) {
+      AppLogger.w('AyurvedaService: failed to sync recommendations to watch',
           category: LogCategory.general, data: {'error': e.toString()});
     }
   }

@@ -1,4 +1,4 @@
-import SwiftUI
+rimport SwiftUI
 
 /// Root view — full-screen vertical pager. Swipe up/down to switch pages.
 /// No navigation bar, no scroll within pages.

@@ -40,11 +40,11 @@ struct NadiMonitorView: View {
         // Gati + dosha
         Text("\(reading.gati) Gati")
             .font(.system(size: 20, weight: .bold))
-            .foregroundColor(doshaColor(reading.dominant))
+            .foregroundColor(AuroTheme.doshaColor(reading.dominant))
 
         Text("\(reading.dominant) Nadi")
             .font(.system(size: 14, weight: .medium))
-            .foregroundColor(doshaColor(reading.dominant).opacity(0.8))
+            .foregroundColor(AuroTheme.doshaColor(reading.dominant).opacity(0.8))
 
         // Dosha bars
         VStack(spacing: 4) {
@@ -155,15 +155,6 @@ struct NadiMonitorView: View {
     }
 
     // MARK: - Helpers
-
-    private func doshaColor(_ dosha: String) -> Color {
-        switch dosha.lowercased() {
-        case "vata":  return AuroTheme.vataColor
-        case "pitta": return AuroTheme.pittaColor
-        case "kapha": return AuroTheme.kaphaColor
-        default:      return AuroTheme.primaryColor
-        }
-    }
 
     private func refreshNadi() {
         isLoading = true

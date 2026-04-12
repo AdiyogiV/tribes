@@ -137,9 +137,30 @@ service cloud.firestore {
         allow read: if request.auth != null;
         allow create, update, delete: if request.auth != null && request.auth.uid == userId;
       }
-      
+
+      // Health Snapshots - daily health data from Apple Watch
+      // User can read own + write own (merge-updates from watch relay)
+      match /healthSnapshots/{dayKey} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // Nadi Readings - individual pulse readings from Apple Watch
+      // User can read own + create new readings, backend can also write
+      match /nadiReadings/{readingId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create: if request.auth != null && request.auth.uid == userId;
+        allow update, delete: if false; // Immutable once written
+      }
+
+      // Health Trends - weekly/monthly aggregated analysis (backend writes)
+      match /healthTrends/{periodKey} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if false; // Backend only via Admin SDK
+      }
+
       // Allow users to update their own insightStreak and lastInsightView
-      allow update: if request.auth != null && 
+      allow update: if request.auth != null &&
                        request.auth.uid == userId &&
                        request.resource.data.diff(resource.data).affectedKeys()
                        .hasOnly(['insightStreak', 'lastInsightView', 'lastStreakUpdate']);

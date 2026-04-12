@@ -90,6 +90,10 @@ export {
     calculateCurrentVikriti,
     resetAyurvedaProfile,
     getAyurvedaRecommendations,
+    analyzeHealthTrends,
+    nightlyHealthAnalysis,
+    weeklyHealthAggregation,
+    onHealthSnapshotWrite,
 } from "./functions/ayurveda.js";
 export {
     prefetchSkyPositions,
@@ -112,3 +116,8 @@ export {
     generateDailyNewsDigest,
     testDailyNewsDigest,
 } from "./functions/ai_daily_digest.js";
+// Cosmic Intelligence Agent
+export {
+    cosmicAgentDaily,
+    cosmicAgentManual,
+} from "./functions/cosmic_agent_runner.js";

@@ -210,7 +210,6 @@ class TodaysBalanceCard extends StatelessWidget {
   final VikritiData? vikriti;
   final bool isCalculating;
   final DateTime? lastCheckIn;
-  final VoidCallback onCheckIn;
   final VoidCallback? onInfo;
   final bool isDark;
 
@@ -220,7 +219,6 @@ class TodaysBalanceCard extends StatelessWidget {
     this.vikriti,
     required this.isCalculating,
     this.lastCheckIn,
-    required this.onCheckIn,
     this.onInfo,
     required this.isDark,
   });
@@ -284,51 +282,7 @@ class TodaysBalanceCard extends StatelessWidget {
           else
             _buildVikritiContent(),
 
-          const SizedBox(height: AppDimensions.spacingLg),
-
-          // Check-in button
-          GestureDetector(
-            onTap: () {
-              HapticFeedback.lightImpact();
-              onCheckIn();
-            },
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: c.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm),
-                border: Border.all(color: c.withValues(alpha: 0.3)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.favorite_border, size: 16, color: c),
-                  const SizedBox(width: AppDimensions.spacingSm),
-                  Flexible(
-                    child: Text(
-                      hasVikriti ? 'Update Check-in' : 'Quick Check-in',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: c,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: AppDimensions.spacingXs),
-                  Text(
-                    '~30s',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: c.withValues(alpha: 0.7),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          const SizedBox(height: AppDimensions.spacingMd),
         ],
       ),
     );

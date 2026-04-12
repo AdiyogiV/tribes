@@ -85,6 +85,14 @@ class WatchSessionManager: NSObject, ObservableObject {
         send(payload)
     }
 
+    /// Send dosha-aware health recommendations to watch.
+    func sendRecommendations(_ data: [String: Any]) {
+        var payload = data
+        payload["type"] = "recommendations"
+        send(payload)
+        print("📱 sendRecommendations: \(data["dosha"] ?? "unknown") dosha")
+    }
+
     // MARK: - Internal
 
     private func send(_ data: [String: Any]) {
@@ -163,7 +171,9 @@ extension WatchSessionManager: WCSessionDelegate {
 
     /// Handle guaranteed-delivery data FROM watch.
     func session(_ session: WCSession, didReceiveUserInfo userInfo: [String: Any] = [:]) {
-        print("📱 Received data from watch: \(userInfo.keys.joined(separator: ", "))")
+        let type = userInfo["type"] as? String ?? "unknown"
+        let keys = userInfo.keys.sorted().joined(separator: ", ")
+        print("📱 Received \(type) from watch (\(userInfo.count) keys): \(keys)")
         onWatchData?(userInfo)
     }
 }

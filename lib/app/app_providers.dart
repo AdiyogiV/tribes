@@ -10,6 +10,7 @@ import 'package:aurogram/features/ai_chat/domain/ai_chat_service.dart';
 import 'package:aurogram/shared/services/location_service.dart';
 import 'package:aurogram/features/feed/domain/feed_controller.dart';
 import 'package:aurogram/features/ai_chat/domain/ai_chat_provider.dart';
+import 'package:aurogram/shared/providers/watch_health_provider.dart';
 
 /// Wraps the app widget tree with all required ChangeNotifierProviders.
 class AppProviders {
@@ -24,6 +25,11 @@ class AppProviders {
         ChangeNotifierProvider(create: (_) => AudioInputService()),
         ChangeNotifierProvider(create: (_) => FeedController()),
         ChangeNotifierProvider(create: (_) => _createAiChatProvider()),
+        ChangeNotifierProvider(create: (_) {
+          final provider = WatchHealthProvider();
+          provider.initialize();
+          return provider;
+        }),
       ],
       child: child,
     );

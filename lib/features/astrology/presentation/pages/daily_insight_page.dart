@@ -208,6 +208,11 @@ class _DailyInsightPageState extends State<DailyInsightPage> {
     context.push('/astrology/saved/${widget.uid}');
   }
 
+  void _openCurrentSky() {
+    HapticFeedback.lightImpact();
+    context.push('/astrology/current-sky', extra: {'uid': widget.uid});
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -251,6 +256,16 @@ class _DailyInsightPageState extends State<DailyInsightPage> {
                                     color: brown,
                                     letterSpacing: 1.2,
                                   )),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 40,
+                            child: IconButton(
+                              icon: Icon(Icons.explore_rounded,
+                                  size: 22, color: brown),
+                              onPressed: () => _openCurrentSky(),
+                              padding: EdgeInsets.zero,
+                              tooltip: 'Current Sky',
                             ),
                           ),
                           SizedBox(

@@ -6,6 +6,8 @@
  */
 
 import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { onSchedule } from "firebase-functions/v2/scheduler";
+import { onDocumentWritten } from "firebase-functions/v2/firestore";
 import { logger } from "firebase-functions";
 import { Timestamp, FieldValue } from "firebase-admin/firestore";
 import { requireAuth } from "../lib/auth_utils.js";
@@ -949,4 +951,465 @@ Important:
 - Focus on the top imbalance if present
 - Keep advice practical and accessible
 - Use a warm, supportive tone`;
+}
+
+// ============================================================================
+// Health Snapshot Analysis — processes watch health data for trend analysis
+// ============================================================================
+
+/**
+ * Analyze watch health snapshots to compute weekly health trends and
+ * Ayurvedic insights. Called periodically or on-demand.
+ *
+ * Reads the last 7 daily snapshots from healthSnapshots subcollection,
+ * computes trend direction for each signal, and stores a summary.
+ */
+export const analyzeHealthTrends = onCall({
+    region: "asia-southeast2",
+    memory: "256MiB",
+}, async (request) => {
+    const uid = requireAuth(request);
+
+    try {
+        const snapshotsRef = db
+            .collection("users")
+            .doc(uid)
+            .collection("healthSnapshots");
+
+        // Get last 7 days of snapshots
+        const snapshot = await snapshotsRef
+            .orderBy("updatedAt", "desc")
+            .limit(7)
+            .get();
+
+        if (snapshot.empty) {
+            return { success: true, message: "No health data available yet" };
+        }
+
+        const days = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+        days.reverse(); // oldest first for trend calculation
+
+        // Compute trends for key signals
+        const trends = {};
+        const signalKeys = [
+            "ojasScore", "hrv", "restingHR", "sleepHours",
+            "deepSleepMins", "remSleepMins", "spO2", "steps",
+            "respRate", "vo2Max", "activeEnergy",
+        ];
+
+        for (const key of signalKeys) {
+            const values = days
+                .map((d) => d[key])
+                .filter((v) => v != null && !isNaN(v));
+
+            if (values.length >= 2) {
+                const first = values.slice(0, Math.ceil(values.length / 2));
+                const second = values.slice(Math.ceil(values.length / 2));
+                const avgFirst = first.reduce((a, b) => a + b, 0) / first.length;
+                const avgSecond = second.reduce((a, b) => a + b, 0) / second.length;
+                const change = avgSecond - avgFirst;
+                const pctChange = avgFirst > 0 ? (change / avgFirst) * 100 : 0;
+
+                trends[key] = {
+                    current: values[values.length - 1],
+                    avg: values.reduce((a, b) => a + b, 0) / values.length,
+                    min: Math.min(...values),
+                    max: Math.max(...values),
+                    direction: Math.abs(pctChange) < 5 ? "stable" :
+                        change > 0 ? "improving" : "declining",
+                    pctChange: Math.round(pctChange * 10) / 10,
+                    dataPoints: values.length,
+                };
+            }
+        }
+
+        // Derive dosha trend from health signals
+        const doshaTrend = deriveDoshaTrend(trends);
+
+        const analysis = {
+            trends,
+            doshaTrend,
+            daysAnalyzed: days.length,
+            latestSnapshot: days[days.length - 1]?.id,
+            analyzedAt: FieldValue.serverTimestamp(),
+        };
+
+        // Store analysis
+        await db.collection("users").doc(uid).update({
+            "ayurvedaData.healthTrends": analysis,
+        });
+
+        logger.info(`Health trends analyzed for ${uid}: ${days.length} days, ${Object.keys(trends).length} signals`);
+
+        return { success: true, analysis };
+    } catch (error) {
+        logger.error("analyzeHealthTrends error:", error);
+        throw new HttpsError("internal", "Failed to analyze health trends");
+    }
+});
+
+/**
+ * Derive dosha trend from health signal trends.
+ * Maps health changes to Ayurvedic dosha implications.
+ */
+function deriveDoshaTrend(trends) {
+    let vataShift = 0;
+    let pittaShift = 0;
+    let kaphaShift = 0;
+
+    // HRV: declining → Vata aggravation, improving → balance
+    if (trends.hrv?.direction === "declining") {
+        vataShift += 3;
+    } else if (trends.hrv?.direction === "improving") {
+        vataShift -= 2;
+    }
+
+    // Sleep: declining → Vata, excessive → Kapha
+    if (trends.sleepHours) {
+        if (trends.sleepHours.current < 6) vataShift += 4;
+        else if (trends.sleepHours.current > 9) kaphaShift += 4;
+        if (trends.sleepHours.direction === "declining") vataShift += 2;
+    }
+
+    // Resting HR: increasing → Pitta
+    if (trends.restingHR?.direction === "improving") {
+        // "improving" = increasing for RHR is actually worse
+        pittaShift += 2;
+    }
+
+    // SpO2: declining → Kapha
+    if (trends.spO2?.direction === "declining") {
+        kaphaShift += 3;
+    }
+
+    // Steps: declining → Kapha
+    if (trends.steps?.direction === "declining") {
+        kaphaShift += 2;
+    }
+
+    // Active energy: declining → Kapha
+    if (trends.activeEnergy?.direction === "declining") {
+        kaphaShift += 2;
+    }
+
+    return {
+        vata: vataShift,
+        pitta: pittaShift,
+        kapha: kaphaShift,
+        dominant: vataShift >= pittaShift && vataShift >= kaphaShift ? "vata" :
+            pittaShift >= vataShift && pittaShift >= kaphaShift ? "pitta" : "kapha",
+        balanced: Math.max(vataShift, pittaShift, kaphaShift) < 3,
+    };
+}
+
+
+// =============================================================================
+// SCHEDULED: Nightly Health Trend Analysis
+// =============================================================================
+
+/**
+ * Runs every night at 23:30 UTC. For each user with recent health snapshots,
+ * computes 7-day trend analysis and stores it on the user doc.
+ */
+export const nightlyHealthAnalysis = onSchedule({
+    schedule: "30 23 * * *",
+    timeZone: "UTC",
+    region: "asia-southeast2",
+    memory: "512MiB",
+    timeoutSeconds: 540,
+}, async () => {
+    logger.info("nightlyHealthAnalysis: starting");
+
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 1); // users with data in last 24h
+
+    // Find users with recent health snapshots
+    const usersSnap = await db.collection("users")
+        .where("ayurvedaData.prakriti", "!=", null)
+        .limit(500)
+        .get();
+
+    let processed = 0;
+    let errors = 0;
+
+    for (const userDoc of usersSnap.docs) {
+        try {
+            const uid = userDoc.id;
+            const snapshotsRef = db.collection("users").doc(uid).collection("healthSnapshots");
+            const snapshot = await snapshotsRef.orderBy("updatedAt", "desc").limit(7).get();
+
+            if (snapshot.empty) continue;
+
+            const days = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+            days.reverse();
+
+            const trends = {};
+            const signalKeys = [
+                "ojasScore", "hrv", "restingHR", "sleepHours",
+                "deepSleepMins", "remSleepMins", "spO2", "steps",
+                "respRate", "vo2Max", "activeEnergy",
+            ];
+
+            for (const key of signalKeys) {
+                const values = days.map((d) => d[key]).filter((v) => v != null && !isNaN(v));
+                if (values.length >= 2) {
+                    const first = values.slice(0, Math.ceil(values.length / 2));
+                    const second = values.slice(Math.ceil(values.length / 2));
+                    const avgFirst = first.reduce((a, b) => a + b, 0) / first.length;
+                    const avgSecond = second.reduce((a, b) => a + b, 0) / second.length;
+                    const change = avgSecond - avgFirst;
+                    const pctChange = avgFirst > 0 ? (change / avgFirst) * 100 : 0;
+
+                    trends[key] = {
+                        current: values[values.length - 1],
+                        avg: Math.round((values.reduce((a, b) => a + b, 0) / values.length) * 10) / 10,
+                        min: Math.min(...values),
+                        max: Math.max(...values),
+                        direction: Math.abs(pctChange) < 5 ? "stable" :
+                            change > 0 ? "improving" : "declining",
+                        pctChange: Math.round(pctChange * 10) / 10,
+                        dataPoints: values.length,
+                    };
+                }
+            }
+
+            const doshaTrend = deriveDoshaTrend(trends);
+
+            await db.collection("users").doc(uid).update({
+                "ayurvedaData.healthTrends": {
+                    trends,
+                    doshaTrend,
+                    daysAnalyzed: days.length,
+                    latestSnapshot: days[days.length - 1]?.id,
+                    analyzedAt: FieldValue.serverTimestamp(),
+                },
+            });
+
+            processed++;
+        } catch (err) {
+            errors++;
+            logger.warn(`nightlyHealthAnalysis: error for user ${userDoc.id}`, err);
+        }
+    }
+
+    logger.info(`nightlyHealthAnalysis: done. processed=${processed}, errors=${errors}`);
+});
+
+
+// =============================================================================
+// SCHEDULED: Weekly Health Aggregation
+// =============================================================================
+
+/**
+ * Runs every Monday at 00:15 UTC. Rolls up the past 7 days of health snapshots
+ * into a weekly summary stored in users/{uid}/healthTrends/{weekKey}.
+ */
+export const weeklyHealthAggregation = onSchedule({
+    schedule: "15 0 * * 1",
+    timeZone: "UTC",
+    region: "asia-southeast2",
+    memory: "512MiB",
+    timeoutSeconds: 540,
+}, async () => {
+    logger.info("weeklyHealthAggregation: starting");
+
+    const now = DateTime.now().setZone("UTC");
+    const weekKey = `${now.toFormat("yyyy")}-W${now.weekNumber.toString().padStart(2, "0")}`;
+    const weekStart = now.startOf("week").minus({ weeks: 1 });
+    const weekEnd = now.startOf("week");
+
+    const usersSnap = await db.collection("users")
+        .where("ayurvedaData.prakriti", "!=", null)
+        .limit(500)
+        .get();
+
+    let processed = 0;
+
+    for (const userDoc of usersSnap.docs) {
+        try {
+            const uid = userDoc.id;
+            const snapshotsRef = db.collection("users").doc(uid).collection("healthSnapshots");
+
+            // Get snapshots from the past week
+            const snapshot = await snapshotsRef
+                .where("updatedAt", ">=", Timestamp.fromDate(weekStart.toJSDate()))
+                .where("updatedAt", "<", Timestamp.fromDate(weekEnd.toJSDate()))
+                .orderBy("updatedAt", "asc")
+                .get();
+
+            if (snapshot.empty) continue;
+
+            const days = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+            // Aggregate each signal
+            const signalKeys = [
+                "ojasScore", "hrv", "restingHR", "sleepHours",
+                "deepSleepMins", "remSleepMins", "spO2", "steps",
+                "respRate", "vo2Max", "activeEnergy", "mindfulMins",
+            ];
+
+            const summary = {};
+            for (const key of signalKeys) {
+                const values = days.map((d) => d[key]).filter((v) => v != null && !isNaN(v));
+                if (values.length > 0) {
+                    summary[key] = {
+                        avg: Math.round((values.reduce((a, b) => a + b, 0) / values.length) * 10) / 10,
+                        min: Math.min(...values),
+                        max: Math.max(...values),
+                        dataPoints: values.length,
+                    };
+                }
+            }
+
+            // Dominant nadi dosha for the week
+            const nadiDoshas = days.map((d) => d.nadiDosha).filter(Boolean);
+            const doshaCounts = {};
+            for (const d of nadiDoshas) {
+                doshaCounts[d.toLowerCase()] = (doshaCounts[d.toLowerCase()] || 0) + 1;
+            }
+            const weeklyDominantDosha = Object.entries(doshaCounts)
+                .sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+
+            await db.collection("users").doc(uid)
+                .collection("healthTrends").doc(weekKey).set({
+                    weekKey,
+                    weekStart: Timestamp.fromDate(weekStart.toJSDate()),
+                    weekEnd: Timestamp.fromDate(weekEnd.toJSDate()),
+                    daysWithData: days.length,
+                    signals: summary,
+                    dominantDosha: weeklyDominantDosha,
+                    doshaCounts,
+                    createdAt: FieldValue.serverTimestamp(),
+                });
+
+            processed++;
+        } catch (err) {
+            logger.warn(`weeklyHealthAggregation: error for user ${userDoc.id}`, err);
+        }
+    }
+
+    logger.info(`weeklyHealthAggregation: done. processed=${processed}, weekKey=${weekKey}`);
+});
+
+
+// =============================================================================
+// TRIGGER: Auto-analyze on new health snapshot
+// =============================================================================
+
+/**
+ * When a health snapshot is written (create or update), automatically
+ * store a "recommendations" field with dosha-aware guidance based on
+ * the latest signals — so the phone can sync it to the watch.
+ */
+export const onHealthSnapshotWrite = onDocumentWritten({
+    document: "users/{userId}/healthSnapshots/{dayKey}",
+    region: "asia-southeast2",
+}, async (event) => {
+    const { userId, dayKey } = event.params;
+    const after = event.data?.after?.data();
+    if (!after) return; // deleted
+
+    try {
+        // Read user's Prakriti
+        const userDoc = await db.collection("users").doc(userId).get();
+        const ayurveda = userDoc.data()?.ayurvedaData;
+        const prakriti = ayurveda?.prakriti;
+        if (!prakriti) return; // no Prakriti yet
+
+        // Quick dosha signal analysis from snapshot
+        const signals = {};
+        const hrv = after.hrv;
+        const restingHR = after.restingHR;
+        const sleep = after.sleepHours;
+        const ojas = after.ojasScore;
+
+        let vataSignal = 0, pittaSignal = 0, kaphaSignal = 0;
+
+        if (hrv != null) {
+            if (hrv < 30) vataSignal += 3;
+            else if (hrv > 80) kaphaSignal += 1;
+        }
+        if (restingHR != null) {
+            if (restingHR > 80) pittaSignal += 2;
+            else if (restingHR < 55) kaphaSignal += 2;
+        }
+        if (sleep != null) {
+            if (sleep < 5.5) vataSignal += 3;
+            else if (sleep > 9.5) kaphaSignal += 3;
+        }
+
+        const dominant = vataSignal >= pittaSignal && vataSignal >= kaphaSignal ? "vata" :
+            pittaSignal >= vataSignal && pittaSignal >= kaphaSignal ? "pitta" : "kapha";
+
+        // Generate quick recommendations
+        const recs = generateQuickRecommendations(dominant, { hrv, restingHR, sleep, ojas });
+
+        // Store recommendations on the snapshot itself
+        await event.data.after.ref.update({
+            "analysis.signalDosha": dominant,
+            "analysis.vataSignal": vataSignal,
+            "analysis.pittaSignal": pittaSignal,
+            "analysis.kaphaSignal": kaphaSignal,
+            "analysis.recommendations": recs,
+            "analysis.analyzedAt": FieldValue.serverTimestamp(),
+        });
+
+        // Also update the user's latest recommendations for watch sync
+        await db.collection("users").doc(userId).update({
+            "ayurvedaData.latestRecommendations": {
+                dosha: dominant,
+                items: recs,
+                basedOn: dayKey,
+                updatedAt: FieldValue.serverTimestamp(),
+            },
+        });
+
+        logger.info(`onHealthSnapshotWrite: analyzed ${dayKey} for ${userId}, dominant=${dominant}`);
+    } catch (err) {
+        logger.warn(`onHealthSnapshotWrite: error for ${userId}/${dayKey}`, err);
+    }
+});
+
+/**
+ * Generate quick dosha-aware recommendations from health signals.
+ */
+function generateQuickRecommendations(dominant, signals) {
+    const recs = [];
+
+    if (dominant === "vata") {
+        recs.push({ type: "food", text: "Warm soups and cooked grains. Avoid cold, raw foods." });
+        recs.push({ type: "activity", text: "Gentle yoga or walking. Avoid intense exercise." });
+        recs.push({ type: "routine", text: "Early bedtime. Warm oil self-massage (Abhyanga)." });
+        if (signals.sleep != null && signals.sleep < 6) {
+            recs.push({ type: "urgent", text: "Sleep is critically low — prioritize rest tonight." });
+        }
+        if (signals.hrv != null && signals.hrv < 25) {
+            recs.push({ type: "urgent", text: "HRV is very low — practice Nadi Shodhana breathing." });
+        }
+    } else if (dominant === "pitta") {
+        recs.push({ type: "food", text: "Cooling foods — cucumber, coconut water, sweet fruits." });
+        recs.push({ type: "activity", text: "Swimming or moonlight walks. Avoid midday exercise." });
+        recs.push({ type: "routine", text: "Sheetali pranayama. Avoid skipping meals." });
+        if (signals.restingHR != null && signals.restingHR > 85) {
+            recs.push({ type: "urgent", text: "Heart rate elevated — take cooling breaks." });
+        }
+    } else {
+        recs.push({ type: "food", text: "Light, warm, spiced meals. Reduce dairy and sweets." });
+        recs.push({ type: "activity", text: "Vigorous exercise — running, HIIT. Best before 10 AM." });
+        recs.push({ type: "routine", text: "Kapalabhati breathing. Dry brushing before shower." });
+        if (signals.sleep != null && signals.sleep > 9) {
+            recs.push({ type: "urgent", text: "Excessive sleep — try waking earlier with stimulating activity." });
+        }
+    }
+
+    // Universal Ojas guidance
+    if (signals.ojas != null) {
+        if (signals.ojas < 40) {
+            recs.push({ type: "ojas", text: "Ojas is low — rest, nourish, avoid stimulants." });
+        } else if (signals.ojas > 80) {
+            recs.push({ type: "ojas", text: "Ojas is strong — great day for focused work or meditation." });
+        }
+    }
+
+    return recs;
 }
