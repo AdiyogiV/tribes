@@ -90,8 +90,8 @@ export function extractSignals(todayPositions, yesterdayPositions = null, dateSt
     const aspects = findAllAspects(todayPositions, yesterdayPositions);
 
     for (const asp of aspects) {
-        // Skip pure Vedic-only aspects for the global signal (they're house-based, less precise)
-        if (asp.isVedicSpecial) continue;
+        // Include Vedic special aspects (Mars 4th/8th, Jupiter 5th/9th, Saturn 3rd/10th)
+        // These are core to Vedic mundane astrology — they carry full weight.
 
         const planets = [asp.planet1, asp.planet2];
         const status = getAspectStatus(asp.orb, asp.maxOrb, asp.applying);

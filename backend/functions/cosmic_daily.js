@@ -27,75 +27,84 @@ import { upsertSignals } from "../lib/signal_store.js";
 import { initMemory, storeMemory, recallMemory, listMemories } from "../lib/agent_memory.js";
 import { fetchNewsHeadlines, formatNewsForPrompt } from "../lib/news_feed.js";
 import { ZODIAC_SIGNS } from "../lib/constants.js";
+import { getPanchanga, getNakshatra, getNakshatraMundane } from "../lib/vedic_utils.js";
 
 // =============================================================================
 // MUNDANE HOUSES — What each house governs in world astrology
 // =============================================================================
 
 const MUNDANE_HOUSES = {
-    1: { name: "World State", domain: "General conditions, public mood, national identity" },
-    2: { name: "Economy", domain: "Markets, wealth, resources, trade, banking" },
-    3: { name: "Communications", domain: "Media, journalism, transport, neighboring relations" },
-    4: { name: "Land & People", domain: "Agriculture, weather, housing, opposition, homeland" },
-    5: { name: "Diplomacy", domain: "Speculation, entertainment, children, ambassadors, creativity" },
-    6: { name: "Health & Military", domain: "Public health, armed forces, labor, service, disease" },
-    7: { name: "Foreign Affairs", domain: "Treaties, alliances, open enemies, war, partnerships" },
-    8: { name: "Crises", domain: "Death, transformation, debt, insurance, mass casualties, secrets" },
-    9: { name: "Law & Religion", domain: "Courts, religion, higher education, long-distance travel, philosophy" },
-    10: { name: "Government", domain: "Leadership, authority, heads of state, reputation, executive power" },
-    11: { name: "Parliament & Tech", domain: "Legislature, allies, technology, social movements, aspirations" },
-    12: { name: "Hidden Forces", domain: "Espionage, prisons, pandemics, hidden enemies, spirituality, exile" },
+    1:  { name: "Lagna",       domain: "Nation's general condition, public mood, national identity, health of the people" },
+    2:  { name: "Dhana",       domain: "National wealth, economy, treasury, revenue, trade, banking, agriculture produce" },
+    3:  { name: "Sahaja",      domain: "Communications, media, neighbors, transport, telecommunications, courage of the nation" },
+    4:  { name: "Sukha",       domain: "Land, agriculture, weather, mining, opposition party, homeland, mother of the nation" },
+    5:  { name: "Putra",       domain: "Diplomacy, ambassadors, speculation, entertainment, children, creativity, education" },
+    6:  { name: "Ripu",        domain: "Armed forces, public health, disease, labor, service sector, enemies, debts" },
+    7:  { name: "Kalatra",     domain: "Foreign affairs, treaties, alliances, open enemies, war & peace, international trade" },
+    8:  { name: "Mrityu",      domain: "Death toll, national crises, debt, insurance, secret intelligence, occult, earthquakes" },
+    9:  { name: "Dharma",      domain: "Judiciary, religion, higher education, long-distance travel, philosophy, dharma" },
+    10: { name: "Karma",       domain: "Government, head of state, ruling party, national reputation, executive authority" },
+    11: { name: "Labha",       domain: "Parliament, legislature, allies, technology, social movements, national aspirations" },
+    12: { name: "Vyaya",       domain: "Losses, espionage, prisons, hospitals, foreign exile, hidden enemies, spirituality" },
 };
 
 // =============================================================================
 // SYSTEM PROMPT
 // =============================================================================
 
-const SYSTEM_PROMPT = `You are a Vedic mundane astrologer with a growing memory. You observe the sky daily, track world events, and make concrete predictions about what happens next in the world.
+const SYSTEM_PROMPT = `You are a Vedic mundane astrologer (Medini Jyotish) analyzing world events through the Navagraha — Sun, Moon, Mars, Mercury, Jupiter, Venus, Saturn, Rahu, and Ketu. No outer planets.
 
-## Your Framework
-- Vedic/sidereal astrology with Lahiri ayanamsha (already applied in data)
-- Whole-sign houses from Aries = House 1 (natural zodiac for mundane)
-- Slow planets (Jupiter, Saturn, Rahu, Ketu) drive world events
-- Fast planets (Moon, Mercury) are triggers, not causes
-- Aspects: conjunction, opposition, trine, square, sextile + Vedic special aspects
+## Your Vedic Framework
+- Sidereal zodiac with Lahiri ayanamsha (already applied in data)
+- Whole-sign houses from Aries = House 1 (Kalpurush Kundli for mundane)
+- Nakshatras matter: Moon's nakshatra colors the day's emotional tone. Slow planet nakshatras mark era themes.
+- Vedic special aspects: Mars aspects 4th & 8th from itself, Jupiter aspects 5th & 9th, Saturn aspects 3rd & 10th — these are FULL-STRENGTH aspects, as strong as conjunction
+- Slow grahas (Jupiter, Saturn, Rahu, Ketu) set world-level themes over months
+- Fast grahas (Moon, Mercury, Venus, Sun) trigger events when they contact slow graha configurations
+- Combustion weakens a planet's significations. Retrograde intensifies and internalizes.
+- Panchanga: Tithi shows the lunar phase energy. Nakshatra shows the daily quality.
 
-## Your Memory
-You have memories from previous runs. USE THEM. If you predicted something before, check if the news confirms or contradicts it. If you noticed a pattern before, reference it. Your value comes from continuity — seeing the same sky over time and learning what configurations actually produce.
+## Prediction Methodology — SKY FIRST
+1. Read the sky INDEPENDENTLY of news. What domains does the current configuration activate? What is forming or perfecting? What is separating?
+2. Look at UPCOMING transits (provided). What will activate in the coming days/weeks? This is your predictive edge — seeing what hasn't happened yet.
+3. THEN read the news. Which current events align with the sky's indications? Which events will intensify or resolve based on upcoming transits?
+4. Make predictions about what WILL happen — events NOT YET in the news. The sky suggests the TYPE of event; the news suggests WHERE it might manifest.
 
-## Rules
-1. Be SPECIFIC. Not "tension may increase" but "India-Pakistan border tension likely to escalate given Mars-Saturn square + active LOC incidents"
-2. Be TIME-BOUND. Every prediction needs a timeframe: days, weeks, or months
-3. Be HONEST. If you have no basis for a prediction, say so. Don't fabricate correlations
-4. CONNECT sky to news. The sky shows tendencies. The news shows what's already in motion. Your job is to project where current events go based on upcoming planetary configurations
-5. Each house reading should be 2-3 sentences connecting current transits to that house's mundane domain
+## Prediction Rules
+1. At least 2 of your predictions MUST be about events NOT currently in the headlines
+2. Every prediction needs a CHECK DATE — the specific date by which it should be verifiable
+3. Be FALSIFIABLE — if your prediction can never be proven wrong, it's useless. Not "markets may be volatile" but "crude oil crosses $85/barrel within 10 days as Mars-Saturn conjunction perfects"
+4. Cite the specific graha configuration and its Vedic mundane signification
+5. When you update past predictions, be HONEST. Mark as "missed" if the timeframe passed without the event.
+
+## Memory
+You have memories from previous runs. USE THEM. Reference your past observations. Check pending predictions against today's news. Your value comes from continuity.
 
 ## Output Format
-Return ONLY valid JSON with this exact structure:
+Return ONLY valid JSON:
 {
-  "worldEnergy": "1-2 paragraphs describing the current global energy landscape",
+  "worldEnergy": "1-2 paragraphs on current global energy from the sky",
   "predictions": [
     {
-      "claim": "specific prediction",
-      "timeframe": "days/weeks/months",
+      "claim": "specific, falsifiable prediction",
+      "timeframe": "by YYYY-MM-DD",
       "confidence": 0.0-1.0,
-      "basedOn": "which signal + which context",
-      "domains": ["domain1", "domain2"]
+      "basedOn": "specific graha configuration + Vedic reasoning",
+      "domains": ["mundane domain 1", "mundane domain 2"]
     }
   ],
   "predictionUpdates": [
     {
       "originalClaim": "the prediction from memory",
       "status": "confirmed|developing|missed|too_early",
-      "evidence": "what in the news supports this assessment"
+      "evidence": "what specifically in the news supports or contradicts this"
     }
   ],
   "houses": {
-    "1": { "reading": "2-3 sentences" },
-    "2": { "reading": "2-3 sentences" },
+    "1": { "reading": "2-3 sentences connecting current transits to this bhava" },
     ...all 12 houses
   },
-  "observations": "What you noticed today that's worth remembering for future runs"
+  "observations": "What you noticed today worth remembering: patterns, correlations, things to watch"
 }`;
 
 // =============================================================================
@@ -196,13 +205,13 @@ export async function generateDailyOutput(geminiApiKeyValue, dateStr = null) {
 async function loadSkyAndExtractSignals(dateStr) {
     const skyDoc = await db.collection("global_astro").doc("sky_positions").get();
     if (!skyDoc.exists) {
-        return { signals: [], topSignals: [], diff: null, positions: null };
+        return { signals: [], topSignals: [], diff: null, positions: null, panchanga: null, upcoming: [] };
     }
 
     const positions = skyDoc.data()?.positions || {};
     const todayPos = positions[dateStr];
     if (!todayPos) {
-        return { signals: [], topSignals: [], diff: null, positions: null };
+        return { signals: [], topSignals: [], diff: null, positions: null, panchanga: null, upcoming: [] };
     }
 
     const sortedDates = Object.keys(positions).sort();
@@ -213,11 +222,19 @@ async function loadSkyAndExtractSignals(dateStr) {
     const diff = yesterdayPos ? diffSky(todayPos, yesterdayPos, dateStr) : null;
     const topSignals = getTopSignals(signals, 15);
 
+    // Panchanga for today
+    const panchanga = getPanchanga(todayPos, dateStr);
+
+    // Scan upcoming transits (next 14 days)
+    const upcoming = scanUpcomingTransits(positions, sortedDates, todayIdx, 14);
+
     // Persist signals
     await upsertSignals(signals);
 
-    return { signals, topSignals, diff, positions: todayPos };
+    return { signals, topSignals, diff, positions: todayPos, panchanga, upcoming };
 }
+
+import { scanUpcomingTransits } from "../lib/upcoming_transits.js";
 
 // =============================================================================
 // PROMPT BUILDING
@@ -226,78 +243,120 @@ async function loadSkyAndExtractSignals(dateStr) {
 function buildPrompt(dateStr, skyData, newsText, observations, predictions, patterns) {
     const sections = [];
 
-    sections.push(`# Date: ${dateStr}\n`);
+    sections.push(`# Cosmic Intelligence Report — ${dateStr}\n`);
 
-    // Memory: recent observations
-    if (observations.length > 0) {
-        sections.push("## Your Recent Observations (from memory)");
-        for (const obs of observations) {
-            const date = obs.createdAt ? new Date(obs.createdAt).toISOString().split("T")[0] : "unknown";
-            sections.push(`[${date}] ${obs.content}`);
+    // ── SECTION 1: PANCHANGA (Vedic daily quality) ───────────────────────
+    if (skyData.panchanga) {
+        const p = skyData.panchanga;
+        sections.push("## Panchanga (Five Limbs of the Day)");
+        sections.push(`  Vara: ${p.vara.name} (lord: ${p.vara.lord})`);
+        sections.push(`  Tithi: ${p.tithi.name} (${p.tithi.paksha} Paksha, #${p.tithi.index}) — ${p.lunarPhase}`);
+        sections.push(`  Moon Nakshatra: ${p.nakshatra.name} (pada ${p.nakshatra.pada}, lord: ${p.nakshatra.lord})`);
+        const moonMundane = getNakshatraMundane(p.nakshatra.name);
+        if (moonMundane) sections.push(`    → Mundane theme: ${moonMundane}`);
+        sections.push(`  Yoga: ${p.yoga.name}`);
+        sections.push("");
+    }
+
+    // ── SECTION 2: PLANET POSITIONS WITH NAKSHATRAS ──────────────────────
+    if (skyData.positions) {
+        sections.push("## Graha Positions (Sidereal, Lahiri)");
+        for (const [planet, data] of Object.entries(skyData.positions)) {
+            if (data?.longitude == null) continue;
+            const sign = ZODIAC_SIGNS[Math.floor(data.longitude / 30)];
+            const deg = (data.longitude % 30).toFixed(1);
+            const retro = data.isRetro ? " (R)" : "";
+            const house = Math.floor(data.longitude / 30) + 1;
+            const nak = getNakshatra(data.longitude);
+            sections.push(`  ${planet}: ${deg}° ${sign} (H${house}) — ${nak.name} P${nak.pada}${retro}`);
         }
         sections.push("");
     }
 
-    // Memory: pending predictions
-    if (predictions.length > 0) {
-        sections.push("## Your Pending Predictions (check against today's news)");
-        for (const pred of predictions) {
-            sections.push(`- ${pred.content}`);
-        }
-        sections.push("");
-    }
-
-    // Memory: patterns
-    if (patterns.length > 0) {
-        sections.push("## Your Known Patterns");
-        for (const pat of patterns) {
-            sections.push(`- ${pat.content} (similarity: ${pat.similarity})`);
-        }
-        sections.push("");
-    }
-
-    // Sky signals
-    sections.push("## Today's Sky Signals");
+    // ── SECTION 3: TODAY'S ACTIVE SIGNALS ────────────────────────────────
+    sections.push("## Active Sky Signals (ranked by intensity)");
     if (skyData.topSignals.length > 0) {
         for (const s of skyData.topSignals) {
             const applying = s.applying === true ? " APPLYING" : s.applying === false ? " separating" : "";
-            const orb = s.orb != null ? ` (${s.orb}°)` : "";
-            sections.push(`- [${s.intensity}/10] ${s.type}: ${s.planets.join(" + ")} ${s.aspect || s.dignity || s.stationType || ""}${orb}${applying} → ${(s.domains || []).slice(0, 4).join(", ")}`);
+            const orb = s.orb != null ? ` (orb: ${s.orb}°)` : "";
+            sections.push(`- [★${s.intensity}/10] ${s.type}: ${s.planets.join(" + ")} ${s.aspect || s.dignity || s.stationType || ""}${orb}${applying}`);
+            sections.push(`    Domains: ${(s.domains || []).slice(0, 5).join(", ")}`);
         }
     } else {
         sections.push("No signals extracted (sky positions may not be available).");
     }
 
     if (skyData.diff) {
-        sections.push(`\nChanges: ${skyData.diff.summary}`);
+        sections.push(`\nChanges from yesterday: ${skyData.diff.summary}`);
     }
+    sections.push("");
 
-    // Planet positions summary for house placement
-    if (skyData.positions) {
-        sections.push("\n## Planet Positions (sidereal)");
-        for (const [planet, data] of Object.entries(skyData.positions)) {
-            if (!data?.longitude && data?.longitude !== 0) continue;
-            const sign = ZODIAC_SIGNS[Math.floor(data.longitude / 30)];
-            const deg = (data.longitude % 30).toFixed(1);
-            const retro = data.isRetro ? " (R)" : "";
-            const house = Math.floor(data.longitude / 30) + 1; // natural zodiac house
-            sections.push(`  ${planet}: ${deg}° ${sign} (H${house})${retro}`);
+    // ── SECTION 4: UPCOMING TRANSITS (next 14 days) ─────────────────────
+    if (skyData.upcoming?.length > 0) {
+        sections.push("## ⚠️ Upcoming Transits (Next 14 Days) — YOUR PREDICTIVE EDGE");
+        sections.push("These events HAVEN'T happened yet. Use them to predict what's COMING.\n");
+        for (const evt of skyData.upcoming) {
+            if (evt.type === "aspect_perfection") {
+                sections.push(`- [${evt.date}, ${evt.daysAway}d away] ${evt.planet1}-${evt.planet2} ${evt.aspect} PERFECTS (orb: ${evt.orb}°)`);
+            } else if (evt.type === "ingress") {
+                sections.push(`- [${evt.date}, ${evt.daysAway}d away] ${evt.planet} enters ${evt.toSign} (from ${evt.fromSign})`);
+            } else if (evt.type === "station") {
+                sections.push(`- [${evt.date}, ${evt.daysAway}d away] ${evt.planet} goes ${evt.stationType} in ${evt.sign}`);
+            }
         }
+        sections.push("");
     }
 
-    // House domains reference
-    sections.push("\n## Mundane House Domains");
+    // ── SECTION 5: MUNDANE HOUSE REFERENCE ───────────────────────────────
+    sections.push("## Mundane Bhava Domains (Kalpurush Kundli)");
     for (const [num, info] of Object.entries(MUNDANE_HOUSES)) {
         sections.push(`  H${num} ${info.name}: ${info.domain}`);
     }
+    sections.push("");
 
-    // News
-    sections.push("\n## Today's World News Headlines");
+    // ── SECTION 6: YOUR MEMORIES ─────────────────────────────────────────
+    if (observations.length > 0 || predictions.length > 0 || patterns.length > 0) {
+        sections.push("## Your Memory\n");
+
+        if (observations.length > 0) {
+            sections.push("### Recent Observations");
+            for (const obs of observations) {
+                const date = obs.createdAt ? new Date(obs.createdAt).toISOString().split("T")[0] : "?";
+                sections.push(`[${date}] ${obs.content}`);
+            }
+            sections.push("");
+        }
+
+        if (predictions.length > 0) {
+            sections.push("### Pending Predictions (CHECK these against today's news!)");
+            for (const pred of predictions) {
+                sections.push(`- ${pred.content}`);
+            }
+            sections.push("");
+        }
+
+        if (patterns.length > 0) {
+            sections.push("### Known Patterns");
+            for (const pat of patterns) {
+                sections.push(`- ${pat.content}`);
+            }
+            sections.push("");
+        }
+    }
+
+    // ── SECTION 7: NEWS (last, intentionally) ───────────────────────────
+    sections.push("## Today's World News Headlines");
+    sections.push("(Read AFTER analyzing the sky. Use news to ground sky-based predictions in current storylines.)\n");
     sections.push(newsText);
 
-    // Instruction
+    // ── TASK ─────────────────────────────────────────────────────────────
     sections.push("\n## Your Task");
-    sections.push("Analyze the sky signals in context of the news and your memories. Generate your complete daily output as JSON.");
+    sections.push("1. Analyze the sky FIRST. What domains are activated? What's forming vs separating?");
+    sections.push("2. Study the UPCOMING transits. What will intensify or shift in the next 1-2 weeks?");
+    sections.push("3. Cross-reference with news. Which current events align with the sky's trajectory?");
+    sections.push("4. Make 5-8 predictions. At least 2 must be about events NOT in today's headlines.");
+    sections.push("5. Check your pending predictions against today's news. Be honest about misses.");
+    sections.push("\nGenerate your complete daily output as JSON.");
 
     return sections.join("\n");
 }
@@ -346,6 +405,8 @@ function enrichOutput(output, dateStr, skyData) {
         predictionUpdates: output.predictionUpdates || [],
         houses,
         observations: output.observations || "",
+        panchanga: skyData.panchanga || null,
+        upcomingTransits: (skyData.upcoming || []).slice(0, 10),
         signalsSummary: skyData.topSignals.slice(0, 8).map(s => ({
             id: s.id, type: s.type, planets: s.planets,
             aspect: s.aspect, dignity: s.dignity,
@@ -376,14 +437,26 @@ async function storeNewMemories(dateStr, output, skyData, headlines) {
         metadata: { date: dateStr, signalCount: skyData.signals.length },
     }));
 
-    // Store each new prediction
+    // Store each new prediction with a check-after date
     if (output.predictions?.length) {
         for (const pred of output.predictions) {
-            const predContent = `[${dateStr}] Prediction: ${pred.claim}. Timeframe: ${pred.timeframe}. Confidence: ${pred.confidence}. Based on: ${pred.basedOn}. Domains: ${(pred.domains || []).join(", ")}`;
+            // Parse check date from timeframe ("by YYYY-MM-DD") or default to +14 days
+            let checkAfterDate = dateStr;
+            const dateMatch = pred.timeframe?.match(/(\d{4}-\d{2}-\d{2})/);
+            if (dateMatch) {
+                checkAfterDate = dateMatch[1];
+            } else {
+                // Default: 14 days from now
+                const d = new Date(dateStr);
+                d.setDate(d.getDate() + 14);
+                checkAfterDate = d.toISOString().split("T")[0];
+            }
+
+            const predContent = `[${dateStr}] Prediction (check by ${checkAfterDate}): ${pred.claim}. Confidence: ${pred.confidence}. Based on: ${pred.basedOn}. Domains: ${(pred.domains || []).join(", ")}`;
             tasks.push(storeMemory(predContent, {
                 namespace: "predictions",
                 tags: pred.domains || [],
-                metadata: { date: dateStr, confidence: pred.confidence, timeframe: pred.timeframe },
+                metadata: { date: dateStr, confidence: pred.confidence, checkAfterDate },
             }));
         }
     }
