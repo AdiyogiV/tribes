@@ -117,18 +117,21 @@ class AppBootstrap {
 
     // App Check – activate with appropriate provider per build mode.
     //
-    // DEBUG MODE: Both Dart AND native (AppDelegate.swift) deliberately skip
-    // App Check provider registration. Without a provider, the Firebase SDK
-    // does not attempt token exchanges, so Firestore/Functions/Storage calls
-    // are never blocked waiting for App Check tokens that would fail anyway
-    // (dev iOS app isn't registered in Firebase Console > App Check).
+    // DEBUG MODE: Native AppDelegate.swift installs AppCheckDebugProviderFactory
+    // which prints a debug token to console on first launch. Add that token in
+    // Firebase Console > App Check > [iOS app] > Manage debug tokens to make
+    // App Check pass for this dev install. We do NOT also call
+    // FirebaseAppCheck.activate() from Dart in debug — the native factory
+    // already covers it and a second activation triggers a redundant token
+    // exchange.
     //
     // RELEASE MODE: Activate normally with platform-specific providers.
     if (!kIsWeb) {
       try {
         if (kDebugMode) {
           AppLogger.i(
-              'App Check: debug — disabled (no provider registered, see AppDelegate)',
+              'App Check: debug provider installed (see AppDelegate). '
+              'First launch prints a token — register it in Firebase Console.',
               category: LogCategory.general);
         } else {
           AppLogger.i('Initializing Firebase App Check (mobile release)...',

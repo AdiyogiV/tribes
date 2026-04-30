@@ -128,6 +128,15 @@ Future<void> setupCoreDependencies() async {
       locator.registerLazySingleton<PostDbService>(() => PostDbService());
     }
 
+    // MediaCompressionService is touched by TabHandler at first build (well
+    // before setupRemainingDependencies runs) — register it here so the
+    // 'not registered, using fallback' warning never fires. It's a lazy
+    // singleton so registration is essentially free.
+    if (!locator.isRegistered<MediaCompressionService>()) {
+      locator.registerLazySingleton<MediaCompressionService>(
+          () => MediaCompressionService());
+    }
+
     // Register AI Chat services early for provider initialization with timeout safety
     locator.registerLazySingleton<LocationService>(() {
       AppLogger.d('Initializing LocationService lazily');
@@ -191,8 +200,13 @@ Future<void> setupRemainingDependencies() async {
     // Services that have no dependencies - register lazily for better performance
     locator.registerLazySingleton<MediaStorageService>(
         () => MediaStorageService());
-    locator.registerLazySingleton<MediaCompressionService>(
-        () => MediaCompressionService());
+    // MediaCompressionService is now registered earlier in
+    // setupCoreDependencies() (see comment there). Skip re-registration to
+    // avoid get_it 'already registered' assertion in dev.
+    if (!locator.isRegistered<MediaCompressionService>()) {
+      locator.registerLazySingleton<MediaCompressionService>(
+          () => MediaCompressionService());
+    }
     if (!locator.isRegistered<PostDbService>()) {
       locator.registerLazySingleton<PostDbService>(() => PostDbService());
     }

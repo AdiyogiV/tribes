@@ -308,10 +308,17 @@ class GramsState extends State<Grams> with AutomaticKeepAliveClientMixin {
 
   bool _publicGramsLoading = false;
 
-  /// Load public grams once and cache
+  /// Load public grams once and cache.
+  ///
+  /// Guarded by [_publicGramsLoaded] (idempotent) and [_publicGramsLoading]
+  /// (re-entrancy). Both must be reset by callers wanting a refresh — see
+  /// [_handleRefresh] which clears [_publicGramsLoaded] back to false. The
+  /// loading flag is reset in `finally` so a failed/aborted load doesn't
+  /// poison the next refresh attempt.
   Future<void> _loadPublicGrams() async {
     if (_publicGramsLoaded || _publicGramsLoading) return;
     _publicGramsLoading = true;
+    AppLogger.d('Loading public grams', category: LogCategory.database);
     try {
       final snapshot = await FirebaseFirestore.instance
           .collection('spaces')
@@ -328,6 +335,9 @@ class GramsState extends State<Grams> with AutomaticKeepAliveClientMixin {
       }).toList();
 
       _publicGramsLoaded = true;
+      AppLogger.d('Public grams loaded',
+          category: LogCategory.database,
+          data: {'count': _cachedPublicGrams!.length});
       if (mounted) setState(() {});
     } catch (e) {
       AppLogger.e('Failed to load public grams',
@@ -337,6 +347,12 @@ class GramsState extends State<Grams> with AutomaticKeepAliveClientMixin {
       _publicGramsLoaded = true;
       _cachedPublicGrams = [];
       if (mounted) setState(() {});
+    } finally {
+      // CRITICAL: must reset so the next refresh can proceed. Without this
+      // the flag was stuck at true after the first load, making refresh a
+      // no-op and the public-grams section vanish (cleared cache + guard
+      // refused to re-fetch).
+      _publicGramsLoading = false;
     }
   }
 

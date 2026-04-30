@@ -19,23 +19,26 @@ import WatchConnectivity
   ) -> Bool {
     // App Check configuration.
     //
-    // DEBUG: We deliberately do NOT install any App Check provider in debug
-    // builds. The iOS Firebase SDK only attempts token exchanges when a
-    // provider is registered, so leaving it unset keeps Firestore /
-    // Functions / Storage calls from being blocked while the app waits for
-    // an App Check token that will never arrive (the dev iOS app is not
-    // registered in Firebase Console > App Check, which is why every
-    // exchangeDeviceCheckToken request returns 400 "App not registered"
-    // and triggers a retry storm that starves Firestore).
+    // DEBUG: Install AppCheckDebugProviderFactory. The iOS Firebase SDK has
+    // a built-in DeviceCheck provider that activates by default when ANY
+    // App-Check-aware service (FCM, Firestore, Storage) requests a token.
+    // Without an explicit factory, every such request hits
+    // exchangeDeviceCheckToken with no app-side override and returns
+    // 400 "App not registered" because the dev iOS app isn't registered
+    // in Firebase Console > App Check. With the debug factory installed:
+    //   1. The SDK stops attempting DeviceCheck altogether.
+    //   2. It generates and prints a debug token to the console (look for
+    //      'Firebase App Check Debug Token: ...' on first launch).
+    //   3. Add that token at:
+    //      https://console.firebase.google.com/project/_/appcheck/apps
+    //      → your iOS app → "Manage debug tokens" → paste → done forever.
     //
     // RELEASE: Dart-side bootstrap (`app_bootstrap.dart`) installs
-    // DeviceCheck via FirebaseAppCheck.activate(). When you ship to
-    // production, register the iOS app at:
-    //   https://console.firebase.google.com/project/_/appcheck/apps
-    // Once registered, you can re-enable a debug provider here for local
-    // testing of App-Check-enforced endpoints.
+    // AppleDeviceCheckProvider via FirebaseAppCheck.activate(). Register
+    // the iOS app at the same URL above before shipping to prod.
     #if DEBUG
-    // Intentionally no-op. See comment above.
+    let providerFactory = AppCheckDebugProviderFactory()
+    AppCheck.setAppCheckProviderFactory(providerFactory)
     #endif
 
     // Configure Firebase
