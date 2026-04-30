@@ -106,25 +106,40 @@ class AppBootstrap {
       throw error;
     });
 
-    // App Check – mobile release only
-    if (!kDebugMode && !kIsWeb) {
+    // App Check – activate with appropriate provider per build mode.
+    //
+    // DEBUG MODE: Both Dart AND native (AppDelegate.swift) deliberately skip
+    // App Check provider registration. Without a provider, the Firebase SDK
+    // does not attempt token exchanges, so Firestore/Functions/Storage calls
+    // are never blocked waiting for App Check tokens that would fail anyway
+    // (dev iOS app isn't registered in Firebase Console > App Check).
+    //
+    // RELEASE MODE: Activate normally with platform-specific providers.
+    if (!kIsWeb) {
       try {
-        AppLogger.i('Initializing Firebase App Check (mobile release)...',
-            category: LogCategory.general);
-        await FirebaseAppCheck.instance.activate(
-          androidProvider: AndroidProvider.playIntegrity,
-          appleProvider: AppleProvider.deviceCheck,
-        );
-        // Token fetch is a network round-trip — fire-and-forget to avoid
-        // blocking runApp(). Firebase SDK will cache the token automatically.
-        unawaited(FirebaseAppCheck.instance.getToken(true).then((token) {
-          AppLogger.i('Firebase App Check activated',
-              category: LogCategory.general, data: {'hasToken': token != null});
-        }).catchError((tokenError) {
-          AppLogger.w('Firebase App Check token fetch failed',
-              category: LogCategory.general,
-              data: {'error': tokenError.toString()});
-        }));
+        if (kDebugMode) {
+          AppLogger.i(
+              'App Check: debug — disabled (no provider registered, see AppDelegate)',
+              category: LogCategory.general);
+        } else {
+          AppLogger.i('Initializing Firebase App Check (mobile release)...',
+              category: LogCategory.general);
+          await FirebaseAppCheck.instance.activate(
+            providerAndroid: const AndroidPlayIntegrityProvider(),
+            providerApple: const AppleDeviceCheckProvider(),
+          );
+          // Token fetch is a network round-trip — fire-and-forget to avoid
+          // blocking runApp(). Firebase SDK will cache the token automatically.
+          unawaited(FirebaseAppCheck.instance.getToken(true).then((token) {
+            AppLogger.i('Firebase App Check activated',
+                category: LogCategory.general,
+                data: {'hasToken': token != null});
+          }).catchError((tokenError) {
+            AppLogger.w('Firebase App Check token fetch failed',
+                category: LogCategory.general,
+                data: {'error': tokenError.toString()});
+          }));
+        }
       } catch (e) {
         AppLogger.w('Firebase App Check activation failed: $e',
             category: LogCategory.general, data: {'error': e.toString()});
@@ -132,9 +147,7 @@ class AppBootstrap {
     } else {
       AppLogger.i('Skipping Firebase App Check',
           category: LogCategory.general,
-          data: {
-            'reason': kIsWeb ? 'Web platform - faster startup' : 'Debug mode'
-          });
+          data: {'reason': 'Web platform - faster startup'});
     }
 
     // FCM background handler (mobile only)
@@ -229,6 +242,7 @@ class AppBootstrap {
         unawaited(_sendSkyToWatch());
 
         startupService.reportStartupPerformance();
+
         AppInitializer.safelyRunBackgroundTasks(startupService);
       } catch (e) {
         AppLogger.e('Error during background initialization: $e');
@@ -243,6 +257,18 @@ class AppBootstrap {
   /// Also listens for fullSync requests at the app level.
   static Future<void> _sendSkyToWatch() async {
     try {
+      // Check if watch is paired BEFORE doing any work
+      final watchPaired = await WatchService.instance.isWatchPaired();
+      if (!watchPaired) {
+        AppLogger.i('Bootstrap: Watch not paired, skipping sky/muhurat/panchang sync',
+            category: LogCategory.general);
+        // Still load sky positions for in-app use, but don't send to watch
+        final skyService = SkyPositionsService();
+        await skyService.fetchPositions();
+        await skyService.fetchGlobalMuhurat();
+        return;
+      }
+
       final skyService = SkyPositionsService();
 
       // 1) Sky positions

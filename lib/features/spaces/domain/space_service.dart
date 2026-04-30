@@ -6,7 +6,6 @@ import 'package:aurogram/shared/models/space_roles.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:aurogram/shared/models/space.dart';
-import 'package:aurogram/core/network/network_manager.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/shared/services/analytics_service.dart';
 
@@ -205,90 +204,65 @@ class SpaceService {
       throw Exception("Invalid space ID (empty)");
     }
 
-    // Check cache for successful lookups first
+    // Check in-memory cache for successful lookups first.
     if (spaceCache.containsKey(spaceId)) {
       return spaceCache[spaceId]!;
     }
 
-    // Check if we already know this space doesn't exist
+    // Check if we already know this space doesn't exist.
     if (notFoundSpaceIds.contains(spaceId)) {
       throw Exception("Space not found! SpaceID: $spaceId (cached)");
     }
 
-    // Check for network connectivity but don't immediately fail
-    final networkManager = NetworkManager();
-    bool isConnected = networkManager.isOnline;
-
-    // If not connected, try once more with a short delay
-    if (!isConnected) {
-      // Wait briefly and check again
-      await Future.delayed(Duration(milliseconds: 800));
-      isConnected = await networkManager.checkInternetAccess();
-
-      // If still not connected, check if we have a cached document
-      if (!isConnected) {
-        try {
-          // Try to use cached data from Firestore if available
-          final document = await spaces
-              .doc(spaceId)
-              .get(GetOptions(source: Source.cache));
-
-          if (document.exists && document.data() != null) {
-            final space =
-                Space.fromJson(document.data() as Map<String, dynamic>);
-
-            // Don't cache this as a normal lookup since it's from cache
-            AppLogger.i(
-              'Used cached space data due to network unavailability for space',
-              category: LogCategory.general,
-              data: {'spaceId': spaceId},
-            );
-
-            return space;
-          }
-        } catch (_) {
-          // If cache lookup fails, continue to the network error
-        }
-
-        throw Exception("No network connection available");
+    // Stale-while-revalidate: try Firestore's local persistence cache
+    // FIRST. This is essentially free (~1ms) and lets us render the gram
+    // immediately even when the network is slow / App Check is throttling.
+    // We then kick off a server refresh in the background so the next
+    // lookup sees fresh data.
+    try {
+      final cachedDoc = await spaces
+          .doc(spaceId)
+          .get(const GetOptions(source: Source.cache));
+      if (cachedDoc.exists && cachedDoc.data() != null) {
+        final space =
+            Space.fromJson(cachedDoc.data() as Map<String, dynamic>);
+        spaceCache[spaceId] = space;
+        // Background refresh — don't await; failures are silent because the
+        // user already has data.
+        unawaited(_refreshSpaceFromServer(spaceId));
+        return space;
       }
+    } catch (_) {
+      // Cache miss / persistence disabled — fall through to server fetch.
     }
 
+    // Cache miss: must hit the server. Use a shorter timeout (5s) so a
+    // single slow space doesn't gate the whole UI for 10 full seconds when
+    // App Check or the network is misbehaving.
     DocumentSnapshot? document;
     try {
-      // Get from server with a reasonable timeout
       document = await spaces.doc(spaceId).get().timeout(
-        Duration(seconds: 10),
+        const Duration(seconds: 5),
         onTimeout: () {
           throw TimeoutException("Network request timed out");
         },
       );
 
-      // CRITICAL: Only mark as not found if document.exists is explicitly false
-      // This is the ONLY reliable way to know a space doesn't exist
+      // CRITICAL: Only mark as not found if document.exists is explicitly false.
       if (!document.exists) {
-        // Remember this space doesn't exist to prevent repeated lookups
         notFoundSpaceIds.add(spaceId);
-
-        // Clean up references if user is logged in
         final user = FirebaseAuth.instance.currentUser;
         if (user != null) {
           cleanupMissingSpace(spaceId, user.uid);
         }
-
         throw Exception("Space not found! SpaceID: $spaceId");
       }
 
-      // Convert to Space object
       final space =
           Space.fromJson(document.data() as Map<String, dynamic>);
-
-      // Cache successful result
       spaceCache[spaceId] = space;
-
       return space;
     } catch (e) {
-      // Handle timeouts specially - don't mark as not found, allow retry
       if (e is TimeoutException) {
         AppLogger.w(
           'Network timeout when fetching space',
@@ -297,18 +271,7 @@ class SpaceService {
         );
         throw Exception("Network timeout - please try again");
       }
-
-      // CRITICAL: If we got a document but it doesn't exist, we already handled it above
-      // If we got an exception BEFORE getting the document, it's a transient error
-      // NEVER mark as not found unless document.exists was explicitly false
-      if (document != null && !document.exists) {
-        // This case is already handled above, but just in case
-        rethrow;
-      }
-
-      // NEVER mark as not found for exceptions from .get() call
-      // Only mark as not found when document.exists == false (handled above)
-      // For all other errors (network, Firestore, permission, etc.), treat as transient and allow retry
+      // Never mark as not found for transient errors.
       AppLogger.w(
         'Transient error fetching Space (will retry on refresh)',
         category: LogCategory.general,
@@ -318,8 +281,28 @@ class SpaceService {
           'errorType': e.runtimeType.toString()
         },
       );
-
       rethrow;
+    }
+  }
+
+  /// Background refresh used by the stale-while-revalidate path in
+  /// [getSpace]. Updates [spaceCache] silently when newer data arrives.
+  Future<void> _refreshSpaceFromServer(String spaceId) async {
+    try {
+      final doc = await spaces
+          .doc(spaceId)
+          .get(const GetOptions(source: Source.server))
+          .timeout(const Duration(seconds: 8));
+      if (doc.exists && doc.data() != null) {
+        spaceCache[spaceId] =
+            Space.fromJson(doc.data() as Map<String, dynamic>);
+      } else if (doc.metadata.isFromCache == false) {
+        // Server explicitly said it doesn't exist.
+        notFoundSpaceIds.add(spaceId);
+        spaceCache.remove(spaceId);
+      }
+    } catch (_) {
+      // Silent — user already has cached data; we'll retry next lookup.
     }
   }
 }

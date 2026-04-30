@@ -1,6 +1,7 @@
 import Flutter
 import UIKit
 import Firebase
+import FirebaseAppCheck
 import FirebaseMessaging
 import UserNotifications
 import WatchConnectivity
@@ -16,6 +17,27 @@ import WatchConnectivity
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
+    // App Check configuration.
+    //
+    // DEBUG: We deliberately do NOT install any App Check provider in debug
+    // builds. The iOS Firebase SDK only attempts token exchanges when a
+    // provider is registered, so leaving it unset keeps Firestore /
+    // Functions / Storage calls from being blocked while the app waits for
+    // an App Check token that will never arrive (the dev iOS app is not
+    // registered in Firebase Console > App Check, which is why every
+    // exchangeDeviceCheckToken request returns 400 "App not registered"
+    // and triggers a retry storm that starves Firestore).
+    //
+    // RELEASE: Dart-side bootstrap (`app_bootstrap.dart`) installs
+    // DeviceCheck via FirebaseAppCheck.activate(). When you ship to
+    // production, register the iOS app at:
+    //   https://console.firebase.google.com/project/_/appcheck/apps
+    // Once registered, you can re-enable a debug provider here for local
+    // testing of App-Check-enforced endpoints.
+    #if DEBUG
+    // Intentionally no-op. See comment above.
+    #endif
+
     // Configure Firebase
     if FirebaseApp.app() == nil {
       FirebaseApp.configure()
