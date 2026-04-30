@@ -41,7 +41,14 @@ class SpaceScreenState extends State<SpaceScreen> {
   String? userName;
   int memberCount = 0;
   File? _gramImageFile;
-  final SpaceService _spaceService = SpaceService();
+  // CRITICAL: use the singleton from the service locator, NOT a fresh
+  // instance. A fresh instance has its own empty spaceCache, which means
+  // grams.dart's prefetchSpaces (which warms the singleton's cache) has
+  // zero benefit when opening a space — every tap incurs a full network
+  // round-trip even though the data is already in memory in the singleton.
+  final SpaceService _spaceService = locator.isRegistered<SpaceService>()
+      ? locator<SpaceService>()
+      : SpaceService();
   bool _isNavigatingToPost = false;
 
   @override
@@ -74,9 +81,15 @@ class SpaceScreenState extends State<SpaceScreen> {
   }
 
   Future<bool> _initializeSpaceBox() async {
+    final stopwatch = Stopwatch()..start();
     try {
       user = FirebaseAuth.instance.currentUser;
+      AppLogger.d('SpaceScreen: starting init',
+          category: LogCategory.navigation, data: {'spaceId': widget.rid});
       space = await _spaceService.getSpace(widget.rid);
+      AppLogger.d('SpaceScreen: getSpace done',
+          category: LogCategory.navigation,
+          data: {'spaceId': widget.rid, 'ms': stopwatch.elapsedMilliseconds});
 
       if (user != null) {
         role = await _spaceService.getSpaceRole(widget.rid, user!.uid);
@@ -109,8 +122,17 @@ class SpaceScreenState extends State<SpaceScreen> {
       return _isMember() || isPublicSpaceType(space!.spaceType);
     } catch (e) {
       AppLogger.e('Error initializing space',
-          category: LogCategory.general, data: {'error': e.toString()});
+          category: LogCategory.general,
+          data: {
+            'spaceId': widget.rid,
+            'ms': stopwatch.elapsedMilliseconds,
+            'error': e.toString(),
+          });
       return false;
+    } finally {
+      AppLogger.d('SpaceScreen: init complete',
+          category: LogCategory.navigation,
+          data: {'spaceId': widget.rid, 'totalMs': stopwatch.elapsedMilliseconds});
     }
   }
 

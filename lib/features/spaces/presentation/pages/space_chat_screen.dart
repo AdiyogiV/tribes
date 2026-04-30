@@ -126,6 +126,14 @@ class SpaceChatScreenState extends State<SpaceChatScreen>
   @override
   void initState() {
     super.initState();
+    AppLogger.d('SpaceChatScreen: opening',
+        category: LogCategory.navigation,
+        data: {
+          'spaceId': widget.spaceId,
+          'isDM': _isDMConversation,
+          'hasSpace': widget.space != null,
+          'hasOtherUserId': widget.otherUserId != null,
+        });
     ChatNotificationService.setActiveChat(widget.spaceId);
     _scrollController.addListener(_onScroll);
     _textFieldFocusNode.addListener(_onFocusChange);
