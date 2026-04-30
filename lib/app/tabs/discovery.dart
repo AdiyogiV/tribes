@@ -78,15 +78,15 @@ class DiscoveryState extends State<Discovery> {
           .map((index, documents) => MapEntry(
                 index,
                 GestureDetector(
-                  key: UniqueKey(),
+                  key: ValueKey('post_${documents.id}'),
                   onTap: () {
                     context.push('/post/${documents.id}');
                   },
                   child: Container(
-                    padding: EdgeInsets.all(5),
+                    padding: const EdgeInsets.all(5),
                     width: MediaQuery.of(context).size.width / 2,
                     child: PreviewBox(
-                      key: UniqueKey(),
+                      key: ValueKey('preview_${documents.id}'),
                       previewUrl: (documents.data()
                                   as Map<String, dynamic>?)?['thumbnail']
                               as String? ??
@@ -165,9 +165,15 @@ class DiscoveryState extends State<Discovery> {
       _spaceUpdatedMap.remove(id);
     }
 
-    // Add listeners for new spaces
+    // Add listeners for new spaces — capped at 10 to prevent listener
+    // storms when search returns many results. Beyond 10 we fall back to
+    // a static order; users can refresh to re-sort.
+    const int kMaxLiveSortListeners = 10;
+    int liveCount = _discoveryUpdatedSubs.length;
     for (final id in spaceIds) {
       if (_discoveryUpdatedSubs.containsKey(id)) continue;
+      if (liveCount >= kMaxLiveSortListeners) break;
+      liveCount++;
       // ignore: cancel_subscriptions — stored in _discoveryUpdatedSubs and cancelled in dispose
       final sub = FirebaseFirestore.instance
           .collection('spaces')
@@ -185,10 +191,14 @@ class DiscoveryState extends State<Discovery> {
             updated = null;
           }
         }
-        _spaceUpdatedMap[id] = updated;
-        // Rebuild suggestions with new ordering
-        _rebuildDiscoverySuggestions();
-        if (mounted) setState(() {});
+        final previousUpdated = _spaceUpdatedMap[id];
+        // Only rebuild if timestamp actually changed
+        if (previousUpdated?.millisecondsSinceEpoch !=
+            updated?.millisecondsSinceEpoch) {
+          _spaceUpdatedMap[id] = updated;
+          _rebuildDiscoverySuggestions();
+          if (mounted) setState(() {});
+        }
       });
       _discoveryUpdatedSubs[id] = sub;
     }
@@ -242,12 +252,12 @@ class DiscoveryState extends State<Discovery> {
             (index, doc) => MapEntry(
               index,
               GestureDetector(
-                key: UniqueKey(),
+                key: ValueKey('user_${doc.id}'),
                 onTap: () {
                   context.push('/user/${doc.id}');
                 },
                 child: CrewPreview(
-                  key: UniqueKey(),
+                  key: ValueKey('crew_${doc.id}'),
                   user: doc.id,
                 ),
               ),

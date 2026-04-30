@@ -1,5 +1,4 @@
 import 'package:aurogram/core/theme/app_dimensions.dart';
-import 'dart:async';
 import 'dart:math' as math;
 import 'package:aurogram/shared/models/space_types.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -27,11 +26,18 @@ class GramPreviewBox extends StatefulWidget {
   final bool showChatButton;
   final int reloadToken;
 
+  /// Optional last-updated timestamp injected by the parent (e.g. Grams tab
+  /// which already maintains a per-space subscription). When provided the
+  /// preview avoids opening its own `spacePosts/{id}` listener — saving
+  /// O(N) Firestore listeners on screens that render many previews.
+  final Timestamp? lastUpdated;
+
   const GramPreviewBox(
       {this.gram,
       this.compact = false,
       this.showChatButton = false,
       this.reloadToken = 0,
+      this.lastUpdated,
       super.key});
 
   // Static cache for space details to avoid repeated lookups
@@ -57,18 +63,18 @@ class GramPreviewBox extends StatefulWidget {
 class _GramPreviewBoxState extends State<GramPreviewBox>
     with AutomaticKeepAliveClientMixin {
   late Future<Map<String, dynamic>?> _spaceFuture;
-  Timestamp? _lastUpdated;
-  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>?
-      _updatedSubscription;
   late int _lastReloadToken;
-  int _retryCount = 0;
-  bool _isInitialLoad = true;
 
   final SpaceChatService _chatService = SpaceChatService();
 
-  // Cache the stream for post previews to prevent recreation on rebuilds
-  Stream<QuerySnapshot>? _postPreviewsStream;
-  String? _cachedSpaceIdForStream;
+  // Lightweight per-process cache for post previews (latest 7 docs per space).
+  // Streaming this for every gram on screen used to open N Firestore
+  // listeners — replaced with a one-shot fetch + 60s TTL.
+  static final Map<String, List<QueryDocumentSnapshot>> _postPreviewsCache = {};
+  static final Map<String, DateTime> _postPreviewsExpiry = {};
+  static const Duration _postPreviewsTtl = Duration(seconds: 60);
+  Future<List<QueryDocumentSnapshot>>? _postPreviewsFuture;
+  String? _cachedSpaceIdForPosts;
 
   // Per-instance random base so each GramPreviewBox looks different
   late final int _randomBase;
@@ -92,9 +98,6 @@ class _GramPreviewBoxState extends State<GramPreviewBox>
     _randomBase = math.Random().nextInt(0x7fffffff);
     _lastReloadToken = widget.reloadToken;
     _spaceFuture = _loadSpaceDetails(forceReload: false);
-    if (widget.gram != null && widget.gram!.isNotEmpty) {
-      _subscribeToSpaceUpdated(widget.gram!);
-    }
   }
 
   @override
@@ -111,53 +114,48 @@ class _GramPreviewBoxState extends State<GramPreviewBox>
     final String spaceId = widget.gram!;
     GramPreviewBox._spaceCache.remove(spaceId);
     GramPreviewBox._spaceCacheExpiry.remove(spaceId);
+    _postPreviewsCache.remove(spaceId);
+    _postPreviewsExpiry.remove(spaceId);
     setState(() {
       _spaceFuture = _loadSpaceDetails(forceReload: true);
+      _postPreviewsFuture = null;
+      _cachedSpaceIdForPosts = null;
     });
   }
 
-  void _subscribeToSpaceUpdated(String spaceId) {
-    _updatedSubscription?.cancel();
-    _updatedSubscription = FirebaseFirestore.instance
-        .collection('spacePosts')
-        .doc(spaceId)
-        .snapshots()
-        .listen(
-      (doc) {
-        Timestamp? updated;
-        if (doc.exists) {
-          final data = doc.data();
-          if (data != null) {
-            updated = data['updated'] as Timestamp?;
-          }
-        }
-        if (mounted && _lastUpdated != updated) {
-          setState(() {
-            _lastUpdated = updated;
-          });
-        }
-      },
-      onError: (error) {
-        AppLogger.w(
-          'GramPreviewBox space update subscription error',
-          category: LogCategory.database,
-          data: {'error': error.toString(), 'spaceId': widget.gram ?? ''},
-        );
-      },
-    );
-  }
-
-  void _ensurePostPreviewsStream(String spaceId) {
-    if (_postPreviewsStream == null || _cachedSpaceIdForStream != spaceId) {
-      _postPreviewsStream = FirebaseFirestore.instance
+  /// Fetch the latest 7 post previews once, cached for [_postPreviewsTtl].
+  /// Replaces a Firestore snapshots() listener that used to fire per gram.
+  Future<List<QueryDocumentSnapshot>> _loadPostPreviews(String spaceId) async {
+    final cached = _postPreviewsCache[spaceId];
+    final expiry = _postPreviewsExpiry[spaceId];
+    if (cached != null && expiry != null && expiry.isAfter(DateTime.now())) {
+      return cached;
+    }
+    try {
+      final snap = await FirebaseFirestore.instance
           .collection('spacePosts')
           .doc(spaceId)
           .collection('posts')
           .orderBy('timestamp', descending: true)
           .limit(7)
-          .snapshots();
-      _cachedSpaceIdForStream = spaceId;
+          .get();
+      _postPreviewsCache[spaceId] = snap.docs;
+      _postPreviewsExpiry[spaceId] = DateTime.now().add(_postPreviewsTtl);
+      return snap.docs;
+    } catch (e) {
+      AppLogger.w('GramPreviewBox post previews fetch failed',
+          category: LogCategory.database,
+          data: {'error': e.toString(), 'spaceId': spaceId});
+      return cached ?? const [];
     }
+  }
+
+  Future<List<QueryDocumentSnapshot>> _ensurePostPreviewsFuture(String spaceId) {
+    if (_postPreviewsFuture == null || _cachedSpaceIdForPosts != spaceId) {
+      _cachedSpaceIdForPosts = spaceId;
+      _postPreviewsFuture = _loadPostPreviews(spaceId);
+    }
+    return _postPreviewsFuture!;
   }
 
   Future<Map<String, dynamic>?> _loadSpaceDetails(
@@ -179,87 +177,55 @@ class _GramPreviewBoxState extends State<GramPreviewBox>
       }
     }
 
-    int retryCount = 0;
-    const maxRetries = 2;
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      final bool useDirectQuery =
+          user == null || !locator.isRegistered<SpaceService>();
 
-    while (retryCount <= maxRetries) {
-      try {
-        final user = FirebaseAuth.instance.currentUser;
-        final bool useDirectQuery = user == null || !locator.isRegistered<SpaceService>();
+      Space space;
+      if (useDirectQuery) {
+        final doc = await FirebaseFirestore.instance
+            .collection('spaces')
+            .doc(spaceId)
+            .get();
 
-        Space space;
-        if (useDirectQuery) {
-          final doc = await FirebaseFirestore.instance
-              .collection('spaces')
-              .doc(spaceId)
-              .get();
-
-          if (!doc.exists || doc.data() == null) {
-            throw Exception('Space not found! SpaceID: $spaceId');
-          }
-
-          space = Space.fromJson(doc.data()!);
-        } else {
-          final spaceService = locator<SpaceService>();
-          space = await spaceService.getSpace(spaceId);
+        if (!doc.exists || doc.data() == null) {
+          throw Exception('Space not found! SpaceID: $spaceId');
         }
 
-        final details = {
-          'id': space.id,
-          'name': space.name,
-          'description': space.description,
-          'displayPicture': space.displayPicture,
-          'spaceType': space.spaceType,
-          'limitedVisibility': space.limitedVisibility,
-          'spaceObject': space,
-        };
-
-        GramPreviewBox._spaceCache[spaceId] = details;
-        GramPreviewBox._spaceCacheExpiry[spaceId] = DateTime.now().add(GramPreviewBox._cacheDuration);
-
-        return details;
-      } catch (e) {
-        retryCount++;
-
-        final errorString = e.toString().toLowerCase();
-        final isTransientError = errorString.contains("no network connection") ||
-            errorString.contains("network timeout") ||
-            errorString.contains("network request timed out") ||
-            errorString.contains("firebaseexception") ||
-            errorString.contains("platformexception") ||
-            errorString.contains("permission-denied") ||
-            errorString.contains("unavailable") ||
-            errorString.contains("uninitialized") ||
-            errorString.contains("failed-precondition");
-
-        if (isTransientError && retryCount <= maxRetries) {
-          await Future.delayed(Duration(milliseconds: 800 * retryCount));
-          continue;
-        }
-
-        if (isTransientError) {
-          if (GramPreviewBox._spaceCache.containsKey(spaceId) &&
-              GramPreviewBox._spaceCache[spaceId] != null) {
-            return GramPreviewBox._spaceCache[spaceId];
-          }
-        }
-
-        if (errorString.contains('space not found') && !isTransientError) {
-          GramPreviewBox._spaceCache[spaceId] = null;
-          GramPreviewBox._spaceCacheExpiry[spaceId] = DateTime.now().add(Duration(minutes: 1));
-          return null;
-        }
-
-        if (isTransientError) {
-          GramPreviewBox._spaceCache.remove(spaceId);
-          GramPreviewBox._spaceCacheExpiry.remove(spaceId);
-        }
-
-        rethrow;
+        space = Space.fromJson(doc.data()!);
+      } else {
+        // SpaceService already has its own cache + 10s timeout, so we don't
+        // duplicate retry/timeout logic here. One source of truth wins.
+        space = await locator<SpaceService>().getSpace(spaceId);
       }
-    }
 
-    return null;
+      final details = {
+        'id': space.id,
+        'name': space.name,
+        'description': space.description,
+        'displayPicture': space.displayPicture,
+        'spaceType': space.spaceType,
+        'limitedVisibility': space.limitedVisibility,
+        'spaceObject': space,
+      };
+
+      GramPreviewBox._spaceCache[spaceId] = details;
+      GramPreviewBox._spaceCacheExpiry[spaceId] =
+          DateTime.now().add(GramPreviewBox._cacheDuration);
+      return details;
+    } catch (e) {
+      final errorString = e.toString().toLowerCase();
+      // Negative-cache 'not found' for 1 minute so we don't keep hammering.
+      if (errorString.contains('space not found')) {
+        GramPreviewBox._spaceCache[spaceId] = null;
+        GramPreviewBox._spaceCacheExpiry[spaceId] =
+            DateTime.now().add(const Duration(minutes: 1));
+        return null;
+      }
+      // Transient error: leave cache untouched so next refresh retries.
+      rethrow;
+    }
   }
 
   String _getSpaceTypeLabel(SpaceType? type) {
@@ -278,57 +244,16 @@ class _GramPreviewBoxState extends State<GramPreviewBox>
       future: _spaceFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return GramPreviewLoading.buildLoadingState(context, compact: widget.compact);
+          return GramPreviewLoading.buildLoadingState(context,
+              compact: widget.compact);
         }
-
-        if (snapshot.hasError) {
-          final errorString = snapshot.error.toString().toLowerCase();
-          final isTransientError = errorString.contains("network") ||
-              errorString.contains("timeout") ||
-              errorString.contains("firebaseexception") ||
-              errorString.contains("platformexception") ||
-              errorString.contains("permission-denied") ||
-              errorString.contains("unavailable") ||
-              errorString.contains("uninitialized");
-
-          if (isTransientError && _retryCount < 5) {
-            _retryCount++;
-            final retryDelay = _isInitialLoad ?
-                Duration(milliseconds: 300 + (_retryCount * 200)) :
-                Duration(seconds: 2);
-
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted && widget.gram != null) {
-                Future.delayed(retryDelay, () {
-                  if (mounted) _forceReload();
-                });
-              }
-            });
-            return GramPreviewLoading.buildLoadingState(context, compact: widget.compact);
-          }
-          return GramPreviewLoading.buildErrorState(context, compact: widget.compact);
+        if (snapshot.hasError || !snapshot.hasData || snapshot.data == null) {
+          // No more silent auto-retry storms — SpaceService already retries
+          // internally and the user can pull-to-refresh on the parent list.
+          return GramPreviewLoading.buildErrorState(context,
+              compact: widget.compact);
         }
-
-        if (!snapshot.hasData || snapshot.data == null) {
-          if (_isInitialLoad && _retryCount < 3) {
-            _retryCount++;
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted && widget.gram != null) {
-                Future.delayed(Duration(milliseconds: 500), () {
-                  if (mounted) _forceReload();
-                });
-              }
-            });
-            return GramPreviewLoading.buildLoadingState(context, compact: widget.compact);
-          }
-          return GramPreviewLoading.buildErrorState(context, compact: widget.compact);
-        }
-
-        _isInitialLoad = false;
-        _retryCount = 0;
-
-        final spaceData = snapshot.data!;
-        return _buildSpacePreview(spaceData);
+        return _buildSpacePreview(snapshot.data!);
       },
     );
   }
@@ -531,7 +456,7 @@ class _GramPreviewBoxState extends State<GramPreviewBox>
   Widget _buildBottomRow(String spaceId, {bool isPublicSpace = true}) {
     if (spaceId.isEmpty) return const SizedBox.shrink();
 
-    final bool hasTime = _lastUpdated != null;
+    final bool hasTime = widget.lastUpdated != null;
     final user = FirebaseAuth.instance.currentUser;
     final bool canShowPreviews = user != null || isPublicSpace;
 
@@ -550,24 +475,11 @@ class _GramPreviewBoxState extends State<GramPreviewBox>
       return const SizedBox.shrink();
     }
 
-    _ensurePostPreviewsStream(spaceId);
-
-    return StreamBuilder<QuerySnapshot>(
-      stream: _postPreviewsStream!,
+    return FutureBuilder<List<QueryDocumentSnapshot>>(
+      future: _ensurePostPreviewsFuture(spaceId),
       builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          AppLogger.w(
-            'GramPreviewBox post stream error',
-            category: LogCategory.database,
-            data: {
-              'spaceId': spaceId,
-              'error': snapshot.error.toString(),
-            },
-          );
-        }
-
-        final bool hasPreviews = snapshot.hasData &&
-            snapshot.data!.docs.isNotEmpty;
+        final docs = snapshot.data ?? const <QueryDocumentSnapshot>[];
+        final bool hasPreviews = docs.isNotEmpty;
 
         if (!hasTime && !hasPreviews) {
           return const SizedBox.shrink();
@@ -579,23 +491,25 @@ class _GramPreviewBoxState extends State<GramPreviewBox>
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               if (hasPreviews)
-                Flexible(child: GramPreviewMedia.buildMiniPostStack(
-                  context: context,
-                  rawPosts: snapshot.data!.docs.map((doc) {
-                    final data = doc.data() as Map<String, dynamic>;
-                    return {
-                      'id': doc.id,
-                      'thumbnail': data['thumbnail'],
-                      'title': data['title'],
-                      'author': data['author'],
-                      'postType': data['postType'] ?? 'video',
-                      'content': data['content'],
-                    };
-                  }).toList(),
-                  gramId: widget.gram,
-                  randomBase: _randomBase,
-                  stableRandomInRange: _stableRandomInRange,
-                )),
+                Flexible(
+                  child: GramPreviewMedia.buildMiniPostStack(
+                    context: context,
+                    rawPosts: docs.map((doc) {
+                      final data = doc.data() as Map<String, dynamic>;
+                      return {
+                        'id': doc.id,
+                        'thumbnail': data['thumbnail'],
+                        'title': data['title'],
+                        'author': data['author'],
+                        'postType': data['postType'] ?? 'video',
+                        'content': data['content'],
+                      };
+                    }).toList(),
+                    gramId: widget.gram,
+                    randomBase: _randomBase,
+                    stableRandomInRange: _stableRandomInRange,
+                  ),
+                ),
               if (hasPreviews && hasTime) const Spacer(),
               if (hasTime) _buildLastUpdatedIndicator(),
             ],
@@ -606,8 +520,9 @@ class _GramPreviewBoxState extends State<GramPreviewBox>
   }
 
   Widget _buildLastUpdatedIndicator() {
-    if (_lastUpdated == null) return const SizedBox.shrink();
-    final DateTime dt = _lastUpdated!.toDate();
+    final ts = widget.lastUpdated;
+    if (ts == null) return const SizedBox.shrink();
+    final DateTime dt = ts.toDate();
     final Duration diff = DateTime.now().difference(dt);
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -617,15 +532,15 @@ class _GramPreviewBoxState extends State<GramPreviewBox>
     } else if (diff.inHours < 24) {
       color = AppTheme.warningColor;
     } else {
-      color = isDark ? AppTheme.textSecondaryDarkColor : AppTheme.textSecondaryLightColor;
+      color = isDark
+          ? AppTheme.textSecondaryDarkColor
+          : AppTheme.textSecondaryLightColor;
     }
-
-    String label = TimeDisplay.getCompactTimestamp(dt);
 
     return Padding(
       padding: const EdgeInsets.only(right: 8.0),
       child: Text(
-        label,
+        TimeDisplay.getCompactTimestamp(dt),
         style: TextStyle(
           fontSize: 11,
           color: color,
@@ -641,9 +556,8 @@ class _GramPreviewBoxState extends State<GramPreviewBox>
 
   @override
   void dispose() {
-    _updatedSubscription?.cancel();
-    _postPreviewsStream = null;
-    _cachedSpaceIdForStream = null;
+    _postPreviewsFuture = null;
+    _cachedSpaceIdForPosts = null;
     super.dispose();
   }
 }

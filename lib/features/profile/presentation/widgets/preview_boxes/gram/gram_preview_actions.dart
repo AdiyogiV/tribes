@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -9,6 +11,67 @@ import 'package:aurogram/features/chat/domain/space_chat_service.dart';
 import 'package:aurogram/core/config/call_ui_config.dart';
 import 'package:aurogram/features/calling/domain/group_call_service.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
+
+/// In-process cache of "is there an active call?" state per space.
+///
+/// Used by [GramPreviewActions.buildCallButton] to avoid opening a Firestore
+/// snapshots() listener on every gram preview tile (which used to add ~1
+/// listener per gram on screen, killing performance and battery).
+class _ActiveCallCache {
+  _ActiveCallCache._();
+  static const Duration _ttl = Duration(seconds: 30);
+  static final Map<String, _ActiveCallEntry> _entries = {};
+
+  static _ActiveCallEntry get(String spaceId) =>
+      _entries.putIfAbsent(spaceId, () => _ActiveCallEntry(spaceId));
+}
+
+class _ActiveCallEntry {
+  _ActiveCallEntry(this.spaceId);
+  final String spaceId;
+  final ValueNotifier<_CallStatus> notifier =
+      ValueNotifier(const _CallStatus(false, 0));
+  DateTime? _lastFetch;
+  Future<void>? _inflight;
+
+  bool get _isStale =>
+      _lastFetch == null ||
+      DateTime.now().difference(_lastFetch!) > _ActiveCallCache._ttl;
+
+  Future<void> refreshIfStale() {
+    if (!_isStale) return Future.value();
+    return _inflight ??= _fetch().whenComplete(() => _inflight = null);
+  }
+
+  Future<void> _fetch() async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('spaces')
+          .doc(spaceId)
+          .collection('calls')
+          .doc('active')
+          .get(const GetOptions(source: Source.serverAndCache))
+          .timeout(const Duration(seconds: 5));
+      _lastFetch = DateTime.now();
+      if (!doc.exists) {
+        notifier.value = const _CallStatus(false, 0);
+        return;
+      }
+      final data = doc.data();
+      final participants = (data?['participants'] as List<dynamic>?) ?? const [];
+      notifier.value = _CallStatus(participants.isNotEmpty, participants.length);
+    } catch (_) {
+      // Keep last known value on transient errors.
+      _lastFetch = DateTime.now();
+    }
+  }
+}
+
+class _CallStatus {
+  const _CallStatus(this.hasActiveCall, this.participantCount);
+  final bool hasActiveCall;
+  final int participantCount;
+}
 
 /// Action widgets (call button, chat/lock icons) for GramPreviewBox.
 /// These are extracted as standalone widget-builder functions.
@@ -62,61 +125,57 @@ class GramPreviewActions {
   }
 
   /// Build a call button that turns green when there's an active call
-  /// Works on all platforms (Agora SDK 6.x supports web)
-  static Widget buildCallButton(BuildContext context, String spaceId, String spaceName) {
+  /// Works on all platforms (Agora SDK 6.x supports web).
+  ///
+  /// Uses an in-memory cache + 30s polling instead of a per-widget Firestore
+  /// snapshots() listener, since rendering N preview tiles used to spawn N
+  /// concurrent listeners.
+  static Widget buildCallButton(
+      BuildContext context, String spaceId, String spaceName) {
     if (spaceId.isEmpty) return const SizedBox.shrink();
+    final entry = _ActiveCallCache.get(spaceId);
+    // Fire-and-forget refresh; cache de-dupes inflight requests.
+    unawaited(entry.refreshIfStale());
 
-    return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('spaces')
-          .doc(spaceId)
-          .collection('calls')
-          .doc('active')
-          .snapshots(),
-      builder: (context, snapshot) {
-        bool hasActiveCall = false;
-        int participantCount = 0;
-
-        if (snapshot.hasData && snapshot.data!.exists) {
-          final data = snapshot.data!.data() as Map<String, dynamic>?;
-          final participants = data?['participants'] as List<dynamic>? ?? [];
-          hasActiveCall = participants.isNotEmpty;
-          participantCount = participants.length;
-        }
-
-        final iconColor = hasActiveCall
-            ? AppTheme.activeGreen
-            : AppTheme.primaryColor;
-
+    return ValueListenableBuilder<_CallStatus>(
+      valueListenable: entry.notifier,
+      builder: (context, status, _) {
+        final iconColor =
+            status.hasActiveCall ? AppTheme.activeGreen : AppTheme.primaryColor;
         final callButton = GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: () => _openCall(context, spaceId, spaceName),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
-            decoration: hasActiveCall
+            decoration: status.hasActiveCall
                 ? BoxDecoration(
                     color: AppTheme.activeGreen.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                    borderRadius:
+                        BorderRadius.circular(AppDimensions.radiusMd),
                   )
                 : null,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
-                  hasActiveCall ? CallUIConfig.callActiveIcon : CallUIConfig.callIcon,
+                  status.hasActiveCall
+                      ? CallUIConfig.callActiveIcon
+                      : CallUIConfig.callIcon,
                   size: 20,
                   color: iconColor,
                 ),
-                if (hasActiveCall) ...[
+                if (status.hasActiveCall) ...[
                   const SizedBox(width: AppDimensions.spacingXs),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
                       color: AppTheme.activeGreen,
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm),
+                      borderRadius:
+                          BorderRadius.circular(AppDimensions.radiusMdSm),
                     ),
                     child: Text(
-                      '$participantCount',
+                      '${status.participantCount}',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 11,
@@ -131,8 +190,8 @@ class GramPreviewActions {
         );
 
         return Tooltip(
-          message: hasActiveCall
-              ? 'Join call ($participantCount)'
+          message: status.hasActiveCall
+              ? 'Join call (${status.participantCount})'
               : 'Start call',
           child: callButton,
         );

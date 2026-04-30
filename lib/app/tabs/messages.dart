@@ -93,7 +93,10 @@ class _MessagesPageState extends State<MessagesPage>
   String? _selectedOtherUserId;
 
   int _chatCount = 0;
+  int _pendingCount = 0;
   List<DmConversation> _cachedConversations = const [];
+  bool _hasFirstEmission = false;
+  StreamSubscription<List<DmConversation>>? _conversationsSub;
   _MessagesTab _selectedTab = _MessagesTab.chats;
 
   /// Handle refresh action
@@ -103,33 +106,75 @@ class _MessagesPageState extends State<MessagesPage>
     await Future.delayed(Duration.zero);
     try {
       _chatService.clearConversationsCache();
-      if (mounted) {
-        setState(() {
-          _namastesSentThisSession.clear();
-          _conversationsStream = _chatService
-              .getUserDmConversations()
-              .handleError((error, stackTrace) {
+      _namastesSentThisSession.clear();
+      _hasFirstEmission = false;
+      _conversationsStream = _chatService
+          .getUserDmConversations()
+          .handleError((error, stackTrace) {
             AppLogger.e('Stream error: $error',
                 category: LogCategory.ui, error: error);
             return <DmConversation>[];
-          });
-        });
-      }
-      await Future.delayed(Duration(milliseconds: 500));
+          })
+          .asBroadcastStream();
+      _subscribeToConversations();
+      if (mounted) setState(() {});
+      await Future.delayed(const Duration(milliseconds: 500));
     } catch (e) {
-      AppLogger.e('Error during refresh', category: LogCategory.general, error: e);
+      AppLogger.e('Error during refresh',
+          category: LogCategory.general, error: e);
     } finally {
       if (mounted) setState(() => _isRefreshing = false);
     }
   }
 
-  void _updateChatCount(int count) {
-    if (count == _chatCount) return;
+  void _updateCounts({required int chats, required int pending}) {
+    if (chats == _chatCount && pending == _pendingCount) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       setState(() {
-        _chatCount = count;
+        _chatCount = chats;
+        _pendingCount = pending;
       });
+    });
+  }
+
+  /// Listen to the conversations stream once at the state level.
+  ///
+  /// Old code spun up 2-3 separate StreamBuilders on the same source which
+  /// each opened their own Firestore listener AND triggered a setState during
+  /// build (via `_prefetchUserNames(...).then(setState)`), creating a
+  /// rebuild loop. Single subscription → single source of truth.
+  void _subscribeToConversations() {
+    _conversationsSub?.cancel();
+    _conversationsSub = _conversationsStream.listen((conversations) {
+      if (!mounted) return;
+      _cachedConversations = conversations;
+      _hasFirstEmission = true;
+
+      final filteredChats = _filterAiConversations(conversations)
+          .where((c) =>
+              c.status != 'pending' || c.requestedBy == _currentUser?.uid)
+          .toList();
+      final pendingRequests = conversations
+          .where((c) =>
+              c.status == 'pending' && c.requestedBy != _currentUser?.uid)
+          .toList();
+
+      _activeUserIds = filteredChats
+          .where((c) => c.id.startsWith('dm_'))
+          .map((c) => c.otherUserId)
+          .toSet();
+
+      _updateCounts(
+          chats: filteredChats.length, pending: pendingRequests.length);
+
+      // Prefetch unknown user names off the build cycle, then rebuild once.
+      prefetchUserNames(filteredChats, _userNameCache).then((_) {
+        if (mounted) setState(() {});
+      });
+    }, onError: (e, st) {
+      AppLogger.e('Messages stream error',
+          category: LogCategory.ui, error: e, stackTrace: st);
     });
   }
 
@@ -137,15 +182,19 @@ class _MessagesPageState extends State<MessagesPage>
   void initState() {
     super.initState();
 
-    // Initialize a stable stream once. Do not rebuild a new stream every build.
-    _conversationsStream =
-        _chatService.getUserDmConversations().handleError((error, stackTrace) {
-      AppLogger.e('🔥 STREAM ERROR: $error',
-          category: LogCategory.ui, error: error);
-      AppLogger.e('🔥 STACK TRACE: $stackTrace', category: LogCategory.ui);
-      // Return empty list on error to prevent UI hanging
-      return <DmConversation>[];
-    });
+    // Use a broadcast stream so both the page state listener and any
+    // downstream widgets can attach without spawning duplicate Firestore
+    // listeners.
+    _conversationsStream = _chatService
+        .getUserDmConversations()
+        .handleError((error, stackTrace) {
+          AppLogger.e('🔥 STREAM ERROR: $error',
+              category: LogCategory.ui, error: error);
+          return <DmConversation>[];
+        })
+        .asBroadcastStream();
+
+    _subscribeToConversations();
 
     // Load contacts if cached, otherwise wait for user action
     _loadCachedContacts();
@@ -194,6 +243,7 @@ class _MessagesPageState extends State<MessagesPage>
 
   @override
   void dispose() {
+    _conversationsSub?.cancel();
     // Clear the stream cache when the page is disposed
     _chatService.clearConversationsCache();
     _searchController.dispose();
@@ -448,52 +498,24 @@ class _MessagesPageState extends State<MessagesPage>
   }
 
   Widget _buildActualContent({Key? key}) {
-    return StreamBuilder<List<DmConversation>>(
+    return KeyedSubtree(
       key: key,
-      stream: _conversationsStream,
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          AppLogger.e('Messages StreamBuilder error',
-              category: LogCategory.ui, error: snapshot.error);
-          return MessagesStreamErrorState(
-            error: snapshot.error,
-            isRefreshing: _isRefreshing,
-            onRetry: _handleRefresh,
-          );
-        }
-
-        // Show loading state only on initial load
-        if (snapshot.connectionState == ConnectionState.waiting &&
-            !snapshot.hasData && _cachedConversations.isEmpty) {
+      child: Builder(builder: (context) {
+        // Show loading skeleton on the very first frame, before the stream
+        // listener has produced any data.
+        if (!_hasFirstEmission) {
           return MessageSkeletons(key: const ValueKey('loading'));
         }
 
-        // Update cache when fresh data arrives
-        var conversations = snapshot.data ?? _cachedConversations;
-        if (snapshot.hasData) _cachedConversations = snapshot.data ?? [];
+        final conversations = _filterAiConversations(_cachedConversations)
+            .where((c) =>
+                c.status != 'pending' || c.requestedBy == _currentUser?.uid)
+            .toList();
 
-        // Filter AI conversations and pending requests
-        conversations = _filterAiConversations(conversations);
-        conversations = conversations.where((c) =>
-          c.status != 'pending' || c.requestedBy == _currentUser?.uid
-        ).toList();
-        _updateChatCount(conversations.length);
-
-        // Update active user IDs for deduplication
-        _activeUserIds = conversations
-            .where((c) => c.id.startsWith('dm_'))
-            .map((c) => c.otherUserId)
-            .toSet();
-
-        // Batch prefetch user names (non-blocking)
-        _prefetchUserNames(conversations);
-
-        // If no search query, show all sections
         if (_searchQuery.trim().isEmpty) {
           return _buildAllSections(conversations);
         }
 
-        // Use FutureBuilder for async search filtering
         return FutureBuilder<List<DmConversation>>(
           future: _filterBySearch(conversations, _searchQuery),
           builder: (context, filterSnapshot) {
@@ -502,18 +524,13 @@ class _MessagesPageState extends State<MessagesPage>
                 children: List.generate(4, (_) => SkeletonListItem()),
               );
             }
-
-            final filteredConversations = filterSnapshot.data ?? conversations;
+            final filteredConversations =
+                filterSnapshot.data ?? conversations;
             return _buildSearchResults(filteredConversations);
           },
         );
-      },
+      }),
     );
-  }
-
-  /// Batch prefetch user names for all conversations
-  Future<void> _prefetchUserNames(List<DmConversation> conversations) async {
-    await prefetchUserNames(conversations, _userNameCache);
   }
 
   /// Filter conversations based on search query
@@ -686,23 +703,13 @@ class _MessagesPageState extends State<MessagesPage>
   }
 
   Widget _buildTabChips() {
-    return StreamBuilder<List<DmConversation>>(
-      stream: _chatService.getUserDmConversations(),
-      builder: (context, snapshot) {
-        final conversations = snapshot.data ?? [];
-        final pendingCount = conversations.where((c) =>
-          c.status == 'pending' &&
-          c.requestedBy != _currentUser?.uid
-        ).length;
-        return MessagesTabChips(
-          selectedIndex: _selectedTab == _MessagesTab.chats ? 0 : 1,
-          chatCount: _chatCount,
-          pendingCount: pendingCount,
-          onTabChanged: (index) => _setTab(
-            index == 0 ? _MessagesTab.chats : _MessagesTab.requests,
-          ),
-        );
-      },
+    return MessagesTabChips(
+      selectedIndex: _selectedTab == _MessagesTab.chats ? 0 : 1,
+      chatCount: _chatCount,
+      pendingCount: _pendingCount,
+      onTabChanged: (index) => _setTab(
+        index == 0 ? _MessagesTab.chats : _MessagesTab.requests,
+      ),
     );
   }
 
@@ -716,7 +723,7 @@ class _MessagesPageState extends State<MessagesPage>
   SliverToBoxAdapter _buildMessageRequestsSliver() {
     return SliverToBoxAdapter(
       child: MessagesRequestsSliverContent(
-        conversationsStream: _chatService.getUserDmConversations(),
+        conversationsStream: _conversationsStream,
         currentUserId: _currentUser?.uid,
         cachedConversations: _cachedConversations,
         onAccept: _acceptRequestInline,

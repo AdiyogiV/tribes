@@ -4,7 +4,6 @@ import 'package:aurogram/features/spaces/presentation/grams/gram_skeleton_widget
 import 'package:aurogram/features/spaces/presentation/grams/grams_app_bar.dart';
 import 'package:aurogram/features/spaces/presentation/grams/grams_desktop_layout.dart';
 import 'package:aurogram/features/spaces/presentation/grams/grams_public_section.dart';
-import 'package:aurogram/shared/services/cache_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -76,32 +75,7 @@ class GramsState extends State<Grams> with AutomaticKeepAliveClientMixin {
     } else {
       _spacesStream = const Stream<QuerySnapshot>.empty();
     }
-    _prefetchFirstVideos();
-  }
-
-  Future<void> _prefetchFirstVideos() async {
-    if (_user == null) return;
-    try {
-      final snap = await _userSpacesCollection.doc(_user!.uid)
-          .collection('spaces')
-          .where('role', whereIn: ['member', 'owner', 'creator'])
-          .limit(10).get();
-      for (int i = 0; i < snap.docs.length && i < 3; i++) {
-        try {
-          final gramDoc = snap.docs[i];
-          final postSnap = await FirebaseFirestore.instance.collection('posts')
-              .where('space', isEqualTo: gramDoc.id)
-              .orderBy('timestamp', descending: true).limit(1).get();
-          if (postSnap.docs.isNotEmpty) {
-            final data = gramDoc.data();
-            if (data['music_url'] != null) {
-              await locator<CacheService>().downloadFile(data['music_url']);
-            }
-          }
-          await Future.delayed(const Duration(milliseconds: 200));
-        } catch (_) {}
-      }
-    } catch (_) {}
+    _loadPublicGrams();
   }
 
   /// Handle search query changes
@@ -198,61 +172,61 @@ class GramsState extends State<Grams> with AutomaticKeepAliveClientMixin {
     );
   }
 
-  /// Fetch space data and filter by query (optimized with parallel fetching and caching)
+  /// Fetch space data and filter by query.
+  ///
+  /// Tries the in-memory caches first (SpaceService.spaceCache and our
+  /// local _gramDataCache). Only spaces missing from both caches incur a
+  /// network round-trip, and those are batched in parallel.
   Future<List<QueryDocumentSnapshot>> _filterGramsByQuery(
       List<QueryDocumentSnapshot> docs, String query) async {
-    // Fetch all space data in parallel
-    final fetchFutures = docs.map((doc) async {
+    final SpaceService? spaceService =
+        locator.isRegistered<SpaceService>() ? locator<SpaceService>() : null;
+
+    Future<MapEntry<QueryDocumentSnapshot, Map<String, dynamic>?>> resolve(
+        QueryDocumentSnapshot doc) async {
       final spaceId = doc.id;
 
-      // Check cache first
-      if (_gramDataCache.containsKey(spaceId)) {
-        return MapEntry(doc, _gramDataCache[spaceId]!);
+      // 1. Local search cache.
+      final localHit = _gramDataCache[spaceId];
+      if (localHit != null) return MapEntry(doc, localHit);
+
+      // 2. SpaceService in-memory cache (no network).
+      final cached = spaceService?.spaceCache[spaceId];
+      if (cached != null) {
+        final json = {
+          'name': cached.name,
+          'description': cached.description,
+        };
+        _gramDataCache[spaceId] = json;
+        return MapEntry(doc, json);
       }
 
-      // Fetch from Firestore
+      // 3. Last resort — fetch via SpaceService (which has its own retry +
+      // negative cache + 10s timeout, so we don't replicate any of that).
       try {
-        final spaceDoc = await FirebaseFirestore.instance
-            .collection('spaces')
-            .doc(spaceId)
-            .get();
-
-        if (!spaceDoc.exists || spaceDoc.data() == null) {
-          return MapEntry<QueryDocumentSnapshot, Map<String, dynamic>?>(
-              doc, null);
-        }
-
-        final spaceData = spaceDoc.data()!;
-        // Cache it
-        _gramDataCache[spaceId] = spaceData;
-        return MapEntry(doc, spaceData);
-      } catch (e) {
-        return MapEntry<QueryDocumentSnapshot, Map<String, dynamic>?>(
-            doc, null);
-      }
-    }).toList();
-
-    // Wait for all fetches to complete
-    final results = await Future.wait(fetchFutures);
-
-    // Filter based on query
-    final List<QueryDocumentSnapshot> matchingDocs = [];
-    for (final entry in results) {
-      final doc = entry.key;
-      final spaceData = entry.value;
-
-      if (spaceData == null) continue;
-
-      final spaceName = (spaceData['name'] ?? '').toString();
-      final spaceDescription = (spaceData['description'] ?? '').toString();
-
-      // Try smart matching
-      if (SearchService.smartMatch(query, spaceName) ||
-          SearchService.smartMatch(query, spaceDescription)) {
-        matchingDocs.add(doc);
+        if (spaceService == null) return MapEntry(doc, null);
+        final space = await spaceService.getSpace(spaceId);
+        final json = {'name': space.name, 'description': space.description};
+        _gramDataCache[spaceId] = json;
+        return MapEntry(doc, json);
+      } catch (_) {
+        return MapEntry(doc, null);
       }
     }
 
+    final results = await Future.wait(docs.map(resolve));
+
+    final List<QueryDocumentSnapshot> matchingDocs = [];
+    for (final entry in results) {
+      final spaceData = entry.value;
+      if (spaceData == null) continue;
+      final spaceName = (spaceData['name'] ?? '').toString();
+      final spaceDescription = (spaceData['description'] ?? '').toString();
+      if (SearchService.smartMatch(query, spaceName) ||
+          SearchService.smartMatch(query, spaceDescription)) {
+        matchingDocs.add(entry.key);
+      }
+    }
     return matchingDocs;
   }
 
@@ -296,11 +270,11 @@ class GramsState extends State<Grams> with AutomaticKeepAliveClientMixin {
       return -1;
     });
 
-    // Validate only once on initial data to avoid repeated rebuild side-effects
-    if (!_validatedOnce) {
-      _validatedOnce = true;
-      _validateUserGrams(filteredDocs);
-    }
+    // Cleanup of orphaned grams now happens lazily in SpaceService.getSpace
+    // (which calls cleanupMissingSpace on a confirmed not-exists doc). Doing
+    // it eagerly here used to fire one extra getSpace() call per gram on
+    // every screen rebuild, which compounded the listener storm. The
+    // _handleRefresh path still triggers a batch validation explicitly.
 
     // Get user's gram IDs to filter out from public grams
     final userGramIds = sortedDocs.map((d) => d.id).toSet();
@@ -327,8 +301,12 @@ class GramsState extends State<Grams> with AutomaticKeepAliveClientMixin {
     );
   }
 
+  bool _publicGramsLoading = false;
+
   /// Load public grams once and cache
   Future<void> _loadPublicGrams() async {
+    if (_publicGramsLoaded || _publicGramsLoading) return;
+    _publicGramsLoading = true;
     try {
       final snapshot = await FirebaseFirestore.instance
           .collection('spaces')
@@ -347,6 +325,10 @@ class GramsState extends State<Grams> with AutomaticKeepAliveClientMixin {
       _publicGramsLoaded = true;
       if (mounted) setState(() {});
     } catch (e) {
+      AppLogger.e('Failed to load public grams',
+          category: LogCategory.database,
+          error: e,
+          data: {'error': e.toString()});
       _publicGramsLoaded = true;
       _cachedPublicGrams = [];
       if (mounted) setState(() {});
@@ -372,32 +354,22 @@ class GramsState extends State<Grams> with AutomaticKeepAliveClientMixin {
         gram: id,
         showChatButton: !isWideLayout,
         reloadToken: _reloadToken,
+        lastUpdated: _lastUpdatedMap[id],
       ),
     );
   }
 
-  Future<void> _validateUserGrams(List<QueryDocumentSnapshot> grams) async {
-    if (_user == null) return;
-    final spaceService = locator<SpaceService>();
-    for (final gramDoc in grams) {
-      try {
-        await spaceService.getSpace(gramDoc.id);
-      } catch (e) {
-        if (e.toString().contains('Space not found')) {
-          try {
-            await _userSpacesCollection.doc(_user!.uid)
-                .collection('spaces').doc(gramDoc.id).delete();
-          } catch (_) {}
-        }
-      }
-    }
-  }
+
 
   Widget _buildGramItem(QueryDocumentSnapshot document) {
     final String id = document.id;
     final bool isWideLayout = Responsive.isWideLayout(context);
 
-    // Don't cache when in wide layout since selection state changes appearance
+    // We can't cache the widget when the timestamp can change, since the
+    // last-updated badge needs to reflect new posts. Cache only in narrow
+    // layout where there's no master/detail selection state, AND only when
+    // we already have a fresh timestamp.
+    final cachedTs = _lastUpdatedMap[id];
     if (!isWideLayout && _gramItemCache.containsKey(id)) {
       return _gramItemCache[id]!;
     }
@@ -416,10 +388,11 @@ class GramsState extends State<Grams> with AutomaticKeepAliveClientMixin {
         gram: id,
         showChatButton: !isWideLayout,
         reloadToken: _reloadToken,
+        lastUpdated: cachedTs,
       ),
     );
 
-    if (!isWideLayout) {
+    if (!isWideLayout && cachedTs != null) {
       _gramItemCache[id] = widgetItem;
     }
     return widgetItem;
@@ -470,6 +443,8 @@ class GramsState extends State<Grams> with AutomaticKeepAliveClientMixin {
           if (previousUpdated?.millisecondsSinceEpoch !=
               updated?.millisecondsSinceEpoch) {
             _lastUpdatedMap[id] = updated;
+            // Invalidate the cached widget so the new badge renders.
+            _gramItemCache.remove(id);
             _scheduleRebuild();
           }
         });
@@ -617,6 +592,7 @@ class GramsState extends State<Grams> with AutomaticKeepAliveClientMixin {
     await Future.delayed(Duration.zero);
     try {
       _gramItemCache.clear();
+      _gramDataCache.clear();
       GramPreviewBox.clearSpaceCache();
       if (locator.isRegistered<SpaceService>()) {
         locator<SpaceService>().clearSpaceCache();
@@ -626,7 +602,6 @@ class GramsState extends State<Grams> with AutomaticKeepAliveClientMixin {
       await _reloadUpdatedTimestamps();
       _reloadToken++;
       _validateGramsInBackground();
-      _prefetchFirstVideos();
       if (mounted) setState(() {});
     } finally {
       if (mounted) setState(() => _isRefreshing = false);
@@ -639,7 +614,8 @@ class GramsState extends State<Grams> with AutomaticKeepAliveClientMixin {
       final snap = await _userSpacesCollection.doc(_user!.uid)
           .collection('spaces')
           .where('role', whereIn: ['member', 'owner', 'creator']).get();
-      for (final d in snap.docs) {
+      // Fetch all space docs in parallel instead of sequentially
+      await Future.wait(snap.docs.map((d) async {
         try {
           final doc = await _spacesCollection.doc(d.id).get();
           final data = doc.exists ? doc.data() as Map<String, dynamic>? : null;
@@ -647,7 +623,7 @@ class GramsState extends State<Grams> with AutomaticKeepAliveClientMixin {
               data?['updated'] as Timestamp? ??
               data?['lastActivity'] as Timestamp?;
         } catch (_) {}
-      }
+      }));
     } catch (_) {}
   }
 

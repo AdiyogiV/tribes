@@ -9,6 +9,31 @@ import '../user_service.dart';
 
 /// Extension on [UserService] for registration and authentication checks.
 extension UserRegistration on UserService {
+  /// Background verification for the deletedUsers/{uid} doc.
+  ///
+  /// Runs unawaited so it never blocks login. If the server confirms the
+  /// account was deleted ('status' == 'completed') we sign the user out and
+  /// the auth listener handles the rest.
+  Future<void> _verifyDeletionInBackground(String uid) async {
+    try {
+      final doc = await firestore
+          .collection('deletedUsers')
+          .doc(uid)
+          .get(const GetOptions(source: Source.server))
+          .timeout(const Duration(seconds: 10));
+      if (!doc.exists) return;
+      final status = (doc.data()?['status'] as String?);
+      if (status == 'completed') {
+        AppLogger.w('🔐 background deletion check: signing out deleted user',
+            category: LogCategory.auth, data: {'uid': uid});
+        await auth.signOut();
+      }
+    } catch (e) {
+      AppLogger.d('Background deletion check skipped: $e',
+          category: LogCategory.auth);
+    }
+  }
+
   /// Checks if the currently authenticated user is registered (has a nickname).
   Future<bool> checkRegistration() async {
     final currentUser = auth.currentUser;
@@ -30,64 +55,62 @@ extension UserRegistration on UserService {
       return true; // No authenticated user = new user
     }
 
-    // CRITICAL: Check if user is deleted BEFORE checking registration
-    // This prevents deleted users from logging in
+    // CRITICAL: Check if user is deleted BEFORE checking registration.
+    //
+    // The deletedUsers/{uid} doc only exists for accounts that were deleted,
+    // so a cache miss is the normal path. Doing a server fallback here used
+    // to block login by 2-5 seconds when the network was warming up. Instead
+    // we:
+    //   1. Try the cache (instant, in-memory).
+    //   2. If the cache says deleted+completed → sign out immediately.
+    //   3. Otherwise allow login NOW and verify against the server in the
+    //      background. If the server later confirms a completed deletion we
+    //      sign the user out then.
     try {
       final deletedStopwatch = Stopwatch()..start();
-      final deletedDoc = await firestore
-          .collection('deletedUsers')
-          .doc(currentUser!.uid)
-          .get()
-          .timeout(const Duration(seconds: 3), onTimeout: () {
-        throw TimeoutException('deletedUsers check timed out');
-      });
-      deletedStopwatch.stop();
-      AppLogger.i('🔐 checkRegistration: deletedUsers fetch completed',
-          category: LogCategory.auth,
-          data: {'ms': deletedStopwatch.elapsedMilliseconds});
-      if (deletedDoc.exists) {
-        final deletionData = deletedDoc.data();
-        final status = deletionData?['status'] as String?;
+      DocumentSnapshot? cachedDoc;
+      try {
+        cachedDoc = await firestore
+            .collection('deletedUsers')
+            .doc(currentUser!.uid)
+            .get(const GetOptions(source: Source.cache))
+            .timeout(const Duration(milliseconds: 500));
+        deletedStopwatch.stop();
+        AppLogger.i('🔐 checkRegistration: deletedUsers cache hit',
+            category: LogCategory.auth,
+            data: {'ms': deletedStopwatch.elapsedMilliseconds});
+      } catch (_) {
+        deletedStopwatch.stop();
+        cachedDoc = null;
+      }
 
-        // IMPORTANT: Only block if deletion actually COMPLETED successfully
-        // Allow login if deletion is still pending (might be stuck) or failed
-        // The scheduled Cloud Function will retry cleanup for pending/failed deletions
+      if (cachedDoc != null && cachedDoc.exists) {
+        final data = cachedDoc.data() as Map<String, dynamic>?;
+        final status = data?['status'] as String?;
         if (status == 'completed') {
           AppLogger.w(
-              'UserService: checkRegistration - user deletion completed, signing out',
-              category: LogCategory.auth);
-          AppLogger.w(
-              '🔐 checkRegistration: user deletion completed, blocking login',
-              category: LogCategory.auth,
-              data: {'status': status, 'deletionData': deletionData});
-          // Sign out the deleted user
+              '🔐 checkRegistration: cached deletion confirmed, blocking login',
+              category: LogCategory.auth, data: {'status': status});
           await auth.signOut();
           throw Exception('Account has been deleted');
-        } else {
-          // Deletion is pending or failed - allow login but log warning
-          AppLogger.w(
-              'UserService: checkRegistration - found deletedUsers record with status: $status, allowing login',
-              category: LogCategory.auth);
-          AppLogger.w(
-              '🔐 checkRegistration: deletedUsers record exists but not completed, allowing login',
-              category: LogCategory.auth,
-              data: {'status': status, 'uid': currentUser.uid});
         }
+        // Pending/failed: allow login (Cloud Function will retry cleanup).
+        AppLogger.w(
+            '🔐 checkRegistration: cached deletion not completed, allowing login',
+            category: LogCategory.auth, data: {'status': status});
+      } else {
+        // Cache miss → verify against server in background. Most users are
+        // not deleted, so this almost always confirms "not deleted" without
+        // any user-visible delay.
+        unawaited(_verifyDeletionInBackground(currentUser!.uid));
       }
-    } on TimeoutException catch (e) {
-      AppLogger.w(
-          '🔐 checkRegistration: deletedUsers check timed out, continuing',
-          category: LogCategory.auth,
-          data: {'error': e.toString()});
     } catch (e) {
-      // If error checking deletedUsers, log but continue (don't block on network issues)
       if (e.toString().contains('deleted')) {
-        rethrow; // Re-throw deletion exception
+        rethrow;
       }
       AppLogger.w(
           '🔐 checkRegistration: error checking deletedUsers, continuing',
-          category: LogCategory.auth,
-          data: {'error': e.toString()});
+          category: LogCategory.auth, data: {'error': e.toString()});
     }
 
     try {
