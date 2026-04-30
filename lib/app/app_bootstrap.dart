@@ -106,6 +106,15 @@ class AppBootstrap {
       throw error;
     });
 
+    // CRITICAL: Firestore settings must be applied IMMEDIATELY after
+    // Firebase.initializeApp() and BEFORE any code touches
+    // FirebaseFirestore.instance. The Firestore SDK locks settings on
+    // first use and silently ignores any later .settings = assignment.
+    // Previously this ran from _completeAuthSetup() (post-runApp), which
+    // meant persistenceEnabled was never actually applied — leaving the
+    // app with zero offline cache and a 10s wait on every cold read.
+    _configureFirestoreSettings();
+
     // App Check – activate with appropriate provider per build mode.
     //
     // DEBUG MODE: Both Dart AND native (AppDelegate.swift) deliberately skip
@@ -162,7 +171,6 @@ class AppBootstrap {
 
   static Future<void> _completeAuthSetup() async {
     try {
-      _configureFirestoreSettings();
       await OnboardingService().initialize();
 
       AppLogger.d('Marking AuthService as ready (background)',

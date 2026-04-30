@@ -177,6 +177,9 @@ extension SpaceQuery on SpaceService {
   // Clear cache to force refresh
   void clearSpaceCache() {
     spaceCache.clear();
+    // Also reset the negative cache so a refresh actually re-checks
+    // spaces that previously came back as missing.
+    notFoundSpaceIds.clear();
   }
 
   // Clear cache for a specific space

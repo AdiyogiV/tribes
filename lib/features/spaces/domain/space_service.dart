@@ -174,6 +174,65 @@ class SpaceService {
   // Cache of successfully retrieved spaces
   final Map<String, Space> spaceCache = {};
 
+  /// Batch-prefetch many spaces in a single Firestore round-trip.
+  ///
+  /// Replaces the N+1 pattern of every gram preview making its own
+  /// `getSpace()` call. Firestore allows up to 30 IDs per `whereIn` query,
+  /// so we chunk and run chunks in parallel.
+  ///
+  /// Results are written into [spaceCache] so subsequent `getSpace()` calls
+  /// (e.g. from individual `GramPreviewBox` widgets) hit the in-memory cache
+  /// and never touch the network.
+  ///
+  /// Failures are logged but never thrown — prefetch is best-effort.
+  Future<void> prefetchSpaces(Iterable<String> spaceIds) async {
+    final ids = spaceIds
+        .where((id) => id.isNotEmpty)
+        .where((id) => !spaceCache.containsKey(id))
+        .where((id) => !notFoundSpaceIds.contains(id))
+        .toSet()
+        .toList(growable: false);
+    if (ids.isEmpty) return;
+
+    // Firestore caps whereIn at 30 elements per query.
+    const int chunkSize = 30;
+    final List<Future<void>> work = [];
+    for (var i = 0; i < ids.length; i += chunkSize) {
+      final end = (i + chunkSize).clamp(0, ids.length);
+      final chunk = ids.sublist(i, end);
+      work.add(_prefetchChunk(chunk));
+    }
+    await Future.wait(work);
+  }
+
+  Future<void> _prefetchChunk(List<String> chunk) async {
+    try {
+      final snap = await spaces
+          .where(FieldPath.documentId, whereIn: chunk)
+          .get()
+          .timeout(const Duration(seconds: 8));
+      final foundIds = <String>{};
+      for (final doc in snap.docs) {
+        final data = doc.data();
+        if (data is Map<String, dynamic>) {
+          spaceCache[doc.id] = Space.fromJson(data);
+          foundIds.add(doc.id);
+        }
+      }
+      // Anything in the chunk not returned by the server is genuinely
+      // missing — mark it so we don't re-query.
+      for (final id in chunk) {
+        if (!foundIds.contains(id)) notFoundSpaceIds.add(id);
+      }
+    } catch (e) {
+      // Best-effort: log and move on. Individual getSpace() calls will
+      // still try with their own SWR fallback.
+      AppLogger.w('prefetchSpaces chunk failed',
+          category: LogCategory.network,
+          data: {'chunkSize': chunk.length, 'error': e.toString()});
+    }
+  }
+
   /// Clean up references to missing spaces for a user
   Future<void> cleanupMissingSpace(String spaceId, String userId) async {
     try {

@@ -51,6 +51,7 @@ class GramsState extends State<Grams> with AutomaticKeepAliveClientMixin {
   // State caching - prevents reload on navigation
   List<QueryDocumentSnapshot>? _cachedGrams;
   bool _initialLoadComplete = false;
+  final Set<String> _prefetchedSpaceIds = <String>{};
 
   // Public grams cache for explorer view
   List<QueryDocumentSnapshot>? _cachedPublicGrams;
@@ -125,6 +126,10 @@ class GramsState extends State<Grams> with AutomaticKeepAliveClientMixin {
         if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
           _cachedGrams = snapshot.data!.docs;
           _initialLoadComplete = true;
+          // Batch-prefetch all space docs in ONE Firestore query so that
+          // each GramPreviewBox can serve from cache instead of making its
+          // own round-trip. Idempotent + fire-and-forget.
+          _maybePrefetchSpaces(_cachedGrams!);
         }
         final spaceDocs = _cachedGrams ?? snapshot.data?.docs ?? [];
 
@@ -398,6 +403,23 @@ class GramsState extends State<Grams> with AutomaticKeepAliveClientMixin {
     return widgetItem;
   }
 
+  /// Batch-prefetch space details for all visible grams in a single
+  /// Firestore query (chunked to 30 IDs per `whereIn`). This eliminates
+  /// the N+1 problem where every [GramPreviewBox] would otherwise trigger
+  /// its own getSpace() round-trip.
+  ///
+  /// Idempotent: skips IDs already prefetched in this session.
+  void _maybePrefetchSpaces(List<QueryDocumentSnapshot> docs) {
+    if (!locator.isRegistered<SpaceService>()) return;
+    final newIds = docs
+        .map((d) => d.id)
+        .where((id) => id.isNotEmpty && !_prefetchedSpaceIds.contains(id))
+        .toList(growable: false);
+    if (newIds.isEmpty) return;
+    _prefetchedSpaceIds.addAll(newIds);
+    unawaited(locator<SpaceService>().prefetchSpaces(newIds));
+  }
+
   void _ensureUpdatedSubscriptions(List<String> spaceIds) {
     // Remove subscriptions for spaces no longer present
     final toRemove = _updatedSubscriptions.keys
@@ -593,6 +615,7 @@ class GramsState extends State<Grams> with AutomaticKeepAliveClientMixin {
     try {
       _gramItemCache.clear();
       _gramDataCache.clear();
+      _prefetchedSpaceIds.clear();
       GramPreviewBox.clearSpaceCache();
       if (locator.isRegistered<SpaceService>()) {
         locator<SpaceService>().clearSpaceCache();

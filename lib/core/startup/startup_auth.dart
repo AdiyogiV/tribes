@@ -44,7 +44,12 @@ mixin StartupAuthMixin {
           FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(true);
         }
 
-        // Configure Firestore for better performance
+        // Configure Firestore for better performance.
+        // NOTE: AppBootstrap._configureFirestoreSettings() already runs
+        // immediately after Firebase.initializeApp() in the main flow.
+        // We keep this call as a safety net for the alternate startup
+        // path (StartupAuth) but it will no-op if Firestore was already
+        // touched, which is correct.
         _configureFirestore();
 
         AppLogger.i('Firebase successfully initialized',
