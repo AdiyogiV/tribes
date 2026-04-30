@@ -174,15 +174,20 @@ class SpaceService {
   // Cache of successfully retrieved spaces
   final Map<String, Space> spaceCache = {};
 
-  /// Batch-prefetch many spaces in a single Firestore round-trip.
+  /// Batch-prefetch many spaces with parallel single-doc reads.
   ///
   /// Replaces the N+1 pattern of every gram preview making its own
-  /// `getSpace()` call. Firestore allows up to 30 IDs per `whereIn` query,
-  /// so we chunk and run chunks in parallel.
+  /// `getSpace()` call. We deliberately use parallel `.doc(id).get()`
+  /// rather than a single `whereIn` query because:
+  ///   - Single-doc reads can serve from offline cache when available
+  ///     (whereIn always hits the network).
+  ///   - One missing/permission-denied doc can't poison the whole batch.
+  ///   - On flaky networks each doc has its own short timeout instead of
+  ///     one big request hanging the whole UI.
   ///
-  /// Results are written into [spaceCache] so subsequent `getSpace()` calls
-  /// (e.g. from individual `GramPreviewBox` widgets) hit the in-memory cache
-  /// and never touch the network.
+  /// Results are written into [spaceCache] so subsequent `getSpace()`
+  /// calls (e.g. from individual `GramPreviewBox` widgets) hit the
+  /// in-memory cache and never touch the network.
   ///
   /// Failures are logged but never thrown — prefetch is best-effort.
   Future<void> prefetchSpaces(Iterable<String> spaceIds) async {
@@ -194,42 +199,43 @@ class SpaceService {
         .toList(growable: false);
     if (ids.isEmpty) return;
 
-    // Firestore caps whereIn at 30 elements per query.
-    const int chunkSize = 30;
-    final List<Future<void>> work = [];
-    for (var i = 0; i < ids.length; i += chunkSize) {
-      final end = (i + chunkSize).clamp(0, ids.length);
-      final chunk = ids.sublist(i, end);
-      work.add(_prefetchChunk(chunk));
-    }
-    await Future.wait(work);
+    await Future.wait(ids.map(_prefetchOne));
   }
 
-  Future<void> _prefetchChunk(List<String> chunk) async {
+  Future<void> _prefetchOne(String id) async {
     try {
-      final snap = await spaces
-          .where(FieldPath.documentId, whereIn: chunk)
-          .get()
-          .timeout(const Duration(seconds: 8));
-      final foundIds = <String>{};
-      for (final doc in snap.docs) {
-        final data = doc.data();
-        if (data is Map<String, dynamic>) {
-          spaceCache[doc.id] = Space.fromJson(data);
-          foundIds.add(doc.id);
+      // Try cache first — zero network, instant. If it's there, we're done.
+      try {
+        final cachedDoc = await spaces
+            .doc(id)
+            .get(const GetOptions(source: Source.cache));
+        if (cachedDoc.exists && cachedDoc.data() != null) {
+          spaceCache[id] = Space.fromJson(cachedDoc.data()! as Map<String, dynamic>);
+          // Refresh in background so next read is fresh — silent.
+          unawaited(spaces.doc(id).get().then((fresh) {
+            if (fresh.exists && fresh.data() != null) {
+              spaceCache[id] = Space.fromJson(fresh.data()! as Map<String, dynamic>);
+            }
+          }).catchError((_) {}));
+          return;
         }
+      } catch (_) {
+        // Cache miss — fall through to server fetch.
       }
-      // Anything in the chunk not returned by the server is genuinely
-      // missing — mark it so we don't re-query.
-      for (final id in chunk) {
-        if (!foundIds.contains(id)) notFoundSpaceIds.add(id);
+
+      final doc =
+          await spaces.doc(id).get().timeout(const Duration(seconds: 6));
+      if (doc.exists && doc.data() != null) {
+        spaceCache[id] = Space.fromJson(doc.data()! as Map<String, dynamic>);
+      } else {
+        notFoundSpaceIds.add(id);
       }
     } catch (e) {
-      // Best-effort: log and move on. Individual getSpace() calls will
-      // still try with their own SWR fallback.
-      AppLogger.w('prefetchSpaces chunk failed',
+      // Best-effort: leave cache untouched. The per-widget getSpace()
+      // will still try with its own SWR fallback.
+      AppLogger.d('prefetchOne failed (will retry on demand)',
           category: LogCategory.network,
-          data: {'chunkSize': chunk.length, 'error': e.toString()});
+          data: {'spaceId': id, 'error': e.toString()});
     }
   }
 
