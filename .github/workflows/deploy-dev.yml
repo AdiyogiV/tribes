@@ -4,7 +4,7 @@ on:
   push:
     branches: [dev]
     paths:
-      - 'backend/**'   # only fires when backend code changes
+      - 'backend/**'
   workflow_dispatch:
     inputs:
       target:
@@ -14,7 +14,7 @@ on:
 
 concurrency:
   group: deploy-dev
-  cancel-in-progress: true   # newer push cancels an in-flight dev deploy
+  cancel-in-progress: true
 
 jobs:
   deploy:
@@ -25,7 +25,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 2   # need parent commit for diff
+          fetch-depth: 2
 
       - uses: actions/setup-node@v4
         with:
@@ -51,9 +51,13 @@ jobs:
           fi
 
       - name: Authenticate to Google Cloud (dev)
+        id: auth
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY_DEV }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
 
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
@@ -67,7 +71,7 @@ jobs:
         working-directory: backend
         run: |
           echo "Shared dependency changed — deploying all functions to dev"
-          firebase deploy --only functions --project dev --force
+          firebase deploy --only functions --project aurogram-dev --force
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth.outputs.credentials_file_path }}
 
@@ -77,8 +81,8 @@ jobs:
         run: |
           FUNCTIONS="${{ steps.changes.outputs.functions }}"
           ONLY=$(echo "$FUNCTIONS" | tr ',' '\n' | sed 's/^/functions:/' | tr '\n' ',' | sed 's/,$//')
-          echo "Deploying: $ONLY"
-          firebase deploy --only "$ONLY" --project dev --force
+          echo "Deploying to aurogram-dev: $ONLY"
+          firebase deploy --only "$ONLY" --project aurogram-dev --force
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth.outputs.credentials_file_path }}
 
@@ -87,15 +91,17 @@ jobs:
         run: echo "No Cloud Function files changed — skipping function deploy"
 
       - name: Deploy Firestore rules to dev
-        if: contains(github.event.commits[0].modified, 'backend/firestore.rules') || contains(github.event.commits[0].added, 'backend/firestore.rules')
+        if: contains(toJSON(github.event.commits), 'backend/firestore.rules')
         working-directory: backend
-        run: firebase deploy --only firestore:rules --project dev
+        run: firebase deploy --only firestore:rules --project aurogram-dev
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth.outputs.credentials_file_path }}
 
       - name: Summary
+        if: always()
         run: |
-          echo "### ✅ Dev deploy complete" >> $GITHUB_STEP_SUMMARY
+          echo "### Deploy backend → dev" >> $GITHUB_STEP_SUMMARY
           echo "**Project:** aurogram-dev" >> $GITHUB_STEP_SUMMARY
+          echo "**Trigger:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
           echo "**Deploy all:** ${{ steps.changes.outputs.deploy_all }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Functions:** ${{ steps.changes.outputs.functions }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Functions:** \`${{ steps.changes.outputs.functions }}\`" >> $GITHUB_STEP_SUMMARY
