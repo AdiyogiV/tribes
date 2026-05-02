@@ -5,6 +5,12 @@ on:
     branches: [dev]
     paths:
       - 'backend/**'   # only fires when backend code changes
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Functions to deploy (comma-separated) or "all"'
+        required: false
+        default: 'all'
 
 concurrency:
   group: deploy-dev
@@ -30,7 +36,19 @@ jobs:
       - name: Detect changed functions
         id: changes
         working-directory: backend
-        run: node scripts/detect-changes.js
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TARGET="${{ github.event.inputs.target }}"
+            if [ "$TARGET" = "all" ] || [ -z "$TARGET" ]; then
+              echo "deploy_all=true" >> $GITHUB_OUTPUT
+              echo "functions=" >> $GITHUB_OUTPUT
+            else
+              echo "deploy_all=false" >> $GITHUB_OUTPUT
+              echo "functions=$TARGET" >> $GITHUB_OUTPUT
+            fi
+          else
+            node scripts/detect-changes.js
+          fi
 
       - name: Authenticate to Google Cloud (dev)
         uses: google-github-actions/auth@v2
