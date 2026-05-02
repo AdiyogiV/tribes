@@ -10,5 +10,7 @@ firebase-debug.log
 firestore-debug.log
 ui-debug.log
 
-# Service account keys
+# Service account keys — never commit these
 serviceAccountKey.json
+serviceAccountKey.*.json
+*-service-account*.json

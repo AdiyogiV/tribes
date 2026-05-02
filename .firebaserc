@@ -1,5 +1,7 @@
 {
   "projects": {
-    "default": "ty-dev-516d7"
+    "default": "ty-dev-516d7",
+    "prod": "ty-dev-516d7",
+    "dev": "aurogram-dev"
   }
 }

@@ -12,6 +12,7 @@ import { logger } from "firebase-functions";
 import { Timestamp, FieldValue } from "firebase-admin/firestore";
 import { requireAuth } from "../lib/auth_utils.js";
 import { db } from "../lib/firebase.js";
+import { withLoopGuard } from "../lib/idempotency.js";
 import { geminiApiKey } from "../lib/secrets.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { AI_MODELS } from "../lib/config.js";
@@ -1300,24 +1301,46 @@ export const weeklyHealthAggregation = onSchedule({
  * When a health snapshot is written (create or update), automatically
  * store a "recommendations" field with dosha-aware guidance based on
  * the latest signals — so the phone can sync it to the watch.
+ *
+ * SAFETY:
+ *  - `withLoopGuard` hashes the input signal fields and stores the hash
+ *    in `_meta.onHealthSnapshotWrite.inputHash`. When this function's
+ *    own write-back retriggers the function, the input hash matches
+ *    the stored hash, so we exit immediately — preventing the infinite
+ *    loop that caused the May 2026 cost incident.
+ *  - `maxInstances: 5` bounds the blast radius if the guard ever fails
+ *    (was unbounded; previously hit 33M invocations / 11 days).
+ *  - `concurrency: 1` (inherited from global) ensures one call per
+ *    instance so retries don't compound.
  */
+const HEALTH_INPUT_FIELDS = (d) => ({
+    hrv: d.hrv ?? null,
+    restingHR: d.restingHR ?? null,
+    sleepHours: d.sleepHours ?? null,
+    ojasScore: d.ojasScore ?? null,
+});
+
 export const onHealthSnapshotWrite = onDocumentWritten({
     document: "users/{userId}/healthSnapshots/{dayKey}",
     region: "asia-southeast2",
-}, async (event) => {
+    maxInstances: 5,
+}, withLoopGuard("onHealthSnapshotWrite", HEALTH_INPUT_FIELDS, async (event, ctx) => {
     const { userId, dayKey } = event.params;
-    const after = event.data?.after?.data();
-    if (!after) return; // deleted
+    const after = ctx.after;
 
     try {
         // Read user's Prakriti
         const userDoc = await db.collection("users").doc(userId).get();
         const ayurveda = userDoc.data()?.ayurvedaData;
         const prakriti = ayurveda?.prakriti;
-        if (!prakriti) return; // no Prakriti yet
+        if (!prakriti) {
+            // Still stamp the meta block so we don't re-run on every retry
+            // for a user who hasn't completed Prakriti onboarding.
+            await event.data.after.ref.update(ctx.metaPatch);
+            return;
+        }
 
         // Quick dosha signal analysis from snapshot
-        const signals = {};
         const hrv = after.hrv;
         const restingHR = after.restingHR;
         const sleep = after.sleepHours;
@@ -1344,7 +1367,10 @@ export const onHealthSnapshotWrite = onDocumentWritten({
         // Generate quick recommendations
         const recs = generateQuickRecommendations(dominant, { hrv, restingHR, sleep, ojas });
 
-        // Store recommendations on the snapshot itself
+        // Store recommendations on the snapshot itself.
+        // CRITICAL: `ctx.metaPatch` MUST be included in this single update
+        // so the new inputHash is persisted atomically with the result.
+        // Otherwise the next event sees stale meta and re-runs.
         await event.data.after.ref.update({
             "analysis.signalDosha": dominant,
             "analysis.vataSignal": vataSignal,
@@ -1352,9 +1378,11 @@ export const onHealthSnapshotWrite = onDocumentWritten({
             "analysis.kaphaSignal": kaphaSignal,
             "analysis.recommendations": recs,
             "analysis.analyzedAt": FieldValue.serverTimestamp(),
+            ...ctx.metaPatch,
         });
 
-        // Also update the user's latest recommendations for watch sync
+        // Also update the user's latest recommendations for watch sync.
+        // (Different document, no loop risk.)
         await db.collection("users").doc(userId).update({
             "ayurvedaData.latestRecommendations": {
                 dosha: dominant,
@@ -1367,8 +1395,10 @@ export const onHealthSnapshotWrite = onDocumentWritten({
         logger.info(`onHealthSnapshotWrite: analyzed ${dayKey} for ${userId}, dominant=${dominant}`);
     } catch (err) {
         logger.warn(`onHealthSnapshotWrite: error for ${userId}/${dayKey}`, err);
+        // Stamp meta even on error so a retry storm doesn't loop.
+        try { await event.data.after.ref.update(ctx.metaPatch); } catch (_) { /* ignore */ }
     }
-});
+}));
 
 /**
  * Generate quick dosha-aware recommendations from health signals.
