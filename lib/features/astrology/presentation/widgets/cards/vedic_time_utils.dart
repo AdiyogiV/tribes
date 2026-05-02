@@ -104,10 +104,21 @@ class VedicTimeUtils {
   };
 
   /// Look up the month number (1–12) from a lunar month name.
+  ///
+  /// Handles common suffix variants automatically:
+  /// - South Indian / Sanskrit `-m` suffix (Vaisakham → Vaisakha)
+  /// - Without needing to enumerate every spelling in the map.
   static int? _lunarMonthNumber(String? monthName) {
     if (monthName == null) return null;
     final key = monthName.toLowerCase().trim();
-    return _lunarMonthNumbers[key];
+    // Direct lookup
+    final direct = _lunarMonthNumbers[key];
+    if (direct != null) return direct;
+    // Strip trailing '-m' suffix (Vaisakham→Vaisakha, Kartikam→Kartika, etc.)
+    if (key.length > 2 && key.endsWith('m')) {
+      return _lunarMonthNumbers[key.substring(0, key.length - 1)];
+    }
+    return null;
   }
 
   /// Build full Vedic date string — names only.
@@ -144,8 +155,8 @@ class VedicTimeUtils {
     return null;
   }
 
-  /// Build numeric Vedic date: "tithi/paksha/month/year" (smallest → largest, like DD/MM/YYYY)
-  /// Example: "6/2/2/2083" (Shashthi/Krishna/Vaishakha/2083)
+  /// Build numeric Vedic date: "month/paksha/tithi/year" (largest → smallest unit, then year)
+  /// Example: "2/2/6/2083" (Vaishakha/Krishna/Shashthi/2083)
   static String? buildVedicNumericDate(Map<String, dynamic>? samvat) {
     if (samvat == null) return null;
 
@@ -193,7 +204,7 @@ class VedicTimeUtils {
   static int? _tithiNumberFromName(String? name) {
     if (name == null) return null;
     const nameToNum = {
-      'pratipada': 1, 'dwitiya': 2, 'tritiya': 3, 'chaturthi': 4,
+      'pratipada': 1, 'pratipat': 1, 'dwitiya': 2, 'tritiya': 3, 'chaturthi': 4,
       'panchami': 5, 'shashthi': 6, 'saptami': 7, 'ashtami': 8,
       'navami': 9, 'dashami': 10, 'ekadashi': 11, 'dwadashi': 12,
       'trayodashi': 13, 'chaturdashi': 14, 'purnima': 15, 'amavasya': 30,

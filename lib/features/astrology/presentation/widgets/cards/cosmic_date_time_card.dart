@@ -477,7 +477,7 @@ int? _extractTithiNumber(Map<String, dynamic>? samvat) {
   
   // Map of tithi names to numbers
   const tithiNames = {
-    'pratipada': 1, 'prathama': 1, 'padyami': 1, 'pratham': 1,
+    'pratipada': 1, 'pratipat': 1, 'prathama': 1, 'padyami': 1, 'pratham': 1,
     'dwitiya': 2, 'vidiya': 2, 'dwitia': 2, 'dvitiya': 2,
     'tritiya': 3, 'tadiya': 3,
     'chaturthi': 4, 'chaviti': 4, 'chaturti': 4,
