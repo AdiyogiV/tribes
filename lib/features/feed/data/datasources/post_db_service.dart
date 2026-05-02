@@ -121,11 +121,31 @@ class PostDbService with PostCacheMixin, PostCrudMixin, PostQueriesMixin {
   /// Used by Feed to preload first screen so first paint is smooth (prod-style).
   Future<Map<String, DocumentSnapshot?>> getPosts(List<String> postIds) async {
     if (postIds.isEmpty) return {};
+    final sw = Stopwatch()..start();
+    int cacheHits = 0;
+    int networkFetches = 0;
+    for (final id in postIds) {
+      if (smartPostCache.containsKey(id) && smartPostCache[id]?.isExpired == false) {
+        cacheHits++;
+      } else {
+        networkFetches++;
+      }
+    }
     final entries = await Future.wait(
       postIds.map((id) => getPost(id)
           .then<MapEntry<String, DocumentSnapshot?>>((s) => MapEntry(id, s))
           .catchError((_) => MapEntry<String, DocumentSnapshot?>(id, null))),
     );
+    sw.stop();
+    AppLogger.w('⏱️ PERF getPosts batch completed',
+        category: LogCategory.performance,
+        data: {
+          'totalPosts': postIds.length,
+          'cacheHits': cacheHits,
+          'networkFetches': networkFetches,
+          'totalMs': sw.elapsedMilliseconds,
+          'avgMs': postIds.isNotEmpty ? (sw.elapsedMilliseconds / postIds.length).round() : 0,
+        });
     return Map.fromEntries(entries);
   }
 
@@ -316,20 +336,37 @@ class PostDbService with PostCacheMixin, PostCrudMixin, PostQueriesMixin {
           data: {'postId': postId, 'spaceId': postSpaceCache[postId]});
       return postSpaceCache[postId];
     }
+    final sw = Stopwatch()..start();
     try {
       // Try multiple collections where space references may exist
 
       // Try spacePosts collection (reverse lookup)
+      // ⚠️ PERF WARNING: This fetches ALL documents in spacePosts collection!
       final spaces =
           await FirebaseFirestore.instance.collection('spacePosts').get();
+      AppLogger.w('⏱️ PERF _getPostSpaceId: full collection scan!',
+          category: LogCategory.performance,
+          data: {
+            'postId': postId,
+            'spacesDocCount': spaces.docs.length,
+            'msForCollectionFetch': sw.elapsedMilliseconds,
+          });
+      int subcollectionReads = 0;
       for (var space in spaces.docs) {
         final postsRef = space.reference.collection('posts').doc(postId);
         final postDoc = await postsRef.get();
+        subcollectionReads++;
         if (postDoc.exists) {
+          sw.stop();
           postSpaceCache[postId] = space.id;
           AppLogger.i('Space lookup found in spacePosts',
               category: LogCategory.general,
-              data: {'postId': postId, 'spaceId': space.id});
+              data: {
+                'postId': postId,
+                'spaceId': space.id,
+                'totalReads': spaces.docs.length + subcollectionReads,
+                'totalMs': sw.elapsedMilliseconds,
+              });
           return space.id;
         }
       }
@@ -346,14 +383,32 @@ class PostDbService with PostCacheMixin, PostCrudMixin, PostQueriesMixin {
         if (userFeedDoc.exists && userFeedDoc.data()?['space'] != null) {
           final spaceId = userFeedDoc.data()?['space'] as String;
           postSpaceCache[postId] = spaceId;
+          sw.stop();
           AppLogger.i('Space lookup found in userFeed',
               category: LogCategory.general,
-              data: {'postId': postId, 'spaceId': spaceId});
+              data: {
+                'postId': postId,
+                'spaceId': spaceId,
+                'totalReads': spaces.docs.length + subcollectionReads + 1,
+                'totalMs': sw.elapsedMilliseconds,
+              });
           return spaceId;
         }
       }
+      sw.stop();
+      AppLogger.w('⏱️ PERF _getPostSpaceId: NOT FOUND after full scan',
+          category: LogCategory.performance,
+          data: {
+            'postId': postId,
+            'spacesScanned': spaces.docs.length,
+            'subcollectionReads': subcollectionReads,
+            'totalMs': sw.elapsedMilliseconds,
+          });
     } catch (e) {
-      // Ignore errors in lookup
+      sw.stop();
+      AppLogger.w('⏱️ PERF _getPostSpaceId: error during scan',
+          category: LogCategory.performance,
+          data: {'postId': postId, 'error': e.toString(), 'totalMs': sw.elapsedMilliseconds});
     }
     return null;
   }

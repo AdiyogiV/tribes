@@ -1,7 +1,7 @@
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'dart:async';
 import 'package:aurogram/shared/presentation/widgets/media/common_widgets.dart';
-import 'package:cloud_firestore/cloud_firestore.dart' show DocumentSnapshot, QuerySnapshot, QueryDocumentSnapshot;
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:aurogram/core/di/injection.dart';
 import 'package:aurogram/features/feed/data/datasources/post_db_service.dart';
@@ -168,14 +168,24 @@ class UserProfilePageState extends State<UserProfilePage>
   @override
   set interactionIsUserBlocked(bool value) => _isUserBlocked = value;
 
-  Stream<DocumentSnapshot>? _getUserStream() {
-    if (widget.uid == null) return null;
-    return _userRepo.userStream(widget.uid!);
-  }
+  // Cached once in initState — never recreated in build()
+  Stream<DocumentSnapshot?>? _userStream;
+  bool _profileTimedOut = false;
 
   @override
   void initState() {
     super.initState();
+    // Cache the user stream once to avoid creating new Firestore listeners on rebuild
+    if (widget.uid != null) {
+      _userStream = _userRepo.userStream(widget.uid!);
+      // Safety net: if Firestore never emits (App Check down, network issues),
+      // try loading from cache after 4s so the profile doesn't stay in skeleton forever.
+      Future.delayed(const Duration(seconds: 4), () {
+        if (mounted && _cachedProfileData == null) {
+          _loadProfileFromCache();
+        }
+      });
+    }
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
@@ -212,6 +222,48 @@ class UserProfilePageState extends State<UserProfilePage>
     // Load user rank for Auroboard card
     if (widget.uid != null) {
       _userRankFuture = _auraService.getUserRank(widget.uid!);
+    }
+  }
+
+  /// Fallback: load profile from Firestore cache when the live stream
+  /// hangs (App Check down, network issues). This prevents the profile
+  /// from staying in skeleton/shimmer state forever.
+  Future<void> _loadProfileFromCache() async {
+    if (widget.uid == null) return;
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.uid!)
+          .get(GetOptions(source: Source.cache))
+          .timeout(const Duration(seconds: 2));
+      if (doc.exists && mounted) {
+        final data = doc.data();
+        if (data != null) {
+          setState(() {
+            _cachedProfileData = {
+              'name': data['name'] ?? '',
+              'nickname': data['nickname'] ?? '',
+              'displayPicture': data['displayPicture'],
+              'profilePictureUrl': data['profilePictureUrl'],
+              'auraScore': data['auraScore'] ?? 0,
+              'createdAt': data['createdAt'],
+              'sunSign': data['sunSign'],
+              'moonSign': data['moonSign'],
+              'ascendant': data['ascendant'],
+            };
+            _profileTimedOut = true;
+          });
+          AppLogger.i('Profile loaded from Firestore cache (stream timeout fallback)',
+              category: LogCategory.navigation);
+        }
+      }
+    } catch (e) {
+      // No cached data available either — profile stays in loading state
+      if (mounted) {
+        setState(() => _profileTimedOut = true);
+      }
+      AppLogger.w('Profile cache fallback failed: $e',
+          category: LogCategory.navigation);
     }
   }
 
@@ -407,13 +459,14 @@ class UserProfilePageState extends State<UserProfilePage>
               ),
               // Content
               SliverToBoxAdapter(
-                child: StreamBuilder<DocumentSnapshot>(
-                  stream: _getUserStream(),
+                child: StreamBuilder<DocumentSnapshot?>(
+                  stream: _userStream,
                   builder: (context, snapshot) {
-                    final profileData = _extractProfileData(snapshot.data);
+                    final profileData = _extractProfileData(snapshot.data)
+                        ?? _cachedProfileData; // fallback to cache
                     final isLoading =
                         snapshot.connectionState == ConnectionState.waiting &&
-                            profileData == null;
+                            profileData == null && !_profileTimedOut;
 
                     if (isLoading) {
                       return _buildLoadingStateContent(isDark);
@@ -502,8 +555,8 @@ class UserProfilePageState extends State<UserProfilePage>
                     padding:
                         EdgeInsets.symmetric(horizontal: contentPadding + 16),
                     sliver: SliverToBoxAdapter(
-                      child: StreamBuilder<DocumentSnapshot>(
-                        stream: _getUserStream(),
+                      child: StreamBuilder<DocumentSnapshot?>(
+                        stream: _userStream,
                         builder: (context, snapshot) {
                           final profileData =
                               _extractProfileData(snapshot.data);

@@ -121,9 +121,9 @@ export {
     cosmicDailyScheduled,
     cosmicDailyManual,
 } from "./functions/cosmic_daily.js";
-// Mundane Astrology (Brihat Samhita)
+// बृहत्संहिता — Mundane Astrology (Brihat Samhita)
 export {
     generateMundaneForecast,
     getMundaneForecast,
-    refreshMundaneDaily,
+    refreshMundanePanchanga,
 } from "./mundane/index.js";

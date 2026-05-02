@@ -291,7 +291,7 @@ class _FollowListContentState extends State<FollowListContent> {
       child: InkWell(
         onTap: () {
           HapticFeedback.selectionClick();
-          context.push('/user/profile/$uid');
+          context.push('/user/$uid');
         },
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingMd),

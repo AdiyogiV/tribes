@@ -44,6 +44,7 @@
 		AA1B2C3D4E5F607182930A04 /* DinacharyaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B2C3D4E5F607182930B04 /* DinacharyaView.swift */; };
 		AA1B2C3D4E5F607182930A05 /* RituView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B2C3D4E5F607182930B05 /* RituView.swift */; };
 		AA1B2C3D4E5F607182930A06 /* VedicTimeTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B2C3D4E5F607182930B06 /* VedicTimeTextView.swift */; };
+		AA1B2C3D4E5F607182930A07 /* AuroLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B2C3D4E5F607182930B07 /* AuroLogger.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -155,6 +156,13 @@
 		FCA260669A555FE61EA6C8EE /* AuroWatchApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuroWatchApp.swift; sourceTree = "<group>"; };
 		FDCE9BA538A2956C4A0D4ACB /* InsightView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InsightView.swift; sourceTree = "<group>"; };
 		A7B3C8D4E5F60192B8E4D301 /* SkyView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SkyView.swift; sourceTree = "<group>"; };
+		AA1B2C3D4E5F607182930B01 /* OjasEngine.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OjasEngine.swift; sourceTree = "<group>"; };
+		AA1B2C3D4E5F607182930B02 /* OjasView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OjasView.swift; sourceTree = "<group>"; };
+		AA1B2C3D4E5F607182930B03 /* DhatuView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DhatuView.swift; sourceTree = "<group>"; };
+		AA1B2C3D4E5F607182930B04 /* DinacharyaView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DinacharyaView.swift; sourceTree = "<group>"; };
+		AA1B2C3D4E5F607182930B05 /* RituView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RituView.swift; sourceTree = "<group>"; };
+		AA1B2C3D4E5F607182930B06 /* VedicTimeTextView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VedicTimeTextView.swift; sourceTree = "<group>"; };
+		AA1B2C3D4E5F607182930B07 /* AuroLogger.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuroLogger.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -221,6 +229,7 @@
 		07C3AE22E2411A31F8CF2F47 /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				AA1B2C3D4E5F607182930B07 /* AuroLogger.swift */,
 				14CC0B16E41BFF6024E5C37C /* Cache */,
 				5762AA597411B182766C3D03 /* Health */,
 				9D80D68ECADFD7533CF45C80 /* Sync */,
@@ -294,6 +303,7 @@
 			children = (
 				15BC72371629DA54F5B17C32 /* HealthKitManager.swift */,
 				398A433AD74F60C3AB06F207 /* NadiEngine.swift */,
+				AA1B2C3D4E5F607182930B01 /* OjasEngine.swift */,
 			);
 			path = Health;
 			sourceTree = "<group>";
@@ -303,13 +313,26 @@
 			children = (
 				800C6C312753DAC2BBA4677E /* VedicClockView.swift */,
 				4CA34A0F8DD3BD570756A86C /* VedicTimeCalculator.swift */,
+				AA1B2C3D4E5F607182930B06 /* VedicTimeTextView.swift */,
 			);
 			path = VedicTime;
+			sourceTree = "<group>";
+		};
+		AA1B2C3D4E5F607182930C01 /* Ayurveda */ = {
+			isa = PBXGroup;
+			children = (
+				AA1B2C3D4E5F607182930B02 /* OjasView.swift */,
+				AA1B2C3D4E5F607182930B03 /* DhatuView.swift */,
+				AA1B2C3D4E5F607182930B04 /* DinacharyaView.swift */,
+				AA1B2C3D4E5F607182930B05 /* RituView.swift */,
+			);
+			path = Ayurveda;
 			sourceTree = "<group>";
 		};
 		95DBC0A86311CE34949A380E /* Features */ = {
 			isa = PBXGroup;
 			children = (
+				AA1B2C3D4E5F607182930C01 /* Ayurveda */,
 				B93F3342BB76655F56800319 /* CosmicNow */,
 				A8567D06569CDA4739485FA2 /* Insight */,
 				AC60FCEF4CAC19A30A9579EF /* Muhurat */,
@@ -773,6 +796,13 @@
 				A7B3C8D4E5F60192B8E4D302 /* SkyView.swift in Sources */,
 				F6F357E8BAA2BF029B93064B /* NadiMonitorView.swift in Sources */,
 				9EF8F85F514CCB82BD528388 /* NotificationsView.swift in Sources */,
+				AA1B2C3D4E5F607182930A01 /* OjasEngine.swift in Sources */,
+				AA1B2C3D4E5F607182930A02 /* OjasView.swift in Sources */,
+				AA1B2C3D4E5F607182930A03 /* DhatuView.swift in Sources */,
+				AA1B2C3D4E5F607182930A04 /* DinacharyaView.swift in Sources */,
+				AA1B2C3D4E5F607182930A05 /* RituView.swift in Sources */,
+				AA1B2C3D4E5F607182930A06 /* VedicTimeTextView.swift in Sources */,
+				AA1B2C3D4E5F607182930A07 /* AuroLogger.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

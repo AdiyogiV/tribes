@@ -128,6 +128,72 @@ class HealthKitManager: ObservableObject {
         return types
     }
 
+    // MARK: - Background Sync
+
+    /// Callback invoked when background health data is ready to send.
+    /// Set by AuroWatchApp to wire up sync → phone.
+    var onBackgroundDataReady: (() -> Void)?
+
+    /// Enable HealthKit background delivery for key signals.
+    /// Apple wakes the app when new samples arrive — we re-fetch and notify.
+    func enableBackgroundDelivery() {
+        let bgTypes: [(HKObjectType, HKUpdateFrequency)] = [
+            (HKQuantityType.quantityType(forIdentifier: .heartRate)!, .immediate),
+            (HKQuantityType.quantityType(forIdentifier: .stepCount)!, .hourly),
+            (HKQuantityType.quantityType(forIdentifier: .oxygenSaturation)!, .hourly),
+            (HKQuantityType.quantityType(forIdentifier: .heartRateVariabilitySDNN)!, .hourly),
+            (HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned)!, .hourly),
+        ]
+
+        for (type, freq) in bgTypes {
+            store.enableBackgroundDelivery(for: type, frequency: freq) { success, error in
+                if let error = error {
+                    AuroLog.error("BG delivery error for \(type.identifier): \(error.localizedDescription)", category: .health)
+                } else if success {
+                    AuroLog.debug("BG delivery enabled: \(type.identifier)", category: .health)
+                }
+            }
+        }
+    }
+
+    /// Set up observer queries that fire when HealthKit receives new samples.
+    /// Each observer triggers a full re-fetch + phone sync.
+    func setupObservers() {
+        guard HKHealthStore.isHealthDataAvailable() else { return }
+
+        // Observe heart rate — fires ~every 5 min while watch is worn
+        if let hrType = HKQuantityType.quantityType(forIdentifier: .heartRate) {
+            let query = HKObserverQuery(sampleType: hrType, predicate: nil) { [weak self] _, completionHandler, error in
+                guard error == nil else {
+                    completionHandler()
+                    return
+                }
+                AuroLog.debug("Observer: new heart rate → fetching all signals", category: .health)
+                self?.fetchAllReadings {
+                    self?.onBackgroundDataReady?()
+                    completionHandler()
+                }
+            }
+            store.execute(query)
+        }
+
+        // Observe HRV — fires ~once per day (after sleep analysis)
+        if let hrvType = HKQuantityType.quantityType(forIdentifier: .heartRateVariabilitySDNN) {
+            let query = HKObserverQuery(sampleType: hrvType, predicate: nil) { [weak self] _, completionHandler, error in
+                guard error == nil else {
+                    completionHandler()
+                    return
+                }
+                AuroLog.debug("Observer: new HRV → fetching all signals", category: .health)
+                self?.fetchAllReadings {
+                    self?.onBackgroundDataReady?()
+                    completionHandler()
+                }
+            }
+            store.execute(query)
+        }
+    }
+
     // MARK: - Authorization
 
     func requestAuthorization() {
@@ -146,6 +212,8 @@ class HealthKitManager: ObservableObject {
                 AuroLog.info("HealthKit authorized: \(success)", category: .health)
                 if success {
                     self.fetchAllReadings()
+                    self.enableBackgroundDelivery()
+                    self.setupObservers()
                 }
             }
         }

@@ -64,7 +64,7 @@ class SkyPositionsService {
     final result = _positions![dateKey];
     final utcResult = _positions![utcDateKey];
 
-    AppLogger.i(
+    AppLogger.d(
       'getPositionsForDate: Lookup attempt',
       category: LogCategory.general,
       data: {
@@ -99,7 +99,7 @@ class SkyPositionsService {
 
     // Try UTC fallback if local not found
     if (utcResult != null) {
-      AppLogger.i(
+      AppLogger.d(
         'getPositionsForDate: Using UTC fallback',
         category: LogCategory.general,
         data: {

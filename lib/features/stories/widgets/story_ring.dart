@@ -1,6 +1,5 @@
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:aurogram/shared/models/story.dart';
@@ -8,6 +7,8 @@ import 'package:aurogram/features/stories/story_service.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/shared/presentation/widgets/avatars/user_avatar.dart';
 import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
+import 'package:aurogram/shared/data/repositories/user_repository.dart';
+import 'package:aurogram/core/di/injection.dart';
 
 /// Horizontal strip of story avatars: "Your story" first, then users with active stories.
 class StoryRing extends StatefulWidget {
@@ -30,11 +31,11 @@ class _StoryRingState extends State<StoryRing> {
   final StoryService _storyService = StoryService();
   List<String> _userIds = [];
   Set<String> _viewedUserIds = {};
+  /// Pre-fetched display names keyed by userId — eliminates N+1 Firestore reads.
+  Map<String, String> _userNames = {};
   bool _loading = true;
-  bool _precaching = false;
-  static const double _avatarSize = 84.0; // Increased size
-  static const double _ringWidth =
-      102.0; // Increased size (includes gradient border)
+  static const double _avatarSize = 84.0;
+  static const double _ringWidth = 102.0;
 
   @override
   void initState() {
@@ -47,67 +48,76 @@ class _StoryRingState extends State<StoryRing> {
       _storyService.getUsersWithStories(forceRefresh: forceRefresh),
       _storyService.getViewedStoryUserIds(),
     ]);
+    final userIds = results[0] as List<String>;
+    final viewedIds = results[1] as Set<String>;
+
+    // Batch-fetch ALL user names in one parallel call via UserRepository.
+    // This replaces N individual Firestore reads with a single batched operation.
+    final names = await _batchFetchUserNames(userIds);
+
     if (mounted) {
       setState(() {
-        _userIds = results[0] as List<String>;
-        _viewedUserIds = results[1] as Set<String>;
+        _userIds = userIds;
+        _viewedUserIds = viewedIds;
+        _userNames = names;
         _loading = false;
-        _precaching = true; // Start precaching indicator
       });
 
-      // Precache stories for instant loading (Instagram-style)
-      await _precacheStories();
+      // Precache story images in background (non-blocking).
+      _precacheStories();
+    }
+  }
 
-      if (mounted) {
-        setState(() {
-          _precaching = false; // Precaching complete
-        });
+  /// Fetch display names for all user IDs in one batch via UserRepository cache.
+  Future<Map<String, String>> _batchFetchUserNames(List<String> userIds) async {
+    if (userIds.isEmpty) return {};
+    try {
+      final userRepo = locator<UserRepository>();
+      final docs = await userRepo.getUsers(userIds);
+      final names = <String, String>{};
+      for (final entry in docs.entries) {
+        final data = entry.value.data();
+        names[entry.key] = data?['name'] as String? ??
+            data?['nickname'] as String? ??
+            'Story';
       }
+      return names;
+    } catch (_) {
+      return {};
     }
   }
 
   Future<void> _precacheStories() async {
     if (!mounted || _userIds.isEmpty) return;
 
-    // Precache ALL users' stories aggressively for instant viewing
-    final allPrecacheTasks = <Future>[];
+    // Precache first 2 images per user concurrently — keeps startup fast
+    // while ensuring the most likely-viewed stories are ready.
+    final tasks = <Future>[];
 
     for (final userId in _userIds) {
       if (!mounted) break;
 
-      final task = Future(() async {
+      tasks.add(Future(() async {
         try {
           final stories = await _storyService.getStoriesForUser(userId);
-
-          // Precache all images for this user - ensure FULL download
+          var cached = 0;
           for (final story in stories) {
-            if (!mounted) break;
+            if (!mounted || cached >= 2) break;
             if (story.mediaUrl.isEmpty ||
                 story.mediaType != StoryMediaType.image) {
               continue;
             }
-
             try {
-              // Use CachedNetworkImageProvider and precache
-              final provider = CachedNetworkImageProvider(story.mediaUrl);
-              await precacheImage(provider, context);
-
-              // Small delay to ensure cache write completes
-              await Future.delayed(const Duration(milliseconds: 10));
-            } catch (e) {
-              // Silent fail - continue with other images
-            }
+              await precacheImage(
+                  CachedNetworkImageProvider(story.mediaUrl), context);
+              cached++;
+            } catch (_) {}
           }
-        } catch (e) {
-          // Silent fail for this user
-        }
-      });
-
-      allPrecacheTasks.add(task);
+        } catch (_) {}
+      }));
     }
 
-    // Wait for ALL users' stories to be FULLY cached
-    await Future.wait(allPrecacheTasks);
+    await Future.wait(tasks);
   }
 
   @override
@@ -120,24 +130,19 @@ class _StoryRingState extends State<StoryRing> {
     }
 
     final otherIds = _userIds.where((id) => id != user.uid).toList();
-    // Height: ring + spacing (4px) + text (16px) = exact content height, no extra padding
-    return AnimatedOpacity(
-      opacity: _precaching ? 0.5 : 1.0,
-      duration: const Duration(milliseconds: 300),
-      child: SizedBox(
-        height: _ringWidth +
-            20, // ring (102) + spacing (4) + text (16) = 122px, no extra padding
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          itemCount: 1 + otherIds.length,
-          itemBuilder: (context, index) {
-            if (index == 0) {
-              return _buildYourStoryItem(user.uid);
-            }
-            return _buildUserStoryItem(otherIds[index - 1]);
-          },
-        ),
+    return SizedBox(
+      height: _ringWidth + 20,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        itemCount: 1 + otherIds.length,
+        itemBuilder: (context, index) {
+          if (index == 0) {
+            return _buildYourStoryItem(user.uid);
+          }
+          final uid = otherIds[index - 1];
+          return _buildUserStoryItem(uid, _userNames[uid] ?? 'Story');
+        },
       ),
     );
   }
@@ -148,9 +153,6 @@ class _StoryRingState extends State<StoryRing> {
       padding: const EdgeInsets.only(right: 16),
       child: GestureDetector(
         onTap: () {
-          // Don't allow opening stories while precaching
-          if (_precaching) return;
-
           if (hasStories) {
             widget.onViewUserStories(currentUid);
           } else {
@@ -195,12 +197,12 @@ class _StoryRingState extends State<StoryRing> {
     );
   }
 
-  Widget _buildUserStoryItem(String userId) {
+  Widget _buildUserStoryItem(String userId, String displayName) {
     final hasUnviewed = !_viewedUserIds.contains(userId);
     return Padding(
       padding: const EdgeInsets.only(right: 16),
       child: GestureDetector(
-        onTap: _precaching ? null : () => widget.onViewUserStories(userId),
+        onTap: () => widget.onViewUserStories(userId),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -216,7 +218,20 @@ class _StoryRingState extends State<StoryRing> {
               width: _ringWidth,
               height: 16,
               child: Center(
-                child: _UserNameLabel(userId: userId),
+                child: Text(
+                  displayName,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w300,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.8),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                ),
               ),
             ),
           ],
@@ -325,42 +340,3 @@ class _StoryRingAvatar extends StatelessWidget {
   }
 }
 
-class _UserNameLabel extends StatelessWidget {
-  final String userId;
-
-  const _UserNameLabel({required this.userId});
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<Map<String, dynamic>?>(
-      future: _loadUserData(userId),
-      builder: (context, snapshot) {
-        final name = snapshot.data?['name'] as String? ??
-            snapshot.data?['nickname'] as String? ??
-            'Story';
-        return Text(
-          name,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w300,
-            color:
-                Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          textAlign: TextAlign.center,
-        );
-      },
-    );
-  }
-
-  Future<Map<String, dynamic>?> _loadUserData(String uid) async {
-    try {
-      final doc =
-          await FirebaseFirestore.instance.collection('users').doc(uid).get();
-      return doc.data();
-    } catch (_) {
-      return null;
-    }
-  }
-}

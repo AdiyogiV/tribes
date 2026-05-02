@@ -42,7 +42,18 @@ mixin ProfileAstrologyLogic<T extends StatefulWidget> on State<T> {
   void initAstrologyFuture() {
     if (astroUid != null) {
       astrologyProfileFuture = AstrologyService().getProfile(astroUid!);
-      dailyInsightStream = AstrologyService().streamTodayInsight(astroUid!);
+      // Wrap the insight stream with a timeout: if Firestore never emits
+      // (e.g. App Check failure, network down), emit null after 5s so the
+      // UI stops showing shimmer and falls back to "Tap to generate…".
+      final rawStream = AstrologyService().streamTodayInsight(astroUid!);
+      dailyInsightStream = rawStream.timeout(
+        const Duration(seconds: 5),
+        onTimeout: (sink) {
+          AppLogger.w('dailyInsightStream timed out, emitting null',
+              category: LogCategory.general);
+          sink.add(null);
+        },
+      );
       ayurvedaProfileStream = ayurvedaService.streamProfile(astroUid!);
 
       // Check if astro is calculating and start refresh timer if needed

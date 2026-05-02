@@ -1,0 +1,1750 @@
+{
+  "triggers": [
+    {
+      "date": "2025-04-13",
+      "type": "purnima",
+      "label": "Purnima (Full Moon) — 2025-04-13",
+      "significance": "Lunar effects peak. Results of previous cycle manifest."
+    },
+    {
+      "date": "2025-04-27",
+      "type": "amavasya",
+      "label": "Amavasya (New Moon) — 2025-04-27",
+      "significance": "Solar/initiation energy peak. New cycles begin."
+    },
+    {
+      "date": "2025-05-12",
+      "type": "purnima",
+      "label": "Purnima (Full Moon) — 2025-05-12",
+      "significance": "Lunar effects peak. Results of previous cycle manifest."
+    },
+    {
+      "date": "2025-05-14",
+      "type": "ingress",
+      "planet": "Jupiter",
+      "label": "Jupiter ingress: Taurus → Gemini",
+      "significance": "major"
+    },
+    {
+      "date": "2025-05-27",
+      "type": "amavasya",
+      "label": "Amavasya (New Moon) — 2025-05-27",
+      "significance": "Solar/initiation energy peak. New cycles begin."
+    },
+    {
+      "date": "2025-06-11",
+      "type": "purnima",
+      "label": "Purnima (Full Moon) — 2025-06-11",
+      "significance": "Lunar effects peak. Results of previous cycle manifest."
+    },
+    {
+      "date": "2025-06-25",
+      "type": "amavasya",
+      "label": "Amavasya (New Moon) — 2025-06-25",
+      "significance": "Solar/initiation energy peak. New cycles begin."
+    },
+    {
+      "date": "2025-07-10",
+      "type": "purnima",
+      "label": "Purnima (Full Moon) — 2025-07-10",
+      "significance": "Lunar effects peak. Results of previous cycle manifest."
+    },
+    {
+      "date": "2025-07-24",
+      "type": "amavasya",
+      "label": "Amavasya (New Moon) — 2025-07-24",
+      "significance": "Solar/initiation energy peak. New cycles begin."
+    },
+    {
+      "date": "2025-08-08",
+      "type": "purnima",
+      "label": "Purnima (Full Moon) — 2025-08-08",
+      "significance": "Lunar effects peak. Results of previous cycle manifest."
+    },
+    {
+      "date": "2025-08-23",
+      "type": "amavasya",
+      "label": "Amavasya (New Moon) — 2025-08-23",
+      "significance": "Solar/initiation energy peak. New cycles begin."
+    },
+    {
+      "date": "2025-09-07",
+      "type": "purnima",
+      "label": "Purnima (Full Moon) — 2025-09-07",
+      "significance": "Lunar effects peak. Results of previous cycle manifest."
+    },
+    {
+      "date": "2025-09-21",
+      "type": "amavasya",
+      "label": "Amavasya (New Moon) — 2025-09-21",
+      "significance": "Solar/initiation energy peak. New cycles begin."
+    },
+    {
+      "date": "2025-10-06",
+      "type": "purnima",
+      "label": "Purnima (Full Moon) — 2025-10-06",
+      "significance": "Lunar effects peak. Results of previous cycle manifest."
+    },
+    {
+      "date": "2025-10-21",
+      "type": "amavasya",
+      "label": "Amavasya (New Moon) — 2025-10-21",
+      "significance": "Solar/initiation energy peak. New cycles begin."
+    },
+    {
+      "date": "2025-11-05",
+      "type": "purnima",
+      "label": "Purnima (Full Moon) — 2025-11-05",
+      "significance": "Lunar effects peak. Results of previous cycle manifest."
+    },
+    {
+      "date": "2025-11-20",
+      "type": "amavasya",
+      "label": "Amavasya (New Moon) — 2025-11-20",
+      "significance": "Solar/initiation energy peak. New cycles begin."
+    },
+    {
+      "date": "2025-12-05",
+      "type": "purnima",
+      "label": "Purnima (Full Moon) — 2025-12-05",
+      "significance": "Lunar effects peak. Results of previous cycle manifest."
+    },
+    {
+      "date": "2025-12-20",
+      "type": "amavasya",
+      "label": "Amavasya (New Moon) — 2025-12-20",
+      "significance": "Solar/initiation energy peak. New cycles begin."
+    },
+    {
+      "date": "2026-01-04",
+      "type": "purnima",
+      "label": "Purnima (Full Moon) — 2026-01-04",
+      "significance": "Lunar effects peak. Results of previous cycle manifest."
+    },
+    {
+      "date": "2026-01-18",
+      "type": "amavasya",
+      "label": "Amavasya (New Moon) — 2026-01-18",
+      "significance": "Solar/initiation energy peak. New cycles begin."
+    },
+    {
+      "date": "2026-02-02",
+      "type": "purnima",
+      "label": "Purnima (Full Moon) — 2026-02-02",
+      "significance": "Lunar effects peak. Results of previous cycle manifest."
+    },
+    {
+      "date": "2026-02-17",
+      "type": "amavasya",
+      "label": "Amavasya (New Moon) — 2026-02-17",
+      "significance": "Solar/initiation energy peak. New cycles begin."
+    },
+    {
+      "date": "2026-03-04",
+      "type": "purnima",
+      "label": "Purnima (Full Moon) — 2026-03-04",
+      "significance": "Lunar effects peak. Results of previous cycle manifest."
+    },
+    {
+      "date": "2026-03-19",
+      "type": "amavasya",
+      "label": "Amavasya (New Moon) — 2026-03-19",
+      "significance": "Solar/initiation energy peak. New cycles begin."
+    },
+    {
+      "date": "2026-04-03",
+      "type": "purnima",
+      "label": "Purnima (Full Moon) — 2026-04-03",
+      "significance": "Lunar effects peak. Results of previous cycle manifest."
+    }
+  ],
+  "results": [
+    {
+      "trigger": {
+        "date": "2025-04-13",
+        "type": "purnima",
+        "label": "Purnima (Full Moon) — 2025-04-13",
+        "significance": "Lunar effects peak. Results of previous cycle manifest."
+      },
+      "date": "2025-04-13",
+      "totalEffects": 24,
+      "fg": 24,
+      "bg": 0,
+      "headline": "⚠️ Mars in Cancer: Mars DEBILITATED — domestic violence rises, emotional aggression",
+      "topFg": [
+        "Mars→public_mood(neg)",
+        "Sun→government(pos)",
+        "Sun→public_mood(pos)"
+      ],
+      "domainScores": [
+        {
+          "domain": "religion",
+          "label": "Religion & Spirituality",
+          "positive": 0,
+          "negative": 3.32,
+          "mixed": 0,
+          "netScore": -3.32,
+          "effectCount": 4,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "maritime",
+          "label": "Maritime & Naval",
+          "positive": 0,
+          "negative": 2.48,
+          "mixed": 0,
+          "netScore": -2.48,
+          "effectCount": 3,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "refugees",
+          "label": "Refugees & Migration",
+          "positive": 0,
+          "negative": 1.64,
+          "mixed": 0,
+          "netScore": -1.64,
+          "effectCount": 2,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "health",
+          "label": "Health & Epidemics",
+          "positive": 0,
+          "negative": 1.54,
+          "mixed": 0,
+          "netScore": -1.54,
+          "effectCount": 2,
+          "outlook": "challenging"
+        }
+      ],
+      "eclipseWindows": 1
+    },
+    {
+      "trigger": {
+        "date": "2025-04-27",
+        "type": "amavasya",
+        "label": "Amavasya (New Moon) — 2025-04-27",
+        "significance": "Solar/initiation energy peak. New cycles begin."
+      },
+      "date": "2025-04-27",
+      "totalEffects": 24,
+      "fg": 15,
+      "bg": 9,
+      "headline": "⚠️ Mars in Cancer: Mars DEBILITATED — domestic violence rises, emotional aggression",
+      "topFg": [
+        "Mars→public_mood(neg)",
+        "Sun→government(pos)",
+        "Saturn→government(mix)"
+      ],
+      "domainScores": [
+        {
+          "domain": "religion",
+          "label": "Religion & Spirituality",
+          "positive": 0,
+          "negative": 2.58,
+          "mixed": 0,
+          "netScore": -2.58,
+          "effectCount": 3,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "maritime",
+          "label": "Maritime & Naval",
+          "positive": 0,
+          "negative": 2.44,
+          "mixed": 0,
+          "netScore": -2.44,
+          "effectCount": 3,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "refugees",
+          "label": "Refugees & Migration",
+          "positive": 0,
+          "negative": 1.64,
+          "mixed": 0,
+          "netScore": -1.64,
+          "effectCount": 2,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "health",
+          "label": "Health & Epidemics",
+          "positive": 0,
+          "negative": 1.54,
+          "mixed": 0,
+          "netScore": -1.54,
+          "effectCount": 2,
+          "outlook": "challenging"
+        }
+      ],
+      "eclipseWindows": 1
+    },
+    {
+      "trigger": {
+        "date": "2025-05-12",
+        "type": "purnima",
+        "label": "Purnima (Full Moon) — 2025-05-12",
+        "significance": "Lunar effects peak. Results of previous cycle manifest."
+      },
+      "date": "2025-05-12",
+      "totalEffects": 24,
+      "fg": 10,
+      "bg": 14,
+      "headline": "⚠️ Mars in Cancer: Mars DEBILITATED — domestic violence rises, emotional aggression",
+      "topFg": [
+        "Mars→public_mood(neg)",
+        "Mars→real_estate(neg)",
+        "Sun→maritime(neg)"
+      ],
+      "domainScores": [
+        {
+          "domain": "religion",
+          "label": "Religion & Spirituality",
+          "positive": 0,
+          "negative": 2.54,
+          "mixed": 0,
+          "netScore": -2.54,
+          "effectCount": 3,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "maritime",
+          "label": "Maritime & Naval",
+          "positive": 0,
+          "negative": 2.4,
+          "mixed": 0,
+          "netScore": -2.4,
+          "effectCount": 3,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "economy",
+          "label": "Economy & Finance",
+          "positive": 1.72,
+          "negative": 0,
+          "mixed": 0.88,
+          "netScore": 1.72,
+          "effectCount": 4,
+          "outlook": "favorable"
+        },
+        {
+          "domain": "refugees",
+          "label": "Refugees & Migration",
+          "positive": 0,
+          "negative": 1.64,
+          "mixed": 0,
+          "netScore": -1.64,
+          "effectCount": 2,
+          "outlook": "challenging"
+        }
+      ],
+      "eclipseWindows": 1
+    },
+    {
+      "trigger": {
+        "date": "2025-05-14",
+        "type": "ingress",
+        "planet": "Jupiter",
+        "label": "Jupiter ingress: Taurus → Gemini",
+        "significance": "major"
+      },
+      "date": "2025-05-14",
+      "totalEffects": 24,
+      "fg": 10,
+      "bg": 14,
+      "headline": "⚡ Mars in Cancer: Mars DEBILITATED — domestic violence rises, emotional aggression",
+      "topFg": [
+        "Mars→public_mood(neg)",
+        "Mars→real_estate(neg)",
+        "Sun→maritime(neg)"
+      ],
+      "domainScores": [
+        {
+          "domain": "religion",
+          "label": "Religion & Spirituality",
+          "positive": 0,
+          "negative": 2.53,
+          "mixed": 0,
+          "netScore": -2.53,
+          "effectCount": 3,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "maritime",
+          "label": "Maritime & Naval",
+          "positive": 0,
+          "negative": 2.39,
+          "mixed": 0,
+          "netScore": -2.39,
+          "effectCount": 3,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "economy",
+          "label": "Economy & Finance",
+          "positive": 1.72,
+          "negative": 0,
+          "mixed": 0.88,
+          "netScore": 1.72,
+          "effectCount": 4,
+          "outlook": "favorable"
+        },
+        {
+          "domain": "refugees",
+          "label": "Refugees & Migration",
+          "positive": 0,
+          "negative": 1.64,
+          "mixed": 0,
+          "netScore": -1.64,
+          "effectCount": 2,
+          "outlook": "challenging"
+        }
+      ],
+      "eclipseWindows": 1
+    },
+    {
+      "trigger": {
+        "date": "2025-05-27",
+        "type": "amavasya",
+        "label": "Amavasya (New Moon) — 2025-05-27",
+        "significance": "Solar/initiation energy peak. New cycles begin."
+      },
+      "date": "2025-05-27",
+      "totalEffects": 29,
+      "fg": 15,
+      "bg": 14,
+      "headline": "Jupiter in Gemini: Jupiter in Rahu's nakshatra — storms bring breakthroughs",
+      "topFg": [
+        "Jupiter→crisis(mix)",
+        "Jupiter→research(pos)",
+        "Sun→maritime(neg)"
+      ],
+      "domainScores": [
+        {
+          "domain": "maritime",
+          "label": "Maritime & Naval",
+          "positive": 0,
+          "negative": 2.36,
+          "mixed": 0,
+          "netScore": -2.36,
+          "effectCount": 3,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "religion",
+          "label": "Religion & Spirituality",
+          "positive": 0.6,
+          "negative": 2.5,
+          "mixed": 0,
+          "netScore": -1.9,
+          "effectCount": 4,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "economy",
+          "label": "Economy & Finance",
+          "positive": 1.68,
+          "negative": 0,
+          "mixed": 0.88,
+          "netScore": 1.68,
+          "effectCount": 4,
+          "outlook": "favorable"
+        },
+        {
+          "domain": "refugees",
+          "label": "Refugees & Migration",
+          "positive": 0,
+          "negative": 1.64,
+          "mixed": 0,
+          "netScore": -1.64,
+          "effectCount": 2,
+          "outlook": "challenging"
+        }
+      ],
+      "eclipseWindows": 1
+    },
+    {
+      "trigger": {
+        "date": "2025-06-11",
+        "type": "purnima",
+        "label": "Purnima (Full Moon) — 2025-06-11",
+        "significance": "Lunar effects peak. Results of previous cycle manifest."
+      },
+      "date": "2025-06-11",
+      "totalEffects": 26,
+      "fg": 10,
+      "bg": 16,
+      "headline": "Sun in Pisces: Maritime disaster, naval crisis, ocean pollution event",
+      "topFg": [
+        "Sun→maritime(neg)",
+        "Sun→religion(neg)",
+        "Mars→government(mix)"
+      ],
+      "domainScores": [
+        {
+          "domain": "religion",
+          "label": "Religion & Spirituality",
+          "positive": 0,
+          "negative": 2.45,
+          "mixed": 0,
+          "netScore": -2.45,
+          "effectCount": 3,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "maritime",
+          "label": "Maritime & Naval",
+          "positive": 0,
+          "negative": 2.31,
+          "mixed": 0,
+          "netScore": -2.31,
+          "effectCount": 3,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "refugees",
+          "label": "Refugees & Migration",
+          "positive": 0,
+          "negative": 1.64,
+          "mixed": 0,
+          "netScore": -1.64,
+          "effectCount": 2,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "health",
+          "label": "Health & Epidemics",
+          "positive": 0,
+          "negative": 1.54,
+          "mixed": 0,
+          "netScore": -1.54,
+          "effectCount": 2,
+          "outlook": "challenging"
+        }
+      ],
+      "eclipseWindows": 1
+    },
+    {
+      "trigger": {
+        "date": "2025-06-25",
+        "type": "amavasya",
+        "label": "Amavasya (New Moon) — 2025-06-25",
+        "significance": "Solar/initiation energy peak. New cycles begin."
+      },
+      "date": "2025-06-25",
+      "totalEffects": 28,
+      "fg": 12,
+      "bg": 16,
+      "headline": "Mars in Leo: Authoritarian enforcement, police action, executive orders",
+      "topFg": [
+        "Mars→government(mix)",
+        "Mercury+Jupiter→education(pos)",
+        "Sun→maritime(neg)"
+      ],
+      "domainScores": [
+        {
+          "domain": "religion",
+          "label": "Religion & Spirituality",
+          "positive": 0,
+          "negative": 2.42,
+          "mixed": 0,
+          "netScore": -2.42,
+          "effectCount": 3,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "maritime",
+          "label": "Maritime & Naval",
+          "positive": 0,
+          "negative": 2.28,
+          "mixed": 0,
+          "netScore": -2.28,
+          "effectCount": 3,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "trade",
+          "label": "Trade & Commerce",
+          "positive": 2,
+          "negative": 0,
+          "mixed": 0,
+          "netScore": 2,
+          "effectCount": 4,
+          "outlook": "favorable"
+        },
+        {
+          "domain": "refugees",
+          "label": "Refugees & Migration",
+          "positive": 0,
+          "negative": 1.64,
+          "mixed": 0,
+          "netScore": -1.64,
+          "effectCount": 2,
+          "outlook": "challenging"
+        }
+      ],
+      "eclipseWindows": 1
+    },
+    {
+      "trigger": {
+        "date": "2025-07-10",
+        "type": "purnima",
+        "label": "Purnima (Full Moon) — 2025-07-10",
+        "significance": "Lunar effects peak. Results of previous cycle manifest."
+      },
+      "date": "2025-07-10",
+      "totalEffects": 24,
+      "fg": 8,
+      "bg": 16,
+      "headline": "Sun in Cancer: Ruler focused on domestic issues, emotional leadership",
+      "topFg": [
+        "Sun→public_mood(mix)",
+        "Mars→military(mix)",
+        "Mars→health(neg)"
+      ],
+      "domainScores": [
+        {
+          "domain": "health",
+          "label": "Health & Epidemics",
+          "positive": 0,
+          "negative": 2.24,
+          "mixed": 0,
+          "netScore": -2.24,
+          "effectCount": 3,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "religion",
+          "label": "Religion & Spirituality",
+          "positive": 0,
+          "negative": 1.8,
+          "mixed": 0,
+          "netScore": -1.8,
+          "effectCount": 2,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "refugees",
+          "label": "Refugees & Migration",
+          "positive": 0,
+          "negative": 1.8,
+          "mixed": 0,
+          "netScore": -1.8,
+          "effectCount": 2,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "maritime",
+          "label": "Maritime & Naval",
+          "positive": 0,
+          "negative": 1.68,
+          "mixed": 0,
+          "netScore": -1.68,
+          "effectCount": 2,
+          "outlook": "challenging"
+        }
+      ],
+      "eclipseWindows": 0
+    },
+    {
+      "trigger": {
+        "date": "2025-07-24",
+        "type": "amavasya",
+        "label": "Amavasya (New Moon) — 2025-07-24",
+        "significance": "Solar/initiation energy peak. New cycles begin."
+      },
+      "date": "2025-07-24",
+      "totalEffects": 24,
+      "fg": 8,
+      "bg": 16,
+      "headline": "Venus in Virgo: Luxury markets decline, austerity in consumption",
+      "topFg": [
+        "Venus→economy(neg)",
+        "Sun→public_mood(mix)",
+        "Mars→military(mix)"
+      ],
+      "domainScores": [
+        {
+          "domain": "health",
+          "label": "Health & Epidemics",
+          "positive": 0,
+          "negative": 2.24,
+          "mixed": 0.3,
+          "netScore": -2.24,
+          "effectCount": 4,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "religion",
+          "label": "Religion & Spirituality",
+          "positive": 0,
+          "negative": 1.8,
+          "mixed": 0,
+          "netScore": -1.8,
+          "effectCount": 2,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "refugees",
+          "label": "Refugees & Migration",
+          "positive": 0,
+          "negative": 1.8,
+          "mixed": 0,
+          "netScore": -1.8,
+          "effectCount": 2,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "maritime",
+          "label": "Maritime & Naval",
+          "positive": 0,
+          "negative": 1.68,
+          "mixed": 0,
+          "netScore": -1.68,
+          "effectCount": 2,
+          "outlook": "challenging"
+        }
+      ],
+      "eclipseWindows": 0
+    },
+    {
+      "trigger": {
+        "date": "2025-08-08",
+        "type": "purnima",
+        "label": "Purnima (Full Moon) — 2025-08-08",
+        "significance": "Lunar effects peak. Results of previous cycle manifest."
+      },
+      "date": "2025-08-08",
+      "totalEffects": 26,
+      "fg": 10,
+      "bg": 16,
+      "headline": "Sun in Leo: Sun in own sign — ruler at peak authority, strong governance",
+      "topFg": [
+        "Sun→government(pos)",
+        "Sun→diplomacy(pos)",
+        "Venus→economy(neg)"
+      ],
+      "domainScores": [
+        {
+          "domain": "health",
+          "label": "Health & Epidemics",
+          "positive": 0,
+          "negative": 2.24,
+          "mixed": 0.3,
+          "netScore": -2.24,
+          "effectCount": 4,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "religion",
+          "label": "Religion & Spirituality",
+          "positive": 0,
+          "negative": 1.8,
+          "mixed": 0,
+          "netScore": -1.8,
+          "effectCount": 2,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "refugees",
+          "label": "Refugees & Migration",
+          "positive": 0,
+          "negative": 1.8,
+          "mixed": 0,
+          "netScore": -1.8,
+          "effectCount": 2,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "maritime",
+          "label": "Maritime & Naval",
+          "positive": 0,
+          "negative": 1.68,
+          "mixed": 0,
+          "netScore": -1.68,
+          "effectCount": 2,
+          "outlook": "challenging"
+        }
+      ],
+      "eclipseWindows": 0
+    },
+    {
+      "trigger": {
+        "date": "2025-08-23",
+        "type": "amavasya",
+        "label": "Amavasya (New Moon) — 2025-08-23",
+        "significance": "Solar/initiation energy peak. New cycles begin."
+      },
+      "date": "2025-08-23",
+      "totalEffects": 27,
+      "fg": 11,
+      "bg": 16,
+      "headline": "Sun in Leo: Sun in own sign — ruler at peak authority, strong governance",
+      "topFg": [
+        "Sun→government(pos)",
+        "Venus→foreign_affairs(pos)",
+        "Moon→refugees(neg)"
+      ],
+      "domainScores": [
+        {
+          "domain": "refugees",
+          "label": "Refugees & Migration",
+          "positive": 0,
+          "negative": 2.8,
+          "mixed": 0,
+          "netScore": -2.8,
+          "effectCount": 3,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "religion",
+          "label": "Religion & Spirituality",
+          "positive": 0,
+          "negative": 1.8,
+          "mixed": 0,
+          "netScore": -1.8,
+          "effectCount": 2,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "maritime",
+          "label": "Maritime & Naval",
+          "positive": 0,
+          "negative": 1.68,
+          "mixed": 0,
+          "netScore": -1.68,
+          "effectCount": 2,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "health",
+          "label": "Health & Epidemics",
+          "positive": 0,
+          "negative": 1.68,
+          "mixed": 0,
+          "netScore": -1.68,
+          "effectCount": 2,
+          "outlook": "challenging"
+        }
+      ],
+      "eclipseWindows": 0
+    },
+    {
+      "trigger": {
+        "date": "2025-09-07",
+        "type": "purnima",
+        "label": "Purnima (Full Moon) — 2025-09-07",
+        "significance": "Lunar effects peak. Results of previous cycle manifest."
+      },
+      "date": "2025-09-07",
+      "totalEffects": 25,
+      "fg": 9,
+      "bg": 16,
+      "headline": "Moon in Virgo: Public health panic, hospital systems overwhelmed",
+      "topFg": [
+        "Moon→health(neg)",
+        "Mars→foreign_affairs(neg)",
+        "Venus→crisis(neg)"
+      ],
+      "domainScores": [
+        {
+          "domain": "health",
+          "label": "Health & Epidemics",
+          "positive": 0.6,
+          "negative": 2.68,
+          "mixed": 0,
+          "netScore": -2.08,
+          "effectCount": 4,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "religion",
+          "label": "Religion & Spirituality",
+          "positive": 0,
+          "negative": 1.8,
+          "mixed": 0,
+          "netScore": -1.8,
+          "effectCount": 2,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "refugees",
+          "label": "Refugees & Migration",
+          "positive": 0,
+          "negative": 1.8,
+          "mixed": 0,
+          "netScore": -1.8,
+          "effectCount": 2,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "maritime",
+          "label": "Maritime & Naval",
+          "positive": 0,
+          "negative": 1.68,
+          "mixed": 0,
+          "netScore": -1.68,
+          "effectCount": 2,
+          "outlook": "challenging"
+        }
+      ],
+      "eclipseWindows": 1
+    },
+    {
+      "trigger": {
+        "date": "2025-09-21",
+        "type": "amavasya",
+        "label": "Amavasya (New Moon) — 2025-09-21",
+        "significance": "Solar/initiation energy peak. New cycles begin."
+      },
+      "date": "2025-09-21",
+      "totalEffects": 28,
+      "fg": 12,
+      "bg": 16,
+      "headline": "✨ Mercury in Virgo: Mercury EXALTED — commerce peaks, analytical precision",
+      "topFg": [
+        "Mercury→trade(pos)",
+        "Mercury→health(pos)",
+        "Moon→health(neg)"
+      ],
+      "domainScores": [
+        {
+          "domain": "religion",
+          "label": "Religion & Spirituality",
+          "positive": 0,
+          "negative": 1.8,
+          "mixed": 0,
+          "netScore": -1.8,
+          "effectCount": 2,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "refugees",
+          "label": "Refugees & Migration",
+          "positive": 0,
+          "negative": 1.8,
+          "mixed": 0,
+          "netScore": -1.8,
+          "effectCount": 2,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "maritime",
+          "label": "Maritime & Naval",
+          "positive": 0,
+          "negative": 1.68,
+          "mixed": 0,
+          "netScore": -1.68,
+          "effectCount": 2,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "trade",
+          "label": "Trade & Commerce",
+          "positive": 1.56,
+          "negative": 0,
+          "mixed": 0,
+          "netScore": 1.56,
+          "effectCount": 2,
+          "outlook": "favorable"
+        }
+      ],
+      "eclipseWindows": 1
+    },
+    {
+      "trigger": {
+        "date": "2025-10-06",
+        "type": "purnima",
+        "label": "Purnima (Full Moon) — 2025-10-06",
+        "significance": "Lunar effects peak. Results of previous cycle manifest."
+      },
+      "date": "2025-10-06",
+      "totalEffects": 28,
+      "fg": 12,
+      "bg": 16,
+      "headline": "⚠️ Sun in Libra: Sun DEBILITATED — ruler weakened, loss of authority",
+      "topFg": [
+        "Sun→government(neg)",
+        "Mercury→trade(pos)",
+        "Mercury→health(pos)"
+      ],
+      "domainScores": [
+        {
+          "domain": "religion",
+          "label": "Religion & Spirituality",
+          "positive": 0,
+          "negative": 1.8,
+          "mixed": 0,
+          "netScore": -1.8,
+          "effectCount": 2,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "refugees",
+          "label": "Refugees & Migration",
+          "positive": 0,
+          "negative": 1.8,
+          "mixed": 0,
+          "netScore": -1.8,
+          "effectCount": 2,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "maritime",
+          "label": "Maritime & Naval",
+          "positive": 0,
+          "negative": 1.68,
+          "mixed": 0,
+          "netScore": -1.68,
+          "effectCount": 2,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "trade",
+          "label": "Trade & Commerce",
+          "positive": 1.67,
+          "negative": 0,
+          "mixed": 0,
+          "netScore": 1.67,
+          "effectCount": 2,
+          "outlook": "favorable"
+        }
+      ],
+      "eclipseWindows": 1
+    },
+    {
+      "trigger": {
+        "date": "2025-10-21",
+        "type": "amavasya",
+        "label": "Amavasya (New Moon) — 2025-10-21",
+        "significance": "Solar/initiation energy peak. New cycles begin."
+      },
+      "date": "2025-10-21",
+      "totalEffects": 25,
+      "fg": 9,
+      "bg": 16,
+      "headline": "⚠️ Sun in Libra: Sun DEBILITATED — ruler weakened, loss of authority",
+      "topFg": [
+        "Sun→government(neg)",
+        "Sun→foreign_affairs(neg)",
+        "Moon→health(neg)"
+      ],
+      "domainScores": [
+        {
+          "domain": "health",
+          "label": "Health & Epidemics",
+          "positive": 0,
+          "negative": 2.56,
+          "mixed": 0,
+          "netScore": -2.56,
+          "effectCount": 3,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "religion",
+          "label": "Religion & Spirituality",
+          "positive": 0.5,
+          "negative": 2.57,
+          "mixed": 0,
+          "netScore": -2.07,
+          "effectCount": 4,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "refugees",
+          "label": "Refugees & Migration",
+          "positive": 0,
+          "negative": 1.8,
+          "mixed": 0,
+          "netScore": -1.8,
+          "effectCount": 2,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "maritime",
+          "label": "Maritime & Naval",
+          "positive": 0,
+          "negative": 1.68,
+          "mixed": 0,
+          "netScore": -1.68,
+          "effectCount": 2,
+          "outlook": "challenging"
+        }
+      ],
+      "eclipseWindows": 1
+    },
+    {
+      "trigger": {
+        "date": "2025-11-05",
+        "type": "purnima",
+        "label": "Purnima (Full Moon) — 2025-11-05",
+        "significance": "Lunar effects peak. Results of previous cycle manifest."
+      },
+      "date": "2025-11-05",
+      "totalEffects": 25,
+      "fg": 9,
+      "bg": 16,
+      "headline": "Moon in Virgo: Public health panic, hospital systems overwhelmed",
+      "topFg": [
+        "Moon→health(neg)",
+        "Mars→religion(neg)",
+        "Mars→foreign_affairs(neg)"
+      ],
+      "domainScores": [
+        {
+          "domain": "health",
+          "label": "Health & Epidemics",
+          "positive": 0,
+          "negative": 2.38,
+          "mixed": 0,
+          "netScore": -2.38,
+          "effectCount": 3,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "religion",
+          "label": "Religion & Spirituality",
+          "positive": 0.5,
+          "negative": 2.43,
+          "mixed": 0,
+          "netScore": -1.93,
+          "effectCount": 4,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "refugees",
+          "label": "Refugees & Migration",
+          "positive": 0,
+          "negative": 1.64,
+          "mixed": 0,
+          "netScore": -1.64,
+          "effectCount": 2,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "maritime",
+          "label": "Maritime & Naval",
+          "positive": 0,
+          "negative": 1.52,
+          "mixed": 0,
+          "netScore": -1.52,
+          "effectCount": 2,
+          "outlook": "challenging"
+        }
+      ],
+      "eclipseWindows": 1
+    },
+    {
+      "trigger": {
+        "date": "2025-11-20",
+        "type": "amavasya",
+        "label": "Amavasya (New Moon) — 2025-11-20",
+        "significance": "Solar/initiation energy peak. New cycles begin."
+      },
+      "date": "2025-11-20",
+      "totalEffects": 25,
+      "fg": 9,
+      "bg": 16,
+      "headline": "✨ Mars in Capricorn: Mars EXALTED — decisive governance, effective enforcement",
+      "topFg": [
+        "Mars→government(pos)",
+        "Mars→infrastructure(pos)",
+        "Moon→health(neg)"
+      ],
+      "domainScores": [
+        {
+          "domain": "health",
+          "label": "Health & Epidemics",
+          "positive": 0,
+          "negative": 2.33,
+          "mixed": 0,
+          "netScore": -2.33,
+          "effectCount": 3,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "religion",
+          "label": "Religion & Spirituality",
+          "positive": 0,
+          "negative": 1.66,
+          "mixed": 0,
+          "netScore": -1.66,
+          "effectCount": 2,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "refugees",
+          "label": "Refugees & Migration",
+          "positive": 0,
+          "negative": 1.64,
+          "mixed": 0,
+          "netScore": -1.64,
+          "effectCount": 2,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "maritime",
+          "label": "Maritime & Naval",
+          "positive": 0,
+          "negative": 1.52,
+          "mixed": 0,
+          "netScore": -1.52,
+          "effectCount": 2,
+          "outlook": "challenging"
+        }
+      ],
+      "eclipseWindows": 1
+    },
+    {
+      "trigger": {
+        "date": "2025-12-05",
+        "type": "purnima",
+        "label": "Purnima (Full Moon) — 2025-12-05",
+        "significance": "Lunar effects peak. Results of previous cycle manifest."
+      },
+      "date": "2025-12-05",
+      "totalEffects": 28,
+      "fg": 12,
+      "bg": 16,
+      "headline": "✨ Mars in Capricorn: Mars EXALTED — decisive governance, effective enforcement",
+      "topFg": [
+        "Mars→government(pos)",
+        "Mars→infrastructure(pos)",
+        "Moon→health(neg)"
+      ],
+      "domainScores": [
+        {
+          "domain": "health",
+          "label": "Health & Epidemics",
+          "positive": 0,
+          "negative": 2.85,
+          "mixed": 0,
+          "netScore": -2.85,
+          "effectCount": 4,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "refugees",
+          "label": "Refugees & Migration",
+          "positive": 0,
+          "negative": 1.64,
+          "mixed": 0,
+          "netScore": -1.64,
+          "effectCount": 2,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "maritime",
+          "label": "Maritime & Naval",
+          "positive": 0,
+          "negative": 1.52,
+          "mixed": 0,
+          "netScore": -1.52,
+          "effectCount": 2,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "religion",
+          "label": "Religion & Spirituality",
+          "positive": 0.66,
+          "negative": 1.66,
+          "mixed": 0.3,
+          "netScore": -1,
+          "effectCount": 4,
+          "outlook": "challenging"
+        }
+      ],
+      "eclipseWindows": 1
+    },
+    {
+      "trigger": {
+        "date": "2025-12-20",
+        "type": "amavasya",
+        "label": "Amavasya (New Moon) — 2025-12-20",
+        "significance": "Solar/initiation energy peak. New cycles begin."
+      },
+      "date": "2025-12-20",
+      "totalEffects": 27,
+      "fg": 11,
+      "bg": 16,
+      "headline": "✨ Mars in Capricorn: Mars EXALTED — decisive governance, effective enforcement",
+      "topFg": [
+        "Mars→government(pos)",
+        "Mars→infrastructure(pos)",
+        "Sun→religion(pos)"
+      ],
+      "domainScores": [
+        {
+          "domain": "health",
+          "label": "Health & Epidemics",
+          "positive": 0,
+          "negative": 2.1,
+          "mixed": 0,
+          "netScore": -2.1,
+          "effectCount": 3,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "refugees",
+          "label": "Refugees & Migration",
+          "positive": 0,
+          "negative": 1.64,
+          "mixed": 0,
+          "netScore": -1.64,
+          "effectCount": 2,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "maritime",
+          "label": "Maritime & Naval",
+          "positive": 0,
+          "negative": 1.52,
+          "mixed": 0,
+          "netScore": -1.52,
+          "effectCount": 2,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "religion",
+          "label": "Religion & Spirituality",
+          "positive": 0.66,
+          "negative": 1.66,
+          "mixed": 0.3,
+          "netScore": -1,
+          "effectCount": 4,
+          "outlook": "challenging"
+        }
+      ],
+      "eclipseWindows": 0
+    },
+    {
+      "trigger": {
+        "date": "2026-01-04",
+        "type": "purnima",
+        "label": "Purnima (Full Moon) — 2026-01-04",
+        "significance": "Lunar effects peak. Results of previous cycle manifest."
+      },
+      "date": "2026-01-04",
+      "totalEffects": 27,
+      "fg": 11,
+      "bg": 16,
+      "headline": "Saturn+Rahu in Pisces: Institutional collapse, corruption scandals, shadow governance",
+      "topFg": [
+        "Saturn+Rahu→government(neg)",
+        "Saturn+Rahu→health(neg)",
+        "Saturn+Rahu→public_mood(neg)"
+      ],
+      "domainScores": [
+        {
+          "domain": "health",
+          "label": "Health & Epidemics",
+          "positive": 0,
+          "negative": 2.34,
+          "mixed": 0,
+          "netScore": -2.34,
+          "effectCount": 3,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "religion",
+          "label": "Religion & Spirituality",
+          "positive": 0,
+          "negative": 1.66,
+          "mixed": 0.3,
+          "netScore": -1.66,
+          "effectCount": 3,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "refugees",
+          "label": "Refugees & Migration",
+          "positive": 0,
+          "negative": 1.64,
+          "mixed": 0,
+          "netScore": -1.64,
+          "effectCount": 2,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "maritime",
+          "label": "Maritime & Naval",
+          "positive": 0,
+          "negative": 1.52,
+          "mixed": 0,
+          "netScore": -1.52,
+          "effectCount": 2,
+          "outlook": "challenging"
+        }
+      ],
+      "eclipseWindows": 0
+    },
+    {
+      "trigger": {
+        "date": "2026-01-18",
+        "type": "amavasya",
+        "label": "Amavasya (New Moon) — 2026-01-18",
+        "significance": "Solar/initiation energy peak. New cycles begin."
+      },
+      "date": "2026-01-18",
+      "totalEffects": 27,
+      "fg": 11,
+      "bg": 16,
+      "headline": "Saturn+Rahu in Pisces: Institutional collapse, corruption scandals, shadow governance",
+      "topFg": [
+        "Saturn+Rahu→government(neg)",
+        "Saturn+Rahu→health(neg)",
+        "Saturn+Rahu→public_mood(neg)"
+      ],
+      "domainScores": [
+        {
+          "domain": "health",
+          "label": "Health & Epidemics",
+          "positive": 0,
+          "negative": 2.34,
+          "mixed": 0,
+          "netScore": -2.34,
+          "effectCount": 3,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "religion",
+          "label": "Religion & Spirituality",
+          "positive": 0,
+          "negative": 1.66,
+          "mixed": 0,
+          "netScore": -1.66,
+          "effectCount": 2,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "refugees",
+          "label": "Refugees & Migration",
+          "positive": 0,
+          "negative": 1.64,
+          "mixed": 0,
+          "netScore": -1.64,
+          "effectCount": 2,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "maritime",
+          "label": "Maritime & Naval",
+          "positive": 0,
+          "negative": 1.52,
+          "mixed": 0,
+          "netScore": -1.52,
+          "effectCount": 2,
+          "outlook": "challenging"
+        }
+      ],
+      "eclipseWindows": 0
+    },
+    {
+      "trigger": {
+        "date": "2026-02-02",
+        "type": "purnima",
+        "label": "Purnima (Full Moon) — 2026-02-02",
+        "significance": "Lunar effects peak. Results of previous cycle manifest."
+      },
+      "date": "2026-02-02",
+      "totalEffects": 30,
+      "fg": 14,
+      "bg": 16,
+      "headline": "✨ Venus in Pisces: Venus EXALTED — artistic golden age, music/cinema peak",
+      "topFg": [
+        "Venus→culture(pos)",
+        "Saturn+Rahu→government(neg)",
+        "Venus→humanitarian(pos)"
+      ],
+      "domainScores": [
+        {
+          "domain": "health",
+          "label": "Health & Epidemics",
+          "positive": 0,
+          "negative": 2.42,
+          "mixed": 0,
+          "netScore": -2.42,
+          "effectCount": 3,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "religion",
+          "label": "Religion & Spirituality",
+          "positive": 0,
+          "negative": 1.66,
+          "mixed": 0,
+          "netScore": -1.66,
+          "effectCount": 2,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "refugees",
+          "label": "Refugees & Migration",
+          "positive": 0,
+          "negative": 1.64,
+          "mixed": 0,
+          "netScore": -1.64,
+          "effectCount": 2,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "maritime",
+          "label": "Maritime & Naval",
+          "positive": 0,
+          "negative": 1.52,
+          "mixed": 0,
+          "netScore": -1.52,
+          "effectCount": 2,
+          "outlook": "challenging"
+        }
+      ],
+      "eclipseWindows": 0
+    },
+    {
+      "trigger": {
+        "date": "2026-02-17",
+        "type": "amavasya",
+        "label": "Amavasya (New Moon) — 2026-02-17",
+        "significance": "Solar/initiation energy peak. New cycles begin."
+      },
+      "date": "2026-02-17",
+      "totalEffects": 29,
+      "fg": 13,
+      "bg": 16,
+      "headline": "✨ Venus in Pisces: Venus EXALTED — artistic golden age, music/cinema peak",
+      "topFg": [
+        "Venus→culture(pos)",
+        "Saturn+Rahu→government(neg)",
+        "Saturn+Rahu→health(neg)"
+      ],
+      "domainScores": [
+        {
+          "domain": "health",
+          "label": "Health & Epidemics",
+          "positive": 0,
+          "negative": 2.54,
+          "mixed": 0,
+          "netScore": -2.54,
+          "effectCount": 3,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "religion",
+          "label": "Religion & Spirituality",
+          "positive": 0,
+          "negative": 1.66,
+          "mixed": 0,
+          "netScore": -1.66,
+          "effectCount": 2,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "refugees",
+          "label": "Refugees & Migration",
+          "positive": 0,
+          "negative": 1.64,
+          "mixed": 0,
+          "netScore": -1.64,
+          "effectCount": 2,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "maritime",
+          "label": "Maritime & Naval",
+          "positive": 0,
+          "negative": 1.52,
+          "mixed": 0,
+          "netScore": -1.52,
+          "effectCount": 2,
+          "outlook": "challenging"
+        }
+      ],
+      "eclipseWindows": 1
+    },
+    {
+      "trigger": {
+        "date": "2026-03-04",
+        "type": "purnima",
+        "label": "Purnima (Full Moon) — 2026-03-04",
+        "significance": "Lunar effects peak. Results of previous cycle manifest."
+      },
+      "date": "2026-03-04",
+      "totalEffects": 32,
+      "fg": 16,
+      "bg": 16,
+      "headline": "✨ Venus in Pisces: Venus EXALTED — artistic golden age, music/cinema peak",
+      "topFg": [
+        "Venus→culture(pos)",
+        "Saturn+Rahu→government(neg)",
+        "Saturn+Rahu→health(neg)"
+      ],
+      "domainScores": [
+        {
+          "domain": "health",
+          "label": "Health & Epidemics",
+          "positive": 0,
+          "negative": 3.92,
+          "mixed": 0,
+          "netScore": -3.92,
+          "effectCount": 5,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "maritime",
+          "label": "Maritime & Naval",
+          "positive": 0,
+          "negative": 1.97,
+          "mixed": 0,
+          "netScore": -1.97,
+          "effectCount": 3,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "government",
+          "label": "Government & Authority",
+          "positive": 0,
+          "negative": 1.77,
+          "mixed": 0.99,
+          "netScore": -1.77,
+          "effectCount": 3,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "humanitarian",
+          "label": "Humanitarian & Aid",
+          "positive": 1.64,
+          "negative": 0,
+          "mixed": 0,
+          "netScore": 1.64,
+          "effectCount": 2,
+          "outlook": "favorable"
+        }
+      ],
+      "eclipseWindows": 2
+    },
+    {
+      "trigger": {
+        "date": "2026-03-19",
+        "type": "amavasya",
+        "label": "Amavasya (New Moon) — 2026-03-19",
+        "significance": "Solar/initiation energy peak. New cycles begin."
+      },
+      "date": "2026-03-19",
+      "totalEffects": 37,
+      "fg": 21,
+      "bg": 16,
+      "headline": "⚠️ Mercury in Pisces: Mercury DEBILITATED — misinformation, confused messaging",
+      "topFg": [
+        "Mercury→media(neg)",
+        "Moon→health(neg)",
+        "Sun→technology(neg)"
+      ],
+      "domainScores": [
+        {
+          "domain": "health",
+          "label": "Health & Epidemics",
+          "positive": 0,
+          "negative": 3.38,
+          "mixed": 0,
+          "netScore": -3.38,
+          "effectCount": 5,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "government",
+          "label": "Government & Authority",
+          "positive": 0,
+          "negative": 2.2,
+          "mixed": 0.99,
+          "netScore": -2.2,
+          "effectCount": 4,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "religion",
+          "label": "Religion & Spirituality",
+          "positive": 0,
+          "negative": 1.38,
+          "mixed": 0,
+          "netScore": -1.38,
+          "effectCount": 2,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "refugees",
+          "label": "Refugees & Migration",
+          "positive": 0,
+          "negative": 1.32,
+          "mixed": 0,
+          "netScore": -1.32,
+          "effectCount": 2,
+          "outlook": "challenging"
+        }
+      ],
+      "eclipseWindows": 2
+    },
+    {
+      "trigger": {
+        "date": "2026-04-03",
+        "type": "purnima",
+        "label": "Purnima (Full Moon) — 2026-04-03",
+        "significance": "Lunar effects peak. Results of previous cycle manifest."
+      },
+      "date": "2026-04-03",
+      "totalEffects": 31,
+      "fg": 15,
+      "bg": 16,
+      "headline": "⚠️ Mars in Cancer: Mars DEBILITATED — domestic violence rises, emotional aggression",
+      "topFg": [
+        "Mars→public_mood(neg)",
+        "Mercury→media(neg)",
+        "Moon→health(neg)"
+      ],
+      "domainScores": [
+        {
+          "domain": "health",
+          "label": "Health & Epidemics",
+          "positive": 0,
+          "negative": 2.17,
+          "mixed": 0,
+          "netScore": -2.17,
+          "effectCount": 3,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "religion",
+          "label": "Religion & Spirituality",
+          "positive": 0,
+          "negative": 1.38,
+          "mixed": 0,
+          "netScore": -1.38,
+          "effectCount": 2,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "refugees",
+          "label": "Refugees & Migration",
+          "positive": 0,
+          "negative": 1.32,
+          "mixed": 0,
+          "netScore": -1.32,
+          "effectCount": 2,
+          "outlook": "challenging"
+        },
+        {
+          "domain": "maritime",
+          "label": "Maritime & Naval",
+          "positive": 0,
+          "negative": 1.2,
+          "mixed": 0,
+          "netScore": -1.2,
+          "effectCount": 2,
+          "outlook": "challenging"
+        }
+      ],
+      "eclipseWindows": 2
+    }
+  ]
+}

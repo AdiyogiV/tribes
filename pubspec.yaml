@@ -120,6 +120,8 @@ dev_dependencies:
   mockito: ^5.4.4
   build_runner: ^2.4.13
   json_serializable: ^6.8.0
+  marionette_flutter: ^0.3.0  # AI agent ↔ running app bridge (widget tree, tap, screenshot)
+  marionette_mcp: ^0.3.0      # MCP server for marionette (Claude Code / Code Puppy)
 
 flutter_launcher_icons:
   android: true

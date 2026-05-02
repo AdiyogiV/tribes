@@ -1,0 +1,4358 @@
+{
+  "meta": {
+    "startDate": "2025-04-01",
+    "endDate": "2026-04-14",
+    "triggersProcessed": 26,
+    "totalNewsHeadlines": 1122,
+    "totalNimitta": 29,
+    "totalEffects": 419,
+    "totalCancelled": 0,
+    "totalLLMCalls": 26,
+    "confidenceRules": 0,
+    "memoryDepth": 26,
+    "engine": "varga/ pipeline (930 rules, 6 layers) + Gemini Flash + Memory + Prediction Lifecycle",
+    "runAt": "2026-04-13T19:36:12.854Z"
+  },
+  "results": [
+    {
+      "date": "2025-04-13",
+      "trigger": "purnima",
+      "season": "vasanta",
+      "jupiterYear": "Parabhava",
+      "planetCount": 9,
+      "headlines": 36,
+      "nimitta": 0,
+      "earthquakes": 0,
+      "rawEffects": 19,
+      "filtered": 0,
+      "cancelled": 0,
+      "finalEffects": 19,
+      "convergentDomains": 4,
+      "elapsedMs": 12,
+      "headline": "Northern India anticipates agricultural shifts amid planetary alignments, while global diplomacy faces challenges.",
+      "usedLLM": true,
+      "predictions": 3,
+      "validations": 0,
+      "confidenceRulesTracked": 0,
+      "memoryDepth": 1,
+      "topEffects": [
+        {
+          "domain": "geography",
+          "dir": "pos",
+          "weight": 0.88,
+          "desc": "Mandala_1: Northern prosperity, Brahmins honored, Vedic rituals flourish, good rains in NE",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2025-07-12"
+        },
+        {
+          "domain": "public_mood",
+          "dir": "pos",
+          "weight": 0.71,
+          "desc": "Naga Veethee: supreme prosperity, excellent rains, kings righteous, people joyful, all crops abundan",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2025-07-12"
+        },
+        {
+          "domain": "geography",
+          "dir": "neg",
+          "weight": 0.7,
+          "desc": "Regions afflicted by Venus in Mandala_1: Madra, Arjunayana, Trigarta, Pushkalavata, Kekaya",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2025-07-12"
+        },
+        {
+          "domain": "agriculture",
+          "dir": "neg",
+          "weight": 0.7,
+          "desc": "Jupiter ahead of Venus: white objects, Brahmins, and eastern direction suffer; rain deficient",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2025-07-12"
+        },
+        {
+          "domain": "agriculture",
+          "dir": "neg",
+          "weight": 0.65,
+          "desc": "Samvatsara \"Plavanga\" (Yuga 9, Moon): Monkeys and pests trouble crops, agricultural damage",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2025-07-12"
+        }
+      ],
+      "topDomains": [
+        {
+          "domain": "agriculture",
+          "outlook": "challenging",
+          "net": -1.35
+        },
+        {
+          "domain": "public_mood",
+          "outlook": "favorable",
+          "net": 0.71
+        },
+        {
+          "domain": "geography",
+          "outlook": "challenging",
+          "net": -0.43999999999999984
+        },
+        {
+          "domain": "religion",
+          "outlook": "challenging",
+          "net": -0.35
+        }
+      ],
+      "hotDomains": [
+        "technology(1.00)",
+        "foreign_affairs(0.78)",
+        "terrorism(0.56)",
+        "refugees(0.56)"
+      ],
+      "eclipses": 1
+    },
+    {
+      "date": "2025-04-27",
+      "trigger": "amavasya",
+      "season": "vasanta",
+      "jupiterYear": "Parabhava",
+      "planetCount": 9,
+      "headlines": 42,
+      "nimitta": 0,
+      "earthquakes": 0,
+      "rawEffects": 21,
+      "filtered": 0,
+      "cancelled": 0,
+      "finalEffects": 21,
+      "convergentDomains": 5,
+      "elapsedMs": 2,
+      "headline": "Northern India braces for agricultural shifts amid geopolitical tensions and cultural realignments",
+      "usedLLM": true,
+      "predictions": 3,
+      "validations": 0,
+      "confidenceRulesTracked": 0,
+      "memoryDepth": 2,
+      "topEffects": [
+        {
+          "domain": "geography",
+          "dir": "pos",
+          "weight": 0.88,
+          "desc": "Mandala_1: Northern prosperity, Brahmins honored, Vedic rituals flourish, good rains in NE",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2025-07-26"
+        },
+        {
+          "domain": "agriculture",
+          "dir": "pos",
+          "weight": 0.85,
+          "desc": "Venus in Rohini: cows and bulls prosper, agriculture abundant, kings honored, wealth flows",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2025-10-24"
+        },
+        {
+          "domain": "geography",
+          "dir": "neg",
+          "weight": 0.7,
+          "desc": "Regions afflicted by Venus in Mandala_1: Madra, Arjunayana, Trigarta, Pushkalavata, Kekaya",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2025-07-26"
+        },
+        {
+          "domain": "agriculture",
+          "dir": "neg",
+          "weight": 0.7,
+          "desc": "Jupiter ahead of Venus: white objects, Brahmins, and eastern direction suffer; rain deficient",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2025-07-26"
+        },
+        {
+          "domain": "agriculture",
+          "dir": "neg",
+          "weight": 0.65,
+          "desc": "Samvatsara \"Plavanga\" (Yuga 9, Moon): Monkeys and pests trouble crops, agricultural damage",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2025-07-26"
+        }
+      ],
+      "topDomains": [
+        {
+          "domain": "public_mood",
+          "outlook": "favorable",
+          "net": 0.64
+        },
+        {
+          "domain": "agriculture",
+          "outlook": "challenging",
+          "net": -0.5000000000000001
+        },
+        {
+          "domain": "geography",
+          "outlook": "challenging",
+          "net": -0.43999999999999984
+        },
+        {
+          "domain": "society",
+          "outlook": "challenging",
+          "net": -0.3799999999999999
+        }
+      ],
+      "hotDomains": [
+        "technology(1.00)",
+        "foreign_affairs(0.82)",
+        "military(0.55)",
+        "culture(0.45)"
+      ],
+      "eclipses": 1
+    },
+    {
+      "date": "2025-05-12",
+      "trigger": "purnima",
+      "season": "grishma",
+      "jupiterYear": "Parabhava",
+      "planetCount": 9,
+      "headlines": 48,
+      "nimitta": 0,
+      "earthquakes": 0,
+      "rawEffects": 14,
+      "filtered": 0,
+      "cancelled": 0,
+      "finalEffects": 14,
+      "convergentDomains": 3,
+      "elapsedMs": 1,
+      "headline": "Agricultural vulnerabilities and economic shifts emerge in Indus Valley region",
+      "usedLLM": true,
+      "predictions": 3,
+      "validations": 0,
+      "confidenceRulesTracked": 0,
+      "memoryDepth": 3,
+      "topEffects": [
+        {
+          "domain": "agriculture",
+          "dir": "neg",
+          "weight": 0.7,
+          "desc": "Jupiter ahead of Venus: white objects, Brahmins, and eastern direction suffer; rain deficient",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2025-08-10"
+        },
+        {
+          "domain": "agriculture",
+          "dir": "neg",
+          "weight": 0.65,
+          "desc": "Samvatsara \"Plavanga\" (Yuga 9, Moon): Monkeys and pests trouble crops, agricultural damage",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2025-08-10"
+        },
+        {
+          "domain": "economy",
+          "dir": "pos",
+          "weight": 0.64,
+          "desc": "Jupiter in 2nd house from Taurus — promotes growth of cloths, flowers, wheat, rice, barley, buffaloe",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2025-08-10"
+        },
+        {
+          "domain": "economy",
+          "dir": "pos",
+          "weight": 0.6,
+          "desc": "Venus in 1st house from Taurus — promotes growth of cloths, flowers, wheat, rice, barley, buffaloes",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2025-08-10"
+        },
+        {
+          "domain": "agriculture",
+          "dir": "mix",
+          "weight": 0.55,
+          "desc": "Rain lord for year 1 of lustrum: Agni — Moderate rain at the beginning, fire-related issues",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2025-08-10"
+        }
+      ],
+      "topDomains": [
+        {
+          "domain": "economy",
+          "outlook": "favorable",
+          "net": 2.66
+        },
+        {
+          "domain": "agriculture",
+          "outlook": "challenging",
+          "net": -1.35
+        },
+        {
+          "domain": "religion",
+          "outlook": "challenging",
+          "net": -0.35
+        },
+        {
+          "domain": "society",
+          "outlook": "favorable",
+          "net": 0.22000000000000003
+        }
+      ],
+      "hotDomains": [
+        "technology(1.00)",
+        "military(0.59)",
+        "foreign_affairs(0.29)",
+        "refugees(0.24)"
+      ],
+      "eclipses": 1
+    },
+    {
+      "date": "2025-05-14",
+      "trigger": "ingress",
+      "season": "grishma",
+      "jupiterYear": "Parabhava",
+      "planetCount": 9,
+      "headlines": 45,
+      "nimitta": 1,
+      "earthquakes": 0,
+      "rawEffects": 14,
+      "filtered": 0,
+      "cancelled": 0,
+      "finalEffects": 14,
+      "convergentDomains": 3,
+      "elapsedMs": 1,
+      "headline": "Economic growth tempered by agricultural challenges in Indus Valley; cultural events gain momentum.",
+      "usedLLM": true,
+      "predictions": 3,
+      "validations": 0,
+      "confidenceRulesTracked": 0,
+      "memoryDepth": 4,
+      "topEffects": [
+        {
+          "domain": "agriculture",
+          "dir": "neg",
+          "weight": 0.7,
+          "desc": "Jupiter ahead of Venus: white objects, Brahmins, and eastern direction suffer; rain deficient",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2025-08-12"
+        },
+        {
+          "domain": "agriculture",
+          "dir": "neg",
+          "weight": 0.65,
+          "desc": "Samvatsara \"Plavanga\" (Yuga 9, Moon): Monkeys and pests trouble crops, agricultural damage",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2025-08-12"
+        },
+        {
+          "domain": "economy",
+          "dir": "pos",
+          "weight": 0.64,
+          "desc": "Jupiter in 2nd house from Taurus — promotes growth of cloths, flowers, wheat, rice, barley, buffaloe",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2025-08-12"
+        },
+        {
+          "domain": "economy",
+          "dir": "pos",
+          "weight": 0.6,
+          "desc": "Venus in 1st house from Taurus — promotes growth of cloths, flowers, wheat, rice, barley, buffaloes",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2025-08-12"
+        },
+        {
+          "domain": "agriculture",
+          "dir": "mix",
+          "weight": 0.55,
+          "desc": "Rain lord for year 1 of lustrum: Agni — Moderate rain at the beginning, fire-related issues",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2025-08-12"
+        }
+      ],
+      "topDomains": [
+        {
+          "domain": "economy",
+          "outlook": "favorable",
+          "net": 2.66
+        },
+        {
+          "domain": "agriculture",
+          "outlook": "challenging",
+          "net": -1.35
+        },
+        {
+          "domain": "religion",
+          "outlook": "challenging",
+          "net": -0.35
+        },
+        {
+          "domain": "society",
+          "outlook": "favorable",
+          "net": 0.22000000000000003
+        }
+      ],
+      "hotDomains": [
+        "technology(1.00)",
+        "foreign_affairs(0.75)",
+        "banking(0.63)",
+        "military(0.50)"
+      ],
+      "eclipses": 1
+    },
+    {
+      "date": "2025-05-27",
+      "trigger": "amavasya",
+      "season": "grishma",
+      "jupiterYear": "Parabhava",
+      "planetCount": 9,
+      "headlines": 47,
+      "nimitta": 3,
+      "earthquakes": 0,
+      "rawEffects": 21,
+      "filtered": 0,
+      "cancelled": 0,
+      "finalEffects": 21,
+      "convergentDomains": 5,
+      "elapsedMs": 2,
+      "headline": "Economic shifts in Indus Valley driven by planetary influences, prompting trade adjustments",
+      "usedLLM": true,
+      "predictions": 3,
+      "validations": 0,
+      "confidenceRulesTracked": 0,
+      "memoryDepth": 5,
+      "topEffects": [
+        {
+          "domain": "economy",
+          "dir": "pos",
+          "weight": 0.85,
+          "desc": "Jupiter in 2nd house from Taurus — promotes growth of cloths, flowers, wheat, rice, barley, buffaloe",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2025-08-25"
+        },
+        {
+          "domain": "economy",
+          "dir": "pos",
+          "weight": 0.8,
+          "desc": "Venus in 2nd house from Taurus — promotes growth of cloths, flowers, wheat, rice, barley, buffaloes",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2025-08-25"
+        },
+        {
+          "domain": "geography",
+          "dir": "pos",
+          "weight": 0.77,
+          "desc": "Mandala_2: Eastern prosperity, trade flourishes, scholarly pursuits succeed, moderate rains",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2025-08-25"
+        },
+        {
+          "domain": "economy",
+          "dir": "neg",
+          "weight": 0.75,
+          "desc": "Mars in 4th house from Taurus — destroys/depresses cloths, flowers, wheat, rice, barley, buffaloes",
+          "regions": [
+            "Western Sone",
+            "Narmada",
+            "Godavari"
+          ],
+          "peak": "2025-08-25"
+        },
+        {
+          "domain": "economy",
+          "dir": "pos",
+          "weight": 0.7,
+          "desc": "Prakrita course (40 days): Good health prevails, timely rain, abundant crops, and general happiness ",
+          "regions": [
+            "Lohitya river",
+            "Indus",
+            "Sarayu"
+          ],
+          "peak": "2025-08-25"
+        }
+      ],
+      "topDomains": [
+        {
+          "domain": "economy",
+          "outlook": "favorable",
+          "net": 2.25
+        },
+        {
+          "domain": "public_mood",
+          "outlook": "favorable",
+          "net": 0.64
+        },
+        {
+          "domain": "agriculture",
+          "outlook": "challenging",
+          "net": -0.49
+        },
+        {
+          "domain": "governance",
+          "outlook": "challenging",
+          "net": -0.4
+        }
+      ],
+      "hotDomains": [
+        "foreign_affairs(1.00)",
+        "technology(0.83)",
+        "military(0.67)",
+        "culture(0.58)"
+      ],
+      "eclipses": 1
+    },
+    {
+      "date": "2025-06-11",
+      "trigger": "purnima",
+      "season": "grishma",
+      "jupiterYear": "Parabhava",
+      "planetCount": 9,
+      "headlines": 50,
+      "nimitta": 2,
+      "earthquakes": 0,
+      "rawEffects": 15,
+      "filtered": 0,
+      "cancelled": 0,
+      "finalEffects": 15,
+      "convergentDomains": 4,
+      "elapsedMs": 1,
+      "headline": "Eastern India sees economic upswing amid agricultural challenges and social tensions.",
+      "usedLLM": true,
+      "predictions": 3,
+      "validations": 0,
+      "confidenceRulesTracked": 0,
+      "memoryDepth": 6,
+      "topEffects": [
+        {
+          "domain": "geography",
+          "dir": "pos",
+          "weight": 0.77,
+          "desc": "Mandala_2: Eastern prosperity, trade flourishes, scholarly pursuits succeed, moderate rains",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2025-09-09"
+        },
+        {
+          "domain": "geography",
+          "dir": "neg",
+          "weight": 0.62,
+          "desc": "Regions afflicted by Venus in Mandala_2: Kosala, Kalinga, Vanga, Magadha, Pragjyotisha",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2025-09-09"
+        },
+        {
+          "domain": "public_mood",
+          "dir": "pos",
+          "weight": 0.6,
+          "desc": "Airavata Veethee: celestial prosperity, rains timely, trade flourishes, spiritual activities thrive",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2025-09-09"
+        },
+        {
+          "domain": "geography",
+          "dir": "neg",
+          "weight": 0.54,
+          "desc": "Regions overpowered when Venus in Mandala_2: Mithila, Tamralipta, Pundra, Gauda, Utkala",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2025-09-09"
+        },
+        {
+          "domain": "society",
+          "dir": "pos",
+          "weight": 0.52,
+          "desc": "Sun is spotless, clear, bright, and displays natural pale color — auspicious to all",
+          "regions": [
+            "Eastern Narmada",
+            "Sone",
+            "Orissa"
+          ],
+          "peak": "2025-09-09"
+        }
+      ],
+      "topDomains": [
+        {
+          "domain": "economy",
+          "outlook": "favorable",
+          "net": 1.4000000000000001
+        },
+        {
+          "domain": "public_mood",
+          "outlook": "favorable",
+          "net": 0.6
+        },
+        {
+          "domain": "agriculture",
+          "outlook": "challenging",
+          "net": -0.49
+        },
+        {
+          "domain": "geography",
+          "outlook": "challenging",
+          "net": -0.3900000000000001
+        }
+      ],
+      "hotDomains": [
+        "technology(1.00)",
+        "foreign_affairs(0.56)",
+        "labor(0.33)",
+        "military(0.28)"
+      ],
+      "eclipses": 1
+    },
+    {
+      "date": "2025-06-25",
+      "trigger": "amavasya",
+      "season": "grishma",
+      "jupiterYear": "Parabhava",
+      "planetCount": 9,
+      "headlines": 51,
+      "nimitta": 3,
+      "earthquakes": 0,
+      "rawEffects": 11,
+      "filtered": 0,
+      "cancelled": 0,
+      "finalEffects": 11,
+      "convergentDomains": 2,
+      "elapsedMs": 1,
+      "headline": "Economic upswing in Indus Valley tempered by agricultural challenges and social tensions",
+      "usedLLM": true,
+      "predictions": 3,
+      "validations": 0,
+      "confidenceRulesTracked": 0,
+      "memoryDepth": 7,
+      "topEffects": [
+        {
+          "domain": "society",
+          "dir": "pos",
+          "weight": 0.7,
+          "desc": "Sun is spotless, clear, bright, and displays natural pale color — auspicious to all",
+          "regions": [
+            "Eastern Narmada",
+            "Sone",
+            "Orissa"
+          ],
+          "peak": "2025-09-23"
+        },
+        {
+          "domain": "society",
+          "dir": "mix",
+          "weight": 0.5,
+          "desc": "Misra course (30 days): Mixed effects — some regions prosper while others suffer; results are uneven",
+          "regions": [
+            "Lohitya river",
+            "Indus",
+            "Sarayu"
+          ],
+          "peak": "2025-09-23"
+        },
+        {
+          "domain": "agriculture",
+          "dir": "neg",
+          "weight": 0.49,
+          "desc": "Samvatsara \"Plavanga\" (Yuga 9, Moon): Monkeys and pests trouble crops, agricultural damage",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2025-09-23"
+        },
+        {
+          "domain": "agriculture",
+          "dir": "mix",
+          "weight": 0.41,
+          "desc": "Rain lord for year 1 of lustrum: Agni — Moderate rain at the beginning, fire-related issues",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2025-09-23"
+        },
+        {
+          "domain": "economy",
+          "dir": "pos",
+          "weight": 0.4,
+          "desc": "Venus in 2nd house from Gemini — promotes growth of corn, creepers, cotton",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2025-09-23"
+        }
+      ],
+      "topDomains": [
+        {
+          "domain": "economy",
+          "outlook": "favorable",
+          "net": 1.4000000000000001
+        },
+        {
+          "domain": "agriculture",
+          "outlook": "challenging",
+          "net": -0.49
+        },
+        {
+          "domain": "society",
+          "outlook": "favorable",
+          "net": 0.29999999999999993
+        },
+        {
+          "domain": "public_mood",
+          "outlook": "mixed",
+          "net": 0
+        }
+      ],
+      "hotDomains": [
+        "foreign_affairs(1.00)",
+        "technology(0.76)",
+        "culture(0.29)"
+      ],
+      "eclipses": 1
+    },
+    {
+      "date": "2025-07-10",
+      "trigger": "purnima",
+      "season": "varsha",
+      "jupiterYear": "Parabhava",
+      "planetCount": 9,
+      "headlines": 45,
+      "nimitta": 2,
+      "earthquakes": 0,
+      "rawEffects": 21,
+      "filtered": 0,
+      "cancelled": 0,
+      "finalEffects": 21,
+      "convergentDomains": 5,
+      "elapsedMs": 1,
+      "headline": "Northern India braces for agricultural disruption amidst geopolitical tensions and shifting trade winds.",
+      "usedLLM": true,
+      "predictions": 3,
+      "validations": 0,
+      "confidenceRulesTracked": 0,
+      "memoryDepth": 8,
+      "topEffects": [
+        {
+          "domain": "agriculture",
+          "dir": "neg",
+          "weight": 0.85,
+          "desc": "Mars ahead of Venus: fire disasters, war erupts, famine in northern countries, bloodshed",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2025-10-08"
+        },
+        {
+          "domain": "geography",
+          "dir": "pos",
+          "weight": 0.77,
+          "desc": "Mandala_2: Eastern prosperity, trade flourishes, scholarly pursuits succeed, moderate rains",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2025-10-08"
+        },
+        {
+          "domain": "society",
+          "dir": "pos",
+          "weight": 0.7,
+          "desc": "Sun is spotless, clear, bright, and displays natural whitish color — auspicious to all",
+          "regions": [
+            "Eastern Narmada",
+            "Sone",
+            "Orissa"
+          ],
+          "peak": "2025-10-08"
+        },
+        {
+          "domain": "agriculture",
+          "dir": "neg",
+          "weight": 0.65,
+          "desc": "Samvatsara \"Plavanga\" (Yuga 9, Moon): Monkeys and pests trouble crops, agricultural damage",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2025-10-08"
+        },
+        {
+          "domain": "geography",
+          "dir": "neg",
+          "weight": 0.62,
+          "desc": "Regions afflicted by Venus in Mandala_2: Kosala, Kalinga, Vanga, Magadha, Pragjyotisha",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2025-10-08"
+        }
+      ],
+      "topDomains": [
+        {
+          "domain": "agriculture",
+          "outlook": "challenging",
+          "net": -1.5
+        },
+        {
+          "domain": "economy",
+          "outlook": "favorable",
+          "net": 0.52
+        },
+        {
+          "domain": "public_mood",
+          "outlook": "favorable",
+          "net": 0.52
+        },
+        {
+          "domain": "military",
+          "outlook": "challenging",
+          "net": -0.43
+        }
+      ],
+      "hotDomains": [
+        "technology(1.00)",
+        "foreign_affairs(0.57)",
+        "military(0.29)",
+        "maritime(0.29)"
+      ],
+      "eclipses": 0
+    },
+    {
+      "date": "2025-07-24",
+      "trigger": "amavasya",
+      "season": "varsha",
+      "jupiterYear": "Parabhava",
+      "planetCount": 9,
+      "headlines": 43,
+      "nimitta": 2,
+      "earthquakes": 0,
+      "rawEffects": 16,
+      "filtered": 0,
+      "cancelled": 0,
+      "finalEffects": 16,
+      "convergentDomains": 3,
+      "elapsedMs": 0,
+      "headline": "Northern India faces agricultural challenges amidst rising geopolitical tensions and shifting trade dynamics.",
+      "usedLLM": true,
+      "predictions": 3,
+      "validations": 0,
+      "confidenceRulesTracked": 0,
+      "memoryDepth": 9,
+      "topEffects": [
+        {
+          "domain": "agriculture",
+          "dir": "neg",
+          "weight": 0.85,
+          "desc": "Mars ahead of Venus: fire disasters, war erupts, famine in northern countries, bloodshed",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2025-10-22"
+        },
+        {
+          "domain": "society",
+          "dir": "pos",
+          "weight": 0.7,
+          "desc": "Sun is spotless, clear, bright, and displays natural whitish color — auspicious to all",
+          "regions": [
+            "Eastern Narmada",
+            "Sone",
+            "Orissa"
+          ],
+          "peak": "2025-10-22"
+        },
+        {
+          "domain": "agriculture",
+          "dir": "neg",
+          "weight": 0.65,
+          "desc": "Samvatsara \"Plavanga\" (Yuga 9, Moon): Monkeys and pests trouble crops, agricultural damage",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2025-10-22"
+        },
+        {
+          "domain": "military",
+          "dir": "neg",
+          "weight": 0.64,
+          "desc": "Mars ahead of Venus: fire disasters, war erupts, famine in northern countries, bloodshed",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2025-10-22"
+        },
+        {
+          "domain": "agriculture",
+          "dir": "mix",
+          "weight": 0.55,
+          "desc": "Rain lord for year 1 of lustrum: Agni — Moderate rain at the beginning, fire-related issues",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2025-10-22"
+        }
+      ],
+      "topDomains": [
+        {
+          "domain": "agriculture",
+          "outlook": "challenging",
+          "net": -1.5
+        },
+        {
+          "domain": "military",
+          "outlook": "challenging",
+          "net": -1.13
+        },
+        {
+          "domain": "crisis",
+          "outlook": "challenging",
+          "net": -0.43
+        },
+        {
+          "domain": "society",
+          "outlook": "favorable",
+          "net": 0.29999999999999993
+        }
+      ],
+      "hotDomains": [
+        "technology(1.00)",
+        "foreign_affairs(0.46)",
+        "government(0.38)",
+        "culture(0.31)"
+      ],
+      "eclipses": 0
+    },
+    {
+      "date": "2025-08-08",
+      "trigger": "purnima",
+      "season": "varsha",
+      "jupiterYear": "Parabhava",
+      "planetCount": 9,
+      "headlines": 48,
+      "nimitta": 0,
+      "earthquakes": 0,
+      "rawEffects": 23,
+      "filtered": 0,
+      "cancelled": 0,
+      "finalEffects": 23,
+      "convergentDomains": 6,
+      "elapsedMs": 2,
+      "headline": "Mars-Venus alignment portends agricultural stress and geopolitical tensions in Northern India",
+      "usedLLM": true,
+      "predictions": 3,
+      "validations": 0,
+      "confidenceRulesTracked": 0,
+      "memoryDepth": 10,
+      "topEffects": [
+        {
+          "domain": "agriculture",
+          "dir": "neg",
+          "weight": 0.85,
+          "desc": "Mars ahead of Venus: fire disasters, war erupts, famine in northern countries, bloodshed",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2025-11-06"
+        },
+        {
+          "domain": "geography",
+          "dir": "mix",
+          "weight": 0.66,
+          "desc": "Mandala_3: Southern regions affected, arts and commerce impacted, heat-related issues",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2025-11-06"
+        },
+        {
+          "domain": "agriculture",
+          "dir": "neg",
+          "weight": 0.65,
+          "desc": "Samvatsara \"Plavanga\" (Yuga 9, Moon): Monkeys and pests trouble crops, agricultural damage",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2025-11-06"
+        },
+        {
+          "domain": "military",
+          "dir": "neg",
+          "weight": 0.64,
+          "desc": "Mars ahead of Venus: fire disasters, war erupts, famine in northern countries, bloodshed",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2025-11-06"
+        },
+        {
+          "domain": "economy",
+          "dir": "pos",
+          "weight": 0.64,
+          "desc": "Jupiter in 11th house from Leo — promotes growth of husk-grains, juices, skins, jaggery",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2025-11-06"
+        }
+      ],
+      "topDomains": [
+        {
+          "domain": "agriculture",
+          "outlook": "challenging",
+          "net": -1.5
+        },
+        {
+          "domain": "military",
+          "outlook": "challenging",
+          "net": -1.13
+        },
+        {
+          "domain": "geography",
+          "outlook": "challenging",
+          "net": -0.99
+        },
+        {
+          "domain": "economy",
+          "outlook": "challenging",
+          "net": -0.8200000000000001
+        }
+      ],
+      "hotDomains": [
+        "technology(1.00)",
+        "foreign_affairs(0.60)",
+        "social_movements(0.60)",
+        "culture(0.60)"
+      ],
+      "eclipses": 0
+    },
+    {
+      "date": "2025-08-23",
+      "trigger": "amavasya",
+      "season": "varsha",
+      "jupiterYear": "Parabhava",
+      "planetCount": 9,
+      "headlines": 29,
+      "nimitta": 2,
+      "earthquakes": 0,
+      "rawEffects": 20,
+      "filtered": 0,
+      "cancelled": 0,
+      "finalEffects": 20,
+      "convergentDomains": 5,
+      "elapsedMs": 1,
+      "headline": "Western India faces trade disruptions as Venus afflicts maritime regions",
+      "usedLLM": true,
+      "predictions": 3,
+      "validations": 0,
+      "confidenceRulesTracked": 0,
+      "memoryDepth": 11,
+      "topEffects": [
+        {
+          "domain": "geography",
+          "dir": "neg",
+          "weight": 0.72,
+          "desc": "Mandala_4: Western and southwestern regions impacted, maritime issues, trade disruption",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2025-11-21"
+        },
+        {
+          "domain": "society",
+          "dir": "pos",
+          "weight": 0.7,
+          "desc": "Sun is spotless, clear, bright, and displays natural whitish color — auspicious to all",
+          "regions": [
+            "Eastern Narmada",
+            "Sone",
+            "Orissa"
+          ],
+          "peak": "2025-11-21"
+        },
+        {
+          "domain": "society",
+          "dir": "neg",
+          "weight": 0.65,
+          "desc": "Mercury transiting Aslesha-Magha group: serpent fears, poison incidents, fire from lightning, ancest",
+          "regions": [
+            "Lohitya river",
+            "Indus",
+            "Sarayu"
+          ],
+          "peak": "2025-11-21"
+        },
+        {
+          "domain": "geography",
+          "dir": "neg",
+          "weight": 0.57,
+          "desc": "Regions afflicted by Venus in Mandala_4: Sindhu, Sauveera, Anarta, Saurashtra, Raivatakas",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2025-11-21"
+        },
+        {
+          "domain": "geography",
+          "dir": "neg",
+          "weight": 0.5,
+          "desc": "Regions overpowered when Venus in Mandala_4: Abheera, Dravida, Pahlava, Barbara, Yavana",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2025-11-21"
+        }
+      ],
+      "topDomains": [
+        {
+          "domain": "geography",
+          "outlook": "challenging",
+          "net": -1.79
+        },
+        {
+          "domain": "agriculture",
+          "outlook": "challenging",
+          "net": -0.49
+        },
+        {
+          "domain": "trade",
+          "outlook": "challenging",
+          "net": -0.49
+        },
+        {
+          "domain": "economy",
+          "outlook": "favorable",
+          "net": 0.43000000000000016
+        }
+      ],
+      "hotDomains": [
+        "foreign_affairs(1.00)",
+        "technology(0.88)",
+        "agriculture(0.50)",
+        "social_movements(0.50)"
+      ],
+      "eclipses": 0
+    },
+    {
+      "date": "2025-09-07",
+      "trigger": "purnima",
+      "season": "sharad",
+      "jupiterYear": "Parabhava",
+      "planetCount": 9,
+      "headlines": 42,
+      "nimitta": 0,
+      "earthquakes": 0,
+      "rawEffects": 11,
+      "filtered": 0,
+      "cancelled": 0,
+      "finalEffects": 11,
+      "convergentDomains": 2,
+      "elapsedMs": 1,
+      "headline": "Eastern India sees auspicious societal trends amid agricultural and economic crosscurrents",
+      "usedLLM": true,
+      "predictions": 3,
+      "validations": 0,
+      "confidenceRulesTracked": 0,
+      "memoryDepth": 12,
+      "topEffects": [
+        {
+          "domain": "society",
+          "dir": "pos",
+          "weight": 0.52,
+          "desc": "Sun is spotless, clear, bright, and displays natural lotus color — auspicious to all",
+          "regions": [
+            "Eastern Narmada",
+            "Sone",
+            "Orissa"
+          ],
+          "peak": "2025-12-06"
+        },
+        {
+          "domain": "agriculture",
+          "dir": "neg",
+          "weight": 0.49,
+          "desc": "Samvatsara \"Plavanga\" (Yuga 9, Moon): Monkeys and pests trouble crops, agricultural damage",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2025-12-06"
+        },
+        {
+          "domain": "economy",
+          "dir": "pos",
+          "weight": 0.43,
+          "desc": "Jupiter in 10th house from Virgo — promotes growth of flax, horse-gram, wheat, green gram, legumes",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2025-12-06"
+        },
+        {
+          "domain": "agriculture",
+          "dir": "mix",
+          "weight": 0.41,
+          "desc": "Rain lord for year 1 of lustrum: Agni — Moderate rain at the beginning, fire-related issues",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2025-12-06"
+        },
+        {
+          "domain": "economy",
+          "dir": "pos",
+          "weight": 0.4,
+          "desc": "Venus in 3rd house from Virgo — promotes growth of flax, horse-gram, wheat, green gram, legumes",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2025-12-06"
+        }
+      ],
+      "topDomains": [
+        {
+          "domain": "agriculture",
+          "outlook": "challenging",
+          "net": -0.49
+        },
+        {
+          "domain": "society",
+          "outlook": "favorable",
+          "net": 0.22000000000000003
+        },
+        {
+          "domain": "economy",
+          "outlook": "favorable",
+          "net": 0.050000000000000044
+        },
+        {
+          "domain": "public_mood",
+          "outlook": "mixed",
+          "net": 0
+        }
+      ],
+      "hotDomains": [
+        "technology(1.00)",
+        "foreign_affairs(0.64)",
+        "military(0.55)",
+        "judiciary(0.45)"
+      ],
+      "eclipses": 1
+    },
+    {
+      "date": "2025-09-21",
+      "trigger": "amavasya",
+      "season": "sharad",
+      "jupiterYear": "Parabhava",
+      "planetCount": 9,
+      "headlines": 41,
+      "nimitta": 2,
+      "earthquakes": 0,
+      "rawEffects": 20,
+      "filtered": 0,
+      "cancelled": 0,
+      "finalEffects": 20,
+      "convergentDomains": 6,
+      "elapsedMs": 0,
+      "headline": "Western India braces for trade disruptions and social unrest amid mixed economic signals",
+      "usedLLM": true,
+      "predictions": 3,
+      "validations": 0,
+      "confidenceRulesTracked": 0,
+      "memoryDepth": 13,
+      "topEffects": [
+        {
+          "domain": "geography",
+          "dir": "neg",
+          "weight": 0.72,
+          "desc": "Mandala_4: Western and southwestern regions impacted, maritime issues, trade disruption",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2025-12-20"
+        },
+        {
+          "domain": "society",
+          "dir": "pos",
+          "weight": 0.7,
+          "desc": "Sun is spotless, clear, bright, and displays natural lotus color — auspicious to all",
+          "regions": [
+            "Eastern Narmada",
+            "Sone",
+            "Orissa"
+          ],
+          "peak": "2025-12-20"
+        },
+        {
+          "domain": "society",
+          "dir": "neg",
+          "weight": 0.7,
+          "desc": "Papakhya course (11 days): Sin-named — robbery, fraud, deceit, and moral decay spread",
+          "regions": [
+            "Lohitya river",
+            "Indus",
+            "Sarayu"
+          ],
+          "peak": "2025-12-20"
+        },
+        {
+          "domain": "economy",
+          "dir": "pos",
+          "weight": 0.64,
+          "desc": "Jupiter in 10th house from Virgo — promotes growth of flax, horse-gram, wheat, green gram, legumes",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2025-12-20"
+        },
+        {
+          "domain": "economy",
+          "dir": "pos",
+          "weight": 0.6,
+          "desc": "Venus in 3rd house from Virgo — promotes growth of flax, horse-gram, wheat, green gram, legumes",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2025-12-20"
+        }
+      ],
+      "topDomains": [
+        {
+          "domain": "geography",
+          "outlook": "challenging",
+          "net": -1.79
+        },
+        {
+          "domain": "society",
+          "outlook": "challenging",
+          "net": -0.8
+        },
+        {
+          "domain": "economy",
+          "outlook": "favorable",
+          "net": 0.6799999999999999
+        },
+        {
+          "domain": "agriculture",
+          "outlook": "challenging",
+          "net": -0.49
+        }
+      ],
+      "hotDomains": [
+        "foreign_affairs(1.00)",
+        "technology(0.90)",
+        "military(0.50)",
+        "culture(0.40)"
+      ],
+      "eclipses": 1
+    },
+    {
+      "date": "2025-10-06",
+      "trigger": "purnima",
+      "season": "sharad",
+      "jupiterYear": "Parabhava",
+      "planetCount": 9,
+      "headlines": 47,
+      "nimitta": 0,
+      "earthquakes": 0,
+      "rawEffects": 14,
+      "filtered": 0,
+      "cancelled": 0,
+      "finalEffects": 14,
+      "convergentDomains": 3,
+      "elapsedMs": 0,
+      "headline": "Eastern India sees societal upswing despite agricultural challenges, while global diplomacy focuses on Gaza ceasefire",
+      "usedLLM": true,
+      "predictions": 3,
+      "validations": 0,
+      "confidenceRulesTracked": 0,
+      "memoryDepth": 14,
+      "topEffects": [
+        {
+          "domain": "economy",
+          "dir": "pos",
+          "weight": 0.64,
+          "desc": "Jupiter in 9th house from Libra — promotes growth of black gram, barley, wheat, mustard",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2026-01-04"
+        },
+        {
+          "domain": "economy",
+          "dir": "pos",
+          "weight": 0.6,
+          "desc": "Venus in 2nd house from Libra — promotes growth of black gram, barley, wheat, mustard",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2026-01-04"
+        },
+        {
+          "domain": "economy",
+          "dir": "neg",
+          "weight": 0.56,
+          "desc": "Mars in 2nd house from Libra — destroys/depresses black gram, barley, wheat, mustard",
+          "regions": [
+            "Western Sone",
+            "Narmada",
+            "Godavari"
+          ],
+          "peak": "2026-01-04"
+        },
+        {
+          "domain": "society",
+          "dir": "pos",
+          "weight": 0.52,
+          "desc": "Sun is spotless, clear, bright, and displays natural lotus color — auspicious to all",
+          "regions": [
+            "Eastern Narmada",
+            "Sone",
+            "Orissa"
+          ],
+          "peak": "2026-01-04"
+        },
+        {
+          "domain": "agriculture",
+          "dir": "neg",
+          "weight": 0.49,
+          "desc": "Samvatsara \"Plavanga\" (Yuga 9, Moon): Monkeys and pests trouble crops, agricultural damage",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2026-01-04"
+        }
+      ],
+      "topDomains": [
+        {
+          "domain": "economy",
+          "outlook": "favorable",
+          "net": 0.72
+        },
+        {
+          "domain": "agriculture",
+          "outlook": "challenging",
+          "net": -0.49
+        },
+        {
+          "domain": "health",
+          "outlook": "challenging",
+          "net": -0.38
+        },
+        {
+          "domain": "society",
+          "outlook": "challenging",
+          "net": -0.07999999999999996
+        }
+      ],
+      "hotDomains": [
+        "technology(1.00)",
+        "foreign_affairs(0.90)",
+        "culture(0.80)",
+        "military(0.40)"
+      ],
+      "eclipses": 1
+    },
+    {
+      "date": "2025-10-21",
+      "trigger": "amavasya",
+      "season": "sharad",
+      "jupiterYear": "Parabhava",
+      "planetCount": 9,
+      "headlines": 44,
+      "nimitta": 1,
+      "earthquakes": 0,
+      "rawEffects": 15,
+      "filtered": 0,
+      "cancelled": 0,
+      "finalEffects": 15,
+      "convergentDomains": 3,
+      "elapsedMs": 1,
+      "headline": "Agricultural distress looms as Venus-Jupiter opposition threatens crop yields, while societal harmony prevails in eastern India",
+      "usedLLM": true,
+      "predictions": 3,
+      "validations": 0,
+      "confidenceRulesTracked": 0,
+      "memoryDepth": 15,
+      "topEffects": [
+        {
+          "domain": "agriculture",
+          "dir": "neg",
+          "weight": 0.8,
+          "desc": "Venus and Jupiter in opposition: sickness pervades, no rain, crops fail, general distress",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2026-01-19"
+        },
+        {
+          "domain": "agriculture",
+          "dir": "neg",
+          "weight": 0.65,
+          "desc": "Samvatsara \"Plavanga\" (Yuga 9, Moon): Monkeys and pests trouble crops, agricultural damage",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2026-01-19"
+        },
+        {
+          "domain": "economy",
+          "dir": "pos",
+          "weight": 0.64,
+          "desc": "Jupiter in 9th house from Libra — promotes growth of black gram, barley, wheat, mustard",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2026-01-19"
+        },
+        {
+          "domain": "economy",
+          "dir": "pos",
+          "weight": 0.6,
+          "desc": "Venus in 3rd house from Libra — promotes growth of black gram, barley, wheat, mustard",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2026-01-19"
+        },
+        {
+          "domain": "agriculture",
+          "dir": "mix",
+          "weight": 0.55,
+          "desc": "Rain lord for year 1 of lustrum: Agni — Moderate rain at the beginning, fire-related issues",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2026-01-19"
+        }
+      ],
+      "topDomains": [
+        {
+          "domain": "economy",
+          "outlook": "favorable",
+          "net": 2.66
+        },
+        {
+          "domain": "agriculture",
+          "outlook": "challenging",
+          "net": -1.4500000000000002
+        },
+        {
+          "domain": "health",
+          "outlook": "challenging",
+          "net": -0.4
+        },
+        {
+          "domain": "society",
+          "outlook": "challenging",
+          "net": -0.07999999999999996
+        }
+      ],
+      "hotDomains": [
+        "technology(1.00)",
+        "foreign_affairs(0.47)",
+        "health(0.32)",
+        "humanitarian(0.26)"
+      ],
+      "eclipses": 1
+    },
+    {
+      "date": "2025-11-05",
+      "trigger": "purnima",
+      "season": "hemanta",
+      "jupiterYear": "Parabhava",
+      "planetCount": 9,
+      "headlines": 44,
+      "nimitta": 0,
+      "earthquakes": 0,
+      "rawEffects": 10,
+      "filtered": 0,
+      "cancelled": 0,
+      "finalEffects": 10,
+      "convergentDomains": 2,
+      "elapsedMs": 0,
+      "headline": "Western India grapples with economic headwinds as Rohini affliction impacts society",
+      "usedLLM": true,
+      "predictions": 3,
+      "validations": 0,
+      "confidenceRulesTracked": 0,
+      "memoryDepth": 16,
+      "topEffects": [
+        {
+          "domain": "society",
+          "dir": "pos",
+          "weight": 0.52,
+          "desc": "Sun is spotless, clear, bright, and displays natural blood-red color — auspicious to all",
+          "regions": [
+            "Eastern Narmada",
+            "Sone",
+            "Orissa"
+          ],
+          "peak": "2026-02-03"
+        },
+        {
+          "domain": "agriculture",
+          "dir": "neg",
+          "weight": 0.49,
+          "desc": "Samvatsara \"Plavanga\" (Yuga 9, Moon): Monkeys and pests trouble crops, agricultural damage",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2026-02-03"
+        },
+        {
+          "domain": "agriculture",
+          "dir": "mix",
+          "weight": 0.41,
+          "desc": "Rain lord for year 1 of lustrum: Agni — Moderate rain at the beginning, fire-related issues",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2026-02-03"
+        },
+        {
+          "domain": "economy",
+          "dir": "pos",
+          "weight": 0.4,
+          "desc": "Venus in 2nd house from Scorpio — promotes growth of sugarcane, iron, bell-metal, wool",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2026-02-03"
+        },
+        {
+          "domain": "economy",
+          "dir": "neg",
+          "weight": 0.4,
+          "desc": "Saturn in 5th house from Scorpio — destroys/depresses sugarcane, iron, bell-metal, wool",
+          "regions": [
+            "Anarta",
+            "Arbuda",
+            "Pushkara"
+          ],
+          "peak": "2026-02-03"
+        }
+      ],
+      "topDomains": [
+        {
+          "domain": "agriculture",
+          "outlook": "challenging",
+          "net": -0.49
+        },
+        {
+          "domain": "economy",
+          "outlook": "challenging",
+          "net": -0.38
+        },
+        {
+          "domain": "society",
+          "outlook": "favorable",
+          "net": 0.22000000000000003
+        },
+        {
+          "domain": "public_mood",
+          "outlook": "mixed",
+          "net": 0
+        }
+      ],
+      "hotDomains": [
+        "technology(1.00)",
+        "foreign_affairs(0.64)",
+        "maritime(0.45)",
+        "military(0.36)"
+      ],
+      "eclipses": 1
+    },
+    {
+      "date": "2025-11-20",
+      "trigger": "amavasya",
+      "season": "hemanta",
+      "jupiterYear": "Parabhava",
+      "planetCount": 9,
+      "headlines": 48,
+      "nimitta": 2,
+      "earthquakes": 0,
+      "rawEffects": 11,
+      "filtered": 0,
+      "cancelled": 0,
+      "finalEffects": 11,
+      "convergentDomains": 3,
+      "elapsedMs": 1,
+      "headline": "Turkish Football Faces Scrutiny Amid Match-Fixing Allegations",
+      "usedLLM": true,
+      "predictions": 3,
+      "validations": 0,
+      "confidenceRulesTracked": 0,
+      "memoryDepth": 17,
+      "topEffects": [
+        {
+          "domain": "economy",
+          "dir": "pos",
+          "weight": 0.6,
+          "desc": "Venus in 3rd house from Scorpio — promotes growth of sugarcane, iron, bell-metal, wool",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2026-02-18"
+        },
+        {
+          "domain": "economy",
+          "dir": "neg",
+          "weight": 0.6,
+          "desc": "Saturn in 5th house from Scorpio — destroys/depresses sugarcane, iron, bell-metal, wool",
+          "regions": [
+            "Anarta",
+            "Arbuda",
+            "Pushkara"
+          ],
+          "peak": "2026-02-18"
+        },
+        {
+          "domain": "society",
+          "dir": "pos",
+          "weight": 0.52,
+          "desc": "Sun is spotless, clear, bright, and displays natural blood-red color — auspicious to all",
+          "regions": [
+            "Eastern Narmada",
+            "Sone",
+            "Orissa"
+          ],
+          "peak": "2026-02-18"
+        },
+        {
+          "domain": "society",
+          "dir": "neg",
+          "weight": 0.52,
+          "desc": "Papakhya course (11 days): Sin-named — robbery, fraud, deceit, and moral decay spread",
+          "regions": [
+            "Lohitya river",
+            "Indus",
+            "Sarayu"
+          ],
+          "peak": "2026-02-18"
+        },
+        {
+          "domain": "agriculture",
+          "dir": "neg",
+          "weight": 0.49,
+          "desc": "Samvatsara \"Plavanga\" (Yuga 9, Moon): Monkeys and pests trouble crops, agricultural damage",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2026-02-18"
+        }
+      ],
+      "topDomains": [
+        {
+          "domain": "agriculture",
+          "outlook": "challenging",
+          "net": -0.49
+        },
+        {
+          "domain": "economy",
+          "outlook": "mixed",
+          "net": 0
+        },
+        {
+          "domain": "society",
+          "outlook": "mixed",
+          "net": 0
+        },
+        {
+          "domain": "public_mood",
+          "outlook": "mixed",
+          "net": 0
+        }
+      ],
+      "hotDomains": [
+        "technology(1.00)",
+        "foreign_affairs(0.65)",
+        "military(0.24)"
+      ],
+      "eclipses": 1
+    },
+    {
+      "date": "2025-12-05",
+      "trigger": "purnima",
+      "season": "hemanta",
+      "jupiterYear": "Parabhava",
+      "planetCount": 9,
+      "headlines": 37,
+      "nimitta": 1,
+      "earthquakes": 1,
+      "rawEffects": 21,
+      "filtered": 0,
+      "cancelled": 0,
+      "finalEffects": 21,
+      "convergentDomains": 5,
+      "elapsedMs": 2,
+      "headline": "Northwestern regions face agricultural challenges amid mixed economic signals, as technology sector booms",
+      "usedLLM": true,
+      "predictions": 3,
+      "validations": 0,
+      "confidenceRulesTracked": 0,
+      "memoryDepth": 18,
+      "topEffects": [
+        {
+          "domain": "economy",
+          "dir": "pos",
+          "weight": 0.85,
+          "desc": "Jupiter in 7th house from Sagittarius — promotes growth of horses, salt, cloths, sesamum, corn",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2026-03-05"
+        },
+        {
+          "domain": "economy",
+          "dir": "pos",
+          "weight": 0.8,
+          "desc": "Venus in 2nd house from Sagittarius — promotes growth of horses, salt, cloths, sesamum, corn",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2026-03-05"
+        },
+        {
+          "domain": "economy",
+          "dir": "neg",
+          "weight": 0.8,
+          "desc": "Saturn in 4th house from Sagittarius — destroys/depresses horses, salt, cloths, sesamum, corn",
+          "regions": [
+            "Anarta",
+            "Arbuda",
+            "Pushkara"
+          ],
+          "peak": "2026-03-05"
+        },
+        {
+          "domain": "geography",
+          "dir": "neg",
+          "weight": 0.77,
+          "desc": "Mandala_5: Northwestern regions affected, cold-weather crops damaged, frontier instability",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2026-03-05"
+        },
+        {
+          "domain": "economy",
+          "dir": "neg",
+          "weight": 0.75,
+          "desc": "Mars in 2nd house from Sagittarius — destroys/depresses horses, salt, cloths, sesamum, corn",
+          "regions": [
+            "Western Sone",
+            "Narmada",
+            "Godavari"
+          ],
+          "peak": "2026-03-05"
+        }
+      ],
+      "topDomains": [
+        {
+          "domain": "geography",
+          "outlook": "challenging",
+          "net": -2.42
+        },
+        {
+          "domain": "agriculture",
+          "outlook": "challenging",
+          "net": -1.17
+        },
+        {
+          "domain": "public_mood",
+          "outlook": "challenging",
+          "net": -0.56
+        },
+        {
+          "domain": "economy",
+          "outlook": "challenging",
+          "net": -0.4200000000000004
+        }
+      ],
+      "hotDomains": [
+        "technology(1.00)",
+        "culture(1.00)",
+        "health(0.75)",
+        "military(0.50)"
+      ],
+      "eclipses": 1
+    },
+    {
+      "date": "2025-12-20",
+      "trigger": "amavasya",
+      "season": "hemanta",
+      "jupiterYear": "Parabhava",
+      "planetCount": 9,
+      "headlines": 30,
+      "nimitta": 0,
+      "earthquakes": 0,
+      "rawEffects": 19,
+      "filtered": 0,
+      "cancelled": 0,
+      "finalEffects": 19,
+      "convergentDomains": 5,
+      "elapsedMs": 0,
+      "headline": "Northwestern India Faces Infrastructure Strain Amidst Positive Societal Trends",
+      "usedLLM": true,
+      "predictions": 3,
+      "validations": 0,
+      "confidenceRulesTracked": 0,
+      "memoryDepth": 19,
+      "topEffects": [
+        {
+          "domain": "geography",
+          "dir": "neg",
+          "weight": 0.77,
+          "desc": "Mandala_5: Northwestern regions affected, cold-weather crops damaged, frontier instability",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2026-03-20"
+        },
+        {
+          "domain": "society",
+          "dir": "pos",
+          "weight": 0.7,
+          "desc": "Sun is spotless, clear, bright, and displays natural blood-red color — auspicious to all",
+          "regions": [
+            "Eastern Narmada",
+            "Sone",
+            "Orissa"
+          ],
+          "peak": "2026-03-20"
+        },
+        {
+          "domain": "economy",
+          "dir": "pos",
+          "weight": 0.64,
+          "desc": "Jupiter in 7th house from Sagittarius — promotes growth of horses, salt, cloths, sesamum, corn",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2026-03-20"
+        },
+        {
+          "domain": "geography",
+          "dir": "neg",
+          "weight": 0.62,
+          "desc": "Regions afflicted by Venus in Mandala_5: Tushara, Madra, Kuluta, Halada, Charmaranga",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2026-03-20"
+        },
+        {
+          "domain": "economy",
+          "dir": "pos",
+          "weight": 0.6,
+          "desc": "Venus in 3rd house from Sagittarius — promotes growth of horses, salt, cloths, sesamum, corn",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2026-03-20"
+        }
+      ],
+      "topDomains": [
+        {
+          "domain": "geography",
+          "outlook": "challenging",
+          "net": -1.9300000000000002
+        },
+        {
+          "domain": "society",
+          "outlook": "challenging",
+          "net": -0.6500000000000001
+        },
+        {
+          "domain": "public_mood",
+          "outlook": "challenging",
+          "net": -0.56
+        },
+        {
+          "domain": "agriculture",
+          "outlook": "challenging",
+          "net": -0.49
+        }
+      ],
+      "hotDomains": [
+        "foreign_affairs(1.00)",
+        "health(0.56)",
+        "technology(0.44)",
+        "culture(0.44)"
+      ],
+      "eclipses": 0
+    },
+    {
+      "date": "2026-01-04",
+      "trigger": "purnima",
+      "season": "shishira",
+      "jupiterYear": "Parabhava",
+      "planetCount": 9,
+      "headlines": 44,
+      "nimitta": 1,
+      "earthquakes": 0,
+      "rawEffects": 15,
+      "filtered": 0,
+      "cancelled": 0,
+      "finalEffects": 15,
+      "convergentDomains": 2,
+      "elapsedMs": 1,
+      "headline": "US-Venezuela tensions rise amid infrastructure concerns in western India",
+      "usedLLM": true,
+      "predictions": 3,
+      "validations": 0,
+      "confidenceRulesTracked": 0,
+      "memoryDepth": 20,
+      "topEffects": [
+        {
+          "domain": "society",
+          "dir": "pos",
+          "weight": 0.7,
+          "desc": "Sun is spotless, clear, bright, and displays natural copper color — auspicious to all",
+          "regions": [
+            "Eastern Narmada",
+            "Sone",
+            "Orissa"
+          ],
+          "peak": "2026-04-04"
+        },
+        {
+          "domain": "society",
+          "dir": "neg",
+          "weight": 0.55,
+          "desc": "Mars in Dhanishta afflicts those without pride and charitable persons; musical instruments go silent",
+          "regions": [
+            "Western Sone",
+            "Narmada",
+            "Godavari"
+          ],
+          "peak": "2026-04-04"
+        },
+        {
+          "domain": "agriculture",
+          "dir": "neg",
+          "weight": 0.49,
+          "desc": "Samvatsara \"Plavanga\" (Yuga 9, Moon): Monkeys and pests trouble crops, agricultural damage",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2026-04-04"
+        },
+        {
+          "domain": "agriculture",
+          "dir": "mix",
+          "weight": 0.41,
+          "desc": "Rain lord for year 1 of lustrum: Agni — Moderate rain at the beginning, fire-related issues",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2026-04-04"
+        },
+        {
+          "domain": "economy",
+          "dir": "pos",
+          "weight": 0.4,
+          "desc": "Venus in 2nd house from Capricorn — promotes growth of trees, sugarcane, gold, iron",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2026-04-04"
+        }
+      ],
+      "topDomains": [
+        {
+          "domain": "society",
+          "outlook": "challenging",
+          "net": -0.6500000000000001
+        },
+        {
+          "domain": "agriculture",
+          "outlook": "challenging",
+          "net": -0.49
+        },
+        {
+          "domain": "health",
+          "outlook": "challenging",
+          "net": -0.38
+        },
+        {
+          "domain": "crisis",
+          "outlook": "challenging",
+          "net": -0.38
+        }
+      ],
+      "hotDomains": [
+        "foreign_affairs(1.00)",
+        "technology(0.86)",
+        "terrorism(0.36)",
+        "humanitarian(0.29)"
+      ],
+      "eclipses": 0
+    },
+    {
+      "date": "2026-01-18",
+      "trigger": "amavasya",
+      "season": "shishira",
+      "jupiterYear": "Parabhava",
+      "planetCount": 9,
+      "headlines": 36,
+      "nimitta": 1,
+      "earthquakes": 0,
+      "rawEffects": 11,
+      "filtered": 0,
+      "cancelled": 0,
+      "finalEffects": 11,
+      "convergentDomains": 1,
+      "elapsedMs": 1,
+      "headline": "Renewed Focus on Western Regions as Venus Shifts, Triggering Economic and Health Impacts",
+      "usedLLM": true,
+      "predictions": 3,
+      "validations": 0,
+      "confidenceRulesTracked": 0,
+      "memoryDepth": 21,
+      "topEffects": [
+        {
+          "domain": "agriculture",
+          "dir": "neg",
+          "weight": 0.49,
+          "desc": "Samvatsara \"Plavanga\" (Yuga 9, Moon): Monkeys and pests trouble crops, agricultural damage",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2026-04-18"
+        },
+        {
+          "domain": "agriculture",
+          "dir": "mix",
+          "weight": 0.41,
+          "desc": "Rain lord for year 1 of lustrum: Agni — Moderate rain at the beginning, fire-related issues",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2026-04-18"
+        },
+        {
+          "domain": "economy",
+          "dir": "pos",
+          "weight": 0.4,
+          "desc": "Venus in 2nd house from Capricorn — promotes growth of trees, sugarcane, gold, iron",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2026-04-18"
+        },
+        {
+          "domain": "health",
+          "dir": "neg",
+          "weight": 0.38,
+          "desc": "Saturn ahead of Venus: barbarians and southerners destroyed by wind-diseases, storms ravage",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2026-04-18"
+        },
+        {
+          "domain": "crisis",
+          "dir": "neg",
+          "weight": 0.38,
+          "desc": "Saturn ahead of Venus: barbarians and southerners destroyed by wind-diseases, storms ravage",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2026-04-18"
+        }
+      ],
+      "topDomains": [
+        {
+          "domain": "agriculture",
+          "outlook": "challenging",
+          "net": -0.49
+        },
+        {
+          "domain": "health",
+          "outlook": "challenging",
+          "net": -0.38
+        },
+        {
+          "domain": "crisis",
+          "outlook": "challenging",
+          "net": -0.38
+        },
+        {
+          "domain": "society",
+          "outlook": "favorable",
+          "net": 0.35
+        }
+      ],
+      "hotDomains": [
+        "foreign_affairs(1.00)",
+        "technology(1.00)",
+        "military(0.57)",
+        "social_movements(0.57)"
+      ],
+      "eclipses": 0
+    },
+    {
+      "date": "2026-02-02",
+      "trigger": "purnima",
+      "season": "shishira",
+      "jupiterYear": "Parabhava",
+      "planetCount": 9,
+      "headlines": 42,
+      "nimitta": 1,
+      "earthquakes": 0,
+      "rawEffects": 11,
+      "filtered": 0,
+      "cancelled": 0,
+      "finalEffects": 11,
+      "convergentDomains": 2,
+      "elapsedMs": 0,
+      "headline": "Positive societal trends in eastern India contrast with agricultural challenges in the northwest",
+      "usedLLM": true,
+      "predictions": 3,
+      "validations": 0,
+      "confidenceRulesTracked": 0,
+      "memoryDepth": 22,
+      "topEffects": [
+        {
+          "domain": "society",
+          "dir": "pos",
+          "weight": 0.52,
+          "desc": "Sun is spotless, clear, bright, and displays natural copper color — auspicious to all",
+          "regions": [
+            "Eastern Narmada",
+            "Sone",
+            "Orissa"
+          ],
+          "peak": "2026-05-03"
+        },
+        {
+          "domain": "agriculture",
+          "dir": "neg",
+          "weight": 0.49,
+          "desc": "Samvatsara \"Plavanga\" (Yuga 9, Moon): Monkeys and pests trouble crops, agricultural damage",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2026-05-03"
+        },
+        {
+          "domain": "agriculture",
+          "dir": "mix",
+          "weight": 0.41,
+          "desc": "Rain lord for year 1 of lustrum: Agni — Moderate rain at the beginning, fire-related issues",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2026-05-03"
+        },
+        {
+          "domain": "economy",
+          "dir": "pos",
+          "weight": 0.4,
+          "desc": "Venus in 3rd house from Capricorn — promotes growth of trees, sugarcane, gold, iron",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2026-05-03"
+        },
+        {
+          "domain": "economy",
+          "dir": "neg",
+          "weight": 0.38,
+          "desc": "Mars in 2nd house from Capricorn — destroys/depresses trees, sugarcane, gold, iron",
+          "regions": [
+            "Western Sone",
+            "Narmada",
+            "Godavari"
+          ],
+          "peak": "2026-05-03"
+        }
+      ],
+      "topDomains": [
+        {
+          "domain": "agriculture",
+          "outlook": "challenging",
+          "net": -0.49
+        },
+        {
+          "domain": "economy",
+          "outlook": "favorable",
+          "net": 0.31999999999999995
+        },
+        {
+          "domain": "society",
+          "outlook": "challenging",
+          "net": -0.07999999999999996
+        },
+        {
+          "domain": "public_mood",
+          "outlook": "mixed",
+          "net": 0
+        }
+      ],
+      "hotDomains": [
+        "foreign_affairs(1.00)",
+        "technology(0.90)",
+        "military(0.50)",
+        "health(0.50)"
+      ],
+      "eclipses": 0
+    },
+    {
+      "date": "2026-02-17",
+      "trigger": "amavasya",
+      "season": "shishira",
+      "jupiterYear": "Parabhava",
+      "planetCount": 9,
+      "headlines": 45,
+      "nimitta": 1,
+      "earthquakes": 0,
+      "rawEffects": 15,
+      "filtered": 0,
+      "cancelled": 0,
+      "finalEffects": 15,
+      "convergentDomains": 3,
+      "elapsedMs": 0,
+      "headline": "Flood alerts and pest infestations threaten northwest Indian agriculture, while ocean trade sees potential gains",
+      "usedLLM": true,
+      "predictions": 3,
+      "validations": 0,
+      "confidenceRulesTracked": 0,
+      "memoryDepth": 23,
+      "topEffects": [
+        {
+          "domain": "geography",
+          "dir": "neg",
+          "weight": 0.83,
+          "desc": "Mandala_6: Northern/central regions suffer, kings troubled, general distress, water issues",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2026-05-18"
+        },
+        {
+          "domain": "public_mood",
+          "dir": "neg",
+          "weight": 0.71,
+          "desc": "Dahana Veethee: fire-path total destruction, famine, war, pestilence, rulers cruel, universal suffer",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2026-05-18"
+        },
+        {
+          "domain": "geography",
+          "dir": "neg",
+          "weight": 0.66,
+          "desc": "Regions afflicted by Venus in Mandala_6: Kuru, Panchala, Surasena, Mathura, Ayodhya",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2026-05-18"
+        },
+        {
+          "domain": "geography",
+          "dir": "neg",
+          "weight": 0.58,
+          "desc": "Regions overpowered when Venus in Mandala_6: Kailasa dwellers, Himalayan people, Kekaya, Gandhara",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2026-05-18"
+        },
+        {
+          "domain": "agriculture",
+          "dir": "neg",
+          "weight": 0.49,
+          "desc": "Samvatsara \"Plavanga\" (Yuga 9, Moon): Monkeys and pests trouble crops, agricultural damage",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2026-05-18"
+        }
+      ],
+      "topDomains": [
+        {
+          "domain": "geography",
+          "outlook": "challenging",
+          "net": -2.07
+        },
+        {
+          "domain": "public_mood",
+          "outlook": "challenging",
+          "net": -0.71
+        },
+        {
+          "domain": "agriculture",
+          "outlook": "challenging",
+          "net": -0.49
+        },
+        {
+          "domain": "economy",
+          "outlook": "favorable",
+          "net": 0.44999999999999996
+        }
+      ],
+      "hotDomains": [
+        "technology(1.00)",
+        "media(0.33)",
+        "foreign_affairs(0.33)",
+        "culture(0.27)"
+      ],
+      "eclipses": 1
+    },
+    {
+      "date": "2026-03-04",
+      "trigger": "purnima",
+      "season": "vasanta",
+      "jupiterYear": "Plavanga",
+      "planetCount": 9,
+      "headlines": 51,
+      "nimitta": 2,
+      "earthquakes": 0,
+      "rawEffects": 17,
+      "filtered": 0,
+      "cancelled": 0,
+      "finalEffects": 17,
+      "convergentDomains": 4,
+      "elapsedMs": 1,
+      "headline": "Northern India Faces Water Scarcity Amidst Regional Conflicts and Trade Fluctuations",
+      "usedLLM": true,
+      "predictions": 3,
+      "validations": 0,
+      "confidenceRulesTracked": 0,
+      "memoryDepth": 24,
+      "topEffects": [
+        {
+          "domain": "geography",
+          "dir": "neg",
+          "weight": 0.83,
+          "desc": "Mandala_6: Northern/central regions suffer, kings troubled, general distress, water issues",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2026-06-02"
+        },
+        {
+          "domain": "public_mood",
+          "dir": "neg",
+          "weight": 0.71,
+          "desc": "Dahana Veethee: fire-path total destruction, famine, war, pestilence, rulers cruel, universal suffer",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2026-06-02"
+        },
+        {
+          "domain": "geography",
+          "dir": "neg",
+          "weight": 0.66,
+          "desc": "Regions afflicted by Venus in Mandala_6: Kuru, Panchala, Surasena, Mathura, Ayodhya",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2026-06-02"
+        },
+        {
+          "domain": "geography",
+          "dir": "neg",
+          "weight": 0.58,
+          "desc": "Regions overpowered when Venus in Mandala_6: Kailasa dwellers, Himalayan people, Kekaya, Gandhara",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2026-06-02"
+        },
+        {
+          "domain": "society",
+          "dir": "pos",
+          "weight": 0.52,
+          "desc": "Sun is spotless, clear, bright, and displays natural saffron color — auspicious to all",
+          "regions": [
+            "Eastern Narmada",
+            "Sone",
+            "Orissa"
+          ],
+          "peak": "2026-06-02"
+        }
+      ],
+      "topDomains": [
+        {
+          "domain": "geography",
+          "outlook": "challenging",
+          "net": -2.07
+        },
+        {
+          "domain": "public_mood",
+          "outlook": "challenging",
+          "net": -0.71
+        },
+        {
+          "domain": "agriculture",
+          "outlook": "challenging",
+          "net": -0.49
+        },
+        {
+          "domain": "economy",
+          "outlook": "favorable",
+          "net": 0.44999999999999996
+        }
+      ],
+      "hotDomains": [
+        "technology(1.00)",
+        "military(0.69)",
+        "terrorism(0.50)",
+        "maritime(0.38)"
+      ],
+      "eclipses": 2
+    },
+    {
+      "date": "2026-03-19",
+      "trigger": "amavasya",
+      "season": "vasanta",
+      "jupiterYear": "Plavanga",
+      "planetCount": 9,
+      "headlines": 49,
+      "nimitta": 1,
+      "earthquakes": 0,
+      "rawEffects": 14,
+      "filtered": 0,
+      "cancelled": 0,
+      "finalEffects": 14,
+      "convergentDomains": 2,
+      "elapsedMs": 1,
+      "headline": "Mars-Rohini conjunction triggers societal disruption in India amid rising heatwave concerns",
+      "usedLLM": true,
+      "predictions": 3,
+      "validations": 0,
+      "confidenceRulesTracked": 0,
+      "memoryDepth": 25,
+      "topEffects": [
+        {
+          "domain": "society",
+          "dir": "neg",
+          "weight": 0.95,
+          "desc": "Mars cutting across Rohini causes terrible mortality among cattle and men; kings perish, earth suffe",
+          "regions": [
+            "Western Sone",
+            "Narmada",
+            "Godavari"
+          ],
+          "peak": "2026-06-17"
+        },
+        {
+          "domain": "society",
+          "dir": "pos",
+          "weight": 0.7,
+          "desc": "Sun is spotless, clear, bright, and displays natural saffron color — auspicious to all",
+          "regions": [
+            "Eastern Narmada",
+            "Sone",
+            "Orissa"
+          ],
+          "peak": "2026-06-17"
+        },
+        {
+          "domain": "agriculture",
+          "dir": "neg",
+          "weight": 0.49,
+          "desc": "Samvatsara \"Plavanga\" (Yuga 9, Moon): Monkeys and pests trouble crops, agricultural damage",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2026-06-17"
+        },
+        {
+          "domain": "economy",
+          "dir": "pos",
+          "weight": 0.43,
+          "desc": "Jupiter in 4th house from Pisces — promotes growth of jewels, pearls, diamonds, oils, fish-products",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2026-06-17"
+        },
+        {
+          "domain": "agriculture",
+          "dir": "mix",
+          "weight": 0.41,
+          "desc": "Rain lord for year 1 of lustrum: Agni — Moderate rain at the beginning, fire-related issues",
+          "regions": [
+            "eastern Indus",
+            "western Muttra",
+            "Bharata"
+          ],
+          "peak": "2026-06-17"
+        }
+      ],
+      "topDomains": [
+        {
+          "domain": "economy",
+          "outlook": "favorable",
+          "net": 0.7300000000000001
+        },
+        {
+          "domain": "society",
+          "outlook": "challenging",
+          "net": -0.6500000000000001
+        },
+        {
+          "domain": "agriculture",
+          "outlook": "challenging",
+          "net": -0.49
+        },
+        {
+          "domain": "weather",
+          "outlook": "challenging",
+          "net": -0.35
+        }
+      ],
+      "hotDomains": [
+        "technology(1.00)",
+        "foreign_affairs(0.77)",
+        "military(0.69)",
+        "resources(0.62)"
+      ],
+      "eclipses": 2
+    },
+    {
+      "date": "2026-04-03",
+      "trigger": "purnima",
+      "season": "vasanta",
+      "jupiterYear": "Plavanga",
+      "planetCount": 9,
+      "headlines": 38,
+      "nimitta": 0,
+      "earthquakes": 0,
+      "rawEffects": 20,
+      "filtered": 0,
+      "cancelled": 0,
+      "finalEffects": 20,
+      "convergentDomains": 4,
+      "elapsedMs": 0,
+      "headline": "Geopolitical tensions rise in Gandhara region amid favorable societal trends in eastern India.",
+      "usedLLM": true,
+      "predictions": 3,
+      "validations": 0,
+      "confidenceRulesTracked": 0,
+      "memoryDepth": 26,
+      "topEffects": [
+        {
+          "domain": "geography",
+          "dir": "pos",
+          "weight": 0.88,
+          "desc": "Mandala_1: Northern prosperity, Brahmins honored, Vedic rituals flourish, good rains in NE",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2026-07-02"
+        },
+        {
+          "domain": "public_mood",
+          "dir": "pos",
+          "weight": 0.71,
+          "desc": "Naga Veethee: supreme prosperity, excellent rains, kings righteous, people joyful, all crops abundan",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2026-07-02"
+        },
+        {
+          "domain": "geography",
+          "dir": "neg",
+          "weight": 0.7,
+          "desc": "Regions afflicted by Venus in Mandala_1: Madra, Arjunayana, Trigarta, Pushkalavata, Kekaya",
+          "regions": [
+            "Taxila",
+            "Gandhara",
+            "Pushkalavata"
+          ],
+          "peak": "2026-07-02"
+        },
+        {
+          "domain": "society",
+          "dir": "pos",
+          "weight": 0.7,
+          "desc": "Sun is spotless, clear, bright, and displays natural saffron color — auspicious to all",
+          "regions": [
+            "Eastern Narmada",
+            "Sone",
+            "Orissa"
+          ],
+          "peak": "2026-07-02"
+        },
+        {
+          "domain": "society",
+          "dir": "neg",
+          "weight": 0.65,
+          "desc": "Theekshna course (18 days): Sharp and severe — quarrels, fear, and suffering afflict people and comm",
+          "regions": [
+            "Lohitya river",
+            "Indus",
+            "Sarayu"
+          ],
+          "peak": "2026-07-02"
+        }
+      ],
+      "topDomains": [
+        {
+          "domain": "society",
+          "outlook": "challenging",
+          "net": -0.7500000000000002
+        },
+        {
+          "domain": "public_mood",
+          "outlook": "favorable",
+          "net": 0.71
+        },
+        {
+          "domain": "agriculture",
+          "outlook": "challenging",
+          "net": -0.49
+        },
+        {
+          "domain": "geography",
+          "outlook": "challenging",
+          "net": -0.43999999999999984
+        }
+      ],
+      "hotDomains": [
+        "military(1.00)",
+        "technology(0.80)",
+        "foreign_affairs(0.60)",
+        "terrorism(0.50)"
+      ],
+      "eclipses": 2
+    }
+  ],
+  "confidenceStore": {},
+  "memoryStore": [
+    {
+      "date": "2025-04-13",
+      "headline": "Northern India anticipates agricultural shifts amid planetary alignments, while global diplomacy faces challenges.",
+      "topDomains": "agriculture(challenging), public_mood(favorable), geography(challenging)",
+      "predictions": [
+        "[agriculture] The Pakistani Ministry of National Food Security and Researc",
+        "[culture] The Archaeological Survey of India will announce the discove",
+        "[foreign_affairs] The United Nations Human Rights Council will censure Myanmar"
+      ],
+      "storedAt": "2026-04-13T19:25:55.769Z"
+    },
+    {
+      "date": "2025-04-27",
+      "headline": "Northern India braces for agricultural shifts amid geopolitical tensions and cultural realignments",
+      "topDomains": "public_mood(favorable), agriculture(challenging), geography(challenging)",
+      "predictions": [
+        "[agriculture] The Indian Council of Agricultural Research (ICAR) will laun",
+        "[economy] The Reserve Bank of India (RBI) will introduce new lending p",
+        "[culture] The Ministry of Culture of Pakistan, in collaboration with U"
+      ],
+      "storedAt": "2026-04-13T19:26:21.832Z"
+    },
+    {
+      "date": "2025-05-12",
+      "headline": "Agricultural vulnerabilities and economic shifts emerge in Indus Valley region",
+      "topDomains": "economy(favorable), agriculture(challenging), religion(challenging)",
+      "predictions": [
+        "[agriculture] The Pakistan Meteorological Department will issue warnings f",
+        "[economy] The Khadi and Village Industries Commission (KVIC) in India ",
+        "[culture] The Odisha State Museum will launch a new exhibit on tribal "
+      ],
+      "storedAt": "2026-04-13T19:26:48.794Z"
+    },
+    {
+      "date": "2025-05-14",
+      "headline": "Economic growth tempered by agricultural challenges in Indus Valley; cultural events gain momentum.",
+      "topDomains": "economy(favorable), agriculture(challenging), religion(challenging)",
+      "predictions": [
+        "[trade] The Pakistan Textile Exporters Association will secure new e",
+        "[health] The World Health Organization (WHO) will issue a health advi",
+        "[religion] The Archaeological Survey of India (ASI) will announce the d"
+      ],
+      "storedAt": "2026-04-13T19:27:13.572Z"
+    },
+    {
+      "date": "2025-05-27",
+      "headline": "Economic shifts in Indus Valley driven by planetary influences, prompting trade adjustments",
+      "topDomains": "economy(favorable), public_mood(favorable), agriculture(challenging)",
+      "predictions": [
+        "[banking] The State Bank of Pakistan will introduce a new export finan",
+        "[agriculture] The Indian Ministry of Agriculture will implement a pest con",
+        "[transport] Following Venus in Ardra, the Bangladesh Inland Water Transp"
+      ],
+      "storedAt": "2026-04-13T19:27:39.378Z"
+    },
+    {
+      "date": "2025-06-11",
+      "headline": "Eastern India sees economic upswing amid agricultural challenges and social tensions.",
+      "topDomains": "economy(favorable), public_mood(favorable), agriculture(challenging)",
+      "predictions": [
+        "[labor] The West Bengal government will launch a new initiative to p",
+        "[transport] The Ministry of Ports, Shipping and Waterways in India will ",
+        "[entertainment] Following the Sun's transit through Ardra, the Uttar Pradesh"
+      ],
+      "storedAt": "2026-04-13T19:28:03.339Z"
+    },
+    {
+      "date": "2025-06-25",
+      "headline": "Economic upswing in Indus Valley tempered by agricultural challenges and social tensions",
+      "topDomains": "economy(favorable), agriculture(challenging), society(favorable)",
+      "predictions": [
+        "[economy] Following Venus's influence in Gemini, the Ministry of Texti",
+        "[health] Due to the Sun's transit through Punarvasu, the Indian Counc",
+        "[agriculture] Following Jupiter's influence and the Samvatsara's effects, "
+      ],
+      "storedAt": "2026-04-13T19:28:27.809Z"
+    },
+    {
+      "date": "2025-07-10",
+      "headline": "Northern India braces for agricultural disruption amidst geopolitical tensions and shifting trade winds.",
+      "topDomains": "agriculture(challenging), economy(favorable), public_mood(favorable)",
+      "predictions": [
+        "[trade] Following Mars ahead of Venus, the Pakistan Ministry of Nati",
+        "[health] Following the Sun's auspicious transit, the Ministry of Ayus",
+        "[maritime] Due to Saturn's influence in Cancer, the Gujarat Maritime Bo"
+      ],
+      "storedAt": "2026-04-13T19:28:52.394Z"
+    },
+    {
+      "date": "2025-07-24",
+      "headline": "Northern India faces agricultural challenges amidst rising geopolitical tensions and shifting trade dynamics.",
+      "topDomains": "agriculture(challenging), military(challenging), crisis(challenging)",
+      "predictions": [
+        "[military] Due to the ongoing military tensions and right_arm of Samvat",
+        "[tourism] Following the spotless Sun transit, the Ministry of Tourism ",
+        "[trade] Due to the combined effect of Saturn in Cancer depressing fr"
+      ],
+      "storedAt": "2026-04-13T19:29:16.964Z"
+    },
+    {
+      "date": "2025-08-08",
+      "headline": "Mars-Venus alignment portends agricultural stress and geopolitical tensions in Northern India",
+      "topDomains": "agriculture(challenging), military(challenging), geography(challenging)",
+      "predictions": [
+        "[humanitarian] Following Mars ahead of Venus, the Pakistan National Disaste",
+        "[culture] Following the spotless Sun transit, the All India Handicraft",
+        "[banking] Due to Saturn's influence in Leo, the Reserve Bank of India "
+      ],
+      "storedAt": "2026-04-13T19:29:41.470Z"
+    },
+    {
+      "date": "2025-08-23",
+      "headline": "Western India faces trade disruptions as Venus afflicts maritime regions",
+      "topDomains": "geography(challenging), agriculture(challenging), trade(challenging)",
+      "predictions": [
+        "[trade] Due to Venus's affliction in Mandala 4, the Adani Ports and ",
+        "[education] Following the auspicious Sun transit, the Ministry of Educat",
+        "[government] Due to the ongoing agricultural challenges and pest infestat"
+      ],
+      "storedAt": "2026-04-13T19:30:07.468Z"
+    },
+    {
+      "date": "2025-09-07",
+      "headline": "Eastern India sees auspicious societal trends amid agricultural and economic crosscurrents",
+      "topDomains": "agriculture(challenging), society(favorable), economy(favorable)",
+      "predictions": [
+        "[culture] Due to the spotless Sun transit, the Ministry of Culture in ",
+        "[crisis] Following the Samvatsara 'Plavanga' and Jupiter's influence,",
+        "[banking] Due to Saturn's depressive influence on agriculture, the Ana"
+      ],
+      "storedAt": "2026-04-13T19:30:32.822Z"
+    },
+    {
+      "date": "2025-09-21",
+      "headline": "Western India braces for trade disruptions and social unrest amid mixed economic signals",
+      "topDomains": "geography(challenging), society(challenging), economy(favorable)",
+      "predictions": [
+        "[trade] The Maharashtra State Agricultural Marketing Board will impl",
+        "[government] Following Papakhya course, the Gujarat Police will launch a ",
+        "[foreign_affairs] The Ministry of External Affairs will announce a new cultura"
+      ],
+      "storedAt": "2026-04-13T19:30:58.128Z"
+    },
+    {
+      "date": "2025-10-06",
+      "headline": "Eastern India sees societal upswing despite agricultural challenges, while global diplomacy focuses on Gaza ceasefire",
+      "topDomains": "economy(favorable), agriculture(challenging), health(challenging)",
+      "predictions": [
+        "[economy] Following the positive influence of Jupiter and Venus on cro",
+        "[judiciary] Due to the affliction of Bharani nakshatra, the National Hum",
+        "[research] In response to the Samvatsara 'Plavanga' agricultural damage"
+      ],
+      "storedAt": "2026-04-13T19:31:22.432Z"
+    },
+    {
+      "date": "2025-10-21",
+      "headline": "Agricultural distress looms as Venus-Jupiter opposition threatens crop yields, while societal harmony prevails in eastern India",
+      "topDomains": "economy(favorable), agriculture(challenging), health(challenging)",
+      "predictions": [
+        "[humanitarian] Due to the Venus-Jupiter opposition and Samvatsara 'Plavanga",
+        "[culture] Following the spotless Sun transit, the London museum will h",
+        "[government] Due to the ongoing agricultural challenges and pest infestat"
+      ],
+      "storedAt": "2026-04-13T19:31:46.499Z"
+    },
+    {
+      "date": "2025-11-05",
+      "headline": "Western India grapples with economic headwinds as Rohini affliction impacts society",
+      "topDomains": "agriculture(challenging), economy(challenging), society(favorable)",
+      "predictions": [
+        "[trade] Due to Saturn's depressive influence in Scorpio, the Saurash",
+        "[entertainment] Following the spotless Sun transit, the Orissa State Museum ",
+        "[judiciary] Due to the Rohini affliction and the ongoing unrest in Tripo"
+      ],
+      "storedAt": "2026-04-13T19:32:10.825Z"
+    },
+    {
+      "date": "2025-11-20",
+      "headline": "Turkish Football Faces Scrutiny Amid Match-Fixing Allegations",
+      "topDomains": "agriculture(challenging), economy(mixed), society(mixed)",
+      "predictions": [
+        "[sports] Due to the Papakhya course and recent news, the Turkish Foot",
+        "[health] Following the spotless Sun transit and recent news, the CDC ",
+        "[maritime] Due to Saturn's depressive influence in Scorpio, the Interna"
+      ],
+      "storedAt": "2026-04-13T19:32:33.844Z"
+    },
+    {
+      "date": "2025-12-05",
+      "headline": "Northwestern regions face agricultural challenges amid mixed economic signals, as technology sector booms",
+      "topDomains": "geography(challenging), agriculture(challenging), public_mood(challenging)",
+      "predictions": [
+        "[technology] The Ministry of Electronics and Information Technology of In",
+        "[government] Pakistan's Ministry of Climate Change will implement stricte",
+        "[health] The World Health Organization (WHO) will issue a warning reg"
+      ],
+      "storedAt": "2026-04-13T19:32:58.049Z"
+    },
+    {
+      "date": "2025-12-20",
+      "headline": "Northwestern India Faces Infrastructure Strain Amidst Positive Societal Trends",
+      "topDomains": "geography(challenging), society(challenging), public_mood(challenging)",
+      "predictions": [
+        "[infrastructure] The Ministry of Road Transport and Highways of India, respon",
+        "[banking] The Reserve Bank of India, aiming to counter Saturn's depres",
+        "[education] The Ministry of Education in Orissa, leveraging the auspicio"
+      ],
+      "storedAt": "2026-04-13T19:33:21.530Z"
+    },
+    {
+      "date": "2026-01-04",
+      "headline": "US-Venezuela tensions rise amid infrastructure concerns in western India",
+      "topDomains": "society(challenging), agriculture(challenging), health(challenging)",
+      "predictions": [
+        "[media] Following the spotless Sun transit, the All India Radio (AIR",
+        "[health] Due to Saturn ahead of Venus, the Turkish Ministry of Health",
+        "[crisis] Following the Mars affliction in Dhanishta, the National Cri"
+      ],
+      "storedAt": "2026-04-13T19:33:45.808Z"
+    },
+    {
+      "date": "2026-01-18",
+      "headline": "Renewed Focus on Western Regions as Venus Shifts, Triggering Economic and Health Impacts",
+      "topDomains": "agriculture(challenging), health(challenging), crisis(challenging)",
+      "predictions": [
+        "[health] Following Venus entering Aquarius and its position in the we",
+        "[economy] Due to Saturn's influence promoting growth of certain commod",
+        "[agriculture] Following the Samvatsara 'Plavanga' influence and the ongoin"
+      ],
+      "storedAt": "2026-04-13T19:34:10.033Z"
+    },
+    {
+      "date": "2026-02-02",
+      "headline": "Positive societal trends in eastern India contrast with agricultural challenges in the northwest",
+      "topDomains": "agriculture(challenging), economy(favorable), society(challenging)",
+      "predictions": [
+        "[culture] Following the spotless Sun transit, the Orissa State Museum ",
+        "[resources] The Pakistan Atomic Energy Commission will suspend uranium m",
+        "[infrastructure] Responding to Venus in Capricorn and the need for infrastruc"
+      ],
+      "storedAt": "2026-04-13T19:34:35.842Z"
+    },
+    {
+      "date": "2026-02-17",
+      "headline": "Flood alerts and pest infestations threaten northwest Indian agriculture, while ocean trade sees potential gains",
+      "topDomains": "geography(challenging), public_mood(challenging), agriculture(challenging)",
+      "predictions": [
+        "[trade] Due to Venus in Revati promoting ocean trade, the Gujarat Ma",
+        "[public_mood] Following the Mandala_6 afflictions and Dahana Veethee, the ",
+        "[agriculture] Following the Samvatsara 'Plavanga' influence, the Punjab Ag"
+      ],
+      "storedAt": "2026-04-13T19:35:00.035Z"
+    },
+    {
+      "date": "2026-03-04",
+      "headline": "Northern India Faces Water Scarcity Amidst Regional Conflicts and Trade Fluctuations",
+      "topDomains": "geography(challenging), public_mood(challenging), agriculture(challenging)",
+      "predictions": [
+        "[crisis] Due to the combined influence of Mandala_6 afflictions and D",
+        "[labor] Following Venus in Revati and the boost to ocean trade, Adan",
+        "[agriculture] Given the Plavanga year's tendency for agricultural damage a"
+      ],
+      "storedAt": "2026-04-13T19:35:25.293Z"
+    },
+    {
+      "date": "2026-03-19",
+      "headline": "Mars-Rohini conjunction triggers societal disruption in India amid rising heatwave concerns",
+      "topDomains": "economy(favorable), society(challenging), agriculture(challenging)",
+      "predictions": [
+        "[government] Due to Mars' transit across Rohini and its effect on leaders",
+        "[culture] Following the spotless Sun transit and Venus's influence, th",
+        "[crisis] Due to Mars spoiling the clouds and obstructing rain, the Ma"
+      ],
+      "storedAt": "2026-04-13T19:35:49.175Z"
+    },
+    {
+      "date": "2026-04-03",
+      "headline": "Geopolitical tensions rise in Gandhara region amid favorable societal trends in eastern India.",
+      "topDomains": "society(challenging), public_mood(favorable), agriculture(challenging)",
+      "predictions": [
+        "[diplomacy] Due to the face of Samvatsarapurusha being afflicted, the In",
+        "[religion] Following the Naga Veethee influence, the Lahore Arts Counci",
+        "[humanitarian] Due to Venus in Bharani, Doctors Without Borders will increa"
+      ],
+      "storedAt": "2026-04-13T19:36:12.050Z"
+    }
+  ],
+  "predictionStore": [
+    {
+      "id": "pred_001",
+      "statement": "The Pakistani Ministry of National Food Security and Research will implement emergency measures to combat locust infestations in the Sindh province, leading to temporary disruptions in cotton and wheat exports.",
+      "domain": "agriculture",
+      "direction": "neg",
+      "confidence": 0.7,
+      "createdDate": "2025-04-13",
+      "manifestDate": "2026-04-13",
+      "pakaDelayDays": 365,
+      "drivingPlanet": "Jupiter",
+      "status": "pending",
+      "evidence": null,
+      "creationDomains": []
+    },
+    {
+      "id": "pred_002",
+      "statement": "The Archaeological Survey of India will announce the discovery of ancient Vedic ritual sites near Taxila, boosting cultural tourism and regional pride.",
+      "domain": "culture",
+      "direction": "pos",
+      "confidence": 0.65,
+      "createdDate": "2025-04-13",
+      "manifestDate": "2025-05-13",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Sentiment (-0.33) contradicts pos",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_003",
+      "statement": "The United Nations Human Rights Council will censure Myanmar for its handling of refugee crises, leading to increased international sanctions and diplomatic isolation.",
+      "domain": "foreign_affairs",
+      "direction": "neg",
+      "confidence": 0.6,
+      "createdDate": "2025-04-13",
+      "manifestDate": "2025-05-13",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "plausible",
+      "evidence": "Domain \"foreign_affairs\" active (heat 0.75, 6 headlines)",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_001",
+      "statement": "The Indian Council of Agricultural Research (ICAR) will launch a nationwide initiative to combat crop pests, focusing on regions affected by deficient rainfall, within ~6 months.",
+      "domain": "agriculture",
+      "direction": "pos",
+      "confidence": 0.7,
+      "createdDate": "2025-04-27",
+      "manifestDate": "2026-04-27",
+      "pakaDelayDays": 365,
+      "drivingPlanet": "Jupiter",
+      "status": "pending",
+      "evidence": null,
+      "creationDomains": []
+    },
+    {
+      "id": "pred_002",
+      "statement": "The Reserve Bank of India (RBI) will introduce new lending policies to support textile and grain businesses in the Taxila region, aiming to counteract Saturn's depressive effects on the economy, within ~6 months.",
+      "domain": "economy",
+      "direction": "pos",
+      "confidence": 0.6,
+      "createdDate": "2025-04-27",
+      "manifestDate": "2026-04-27",
+      "pakaDelayDays": 365,
+      "drivingPlanet": "Saturn",
+      "status": "pending",
+      "evidence": null,
+      "creationDomains": []
+    },
+    {
+      "id": "pred_003",
+      "statement": "The Ministry of Culture of Pakistan, in collaboration with UNESCO, will announce a new initiative to promote Vedic rituals and cultural heritage in the Gandhara region, leveraging the auspicious influence of Mandala_1, within ~6 months.",
+      "domain": "culture",
+      "direction": "pos",
+      "confidence": 0.6,
+      "createdDate": "2025-04-27",
+      "manifestDate": "2025-05-27",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "plausible",
+      "evidence": "Domain \"culture\" active (heat 0.58, 7 headlines)",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_001",
+      "statement": "The Pakistan Meteorological Department will issue warnings for locust swarms in Sindh province, leading to emergency crop dusting operations and temporary disruptions to cotton exports. ",
+      "domain": "agriculture",
+      "direction": "neg",
+      "confidence": 0.7,
+      "createdDate": "2025-05-12",
+      "manifestDate": "2026-05-12",
+      "pakaDelayDays": 365,
+      "drivingPlanet": "Jupiter",
+      "status": "pending",
+      "evidence": null,
+      "creationDomains": []
+    },
+    {
+      "id": "pred_002",
+      "statement": "The Khadi and Village Industries Commission (KVIC) in India will announce a 15% increase in cotton textile production in Gujarat, driven by favorable planetary influences on the textile industry.",
+      "domain": "economy",
+      "direction": "pos",
+      "confidence": 0.65,
+      "createdDate": "2025-05-12",
+      "manifestDate": "2026-05-12",
+      "pakaDelayDays": 365,
+      "drivingPlanet": "Jupiter",
+      "status": "pending",
+      "evidence": null,
+      "creationDomains": []
+    },
+    {
+      "id": "pred_003",
+      "statement": "The Odisha State Museum will launch a new exhibit on tribal art and culture, but attendance will be lower than expected due to ongoing heat waves and concerns about public health, impacting tourism revenue.",
+      "domain": "culture",
+      "direction": "neg",
+      "confidence": 0.6,
+      "createdDate": "2025-05-12",
+      "manifestDate": "2025-06-11",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Domain \"culture\" quiet at manifestation window",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_001",
+      "statement": "The Pakistan Textile Exporters Association will secure new export contracts with European buyers, boosting textile production in Punjab province despite regional agricultural challenges.",
+      "domain": "trade",
+      "direction": "pos",
+      "confidence": 0.6,
+      "createdDate": "2025-05-14",
+      "manifestDate": "2025-06-13",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Domain \"trade\" quiet at manifestation window",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_002",
+      "statement": "The World Health Organization (WHO) will issue a health advisory for Eastern Narmada region due to increased waterborne diseases following recent flooding, straining local healthcare resources.",
+      "domain": "health",
+      "direction": "neg",
+      "confidence": 0.7,
+      "createdDate": "2025-05-14",
+      "manifestDate": "2025-06-13",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Domain \"health\" quiet at manifestation window",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_003",
+      "statement": "The Archaeological Survey of India (ASI) will announce the discovery of ancient Vedic texts near the Sarayu River, prompting renewed interest in religious studies and attracting tourism to the region.",
+      "domain": "religion",
+      "direction": "pos",
+      "confidence": 0.5,
+      "createdDate": "2025-05-14",
+      "manifestDate": "2025-11-10",
+      "pakaDelayDays": 180,
+      "drivingPlanet": "Venus",
+      "status": "unconfirmed",
+      "evidence": "Domain \"religion\" quiet at manifestation window",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_001",
+      "statement": "The State Bank of Pakistan will introduce a new export financing scheme targeting textile manufacturers in the Punjab region to counteract the effects of Mars in Taurus, aiming to boost regional trade by Q1 2026.",
+      "domain": "banking",
+      "direction": "pos",
+      "confidence": 0.7,
+      "createdDate": "2025-05-27",
+      "manifestDate": "2025-06-26",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Domain \"banking\" quiet at manifestation window",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_002",
+      "statement": "The Indian Ministry of Agriculture will implement a pest control program in Uttar Pradesh to mitigate crop damage predicted by the Samvatsara 'Plavanga', focusing on innovative, environmentally friendly pest management solutions by November 2025.",
+      "domain": "agriculture",
+      "direction": "pos",
+      "confidence": 0.65,
+      "createdDate": "2025-05-27",
+      "manifestDate": "2026-05-27",
+      "pakaDelayDays": 365,
+      "drivingPlanet": "Jupiter",
+      "status": "pending",
+      "evidence": null,
+      "creationDomains": []
+    },
+    {
+      "id": "pred_003",
+      "statement": "Following Venus in Ardra, the Bangladesh Inland Water Transport Authority will suspend river transport operations in the Brahmaputra River delta for three days in late November 2025 due to anticipated storm surges, prioritizing public safety.",
+      "domain": "transport",
+      "direction": "neg",
+      "confidence": 0.6,
+      "createdDate": "2025-05-27",
+      "manifestDate": "2025-06-26",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Domain \"transport\" quiet at manifestation window",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_001",
+      "statement": "The West Bengal government will launch a new initiative to promote jute cultivation and textile production in the region, aiming to boost the local economy and create employment opportunities.",
+      "domain": "labor",
+      "direction": "pos",
+      "confidence": 0.6,
+      "createdDate": "2025-06-11",
+      "manifestDate": "2025-07-11",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Domain \"labor\" quiet at manifestation window",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_002",
+      "statement": "The Ministry of Ports, Shipping and Waterways in India will announce a new set of regulations for inland water transport on the Ganges River, aimed at improving safety and efficiency but potentially facing resistance from local boat operators.",
+      "domain": "transport",
+      "direction": "mix",
+      "confidence": 0.7,
+      "createdDate": "2025-06-11",
+      "manifestDate": "2025-07-11",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Domain \"transport\" quiet at manifestation window",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_003",
+      "statement": "Following the Sun's transit through Ardra, the Uttar Pradesh police will launch a crackdown on organized crime syndicates involved in illegal liquor trade and gambling dens in the state, leading to a temporary disruption in the entertainment sector.",
+      "domain": "entertainment",
+      "direction": "neg",
+      "confidence": 0.6,
+      "createdDate": "2025-06-11",
+      "manifestDate": "2025-07-11",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Domain \"entertainment\" quiet at manifestation window",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_001",
+      "statement": "Following Venus's influence in Gemini, the Ministry of Textiles in Pakistan will introduce new subsidies for cotton farmers in the Sindh province to boost production, despite anticipated pest-related crop losses.",
+      "domain": "economy",
+      "direction": "pos",
+      "confidence": 0.6,
+      "createdDate": "2025-06-25",
+      "manifestDate": "2026-06-25",
+      "pakaDelayDays": 365,
+      "drivingPlanet": "Saturn",
+      "status": "pending",
+      "evidence": null,
+      "creationDomains": []
+    },
+    {
+      "id": "pred_002",
+      "statement": "Due to the Sun's transit through Punarvasu, the Indian Council of Medical Research (ICMR) will issue guidelines regarding increased heatstroke cases among vulnerable populations in Orissa and Vanga, leading to increased strain on healthcare resources.",
+      "domain": "health",
+      "direction": "neg",
+      "confidence": 0.7,
+      "createdDate": "2025-06-25",
+      "manifestDate": "2025-07-25",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Sentiment (0.25) contradicts neg",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_003",
+      "statement": "Following Jupiter's influence and the Samvatsara's effects, the Food and Agriculture Organization (FAO) will launch a pilot program in Uttar Pradesh to promote integrated pest management techniques among smallholder farmers to mitigate crop losses from monkeys and pests.",
+      "domain": "agriculture",
+      "direction": "mix",
+      "confidence": 0.6,
+      "createdDate": "2025-06-25",
+      "manifestDate": "2026-06-25",
+      "pakaDelayDays": 365,
+      "drivingPlanet": "Jupiter",
+      "status": "pending",
+      "evidence": null,
+      "creationDomains": []
+    },
+    {
+      "id": "pred_001",
+      "statement": "Following Mars ahead of Venus, the Pakistan Ministry of National Food Security and Research will implement emergency import measures to stabilize wheat supplies in Punjab province following locust swarms, driving up regional grain prices.",
+      "domain": "trade",
+      "direction": "neg",
+      "confidence": 0.75,
+      "createdDate": "2025-07-10",
+      "manifestDate": "2025-08-09",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "plausible",
+      "evidence": "Domain \"trade\" active (heat 0.38, 3 headlines)",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_002",
+      "statement": "Following the Sun's auspicious transit, the Ministry of Ayush in India will launch a national campaign promoting traditional medicine practices in Orissa to combat seasonal illnesses, bolstering local healthcare systems.",
+      "domain": "health",
+      "direction": "pos",
+      "confidence": 0.65,
+      "createdDate": "2025-07-10",
+      "manifestDate": "2025-08-09",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Domain \"health\" quiet at manifestation window",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_003",
+      "statement": "Due to Saturn's influence in Cancer, the Gujarat Maritime Board will suspend operations at smaller ports in Saurashtra due to increased storm activity and rising insurance costs, leading to cargo delays and regional economic slowdown.",
+      "domain": "maritime",
+      "direction": "neg",
+      "confidence": 0.7,
+      "createdDate": "2025-07-10",
+      "manifestDate": "2025-08-09",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Domain \"maritime\" quiet at manifestation window",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_001",
+      "statement": "Due to the ongoing military tensions and right_arm of Samvatsarapurusha affliction, the Indian Ministry of Defence will increase military presence along the India-Pakistan border, prompting heightened security measures.",
+      "domain": "military",
+      "direction": "neg",
+      "confidence": 0.7,
+      "createdDate": "2025-07-24",
+      "manifestDate": "2026-07-24",
+      "pakaDelayDays": 365,
+      "drivingPlanet": "Jupiter",
+      "status": "pending",
+      "evidence": null,
+      "creationDomains": []
+    },
+    {
+      "id": "pred_002",
+      "statement": "Following the spotless Sun transit, the Ministry of Tourism in Orissa will launch a new campaign promoting cultural tourism in the region, highlighting historical sites and local traditions, leading to a surge in domestic and international visitors.",
+      "domain": "tourism",
+      "direction": "pos",
+      "confidence": 0.6,
+      "createdDate": "2025-07-24",
+      "manifestDate": "2025-08-23",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Domain \"tourism\" quiet at manifestation window",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_003",
+      "statement": "Due to the combined effect of Saturn in Cancer depressing fragrant leaves and the news reports of staff cuts in UK firms, Unilever Pakistan will announce a temporary suspension of operations at its Karachi fragrance production plant, citing supply chain disruptions and decreased consumer demand.",
+      "domain": "trade",
+      "direction": "neg",
+      "confidence": 0.5,
+      "createdDate": "2025-07-24",
+      "manifestDate": "2025-08-23",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "plausible",
+      "evidence": "Domain \"trade\" active (heat 0.38, 3 headlines)",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_001",
+      "statement": "Following Mars ahead of Venus, the Pakistan National Disaster Management Authority will initiate emergency food distribution programs in Sindh and Punjab due to anticipated crop failures.",
+      "domain": "humanitarian",
+      "direction": "neg",
+      "confidence": 0.75,
+      "createdDate": "2025-08-08",
+      "manifestDate": "2025-09-07",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Domain \"humanitarian\" quiet at manifestation window",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_002",
+      "statement": "Following the spotless Sun transit, the All India Handicrafts Board will launch a campaign promoting traditional textile arts from Orissa and Vanga to boost artisan incomes affected by economic disruption.",
+      "domain": "culture",
+      "direction": "pos",
+      "confidence": 0.7,
+      "createdDate": "2025-08-08",
+      "manifestDate": "2026-02-04",
+      "pakaDelayDays": 180,
+      "drivingPlanet": "Venus",
+      "status": "unconfirmed",
+      "evidence": "Domain \"culture\" quiet at manifestation window",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_003",
+      "statement": "Due to Saturn's influence in Leo, the Reserve Bank of India will issue new regulations on agricultural lending in Anarta, Arbuda, and Saurashtra to mitigate risks associated with predicted crop losses.",
+      "domain": "banking",
+      "direction": "neg",
+      "confidence": 0.7,
+      "createdDate": "2025-08-08",
+      "manifestDate": "2025-09-07",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Domain \"banking\" quiet at manifestation window",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_001",
+      "statement": "Due to Venus's affliction in Mandala 4, the Adani Ports and Special Economic Zone will suspend operations at Mundra Port for safety review following increased reports of wind-related damage, disrupting trade in western India.",
+      "domain": "trade",
+      "direction": "neg",
+      "confidence": 0.7,
+      "createdDate": "2025-08-23",
+      "manifestDate": "2026-08-23",
+      "pakaDelayDays": 365,
+      "drivingPlanet": "Jupiter",
+      "status": "pending",
+      "evidence": null,
+      "creationDomains": []
+    },
+    {
+      "id": "pred_002",
+      "statement": "Following the auspicious Sun transit, the Ministry of Education in Orissa will launch a new literacy program targeting marginalized communities, improving social equity in the region.",
+      "domain": "education",
+      "direction": "pos",
+      "confidence": 0.6,
+      "createdDate": "2025-08-23",
+      "manifestDate": "2025-09-22",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Domain \"education\" quiet at manifestation window",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_003",
+      "statement": "Due to the ongoing agricultural challenges and pest infestations, the Sindh government will impose stricter regulations on pesticide use, leading to protests from farmers concerned about reduced yields.",
+      "domain": "government",
+      "direction": "mix",
+      "confidence": 0.65,
+      "createdDate": "2025-08-23",
+      "manifestDate": "2025-09-22",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Domain \"government\" quiet at manifestation window",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_001",
+      "statement": "Due to the spotless Sun transit, the Ministry of Culture in Orissa will announce a new initiative to promote traditional Odia art forms through digital platforms, aiming to boost cultural tourism.",
+      "domain": "culture",
+      "direction": "pos",
+      "confidence": 0.7,
+      "createdDate": "2025-09-07",
+      "manifestDate": "2025-10-07",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Domain \"culture\" quiet at manifestation window",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_002",
+      "statement": "Following the Samvatsara 'Plavanga' and Jupiter's influence, the Sindh Department of Agriculture will implement emergency measures to combat locust swarms and crop damage in the Thar desert region, potentially leading to food shortages.",
+      "domain": "crisis",
+      "direction": "neg",
+      "confidence": 0.7,
+      "createdDate": "2025-09-07",
+      "manifestDate": "2025-10-07",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Domain \"crisis\" quiet at manifestation window",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_003",
+      "statement": "Due to Saturn's depressive influence on agriculture, the Anarta-based Gujarat State Cooperative Bank will face increased loan defaults from farmers, prompting the bank to tighten lending criteria and potentially triggering rural unrest.",
+      "domain": "banking",
+      "direction": "neg",
+      "confidence": 0.6,
+      "createdDate": "2025-09-07",
+      "manifestDate": "2025-10-07",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Domain \"banking\" quiet at manifestation window",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_001",
+      "statement": "The Maharashtra State Agricultural Marketing Board will implement stricter quality control measures for exported flax and legumes due to crop damage, leading to a 10% price increase in European markets.",
+      "domain": "trade",
+      "direction": "neg",
+      "confidence": 0.7,
+      "createdDate": "2025-09-21",
+      "manifestDate": "2026-09-21",
+      "pakaDelayDays": 365,
+      "drivingPlanet": "Jupiter",
+      "status": "pending",
+      "evidence": null,
+      "creationDomains": []
+    },
+    {
+      "id": "pred_002",
+      "statement": "Following Papakhya course, the Gujarat Police will launch a crackdown on cyber fraud targeting elderly citizens in Ahmedabad, resulting in 50+ arrests and increased public awareness campaigns.",
+      "domain": "government",
+      "direction": "neg",
+      "confidence": 0.6,
+      "createdDate": "2025-09-21",
+      "manifestDate": "2025-10-21",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Domain \"government\" quiet at manifestation window",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_003",
+      "statement": "The Ministry of External Affairs will announce a new cultural exchange program between Orissa and Sri Lanka, promoting Buddhist studies and traditional arts, fostering stronger diplomatic ties.",
+      "domain": "foreign_affairs",
+      "direction": "pos",
+      "confidence": 0.6,
+      "createdDate": "2025-09-21",
+      "manifestDate": "2025-10-21",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Sentiment (-0.33) contradicts pos",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_001",
+      "statement": "Following the positive influence of Jupiter and Venus on crop yields, the Ministry of Food Processing Industries in India will announce new subsidies for millet-based products to boost farmer income in the Taxila region, driving increased investment in processing facilities.",
+      "domain": "economy",
+      "direction": "pos",
+      "confidence": 0.6,
+      "createdDate": "2025-10-06",
+      "manifestDate": "2026-10-06",
+      "pakaDelayDays": 365,
+      "drivingPlanet": "Jupiter",
+      "status": "pending",
+      "evidence": null,
+      "creationDomains": []
+    },
+    {
+      "id": "pred_002",
+      "statement": "Due to the affliction of Bharani nakshatra, the National Human Rights Commission of India will launch an inquiry into allegations of excessive force used by law enforcement in the Western Sone region, leading to policy reforms and increased accountability.",
+      "domain": "judiciary",
+      "direction": "neg",
+      "confidence": 0.6,
+      "createdDate": "2025-10-06",
+      "manifestDate": "2025-11-05",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Domain \"judiciary\" quiet at manifestation window",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_003",
+      "statement": "In response to the Samvatsara 'Plavanga' agricultural damage forecast, the Council of Scientific and Industrial Research (CSIR) in Bharata will announce a breakthrough in pest-resistant crop technology, offering open-source solutions to farmers and mitigating losses.",
+      "domain": "research",
+      "direction": "pos",
+      "confidence": 0.5,
+      "createdDate": "2025-10-06",
+      "manifestDate": "2025-11-05",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Domain \"research\" quiet at manifestation window",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_001",
+      "statement": "Due to the Venus-Jupiter opposition and Samvatsara 'Plavanga', the Food and Agriculture Organization (FAO) will issue a warning regarding potential wheat crop failures in the Kaikaya region, prompting emergency food aid discussions.",
+      "domain": "humanitarian",
+      "direction": "neg",
+      "confidence": 0.7,
+      "createdDate": "2025-10-21",
+      "manifestDate": "2025-11-20",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Domain \"humanitarian\" quiet at manifestation window",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_002",
+      "statement": "Following the spotless Sun transit, the London museum will host a major exhibition showcasing the cultural heritage of Orissa, fostering greater understanding and appreciation of the region's artistic traditions.",
+      "domain": "culture",
+      "direction": "pos",
+      "confidence": 0.6,
+      "createdDate": "2025-10-21",
+      "manifestDate": "2025-11-20",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Domain \"culture\" quiet at manifestation window",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_003",
+      "statement": "Due to the ongoing agricultural challenges and pest infestations, the Haryana government will implement stricter regulations on pesticide use, facing resistance from local farmers and agricultural businesses.",
+      "domain": "government",
+      "direction": "mix",
+      "confidence": 0.7,
+      "createdDate": "2025-10-21",
+      "manifestDate": "2025-11-20",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Domain \"government\" quiet at manifestation window",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_001",
+      "statement": "Due to Saturn's depressive influence in Scorpio, the Saurashtra Chamber of Commerce will report a 15% decline in bell-metal exports, prompting government intervention to support local artisans.",
+      "domain": "trade",
+      "direction": "neg",
+      "confidence": 0.7,
+      "createdDate": "2025-11-05",
+      "manifestDate": "2025-12-05",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Domain \"trade\" quiet at manifestation window",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_002",
+      "statement": "Following the spotless Sun transit, the Orissa State Museum will announce a new exhibition showcasing ancient Kalinga art, boosting tourism revenue by 10% in the region.",
+      "domain": "entertainment",
+      "direction": "pos",
+      "confidence": 0.6,
+      "createdDate": "2025-11-05",
+      "manifestDate": "2025-12-05",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Domain \"entertainment\" quiet at manifestation window",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_003",
+      "statement": "Due to the Rohini affliction and the ongoing unrest in Tripoli reported in the news, the Libyan Ministry of Justice will suspend all international judicial cooperation programs, delaying extradition requests.",
+      "domain": "judiciary",
+      "direction": "neg",
+      "confidence": 0.6,
+      "createdDate": "2025-11-05",
+      "manifestDate": "2025-12-05",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Domain \"judiciary\" quiet at manifestation window",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_001",
+      "statement": "Due to the Papakhya course and recent news, the Turkish Football Federation will launch a formal investigation into match-fixing allegations within the Süper Lig, leading to suspensions and potential legal action against involved players and officials.",
+      "domain": "sports",
+      "direction": "neg",
+      "confidence": 0.7,
+      "createdDate": "2025-11-20",
+      "manifestDate": "2025-12-20",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Domain \"sports\" quiet at manifestation window",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_002",
+      "statement": "Following the spotless Sun transit and recent news, the CDC will expand its public health campaign to promote vaccination against mosquito-borne illnesses in Cuba, providing resources and educational materials to affected communities.",
+      "domain": "health",
+      "direction": "pos",
+      "confidence": 0.6,
+      "createdDate": "2025-11-20",
+      "manifestDate": "2025-12-20",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Sentiment (-0.20) contradicts pos",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_003",
+      "statement": "Due to Saturn's depressive influence in Scorpio, the International Maritime Organization (IMO) will delay the implementation of new environmental regulations for shipping in the Arabian Sea, citing concerns about economic impacts on regional trade.",
+      "domain": "maritime",
+      "direction": "neg",
+      "confidence": 0.7,
+      "createdDate": "2025-11-20",
+      "manifestDate": "2025-12-20",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "plausible",
+      "evidence": "Domain \"maritime\" active (heat 0.33, 3 headlines)",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_001",
+      "statement": "The Ministry of Electronics and Information Technology of India will launch a new initiative to support AI-driven agricultural technologies in response to crop losses in the northwest, aiming to improve yields and resource management.",
+      "domain": "technology",
+      "direction": "pos",
+      "confidence": 0.7,
+      "createdDate": "2025-12-05",
+      "manifestDate": "2026-01-04",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Sentiment (-0.28) contradicts pos",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_002",
+      "statement": "Pakistan's Ministry of Climate Change will implement stricter regulations on water usage in the Indus River basin, following reports of severe water scarcity affecting crops in the region, potentially leading to disputes with agricultural communities.",
+      "domain": "government",
+      "direction": "neg",
+      "confidence": 0.7,
+      "createdDate": "2025-12-05",
+      "manifestDate": "2026-01-04",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Domain \"government\" quiet at manifestation window",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_003",
+      "statement": "The World Health Organization (WHO) will issue a warning regarding increased cases of respiratory illnesses, specifically asthma, in the Kuru region due to deteriorating air quality and environmental conditions.",
+      "domain": "health",
+      "direction": "neg",
+      "confidence": 0.6,
+      "createdDate": "2025-12-05",
+      "manifestDate": "2026-02-03",
+      "pakaDelayDays": 60,
+      "drivingPlanet": "Moon",
+      "status": "unconfirmed",
+      "evidence": "Domain \"health\" quiet at manifestation window",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_001",
+      "statement": "The Ministry of Road Transport and Highways of India, responding to infrastructure damage in the Taxila-Gandhara region, will announce emergency funding for highway repairs, prioritizing routes vital for cold-weather crop transport.",
+      "domain": "infrastructure",
+      "direction": "neg",
+      "confidence": 0.7,
+      "createdDate": "2025-12-20",
+      "manifestDate": "2026-12-20",
+      "pakaDelayDays": 365,
+      "drivingPlanet": "Jupiter",
+      "status": "pending",
+      "evidence": null,
+      "creationDomains": []
+    },
+    {
+      "id": "pred_002",
+      "statement": "The Reserve Bank of India, aiming to counter Saturn's depressive influence on specific commodities, will introduce targeted lending programs for salt and sesame farmers in Anarta, Arbuda, and Saurashtra.",
+      "domain": "banking",
+      "direction": "pos",
+      "confidence": 0.6,
+      "createdDate": "2025-12-20",
+      "manifestDate": "2026-01-19",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Domain \"banking\" quiet at manifestation window",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_003",
+      "statement": "The Ministry of Education in Orissa, leveraging the auspicious influence of the spotless Sun, will launch a nationwide literacy campaign focused on promoting traditional arts and crafts, seeking to revive cultural heritage.",
+      "domain": "education",
+      "direction": "pos",
+      "confidence": 0.7,
+      "createdDate": "2025-12-20",
+      "manifestDate": "2026-01-19",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Domain \"education\" quiet at manifestation window",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_001",
+      "statement": "Following the spotless Sun transit, the All India Radio (AIR) will launch a new program promoting classical Indian music in Orissa, aiming to uplift public morale and showcase regional talent.",
+      "domain": "media",
+      "direction": "pos",
+      "confidence": 0.6,
+      "createdDate": "2026-01-04",
+      "manifestDate": "2026-02-03",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Sentiment (-0.33) contradicts pos",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_002",
+      "statement": "Due to Saturn ahead of Venus, the Turkish Ministry of Health will issue warnings regarding increased respiratory illnesses and implement stricter air quality control measures in Ankara and Istanbul.",
+      "domain": "health",
+      "direction": "neg",
+      "confidence": 0.7,
+      "createdDate": "2026-01-04",
+      "manifestDate": "2026-07-03",
+      "pakaDelayDays": 180,
+      "drivingPlanet": "Venus",
+      "status": "pending",
+      "evidence": null,
+      "creationDomains": []
+    },
+    {
+      "id": "pred_003",
+      "statement": "Following the Mars affliction in Dhanishta, the National Crisis Management Committee (NCMC) of India will convene an emergency meeting to address potential disruptions to railway lines and power grids in Maharashtra, focusing on preventative measures and resource allocation.",
+      "domain": "crisis",
+      "direction": "neg",
+      "confidence": 0.6,
+      "createdDate": "2026-01-04",
+      "manifestDate": "2026-07-03",
+      "pakaDelayDays": 180,
+      "drivingPlanet": "Venus",
+      "status": "pending",
+      "evidence": null,
+      "creationDomains": []
+    },
+    {
+      "id": "pred_001",
+      "statement": "Following Venus entering Aquarius and its position in the western Mandala, the World Health Organization (WHO) will issue a specific advisory for Taxila and Gandhara concerning respiratory illnesses linked to unusual wind patterns and potential outbreaks, prompting increased resource allocation to these regions.",
+      "domain": "health",
+      "direction": "neg",
+      "confidence": 0.7,
+      "createdDate": "2026-01-18",
+      "manifestDate": "2026-07-17",
+      "pakaDelayDays": 180,
+      "drivingPlanet": "Venus",
+      "status": "pending",
+      "evidence": null,
+      "creationDomains": []
+    },
+    {
+      "id": "pred_002",
+      "statement": "Due to Saturn's influence promoting growth of certain commodities and the spotless Sun transit, the Ministry of Textiles of India will launch a new initiative to promote sustainable cotton farming in Orissa, aiming to boost local economies and improve farmer livelihoods.",
+      "domain": "economy",
+      "direction": "pos",
+      "confidence": 0.65,
+      "createdDate": "2026-01-18",
+      "manifestDate": "2027-01-18",
+      "pakaDelayDays": 365,
+      "drivingPlanet": "Saturn",
+      "status": "pending",
+      "evidence": null,
+      "creationDomains": []
+    },
+    {
+      "id": "pred_003",
+      "statement": "Following the Samvatsara 'Plavanga' influence and the ongoing tensions reported in the news, the Pakistan Ministry of National Food Security and Research will implement emergency measures to combat locust swarms in the eastern Indus region, including aerial spraying and farmer support programs, to mitigate potential crop losses.",
+      "domain": "agriculture",
+      "direction": "neg",
+      "confidence": 0.75,
+      "createdDate": "2026-01-18",
+      "manifestDate": "2027-01-18",
+      "pakaDelayDays": 365,
+      "drivingPlanet": "Jupiter",
+      "status": "pending",
+      "evidence": null,
+      "creationDomains": []
+    },
+    {
+      "id": "pred_001",
+      "statement": "Following the spotless Sun transit, the Orissa State Museum will announce the discovery of ancient Buddhist artifacts in the Sone River valley, boosting tourism revenue.",
+      "domain": "culture",
+      "direction": "pos",
+      "confidence": 0.6,
+      "createdDate": "2026-02-02",
+      "manifestDate": "2026-03-04",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Domain \"culture\" quiet at manifestation window",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_002",
+      "statement": "The Pakistan Atomic Energy Commission will suspend uranium mining operations in the Indus River region due to increased pest infestations affecting worker safety and environmental concerns linked to 'Plavanga' Samvatsara.",
+      "domain": "resources",
+      "direction": "neg",
+      "confidence": 0.7,
+      "createdDate": "2026-02-02",
+      "manifestDate": "2026-03-04",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Domain \"resources\" quiet at manifestation window",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_003",
+      "statement": "Responding to Venus in Capricorn and the need for infrastructure upgrades, the Gujarat Maritime Board will announce a new initiative to modernize port facilities in Saurashtra, attracting foreign investment in the region's metal and sugarcane industries.",
+      "domain": "infrastructure",
+      "direction": "pos",
+      "confidence": 0.6,
+      "createdDate": "2026-02-02",
+      "manifestDate": "2026-03-04",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Domain \"infrastructure\" quiet at manifestation window",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_001",
+      "statement": "Due to Venus in Revati promoting ocean trade, the Gujarat Maritime Board will announce new incentives for perfume and flower exporters in Kandla port, aiming to double exports to the Middle East.",
+      "domain": "trade",
+      "direction": "pos",
+      "confidence": 0.7,
+      "createdDate": "2026-02-17",
+      "manifestDate": "2026-08-16",
+      "pakaDelayDays": 180,
+      "drivingPlanet": "Venus",
+      "status": "pending",
+      "evidence": null,
+      "creationDomains": []
+    },
+    {
+      "id": "pred_002",
+      "statement": "Following the Mandala_6 afflictions and Dahana Veethee, the Delhi government will impose stricter water rationing measures in response to depleting water reserves, sparking public protests.",
+      "domain": "public_mood",
+      "direction": "neg",
+      "confidence": 0.7,
+      "createdDate": "2026-02-17",
+      "manifestDate": "2027-02-17",
+      "pakaDelayDays": 365,
+      "drivingPlanet": "Jupiter",
+      "status": "pending",
+      "evidence": null,
+      "creationDomains": []
+    },
+    {
+      "id": "pred_003",
+      "statement": "Following the Samvatsara 'Plavanga' influence, the Punjab Agricultural University will issue an emergency advisory on pest control measures for cotton crops, recommending specific pesticide applications to mitigate losses.",
+      "domain": "agriculture",
+      "direction": "neg",
+      "confidence": 0.6,
+      "createdDate": "2026-02-17",
+      "manifestDate": "2027-02-17",
+      "pakaDelayDays": 365,
+      "drivingPlanet": "Jupiter",
+      "status": "pending",
+      "evidence": null,
+      "creationDomains": []
+    },
+    {
+      "id": "pred_001",
+      "statement": "Due to the combined influence of Mandala_6 afflictions and Dahana Veethee, the Delhi Jal Board will implement stricter water rationing measures in response to severe water shortages, sparking public protests.",
+      "domain": "crisis",
+      "direction": "neg",
+      "confidence": 0.7,
+      "createdDate": "2026-03-04",
+      "manifestDate": "2026-04-03",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "unconfirmed",
+      "evidence": "Domain \"crisis\" quiet at manifestation window",
+      "creationDomains": []
+    },
+    {
+      "id": "pred_002",
+      "statement": "Following Venus in Revati and the boost to ocean trade, Adani Ports will announce a new expansion project at Mundra Port to accommodate increased cargo volumes, boosting regional employment.",
+      "domain": "labor",
+      "direction": "pos",
+      "confidence": 0.6,
+      "createdDate": "2026-03-04",
+      "manifestDate": "2027-03-04",
+      "pakaDelayDays": 365,
+      "drivingPlanet": "Jupiter",
+      "status": "pending",
+      "evidence": null,
+      "creationDomains": []
+    },
+    {
+      "id": "pred_003",
+      "statement": "Given the Plavanga year's tendency for agricultural damage and the fire-related issues indicated by the Rain lord Agni, the Maharashtra Department of Agriculture will launch a new initiative to provide drought-resistant seeds and fire safety training to farmers in the Marathwada region.",
+      "domain": "agriculture",
+      "direction": "mix",
+      "confidence": 0.6,
+      "createdDate": "2026-03-04",
+      "manifestDate": "2027-03-04",
+      "pakaDelayDays": 365,
+      "drivingPlanet": "Jupiter",
+      "status": "pending",
+      "evidence": null,
+      "creationDomains": []
+    },
+    {
+      "id": "pred_001",
+      "statement": "Due to Mars' transit across Rohini and its effect on leadership, the Election Commission of India will postpone local elections in Maharashtra citing security concerns and potential for violence, impacting regional governance for ~60 days.",
+      "domain": "government",
+      "direction": "neg",
+      "confidence": 0.7,
+      "createdDate": "2026-03-19",
+      "manifestDate": "2027-03-19",
+      "pakaDelayDays": 365,
+      "drivingPlanet": "Jupiter",
+      "status": "pending",
+      "evidence": null,
+      "creationDomains": []
+    },
+    {
+      "id": "pred_002",
+      "statement": "Following the spotless Sun transit and Venus's influence, the Archaeological Survey of India (ASI) will announce the discovery of ancient jewelry hoards in Taxila, boosting tourism revenue in the region within ~6 months.",
+      "domain": "culture",
+      "direction": "pos",
+      "confidence": 0.6,
+      "createdDate": "2026-03-19",
+      "manifestDate": "2026-04-18",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "pending",
+      "evidence": null,
+      "creationDomains": []
+    },
+    {
+      "id": "pred_003",
+      "statement": "Due to Mars spoiling the clouds and obstructing rain, the Maharashtra State Disaster Management Authority will implement water rationing measures in the Godavari basin, triggering social unrest and impacting industrial output for ~60 days.",
+      "domain": "crisis",
+      "direction": "neg",
+      "confidence": 0.7,
+      "createdDate": "2026-03-19",
+      "manifestDate": "2026-04-18",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "pending",
+      "evidence": null,
+      "creationDomains": []
+    },
+    {
+      "id": "pred_001",
+      "statement": "Due to the face of Samvatsarapurusha being afflicted, the Indian Ministry of External Affairs will postpone a planned summit with Pakistani officials, further straining diplomatic relations between the two nations.",
+      "domain": "diplomacy",
+      "direction": "neg",
+      "confidence": 0.6,
+      "createdDate": "2026-04-03",
+      "manifestDate": "2027-04-03",
+      "pakaDelayDays": 365,
+      "drivingPlanet": "Jupiter",
+      "status": "pending",
+      "evidence": null,
+      "creationDomains": []
+    },
+    {
+      "id": "pred_002",
+      "statement": "Following the Naga Veethee influence, the Lahore Arts Council will organize a major interfaith music festival, fostering goodwill and cultural exchange between Pakistani and Indian artists.",
+      "domain": "religion",
+      "direction": "pos",
+      "confidence": 0.5,
+      "createdDate": "2026-04-03",
+      "manifestDate": "2026-05-03",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "pending",
+      "evidence": null,
+      "creationDomains": []
+    },
+    {
+      "id": "pred_003",
+      "statement": "Due to Venus in Bharani, Doctors Without Borders will increase surgical support in Kabul due to a rise in violence-related injuries, straining local healthcare infrastructure.",
+      "domain": "humanitarian",
+      "direction": "neg",
+      "confidence": 0.4,
+      "createdDate": "2026-04-03",
+      "manifestDate": "2026-05-03",
+      "pakaDelayDays": 30,
+      "drivingPlanet": null,
+      "status": "pending",
+      "evidence": null,
+      "creationDomains": []
+    }
+  ],
+  "predictionSummary": {
+    "total": 78,
+    "plausible": 5,
+    "unconfirmed": 44,
+    "echoFiltered": 0,
+    "pending": 29,
+    "pakaDistribution": {
+      "≤30d": 50,
+      "31-90d": 1,
+      "91-200d": 6,
+      "201-365d": 21,
+      ">365d": 0
+    },
+    "drivingPlanetDistribution": {
+      "Jupiter": 18,
+      "unknown": 50,
+      "Saturn": 3,
+      "Venus": 6,
+      "Moon": 1
+    }
+  }
+}

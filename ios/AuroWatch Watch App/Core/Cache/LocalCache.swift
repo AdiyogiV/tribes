@@ -467,7 +467,7 @@ class LocalCache: ObservableObject {
         if let v = vo2Max { payload["vo2Max"] = v }
         if let v = todaySteps { payload["steps"] = v }
         if let v = hrRecovery { payload["hrRecovery"] = v }
-        if let v = spO2 { payload["spO2"] = v }
+        if let v = spO2 { payload["spO2"] = v > 1 ? v : v * 100 } // always send as 0–100%
         if let v = activeEnergy { payload["activeEnergy"] = v }
         if let v = mindfulMinutes { payload["mindfulMins"] = v }
         if !ojasHistory.isEmpty { payload["ojasHistory"] = ojasHistory }

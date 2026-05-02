@@ -62,7 +62,7 @@ mixin NotificationDataMixin<T extends StatefulWidget> on State<T> {
       final name = await userService
           .getUserDisplayName(userId)
           .timeout(const Duration(seconds: 5));
-      return (name != null && name.isNotEmpty) ? name : 'Someone';
+      return name.isNotEmpty ? name : 'Someone';
     } catch (e) {
       AppLogger.w('NotificationDataMixin: failed to fetch display name for $userId',
           category: LogCategory.general);
@@ -79,8 +79,8 @@ mixin NotificationDataMixin<T extends StatefulWidget> on State<T> {
       final userDoc = await locator<UserRepository>()
           .getUser(userId)
           .timeout(const Duration(seconds: 5));
-      if (userDoc == null || !userDoc.exists) return null;
-      final data = userDoc.data() as Map<String, dynamic>?;
+      if (!userDoc.exists) return null;
+      final data = userDoc.data();
       return data?['displayPicture'] as String?;
     } catch (e) {
       AppLogger.w('NotificationDataMixin: failed to fetch avatar for $userId',
@@ -103,7 +103,7 @@ mixin NotificationDataMixin<T extends StatefulWidget> on State<T> {
       final spaceDoc = await DatabaseService()
           .getSpace(spaceId)
           .timeout(const Duration(seconds: 5));
-      if (spaceDoc == null || !spaceDoc.exists) return fallback;
+      if (!spaceDoc.exists) return fallback;
       final data = spaceDoc.data() as Map<String, dynamic>?;
       return data?['name'] as String? ?? fallback;
     } catch (e) {

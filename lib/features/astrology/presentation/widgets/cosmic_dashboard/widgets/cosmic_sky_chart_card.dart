@@ -58,7 +58,7 @@ class CosmicSkyChartCard extends StatelessWidget {
     // Calculate positions based on slider
     final positions = _calculatePositions();
 
-    AppLogger.i(
+    AppLogger.d(
       'CosmicSkyChartCard: build - final positions check',
       category: LogCategory.ui,
       data: {
@@ -303,85 +303,87 @@ class CosmicSkyChartCard extends StatelessWidget {
         const baseScale = 1.23;
 
         return Center(
-          child: Container(
-            width: chartWidth,
-            height: chartWidth,
-            padding: const EdgeInsets.all(padding),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
-              child: Transform.scale(
-                scale: baseScale,
-                alignment: Alignment.center,
-                child: SizedBox(
-                  width: innerSize,
-                  height: innerSize,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // Current Sky Chart
-                      Opacity(
-                        opacity: showTransitOverlay
-                            ? (1 - chartBlendValue).clamp(0.15, 1.0)
-                            : 1.0,
-                        child: KundaliChart(
-                          key: ValueKey('sky_$dateStr'),
-                          houses: skyHouses,
-                          strokeColor: isDark
-                              ? Colors.teal.shade300
-                              : Colors.teal.shade700,
-                          houseLabelStyle: TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.w500,
-                            color: isDark
+          child: RepaintBoundary(
+            child: Container(
+              width: chartWidth,
+              height: chartWidth,
+              padding: const EdgeInsets.all(padding),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
+                child: Transform.scale(
+                  scale: baseScale,
+                  alignment: Alignment.center,
+                  child: SizedBox(
+                    width: innerSize,
+                    height: innerSize,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Current Sky Chart
+                        Opacity(
+                          opacity: showTransitOverlay
+                              ? (1 - chartBlendValue).clamp(0.15, 1.0)
+                              : 1.0,
+                          child: KundaliChart(
+                            key: ValueKey('sky_$dateStr'),
+                            houses: skyHouses,
+                            strokeColor: isDark
                                 ? Colors.teal.shade300
                                 : Colors.teal.shade700,
-                            height: 1.2,
-                          ),
-                          planetStyle: TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.w800,
-                            color: isDark
-                                ? Colors.cyan.shade300
-                                : Colors.teal.shade900,
-                            height: 1.2,
-                          ),
-                          lineWidth: 1,
-                          houseLabels: skyLabels,
-                        ),
-                      ),
-
-                      // Birth Chart Overlay (same size)
-                      if (showTransitOverlay &&
-                          birthHouses != null &&
-                          birthLabels != null)
-                        Opacity(
-                          opacity: chartBlendValue.clamp(0.15, 1.0),
-                          child: KundaliChart(
-                            houses: birthHouses,
-                            strokeColor: isDark
-                                ? Colors.amber.shade400
-                                : Colors.amber.shade700,
                             houseLabelStyle: TextStyle(
                               fontSize: 9,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.w500,
                               color: isDark
-                                  ? Colors.amber.shade400
-                                  : Colors.amber.shade800,
+                                  ? Colors.teal.shade300
+                                  : Colors.teal.shade700,
                               height: 1.2,
                             ),
                             planetStyle: TextStyle(
                               fontSize: 9,
-                              fontWeight: FontWeight.w900,
+                              fontWeight: FontWeight.w800,
                               color: isDark
-                                  ? Colors.orange.shade300
-                                  : Colors.deepOrange.shade700,
+                                  ? Colors.cyan.shade300
+                                  : Colors.teal.shade900,
                               height: 1.2,
                             ),
-                            lineWidth: 1.5,
-                            houseLabels: birthLabels,
+                            lineWidth: 1,
+                            houseLabels: skyLabels,
                           ),
                         ),
-                    ],
+
+                        // Birth Chart Overlay (same size)
+                        if (showTransitOverlay &&
+                            birthHouses != null &&
+                            birthLabels != null)
+                          Opacity(
+                            opacity: chartBlendValue.clamp(0.15, 1.0),
+                            child: KundaliChart(
+                              houses: birthHouses,
+                              strokeColor: isDark
+                                  ? Colors.amber.shade400
+                                  : Colors.amber.shade700,
+                              houseLabelStyle: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w600,
+                                color: isDark
+                                    ? Colors.amber.shade400
+                                    : Colors.amber.shade800,
+                                height: 1.2,
+                              ),
+                              planetStyle: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w900,
+                                color: isDark
+                                    ? Colors.orange.shade300
+                                    : Colors.deepOrange.shade700,
+                                height: 1.2,
+                              ),
+                              lineWidth: 1.5,
+                              houseLabels: birthLabels,
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
               ),

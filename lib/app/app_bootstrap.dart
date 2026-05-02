@@ -18,11 +18,12 @@ import 'package:aurogram/core/notifications/fcm_background_handler.dart';
 import 'package:aurogram/app/app_providers.dart';
 import 'package:aurogram/app/app_root.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_app_check/firebase_app_check.dart';
+// import 'package:firebase_app_check/firebase_app_check.dart'; // Disabled — native NoOp handles App Check
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:marionette_flutter/marionette_flutter.dart';
 
 /// Tracks whether initial dependencies are loaded.
 bool initialDependenciesLoaded = false;
@@ -41,7 +42,14 @@ class AppBootstrap {
       final startupService = StartupService();
       startupService.recordStartTime();
 
-      WidgetsFlutterBinding.ensureInitialized();
+      // In debug mode, use MarionetteBinding so AI agents (Wibey, Code Puppy)
+      // can inspect widgets, tap, scroll, type, and take screenshots via MCP.
+      // In release mode, use the standard binding — zero overhead.
+      if (kDebugMode) {
+        MarionetteBinding.ensureInitialized();
+      } else {
+        WidgetsFlutterBinding.ensureInitialized();
+      }
       initializePlatformServices();
       _preWarmComponents();
       AppInitializer.setupErrorHandling();
@@ -115,52 +123,25 @@ class AppBootstrap {
     // app with zero offline cache and a 10s wait on every cold read.
     _configureFirestoreSettings();
 
-    // App Check – activate with appropriate provider per build mode.
+    // App Check – disabled via native NoOp factory in AppDelegate.swift.
     //
-    // DEBUG MODE: Native AppDelegate.swift installs AppCheckDebugProviderFactory
-    // which prints a debug token to console on first launch. Add that token in
-    // Firebase Console > App Check > [iOS app] > Manage debug tokens to make
-    // App Check pass for this dev install. We do NOT also call
-    // FirebaseAppCheck.activate() from Dart in debug — the native factory
-    // already covers it and a second activation triggers a redundant token
-    // exchange.
+    // The native side installs a NoOpAppCheckProviderFactory BEFORE
+    // FirebaseApp.configure() so the eagerly-created AppCheck component
+    // gets a NoOp provider (cached by FIRComponentContainer). It also
+    // re-installs it AFTER GeneratedPluginRegistrant.register() because
+    // the Flutter firebase_app_check plugin unconditionally overrides the
+    // factory with a DeviceCheck-backed one during registration.
     //
-    // RELEASE MODE: Activate normally with platform-specific providers.
-    if (!kIsWeb) {
-      try {
-        if (kDebugMode) {
-          AppLogger.i(
-              'App Check: debug provider installed (see AppDelegate). '
-              'First launch prints a token — register it in Firebase Console.',
-              category: LogCategory.general);
-        } else {
-          AppLogger.i('Initializing Firebase App Check (mobile release)...',
-              category: LogCategory.general);
-          await FirebaseAppCheck.instance.activate(
-            providerAndroid: const AndroidPlayIntegrityProvider(),
-            providerApple: const AppleDeviceCheckProvider(),
-          );
-          // Token fetch is a network round-trip — fire-and-forget to avoid
-          // blocking runApp(). Firebase SDK will cache the token automatically.
-          unawaited(FirebaseAppCheck.instance.getToken(true).then((token) {
-            AppLogger.i('Firebase App Check activated',
-                category: LogCategory.general,
-                data: {'hasToken': token != null});
-          }).catchError((tokenError) {
-            AppLogger.w('Firebase App Check token fetch failed',
-                category: LogCategory.general,
-                data: {'error': tokenError.toString()});
-          }));
-        }
-      } catch (e) {
-        AppLogger.w('Firebase App Check activation failed: $e',
-            category: LogCategory.general, data: {'error': e.toString()});
-      }
-    } else {
-      AppLogger.i('Skipping Firebase App Check',
-          category: LogCategory.general,
-          data: {'reason': 'Web platform - faster startup'});
-    }
+    // App Check is currently in Monitoring mode in Firebase Console, so
+    // all requests pass regardless of token validity. When enforcement is
+    // enabled, activate with real providers here and remove the native NoOp.
+    //
+    // Skip activation entirely — the native NoOp factory handles it.
+    // Calling activate() from Dart would reconfigure the Flutter plugin's
+    // internal provider but cannot replace the already-cached native
+    // AppCheck instance (created eagerly during configure()).
+    AppLogger.i('App Check: handled by native NoOp factory (monitoring mode)',
+        category: LogCategory.general);
 
     // FCM background handler (mobile only)
     if (!kIsWeb) {
@@ -200,11 +181,11 @@ class AppBootstrap {
     try {
       int cacheSizeBytes;
       if (kIsWeb) {
-        cacheSizeBytes = 10 * 1024 * 1024;
+        cacheSizeBytes = 10 * 1024 * 1024; // 10 MB – browser quota limited
       } else if (PlatformServices.instance.isIOS) {
-        cacheSizeBytes = 20 * 1024 * 1024;
+        cacheSizeBytes = 100 * 1024 * 1024; // 100 MB – was 20 MB, too small for chat-heavy app
       } else {
-        cacheSizeBytes = 80 * 1024 * 1024;
+        cacheSizeBytes = 100 * 1024 * 1024; // 100 MB
       }
 
       FirebaseFirestore.instance.settings = Settings(

@@ -16,11 +16,6 @@ class VedicClockPainter extends CustomPainter {
 
   static const _sunriseHour = 6;
 
-  static const _praharNames = [
-    'purvanha', 'madhyanha', 'aparanha', 'sayanha',
-    'pradosha', 'nishitha', 'triyama', 'usha',
-  ];
-
   /// Base clock color — white on dark backgrounds, warm brown on light.
   Color get _clockColor => isDark ? Colors.white : const Color(0xFF5A3D34);
 
@@ -95,11 +90,7 @@ class VedicClockPainter extends CustomPainter {
   // ── Ghati ring — outer circle, sun, tracker, time + ghati labels ──
 
   void _drawGhatiRing(Canvas canvas, double radius, double ghati, double pala) {
-    final outerR = radius * 0.92;
     final labelR = radius * 0.75;
-
-    // Sun icon disabled — kept for reuse
-    // _drawSunIcon(canvas, 0, -labelR, radius * 0.065);
 
     // Ghati tracker — sun color, tracks around dial
     final trackerAngle = -math.pi / 2 + (ghati / 60.0) * 2 * math.pi;
@@ -190,24 +181,6 @@ class VedicClockPainter extends CustomPainter {
       Offset(length * math.cos(angle), length * math.sin(angle)),
       Paint()..color = color..strokeWidth = width..strokeCap = StrokeCap.round,
     );
-  }
-
-  // ── Sun icon ──────────────────────────────────────────────
-
-  void _drawSunIcon(Canvas canvas, double cx, double cy, double r) {
-    const sunColor = Color(0xFFFFD64F);
-    canvas.save();
-    canvas.translate(cx, cy);
-    canvas.drawCircle(Offset.zero, r * 0.55, Paint()..color = sunColor);
-    for (int i = 0; i < 8; i++) {
-      final a = (i / 8.0) * 2 * math.pi;
-      canvas.drawLine(
-        Offset(r * 0.7 * math.cos(a), r * 0.7 * math.sin(a)),
-        Offset(r * math.cos(a), r * math.sin(a)),
-        Paint()..color = sunColor.withValues(alpha: 0.85)..strokeWidth = r * 0.24..strokeCap = StrokeCap.round,
-      );
-    }
-    canvas.restore();
   }
 
   // ── Center dot ────────────────────────────────────────────

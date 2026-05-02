@@ -219,7 +219,7 @@ class _SpaceMembersListState extends State<SpaceMembersList> {
   }
 
   void _navigateToUserProfile(String userId) {
-    context.push('/user/profile/$userId');
+    context.push('/user/$userId');
   }
 
   void _showAdminOptions(String userId, String currentRole) {

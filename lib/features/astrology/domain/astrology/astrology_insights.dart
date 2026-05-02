@@ -72,8 +72,13 @@ extension AstrologyInsightsExtension on AstrologyService {
   }
 
   /// Stream daily insight for a specific date.
+  /// Uses hash-based deduplication to avoid rebuilding widgets when data
+  /// hasn't actually changed (Firestore snapshots can emit metadata-only
+  /// updates).
   Stream<DailyInsight?> streamDailyInsight(String uid, DateTime date) {
     final dateString = _formatDate(date);
+    String? lastHash;
+    DailyInsight? cached;
     return firestore
         .collection('users')
         .doc(uid)
@@ -92,10 +97,14 @@ extension AstrologyInsightsExtension on AstrologyService {
         if (!doc.exists) return null;
         final data = doc.data();
         if (data == null) return null;
-        return DailyInsight.fromMap({
+        final hash = data.toString();
+        if (hash == lastHash && cached != null) return cached;
+        lastHash = hash;
+        cached = DailyInsight.fromMap({
           ...data,
           'date': dateString,
         });
+        return cached;
       } catch (e, stackTrace) {
         AppLogger.e(
           'Error parsing daily insight from stream',
@@ -105,12 +114,15 @@ extension AstrologyInsightsExtension on AstrologyService {
         );
         return null;
       }
-    });
+    }).distinct();
   }
 
   /// Stream today's daily insight — queries the MOST RECENT insight.
   /// This avoids timezone mismatch issues between frontend and backend.
+  /// Uses hash-based deduplication to prevent unnecessary widget rebuilds.
   Stream<DailyInsight?> streamTodayInsight(String uid) {
+    String? lastHash;
+    DailyInsight? cached;
     return firestore
         .collection('users')
         .doc(uid)
@@ -130,10 +142,14 @@ extension AstrologyInsightsExtension on AstrologyService {
         if (snapshot.docs.isEmpty) return null;
         final doc = snapshot.docs.first;
         final data = doc.data();
-        return DailyInsight.fromMap({
+        final hash = data.toString();
+        if (hash == lastHash && cached != null) return cached;
+        lastHash = hash;
+        cached = DailyInsight.fromMap({
           ...data,
           'date': doc.id,
         });
+        return cached;
       } catch (e, stackTrace) {
         AppLogger.e(
           'Error parsing today insight from stream',
@@ -143,11 +159,14 @@ extension AstrologyInsightsExtension on AstrologyService {
         );
         return null;
       }
-    });
+    }).distinct();
   }
 
   /// Stream a specific date's insight (for history viewing).
+  /// Uses hash-based deduplication to prevent unnecessary widget rebuilds.
   Stream<DailyInsight?> streamInsightForDate(String uid, String date) {
+    String? lastHash;
+    DailyInsight? cached;
     return firestore
         .collection('users')
         .doc(uid)
@@ -166,10 +185,14 @@ extension AstrologyInsightsExtension on AstrologyService {
         if (!doc.exists) return null;
         final data = doc.data();
         if (data == null) return null;
-        return DailyInsight.fromMap({
+        final hash = data.toString();
+        if (hash == lastHash && cached != null) return cached;
+        lastHash = hash;
+        cached = DailyInsight.fromMap({
           ...data,
           'date': doc.id,
         });
+        return cached;
       } catch (e, stackTrace) {
         AppLogger.e(
           'Error parsing insight for date $date',
@@ -179,7 +202,7 @@ extension AstrologyInsightsExtension on AstrologyService {
         );
         return null;
       }
-    });
+    }).distinct();
   }
 
   /// Generate daily insight for the current user.

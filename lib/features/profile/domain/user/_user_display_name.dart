@@ -24,24 +24,15 @@ extension UserDisplayName on UserService {
 
     final isAuthenticated = user != null;
 
-    // Fast path: If we have a cached name and it's still valid, use it
+    // Fast path: If we have a cached name, trust it (no Firestore round-trip).
+    // Names rarely change; the periodic cache expiry below handles staleness.
     if (cachedName != null &&
         cachedName.isNotEmpty &&
         cachedName != UserService.deletedUserLabel) {
-      // Quick check: is user still valid?
-      try {
-        final userDoc = await userCollection.doc(userId).get();
-        if (userDoc.exists) {
-          // User still exists, cached name is valid
-          return cachedName;
-        }
-        // User deleted, fall through to check deletedUsers
-      } catch (e) {
-        // On error, fall through to full check (will try to fetch fresh data)
-        AppLogger.w('Error validating cached name',
-            category: LogCategory.database,
-            data: {'userId': userId, 'error': e.toString()});
-      }
+      // Also populate the static cache so other callers benefit
+      UserService.displayNameCache[userId] = cachedName;
+      UserService.displayNameCacheTimestamps[userId] ??= DateTime.now();
+      return cachedName;
     }
 
     // Check display name cache first (performance optimization only)

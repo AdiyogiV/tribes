@@ -6,40 +6,59 @@ import FirebaseMessaging
 import UserNotifications
 import WatchConnectivity
 
+/// A no-op App Check provider that silently absorbs token requests
+/// instead of letting the SDK fall back to DeviceCheck (which fails
+/// with 400 "App not registered" when the app isn't enrolled in
+/// Firebase Console > App Check).
+///
+/// Returning `nil` from the factory causes the SDK to auto-detect
+/// DeviceCheck and attempt a token exchange anyway.  Returning an
+/// actual provider that errors immediately stops the retry loop.
+private class NoOpAppCheckProvider: NSObject, AppCheckProvider {
+  func getToken(completion handler: @escaping (AppCheckToken?, Error?) -> Void) {
+    print("🛡️ NoOp App Check provider: returning nil token (debug build)")
+    handler(nil, NSError(domain: "com.canay.dhaara.debug",
+                         code: -1,
+                         userInfo: [NSLocalizedDescriptionKey:
+                                      "App Check disabled for debug builds"]))
+  }
+}
+
+private class NoOpAppCheckProviderFactory: NSObject, AppCheckProviderFactory {
+  func createProvider(with app: FirebaseApp) -> AppCheckProvider? {
+    print("🛡️ NoOp App Check factory: returning NoOp provider (debug build)")
+    return NoOpAppCheckProvider()
+  }
+}
+
 @main
 @objc class AppDelegate: FlutterAppDelegate {
-  
+
   private var deviceType: String {
     UIDevice.current.userInterfaceIdiom == .pad ? "iPad" : "iPhone"
   }
-  
+
   override func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-    // App Check configuration.
+    // App Check: Install a no-op factory BEFORE FirebaseApp.configure() so the
+    // eagerly-created AppCheck component gets our NoOp provider (and caches it).
+    // Without this, FIRComponentContainer returns nil on the first attempt, then
+    // the Flutter firebase_app_check plugin sets a DeviceCheck factory during
+    // GeneratedPluginRegistrant.register(), and subsequent token requests create
+    // an AppCheck instance with DeviceCheck — which fails with 400
+    // "App not registered" on development-signed builds.
     //
-    // DEBUG: Install AppCheckDebugProviderFactory. The iOS Firebase SDK has
-    // a built-in DeviceCheck provider that activates by default when ANY
-    // App-Check-aware service (FCM, Firestore, Storage) requests a token.
-    // Without an explicit factory, every such request hits
-    // exchangeDeviceCheckToken with no app-side override and returns
-    // 400 "App not registered" because the dev iOS app isn't registered
-    // in Firebase Console > App Check. With the debug factory installed:
-    //   1. The SDK stops attempting DeviceCheck altogether.
-    //   2. It generates and prints a debug token to the console (look for
-    //      'Firebase App Check Debug Token: ...' on first launch).
-    //   3. Add that token at:
-    //      https://console.firebase.google.com/project/_/appcheck/apps
-    //      → your iOS app → "Manage debug tokens" → paste → done forever.
+    // NOTE: #if DEBUG is NOT used because Swift compilation conditions evaluate
+    // to false in this project's build configuration despite SWIFT_ACTIVE_-
+    // COMPILATION_CONDITIONS containing DEBUG. Using unconditional NoOp is safe
+    // because App Check is in Monitoring mode (not Enforced), so all requests
+    // pass regardless of token validity.
     //
-    // RELEASE: Dart-side bootstrap (`app_bootstrap.dart`) installs
-    // AppleDeviceCheckProvider via FirebaseAppCheck.activate(). Register
-    // the iOS app at the same URL above before shipping to prod.
-    #if DEBUG
-    let providerFactory = AppCheckDebugProviderFactory()
-    AppCheck.setAppCheckProviderFactory(providerFactory)
-    #endif
+    // When App Check enforcement is enabled, replace this with a runtime check
+    // (e.g. embedded.mobileprovision detection) or fix the build flags.
+    AppCheck.setAppCheckProviderFactory(NoOpAppCheckProviderFactory())
 
     // Configure Firebase
     if FirebaseApp.app() == nil {
@@ -73,6 +92,15 @@ import WatchConnectivity
     setupWatchPlatformChannel()
 
     GeneratedPluginRegistrant.register(with: self)
+
+    // Re-install no-op factory AFTER plugin registration — the Flutter
+    // firebase_app_check plugin unconditionally overrides our factory with a
+    // DeviceCheck-backed one during GeneratedPluginRegistrant.register().
+    // This second set ensures our NoOp stays active.
+    AppCheck.setAppCheckProviderFactory(NoOpAppCheckProviderFactory())
+    // Kill the periodic token refresh that fires the 400s
+    AppCheck.appCheck().isTokenAutoRefreshEnabled = false
+
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 

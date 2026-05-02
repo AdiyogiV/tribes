@@ -68,6 +68,12 @@ class MessagesUnifiedCard extends StatelessWidget {
     final now = DateTime.now();
     final difference = now.difference(dateTime);
 
+    // Guard against epoch-zero or far-future timestamps that indicate
+    // missing / malformed data — show nothing instead of "2939w".
+    if (difference.inDays.abs() > 365 * 5) {
+      return '';
+    }
+
     if (difference.inMinutes < 1) {
       return 'now';
     } else if (difference.inHours < 1) {
@@ -76,9 +82,12 @@ class MessagesUnifiedCard extends StatelessWidget {
       return '${difference.inHours}h';
     } else if (difference.inDays < 7) {
       return '${difference.inDays}d';
-    } else {
+    } else if (difference.inDays < 365) {
       final weeks = (difference.inDays / 7).floor();
       return '${weeks}w';
+    } else {
+      final years = (difference.inDays / 365).floor();
+      return '${years}y';
     }
   }
 

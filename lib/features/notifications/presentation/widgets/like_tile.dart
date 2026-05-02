@@ -131,7 +131,7 @@ class _LikeTileState extends State<LikeTile> with NotificationDataMixin {
           : null,
       onTap: () {
         if (widget.data?['postId'] != null) {
-          context.push('/post/${widget.data!['postId']}');
+          context.push('/thread/${widget.data!['postId']}');
         } else {
           showCustomSnackBar(context, message: 'Post or space information is unavailable', duration: const Duration(seconds: 2), backgroundColor: AppTheme.errorColor);
         }

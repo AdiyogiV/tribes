@@ -491,32 +491,17 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
     DailyInsight? insight,
     AyurvedaProfile? ayurvedaProfile,
   ) {
-    // Get current planetary positions
-    final now = DateTime.now();
-    final globalSkyPositions =
-        _loadingState.isSkyLoaded ? _skyService.getPositionsForDate(now) : null;
+    // Fallback positions from insight transits (used when sky cache misses)
     final insightTransits =
         insight?.astrologicalData?['transits'] as Map<String, dynamic>?;
-    final currentPositions =
-        globalSkyPositions != null && globalSkyPositions.isNotEmpty
-            ? globalSkyPositions
-            : insightTransits;
 
-    AppLogger.i(
+    AppLogger.d(
       'CosmicDashboard: Determining currentPositions',
       category: LogCategory.ui,
       data: {
         'isSkyLoaded': _loadingState.isSkyLoaded,
-        'now': now.toIso8601String(),
-        'globalSkyPositionsFound': globalSkyPositions != null,
-        'globalSkyPositionsPlanetCount': globalSkyPositions?.length ?? 0,
-        'globalSkyPositionsPlanets': globalSkyPositions?.keys.toList(),
         'insightTransitsFound': insightTransits != null,
         'insightTransitsPlanetCount': insightTransits?.length ?? 0,
-        'usingGlobalSky': currentPositions == globalSkyPositions,
-        'usingInsightTransits': currentPositions == insightTransits,
-        'finalPlanetCount': currentPositions?.length ?? 0,
-        'finalPlanets': currentPositions?.keys.toList(),
       },
     );
 
@@ -524,8 +509,14 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
     _sendWatchProfileIfChanged(ayurvedaProfile);
     _sendWatchInsightIfChanged(insight);
 
-    // Send sky positions to watch
-    _sendWatchSkyIfChanged(currentPositions);
+    // Send sky positions to watch (use cached sky positions or insight fallback)
+    final watchSkyPositions = _loadingState.isSkyLoaded
+        ? _skyService.getPositionsForDate(DateTime.now())
+        : null;
+    _sendWatchSkyIfChanged(
+        watchSkyPositions != null && watchSkyPositions.isNotEmpty
+            ? watchSkyPositions
+            : insightTransits);
 
     // Global muhurat (same for all users, calculated at Ujjain)
     final globalMuhurat = _skyService.globalMuhurat;
@@ -602,10 +593,20 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
                   // 1. todaySamvat (lunar month, vikram year)
                   // 2. insight panchang (tithi, nakshatra, yoga)
                   // 3. global panchang (full panchang if available)
+                  // Smart merge: only overwrite with non-null values to prevent
+                  // later sources from erasing valid data (e.g. lunar_month_full_name).
                   final Map<String, dynamic> merged = {};
                   if (todaySamvat != null) merged.addAll(todaySamvat);
-                  if (insightPanchang != null) merged.addAll(insightPanchang);
-                  if (globalPanchang != null) merged.addAll(globalPanchang);
+                  if (insightPanchang != null) {
+                    insightPanchang.forEach((k, v) {
+                      if (v != null) merged[k] = v;
+                    });
+                  }
+                  if (globalPanchang != null) {
+                    globalPanchang.forEach((k, v) {
+                      if (v != null) merged[k] = v;
+                    });
+                  }
                   final todayPanchang = merged.isNotEmpty ? merged : null;
                   _sendWatchPanchangIfChanged(todayPanchang);
                   return CosmicDateTimeCard(
@@ -638,44 +639,9 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
                           final positions =
                               skyPositions != null && skyPositions.isNotEmpty
                                   ? skyPositions
-                                  : currentPositions;
-
-                          AppLogger.i(
-                            'CosmicDashboard: Building chart positions',
-                            category: LogCategory.ui,
-                            data: {
-                              'sliderDate': sliderDate.toIso8601String(),
-                              'sliderValue': sliderValue,
-                              'skyPositionsFound': skyPositions != null,
-                              'skyPositionsPlanetCount':
-                                  skyPositions?.length ?? 0,
-                              'skyPositionsPlanets':
-                                  skyPositions?.keys.toList(),
-                              'currentPositionsFound': currentPositions != null,
-                              'currentPositionsPlanetCount':
-                                  currentPositions?.length ?? 0,
-                              'currentPositionsPlanets':
-                                  currentPositions?.keys.toList(),
-                              'finalPositionsFound': positions != null,
-                              'finalPositionsPlanetCount':
-                                  positions?.length ?? 0,
-                              'finalPositionsPlanets': positions?.keys.toList(),
-                              'willShowChart':
-                                  positions != null && positions.isNotEmpty,
-                            },
-                          );
+                                  : insightTransits;
 
                           if (positions == null || positions.isEmpty) {
-                            AppLogger.w(
-                              'CosmicDashboard: Hiding chart - no positions',
-                              category: LogCategory.ui,
-                              data: {
-                                'sliderDate': sliderDate.toIso8601String(),
-                                'skyPositionsNull': skyPositions == null,
-                                'currentPositionsNull':
-                                    currentPositions == null,
-                              },
-                            );
                             return const SizedBox.shrink();
                           }
                           return CosmicSkyChartCard(

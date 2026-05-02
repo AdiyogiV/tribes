@@ -1,0 +1,898 @@
+{
+  "2025-01": {
+    "Sun": {
+      "sign": "Sagittarius",
+      "longitude": 270.5,
+      "isRetrograde": false,
+      "sunDistance": 0
+    },
+    "Moon": {
+      "sign": "Gemini",
+      "longitude": 80,
+      "isRetrograde": false,
+      "sunDistance": 169.5
+    },
+    "Mars": {
+      "sign": "Cancer",
+      "longitude": 95,
+      "isRetrograde": false,
+      "sunDistance": 175.5
+    },
+    "Mercury": {
+      "sign": "Sagittarius",
+      "longitude": 265,
+      "isRetrograde": false,
+      "sunDistance": 5.5
+    },
+    "Jupiter": {
+      "sign": "Taurus",
+      "longitude": 50,
+      "isRetrograde": false,
+      "sunDistance": 140.5
+    },
+    "Venus": {
+      "sign": "Aquarius",
+      "longitude": 315,
+      "isRetrograde": false,
+      "sunDistance": 44.5
+    },
+    "Saturn": {
+      "sign": "Aquarius",
+      "longitude": 322,
+      "isRetrograde": false,
+      "sunDistance": 51.5
+    },
+    "Rahu": {
+      "sign": "Pisces",
+      "longitude": 359,
+      "isRetrograde": true,
+      "sunDistance": 88.5
+    },
+    "Ketu": {
+      "sign": "Virgo",
+      "longitude": 179,
+      "isRetrograde": true,
+      "sunDistance": 91.5
+    }
+  },
+  "2025-02": {
+    "Sun": {
+      "sign": "Capricorn",
+      "longitude": 300,
+      "isRetrograde": false,
+      "sunDistance": 0
+    },
+    "Moon": {
+      "sign": "Leo",
+      "longitude": 130,
+      "isRetrograde": false,
+      "sunDistance": 170
+    },
+    "Mars": {
+      "sign": "Cancer",
+      "longitude": 100,
+      "isRetrograde": true,
+      "sunDistance": 160
+    },
+    "Mercury": {
+      "sign": "Capricorn",
+      "longitude": 295,
+      "isRetrograde": false,
+      "sunDistance": 5
+    },
+    "Jupiter": {
+      "sign": "Taurus",
+      "longitude": 52,
+      "isRetrograde": false,
+      "sunDistance": 112
+    },
+    "Venus": {
+      "sign": "Pisces",
+      "longitude": 340,
+      "isRetrograde": false,
+      "sunDistance": 40
+    },
+    "Saturn": {
+      "sign": "Aquarius",
+      "longitude": 325,
+      "isRetrograde": false,
+      "sunDistance": 25
+    },
+    "Rahu": {
+      "sign": "Pisces",
+      "longitude": 357.5,
+      "isRetrograde": true,
+      "sunDistance": 57.5
+    },
+    "Ketu": {
+      "sign": "Virgo",
+      "longitude": 177.5,
+      "isRetrograde": true,
+      "sunDistance": 122.5
+    }
+  },
+  "2025-03": {
+    "Sun": {
+      "sign": "Aquarius",
+      "longitude": 330,
+      "isRetrograde": false,
+      "sunDistance": 0
+    },
+    "Moon": {
+      "sign": "Virgo",
+      "longitude": 160,
+      "isRetrograde": false,
+      "sunDistance": 170
+    },
+    "Mars": {
+      "sign": "Cancer",
+      "longitude": 98,
+      "isRetrograde": true,
+      "sunDistance": 128
+    },
+    "Mercury": {
+      "sign": "Aquarius",
+      "longitude": 325,
+      "isRetrograde": false,
+      "sunDistance": 5
+    },
+    "Jupiter": {
+      "sign": "Taurus",
+      "longitude": 55,
+      "isRetrograde": false,
+      "sunDistance": 85
+    },
+    "Venus": {
+      "sign": "Aries",
+      "longitude": 5,
+      "isRetrograde": false,
+      "sunDistance": 35
+    },
+    "Saturn": {
+      "sign": "Aquarius",
+      "longitude": 328,
+      "isRetrograde": false,
+      "sunDistance": 2
+    },
+    "Rahu": {
+      "sign": "Pisces",
+      "longitude": 356,
+      "isRetrograde": true,
+      "sunDistance": 26
+    },
+    "Ketu": {
+      "sign": "Virgo",
+      "longitude": 176,
+      "isRetrograde": true,
+      "sunDistance": 154
+    }
+  },
+  "2025-04": {
+    "Sun": {
+      "sign": "Pisces",
+      "longitude": 0,
+      "isRetrograde": false,
+      "sunDistance": 0
+    },
+    "Moon": {
+      "sign": "Libra",
+      "longitude": 190,
+      "isRetrograde": false,
+      "sunDistance": 170
+    },
+    "Mars": {
+      "sign": "Cancer",
+      "longitude": 96,
+      "isRetrograde": false,
+      "sunDistance": 96
+    },
+    "Mercury": {
+      "sign": "Pisces",
+      "longitude": 355,
+      "isRetrograde": false,
+      "sunDistance": 5
+    },
+    "Jupiter": {
+      "sign": "Taurus",
+      "longitude": 58,
+      "isRetrograde": false,
+      "sunDistance": 58
+    },
+    "Venus": {
+      "sign": "Aries",
+      "longitude": 20,
+      "isRetrograde": false,
+      "sunDistance": 20
+    },
+    "Saturn": {
+      "sign": "Pisces",
+      "longitude": 332,
+      "isRetrograde": false,
+      "sunDistance": 28
+    },
+    "Rahu": {
+      "sign": "Pisces",
+      "longitude": 354.5,
+      "isRetrograde": true,
+      "sunDistance": 5.5
+    },
+    "Ketu": {
+      "sign": "Virgo",
+      "longitude": 174.5,
+      "isRetrograde": true,
+      "sunDistance": 174.5
+    }
+  },
+  "2025-05": {
+    "Sun": {
+      "sign": "Aries",
+      "longitude": 28,
+      "isRetrograde": false,
+      "sunDistance": 0
+    },
+    "Moon": {
+      "sign": "Scorpio",
+      "longitude": 220,
+      "isRetrograde": false,
+      "sunDistance": 168
+    },
+    "Mars": {
+      "sign": "Cancer",
+      "longitude": 100,
+      "isRetrograde": false,
+      "sunDistance": 72
+    },
+    "Mercury": {
+      "sign": "Aries",
+      "longitude": 25,
+      "isRetrograde": false,
+      "sunDistance": 3
+    },
+    "Jupiter": {
+      "sign": "Taurus",
+      "longitude": 62,
+      "isRetrograde": false,
+      "sunDistance": 34
+    },
+    "Venus": {
+      "sign": "Taurus",
+      "longitude": 45,
+      "isRetrograde": false,
+      "sunDistance": 17
+    },
+    "Saturn": {
+      "sign": "Pisces",
+      "longitude": 335,
+      "isRetrograde": false,
+      "sunDistance": 53
+    },
+    "Rahu": {
+      "sign": "Pisces",
+      "longitude": 353,
+      "isRetrograde": true,
+      "sunDistance": 35
+    },
+    "Ketu": {
+      "sign": "Virgo",
+      "longitude": 173,
+      "isRetrograde": true,
+      "sunDistance": 145
+    }
+  },
+  "2025-06": {
+    "Sun": {
+      "sign": "Taurus",
+      "longitude": 58,
+      "isRetrograde": false,
+      "sunDistance": 0
+    },
+    "Moon": {
+      "sign": "Sagittarius",
+      "longitude": 260,
+      "isRetrograde": false,
+      "sunDistance": 158
+    },
+    "Mars": {
+      "sign": "Leo",
+      "longitude": 125,
+      "isRetrograde": false,
+      "sunDistance": 67
+    },
+    "Mercury": {
+      "sign": "Taurus",
+      "longitude": 50,
+      "isRetrograde": false,
+      "sunDistance": 8
+    },
+    "Jupiter": {
+      "sign": "Gemini",
+      "longitude": 68,
+      "isRetrograde": false,
+      "sunDistance": 10
+    },
+    "Venus": {
+      "sign": "Gemini",
+      "longitude": 75,
+      "isRetrograde": false,
+      "sunDistance": 17
+    },
+    "Saturn": {
+      "sign": "Pisces",
+      "longitude": 337,
+      "isRetrograde": false,
+      "sunDistance": 79
+    },
+    "Rahu": {
+      "sign": "Pisces",
+      "longitude": 351.5,
+      "isRetrograde": true,
+      "sunDistance": 66.5
+    },
+    "Ketu": {
+      "sign": "Virgo",
+      "longitude": 171.5,
+      "isRetrograde": true,
+      "sunDistance": 113.5
+    }
+  },
+  "2025-07": {
+    "Sun": {
+      "sign": "Gemini",
+      "longitude": 88,
+      "isRetrograde": false,
+      "sunDistance": 0
+    },
+    "Moon": {
+      "sign": "Capricorn",
+      "longitude": 295,
+      "isRetrograde": false,
+      "sunDistance": 153
+    },
+    "Mars": {
+      "sign": "Virgo",
+      "longitude": 155,
+      "isRetrograde": false,
+      "sunDistance": 67
+    },
+    "Mercury": {
+      "sign": "Gemini",
+      "longitude": 80,
+      "isRetrograde": false,
+      "sunDistance": 8
+    },
+    "Jupiter": {
+      "sign": "Gemini",
+      "longitude": 72,
+      "isRetrograde": false,
+      "sunDistance": 16
+    },
+    "Venus": {
+      "sign": "Leo",
+      "longitude": 120,
+      "isRetrograde": false,
+      "sunDistance": 32
+    },
+    "Saturn": {
+      "sign": "Pisces",
+      "longitude": 339,
+      "isRetrograde": true,
+      "sunDistance": 109
+    },
+    "Rahu": {
+      "sign": "Pisces",
+      "longitude": 350,
+      "isRetrograde": true,
+      "sunDistance": 98
+    },
+    "Ketu": {
+      "sign": "Virgo",
+      "longitude": 170,
+      "isRetrograde": true,
+      "sunDistance": 82
+    }
+  },
+  "2025-08": {
+    "Sun": {
+      "sign": "Cancer",
+      "longitude": 118,
+      "isRetrograde": false,
+      "sunDistance": 0
+    },
+    "Moon": {
+      "sign": "Aquarius",
+      "longitude": 320,
+      "isRetrograde": false,
+      "sunDistance": 158
+    },
+    "Mars": {
+      "sign": "Virgo",
+      "longitude": 172,
+      "isRetrograde": false,
+      "sunDistance": 54
+    },
+    "Mercury": {
+      "sign": "Cancer",
+      "longitude": 110,
+      "isRetrograde": false,
+      "sunDistance": 8
+    },
+    "Jupiter": {
+      "sign": "Gemini",
+      "longitude": 74,
+      "isRetrograde": false,
+      "sunDistance": 44
+    },
+    "Venus": {
+      "sign": "Virgo",
+      "longitude": 165,
+      "isRetrograde": false,
+      "sunDistance": 47
+    },
+    "Saturn": {
+      "sign": "Pisces",
+      "longitude": 337.5,
+      "isRetrograde": true,
+      "sunDistance": 140.5
+    },
+    "Rahu": {
+      "sign": "Pisces",
+      "longitude": 348.5,
+      "isRetrograde": true,
+      "sunDistance": 129.5
+    },
+    "Ketu": {
+      "sign": "Virgo",
+      "longitude": 168.5,
+      "isRetrograde": true,
+      "sunDistance": 50.5
+    }
+  },
+  "2025-09": {
+    "Sun": {
+      "sign": "Leo",
+      "longitude": 148,
+      "isRetrograde": false,
+      "sunDistance": 0
+    },
+    "Moon": {
+      "sign": "Pisces",
+      "longitude": 350,
+      "isRetrograde": false,
+      "sunDistance": 158
+    },
+    "Mars": {
+      "sign": "Libra",
+      "longitude": 195,
+      "isRetrograde": false,
+      "sunDistance": 47
+    },
+    "Mercury": {
+      "sign": "Leo",
+      "longitude": 140,
+      "isRetrograde": false,
+      "sunDistance": 8
+    },
+    "Jupiter": {
+      "sign": "Gemini",
+      "longitude": 76,
+      "isRetrograde": false,
+      "sunDistance": 72
+    },
+    "Venus": {
+      "sign": "Libra",
+      "longitude": 205,
+      "isRetrograde": false,
+      "sunDistance": 57
+    },
+    "Saturn": {
+      "sign": "Pisces",
+      "longitude": 336,
+      "isRetrograde": true,
+      "sunDistance": 172
+    },
+    "Rahu": {
+      "sign": "Pisces",
+      "longitude": 347,
+      "isRetrograde": true,
+      "sunDistance": 161
+    },
+    "Ketu": {
+      "sign": "Virgo",
+      "longitude": 167,
+      "isRetrograde": true,
+      "sunDistance": 19
+    }
+  },
+  "2025-10": {
+    "Sun": {
+      "sign": "Virgo",
+      "longitude": 178,
+      "isRetrograde": false,
+      "sunDistance": 0
+    },
+    "Moon": {
+      "sign": "Aries",
+      "longitude": 15,
+      "isRetrograde": false,
+      "sunDistance": 163
+    },
+    "Mars": {
+      "sign": "Scorpio",
+      "longitude": 225,
+      "isRetrograde": false,
+      "sunDistance": 47
+    },
+    "Mercury": {
+      "sign": "Virgo",
+      "longitude": 170,
+      "isRetrograde": false,
+      "sunDistance": 8
+    },
+    "Jupiter": {
+      "sign": "Gemini",
+      "longitude": 77,
+      "isRetrograde": true,
+      "sunDistance": 101
+    },
+    "Venus": {
+      "sign": "Scorpio",
+      "longitude": 230,
+      "isRetrograde": false,
+      "sunDistance": 52
+    },
+    "Saturn": {
+      "sign": "Pisces",
+      "longitude": 335,
+      "isRetrograde": true,
+      "sunDistance": 157
+    },
+    "Rahu": {
+      "sign": "Pisces",
+      "longitude": 346,
+      "isRetrograde": true,
+      "sunDistance": 168
+    },
+    "Ketu": {
+      "sign": "Virgo",
+      "longitude": 166,
+      "isRetrograde": true,
+      "sunDistance": 12
+    }
+  },
+  "2025-11": {
+    "Sun": {
+      "sign": "Libra",
+      "longitude": 208,
+      "isRetrograde": false,
+      "sunDistance": 0
+    },
+    "Moon": {
+      "sign": "Taurus",
+      "longitude": 45,
+      "isRetrograde": false,
+      "sunDistance": 163
+    },
+    "Mars": {
+      "sign": "Sagittarius",
+      "longitude": 255,
+      "isRetrograde": false,
+      "sunDistance": 47
+    },
+    "Mercury": {
+      "sign": "Libra",
+      "longitude": 200,
+      "isRetrograde": false,
+      "sunDistance": 8
+    },
+    "Jupiter": {
+      "sign": "Gemini",
+      "longitude": 75,
+      "isRetrograde": true,
+      "sunDistance": 133
+    },
+    "Venus": {
+      "sign": "Sagittarius",
+      "longitude": 265,
+      "isRetrograde": false,
+      "sunDistance": 57
+    },
+    "Saturn": {
+      "sign": "Pisces",
+      "longitude": 334.5,
+      "isRetrograde": false,
+      "sunDistance": 126.5
+    },
+    "Rahu": {
+      "sign": "Pisces",
+      "longitude": 345,
+      "isRetrograde": true,
+      "sunDistance": 137
+    },
+    "Ketu": {
+      "sign": "Virgo",
+      "longitude": 165,
+      "isRetrograde": true,
+      "sunDistance": 43
+    }
+  },
+  "2025-12": {
+    "Sun": {
+      "sign": "Scorpio",
+      "longitude": 238,
+      "isRetrograde": false,
+      "sunDistance": 0
+    },
+    "Moon": {
+      "sign": "Gemini",
+      "longitude": 70,
+      "isRetrograde": false,
+      "sunDistance": 168
+    },
+    "Mars": {
+      "sign": "Capricorn",
+      "longitude": 285,
+      "isRetrograde": false,
+      "sunDistance": 47
+    },
+    "Mercury": {
+      "sign": "Scorpio",
+      "longitude": 240,
+      "isRetrograde": false,
+      "sunDistance": 2
+    },
+    "Jupiter": {
+      "sign": "Gemini",
+      "longitude": 72,
+      "isRetrograde": true,
+      "sunDistance": 166
+    },
+    "Venus": {
+      "sign": "Capricorn",
+      "longitude": 295,
+      "isRetrograde": false,
+      "sunDistance": 57
+    },
+    "Saturn": {
+      "sign": "Pisces",
+      "longitude": 335.5,
+      "isRetrograde": false,
+      "sunDistance": 97.5
+    },
+    "Rahu": {
+      "sign": "Pisces",
+      "longitude": 343.5,
+      "isRetrograde": true,
+      "sunDistance": 105.5
+    },
+    "Ketu": {
+      "sign": "Virgo",
+      "longitude": 163.5,
+      "isRetrograde": true,
+      "sunDistance": 74.5
+    }
+  },
+  "2026-01": {
+    "Sun": {
+      "sign": "Sagittarius",
+      "longitude": 268,
+      "isRetrograde": false,
+      "sunDistance": 0
+    },
+    "Moon": {
+      "sign": "Cancer",
+      "longitude": 100,
+      "isRetrograde": false,
+      "sunDistance": 168
+    },
+    "Mars": {
+      "sign": "Capricorn",
+      "longitude": 300,
+      "isRetrograde": false,
+      "sunDistance": 32
+    },
+    "Mercury": {
+      "sign": "Sagittarius",
+      "longitude": 260,
+      "isRetrograde": false,
+      "sunDistance": 8
+    },
+    "Jupiter": {
+      "sign": "Gemini",
+      "longitude": 69,
+      "isRetrograde": true,
+      "sunDistance": 159
+    },
+    "Venus": {
+      "sign": "Aquarius",
+      "longitude": 310,
+      "isRetrograde": false,
+      "sunDistance": 42
+    },
+    "Saturn": {
+      "sign": "Pisces",
+      "longitude": 337,
+      "isRetrograde": false,
+      "sunDistance": 69
+    },
+    "Rahu": {
+      "sign": "Pisces",
+      "longitude": 342,
+      "isRetrograde": true,
+      "sunDistance": 74
+    },
+    "Ketu": {
+      "sign": "Virgo",
+      "longitude": 162,
+      "isRetrograde": true,
+      "sunDistance": 106
+    }
+  },
+  "2026-02": {
+    "Sun": {
+      "sign": "Capricorn",
+      "longitude": 298,
+      "isRetrograde": false,
+      "sunDistance": 0
+    },
+    "Moon": {
+      "sign": "Leo",
+      "longitude": 130,
+      "isRetrograde": false,
+      "sunDistance": 168
+    },
+    "Mars": {
+      "sign": "Aquarius",
+      "longitude": 315,
+      "isRetrograde": false,
+      "sunDistance": 17
+    },
+    "Mercury": {
+      "sign": "Capricorn",
+      "longitude": 290,
+      "isRetrograde": false,
+      "sunDistance": 8
+    },
+    "Jupiter": {
+      "sign": "Gemini",
+      "longitude": 68,
+      "isRetrograde": false,
+      "sunDistance": 130
+    },
+    "Venus": {
+      "sign": "Pisces",
+      "longitude": 345,
+      "isRetrograde": false,
+      "sunDistance": 47
+    },
+    "Saturn": {
+      "sign": "Pisces",
+      "longitude": 339,
+      "isRetrograde": false,
+      "sunDistance": 41
+    },
+    "Rahu": {
+      "sign": "Pisces",
+      "longitude": 340.5,
+      "isRetrograde": true,
+      "sunDistance": 42.5
+    },
+    "Ketu": {
+      "sign": "Virgo",
+      "longitude": 160.5,
+      "isRetrograde": true,
+      "sunDistance": 137.5
+    }
+  },
+  "2026-03": {
+    "Sun": {
+      "sign": "Aquarius",
+      "longitude": 328,
+      "isRetrograde": false,
+      "sunDistance": 0
+    },
+    "Moon": {
+      "sign": "Virgo",
+      "longitude": 162,
+      "isRetrograde": false,
+      "sunDistance": 166
+    },
+    "Mars": {
+      "sign": "Pisces",
+      "longitude": 340,
+      "isRetrograde": false,
+      "sunDistance": 12
+    },
+    "Mercury": {
+      "sign": "Aquarius",
+      "longitude": 320,
+      "isRetrograde": false,
+      "sunDistance": 8
+    },
+    "Jupiter": {
+      "sign": "Gemini",
+      "longitude": 70,
+      "isRetrograde": false,
+      "sunDistance": 102
+    },
+    "Venus": {
+      "sign": "Pisces",
+      "longitude": 355,
+      "isRetrograde": false,
+      "sunDistance": 27
+    },
+    "Saturn": {
+      "sign": "Pisces",
+      "longitude": 341,
+      "isRetrograde": false,
+      "sunDistance": 13
+    },
+    "Rahu": {
+      "sign": "Pisces",
+      "longitude": 339,
+      "isRetrograde": true,
+      "sunDistance": 11
+    },
+    "Ketu": {
+      "sign": "Virgo",
+      "longitude": 159,
+      "isRetrograde": true,
+      "sunDistance": 169
+    }
+  },
+  "2026-04": {
+    "Sun": {
+      "sign": "Pisces",
+      "longitude": 358.5,
+      "isRetrograde": false,
+      "sunDistance": 0
+    },
+    "Moon": {
+      "sign": "Leo",
+      "longitude": 135.2,
+      "isRetrograde": false,
+      "sunDistance": 136.7
+    },
+    "Mars": {
+      "sign": "Cancer",
+      "longitude": 105.8,
+      "isRetrograde": false,
+      "sunDistance": 107.3
+    },
+    "Mercury": {
+      "sign": "Pisces",
+      "longitude": 349.2,
+      "isRetrograde": false,
+      "sunDistance": 9.3
+    },
+    "Jupiter": {
+      "sign": "Gemini",
+      "longitude": 78.4,
+      "isRetrograde": false,
+      "sunDistance": 80.1
+    },
+    "Venus": {
+      "sign": "Aries",
+      "longitude": 15.6,
+      "isRetrograde": false,
+      "sunDistance": 17.1
+    },
+    "Saturn": {
+      "sign": "Pisces",
+      "longitude": 343.7,
+      "isRetrograde": false,
+      "sunDistance": 14.8
+    },
+    "Rahu": {
+      "sign": "Pisces",
+      "longitude": 355.1,
+      "isRetrograde": true,
+      "sunDistance": 3.4
+    },
+    "Ketu": {
+      "sign": "Virgo",
+      "longitude": 175.1,
+      "isRetrograde": true,
+      "sunDistance": 176.6
+    }
+  }
+}

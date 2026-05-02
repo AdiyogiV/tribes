@@ -199,7 +199,7 @@ class _NewPostTileState extends State<NewPostTile> {
         child: InkWell(
           onTap: () {
             if (widget.data?['postId'] != null) {
-              context.push('/post/${widget.data!['postId']}');
+              context.push('/thread/${widget.data!['postId']}');
             } else {
               showCustomSnackBar(context, message: 'Post information is unavailable', duration: const Duration(seconds: 2), backgroundColor: AppTheme.errorColor);
             }
@@ -385,7 +385,7 @@ class _NewPostTileState extends State<NewPostTile> {
                           GestureDetector(
                             onTap: () {
                               if (widget.data?['postId'] != null) {
-                                context.push('/post/${widget.data!['postId']}');
+                                context.push('/thread/${widget.data!['postId']}');
                               }
                             },
                             child: Container(

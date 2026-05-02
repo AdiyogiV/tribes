@@ -39,7 +39,7 @@ void main() {
       RouteNames.cosmicDashboard,
       // Ayurveda
       RouteNames.ayurvedaDetails,
-      RouteNames.vikritiCheckin,
+      RouteNames.ayurvedaCheckin,
       // AI
       RouteNames.aiChat,
       RouteNames.recentConversations,

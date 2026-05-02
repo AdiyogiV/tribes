@@ -199,14 +199,14 @@ class EmbeddedChatViewState extends State<EmbeddedChatView>
     _onlineStatusSubscription = locator<UserRepository>()
         .userStream(widget.otherUserId!)
         .listen((snapshot) {
-      if (snapshot.exists && mounted) {
+      if (snapshot != null && snapshot.exists && mounted) {
         final data = snapshot.data();
         setState(() {
           _isOtherUserOnline = data?['isOnline'] as bool? ?? false;
           _otherUserLastSeen = (data?['lastSeen'] as Timestamp?)?.toDate();
         });
       }
-    });
+    }, onError: (_) { /* timeout or network — keep showing stale state */ });
   }
 
   Future<void> _loadDisplayName() async {

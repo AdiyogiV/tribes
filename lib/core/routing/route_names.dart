@@ -23,7 +23,7 @@ class RouteNames {
   static const spaceChatScreen = '/space/chat';
 
   // ── Content ──────────────────────────────────────────────────────────
-  static const threadView = '/post';
+  static const threadView = '/thread';
 
   // ── Astrology ────────────────────────────────────────────────────────
   static const dailyInsight = '/astrology/insight';
@@ -82,8 +82,9 @@ class RouteNames {
   // ── Uploads ─────────────────────────────────────────────────────────
   static const uploads = '/uploads';
 
-  // ── Ayurveda (refinement) ────────────────────────────────────────────
+  // ── Ayurveda (refinement & check-in) ────────────────────────────────
   static const prakritiRefinement = '/ayurveda/prakriti-refinement';
+  static const ayurvedaCheckin = '/ayurveda/checkin';
 
   // ── Space Creation ──────────────────────────────────────────────────
   static const spaceCreation = '/space/create';

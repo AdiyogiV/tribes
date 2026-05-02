@@ -590,7 +590,7 @@ class _UploadCardState extends State<_UploadCard> {
 
     if (spaceId != null && spaceId.isNotEmpty) {
       // Navigate to the space screen with the post ID to show that specific post
-      context.push('/space/$spaceId', extra: postId);
+      context.push('/space/$spaceId', extra: {'postId': postId});
     } else {
       // Fallback if space ID is not available - navigate to post directly
       Navigator.of(context).push(

@@ -461,7 +461,7 @@ class _InviteCardState extends State<_InviteCard> {
                   GestureDetector(
                     onTap: widget.inviterId != null
                         ? () {
-                            context.push('/user/profile/${widget.inviterId!}');
+                            context.push('/user/${widget.inviterId!}');
                           }
                         : null,
                     child: Container(

@@ -107,6 +107,8 @@ mixin ChatStreamHandlers {
   // ---------------------------------------------------------------------------
 
   /// Stream of unread message count for the given [spaceId] and [userId].
+  /// ⚠️ PERF: This streams ALL messages in a space with NO .limit() — every
+  /// message document is downloaded on each update just to count unreads.
   Stream<int> getUnreadCount(String spaceId, String userId) {
     return messagesCollection
         .where('spaceId', isEqualTo: spaceId)
@@ -125,6 +127,15 @@ mixin ChatStreamHandlers {
           unreadCount++;
         }
       }
+      // Diagnostic: how many docs are we downloading just to count unreads?
+      AppLogger.w('⏱️ PERF getUnreadCount: processed ALL messages in space',
+          category: LogCategory.performance,
+          data: {
+            'spaceId': spaceId,
+            'totalDocsDownloaded': snapshot.docs.length,
+            'unreadCount': unreadCount,
+            'wastedDocs': snapshot.docs.length - unreadCount,
+          });
       return unreadCount;
     });
   }

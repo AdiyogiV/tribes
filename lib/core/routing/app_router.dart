@@ -12,6 +12,7 @@ import 'package:aurogram/features/astrology/presentation/pages/astrology_setup_p
 import 'package:aurogram/features/astrology/presentation/pages/astro_chat_page.dart';
 import 'package:aurogram/features/ayurveda/presentation/pages/ayurveda_details_page.dart';
 import 'package:aurogram/features/ayurveda/presentation/pages/prakriti_refinement_page.dart';
+import 'package:aurogram/features/ayurveda/presentation/pages/vikriti_checkin_page.dart';
 import 'package:aurogram/features/ai_chat/presentation/pages/ai_chat_page.dart';
 import 'package:aurogram/features/ai_chat/presentation/pages/recent_conversations_page.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard.dart';
@@ -317,6 +318,18 @@ GoRouter createAppRouter(GlobalKey<NavigatorState> navigatorKey) {
           final extra = state.extra as Map<String, dynamic>? ?? {};
           return PrakritiRefinementPage(
             predictedPrakriti: extra['predictedPrakriti'] as PrakritiData,
+          );
+        },
+      ),
+
+      GoRoute(
+        path: RouteNames.ayurvedaCheckin,
+        name: 'ayurvedaCheckin',
+        builder: (_, state) {
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          return VikritiCheckInPage(
+            ayurvedaProfile: extra['ayurvedaProfile'] as AyurvedaProfile,
+            astroProfile: extra['astroProfile'] as AstrologyProfile,
           );
         },
       ),

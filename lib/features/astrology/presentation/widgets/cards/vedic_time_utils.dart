@@ -91,16 +91,6 @@ class VedicTimeUtils {
     return 'Ghati $ghati · Pala $pala';
   }
 
-  /// Get ordinal suffix for prahar number (1st, 2nd, 3rd, 4th, etc.)
-  static String _getOrdinal(int number) {
-    final num = number % 8;
-    if (num == 0) return '8th';
-    if (num == 1) return '1st';
-    if (num == 2) return '2nd';
-    if (num == 3) return '3rd';
-    return '${num}th';
-  }
-
   // Hindu lunar month order (Chaitra = 1, the first month of the year)
   static const _lunarMonthNumbers = <String, int>{
     'chaitra': 1, 'vaishakha': 2, 'jyeshtha': 3, 'ashadha': 4,

@@ -54,7 +54,13 @@ class SpaceScreenState extends State<SpaceScreen> {
   @override
   void initState() {
     super.initState();
-    _initializationFuture = _initializeSpaceBox();
+    _initializationFuture = _initializeSpaceBox()
+        .timeout(const Duration(seconds: 20), onTimeout: () {
+      AppLogger.e('SpaceScreen: init timed out after 20s',
+          category: LogCategory.navigation,
+          data: {'spaceId': widget.rid});
+      return false;
+    });
 
     // Set flag to indicate we're navigating to a specific post
     _isNavigatingToPost = widget.postId != null && widget.postId!.isNotEmpty;
@@ -84,62 +90,79 @@ class SpaceScreenState extends State<SpaceScreen> {
     final stopwatch = Stopwatch()..start();
     try {
       user = FirebaseAuth.instance.currentUser;
-      AppLogger.d('SpaceScreen: starting init',
-          category: LogCategory.navigation, data: {'spaceId': widget.rid});
-      space = await _spaceService.getSpace(widget.rid);
-      AppLogger.d('SpaceScreen: getSpace done',
-          category: LogCategory.navigation,
-          data: {'spaceId': widget.rid, 'ms': stopwatch.elapsedMilliseconds});
+
+      // Step 1: Get the space (required — everything else depends on it)
+      space = await _spaceService.getSpace(widget.rid)
+          .timeout(const Duration(seconds: 10));
+      debugPrint('SpaceScreen: getSpace ${stopwatch.elapsedMilliseconds}ms');
 
       if (user != null) {
-        role = await _spaceService.getSpaceRole(widget.rid, user!.uid);
-        // Fetch user's name for sharing
-        final userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user!.uid)
-            .get();
-        userName = userDoc.data()?['name']?.toString();
+        // Step 2: Run role, userName, image, memberCount ALL in parallel
+        await Future.wait([
+          _fetchRole(),
+          _fetchUserName(),
+          _fetchImage(),
+          _fetchMemberCount(),
+        ]);
       }
 
-      // Pre-fetch gram image from cache for instant sharing
-      if (space?.displayPicture != null) {
-        final cacheService = locator<CacheService>();
-        _gramImageFile = await cacheService.getFile(space!.displayPicture);
-      }
-
-      // Fetch member count for sharing
-      try {
-        final rolesSnapshot = await FirebaseFirestore.instance
-            .collection('spaceRoles')
-            .doc(widget.rid)
-            .collection('roles')
-            .get();
-        memberCount = rolesSnapshot.docs.length;
-      } catch (e) {
-        // Ignore error, use default 0
-      }
-
+      debugPrint('SpaceScreen: init done ${stopwatch.elapsedMilliseconds}ms');
       return _isMember() || isPublicSpaceType(space!.spaceType);
     } catch (e) {
-      AppLogger.e('Error initializing space',
+      AppLogger.e('SpaceScreen init failed',
           category: LogCategory.general,
-          data: {
-            'spaceId': widget.rid,
-            'ms': stopwatch.elapsedMilliseconds,
-            'error': e.toString(),
-          });
+          data: {'spaceId': widget.rid, 'error': e.toString()});
       return false;
-    } finally {
-      AppLogger.d('SpaceScreen: init complete',
-          category: LogCategory.navigation,
-          data: {'spaceId': widget.rid, 'totalMs': stopwatch.elapsedMilliseconds});
     }
+  }
+
+  /// Fetch role: try server, fall back to assuming member on failure.
+  Future<void> _fetchRole() async {
+    try {
+      role = await _spaceService.getSpaceRole(widget.rid, user!.uid)
+          .timeout(const Duration(seconds: 8));
+    } catch (_) {
+      // Network/timeout — assume member so the user isn't locked out.
+      role = SpaceRoles.member;
+    }
+  }
+
+  /// Fetch current user's display name.
+  Future<void> _fetchUserName() async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users').doc(user!.uid)
+          .get().timeout(const Duration(seconds: 5));
+      userName = doc.data()?['name']?.toString();
+    } catch (_) {}
+  }
+
+  /// Pre-cache the space display picture.
+  Future<void> _fetchImage() async {
+    if (space?.displayPicture == null) return;
+    try {
+      _gramImageFile = await locator<CacheService>()
+          .getFile(space!.displayPicture)
+          .timeout(const Duration(seconds: 3));
+    } catch (_) {}
+  }
+
+  /// Fetch member count for the space header.
+  Future<void> _fetchMemberCount() async {
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('spaceRoles').doc(widget.rid)
+          .collection('roles').get()
+          .timeout(const Duration(seconds: 5));
+      memberCount = snap.docs.length;
+    } catch (_) {}
   }
 
   bool _isMember() {
     return role == SpaceRoles.member ||
         role == SpaceRoles.creator ||
-        role == SpaceRoles.admin;
+        role == SpaceRoles.admin ||
+        role == SpaceRoles.owner;
   }
 
   bool _isPublicOrOpen() {
@@ -153,7 +176,15 @@ class SpaceScreenState extends State<SpaceScreen> {
       future: _initializationFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return FlashScreen();
+          // Show loading with a back button so user can escape
+          return Scaffold(
+            backgroundColor: AppTheme.scaffoldLightColor,
+            appBar: CupertinoNavigationBar(
+              backgroundColor: Colors.transparent,
+              border: null,
+            ),
+            body: const FlashScreen(),
+          );
         }
         if (snapshot.hasError || space == null) {
           return _buildErrorWidget();
@@ -163,7 +194,7 @@ class SpaceScreenState extends State<SpaceScreen> {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             context.pushReplacement('/space/edit/${widget.rid}');
           });
-          return FlashScreen();
+          return const FlashScreen();
         }
         return _buildSpaceContent();
       },
@@ -304,7 +335,13 @@ class SpaceScreenState extends State<SpaceScreen> {
 
   void _refreshSpace() {
     setState(() {
-      _initializationFuture = _initializeSpaceBox();
+      _initializationFuture = _initializeSpaceBox()
+          .timeout(const Duration(seconds: 20), onTimeout: () {
+        AppLogger.e('SpaceScreen: refresh timed out after 20s',
+            category: LogCategory.navigation,
+            data: {'spaceId': widget.rid});
+        return false;
+      });
     });
   }
 

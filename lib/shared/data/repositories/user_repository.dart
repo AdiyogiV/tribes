@@ -1,4 +1,4 @@
-import 'dart:async' show Timer;
+import 'dart:async' show Timer, TimeoutException;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 
@@ -108,8 +108,22 @@ class UserRepository {
   // ── Streams ────────────────────────────────────────────────────────
 
   /// Stream a user document for real-time updates (e.g., online status).
-  Stream<DocumentSnapshot<Map<String, dynamic>>> userStream(String uid) {
-    return collection.doc(uid).snapshots();
+  ///
+  /// Emits null snapshot if Firestore never delivers within [timeout]
+  /// (e.g. offline with empty cache, App Check failure). Callers should
+  /// handle null as "data unavailable" and show cached/fallback UI.
+  Stream<DocumentSnapshot<Map<String, dynamic>>?> userStream(
+    String uid, {
+    Duration timeout = const Duration(seconds: 8),
+  }) {
+    return collection.doc(uid).snapshots().timeout(
+      timeout,
+      onTimeout: (sink) {
+        AppLogger.w('userStream($uid) timed out after ${timeout.inSeconds}s',
+            category: LogCategory.general);
+        sink.addError(TimeoutException('userStream timed out', timeout));
+      },
+    );
   }
 
   // ── Batch reads ────────────────────────────────────────────────────

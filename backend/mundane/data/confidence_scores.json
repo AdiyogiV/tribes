@@ -1,0 +1,74 @@
+{
+  "scores": {
+    "rahu_in_pisces_maritime": 0.554,
+    "saturn_in_pisces_maritime": 0.554,
+    "saturn_in_pisces_health": 0.548,
+    "ketu_in_virgo_health": 0.548,
+    "eclipse_solar_in_aquarius": 0.548,
+    "mercury_in_pisces_media": 0.493,
+    "mars_in_cancer_domestic": 0.53
+  },
+  "meta": {
+    "createdAt": "2026-04-12T12:09:54.853Z",
+    "totalUpdates": 7,
+    "lastUpdated": "2026-04-12T12:09:54.863Z"
+  },
+  "history": [
+    {
+      "ruleId": "rahu_in_pisces_maritime",
+      "oldScore": 0.5,
+      "newScore": 0.554,
+      "evidence": 0.86,
+      "reason": "Maritime headlines confirmed Rahu prediction",
+      "date": "2026-04-12T12:09:54.855Z"
+    },
+    {
+      "ruleId": "saturn_in_pisces_maritime",
+      "oldScore": 0.5,
+      "newScore": 0.554,
+      "evidence": 0.86,
+      "reason": "Maritime disruption confirmed by Red Sea news",
+      "date": "2026-04-12T12:09:54.858Z"
+    },
+    {
+      "ruleId": "saturn_in_pisces_health",
+      "oldScore": 0.5,
+      "newScore": 0.548,
+      "evidence": 0.82,
+      "reason": "WHO disease outbreak confirms health theme",
+      "date": "2026-04-12T12:09:54.859Z"
+    },
+    {
+      "ruleId": "ketu_in_virgo_health",
+      "oldScore": 0.5,
+      "newScore": 0.548,
+      "evidence": 0.82,
+      "reason": "Health crisis matches Ketu disruption",
+      "date": "2026-04-12T12:09:54.860Z"
+    },
+    {
+      "ruleId": "eclipse_solar_in_aquarius",
+      "oldScore": 0.5,
+      "newScore": 0.548,
+      "evidence": 0.82,
+      "reason": "Tech disruption matches eclipse in Aquarius",
+      "date": "2026-04-12T12:09:54.861Z"
+    },
+    {
+      "ruleId": "mercury_in_pisces_media",
+      "oldScore": 0.5,
+      "newScore": 0.493,
+      "evidence": 0.45,
+      "reason": "No media headlines — inconclusive",
+      "date": "2026-04-12T12:09:54.862Z"
+    },
+    {
+      "ruleId": "mars_in_cancer_domestic",
+      "oldScore": 0.5,
+      "newScore": 0.53,
+      "evidence": 0.7,
+      "reason": "Protest news partially confirms Mars debilitated",
+      "date": "2026-04-12T12:09:54.863Z"
+    }
+  ]
+}

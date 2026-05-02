@@ -123,7 +123,7 @@ void main() {
 
       // Ayurveda routes
       expect(RouteNames.ayurvedaDetails, startsWith('/ayurveda'));
-      expect(RouteNames.vikritiCheckin, startsWith('/ayurveda'));
+      expect(RouteNames.ayurvedaCheckin, startsWith('/ayurveda'));
       expect(RouteNames.prakritiRefinement, startsWith('/ayurveda'));
 
       // AI routes
@@ -173,7 +173,7 @@ List<String> _allRouteNameValues() {
     RouteNames.astrologySetup,
     RouteNames.astroChatPage,
     RouteNames.ayurvedaDetails,
-    RouteNames.vikritiCheckin,
+    RouteNames.ayurvedaCheckin,
     RouteNames.aiChat,
     RouteNames.recentConversations,
     RouteNames.cosmicDashboard,

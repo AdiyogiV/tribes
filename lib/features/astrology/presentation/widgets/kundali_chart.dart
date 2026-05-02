@@ -232,8 +232,7 @@ class KundaliChartWidget extends StatelessWidget {
     // Get AI interpretation if available
     String? interpretation;
     if (houseInterpretations != null) {
-      final houseData = houseInterpretations!['$houseNumber'] ??
-          houseInterpretations![houseNumber];
+      final houseData = houseInterpretations!['$houseNumber'];
       if (houseData is Map) {
         interpretation = houseData['interpretation'] as String?;
       } else if (houseData is String) {

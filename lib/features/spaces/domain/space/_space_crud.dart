@@ -8,9 +8,13 @@ import '../space_service.dart';
 
 /// Extension on [SpaceService] for basic CRUD operations (read, update, query types/roles).
 extension SpaceCrud on SpaceService {
-  Future<List<Space>> getAllSpaces() async {
+  /// Fetches all spaces — **use sparingly**.
+  /// Applies a limit to prevent full collection scans at scale.
+  /// Prefer user-scoped queries (e.g. userSpaces) for normal UI paths.
+  @Deprecated('No callers found — consider removing.')
+  Future<List<Space>> getAllSpaces({int limit = 100}) async {
     try {
-      final querySnapshot = await spaces.get();
+      final querySnapshot = await spaces.limit(limit).get();
       return querySnapshot.docs
           .map((doc) => Space.fromJson(doc.data() as Map<String, dynamic>))
           .toList();
@@ -24,8 +28,11 @@ extension SpaceCrud on SpaceService {
     }
   }
 
-  Stream<List<Space>> getSpacesStream() {
-    return spaces.snapshots().map((snapshot) => snapshot.docs
+  /// Streams all spaces — **use sparingly**.
+  /// Applies a limit to prevent full collection scans at scale.
+  @Deprecated('No callers found — consider removing.')
+  Stream<List<Space>> getSpacesStream({int limit = 100}) {
+    return spaces.limit(limit).snapshots().map((snapshot) => snapshot.docs
         .map((doc) => Space.fromJson(doc.data() as Map<String, dynamic>))
         .toList());
   }

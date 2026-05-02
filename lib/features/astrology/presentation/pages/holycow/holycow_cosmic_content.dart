@@ -54,15 +54,9 @@ class HolyCowCosmicContent extends StatelessWidget {
     final brown = AppTheme.primaryColor;
     final bottomInset = MediaQuery.of(context).padding.bottom;
 
-    final now = DateTime.now();
-    final globalSkyPositions =
-        loadingState.isSkyLoaded ? skyService.getPositionsForDate(now) : null;
+    // Fallback positions from insight transits (used when sky cache misses)
     final insightTransits =
         insight?.astrologicalData?['transits'] as Map<String, dynamic>?;
-    final currentPositions =
-        globalSkyPositions != null && globalSkyPositions.isNotEmpty
-            ? globalSkyPositions
-            : insightTransits;
 
     final globalMuhurat = skyService.globalMuhurat;
     final cardColor = isDark ? const Color(0xFF1A1A1C) : Colors.white;
@@ -100,10 +94,21 @@ class HolyCowCosmicContent extends StatelessWidget {
                 final todaySamvat = todaySamvatRaw is Map
                     ? Map<String, dynamic>.from(todaySamvatRaw)
                     : null;
+                // Smart merge: only overwrite with non-null values to prevent
+                // later sources (globalPanchang) from erasing valid data
+                // (e.g. lunar_month_full_name) with nulls.
                 final Map<String, dynamic> merged = {};
                 if (todaySamvat != null) merged.addAll(todaySamvat);
-                if (insightPanchang != null) merged.addAll(insightPanchang);
-                if (globalPanchang != null) merged.addAll(globalPanchang);
+                if (insightPanchang != null) {
+                  insightPanchang.forEach((k, v) {
+                    if (v != null) merged[k] = v;
+                  });
+                }
+                if (globalPanchang != null) {
+                  globalPanchang.forEach((k, v) {
+                    if (v != null) merged[k] = v;
+                  });
+                }
                 final todayPanchang = merged.isNotEmpty ? merged : null;
                 return CosmicDateTimeCard(samvat: todayPanchang, brown: brown);
               }),
@@ -123,7 +128,7 @@ class HolyCowCosmicContent extends StatelessWidget {
                         final positions =
                             skyPositions != null && skyPositions.isNotEmpty
                                 ? skyPositions
-                                : currentPositions;
+                                : insightTransits;
 
                         if (positions == null || positions.isEmpty) {
                           return const SizedBox.shrink();

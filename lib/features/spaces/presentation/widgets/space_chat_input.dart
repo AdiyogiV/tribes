@@ -326,6 +326,12 @@ class _SpaceChatInputAreaState extends State<SpaceChatInputArea> {
                                               focusNode:
                                                   widget.textFieldFocusNode,
                                               enabled: !widget.isPendingRequest,
+                                              maxLength: 5000,
+                                              maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                                              inputFormatters: [
+                                                LengthLimitingTextInputFormatter(5000),
+                                              ],
+                                              buildCounter: (_, {required currentLength, required isFocused, maxLength}) => null,
                                               decoration: InputDecoration(
                                                 hintText: widget.isPendingRequest
                                                     ? 'Accept the request to send messages'

@@ -173,23 +173,25 @@ class SpaceDbService {
     }
   }
 
-  /// Retrieves all spaces
-  Future<List<Space>> getAllSpaces() async {
+  /// Retrieves spaces — applies a limit to prevent full collection scans.
+  @Deprecated('No callers found — prefer user-scoped queries. Consider removing.')
+  Future<List<Space>> getAllSpaces({int limit = 100}) async {
     try {
-      final querySnapshot = await _spaces.get();
+      final querySnapshot = await _spaces.limit(limit).get();
       return querySnapshot.docs
           .map((doc) => Space.fromJson(doc.data() as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      AppLogger.e("", category: LogCategory.general);
+      AppLogger.e("getAllSpaces failed", category: LogCategory.general);
       FirebaseCrashlytics.instance.recordError(e, StackTrace.current);
       rethrow;
     }
   }
 
-  /// Returns a stream of all spaces
-  Stream<List<Space>> getSpacesStream() {
-    return _spaces.snapshots().map((snapshot) => snapshot.docs
+  /// Streams spaces — applies a limit to prevent full collection scans.
+  @Deprecated('No callers found — prefer user-scoped queries. Consider removing.')
+  Stream<List<Space>> getSpacesStream({int limit = 100}) {
+    return _spaces.limit(limit).snapshots().map((snapshot) => snapshot.docs
         .map((doc) => Space.fromJson(doc.data() as Map<String, dynamic>))
         .toList());
   }

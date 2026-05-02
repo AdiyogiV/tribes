@@ -80,7 +80,7 @@ class DiscoveryState extends State<Discovery> {
                 GestureDetector(
                   key: ValueKey('post_${documents.id}'),
                   onTap: () {
-                    context.push('/post/${documents.id}');
+                    context.push('/thread/${documents.id}');
                   },
                   child: Container(
                     padding: const EdgeInsets.all(5),

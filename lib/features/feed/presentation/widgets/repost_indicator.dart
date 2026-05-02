@@ -29,7 +29,7 @@ class RepostIndicator extends StatelessWidget {
 
     // Navigate to reposter's profile if reposterId is available
     if (reposterId != null && reposterId!.isNotEmpty) {
-      context.push('/user/profile/${reposterId!}');
+      context.push('/user/${reposterId!}');
     }
   }
 

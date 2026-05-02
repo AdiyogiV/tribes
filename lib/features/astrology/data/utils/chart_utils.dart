@@ -208,7 +208,7 @@ class ChartUtils {
     final Map<int, List<String>> tempSignPositions = {};
 
     // Log the input to debug
-    AppLogger.i(
+    AppLogger.d(
       'buildCurrentSkyHouses: Processing positions',
       category: LogCategory.general,
       data: {
@@ -294,7 +294,7 @@ class ChartUtils {
       return ['\n$symbols\n$initials'];
     });
 
-    AppLogger.i(
+    AppLogger.d(
       'buildCurrentSkyHouses: Result',
       category: LogCategory.general,
       data: {

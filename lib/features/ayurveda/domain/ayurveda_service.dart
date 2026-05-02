@@ -198,8 +198,12 @@ class AyurvedaService {
     }
   }
 
-  /// Stream Ayurveda profile changes
+  /// Stream Ayurveda profile changes.
+  /// Uses hash-based deduplication to avoid rebuilding widgets when data
+  /// hasn't actually changed (Firestore snapshots can emit metadata-only
+  /// updates).
   Stream<AyurvedaProfile?> streamProfile(String uid) {
+    String? lastHash;
     return _firestore.collection('users').doc(uid).snapshots().map((doc) {
       try {
         if (!doc.exists) {
@@ -212,9 +216,15 @@ class AyurvedaService {
           return _profileCache[uid];
         }
 
+        final ayurvedaData = data['ayurvedaData'] as Map<String, dynamic>;
+        final hash = ayurvedaData.toString();
+        if (hash == lastHash && _profileCache.containsKey(uid)) {
+          return _profileCache[uid];
+        }
+        lastHash = hash;
+
         final profile = AyurvedaProfile.fromMap(
-          Map<String, dynamic>.from(
-              data['ayurvedaData'] as Map<String, dynamic>),
+          Map<String, dynamic>.from(ayurvedaData),
         );
         _profileCache[uid] = profile;
         return profile;
@@ -223,7 +233,7 @@ class AyurvedaService {
             category: LogCategory.database, error: e, stackTrace: stackTrace);
         return _profileCache[uid];
       }
-    });
+    }).distinct();
   }
 
   /// Calculate Ayurveda profile from astrology data

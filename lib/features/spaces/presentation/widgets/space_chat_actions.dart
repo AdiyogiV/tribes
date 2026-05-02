@@ -80,7 +80,7 @@ mixin SpaceChatActionsMixin<T extends StatefulWidget> on State<T> {
 
   void navigateToHeader() {
     if (actionIsDMConversation && actionOtherUserId != null) {
-      context.push('/user/profile/$actionOtherUserId');
+      context.push('/user/$actionOtherUserId');
     } else if (!actionIsDMConversation) {
       context.push('/space/$actionSpaceId');
     }

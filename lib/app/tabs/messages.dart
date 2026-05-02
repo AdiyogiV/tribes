@@ -67,7 +67,7 @@ class _MessagesPageState extends State<MessagesPage>
   List<QueryDocumentSnapshot> _userSearchResults = [];
   bool _isSearchingUsers = false;
   Timer? _searchDebounceTimer;
-  String? _lastSearchMetricsKey; // ignore: unused_field
+  // _lastSearchMetricsKey removed — was unused (dead code audit)
   static const int _minSearchLength = 2;
 
   // Contact sync state

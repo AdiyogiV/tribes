@@ -12,6 +12,7 @@ import 'package:aurogram/features/chat/domain/chat_notification_service.dart';
 import 'package:aurogram/features/calling/presentation/widgets/active_call_banner.dart';
 import 'package:aurogram/shared/presentation/responsive/responsive.dart';
 import 'package:aurogram/core/di/injection.dart';
+import 'package:aurogram/shared/data/repositories/user_repository.dart';
 import 'package:aurogram/features/profile/domain/user_service.dart';
 import 'package:aurogram/shared/presentation/widgets/feedback/snack_bar_service.dart';
 
@@ -74,6 +75,7 @@ class SpaceChatScreenState extends State<SpaceChatScreen>
   bool _isOtherUserOnline = false;
   DateTime? _otherUserLastSeen;
   StreamSubscription? _onlineStatusSubscription;
+  StreamSubscription? _conversationStatusSubscription;
   bool _namasteSentThisSession = false;
 
   /// Instagram-style: swipe left to reveal timestamps on the right.
@@ -168,6 +170,7 @@ class SpaceChatScreenState extends State<SpaceChatScreen>
     _messageController.dispose();
     _scrollController.dispose();
     _onlineStatusSubscription?.cancel();
+    _conversationStatusSubscription?.cancel();
     _typingSubscription?.cancel();
     _typingTimer?.cancel();
     _chatService.setTyping(widget.spaceId, false);
@@ -178,7 +181,7 @@ class SpaceChatScreenState extends State<SpaceChatScreen>
   // ─── Listeners & data loading ───────────────────────────────────────
 
   void _listenToConversationStatus() {
-    FirebaseFirestore.instance
+    _conversationStatusSubscription = FirebaseFirestore.instance
         .collection('dmConversations')
         .doc(widget.spaceId)
         .snapshots()
@@ -190,6 +193,9 @@ class SpaceChatScreenState extends State<SpaceChatScreen>
           _requestedBy = data?['requestedBy'] as String?;
         });
       }
+    }, onError: (e) {
+      AppLogger.w('Error listening to conversation status',
+          category: LogCategory.ui, data: {'error': e.toString()});
     });
   }
 
@@ -207,19 +213,17 @@ class SpaceChatScreenState extends State<SpaceChatScreen>
 
   void _listenToOnlineStatus() {
     if (widget.otherUserId == null) return;
-    _onlineStatusSubscription = FirebaseFirestore.instance
-        .collection('users')
-        .doc(widget.otherUserId)
-        .snapshots()
+    _onlineStatusSubscription = locator<UserRepository>()
+        .userStream(widget.otherUserId!)
         .listen((snapshot) {
-      if (snapshot.exists && mounted) {
+      if (snapshot != null && snapshot.exists && mounted) {
         final data = snapshot.data();
         setState(() {
           _isOtherUserOnline = data?['isOnline'] as bool? ?? false;
           _otherUserLastSeen = (data?['lastSeen'] as Timestamp?)?.toDate();
         });
       }
-    });
+    }, onError: (_) { /* timeout/network — keep showing stale state */ });
   }
 
   Future<void> _loadDisplayName() async {
@@ -231,15 +235,12 @@ class SpaceChatScreenState extends State<SpaceChatScreen>
     setState(() => _isLoadingName = true);
 
     try {
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(widget.otherUserId!)
-          .get();
+      final userData = await locator<UserRepository>()
+          .getUserData(widget.otherUserId!);
 
-      if (userDoc.exists && mounted) {
-        final userData = userDoc.data();
-        final name = userData?['name'] as String? ??
-            userData?['nickname'] as String? ??
+      if (userData != null && mounted) {
+        final name = userData['name'] as String? ??
+            userData['nickname'] as String? ??
             widget.space?.name ??
             'Chat';
         setState(() {
@@ -262,19 +263,9 @@ class SpaceChatScreenState extends State<SpaceChatScreen>
   }
 
   Future<String> _getUserName(String userId) async {
+    // Fast path: return from local session cache.
     if (_senderNameCache.containsKey(userId)) {
-      final cachedName = _senderNameCache[userId]!;
-      if (cachedName != 'Deleted User') {
-        try {
-          final userDoc = await FirebaseFirestore.instance
-              .collection('users')
-              .doc(userId)
-              .get();
-          if (userDoc.exists) return cachedName;
-        } catch (_) {}
-      } else {
-        return cachedName;
-      }
+      return _senderNameCache[userId]!;
     }
 
     try {
@@ -283,7 +274,7 @@ class SpaceChatScreenState extends State<SpaceChatScreen>
       _senderNameCache[userId] = name;
       return name;
     } catch (e) {
-      AppLogger.e('Error fetching user name',
+      AppLogger.w('Error fetching user name',
           category: LogCategory.ui,
           data: {'userId': userId, 'error': e.toString()});
       return 'Unknown User';
