@@ -63,7 +63,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyC0nnU5r74OZAq3MDmOGEOXpKA9SpJF5_g',
-    appId: '1:735015361682:ios:42ba864cb814d372645a4b',
+    appId: '1:735015361682:ios:ba2c09702cc4cb85645a4b',
     messagingSenderId: '735015361682',
     projectId: 'ty-dev-516d7',
     storageBucket: 'ty-dev-516d7.appspot.com',
