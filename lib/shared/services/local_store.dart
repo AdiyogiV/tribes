@@ -344,6 +344,113 @@ class LocalStore {
     }).toList();
   }
 
+  /// Compute a rolling dosha balance time series from all batch readings.
+  ///
+  /// Walks through all readings sorted by time, maintains rolling state,
+  /// computes dosha balance at each meaningful point. Returns timestamped
+  /// {vata, pitta, kapha} maps.
+  Future<List<({DateTime time, Map<String, double> doshas})>>
+      computeDoshaTimeSeries({int days = 7}) async {
+    final db = _db;
+    if (db == null) return [];
+
+    final cutoff = DateTime.now()
+        .subtract(Duration(days: days))
+        .millisecondsSinceEpoch;
+
+    final rows = await db.rawQuery(
+      'SELECT timestamp, heart_rate, hrv, resting_hr, spo2, resp_rate, '
+      'steps, sleep_hours, wrist_temp, vata, pitta, kapha '
+      'FROM health_readings '
+      'WHERE timestamp >= ? '
+      'ORDER BY timestamp ASC',
+      [cutoff],
+    );
+
+    if (rows.isEmpty) return [];
+
+    // Rolling latest-known values
+    double? hrv, restingHR, spO2, respRate, sleepHours, wristTemp;
+    int? steps;
+
+    final result = <({DateTime time, Map<String, double> doshas})>[];
+    DateTime? lastEmitted;
+
+    for (final row in rows) {
+      if (row['hrv'] != null) hrv = (row['hrv'] as num).toDouble();
+      if (row['resting_hr'] != null) restingHR = (row['resting_hr'] as num).toDouble();
+      if (row['spo2'] != null) spO2 = (row['spo2'] as num).toDouble();
+      if (row['resp_rate'] != null) respRate = (row['resp_rate'] as num).toDouble();
+      if (row['sleep_hours'] != null) sleepHours = (row['sleep_hours'] as num).toDouble();
+      if (row['wrist_temp'] != null) wristTemp = (row['wrist_temp'] as num).toDouble();
+      if (row['steps'] != null) steps = (row['steps'] as num).toInt();
+
+      final ts = DateTime.fromMillisecondsSinceEpoch(row['timestamp'] as int);
+
+      // Throttle: at most one point per 5 minutes
+      if (lastEmitted != null && ts.difference(lastEmitted).inSeconds < 300) continue;
+
+      // If row has stored dosha values, use them directly
+      if (row['vata'] != null && row['pitta'] != null && row['kapha'] != null) {
+        result.add((
+          time: ts,
+          doshas: {
+            'vata': (row['vata'] as num).toDouble(),
+            'pitta': (row['pitta'] as num).toDouble(),
+            'kapha': (row['kapha'] as num).toDouble(),
+          },
+        ));
+        lastEmitted = ts;
+        continue;
+      }
+
+      // Need at least one biometric signal to compute dosha
+      if (hrv == null && restingHR == null && sleepHours == null) continue;
+
+      // Compute dosha from rolling state
+      double v = 33, p = 33, k = 34;
+      final hv = hrv, rhr = restingHR, wt = wristTemp;
+      final sh = sleepHours, rr = respRate, so = spO2, st = steps;
+      if (hv != null) {
+        if (hv > 60) { v += 8; p -= 3; k -= 5; }
+        else if (hv < 25) { k += 6; v -= 3; p -= 3; }
+      }
+      if (rhr != null) {
+        if (rhr > 75) { p += 5; v += 3; k -= 5; }
+        else if (rhr < 55) { k += 5; p -= 3; }
+      }
+      if (wt != null) {
+        if (wt > 0.3) { p += 6; v -= 2; }
+        else if (wt < -0.3) { v += 5; k += 2; p -= 4; }
+      }
+      if (sh != null) {
+        if (sh < 6) { v += 6; p += 3; k -= 5; }
+        else if (sh > 9) { k += 8; v -= 4; p -= 2; }
+      }
+      if (rr != null) {
+        if (rr > 18) { v += 4; k -= 2; }
+        else if (rr < 12) { k += 3; }
+      }
+      if (so != null && so < 94) { k += 4; v += 2; }
+      if (st != null) {
+        if (st < 2000) { k += 5; v -= 2; }
+        else if (st > 15000) { v += 4; k -= 3; }
+      }
+
+      final total = v + p + k;
+      if (total > 0) {
+        v = (v / total) * 100;
+        p = (p / total) * 100;
+        k = (k / total) * 100;
+      }
+
+      result.add((time: ts, doshas: {'vata': v, 'pitta': p, 'kapha': k}));
+      lastEmitted = ts;
+    }
+
+    return result;
+  }
+
   /// Compute a rolling Ojas time series from all available batch readings.
   ///
   /// Algorithm: walks through all readings sorted by time, maintaining a

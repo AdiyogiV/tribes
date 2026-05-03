@@ -7,31 +7,71 @@ import 'package:aurogram/shared/models/watch_health_data.dart';
 import 'package:aurogram/shared/providers/watch_health_provider.dart';
 import 'package:aurogram/features/ayurveda/presentation/widgets/ayurveda_theme.dart';
 import 'package:aurogram/features/ayurveda/presentation/widgets/watch_health_cards.dart';
-import 'package:aurogram/features/ayurveda/presentation/pages/trend_chart_painters.dart';
+import 'package:aurogram/features/ayurveda/presentation/pages/dosha_trend_painter.dart';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NadiDetailPage — Pulse reading / Dosha balance drill-down
+// ─────────────────────────────────────────────────────────────────────────────
 
 /// Detail page for Nadi Pariksha (pulse reading / dosha balance).
-/// Shows current balance, historical dosha trend, prahar context, and Ayurvedic info.
-class NadiDetailPage extends StatelessWidget {
+/// Shows current balance, granular timestamped dosha trend, prahar context,
+/// and Ayurvedic info.
+class NadiDetailPage extends StatefulWidget {
   final WatchHealthData data;
 
   const NadiDetailPage({super.key, required this.data});
 
   @override
+  State<NadiDetailPage> createState() => _NadiDetailPageState();
+}
+
+class _NadiDetailPageState extends State<NadiDetailPage> {
+  int _rangeIndex = 2;
+  static const _rangeDays = [1, 3, 7];
+  static const _rangeLabels = ['Today', '3 Days', '7 Days'];
+
+  List<({DateTime time, Map<String, double> doshas})> _doshaTimeSeries = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDoshaTimeSeries();
+  }
+
+  Future<void> _loadDoshaTimeSeries() async {
+    setState(() => _isLoading = true);
+
+    final provider = context.read<WatchHealthProvider>();
+    final days = _rangeDays[_rangeIndex];
+    final data = await provider.doshaTimeSeries(days: days);
+
+    if (mounted) {
+      setState(() {
+        _doshaTimeSeries = data;
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _onRangeChanged(int index) {
+    if (index == _rangeIndex) return;
+    setState(() => _rangeIndex = index);
+    _loadDoshaTimeSeries();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final c = AppTheme.primaryColor;
-    final balance = computeDoshaBalance(data);
-    final dominant = data.nadiDosha ?? _dominantFromBalance(balance);
-
-    // Get dosha history from provider
-    final provider = context.watch<WatchHealthProvider>();
-    final doshaHistory = provider.history
-        .map((d) => computeDoshaBalance(d))
-        .toList();
+    final balance = computeDoshaBalance(widget.data);
+    final dominant =
+        widget.data.nadiDosha ?? _dominantFromBalance(balance);
 
     return Scaffold(
-      backgroundColor:
-          isDark ? Theme.of(context).scaffoldBackgroundColor : const Color(0xFFF5F5F5),
+      backgroundColor: isDark
+          ? Theme.of(context).scaffoldBackgroundColor
+          : const Color(0xFFF5F5F5),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -56,183 +96,33 @@ class NadiDetailPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // ── Hero: Current dosha ────────────────────────────
-            DetailCard(
-              isDark: isDark,
-              child: Column(
-                children: [
-                  Text(
-                    _nadiGlyph(dominant),
-                    style: const TextStyle(fontSize: 40),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${capitalize(dominant)} Nadi',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w800,
-                      color: getDoshaColor(dominant),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _nadiDescription(dominant),
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: isDark ? Colors.white54 : Colors.black45,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
+            _buildHeroCard(isDark, balance, dominant),
 
-                  // Dosha bars
-                  _doshaBar('Vata', balance['vata']!, vataColor, isDark),
-                  const SizedBox(height: 8),
-                  _doshaBar('Pitta', balance['pitta']!, pittaColor, isDark),
-                  const SizedBox(height: 8),
-                  _doshaBar('Kapha', balance['kapha']!, kaphaColor, isDark),
-                ],
-              ),
-            ),
+            // ── Time range selector ───────────────────────────
+            const SizedBox(height: 16),
+            _buildRangeSelector(isDark),
 
-            // ── Dosha trend chart ──────────────────────────────
-            if (doshaHistory.length >= 2) ...[
+            // ── Dosha trend chart ─────────────────────────────
+            const SizedBox(height: 12),
+            _buildDoshaTrendCard(isDark),
+
+            // ── Dosha stats ───────────────────────────────────
+            if (_doshaTimeSeries.length >= 2) ...[
               const SizedBox(height: 12),
-              DetailCard(
-                isDark: isDark,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '7-Day Dosha Trend',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white54 : Colors.black45,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      height: 120,
-                      child: CustomPaint(
-                        size: const Size(double.infinity, 120),
-                        painter: _DoshaTrendPainter(
-                          data: doshaHistory,
-                          gridColor: isDark
-                              ? Colors.white.withValues(alpha: 0.06)
-                              : Colors.black.withValues(alpha: 0.06),
-                          isDark: isDark,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    // Day labels
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: List.generate(
-                        doshaHistory.length.clamp(0, 7),
-                        (i) {
-                          final daysAgo = doshaHistory.length - 1 - i;
-                          final day = DateTime.now().subtract(Duration(days: daysAgo));
-                          return Text(
-                            shortDayName(day.weekday),
-                            style: TextStyle(
-                              fontSize: 9,
-                              color: isDark ? Colors.white24 : Colors.black26,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    // Legend
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _legendDot('Vata', vataColor, isDark),
-                        const SizedBox(width: 16),
-                        _legendDot('Pitta', pittaColor, isDark),
-                        const SizedBox(width: 16),
-                        _legendDot('Kapha', kaphaColor, isDark),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+              _buildDoshaStats(isDark),
             ],
 
-            // ── Prahar context ─────────────────────────────────
+            // ── Prahar context ────────────────────────────────
             const SizedBox(height: 12),
-            DetailCard(
-              isDark: isDark,
-              child: _buildPraharContext(isDark, dominant),
-            ),
+            _buildPraharCard(isDark, dominant),
 
-            // ── What is Nadi Pariksha ──────────────────────────
+            // ── What it means ─────────────────────────────────
             const SizedBox(height: 12),
-            DetailCard(
-              isDark: isDark,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'What It Means',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white54 : Colors.black45,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Your Apple Watch approximates traditional pulse diagnosis '
-                    'by analyzing HRV patterns, heart rate, temperature, and activity '
-                    'to estimate your current dosha balance.',
-                    style: TextStyle(
-                      fontSize: 14,
-                      height: 1.5,
-                      color: isDark ? Colors.white70 : Colors.black87,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            _buildExplanationCard(isDark),
 
-            // ── Ayurvedic view ─────────────────────────────────
+            // ── Ayurvedic view ────────────────────────────────
             const SizedBox(height: 12),
-            DetailCard(
-              isDark: isDark,
-              accent: const Color(0xFFF5E6D0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Text('🪷', style: TextStyle(fontSize: 16)),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Ayurvedic View',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.white54 : Colors.black45,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Nadi Pariksha reads the pulse at three points on the radial artery. '
-                    'Vata pulses like a snake (Sarpa), Pitta jumps like a frog (Manduka), '
-                    'and Kapha glides like a swan (Hamsa). Balance shifts with season, '
-                    'time of day, and lifestyle.',
-                    style: TextStyle(
-                      fontSize: 14,
-                      height: 1.5,
-                      color: isDark ? Colors.white70 : Colors.black87,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            _buildAyurvedicCard(isDark),
 
             const SizedBox(height: 40),
           ],
@@ -241,71 +131,398 @@ class NadiDetailPage extends StatelessWidget {
     );
   }
 
-  // ── Prahar (time-of-day dosha) ─────────────────────────────
+  // ── Hero Card ──────────────────────────────────────────────────────────
 
-  Widget _buildPraharContext(bool isDark, String dominant) {
-    final hour = DateTime.now().hour;
-    final expectedDosha = _praharDosha(hour);
-    final inHarmony = dominant.toLowerCase() == expectedDosha.toLowerCase();
-    final period = _praharPeriod(hour);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              inHarmony ? '☀' : '🌀',
-              style: const TextStyle(fontSize: 18),
+  Widget _buildHeroCard(
+      bool isDark, Map<String, double> balance, String dominant) {
+    return DetailCard(
+      isDark: isDark,
+      child: Column(
+        children: [
+          Text(_nadiGlyph(dominant), style: const TextStyle(fontSize: 40)),
+          const SizedBox(height: 8),
+          Text(
+            '${capitalize(dominant)} Nadi',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              color: getDoshaColor(dominant),
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                inHarmony ? 'In Harmony' : 'Dosha Shift',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: inHarmony ? kaphaColor : Colors.amber.shade600,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        Text(
-          inHarmony
-              ? 'Your dominant $dominant energy aligns with the current $period ($expectedDosha time).'
-              : 'Your dominant $dominant energy differs from the current $period ($expectedDosha time). '
-                'This is normal and may shift naturally.',
-          style: TextStyle(
-            fontSize: 14,
-            height: 1.5,
-            color: isDark ? Colors.white70 : Colors.black87,
           ),
-        ),
-      ],
+          const SizedBox(height: 4),
+          Text(
+            _nadiDescription(dominant),
+            style: TextStyle(
+              fontSize: 13,
+              color: isDark ? Colors.white54 : Colors.black45,
+            ),
+          ),
+          const SizedBox(height: 20),
+          _doshaBar('Vata', balance['vata']!, vataColor, isDark),
+          const SizedBox(height: 8),
+          _doshaBar('Pitta', balance['pitta']!, pittaColor, isDark),
+          const SizedBox(height: 8),
+          _doshaBar('Kapha', balance['kapha']!, kaphaColor, isDark),
+        ],
+      ),
     );
   }
 
-  static String _praharDosha(int hour) {
-    if (hour >= 2 && hour < 6) return 'Vata';
-    if (hour >= 6 && hour < 10) return 'Kapha';
-    if (hour >= 10 && hour < 14) return 'Pitta';
-    if (hour >= 14 && hour < 18) return 'Vata';
-    if (hour >= 18 && hour < 22) return 'Kapha';
-    return 'Pitta'; // 22-2
+  // ── Range Selector ─────────────────────────────────────────────────────
+
+  Widget _buildRangeSelector(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.06)
+            : Colors.grey.shade200,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: List.generate(_rangeLabels.length, (i) {
+          final isSelected = i == _rangeIndex;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => _onRangeChanged(i),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? (isDark
+                          ? Colors.white.withValues(alpha: 0.12)
+                          : Colors.white)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 4,
+                            offset: const Offset(0, 1),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Text(
+                  _rangeLabels[i],
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight:
+                        isSelected ? FontWeight.w700 : FontWeight.w500,
+                    color: isSelected
+                        ? (isDark ? Colors.white : Colors.black87)
+                        : (isDark ? Colors.white38 : Colors.black38),
+                  ),
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
   }
 
-  static String _praharPeriod(int hour) {
-    if (hour >= 5 && hour < 12) return 'morning';
-    if (hour >= 12 && hour < 17) return 'afternoon';
-    if (hour >= 17 && hour < 21) return 'evening';
-    return 'night';
+  // ── Dosha Trend Chart ──────────────────────────────────────────────────
+
+  Widget _buildDoshaTrendCard(bool isDark) {
+    if (_isLoading) {
+      return DetailCard(
+        isDark: isDark,
+        child: const SizedBox(
+          height: 200,
+          child: Center(child: CupertinoActivityIndicator()),
+        ),
+      );
+    }
+
+    if (_doshaTimeSeries.length < 2) {
+      return DetailCard(
+        isDark: isDark,
+        child: SizedBox(
+          height: 120,
+          child: Center(
+            child: Text(
+              'Need more data for trend chart.\nKeep wearing your Apple Watch!',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                color: isDark ? Colors.white38 : Colors.black38,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return DetailCard(
+      isDark: isDark,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Dosha Trend',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white54 : Colors.black45,
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 200,
+            child: CustomPaint(
+              size: const Size(double.infinity, 200),
+              painter: DoshaTrendPainter(
+                data: _doshaTimeSeries,
+                gridColor: isDark
+                    ? Colors.white.withValues(alpha: 0.06)
+                    : Colors.black.withValues(alpha: 0.06),
+                labelColor: isDark
+                    ? Colors.white.withValues(alpha: 0.3)
+                    : Colors.black.withValues(alpha: 0.3),
+                isDark: isDark,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Legend
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _legendDot('Vata', vataColor, isDark),
+              const SizedBox(width: 16),
+              _legendDot('Pitta', pittaColor, isDark),
+              const SizedBox(width: 16),
+              _legendDot('Kapha', kaphaColor, isDark),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
-  // ── Helpers ────────────────────────────────────────────────
+  // ── Dosha Stats ────────────────────────────────────────────────────────
 
-  Widget _doshaBar(String label, double value, Color color, bool isDark) {
+  Widget _buildDoshaStats(bool isDark) {
+    // Compute min/avg/max for each dosha
+    final stats = <String, ({double min, double avg, double max})>{};
+    for (final key in ['vata', 'pitta', 'kapha']) {
+      final values =
+          _doshaTimeSeries.map((d) => d.doshas[key] ?? 33).toList();
+      final minV = values.reduce(math.min);
+      final maxV = values.reduce(math.max);
+      final avgV = values.reduce((a, b) => a + b) / values.length;
+      stats[key] = (min: minV, avg: avgV, max: maxV);
+    }
+
+    Widget statColumn(
+        String label, Color color, ({double min, double avg, double max}) s) {
+      return Expanded(
+        child: Column(
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+            const SizedBox(height: 8),
+            _statRow('Min', s.min, isDark),
+            _statRow('Avg', s.avg, isDark),
+            _statRow('Max', s.max, isDark),
+          ],
+        ),
+      );
+    }
+
+    return DetailCard(
+      isDark: isDark,
+      child: Row(
+        children: [
+          statColumn('Vata', vataColor, stats['vata']!),
+          Container(
+            width: 1,
+            height: 60,
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.1)
+                : Colors.black.withValues(alpha: 0.1),
+          ),
+          statColumn('Pitta', pittaColor, stats['pitta']!),
+          Container(
+            width: 1,
+            height: 60,
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.1)
+                : Colors.black.withValues(alpha: 0.1),
+          ),
+          statColumn('Kapha', kaphaColor, stats['kapha']!),
+        ],
+      ),
+    );
+  }
+
+  Widget _statRow(String label, double value, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              color: isDark ? Colors.white30 : Colors.black26,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            '${value.round()}%',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white70 : Colors.black54,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Prahar Context ─────────────────────────────────────────────────────
+
+  Widget _buildPraharCard(bool isDark, String dominant) {
+    final hour = DateTime.now().hour;
+    final expectedDosha = _praharDosha(hour);
+    final inHarmony =
+        dominant.toLowerCase() == expectedDosha.toLowerCase();
+    final period = _praharPeriod(hour);
+
+    return DetailCard(
+      isDark: isDark,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                inHarmony ? '☀' : '🌀',
+                style: const TextStyle(fontSize: 18),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  inHarmony ? 'In Harmony' : 'Dosha Shift',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color:
+                        inHarmony ? kaphaColor : Colors.amber.shade600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            inHarmony
+                ? 'Your dominant $dominant energy aligns with the '
+                    'current $period ($expectedDosha time).'
+                : 'Your dominant $dominant energy differs from the '
+                    'current $period ($expectedDosha time). '
+                    'This is normal and may shift naturally.',
+            style: TextStyle(
+              fontSize: 14,
+              height: 1.5,
+              color: isDark ? Colors.white70 : Colors.black87,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Explanation ────────────────────────────────────────────────────────
+
+  Widget _buildExplanationCard(bool isDark) {
+    return DetailCard(
+      isDark: isDark,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'What It Means',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white54 : Colors.black45,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Your Apple Watch approximates traditional pulse diagnosis '
+            'by analyzing HRV patterns, heart rate, temperature, and '
+            'activity to estimate your current dosha balance.',
+            style: TextStyle(
+              fontSize: 14,
+              height: 1.5,
+              color: isDark ? Colors.white70 : Colors.black87,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Ayurvedic View ─────────────────────────────────────────────────────
+
+  Widget _buildAyurvedicCard(bool isDark) {
+    return DetailCard(
+      isDark: isDark,
+      accent: const Color(0xFFF5E6D0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text('🪷', style: TextStyle(fontSize: 16)),
+              const SizedBox(width: 6),
+              Text(
+                'Ayurvedic View',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white54 : Colors.black45,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Nadi Pariksha reads the pulse at three points on the '
+            'radial artery. Vata pulses like a snake (Sarpa), Pitta '
+            'jumps like a frog (Manduka), and Kapha glides like a '
+            'swan (Hamsa). Balance shifts with season, time of day, '
+            'and lifestyle.',
+            style: TextStyle(
+              fontSize: 14,
+              height: 1.5,
+              color: isDark ? Colors.white70 : Colors.black87,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Dosha Bar ──────────────────────────────────────────────────────────
+
+  Widget _doshaBar(
+      String label, double value, Color color, bool isDark) {
     return Row(
       children: [
         SizedBox(
@@ -387,6 +604,8 @@ class NadiDetailPage extends StatelessWidget {
     );
   }
 
+  // ── Static Helpers ─────────────────────────────────────────────────────
+
   String _dominantFromBalance(Map<String, double> balance) {
     final sorted = balance.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
@@ -418,123 +637,21 @@ class NadiDetailPage extends StatelessWidget {
         return 'Pulse pattern';
     }
   }
-}
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DoshaTrendPainter — Multi-line chart for Vata/Pitta/Kapha over time
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _DoshaTrendPainter extends CustomPainter {
-  final List<Map<String, double>> data;
-  final Color gridColor;
-  final bool isDark;
-
-  _DoshaTrendPainter({
-    required this.data,
-    required this.gridColor,
-    required this.isDark,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (data.length < 2) return;
-
-    // Grid
-    for (int i = 0; i <= 3; i++) {
-      final y = (i / 3) * size.height;
-      canvas.drawLine(
-        Offset(0, y),
-        Offset(size.width, y),
-        Paint()..color = gridColor,
-      );
-    }
-
-    // Find max value for scaling (usually ~50-60%)
-    double maxVal = 0;
-    for (final d in data) {
-      for (final v in d.values) {
-        maxVal = math.max(maxVal, v);
-      }
-    }
-    maxVal = math.max(maxVal, 50); // minimum scale
-    final padding = maxVal * 0.05;
-
-    // Draw each dosha line
-    _drawSeries(canvas, size, 'vata', vataColor, maxVal, padding);
-    _drawSeries(canvas, size, 'pitta', pittaColor, maxVal, padding);
-    _drawSeries(canvas, size, 'kapha', kaphaColor, maxVal, padding);
+  static String _praharDosha(int hour) {
+    if (hour >= 2 && hour < 6) return 'Vata';
+    if (hour >= 6 && hour < 10) return 'Kapha';
+    if (hour >= 10 && hour < 14) return 'Pitta';
+    if (hour >= 14 && hour < 18) return 'Vata';
+    if (hour >= 18 && hour < 22) return 'Kapha';
+    return 'Pitta'; // 22-2
   }
 
-  void _drawSeries(
-    Canvas canvas,
-    Size size,
-    String key,
-    Color color,
-    double maxVal,
-    double padding,
-  ) {
-    final points = <Offset>[];
-    for (int i = 0; i < data.length; i++) {
-      final x = (i / (data.length - 1)) * size.width;
-      final value = data[i][key] ?? 33;
-      final normalized = (value + padding) / (maxVal + padding * 2);
-      final y = size.height - normalized * size.height;
-      points.add(Offset(x, y));
-    }
-
-    // Line
-    final path = Path()..moveTo(points.first.dx, points.first.dy);
-    for (int i = 1; i < points.length; i++) {
-      path.lineTo(points[i].dx, points[i].dy);
-    }
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = color
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.5
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round,
-    );
-
-    // Dots
-    for (final p in points) {
-      canvas.drawCircle(p, 4, Paint()..color = color);
-      canvas.drawCircle(
-        p,
-        2.5,
-        Paint()..color = isDark ? const Color(0xFF1E1E1E) : Colors.white,
-      );
-    }
-
-    // Last value label
-    final lastPoint = points.last;
-    final lastValue = data.last[key] ?? 33;
-    final tp = TextPainter(
-      text: TextSpan(
-        text: '${lastValue.round()}%',
-        style: TextStyle(
-          fontSize: 9,
-          fontWeight: FontWeight.w700,
-          color: color,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-
-    // Offset label to avoid overlap
-    tp.paint(
-      canvas,
-      Offset(
-        (lastPoint.dx + tp.width + 4 > size.width)
-            ? lastPoint.dx - tp.width - 6
-            : lastPoint.dx + 6,
-        lastPoint.dy - tp.height / 2,
-      ),
-    );
+  static String _praharPeriod(int hour) {
+    if (hour >= 5 && hour < 12) return 'morning';
+    if (hour >= 12 && hour < 17) return 'afternoon';
+    if (hour >= 17 && hour < 21) return 'evening';
+    return 'night';
   }
-
-  @override
-  bool shouldRepaint(covariant _DoshaTrendPainter old) =>
-      old.data != data;
 }
+

@@ -274,6 +274,15 @@ class WatchHealthProvider extends ChangeNotifier {
     }
   }
 
+  /// Get timestamped dosha balance series from LocalStore.
+  /// Returns rolling dosha computations using all available batch readings.
+  Future<List<({DateTime time, Map<String, double> doshas})>>
+      doshaTimeSeries({int days = 7}) async {
+    final store = LocalStore.instance;
+    if (!store.isReady) return [];
+    return store.computeDoshaTimeSeries(days: days);
+  }
+
   /// Get timestamped metric series from LocalStore for detailed charts.
   /// Returns (time, value) pairs — preserves the actual measurement times.
   ///
