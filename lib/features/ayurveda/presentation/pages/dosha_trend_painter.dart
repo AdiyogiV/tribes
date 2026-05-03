@@ -23,10 +23,11 @@ class DoshaTrendPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (data.length < 2) return;
 
-    // ── Layout: leave room for Y-axis labels (left) and X-axis (bottom)
+    // ── Layout: leave room for Y-axis (left), end labels (right), X-axis (bottom)
     const leftPad = 32.0;
+    const rightPad = 36.0; // space for end-value labels
     const bottomPad = 20.0;
-    final chartW = size.width - leftPad;
+    final chartW = size.width - leftPad - rightPad;
     final chartH = size.height - bottomPad;
 
     // ── Time range
@@ -61,6 +62,9 @@ class DoshaTrendPainter extends CustomPainter {
           (t.difference(firstTime).inSeconds / totalSec) * chartW;
     }
 
+    // Chart right edge (where lines stop)
+    final chartRight = leftPad + chartW;
+
     // ── Y-axis grid & labels
     final gridSteps = _niceGridSteps(yMin, yMax, 4);
     final gridPaint = Paint()..color = gridColor;
@@ -69,7 +73,7 @@ class DoshaTrendPainter extends CustomPainter {
       if (y < 0 || y > chartH) continue;
       canvas.drawLine(
         Offset(leftPad, y),
-        Offset(size.width, y),
+        Offset(chartRight, y),
         gridPaint,
       );
       final tp = TextPainter(
@@ -94,7 +98,7 @@ class DoshaTrendPainter extends CustomPainter {
         DateTime(firstTime.year, firstTime.month, firstTime.day + 1);
     while (day.isBefore(lastTime)) {
       final x = timeToX(day);
-      if (x > leftPad && x < size.width) {
+      if (x > leftPad && x < chartRight) {
         canvas.drawLine(Offset(x, 0), Offset(x, chartH), bPaint);
       }
       day = day.add(const Duration(days: 1));
@@ -103,14 +107,14 @@ class DoshaTrendPainter extends CustomPainter {
     // ── Draw each dosha series (collect end labels to avoid overlap)
     final endLabels = <({double y, String text, Color color})>[];
     _drawSeries(canvas, 'vata', vataColor, timeToX, valToY,
-        chartH, size.width, leftPad, endLabels);
+        chartH, chartRight, leftPad, endLabels);
     _drawSeries(canvas, 'pitta', pittaColor, timeToX, valToY,
-        chartH, size.width, leftPad, endLabels);
+        chartH, chartRight, leftPad, endLabels);
     _drawSeries(canvas, 'kapha', kaphaColor, timeToX, valToY,
-        chartH, size.width, leftPad, endLabels);
+        chartH, chartRight, leftPad, endLabels);
 
-    // ── Paint end labels with collision avoidance
-    _paintEndLabels(canvas, endLabels, size.width);
+    // ── Paint end labels with collision avoidance (in the right margin)
+    _paintEndLabels(canvas, endLabels, chartRight + 4);
   }
 
   void _drawSeries(
@@ -196,11 +200,11 @@ class DoshaTrendPainter extends CustomPainter {
   }
 
   /// Paint end-value labels with vertical collision avoidance.
-  /// If labels overlap, push them apart so all three are readable.
+  /// Labels are placed in the right margin, outside the chart lines.
   void _paintEndLabels(
     Canvas canvas,
     List<({double y, String text, Color color})> labels,
-    double chartW,
+    double labelX,
   ) {
     if (labels.isEmpty) return;
 
@@ -237,7 +241,7 @@ class DoshaTrendPainter extends CustomPainter {
         textDirection: TextDirection.ltr,
       )..layout();
 
-      final x = chartW - tp.width - 4;
+      final x = labelX;
       tp.paint(canvas, Offset(x, yPositions[i] - tp.height / 2));
     }
   }
@@ -277,7 +281,7 @@ class DoshaTrendPainter extends CustomPainter {
     while (t.isBefore(lastTime)) {
       final x = leftPad +
           (t.difference(firstTime).inSeconds / totalSec) * chartW;
-      if (x > leftPad + 10 && x < size.width - 20) {
+      if (x > leftPad + 10 && x < leftPad + chartW - 10) {
         final tp = TextPainter(
           text: TextSpan(
             text: fmt(t),
