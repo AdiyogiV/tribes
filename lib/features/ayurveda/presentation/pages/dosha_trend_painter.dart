@@ -100,13 +100,17 @@ class DoshaTrendPainter extends CustomPainter {
       day = day.add(const Duration(days: 1));
     }
 
-    // ── Draw each dosha series
+    // ── Draw each dosha series (collect end labels to avoid overlap)
+    final endLabels = <({double y, String text, Color color})>[];
     _drawSeries(canvas, 'vata', vataColor, timeToX, valToY,
-        chartH, size.width, leftPad);
+        chartH, size.width, leftPad, endLabels);
     _drawSeries(canvas, 'pitta', pittaColor, timeToX, valToY,
-        chartH, size.width, leftPad);
+        chartH, size.width, leftPad, endLabels);
     _drawSeries(canvas, 'kapha', kaphaColor, timeToX, valToY,
-        chartH, size.width, leftPad);
+        chartH, size.width, leftPad, endLabels);
+
+    // ── Paint end labels with collision avoidance
+    _paintEndLabels(canvas, endLabels, size.width);
   }
 
   void _drawSeries(
@@ -118,6 +122,7 @@ class DoshaTrendPainter extends CustomPainter {
     double chartH,
     double chartW,
     double leftPad,
+    List<({double y, String text, Color color})> endLabels,
   ) {
     final points = <Offset>[];
     for (final d in data) {
@@ -184,25 +189,57 @@ class DoshaTrendPainter extends CustomPainter {
       }
     }
 
-    // Last value label
+    // Collect end label for later (drawn with collision avoidance)
     final lastVal = data.last.doshas[key] ?? 33;
-    final tp = TextPainter(
-      text: TextSpan(
-        text: '${lastVal.round()}%',
-        style: TextStyle(
-          fontSize: 9,
-          fontWeight: FontWeight.w700,
-          color: color,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-
     final lp = points.last;
-    final labelX = (lp.dx + tp.width + 4 > chartW)
-        ? lp.dx - tp.width - 6
-        : lp.dx + 6;
-    tp.paint(canvas, Offset(labelX, lp.dy - tp.height / 2));
+    endLabels.add((y: lp.dy, text: '${lastVal.round()}%', color: color));
+  }
+
+  /// Paint end-value labels with vertical collision avoidance.
+  /// If labels overlap, push them apart so all three are readable.
+  void _paintEndLabels(
+    Canvas canvas,
+    List<({double y, String text, Color color})> labels,
+    double chartW,
+  ) {
+    if (labels.isEmpty) return;
+
+    const labelH = 12.0; // approximate height of a 9px label
+    const minGap = 2.0;
+
+    // Sort by Y position (top to bottom)
+    final sorted = List.of(labels)..sort((a, b) => a.y.compareTo(b.y));
+
+    // Resolve overlaps: push labels apart
+    final yPositions = sorted.map((l) => l.y).toList();
+    for (int pass = 0; pass < 5; pass++) {
+      for (int i = 1; i < yPositions.length; i++) {
+        final gap = yPositions[i] - yPositions[i - 1];
+        if (gap < labelH + minGap) {
+          final push = (labelH + minGap - gap) / 2;
+          yPositions[i - 1] -= push;
+          yPositions[i] += push;
+        }
+      }
+    }
+
+    for (int i = 0; i < sorted.length; i++) {
+      final label = sorted[i];
+      final tp = TextPainter(
+        text: TextSpan(
+          text: label.text,
+          style: TextStyle(
+            fontSize: 9,
+            fontWeight: FontWeight.w700,
+            color: label.color,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+
+      final x = chartW - tp.width - 4;
+      tp.paint(canvas, Offset(x, yPositions[i] - tp.height / 2));
+    }
   }
 
   void _paintXAxisLabels(
@@ -226,10 +263,10 @@ class DoshaTrendPainter extends CustomPainter {
       fmt = (d) => '${d.hour.toString().padLeft(2, '0')}:00';
     } else if (totalHours <= 72) {
       step = const Duration(hours: 12);
-      fmt = (d) => '${d.day}/${d.month} ${d.hour}h';
+      fmt = (d) => '${_monthAbbr(d.month)} ${d.day}, ${d.hour}:00';
     } else {
       step = const Duration(days: 1);
-      fmt = (d) => '${d.day}/${d.month}';
+      fmt = (d) => '${_monthAbbr(d.month)} ${d.day}';
     }
 
     // Start at the next clean boundary
@@ -292,4 +329,10 @@ class DoshaTrendPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant DoshaTrendPainter old) =>
       old.data != data;
+
+  static String _monthAbbr(int m) {
+    const months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return months[m.clamp(1, 12)];
+  }
 }
