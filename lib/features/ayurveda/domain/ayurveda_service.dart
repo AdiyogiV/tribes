@@ -6,6 +6,7 @@ import 'package:aurogram/shared/models/ayurveda_profile.dart';
 import 'package:aurogram/shared/models/astrology_profile.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/shared/services/watch_service.dart';
+import 'package:aurogram/shared/services/local_store.dart';
 
 /// Service for Ayurveda profile management
 /// Separate from AstrologyService but can use astrology data for calculations
@@ -93,29 +94,18 @@ class AyurvedaService {
   }
 
   /// Store a health snapshot from the watch for longitudinal tracking.
-  /// After writing, listens for backend-generated recommendations and
-  /// syncs them back to the watch.
+  ///
+  /// Writes to local sqflite DB first (instant, offline-safe), then
+  /// LocalStore's sync timer batch-uploads to Firestore in the background.
+  /// After the local write, syncs recommendations to the watch.
   Future<void> _storeHealthSnapshot(Map<String, dynamic> data) async {
     final uid = _user?.uid;
     if (uid == null) return;
     try {
-      // Store daily snapshot — one per day, overwrite intraday
-      final today = DateTime.now();
-      final dayKey =
-          '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
-      await _firestore
-          .collection('users')
-          .doc(uid)
-          .collection('healthSnapshots')
-          .doc(dayKey)
-          .set({
-        ...data,
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      // Write to local DB — instant, no network required
+      await LocalStore.instance.insertReadingFromMap(data);
 
-      // After snapshot is stored, the onHealthSnapshotWrite Cloud Function
-      // generates recommendations and writes them to the user doc.
-      // Sync those recommendations to the watch after a short delay.
+      // Sync recommendations to watch (reads from Firestore cache)
       _syncRecommendationsToWatch(uid);
     } catch (e) {
       AppLogger.w('AyurvedaService: failed to store health snapshot',

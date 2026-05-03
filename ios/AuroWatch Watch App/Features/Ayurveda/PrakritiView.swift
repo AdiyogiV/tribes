@@ -143,10 +143,13 @@ struct PrakritiView: View {
 }
 
 #Preview {
-    let cache = LocalCache()
-    cache.prakritiType = "Vata-Pitta"
-    cache.prakritiVata = 45
-    cache.prakritiPitta = 35
-    cache.prakritiKapha = 20
-    return PrakritiView().environmentObject(cache)
+    PrakritiView()
+        .environmentObject({
+            let c = LocalCache()
+            c.prakritiType = "Vata-Pitta"
+            c.prakritiVata = 45
+            c.prakritiPitta = 35
+            c.prakritiKapha = 20
+            return c
+        }())
 }

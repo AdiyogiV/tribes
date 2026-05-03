@@ -110,13 +110,7 @@ class WatchSessionManager: NSObject, ObservableObject {
             for (key, value) in data {
                 context[key] = value
             }
-
-            // Strip NSNull and any non-plist values — WatchConnectivity only
-            // accepts Property List types (String, Number, Bool, Date, Data,
-            // and collections of those). Flutter platform channel converts
-            // Dart null → NSNull which crashes updateApplicationContext.
-            let sanitized = Self.sanitizeForPlist(context)
-            try session.updateApplicationContext(sanitized)
+            try session.updateApplicationContext(context)
             print("📱 Updated watch application context: \(data.keys.joined(separator: ", "))")
         } catch {
             print("📱 Failed to update watch context: \(error.localizedDescription)")
@@ -124,34 +118,10 @@ class WatchSessionManager: NSObject, ObservableObject {
 
         // Also send real-time if reachable (for immediate update)
         if session.isReachable {
-            let cleanData = Self.sanitizeForPlist(data)
-            session.sendMessage(cleanData, replyHandler: nil) { error in
+            session.sendMessage(data, replyHandler: nil) { error in
                 print("📱 Real-time send failed: \(error.localizedDescription)")
             }
         }
-    }
-
-    /// Recursively remove NSNull values from a dictionary so it only
-    /// contains Property List–safe types for WatchConnectivity.
-    private static func sanitizeForPlist(_ dict: [String: Any]) -> [String: Any] {
-        var result = [String: Any]()
-        for (key, value) in dict {
-            if value is NSNull { continue }
-            if let nested = value as? [String: Any] {
-                result[key] = sanitizeForPlist(nested)
-            } else if let array = value as? [Any] {
-                result[key] = array.compactMap { item -> Any? in
-                    if item is NSNull { return nil }
-                    if let nestedDict = item as? [String: Any] {
-                        return sanitizeForPlist(nestedDict)
-                    }
-                    return item
-                }
-            } else {
-                result[key] = value
-            }
-        }
-        return result
     }
 }
 

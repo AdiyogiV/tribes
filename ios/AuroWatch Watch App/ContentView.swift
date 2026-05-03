@@ -24,6 +24,12 @@ struct ContentView: View {
 
             MuhuratView()
                 .tag(5)
+
+            OjasView()
+                .tag(6)
+
+            AyurvedaHubView()
+                .tag(7)
         }
         .tabViewStyle(.verticalPage)
         .ignoresSafeArea(.all)

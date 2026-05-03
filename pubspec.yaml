@@ -56,6 +56,7 @@ dependencies:
   app_links: ^7.0.0  # Deep linking (Universal Links, App Links)
   flutter_local_notifications:
   shared_preferences: ^2.5.3
+  sqflite: ^2.4.1                # Local health readings DB (offline-first)
   path:
   path_provider: ^2.1.5
   device_info_plus: ^12.2.0

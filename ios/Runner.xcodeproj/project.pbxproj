@@ -31,6 +31,7 @@
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
 		9EF8F85F514CCB82BD528388 /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47036F15F80BF9D94BD7AF58 /* NotificationsView.swift */; };
 		AE89FDCA6E49A85DE21D1F9C /* WatchSyncManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E634DE73DFC312E04A7FE8B4 /* WatchSyncManager.swift */; };
+		BB01A2C3D4E5F607182930A1 /* BackgroundHealthSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB01A2C3D4E5F607182930B1 /* BackgroundHealthSync.swift */; };
 		B431D2432C367FBF00A97FCA /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = B431D2422C367FBF00A97FCA /* GoogleService-Info.plist */; };
 		B431D2442C367FBF00A97FCA /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = B431D2422C367FBF00A97FCA /* GoogleService-Info.plist */; };
 		BABC9A7B4C906902D30EC663 /* HealthKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15BC72371629DA54F5B17C32 /* HealthKitManager.swift */; };
@@ -43,6 +44,20 @@
 		AA1B2C3D4E5F607182930A03 /* DhatuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B2C3D4E5F607182930B03 /* DhatuView.swift */; };
 		AA1B2C3D4E5F607182930A04 /* DinacharyaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B2C3D4E5F607182930B04 /* DinacharyaView.swift */; };
 		AA1B2C3D4E5F607182930A05 /* RituView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B2C3D4E5F607182930B05 /* RituView.swift */; };
+		CC01A2C3D4E5F607182930A1 /* AbhyangaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC01A2C3D4E5F607182930B1 /* AbhyangaView.swift */; };
+		CC02A2C3D4E5F607182930A1 /* AgniView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC02A2C3D4E5F607182930B1 /* AgniView.swift */; };
+		CC03A2C3D4E5F607182930A1 /* AyurvedaHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC03A2C3D4E5F607182930B1 /* AyurvedaHubView.swift */; };
+		CC04A2C3D4E5F607182930A1 /* HridayaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC04A2C3D4E5F607182930B1 /* HridayaView.swift */; };
+		CC05A2C3D4E5F607182930A1 /* MantraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC05A2C3D4E5F607182930B1 /* MantraView.swift */; };
+		CC06A2C3D4E5F607182930A1 /* NadiView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC06A2C3D4E5F607182930B1 /* NadiView.swift */; };
+		CC07A2C3D4E5F607182930A1 /* NidraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC07A2C3D4E5F607182930B1 /* NidraView.swift */; };
+		CC08A2C3D4E5F607182930A1 /* PrakritiView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC08A2C3D4E5F607182930B1 /* PrakritiView.swift */; };
+		CC09A2C3D4E5F607182930A1 /* PranaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC09A2C3D4E5F607182930B1 /* PranaView.swift */; };
+		CC10A2C3D4E5F607182930A1 /* PranayamaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC10A2C3D4E5F607182930B1 /* PranayamaView.swift */; };
+		CC11A2C3D4E5F607182930A1 /* RemedyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC11A2C3D4E5F607182930B1 /* RemedyView.swift */; };
+		CC12A2C3D4E5F607182930A1 /* SensorsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC12A2C3D4E5F607182930B1 /* SensorsView.swift */; };
+		CC13A2C3D4E5F607182930A1 /* VikritiView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC13A2C3D4E5F607182930B1 /* VikritiView.swift */; };
+		CC14A2C3D4E5F607182930A1 /* VyayamaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC14A2C3D4E5F607182930B1 /* VyayamaView.swift */; };
 		AA1B2C3D4E5F607182930A06 /* VedicTimeTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B2C3D4E5F607182930B06 /* VedicTimeTextView.swift */; };
 		AA1B2C3D4E5F607182930A07 /* AuroLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B2C3D4E5F607182930B07 /* AuroLogger.swift */; };
 /* End PBXBuildFile section */
@@ -153,6 +168,7 @@
 		DE5210EE6CBF4D7119299FA8 /* AuroTheme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuroTheme.swift; sourceTree = "<group>"; };
 		E576E09EC1A80A2B133278CD /* WatchSessionManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchSessionManager.swift; sourceTree = "<group>"; };
 		E634DE73DFC312E04A7FE8B4 /* WatchSyncManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchSyncManager.swift; sourceTree = "<group>"; };
+		BB01A2C3D4E5F607182930B1 /* BackgroundHealthSync.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BackgroundHealthSync.swift; sourceTree = "<group>"; };
 		FCA260669A555FE61EA6C8EE /* AuroWatchApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuroWatchApp.swift; sourceTree = "<group>"; };
 		FDCE9BA538A2956C4A0D4ACB /* InsightView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InsightView.swift; sourceTree = "<group>"; };
 		A7B3C8D4E5F60192B8E4D301 /* SkyView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SkyView.swift; sourceTree = "<group>"; };
@@ -163,6 +179,20 @@
 		AA1B2C3D4E5F607182930B05 /* RituView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RituView.swift; sourceTree = "<group>"; };
 		AA1B2C3D4E5F607182930B06 /* VedicTimeTextView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VedicTimeTextView.swift; sourceTree = "<group>"; };
 		AA1B2C3D4E5F607182930B07 /* AuroLogger.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuroLogger.swift; sourceTree = "<group>"; };
+		CC01A2C3D4E5F607182930B1 /* AbhyangaView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AbhyangaView.swift; sourceTree = "<group>"; };
+		CC02A2C3D4E5F607182930B1 /* AgniView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AgniView.swift; sourceTree = "<group>"; };
+		CC03A2C3D4E5F607182930B1 /* AyurvedaHubView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AyurvedaHubView.swift; sourceTree = "<group>"; };
+		CC04A2C3D4E5F607182930B1 /* HridayaView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HridayaView.swift; sourceTree = "<group>"; };
+		CC05A2C3D4E5F607182930B1 /* MantraView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MantraView.swift; sourceTree = "<group>"; };
+		CC06A2C3D4E5F607182930B1 /* NadiView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NadiView.swift; sourceTree = "<group>"; };
+		CC07A2C3D4E5F607182930B1 /* NidraView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NidraView.swift; sourceTree = "<group>"; };
+		CC08A2C3D4E5F607182930B1 /* PrakritiView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PrakritiView.swift; sourceTree = "<group>"; };
+		CC09A2C3D4E5F607182930B1 /* PranaView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PranaView.swift; sourceTree = "<group>"; };
+		CC10A2C3D4E5F607182930B1 /* PranayamaView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PranayamaView.swift; sourceTree = "<group>"; };
+		CC11A2C3D4E5F607182930B1 /* RemedyView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RemedyView.swift; sourceTree = "<group>"; };
+		CC12A2C3D4E5F607182930B1 /* SensorsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SensorsView.swift; sourceTree = "<group>"; };
+		CC13A2C3D4E5F607182930B1 /* VikritiView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VikritiView.swift; sourceTree = "<group>"; };
+		CC14A2C3D4E5F607182930B1 /* VyayamaView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VyayamaView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -321,10 +351,24 @@
 		AA1B2C3D4E5F607182930C01 /* Ayurveda */ = {
 			isa = PBXGroup;
 			children = (
-				AA1B2C3D4E5F607182930B02 /* OjasView.swift */,
+				CC01A2C3D4E5F607182930B1 /* AbhyangaView.swift */,
+				CC02A2C3D4E5F607182930B1 /* AgniView.swift */,
+				CC03A2C3D4E5F607182930B1 /* AyurvedaHubView.swift */,
 				AA1B2C3D4E5F607182930B03 /* DhatuView.swift */,
 				AA1B2C3D4E5F607182930B04 /* DinacharyaView.swift */,
+				CC04A2C3D4E5F607182930B1 /* HridayaView.swift */,
+				CC05A2C3D4E5F607182930B1 /* MantraView.swift */,
+				CC06A2C3D4E5F607182930B1 /* NadiView.swift */,
+				CC07A2C3D4E5F607182930B1 /* NidraView.swift */,
+				AA1B2C3D4E5F607182930B02 /* OjasView.swift */,
+				CC08A2C3D4E5F607182930B1 /* PrakritiView.swift */,
+				CC09A2C3D4E5F607182930B1 /* PranaView.swift */,
+				CC10A2C3D4E5F607182930B1 /* PranayamaView.swift */,
+				CC11A2C3D4E5F607182930B1 /* RemedyView.swift */,
 				AA1B2C3D4E5F607182930B05 /* RituView.swift */,
+				CC12A2C3D4E5F607182930B1 /* SensorsView.swift */,
+				CC13A2C3D4E5F607182930B1 /* VikritiView.swift */,
+				CC14A2C3D4E5F607182930B1 /* VyayamaView.swift */,
 			);
 			path = Ayurveda;
 			sourceTree = "<group>";
@@ -402,6 +446,7 @@
 			isa = PBXGroup;
 			children = (
 				E634DE73DFC312E04A7FE8B4 /* WatchSyncManager.swift */,
+				BB01A2C3D4E5F607182930B1 /* BackgroundHealthSync.swift */,
 			);
 			path = Sync;
 			sourceTree = "<group>";
@@ -787,6 +832,7 @@
 				BABC9A7B4C906902D30EC663 /* HealthKitManager.swift in Sources */,
 				113E545D9BDBF22639199822 /* NadiEngine.swift in Sources */,
 				AE89FDCA6E49A85DE21D1F9C /* WatchSyncManager.swift in Sources */,
+				BB01A2C3D4E5F607182930A1 /* BackgroundHealthSync.swift in Sources */,
 				E76855332AE0C9563A850423 /* AuroTheme.swift in Sources */,
 				67D3FF2347F3B3CE4E090496 /* VedicClockView.swift in Sources */,
 				6BAB15A8DA6045FEA1BD804B /* VedicTimeCalculator.swift in Sources */,
@@ -801,6 +847,20 @@
 				AA1B2C3D4E5F607182930A03 /* DhatuView.swift in Sources */,
 				AA1B2C3D4E5F607182930A04 /* DinacharyaView.swift in Sources */,
 				AA1B2C3D4E5F607182930A05 /* RituView.swift in Sources */,
+				CC01A2C3D4E5F607182930A1 /* AbhyangaView.swift in Sources */,
+				CC02A2C3D4E5F607182930A1 /* AgniView.swift in Sources */,
+				CC03A2C3D4E5F607182930A1 /* AyurvedaHubView.swift in Sources */,
+				CC04A2C3D4E5F607182930A1 /* HridayaView.swift in Sources */,
+				CC05A2C3D4E5F607182930A1 /* MantraView.swift in Sources */,
+				CC06A2C3D4E5F607182930A1 /* NadiView.swift in Sources */,
+				CC07A2C3D4E5F607182930A1 /* NidraView.swift in Sources */,
+				CC08A2C3D4E5F607182930A1 /* PrakritiView.swift in Sources */,
+				CC09A2C3D4E5F607182930A1 /* PranaView.swift in Sources */,
+				CC10A2C3D4E5F607182930A1 /* PranayamaView.swift in Sources */,
+				CC11A2C3D4E5F607182930A1 /* RemedyView.swift in Sources */,
+				CC12A2C3D4E5F607182930A1 /* SensorsView.swift in Sources */,
+				CC13A2C3D4E5F607182930A1 /* VikritiView.swift in Sources */,
+				CC14A2C3D4E5F607182930A1 /* VyayamaView.swift in Sources */,
 				AA1B2C3D4E5F607182930A06 /* VedicTimeTextView.swift in Sources */,
 				AA1B2C3D4E5F607182930A07 /* AuroLogger.swift in Sources */,
 			);

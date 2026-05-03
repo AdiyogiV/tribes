@@ -14,18 +14,15 @@ import WatchKit
 ///   HealthKit → HealthKitManager → NadiEngine → LocalCache
 ///   LocalCache → Feature Views (via @EnvironmentObject)
 ///
-/// Health sync cadence:
-///   • Observers: Apple notifies when new heart rate / HRV arrives
-///   • Ghati timer: Background refresh every ~24 min as safety net
-///   • Manual: User can trigger via OjasView button
+/// Background data collection:
+///   HealthKit observer queries → BackgroundHealthSync → sendToPhone
+///   Background refresh (15 min) → fetch cumulative stats → sendToPhone
 @main
 struct AuroWatchApp: App {
+    @WKApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var syncManager = WatchSyncManager()
     @StateObject private var healthManager = HealthKitManager()
     @StateObject private var cache = LocalCache()
-
-    /// 1 Ghati = 24 minutes (Vedic time unit)
-    private static let ghatiInterval: TimeInterval = 24 * 60
 
     var body: some Scene {
         WindowGroup {
@@ -36,71 +33,70 @@ struct AuroWatchApp: App {
                 .onAppear {
                     // Link cache so incoming phone data reaches the UI
                     syncManager.cache = cache
+                    syncManager.activate()
 
-                    // Wire up background health → phone sync
-                    healthManager.onBackgroundDataReady = { [weak syncManager, weak cache] in
-                        guard let sync = syncManager, let c = cache else { return }
-                        let payload = c.healthPayload()
-                        // Only send if we have at least 2 real signals (not just timestamp)
-                        if payload.count > 3 {
-                            sync.sendToPhone(payload)
-                            AuroLog.info("Background sync: sent \(payload.count) fields to phone", category: .health)
+                    // Store references for background access
+                    appDelegate.healthManager = healthManager
+                    appDelegate.cache = cache
+                    appDelegate.syncManager = syncManager
+
+                    // Request HealthKit access; on success, register background observers
+                    healthManager.requestAuthorization()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                        if healthManager.isAuthorized {
+                            BackgroundHealthSync.shared.registerObservers(
+                                healthStore: healthManager.store,
+                                health: healthManager,
+                                cache: cache,
+                                syncManager: syncManager
+                            )
+                            BackgroundHealthSync.shared.scheduleNextRefresh()
                         }
                     }
 
-                    syncManager.activate()
-                    healthManager.requestAuthorization()
-
-                    // Request fresh data from phone
+                    // Request fresh data from phone after phone has time to load sky
                     DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
                         syncManager.requestSync()
                     }
-
-                    // Schedule first ghati background refresh
-                    Self.scheduleNextGhati()
                 }
         }
-        // Handle background tasks (ghati health refresh)
-        .backgroundTask(.appRefresh("com.aurogram.health.ghati")) {
-            await handleGhatiRefresh()
-        }
     }
+}
 
-    // MARK: - Ghati Background Refresh
+// MARK: - WKApplicationDelegate (handles background tasks)
 
-    /// Schedule the next background refresh ~24 minutes from now.
-    static func scheduleNextGhati() {
-        WKApplication.shared().scheduleBackgroundRefresh(
-            withPreferredDate: Date.now.addingTimeInterval(ghatiInterval),
-            userInfo: "ghati" as NSSecureCoding & NSObjectProtocol
-        ) { error in
-            if let error = error {
-                AuroLog.error("Failed to schedule ghati refresh: \(error.localizedDescription)", category: .health)
-            } else {
-                AuroLog.debug("Ghati refresh scheduled in ~24 min", category: .health)
+class AppDelegate: NSObject, WKApplicationDelegate {
+
+    /// Shared references set by AuroWatchApp.onAppear
+    var healthManager: HealthKitManager?
+    var cache: LocalCache?
+    var syncManager: WatchSyncManager?
+
+    /// Called when the system delivers background tasks.
+    func handle(_ backgroundTasks: Set<WKRefreshBackgroundTask>) {
+        for task in backgroundTasks {
+            switch task {
+            case let refreshTask as WKApplicationRefreshBackgroundTask:
+                AuroLog.info("Received background refresh task", category: .sync)
+                if let health = healthManager, let cache = cache, let sync = syncManager {
+                    BackgroundHealthSync.shared.handleBackgroundRefresh(
+                        task: refreshTask,
+                        health: health,
+                        cache: cache,
+                        syncManager: sync
+                    )
+                } else {
+                    AuroLog.warn("Background refresh: managers not available", category: .sync)
+                    BackgroundHealthSync.shared.scheduleNextRefresh()
+                    refreshTask.setTaskCompletedWithSnapshot(false)
+                }
+
+            case let snapshotTask as WKSnapshotRefreshBackgroundTask:
+                snapshotTask.setTaskCompletedWithSnapshot(false)
+
+            default:
+                task.setTaskCompletedWithSnapshot(false)
             }
         }
-    }
-
-    /// Called by watchOS when the ghati background task fires.
-    private func handleGhatiRefresh() async {
-        AuroLog.info("Ghati refresh fired — fetching health data", category: .health)
-
-        // Fetch all health signals
-        await withCheckedContinuation { continuation in
-            healthManager.fetchAllReadings {
-                continuation.resume()
-            }
-        }
-
-        // Send to phone
-        let payload = cache.healthPayload()
-        if payload.count > 3 {
-            syncManager.sendToPhone(payload)
-            AuroLog.info("Ghati sync: sent \(payload.count) fields to phone", category: .health)
-        }
-
-        // Schedule next ghati
-        Self.scheduleNextGhati()
     }
 }

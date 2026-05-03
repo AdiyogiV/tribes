@@ -15,7 +15,7 @@ struct MantraView: View {
     @State private var breathScale: CGFloat = 1.0
 
     private var dominant: String {
-        let d = cache.nadiDosha.lowercased()
+        let d = (cache.nadiDominantDosha ?? "").lowercased()
         if !d.isEmpty { return d }
         let v = cache.prakritiVata, p = cache.prakritiPitta, k = cache.prakritiKapha
         if (v + p + k) == 0 { return "vata" }
@@ -258,7 +258,10 @@ struct MantraView: View {
 }
 
 #Preview {
-    let cache = LocalCache()
-    cache.nadiDosha = "Pitta"
-    return MantraView().environmentObject(cache)
+    MantraView()
+        .environmentObject({
+            let c = LocalCache()
+            c.nadiDominantDosha = "Pitta"
+            return c
+        }())
 }

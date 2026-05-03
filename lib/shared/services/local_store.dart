@@ -1,0 +1,635 @@
+import 'dart:async';
+import 'dart:convert';
+import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart' as p;
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:aurogram/shared/models/watch_health_data.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
+
+/// Local-first data store using sqflite.
+///
+/// Three tables:
+///   1. `health_readings` — every health reading from the watch (time-series)
+///   2. `cache` — generic JSON cache for profiles, recommendations, etc.
+///   3. `sync_queue` — outbound queue for batched Firestore writes
+///
+/// Architecture:
+///   Watch → Phone → LocalStore (instant) → UI reads from here
+///                        ↓
+///                   Firestore (background batch sync every 30 min)
+///
+/// Usage:
+///   await LocalStore.instance.initialize();
+///   await LocalStore.instance.insertReading(data);
+///   final readings = await LocalStore.instance.getReadings(from: ..., to: ...);
+class LocalStore {
+  LocalStore._();
+  static final LocalStore instance = LocalStore._();
+
+  Database? _db;
+  Timer? _syncTimer;
+  bool _syncing = false;
+
+  /// How often to batch-sync to Firestore (seconds).
+  static const int syncIntervalSeconds = 30 * 60; // 30 minutes
+
+  /// How many days of readings to keep locally.
+  static const int localRetentionDays = 14;
+
+  /// Max readings per Firestore batch write.
+  static const int _batchSize = 400; // Firestore limit is 500
+
+  /// Whether the store is initialized and ready.
+  bool get isReady => _db != null;
+
+  // ─── Initialization ─────────────────────────────────────────────────────
+
+  /// Open (or create) the local database. Call once at app startup.
+  Future<void> initialize() async {
+    if (_db != null) return;
+
+    final dbPath = p.join(await getDatabasesPath(), 'aurogram_health.db');
+    _db = await openDatabase(
+      dbPath,
+      version: 1,
+      onCreate: _createTables,
+    );
+
+    AppLogger.i('LocalStore: initialized at $dbPath',
+        category: LogCategory.general);
+
+    // Clean up old readings on startup
+    unawaited(_pruneOldReadings());
+  }
+
+  Future<void> _createTables(Database db, int version) async {
+    // Health readings — one row per watch payload
+    await db.execute('''
+      CREATE TABLE health_readings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        timestamp INTEGER NOT NULL,
+        hrv REAL,
+        resting_hr REAL,
+        heart_rate REAL,
+        steps INTEGER,
+        spo2 REAL,
+        resp_rate REAL,
+        wrist_temp REAL,
+        vo2_max REAL,
+        active_energy REAL,
+        sleep_hours REAL,
+        deep_sleep_mins REAL,
+        rem_sleep_mins REAL,
+        mindful_mins REAL,
+        hr_recovery REAL,
+        ojas_score REAL,
+        ojas_summary TEXT,
+        agni_type TEXT,
+        nadi_dosha TEXT,
+        vata REAL,
+        pitta REAL,
+        kapha REAL,
+        synced INTEGER DEFAULT 0
+      )
+    ''');
+    await db.execute(
+        'CREATE INDEX idx_readings_time ON health_readings(timestamp)');
+    await db.execute(
+        'CREATE INDEX idx_readings_unsynced ON health_readings(synced) WHERE synced = 0');
+
+    // Generic JSON cache
+    await db.execute('''
+      CREATE TABLE cache (
+        key TEXT PRIMARY KEY,
+        data TEXT NOT NULL,
+        updated_at INTEGER NOT NULL,
+        expires_at INTEGER
+      )
+    ''');
+
+    // Outbound sync queue
+    await db.execute('''
+      CREATE TABLE sync_queue (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        collection_path TEXT NOT NULL,
+        doc_id TEXT,
+        data TEXT NOT NULL,
+        created_at INTEGER NOT NULL,
+        status TEXT DEFAULT 'pending'
+      )
+    ''');
+
+    AppLogger.i('LocalStore: tables created', category: LogCategory.general);
+  }
+
+  // ─── Health Readings ────────────────────────────────────────────────────
+
+  /// Insert a health reading from the watch.
+  /// Deduplicates by timestamp (within 30-second window).
+  Future<void> insertReading(WatchHealthData data) async {
+    final db = _db;
+    if (db == null) return;
+
+    final ts = data.timestamp?.millisecondsSinceEpoch ??
+        DateTime.now().millisecondsSinceEpoch;
+
+    // Deduplicate: skip if we already have a reading within ±30s
+    final existing = await db.rawQuery(
+      'SELECT id FROM health_readings WHERE ABS(timestamp - ?) < 30000 LIMIT 1',
+      [ts],
+    );
+    if (existing.isNotEmpty) return;
+
+    await db.insert('health_readings', {
+      'timestamp': ts,
+      'hrv': data.hrv,
+      'resting_hr': data.restingHR,
+      'steps': data.steps,
+      'spo2': data.spO2,
+      'resp_rate': data.respRate,
+      'wrist_temp': data.wristTemp,
+      'vo2_max': data.vo2Max,
+      'active_energy': data.activeEnergy,
+      'sleep_hours': data.sleepHours,
+      'deep_sleep_mins': data.deepSleepMins,
+      'rem_sleep_mins': data.remSleepMins,
+      'mindful_mins': data.mindfulMins,
+      'hr_recovery': data.hrRecovery,
+      'ojas_score': data.ojasScore,
+      'ojas_summary': data.ojasSummary,
+      'agni_type': data.agniType,
+      'nadi_dosha': data.nadiDosha,
+      'synced': 0,
+    });
+
+    AppLogger.d('LocalStore: inserted reading',
+        category: LogCategory.general,
+        data: {'ts': ts, 'signals': data.signalCount});
+  }
+
+  /// Insert a health reading from a raw map (e.g., directly from watch payload).
+  Future<void> insertReadingFromMap(Map<String, dynamic> map) async {
+    await insertReading(WatchHealthData.fromMap(map));
+  }
+
+  /// Get readings in a time range, oldest first.
+  Future<List<WatchHealthData>> getReadings({
+    DateTime? from,
+    DateTime? to,
+  }) async {
+    final db = _db;
+    if (db == null) return [];
+
+    final where = <String>[];
+    final args = <dynamic>[];
+
+    if (from != null) {
+      where.add('timestamp >= ?');
+      args.add(from.millisecondsSinceEpoch);
+    }
+    if (to != null) {
+      where.add('timestamp <= ?');
+      args.add(to.millisecondsSinceEpoch);
+    }
+
+    final rows = await db.query(
+      'health_readings',
+      where: where.isEmpty ? null : where.join(' AND '),
+      whereArgs: args.isEmpty ? null : args,
+      orderBy: 'timestamp ASC',
+    );
+
+    return rows.map(_rowToHealthData).toList();
+  }
+
+  /// Get the latest reading (most recent timestamp).
+  Future<WatchHealthData?> getLatestReading() async {
+    final db = _db;
+    if (db == null) return null;
+
+    final rows = await db.query(
+      'health_readings',
+      orderBy: 'timestamp DESC',
+      limit: 1,
+    );
+
+    if (rows.isEmpty) return null;
+    return _rowToHealthData(rows.first);
+  }
+
+  /// Get readings for a specific day.
+  Future<List<WatchHealthData>> getReadingsForDay(DateTime day) async {
+    final start = DateTime(day.year, day.month, day.day);
+    final end = start.add(const Duration(days: 1));
+    return getReadings(from: start, to: end);
+  }
+
+  /// Get one representative reading per day for the last N days.
+  /// Uses the last reading of each day. For trend charts.
+  Future<List<WatchHealthData>> getDailySnapshots({int days = 7}) async {
+    final db = _db;
+    if (db == null) return [];
+
+    final cutoff = DateTime.now()
+        .subtract(Duration(days: days))
+        .millisecondsSinceEpoch;
+
+    // Get the last reading per calendar day
+    final rows = await db.rawQuery('''
+      SELECT * FROM health_readings
+      WHERE timestamp >= ?
+      AND id IN (
+        SELECT id FROM health_readings h2
+        WHERE h2.timestamp >= ?
+        GROUP BY CAST(timestamp / 86400000 AS INTEGER)
+        HAVING id = MAX(id)
+      )
+      ORDER BY timestamp ASC
+    ''', [cutoff, cutoff]);
+
+    return rows.map(_rowToHealthData).toList();
+  }
+
+  /// Get a specific metric's values over time (for sparkline/trend charts).
+  /// Returns (timestamp, value) pairs, oldest first. Null values omitted.
+  Future<List<({DateTime time, double value})>> getMetricTrend(
+    String metric, {
+    int days = 7,
+  }) async {
+    final db = _db;
+    if (db == null) return [];
+
+    final column = _metricToColumn(metric);
+    if (column == null) return [];
+
+    final cutoff = DateTime.now()
+        .subtract(Duration(days: days))
+        .millisecondsSinceEpoch;
+
+    final rows = await db.rawQuery(
+      'SELECT timestamp, $column FROM health_readings '
+      'WHERE timestamp >= ? AND $column IS NOT NULL '
+      'ORDER BY timestamp ASC',
+      [cutoff],
+    );
+
+    return rows.map((r) {
+      return (
+        time: DateTime.fromMillisecondsSinceEpoch(r['timestamp'] as int),
+        value: (r[column] as num).toDouble(),
+      );
+    }).toList();
+  }
+
+  /// Total number of readings in the local store.
+  Future<int> get readingCount async {
+    final db = _db;
+    if (db == null) return 0;
+    final result =
+        await db.rawQuery('SELECT COUNT(*) as cnt FROM health_readings');
+    return result.first['cnt'] as int? ?? 0;
+  }
+
+  // ─── Generic Cache ──────────────────────────────────────────────────────
+
+  /// Cache a JSON object under a key, with optional TTL.
+  Future<void> cacheJson(
+    String key,
+    Map<String, dynamic> data, {
+    Duration? ttl,
+  }) async {
+    final db = _db;
+    if (db == null) return;
+
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await db.insert(
+      'cache',
+      {
+        'key': key,
+        'data': jsonEncode(data),
+        'updated_at': now,
+        'expires_at': ttl != null ? now + ttl.inMilliseconds : null,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  /// Retrieve a cached JSON object. Returns null if missing or expired.
+  Future<Map<String, dynamic>?> getCached(String key) async {
+    final db = _db;
+    if (db == null) return null;
+
+    final rows = await db.query('cache', where: 'key = ?', whereArgs: [key]);
+    if (rows.isEmpty) return null;
+
+    final row = rows.first;
+    final expiresAt = row['expires_at'] as int?;
+    if (expiresAt != null &&
+        expiresAt < DateTime.now().millisecondsSinceEpoch) {
+      // Expired — delete and return null
+      await db.delete('cache', where: 'key = ?', whereArgs: [key]);
+      return null;
+    }
+
+    return jsonDecode(row['data'] as String) as Map<String, dynamic>;
+  }
+
+  /// Remove a cached item.
+  Future<void> removeCached(String key) async {
+    final db = _db;
+    if (db == null) return;
+    await db.delete('cache', where: 'key = ?', whereArgs: [key]);
+  }
+
+  // ─── Sync to Firestore ──────────────────────────────────────────────────
+
+  /// Start the periodic sync timer. Call once after initialization.
+  void startSyncTimer() {
+    _syncTimer?.cancel();
+    _syncTimer = Timer.periodic(
+      const Duration(seconds: syncIntervalSeconds),
+      (_) => syncToFirestore(),
+    );
+    AppLogger.i('LocalStore: sync timer started (every ${syncIntervalSeconds ~/ 60} min)',
+        category: LogCategory.general);
+  }
+
+  /// Stop the sync timer (call on dispose).
+  void stopSyncTimer() {
+    _syncTimer?.cancel();
+    _syncTimer = null;
+  }
+
+  /// Batch-sync unsynced health readings to Firestore.
+  /// Called periodically, on app foreground, and on app pause.
+  Future<void> syncToFirestore() async {
+    if (_syncing) return; // Prevent concurrent syncs
+    final db = _db;
+    if (db == null) return;
+
+    _syncing = true;
+    try {
+      // Get unsynced readings
+      final rows = await db.query(
+        'health_readings',
+        where: 'synced = 0',
+        orderBy: 'timestamp ASC',
+        limit: _batchSize,
+      );
+
+      if (rows.isEmpty) {
+        _syncing = false;
+        return;
+      }
+
+      AppLogger.i('LocalStore: syncing ${rows.length} readings to Firestore',
+          category: LogCategory.general);
+
+      final firestore = FirebaseFirestore.instance;
+      final uid = _getCurrentUid();
+      if (uid == null) {
+        _syncing = false;
+        return;
+      }
+
+      // Group readings by day for daily summary docs
+      final byDay = <String, List<Map<String, dynamic>>>{};
+      for (final row in rows) {
+        final ts = row['timestamp'] as int;
+        final dt = DateTime.fromMillisecondsSinceEpoch(ts);
+        final dayKey =
+            '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+        byDay.putIfAbsent(dayKey, () => []).add(row);
+      }
+
+      // Write daily summary docs only (no subcollections).
+      // Granular per-reading data lives in local sqflite — Firestore just
+      // needs the latest snapshot per day for Cloud Function triggers and
+      // cross-device availability. This matches existing security rules that
+      // allow writes to healthSnapshots/{dayKey} but not nested subcollections.
+      final batch = firestore.batch();
+      final syncedIds = <int>[];
+
+      for (final entry in byDay.entries) {
+        final dayKey = entry.key;
+        final dayReadings = entry.value;
+
+        // Collect all reading IDs for this day so we can mark them synced
+        for (final row in dayReadings) {
+          syncedIds.add(row['id'] as int);
+        }
+
+        // Use the most recent reading as the daily summary
+        final latestRow = dayReadings.last;
+        final summaryRef = firestore
+            .collection('users')
+            .doc(uid)
+            .collection('healthSnapshots')
+            .doc(dayKey);
+
+        batch.set(
+          summaryRef,
+          {
+            ..._rowToFirestoreMap(latestRow),
+            'updatedAt': FieldValue.serverTimestamp(),
+            'readingCount': dayReadings.length,
+            'source': 'localStore',
+          },
+          SetOptions(merge: true),
+        );
+      }
+
+      await batch.commit();
+
+      // Mark as synced
+      for (final id in syncedIds) {
+        await db.update(
+          'health_readings',
+          {'synced': 1},
+          where: 'id = ?',
+          whereArgs: [id],
+        );
+      }
+
+      AppLogger.i('LocalStore: synced ${syncedIds.length} readings to Firestore',
+          category: LogCategory.general,
+          data: {'days': byDay.length});
+
+      // If there are more unsynced readings, sync again
+      final remaining = await db.rawQuery(
+          'SELECT COUNT(*) as cnt FROM health_readings WHERE synced = 0');
+      final count = remaining.first['cnt'] as int? ?? 0;
+      if (count > 0) {
+        AppLogger.d('LocalStore: $count more readings pending sync',
+            category: LogCategory.general);
+      }
+    } catch (e) {
+      AppLogger.w('LocalStore: sync failed, will retry next cycle',
+          category: LogCategory.general, data: {'error': e.toString()});
+    } finally {
+      _syncing = false;
+    }
+  }
+
+  // ─── Maintenance ────────────────────────────────────────────────────────
+
+  /// Delete readings older than the retention period.
+  Future<void> _pruneOldReadings() async {
+    final db = _db;
+    if (db == null) return;
+
+    final cutoff = DateTime.now()
+        .subtract(const Duration(days: localRetentionDays))
+        .millisecondsSinceEpoch;
+
+    final deleted = await db.delete(
+      'health_readings',
+      where: 'timestamp < ? AND synced = 1',
+      whereArgs: [cutoff],
+    );
+
+    if (deleted > 0) {
+      AppLogger.i('LocalStore: pruned $deleted old readings',
+          category: LogCategory.general);
+    }
+  }
+
+  /// Delete expired cache entries.
+  Future<void> pruneExpiredCache() async {
+    final db = _db;
+    if (db == null) return;
+
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await db.delete(
+      'cache',
+      where: 'expires_at IS NOT NULL AND expires_at < ?',
+      whereArgs: [now],
+    );
+  }
+
+  /// Get diagnostic info about the local store.
+  Future<Map<String, dynamic>> diagnostics() async {
+    final db = _db;
+    if (db == null) return {'status': 'not initialized'};
+
+    final totalReadings = await db
+        .rawQuery('SELECT COUNT(*) as cnt FROM health_readings');
+    final unsyncedReadings = await db
+        .rawQuery('SELECT COUNT(*) as cnt FROM health_readings WHERE synced = 0');
+    final cacheEntries = await db
+        .rawQuery('SELECT COUNT(*) as cnt FROM cache');
+    final oldestReading = await db
+        .rawQuery('SELECT MIN(timestamp) as ts FROM health_readings');
+    final newestReading = await db
+        .rawQuery('SELECT MAX(timestamp) as ts FROM health_readings');
+
+    return {
+      'totalReadings': totalReadings.first['cnt'],
+      'unsyncedReadings': unsyncedReadings.first['cnt'],
+      'cacheEntries': cacheEntries.first['cnt'],
+      'oldestReading': oldestReading.first['ts'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(
+              oldestReading.first['ts'] as int)
+              .toIso8601String()
+          : null,
+      'newestReading': newestReading.first['ts'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(
+              newestReading.first['ts'] as int)
+              .toIso8601String()
+          : null,
+    };
+  }
+
+  /// Close the database (call on app shutdown if needed).
+  Future<void> close() async {
+    stopSyncTimer();
+    await _db?.close();
+    _db = null;
+  }
+
+  // ─── Private Helpers ────────────────────────────────────────────────────
+
+  WatchHealthData _rowToHealthData(Map<String, dynamic> row) {
+    final ts = row['timestamp'] as int?;
+    return WatchHealthData(
+      hrv: _toDouble(row['hrv']),
+      restingHR: _toDouble(row['resting_hr']),
+      steps: row['steps'] as int?,
+      spO2: _toDouble(row['spo2']),
+      respRate: _toDouble(row['resp_rate']),
+      wristTemp: _toDouble(row['wrist_temp']),
+      vo2Max: _toDouble(row['vo2_max']),
+      activeEnergy: _toDouble(row['active_energy']),
+      sleepHours: _toDouble(row['sleep_hours']),
+      deepSleepMins: _toDouble(row['deep_sleep_mins']),
+      remSleepMins: _toDouble(row['rem_sleep_mins']),
+      mindfulMins: _toDouble(row['mindful_mins']),
+      hrRecovery: _toDouble(row['hr_recovery']),
+      ojasScore: _toDouble(row['ojas_score']),
+      ojasSummary: row['ojas_summary'] as String?,
+      agniType: row['agni_type'] as String?,
+      nadiDosha: row['nadi_dosha'] as String?,
+      timestamp: ts != null ? DateTime.fromMillisecondsSinceEpoch(ts) : null,
+    );
+  }
+
+  Map<String, dynamic> _rowToFirestoreMap(Map<String, dynamic> row) {
+    // Convert DB row to the same shape that was previously written directly
+    final map = <String, dynamic>{};
+    if (row['hrv'] != null) map['hrv'] = row['hrv'];
+    if (row['resting_hr'] != null) map['restingHR'] = row['resting_hr'];
+    if (row['steps'] != null) map['steps'] = row['steps'];
+    if (row['spo2'] != null) map['spO2'] = row['spo2'];
+    if (row['resp_rate'] != null) map['respRate'] = row['resp_rate'];
+    if (row['wrist_temp'] != null) map['wristTemp'] = row['wrist_temp'];
+    if (row['vo2_max'] != null) map['vo2Max'] = row['vo2_max'];
+    if (row['active_energy'] != null) map['activeEnergy'] = row['active_energy'];
+    if (row['sleep_hours'] != null) map['sleepHours'] = row['sleep_hours'];
+    if (row['deep_sleep_mins'] != null) map['deepSleepMins'] = row['deep_sleep_mins'];
+    if (row['rem_sleep_mins'] != null) map['remSleepMins'] = row['rem_sleep_mins'];
+    if (row['mindful_mins'] != null) map['mindfulMins'] = row['mindful_mins'];
+    if (row['hr_recovery'] != null) map['hrRecovery'] = row['hr_recovery'];
+    if (row['ojas_score'] != null) map['ojasScore'] = row['ojas_score'];
+    if (row['ojas_summary'] != null) map['ojasSummary'] = row['ojas_summary'];
+    if (row['agni_type'] != null) map['agniType'] = row['agni_type'];
+    if (row['nadi_dosha'] != null) map['nadiDosha'] = row['nadi_dosha'];
+    if (row['timestamp'] != null) {
+      map['timestamp'] = (row['timestamp'] as int) / 1000; // Back to seconds
+    }
+    map['type'] = 'healthData';
+    return map;
+  }
+
+  String? _metricToColumn(String metric) {
+    const mapping = {
+      'hrv': 'hrv',
+      'restingHR': 'resting_hr',
+      'steps': 'steps',
+      'spO2': 'spo2',
+      'respRate': 'resp_rate',
+      'wristTemp': 'wrist_temp',
+      'vo2Max': 'vo2_max',
+      'activeEnergy': 'active_energy',
+      'sleepHours': 'sleep_hours',
+      'deepSleepMins': 'deep_sleep_mins',
+      'remSleepMins': 'rem_sleep_mins',
+      'mindfulMins': 'mindful_mins',
+      'hrRecovery': 'hr_recovery',
+      'ojasScore': 'ojas_score',
+    };
+    return mapping[metric];
+  }
+
+  static double? _toDouble(dynamic v) {
+    if (v == null) return null;
+    if (v is double) return v;
+    if (v is int) return v.toDouble();
+    if (v is num) return v.toDouble();
+    return null;
+  }
+
+  static String? _getCurrentUid() {
+    return FirebaseAuth.instance.currentUser?.uid;
+  }
+}

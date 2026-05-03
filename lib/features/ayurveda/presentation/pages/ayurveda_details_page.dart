@@ -469,9 +469,22 @@ class _AyurvedaDetailsPageState extends State<AyurvedaDetailsPage> {
             : 16.0;
         final spacing = screenWidth > 700 ? 16.0 : 12.0;
 
-        // Access watch health data from provider
-        final watchHealth =
-            context.watch<WatchHealthProvider>().healthData;
+        // Access watch health data and trends from provider
+        final watchProvider = context.watch<WatchHealthProvider>();
+        final watchHealth = watchProvider.healthData;
+        final trends = watchProvider.hasHistory
+            ? <String, List<double>>{
+                'hrv': watchProvider.metricTrend('hrv'),
+                'restingHR': watchProvider.metricTrend('restingHR'),
+                'steps': watchProvider.metricTrend('steps'),
+                'spO2': watchProvider.metricTrend('spO2'),
+                'respRate': watchProvider.metricTrend('respRate'),
+                'activeEnergy': watchProvider.metricTrend('activeEnergy'),
+                'sleepHours': watchProvider.metricTrend('sleepHours'),
+                'wristTemp': watchProvider.metricTrend('wristTemp'),
+                'vo2Max': watchProvider.metricTrend('vo2Max'),
+              }
+            : null;
 
         return Padding(
           padding: EdgeInsets.all(horizontalPadding),
@@ -515,12 +528,19 @@ class _AyurvedaDetailsPageState extends State<AyurvedaDetailsPage> {
 
                 // Sleep breakdown
                 if (watchHealth.sleepHours != null) ...[
-                  SleepSummaryCard(data: watchHealth, isDark: isDark),
+                  SleepSummaryCard(
+                    data: watchHealth,
+                    isDark: isDark,
+                  ),
                   SizedBox(height: spacing),
                 ],
 
-                // All body signals
-                BodySignalsCard(data: watchHealth, isDark: isDark),
+                // All body signals — 2-column grid of minimal tiles
+                BodySignalsGrid(
+                  data: watchHealth,
+                  isDark: isDark,
+                  trends: trends,
+                ),
                 SizedBox(height: spacing),
               ],
 

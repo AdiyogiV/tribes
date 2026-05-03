@@ -10,6 +10,11 @@ struct NadiMonitorView: View {
     @State private var baseline: NadiBaseline?
     @State private var isLoading = false
 
+    /// Throttle: prevent duplicate phone syncs across tab switches.
+    /// Reduced from 60s to 30s since BackgroundHealthSync handles periodic sends.
+    private static var lastPhoneSyncAt: Date?
+    private static let minSyncInterval: TimeInterval = 30
+
     var body: some View {
         GeometryReader { geo in
             VStack(spacing: 6) {
@@ -157,6 +162,10 @@ struct NadiMonitorView: View {
     // MARK: - Helpers
 
     private func refreshNadi() {
+        // Skip if we already have a reading displayed (user swiped away & back)
+        guard !isLoading else { return }
+        if reading != nil { return }
+
         isLoading = true
         health.fetchLatestReadings()
 
@@ -181,20 +190,29 @@ struct NadiMonitorView: View {
                     hrv: r.hrv,
                     restingHR: r.restingHR
                 )
-                syncManager.sendToPhone([
-                    "type": "nadiReading",
-                    "dominant": r.dominant,
-                    "gati": r.gati,
-                    "vata": r.vata,
-                    "pitta": r.pitta,
-                    "kapha": r.kapha,
-                    "hrv": r.hrv,
-                    "restingHR": r.restingHR as Any,
-                    "baselineHRV": r.baselineHRV,
-                    "timestamp": r.timestamp.timeIntervalSince1970,
-                    "baselineReliable": baseline?.isReliable ?? false,
-                    "baselineSamples": baseline?.sampleCount ?? 0,
-                ])
+
+                // Throttle phone sync — at most once per 60 seconds
+                let now = Date()
+                let shouldSync = Self.lastPhoneSyncAt == nil ||
+                    now.timeIntervalSince(Self.lastPhoneSyncAt!) >= Self.minSyncInterval
+
+                if shouldSync {
+                    Self.lastPhoneSyncAt = now
+                    syncManager.sendToPhone([
+                        "type": "nadiReading",
+                        "dominant": r.dominant,
+                        "gati": r.gati,
+                        "vata": r.vata,
+                        "pitta": r.pitta,
+                        "kapha": r.kapha,
+                        "hrv": r.hrv,
+                        "restingHR": r.restingHR as Any,
+                        "baselineHRV": r.baselineHRV,
+                        "timestamp": r.timestamp.timeIntervalSince1970,
+                        "baselineReliable": baseline?.isReliable ?? false,
+                        "baselineSamples": baseline?.sampleCount ?? 0,
+                    ])
+                }
             }
         }
     }

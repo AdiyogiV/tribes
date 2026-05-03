@@ -194,9 +194,12 @@ struct NadiView: View {
 }
 
 #Preview {
-    let cache = LocalCache()
-    cache.nadiDominantDosha = "Vata"
-    cache.latestHRV = 42
-    cache.latestRestingHR = 68
-    return NadiView().environmentObject(cache)
+    NadiView()
+        .environmentObject({
+            let c = LocalCache()
+            c.nadiDominantDosha = "Vata"
+            c.latestHRV = 42
+            c.latestRestingHR = 68
+            return c
+        }())
 }

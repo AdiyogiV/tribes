@@ -211,9 +211,12 @@ struct VyayamaView: View {
 }
 
 #Preview {
-    let cache = LocalCache()
-    cache.prakritiVata = 40
-    cache.prakritiPitta = 35
-    cache.prakritiKapha = 25
-    return VyayamaView().environmentObject(cache)
+    VyayamaView()
+        .environmentObject({
+            let c = LocalCache()
+            c.prakritiVata = 40
+            c.prakritiPitta = 35
+            c.prakritiKapha = 25
+            return c
+        }())
 }

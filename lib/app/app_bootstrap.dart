@@ -10,6 +10,7 @@ import 'package:aurogram/core/network/network_optimizer.dart';
 import 'package:aurogram/shared/services/media/media_compression_service.dart';
 import 'package:aurogram/core/routing/dynamic_link_navigator.dart';
 import 'package:aurogram/shared/services/watch_service.dart';
+import 'package:aurogram/shared/services/local_store.dart';
 import 'package:aurogram/features/ayurveda/domain/ayurveda_service.dart';
 import 'package:aurogram/features/astrology/domain/sky_positions_service.dart';
 import 'package:aurogram/platform/platform.dart';
@@ -18,7 +19,7 @@ import 'package:aurogram/core/notifications/fcm_background_handler.dart';
 import 'package:aurogram/app/app_providers.dart';
 import 'package:aurogram/app/app_root.dart';
 import 'package:firebase_core/firebase_core.dart';
-// import 'package:firebase_app_check/firebase_app_check.dart'; // Disabled — native NoOp handles App Check
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
@@ -123,25 +124,43 @@ class AppBootstrap {
     // app with zero offline cache and a 10s wait on every cold read.
     _configureFirestoreSettings();
 
-    // App Check – disabled via native NoOp factory in AppDelegate.swift.
+    // App Check – activate with appropriate provider per build mode.
     //
-    // The native side installs a NoOpAppCheckProviderFactory BEFORE
-    // FirebaseApp.configure() so the eagerly-created AppCheck component
-    // gets a NoOp provider (cached by FIRComponentContainer). It also
-    // re-installs it AFTER GeneratedPluginRegistrant.register() because
-    // the Flutter firebase_app_check plugin unconditionally overrides the
-    // factory with a DeviceCheck-backed one during registration.
+    // DEBUG MODE: Native AppDelegate.swift installs AppCheckDebugProviderFactory
+    // which prints a debug token to console on first launch. Add that token in
+    // Firebase Console > App Check > [iOS app] > Manage debug tokens to make
+    // App Check pass for this dev install. We do NOT also call
+    // FirebaseAppCheck.activate() from Dart in debug — the native factory
+    // already covers it and a second activation triggers a redundant token
+    // exchange.
     //
-    // App Check is currently in Monitoring mode in Firebase Console, so
-    // all requests pass regardless of token validity. When enforcement is
-    // enabled, activate with real providers here and remove the native NoOp.
-    //
-    // Skip activation entirely — the native NoOp factory handles it.
-    // Calling activate() from Dart would reconfigure the Flutter plugin's
-    // internal provider but cannot replace the already-cached native
-    // AppCheck instance (created eagerly during configure()).
-    AppLogger.i('App Check: handled by native NoOp factory (monitoring mode)',
-        category: LogCategory.general);
+    // App Check: only activate in release mode on mobile.
+    // Debug builds skip App Check entirely — the iOS app isn't registered
+    // in Firebase Console, so both DeviceCheck and DebugProvider fail with
+    // 400 "App not registered" and spam the console.
+    if (!kIsWeb && !kDebugMode) {
+      try {
+        await FirebaseAppCheck.instance.activate(
+          providerAndroid: const AndroidPlayIntegrityProvider(),
+          providerApple: const AppleDeviceCheckProvider(),
+        );
+        unawaited(FirebaseAppCheck.instance.getToken(true).then((token) {
+          AppLogger.i('App Check activated',
+              category: LogCategory.general,
+              data: {'hasToken': token != null});
+        }).catchError((e) {
+          AppLogger.w('App Check token fetch failed',
+              category: LogCategory.general,
+              data: {'error': e.toString()});
+        }));
+      } catch (e) {
+        AppLogger.w('App Check activation failed: $e',
+            category: LogCategory.general);
+      }
+    } else {
+      AppLogger.i('App Check: disabled (debug or web)',
+          category: LogCategory.general);
+    }
 
     // FCM background handler (mobile only)
     if (!kIsWeb) {
@@ -223,6 +242,10 @@ class AppBootstrap {
         if (locator.isRegistered<MediaCompressionService>()) {
           locator<MediaCompressionService>().migrateAndCleanupUploads();
         }
+
+        // Initialize local health DB (offline-first, before watch bridge)
+        await LocalStore.instance.initialize();
+        LocalStore.instance.startSyncTimer();
 
         // Initialize Apple Watch companion bridge (iOS only, no-op elsewhere)
         WatchService.instance.initialize();

@@ -38,9 +38,9 @@ class WatchService {
     _channel.setMethodCallHandler((call) async {
       if (call.method == 'onWatchData') {
         final data = Map<String, dynamic>.from(call.arguments as Map);
-        AppLogger.d('WatchService: received data from watch',
+        AppLogger.i('WatchService: received data from watch',
             category: LogCategory.general,
-            data: {'keys': data.keys.toList()});
+            data: {'type': data['type'], 'keys': data.keys.toList()});
         _watchDataController.add(data);
       }
     });
@@ -69,17 +69,11 @@ class WatchService {
   Future<void> sendPanchang(Map<String, dynamic>? samvat) async {
     if (samvat == null) return;
     try {
-      // Only include non-null values — NSNull is not a valid Property List
-      // type and will crash WCSession.updateApplicationContext().
-      final payload = <String, dynamic>{};
-      final vedicDate = _buildVedicDate(samvat);
-      if (vedicDate != null) payload['vedicDate'] = vedicDate;
-      final samvatYear = _buildSamvatYear(samvat);
-      if (samvatYear != null) payload['samvatYear'] = samvatYear;
-      final numericDate = _buildNumericDate(samvat);
-      if (numericDate != null) payload['vedicNumericDate'] = numericDate;
-      if (payload.isEmpty) return; // nothing useful to send
-      await _channel.invokeMethod('sendPanchang', payload);
+      await _channel.invokeMethod('sendPanchang', {
+        'vedicDate': _buildVedicDate(samvat),
+        'samvatYear': _buildSamvatYear(samvat),
+        'vedicNumericDate': _buildNumericDate(samvat),
+      });
     } on MissingPluginException {
       // Not on iOS
     } catch (e) {

@@ -8,6 +8,8 @@ import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/storage/memory_manager.dart';
 import 'package:aurogram/core/network/network_manager.dart';
+import 'package:aurogram/shared/services/local_store.dart';
+import 'package:aurogram/shared/providers/watch_health_provider.dart';
 import 'package:aurogram/core/routing/app_router.dart';
 import 'package:aurogram/core/routing/route_names.dart';
 import 'package:go_router/go_router.dart';
@@ -186,6 +188,11 @@ class AppRootState extends State<AppRoot> with WidgetsBindingObserver {
             : CleanupType.light;
         mm.clearMemoryCaches(cleanupType: type);
       }
+
+      // Flush pending health readings to Firestore before backgrounding
+      if (LocalStore.instance.isReady) {
+        unawaited(LocalStore.instance.syncToFirestore());
+      }
     }
 
     if (state == AppLifecycleState.resumed) {
@@ -196,6 +203,19 @@ class AppRootState extends State<AppRoot> with WidgetsBindingObserver {
                 category: LogCategory.network);
           }
         });
+      }
+
+      // Refresh health history (pick up readings received while backgrounded)
+      try {
+        final provider = context.read<WatchHealthProvider>();
+        unawaited(provider.refreshHistory());
+      } catch (_) {
+        // Provider may not be in tree yet
+      }
+
+      // Sync any pending readings that accumulated
+      if (LocalStore.instance.isReady) {
+        unawaited(LocalStore.instance.syncToFirestore());
       }
     }
   }

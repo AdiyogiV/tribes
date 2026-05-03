@@ -1,9 +1,62 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:aurogram/shared/models/watch_health_data.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/features/ayurveda/presentation/widgets/ayurveda_theme.dart';
+import 'package:provider/provider.dart';
+import 'package:aurogram/shared/providers/watch_health_provider.dart';
+import 'package:aurogram/features/ayurveda/presentation/pages/signal_detail_page.dart';
+import 'package:aurogram/features/ayurveda/presentation/pages/metric_info.dart';
+import 'package:aurogram/features/ayurveda/presentation/pages/nadi_detail_page.dart';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Dosha Balance Computation — shared between NadiCard and NadiDetailPage
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Compute approximate dosha balance from watch health signals.
+/// Returns {'vata': %, 'pitta': %, 'kapha': %} normalized to 100.
+Map<String, double> computeDoshaBalance(WatchHealthData data) {
+  double vata = 33, pitta = 33, kapha = 34;
+
+  if (data.hrv != null) {
+    if (data.hrv! > 60) { vata += 8; pitta -= 3; kapha -= 5; }
+    else if (data.hrv! < 25) { kapha += 6; vata -= 3; pitta -= 3; }
+  }
+  if (data.restingHR != null) {
+    if (data.restingHR! > 75) { pitta += 5; vata += 3; kapha -= 5; }
+    else if (data.restingHR! < 55) { kapha += 5; pitta -= 3; }
+  }
+  if (data.wristTemp != null) {
+    if (data.wristTemp! > 0.3) { pitta += 6; vata -= 2; }
+    else if (data.wristTemp! < -0.3) { vata += 5; kapha += 2; pitta -= 4; }
+  }
+  if (data.sleepHours != null) {
+    if (data.sleepHours! < 6) { vata += 6; pitta += 3; kapha -= 5; }
+    else if (data.sleepHours! > 9) { kapha += 8; vata -= 4; pitta -= 2; }
+  }
+  if (data.respRate != null) {
+    if (data.respRate! > 18) { vata += 4; kapha -= 2; }
+    else if (data.respRate! < 12) { kapha += 3; }
+  }
+  if (data.normalizedSpO2 != null && data.normalizedSpO2! < 94) {
+    kapha += 4; vata += 2;
+  }
+  if (data.steps != null) {
+    if (data.steps! < 2000) { kapha += 5; vata -= 2; }
+    else if (data.steps! > 15000) { vata += 4; kapha -= 3; }
+  }
+
+  final total = [vata, pitta, kapha].reduce((a, b) => a + b);
+  if (total > 0) {
+    vata = (vata / total) * 100;
+    pitta = (pitta / total) * 100;
+    kapha = (kapha / total) * 100;
+  }
+  return {'vata': vata, 'pitta': pitta, 'kapha': kapha};
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // OjasScoreCard — Hero vitality gauge from Apple Watch
@@ -257,134 +310,97 @@ class OjasScoreCard extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// BodySignalsCard — All watch sensor data in compact rows
+// BodySignalsGrid — Clean 2-column grid of minimal metric tiles
 // ─────────────────────────────────────────────────────────────────────────────
 
-class BodySignalsCard extends StatefulWidget {
+class BodySignalsGrid extends StatelessWidget {
   final WatchHealthData data;
   final bool isDark;
+  final Map<String, List<double>>? trends;
 
-  const BodySignalsCard({
+  const BodySignalsGrid({
     super.key,
     required this.data,
     required this.isDark,
+    this.trends,
   });
 
   @override
-  State<BodySignalsCard> createState() => _BodySignalsCardState();
-}
-
-class _BodySignalsCardState extends State<BodySignalsCard> {
-  bool _expanded = false;
-
-  @override
   Widget build(BuildContext context) {
-    final c = AppTheme.primaryColor;
     final signals = _buildSignalList();
     if (signals.isEmpty) return const SizedBox.shrink();
 
-    // Show first 4 by default, rest on expand
-    final visibleCount = _expanded ? signals.length : signals.length.clamp(0, 4);
-
-    return AyurvedaCardContainer(
-      isDark: widget.isDark,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Section header
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 10),
+          child: Row(
             children: [
               Text(
                 'Body Signals',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  color: c,
+                  color: AppTheme.primaryColor,
                 ),
               ),
               const Spacer(),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: widget.isDark
-                      ? Colors.white.withValues(alpha: 0.05)
-                      : Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-                ),
-                child: Text(
-                  '${signals.length} active',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: widget.isDark ? Colors.white38 : Colors.black38,
-                  ),
+              Text(
+                '${signals.length} active',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: isDark ? Colors.white30 : Colors.black26,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: AppDimensions.spacingMd),
-
-          // Signal rows
-          ...signals.take(visibleCount).map((s) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: _SignalRow(
-                  icon: s.icon,
-                  label: s.label,
-                  value: s.value,
-                  unit: s.unit,
-                  status: s.status,
-                  statusColor: s.statusColor,
-                  ayurvedaHint: s.ayurvedaHint,
-                  isDark: widget.isDark,
-                ),
-              )),
-
-          // Expand/collapse
-          if (signals.length > 4)
-            GestureDetector(
-              onTap: () => setState(() => _expanded = !_expanded),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                decoration: BoxDecoration(
-                  color: widget.isDark
-                      ? Colors.white.withValues(alpha: 0.03)
-                      : Colors.grey.shade50,
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      _expanded
-                          ? 'Show less'
-                          : 'Show ${signals.length - 4} more',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: c.withValues(alpha: 0.7),
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      _expanded
-                          ? Icons.keyboard_arrow_up
-                          : Icons.keyboard_arrow_down,
-                      size: 16,
-                      color: c.withValues(alpha: 0.7),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-        ],
-      ),
+        ),
+        // 2-column grid of metric tiles
+        ..._buildRows(context, signals),
+      ],
     );
   }
 
+  List<Widget> _buildRows(BuildContext context, List<_SignalData> signals) {
+    final rows = <Widget>[];
+    for (int i = 0; i < signals.length; i += 2) {
+      if (i > 0) rows.add(const SizedBox(height: 10));
+      final left = signals[i];
+      final right = (i + 1 < signals.length) ? signals[i + 1] : null;
+      rows.add(Row(
+        children: [
+          Expanded(
+            child: _MetricTile(
+              data: left,
+              isDark: isDark,
+              trend: _trendFor(left),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: right != null
+                ? _MetricTile(
+                    data: right,
+                    isDark: isDark,
+                    trend: _trendFor(right),
+                  )
+                : const SizedBox(),
+          ),
+        ],
+      ));
+    }
+    return rows;
+  }
+
+  List<double>? _trendFor(_SignalData s) {
+    if (s.metricKey == null || trends == null) return null;
+    return trends![s.metricKey!];
+  }
+
   List<_SignalData> _buildSignalList() {
-    final d = widget.data;
+    final d = data;
     final list = <_SignalData>[];
 
     // Heart
@@ -398,6 +414,7 @@ class _BodySignalsCardState extends State<BodySignalsCard> {
         status: v > 50 ? 'Good' : v > 25 ? 'Fair' : 'Low',
         statusColor: v > 50 ? kaphaColor : v > 25 ? Colors.amber.shade600 : pittaColor,
         ayurvedaHint: v > 60 ? 'Vata ↑' : v < 25 ? 'Kapha ↑' : null,
+        metricKey: 'hrv',
       ));
     }
     if (d.restingHR != null) {
@@ -410,42 +427,7 @@ class _BodySignalsCardState extends State<BodySignalsCard> {
         status: v < 65 ? 'Good' : v < 80 ? 'Normal' : 'Elevated',
         statusColor: v < 65 ? kaphaColor : v < 80 ? Colors.amber.shade600 : pittaColor,
         ayurvedaHint: v > 75 ? 'Pitta ↑' : v < 55 ? 'Kapha ↑' : null,
-      ));
-    }
-
-    // Sleep
-    if (d.sleepHours != null) {
-      final v = d.sleepHours!;
-      list.add(_SignalData(
-        icon: Icons.bedtime_outlined,
-        label: 'Sleep',
-        value: v.toStringAsFixed(1),
-        unit: 'hrs',
-        status: v >= 7 ? 'Good' : v >= 5 ? 'Fair' : 'Low',
-        statusColor: v >= 7 ? kaphaColor : v >= 5 ? Colors.amber.shade600 : pittaColor,
-        ayurvedaHint: v < 6 ? 'Vata ↑' : v > 9 ? 'Kapha ↑' : null,
-      ));
-    }
-    if (d.deepSleepMins != null) {
-      final v = d.deepSleepMins!;
-      list.add(_SignalData(
-        icon: Icons.nights_stay_outlined,
-        label: 'Deep Sleep',
-        value: '${v.round()}',
-        unit: 'min',
-        status: v >= 60 ? 'Good' : v >= 30 ? 'Fair' : 'Low',
-        statusColor: v >= 60 ? kaphaColor : v >= 30 ? Colors.amber.shade600 : pittaColor,
-      ));
-    }
-    if (d.remSleepMins != null) {
-      final v = d.remSleepMins!;
-      list.add(_SignalData(
-        icon: Icons.remove_red_eye_outlined,
-        label: 'REM Sleep',
-        value: '${v.round()}',
-        unit: 'min',
-        status: v >= 90 ? 'Good' : v >= 45 ? 'Fair' : 'Low',
-        statusColor: v >= 90 ? kaphaColor : v >= 45 ? Colors.amber.shade600 : pittaColor,
+        metricKey: 'restingHR',
       ));
     }
 
@@ -454,24 +436,26 @@ class _BodySignalsCardState extends State<BodySignalsCard> {
       final pct = d.normalizedSpO2!;
       list.add(_SignalData(
         icon: Icons.air,
-        label: 'Blood Oxygen',
+        label: 'Blood O₂',
         value: '${pct.round()}',
         unit: '%',
         status: pct >= 95 ? 'Normal' : pct >= 92 ? 'Fair' : 'Low',
         statusColor: pct >= 95 ? kaphaColor : pct >= 92 ? Colors.amber.shade600 : pittaColor,
         ayurvedaHint: pct < 94 ? 'Kapha ↑' : null,
+        metricKey: 'spO2',
       ));
     }
     if (d.respRate != null) {
       final v = d.respRate!;
       list.add(_SignalData(
         icon: Icons.waves,
-        label: 'Breath Rate',
+        label: 'Breath',
         value: '${v.round()}',
         unit: '/min',
         status: (v >= 12 && v <= 20) ? 'Normal' : 'Elevated',
         statusColor: (v >= 12 && v <= 20) ? kaphaColor : pittaColor,
         ayurvedaHint: v > 18 ? 'Vata ↑' : null,
+        metricKey: 'respRate',
       ));
     }
 
@@ -487,6 +471,7 @@ class _BodySignalsCardState extends State<BodySignalsCard> {
         status: v.abs() < 0.3 ? 'Stable' : 'Shifted',
         statusColor: v.abs() < 0.3 ? kaphaColor : pittaColor,
         ayurvedaHint: v > 0.3 ? 'Pitta ↑' : v < -0.3 ? 'Vata ↑' : null,
+        metricKey: 'wristTemp',
       ));
     }
 
@@ -497,9 +482,10 @@ class _BodySignalsCardState extends State<BodySignalsCard> {
         icon: Icons.directions_run,
         label: 'VO₂ Max',
         value: '${v.round()}',
-        unit: 'mL/kg/min',
+        unit: '',
         status: v >= 40 ? 'Good' : v >= 30 ? 'Fair' : 'Low',
         statusColor: v >= 40 ? kaphaColor : v >= 30 ? Colors.amber.shade600 : pittaColor,
+        metricKey: 'vo2Max',
       ));
     }
     if (d.steps != null) {
@@ -511,6 +497,20 @@ class _BodySignalsCardState extends State<BodySignalsCard> {
         status: d.steps! >= 8000 ? 'Active' : d.steps! >= 4000 ? 'Fair' : 'Low',
         statusColor: d.steps! >= 8000 ? kaphaColor : d.steps! >= 4000 ? Colors.amber.shade600 : pittaColor,
         ayurvedaHint: d.steps! < 2000 ? 'Kapha ↑' : d.steps! > 15000 ? 'Vata ↑' : null,
+        metricKey: 'steps',
+      ));
+    }
+
+    // Energy
+    if (d.activeEnergy != null) {
+      list.add(_SignalData(
+        icon: Icons.local_fire_department_outlined,
+        label: 'Active Cal',
+        value: '${d.activeEnergy!.round()}',
+        unit: 'kcal',
+        status: d.activeEnergy! >= 300 ? 'Active' : 'Low',
+        statusColor: d.activeEnergy! >= 300 ? kaphaColor : Colors.amber.shade600,
+        metricKey: 'activeEnergy',
       ));
     }
 
@@ -521,23 +521,14 @@ class _BodySignalsCardState extends State<BodySignalsCard> {
         icon: Icons.restore,
         label: 'HR Recovery',
         value: '${v.round()}',
-        unit: 'bpm drop',
+        unit: 'bpm',
         status: v >= 20 ? 'Good' : v >= 12 ? 'Fair' : 'Low',
         statusColor: v >= 20 ? kaphaColor : v >= 12 ? Colors.amber.shade600 : pittaColor,
+        metricKey: 'hrRecovery',
       ));
     }
 
-    // Energy & Mindful
-    if (d.activeEnergy != null) {
-      list.add(_SignalData(
-        icon: Icons.local_fire_department_outlined,
-        label: 'Active Energy',
-        value: '${d.activeEnergy!.round()}',
-        unit: 'kcal',
-        status: d.activeEnergy! >= 300 ? 'Active' : 'Low',
-        statusColor: d.activeEnergy! >= 300 ? kaphaColor : Colors.amber.shade600,
-      ));
-    }
+    // Mindful
     if (d.mindfulMins != null && d.mindfulMins! > 0) {
       list.add(_SignalData(
         icon: Icons.self_improvement,
@@ -546,17 +537,174 @@ class _BodySignalsCardState extends State<BodySignalsCard> {
         unit: 'min',
         status: d.mindfulMins! >= 10 ? 'Good' : 'Brief',
         statusColor: d.mindfulMins! >= 10 ? kaphaColor : Colors.amber.shade600,
+        metricKey: 'mindfulMins',
       ));
     }
 
     return list;
   }
 
-  String _formatSteps(int steps) {
-    if (steps >= 1000) {
-      return '${(steps / 1000).toStringAsFixed(1)}k';
-    }
+  static String _formatSteps(int steps) {
+    if (steps >= 1000) return '${(steps / 1000).toStringAsFixed(1)}k';
     return '$steps';
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// _MetricTile — Minimal card tile for a single health metric
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _MetricTile extends StatelessWidget {
+  final _SignalData data;
+  final bool isDark;
+  final List<double>? trend;
+
+  const _MetricTile({
+    required this.data,
+    required this.isDark,
+    this.trend,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final hasDetail = data.metricKey != null;
+
+    return GestureDetector(
+      onTap: hasDetail
+          ? () {
+              HapticFeedback.lightImpact();
+              Navigator.of(context).push(
+                CupertinoPageRoute<void>(
+                  builder: (_) => SignalDetailPage(
+                    label: data.label,
+                    value: data.value,
+                    unit: data.unit,
+                    status: data.status,
+                    statusColor: data.statusColor,
+                    icon: data.icon,
+                    ayurvedaHint: data.ayurvedaHint,
+                    metricKey: data.metricKey,
+                    trend: trend,
+                    info: getMetricInfo(data.metricKey!),
+                  ),
+                ),
+              );
+            }
+          : null,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: isDark
+              ? Theme.of(context).colorScheme.surface
+              : Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: isDark
+              ? null
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Row 1: icon ... value + unit
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Icon(
+                  data.icon,
+                  size: 18,
+                  color: data.statusColor.withValues(alpha: 0.7),
+                ),
+                const Spacer(),
+                Text(
+                  data.value,
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: isDark ? Colors.white : Colors.black87,
+                    height: 1,
+                  ),
+                ),
+                if (data.unit.isNotEmpty) ...[
+                  const SizedBox(width: 3),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 2),
+                    child: Text(
+                      data.unit,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: isDark ? Colors.white38 : Colors.black38,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 10),
+
+            // Row 2: label ... status dot + text
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    data.label,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: isDark ? Colors.white54 : Colors.black45,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: data.statusColor,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  data.status,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: data.statusColor,
+                  ),
+                ),
+              ],
+            ),
+
+            // Optional Ayurveda hint
+            if (data.ayurvedaHint != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                data.ayurvedaHint!,
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w600,
+                  color: getDoshaColor(
+                    data.ayurvedaHint!.contains('Vata')
+                        ? 'vata'
+                        : data.ayurvedaHint!.contains('Pitta')
+                            ? 'pitta'
+                            : 'kapha',
+                  ).withValues(alpha: 0.6),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -579,88 +727,87 @@ class WatchNadiCard extends StatelessWidget {
     final c = AppTheme.primaryColor;
     if (data.nadiDosha == null && data.hrv == null) return const SizedBox.shrink();
 
-    // Compute approximate dosha percentages from available signals
-    final doshaBalance = _computeDoshaFromSignals();
+    final doshaBalance = computeDoshaBalance(data);
 
-    return AyurvedaCardContainer(
-      isDark: isDark,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Row(
-            children: [
-              Text(
-                'Nadi · Pulse Reading',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: c,
-                ),
-              ),
-              const Spacer(),
-              Icon(
-                Icons.watch,
-                size: 16,
-                color: isDark ? Colors.white24 : Colors.black26,
-              ),
-            ],
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        Navigator.of(context).push(
+          CupertinoPageRoute<void>(
+            builder: (_) => NadiDetailPage(data: data),
           ),
-          const SizedBox(height: AppDimensions.spacingMd),
-
-          // Nadi type
-          if (data.nadiDosha != null) ...[
+        );
+      },
+      child: AyurvedaCardContainer(
+        isDark: isDark,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
             Row(
               children: [
                 Text(
-                  _nadiGlyph(data.nadiDosha!),
-                  style: const TextStyle(fontSize: 24),
+                  'Nadi · Pulse Reading',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: c,
+                  ),
                 ),
-                const SizedBox(width: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${capitalize(data.nadiDosha!)} Nadi',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: getDoshaColor(data.nadiDosha!),
-                      ),
-                    ),
-                    Text(
-                      _nadiDescription(data.nadiDosha!),
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: isDark ? Colors.white54 : Colors.black45,
-                      ),
-                    ),
-                  ],
+                const Spacer(),
+                Icon(
+                  CupertinoIcons.chevron_right,
+                  size: 14,
+                  color: isDark ? Colors.white24 : Colors.black26,
                 ),
               ],
             ),
-            const SizedBox(height: AppDimensions.spacingLg),
+            const SizedBox(height: AppDimensions.spacingMd),
+
+            // Nadi type
+            if (data.nadiDosha != null) ...[
+              Row(
+                children: [
+                  Text(
+                    _nadiGlyph(data.nadiDosha!),
+                    style: const TextStyle(fontSize: 24),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${capitalize(data.nadiDosha!)} Nadi',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: getDoshaColor(data.nadiDosha!),
+                          ),
+                        ),
+                        Text(
+                          _nadiDescription(data.nadiDosha!),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isDark ? Colors.white54 : Colors.black45,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppDimensions.spacingLg),
+            ],
+
+            // Dosha balance bars
+            _buildDoshaBar('Vata', doshaBalance['vata']!, vataColor),
+            const SizedBox(height: 8),
+            _buildDoshaBar('Pitta', doshaBalance['pitta']!, pittaColor),
+            const SizedBox(height: 8),
+            _buildDoshaBar('Kapha', doshaBalance['kapha']!, kaphaColor),
           ],
-
-          // Dosha balance bars (from watch signals)
-          _buildDoshaBar('Vata', doshaBalance['vata']!, vataColor),
-          const SizedBox(height: 8),
-          _buildDoshaBar('Pitta', doshaBalance['pitta']!, pittaColor),
-          const SizedBox(height: 8),
-          _buildDoshaBar('Kapha', doshaBalance['kapha']!, kaphaColor),
-
-          const SizedBox(height: AppDimensions.spacingMd),
-
-          // Source note
-          Text(
-            'Derived from HRV, heart rate, temperature & activity patterns',
-            style: TextStyle(
-              fontSize: 10,
-              fontStyle: FontStyle.italic,
-              color: isDark ? Colors.white24 : Colors.black26,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -722,95 +869,7 @@ class WatchNadiCard extends StatelessWidget {
     );
   }
 
-  /// Approximate dosha balance from watch health signals.
-  /// Mirrors the VikritiView.swift logic on the watch.
-  Map<String, double> _computeDoshaFromSignals() {
-    double vata = 33, pitta = 33, kapha = 34;
-
-    if (data.hrv != null) {
-      if (data.hrv! > 60) {
-        vata += 8;
-        pitta -= 3;
-        kapha -= 5;
-      } else if (data.hrv! < 25) {
-        kapha += 6;
-        vata -= 3;
-        pitta -= 3;
-      }
-    }
-
-    if (data.restingHR != null) {
-      if (data.restingHR! > 75) {
-        pitta += 5;
-        vata += 3;
-        kapha -= 5;
-      } else if (data.restingHR! < 55) {
-        kapha += 5;
-        pitta -= 3;
-      }
-    }
-
-    if (data.wristTemp != null) {
-      if (data.wristTemp! > 0.3) {
-        pitta += 6;
-        vata -= 2;
-      } else if (data.wristTemp! < -0.3) {
-        vata += 5;
-        kapha += 2;
-        pitta -= 4;
-      }
-    }
-
-    if (data.sleepHours != null) {
-      if (data.sleepHours! < 6) {
-        vata += 6;
-        pitta += 3;
-        kapha -= 5;
-      } else if (data.sleepHours! > 9) {
-        kapha += 8;
-        vata -= 4;
-        pitta -= 2;
-      }
-    }
-
-    if (data.respRate != null) {
-      if (data.respRate! > 18) {
-        vata += 4;
-        kapha -= 2;
-      } else if (data.respRate! < 12) {
-        kapha += 3;
-      }
-    }
-
-    if (data.normalizedSpO2 != null) {
-      if (data.normalizedSpO2! < 94) {
-        kapha += 4;
-        vata += 2;
-      }
-    }
-
-    if (data.steps != null) {
-      if (data.steps! < 2000) {
-        kapha += 5;
-        vata -= 2;
-      } else if (data.steps! > 15000) {
-        vata += 4;
-        kapha -= 3;
-      }
-    }
-
-    // Normalize
-    final total = [vata, pitta, kapha].reduce((a, b) => a + b);
-    if (total > 0) {
-      vata = (vata / total) * 100;
-      pitta = (pitta / total) * 100;
-      kapha = (kapha / total) * 100;
-    }
-
-    return {'vata': vata, 'pitta': pitta, 'kapha': kapha};
-  }
-
-  String _nadiGlyph(String dosha) {
+  static String _nadiGlyph(String dosha) {
     switch (dosha.toLowerCase()) {
       case 'vata':
         return '🐍';
@@ -823,7 +882,7 @@ class WatchNadiCard extends StatelessWidget {
     }
   }
 
-  String _nadiDescription(String dosha) {
+  static String _nadiDescription(String dosha) {
     switch (dosha.toLowerCase()) {
       case 'vata':
         return 'Sarpa gati · Snake-like pulse';
@@ -862,36 +921,66 @@ class SleepSummaryCard extends StatelessWidget {
     final totalMins = (total * 60).round();
     final core = (totalMins - deep - rem).clamp(0, totalMins).toDouble();
 
-    return AyurvedaCardContainer(
-      isDark: isDark,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Row(
-            children: [
-              Text(
-                'Nidra · Sleep',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: c,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                '${total.toStringAsFixed(1)} hrs',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: total >= 7 ? kaphaColor : total >= 5 ? Colors.amber.shade600 : pittaColor,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppDimensions.spacingLg),
+    final statusColor = total >= 7 ? kaphaColor : total >= 5 ? Colors.amber.shade600 : pittaColor;
+    final status = total >= 7 ? 'Good' : total >= 5 ? 'Fair' : 'Low';
 
-          // Stacked bar
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        Navigator.of(context).push(
+          CupertinoPageRoute<void>(
+            builder: (_) => SignalDetailPage(
+              label: 'Sleep',
+              value: total.toStringAsFixed(1),
+              unit: 'hrs',
+              status: status,
+              statusColor: statusColor,
+              icon: Icons.bedtime_outlined,
+              ayurvedaHint: total < 6 ? 'Vata ↑' : total > 9 ? 'Kapha ↑' : null,
+              metricKey: 'sleepHours',
+              trend: Provider.of<WatchHealthProvider>(context, listen: false)
+                  .metricTrend('sleepHours'),
+              info: getMetricInfo('sleepHours'),
+            ),
+          ),
+        );
+      },
+      child: AyurvedaCardContainer(
+        isDark: isDark,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              children: [
+                Text(
+                  'Nidra · Sleep',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: c,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  '${total.toStringAsFixed(1)} hrs',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: statusColor,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Icon(
+                  CupertinoIcons.chevron_right,
+                  size: 14,
+                  color: isDark ? Colors.white24 : Colors.black26,
+                ),
+              ],
+            ),
+            const SizedBox(height: AppDimensions.spacingLg),
+
+            // Stacked bar
           ClipRRect(
             borderRadius: BorderRadius.circular(6),
             child: SizedBox(
@@ -932,7 +1021,7 @@ class SleepSummaryCard extends StatelessWidget {
 
           const SizedBox(height: AppDimensions.spacingMd),
 
-          // Quality word
+          // Quality assessment
           Text(
             _sleepQuality(total, deep, rem),
             style: TextStyle(
@@ -942,6 +1031,7 @@ class SleepSummaryCard extends StatelessWidget {
             ),
           ),
         ],
+        ),
       ),
     );
   }
@@ -979,7 +1069,7 @@ class SleepSummaryCard extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Internal Widgets & Painters
+// Internal Data Model
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _SignalData {
@@ -990,6 +1080,7 @@ class _SignalData {
   final String status;
   final Color statusColor;
   final String? ayurvedaHint;
+  final String? metricKey;
 
   const _SignalData({
     required this.icon,
@@ -999,99 +1090,13 @@ class _SignalData {
     required this.status,
     required this.statusColor,
     this.ayurvedaHint,
+    this.metricKey,
   });
 }
 
-class _SignalRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final String unit;
-  final String status;
-  final Color statusColor;
-  final String? ayurvedaHint;
-  final bool isDark;
-
-  const _SignalRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.unit,
-    required this.status,
-    required this.statusColor,
-    this.ayurvedaHint,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(
-          icon,
-          size: 18,
-          color: statusColor.withValues(alpha: 0.7),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white : Colors.black87,
-                ),
-              ),
-              if (ayurvedaHint != null)
-                Text(
-                  ayurvedaHint!,
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: getDoshaColor(
-                      ayurvedaHint!.contains('Vata')
-                          ? 'vata'
-                          : ayurvedaHint!.contains('Pitta')
-                              ? 'pitta'
-                              : 'kapha',
-                    ).withValues(alpha: 0.6),
-                  ),
-                ),
-            ],
-          ),
-        ),
-        Text(
-          '$value $unit',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-            fontFamily: 'monospace',
-            color: isDark ? Colors.white.withValues(alpha: 0.85) : Colors.black87,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-          decoration: BoxDecoration(
-            color: statusColor.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: Text(
-            status,
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: statusColor,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// Painters
+// ─────────────────────────────────────────────────────────────────────────────
 
 /// Arc painter for Ojas gauge.
 class _OjasArcPainter extends CustomPainter {

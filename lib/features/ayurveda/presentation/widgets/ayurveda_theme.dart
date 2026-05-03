@@ -131,6 +131,52 @@ class AyurvedaCardContainer extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// DetailCard — Shared card wrapper for detail/drill-down pages
+// ─────────────────────────────────────────────────────────────────────────────
+
+class DetailCard extends StatelessWidget {
+  final Widget child;
+  final bool isDark;
+  final Color? accent;
+
+  const DetailCard({
+    super.key,
+    required this.child,
+    required this.isDark,
+    this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Color bg;
+    if (accent != null && !isDark) {
+      bg = accent!.withValues(alpha: 0.3);
+    } else {
+      bg = isDark ? Theme.of(context).colorScheme.surface : Colors.white;
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+      ),
+      child: child,
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // DoshaBar - Horizontal progress bar for dosha percentage
 // ─────────────────────────────────────────────────────────────────────────────
 

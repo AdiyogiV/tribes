@@ -223,7 +223,10 @@ struct AgniView: View {
 }
 
 #Preview {
-    let cache = LocalCache()
-    cache.agniType = "Tikshna"
-    return AgniView().environmentObject(cache)
+    AgniView()
+        .environmentObject({
+            let c = LocalCache()
+            c.agniType = "Tikshna"
+            return c
+        }())
 }

@@ -6,29 +6,11 @@ import FirebaseMessaging
 import UserNotifications
 import WatchConnectivity
 
-/// A no-op App Check provider that silently absorbs token requests
-/// instead of letting the SDK fall back to DeviceCheck (which fails
-/// with 400 "App not registered" when the app isn't enrolled in
-/// Firebase Console > App Check).
-///
-/// Returning `nil` from the factory causes the SDK to auto-detect
-/// DeviceCheck and attempt a token exchange anyway.  Returning an
-/// actual provider that errors immediately stops the retry loop.
-private class NoOpAppCheckProvider: NSObject, AppCheckProvider {
-  func getToken(completion handler: @escaping (AppCheckToken?, Error?) -> Void) {
-    print("🛡️ NoOp App Check provider: returning nil token (debug build)")
-    handler(nil, NSError(domain: "com.canay.dhaara.debug",
-                         code: -1,
-                         userInfo: [NSLocalizedDescriptionKey:
-                                      "App Check disabled for debug builds"]))
-  }
-}
-
+/// A no-op App Check factory that prevents the Firebase SDK from
+/// auto-activating DeviceCheck (which fails with 400 "App not registered"
+/// when the app isn't registered in Firebase Console > App Check).
 private class NoOpAppCheckProviderFactory: NSObject, AppCheckProviderFactory {
-  func createProvider(with app: FirebaseApp) -> AppCheckProvider? {
-    print("🛡️ NoOp App Check factory: returning NoOp provider (debug build)")
-    return NoOpAppCheckProvider()
-  }
+  func createProvider(with app: FirebaseApp) -> AppCheckProvider? { nil }
 }
 
 @main
@@ -42,23 +24,13 @@ private class NoOpAppCheckProviderFactory: NSObject, AppCheckProviderFactory {
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-    // App Check: Install a no-op factory BEFORE FirebaseApp.configure() so the
-    // eagerly-created AppCheck component gets our NoOp provider (and caches it).
-    // Without this, FIRComponentContainer returns nil on the first attempt, then
-    // the Flutter firebase_app_check plugin sets a DeviceCheck factory during
-    // GeneratedPluginRegistrant.register(), and subsequent token requests create
-    // an AppCheck instance with DeviceCheck — which fails with 400
-    // "App not registered" on development-signed builds.
-    //
-    // NOTE: #if DEBUG is NOT used because Swift compilation conditions evaluate
-    // to false in this project's build configuration despite SWIFT_ACTIVE_-
-    // COMPILATION_CONDITIONS containing DEBUG. Using unconditional NoOp is safe
-    // because App Check is in Monitoring mode (not Enforced), so all requests
-    // pass regardless of token validity.
-    //
-    // When App Check enforcement is enabled, replace this with a runtime check
-    // (e.g. embedded.mobileprovision detection) or fix the build flags.
+    // App Check: Install a no-op factory in debug to stop the SDK from
+    // auto-activating DeviceCheck. Without this, every Firestore/FCM/Storage
+    // request triggers a failing exchangeDeviceCheckToken call.
+    // Release builds get real App Check via app_bootstrap.dart.
+    #if DEBUG
     AppCheck.setAppCheckProviderFactory(NoOpAppCheckProviderFactory())
+    #endif
 
     // Configure Firebase
     if FirebaseApp.app() == nil {
@@ -92,15 +64,6 @@ private class NoOpAppCheckProviderFactory: NSObject, AppCheckProviderFactory {
     setupWatchPlatformChannel()
 
     GeneratedPluginRegistrant.register(with: self)
-
-    // Re-install no-op factory AFTER plugin registration — the Flutter
-    // firebase_app_check plugin unconditionally overrides our factory with a
-    // DeviceCheck-backed one during GeneratedPluginRegistrant.register().
-    // This second set ensures our NoOp stays active.
-    AppCheck.setAppCheckProviderFactory(NoOpAppCheckProviderFactory())
-    // Kill the periodic token refresh that fires the 400s
-    AppCheck.appCheck().isTokenAutoRefreshEnabled = false
-
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 

@@ -228,9 +228,12 @@ struct AbhyangaView: View {
 }
 
 #Preview {
-    let cache = LocalCache()
-    cache.prakritiVata = 45
-    cache.prakritiPitta = 30
-    cache.prakritiKapha = 25
-    return AbhyangaView().environmentObject(cache)
+    AbhyangaView()
+        .environmentObject({
+            let c = LocalCache()
+            c.prakritiVata = 45
+            c.prakritiPitta = 30
+            c.prakritiKapha = 25
+            return c
+        }())
 }

@@ -232,12 +232,15 @@ struct RemedyView: View {
 }
 
 #Preview {
-    let cache = LocalCache()
-    cache.prakritiVata = 40
-    cache.prakritiPitta = 35
-    cache.prakritiKapha = 25
-    cache.nadiDominantDosha = "Vata"
-    cache.latestHRV = 55
-    cache.latestRestingHR = 72
-    return RemedyView().environmentObject(cache)
+    RemedyView()
+        .environmentObject({
+            let c = LocalCache()
+            c.prakritiVata = 40
+            c.prakritiPitta = 35
+            c.prakritiKapha = 25
+            c.nadiDominantDosha = "Vata"
+            c.latestHRV = 55
+            c.latestRestingHR = 72
+            return c
+        }())
 }

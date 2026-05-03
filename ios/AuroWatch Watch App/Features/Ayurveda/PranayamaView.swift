@@ -22,11 +22,11 @@ struct PranayamaView: View {
         case inhale = "Inhale"
         case hold = "Hold"
         case exhale = "Exhale"
-        case holdOut = "Hold"
+        case holdOut = "Hold Out"
         case complete = "Done"
     }
 
-    private var technique: Technique { techniqueForDosha(cache.nadiDosha) }
+    private var technique: Technique { techniqueForDosha(cache.nadiDominantDosha ?? "") }
 
     var body: some View {
         TabView {
@@ -140,10 +140,10 @@ struct PranayamaView: View {
                 .font(.system(size: 11))
                 .foregroundColor(.white.opacity(0.4))
 
-            if !cache.nadiDosha.isEmpty {
-                Text("Selected for \(cache.nadiDosha.capitalized) pulse")
+            if let dosha = cache.nadiDominantDosha, !dosha.isEmpty {
+                Text("Selected for \(dosha.capitalized) pulse")
                     .font(.system(size: 10))
-                    .foregroundColor(AuroTheme.doshaColor(cache.nadiDosha).opacity(0.6))
+                    .foregroundColor(AuroTheme.doshaColor(dosha).opacity(0.6))
             }
         }
         .padding(.horizontal, 10)
@@ -290,7 +290,10 @@ struct PranayamaView: View {
 }
 
 #Preview {
-    let cache = LocalCache()
-    cache.nadiDosha = "Pitta"
-    return PranayamaView().environmentObject(cache)
+    PranayamaView()
+        .environmentObject({
+            let c = LocalCache()
+            c.nadiDominantDosha = "Pitta"
+            return c
+        }())
 }

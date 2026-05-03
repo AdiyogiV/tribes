@@ -94,7 +94,5 @@
 	</array>
 	<key>FacebookAppID</key>
 	<string>964631802585634</string>
-	<key>FirebaseAppCheckTokenAutoRefreshEnabled</key>
-	<false/>
 </dict>
 </plist>
