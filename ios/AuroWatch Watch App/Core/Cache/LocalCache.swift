@@ -139,10 +139,28 @@ class LocalCache: ObservableObject {
     /// Populated by fetchHeartRateReadings(since:) for zero-loss capture.
     var recentHeartRateReadings: [TimestampedValue] = []
 
+    /// Batch of recent HRV readings since last sync.
+    var recentHRVReadings: [TimestampedValue] = []
+
+    /// Batch of recent SpO2 readings since last sync.
+    var recentSpO2Readings: [TimestampedValue] = []
+
+    /// Batch of recent respiratory rate readings since last sync.
+    var recentRespRateReadings: [TimestampedValue] = []
+
+    /// Batch of recent resting HR readings since last sync.
+    var recentRestingHRReadings: [TimestampedValue] = []
+
     /// When we last batch-synced HR readings to the phone.
     var lastHRBatchSync: Date {
         get { defaults.object(forKey: key("lastHRBatchSync")) as? Date ?? Date.distantPast }
         set { defaults.set(newValue, forKey: key("lastHRBatchSync")) }
+    }
+
+    /// When we last batch-synced other signals to the phone.
+    var lastSignalBatchSync: Date {
+        get { defaults.object(forKey: key("lastSignalBatchSync")) as? Date ?? Date.distantPast }
+        set { defaults.set(newValue, forKey: key("lastSignalBatchSync")) }
     }
 
     // MARK: - Timestamps (when each reading was recorded)
@@ -480,6 +498,30 @@ class LocalCache: ObservableObject {
                 ["v": $0.value, "t": $0.date.timeIntervalSince1970]
             }
         }
+        // Batch HRV readings
+        if !recentHRVReadings.isEmpty {
+            payload["hrvReadings"] = recentHRVReadings.map {
+                ["v": $0.value, "t": $0.date.timeIntervalSince1970]
+            }
+        }
+        // Batch SpO2 readings (HealthKit stores as fraction, multiply by 100)
+        if !recentSpO2Readings.isEmpty {
+            payload["spO2Readings"] = recentSpO2Readings.map {
+                ["v": $0.value * 100.0, "t": $0.date.timeIntervalSince1970]
+            }
+        }
+        // Batch respiratory rate readings
+        if !recentRespRateReadings.isEmpty {
+            payload["respRateReadings"] = recentRespRateReadings.map {
+                ["v": $0.value, "t": $0.date.timeIntervalSince1970]
+            }
+        }
+        // Batch resting HR readings
+        if !recentRestingHRReadings.isEmpty {
+            payload["restingHRReadings"] = recentRestingHRReadings.map {
+                ["v": $0.value, "t": $0.date.timeIntervalSince1970]
+            }
+        }
         // Activity
         if let v = todaySteps { payload["steps"] = v }
         if let v = activeEnergy { payload["activeEnergy"] = v }
@@ -496,6 +538,26 @@ class LocalCache: ObservableObject {
         if let v = wristTempDeviation { payload["wristTemp"] = v }
         if !ojasHistory.isEmpty { payload["ojasHistory"] = ojasHistory }
         payload["timestamp"] = Date.now.timeIntervalSince1970
+
+        // Per-signal timestamps: when HealthKit actually recorded each metric.
+        // Without these, the phone uses sync-time which creates misleading charts.
+        var signalTimestamps: [String: Double] = [:]
+        if let t = heartRateTimestamp { signalTimestamps["hr"] = t.timeIntervalSince1970 }
+        if let t = hrvTimestamp { signalTimestamps["hrv"] = t.timeIntervalSince1970 }
+        if let t = spO2Timestamp { signalTimestamps["spo2"] = t.timeIntervalSince1970 }
+        if let t = respiratoryRateTimestamp { signalTimestamps["resp"] = t.timeIntervalSince1970 }
+        if let t = stepsTimestamp { signalTimestamps["steps"] = t.timeIntervalSince1970 }
+        if let t = activeEnergyTimestamp { signalTimestamps["energy"] = t.timeIntervalSince1970 }
+        if let t = vo2MaxTimestamp { signalTimestamps["vo2"] = t.timeIntervalSince1970 }
+        if let t = hrRecoveryTimestamp { signalTimestamps["recovery"] = t.timeIntervalSince1970 }
+        if let t = walkingSteadinessTimestamp { signalTimestamps["steadiness"] = t.timeIntervalSince1970 }
+        if let t = sleepTimestamp { signalTimestamps["sleep"] = t.timeIntervalSince1970 }
+        if let t = wristTempTimestamp { signalTimestamps["temp"] = t.timeIntervalSince1970 }
+        if let t = mindfulTimestamp { signalTimestamps["mindful"] = t.timeIntervalSince1970 }
+        if !signalTimestamps.isEmpty {
+            payload["signalTimestamps"] = signalTimestamps
+        }
+
         return payload
     }
 

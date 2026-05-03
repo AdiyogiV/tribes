@@ -28,6 +28,11 @@ class WatchService {
   final _watchDataController = StreamController<Map<String, dynamic>>.broadcast();
   Stream<Map<String, dynamic>> get onWatchData => _watchDataController.stream;
 
+  /// Replay buffer: stores recent data for late-subscribing listeners.
+  /// WatchHealthProvider may subscribe seconds after WatchService starts.
+  final List<Map<String, dynamic>> _replayBuffer = [];
+  static const _maxReplayBuffer = 20;
+
   bool _initialized = false;
 
   /// Initialize the watch service. Call once at app startup.
@@ -41,11 +46,57 @@ class WatchService {
         AppLogger.i('WatchService: received data from watch',
             category: LogCategory.general,
             data: {'type': data['type'], 'keys': data.keys.toList()});
+        _addToReplayBuffer(data);
         _watchDataController.add(data);
       }
     });
 
+    // Flush any data that arrived at the native layer before Dart was ready
+    _flushPendingNativeData();
+
     AppLogger.i('WatchService: initialized', category: LogCategory.general);
+  }
+
+  /// Drain the replay buffer. Called by late-subscribing listeners
+  /// (e.g., WatchHealthProvider which initializes after WatchService).
+  List<Map<String, dynamic>> drainReplayBuffer() {
+    final data = List<Map<String, dynamic>>.from(_replayBuffer);
+    _replayBuffer.clear();
+    if (data.isNotEmpty) {
+      AppLogger.i('WatchService: drained ${data.length} buffered items',
+          category: LogCategory.general);
+    }
+    return data;
+  }
+
+  void _addToReplayBuffer(Map<String, dynamic> data) {
+    _replayBuffer.add(data);
+    if (_replayBuffer.length > _maxReplayBuffer) {
+      _replayBuffer.removeAt(0);
+    }
+  }
+
+  /// Ask native layer for any watch data that arrived before Dart was ready.
+  Future<void> _flushPendingNativeData() async {
+    try {
+      final result = await _channel.invokeMethod<List>('getPendingData');
+      if (result != null && result.isNotEmpty) {
+        AppLogger.i('WatchService: flushing ${result.length} native-buffered items',
+            category: LogCategory.general);
+        for (final item in result) {
+          if (item is Map) {
+            final data = Map<String, dynamic>.from(item);
+            _addToReplayBuffer(data);
+            _watchDataController.add(data);
+          }
+        }
+      }
+    } on MissingPluginException {
+      // Not on iOS
+    } catch (e) {
+      AppLogger.w('WatchService: getPendingData failed',
+          category: LogCategory.general, data: {'error': e.toString()});
+    }
   }
 
   /// Check if a watch is paired and the companion app is installed.

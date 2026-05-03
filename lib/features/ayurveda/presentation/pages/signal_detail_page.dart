@@ -349,7 +349,6 @@ class _SignalDetailPageState extends State<SignalDetailPage> {
                 ),
               ),
               const Spacer(),
-              // Data point count badge
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
@@ -377,7 +376,7 @@ class _SignalDetailPageState extends State<SignalDetailPage> {
             ],
           ),
           const SizedBox(height: 16),
-          // The chart
+          // Chart — zoomed into data extent for maximum detail
           SizedBox(
             height: 140,
             child: CustomPaint(
@@ -399,58 +398,67 @@ class _SignalDetailPageState extends State<SignalDetailPage> {
             ),
           ),
           const SizedBox(height: 6),
-          // Time labels
           _buildTimeLabels(isDark),
         ],
       ),
     );
   }
 
+  /// Smart time labels: show time-of-day when data spans < 1 day,
+  /// date labels when data spans multiple days.
   Widget _buildTimeLabels(bool isDark) {
     if (_timeSeries.isEmpty) return const SizedBox.shrink();
 
-    final days = _rangeDays[_rangeIndex];
     final labelColor = isDark ? Colors.white24 : Colors.black26;
     final labelStyle = TextStyle(fontSize: 9, color: labelColor);
 
-    if (days == 1) {
-      // Today: show hour labels (6am, 12pm, 6pm, etc.)
+    final first = _timeSeries.first.time;
+    final last = _timeSeries.last.time;
+    final spanHours = last.difference(first).inHours;
+
+    // Decide format based on actual data span, not selected range
+    if (spanHours < 24) {
+      // All data within one day → show time-of-day labels
+      final stepCount = math.min(_timeSeries.length, 5);
       return Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text('12am', style: labelStyle),
-          Text('6am', style: labelStyle),
-          Text('12pm', style: labelStyle),
-          Text('6pm', style: labelStyle),
-          Text('Now', style: labelStyle),
-        ],
+        children: List.generate(stepCount, (i) {
+          final fraction = stepCount == 1 ? 0.0 : i / (stepCount - 1);
+          final idx = (fraction * (_timeSeries.length - 1)).round();
+          return Text(
+            _formatTime(_timeSeries[idx].time),
+            style: labelStyle,
+          );
+        }),
       );
     }
 
-    // Multi-day: show date labels
-    final first = _timeSeries.first.time;
-    final last = _timeSeries.last.time;
+    // Multi-day → show date labels
     final totalDuration = last.difference(first);
-    final stepCount = math.min(days + 1, 5);
-
+    final stepCount = math.min(5, _timeSeries.length);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: List.generate(stepCount, (i) {
-        final fraction = i / (stepCount - 1);
+        final fraction = stepCount == 1 ? 0.0 : i / (stepCount - 1);
         final date = first.add(totalDuration * fraction);
-        return Text(
-          _formatDateLabel(date, days),
-          style: labelStyle,
-        );
+        return Text(_formatDateLabel(date, spanHours), style: labelStyle);
       }),
     );
   }
 
-  String _formatDateLabel(DateTime date, int rangeDays) {
-    final months = ['', 'Jan','Feb','Mar','Apr','May','Jun',
+  String _formatTime(DateTime t) {
+    final hour = t.hour % 12 == 0 ? 12 : t.hour % 12;
+    final ampm = t.hour < 12 ? 'am' : 'pm';
+    return '$hour:${t.minute.toString().padLeft(2, '0')}$ampm';
+  }
+
+  String _formatDateLabel(DateTime date, int spanHours) {
+    const months = ['', 'Jan','Feb','Mar','Apr','May','Jun',
                      'Jul','Aug','Sep','Oct','Nov','Dec'];
-    if (rangeDays <= 3) {
-      return '${months[date.month]} ${date.day}\n${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+    if (spanHours < 72) {
+      final hour = date.hour % 12 == 0 ? 12 : date.hour % 12;
+      final ampm = date.hour < 12 ? 'am' : 'pm';
+      return '${months[date.month]} ${date.day}\n$hour$ampm';
     }
     return '${months[date.month]} ${date.day}';
   }

@@ -133,6 +133,11 @@ private class NoOpAppCheckProviderFactory: NSObject, AppCheckProviderFactory {
       case "isWatchPaired":
         result(watchManager.isWatchAvailable)
 
+      case "getPendingData":
+        // Return any data that arrived before Dart was ready
+        let pending = watchManager.getPendingData()
+        result(pending)
+
       default:
         result(FlutterMethodNotImplemented)
       }

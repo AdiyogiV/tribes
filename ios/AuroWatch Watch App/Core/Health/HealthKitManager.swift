@@ -286,6 +286,57 @@ class HealthKitManager: ObservableObject {
         fetchHistory(type: type, unit: bpm, since: since, completion: completion)
     }
 
+    /// Fetch ALL HRV readings since `since`.
+    func fetchHRVReadings(
+        since: Date,
+        completion: @escaping ([TimestampedValue]) -> Void
+    ) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .heartRateVariabilitySDNN) else {
+            completion([])
+            return
+        }
+        fetchHistory(type: type, unit: HKUnit.secondUnit(with: .milli), since: since, completion: completion)
+    }
+
+    /// Fetch ALL SpO2 readings since `since`.
+    func fetchSpO2Readings(
+        since: Date,
+        completion: @escaping ([TimestampedValue]) -> Void
+    ) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .oxygenSaturation) else {
+            completion([])
+            return
+        }
+        // HealthKit stores SpO2 as a fraction (0.0–1.0)
+        fetchHistory(type: type, unit: HKUnit.percent(), since: since, completion: completion)
+    }
+
+    /// Fetch ALL respiratory rate readings since `since`.
+    func fetchRespRateReadings(
+        since: Date,
+        completion: @escaping ([TimestampedValue]) -> Void
+    ) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .respiratoryRate) else {
+            completion([])
+            return
+        }
+        let unit = HKUnit.count().unitDivided(by: .minute())
+        fetchHistory(type: type, unit: unit, since: since, completion: completion)
+    }
+
+    /// Fetch ALL resting HR readings since `since`.
+    func fetchRestingHRReadings(
+        since: Date,
+        completion: @escaping ([TimestampedValue]) -> Void
+    ) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .restingHeartRate) else {
+            completion([])
+            return
+        }
+        let bpm = HKUnit.count().unitDivided(by: .minute())
+        fetchHistory(type: type, unit: bpm, since: since, completion: completion)
+    }
+
     // MARK: - Sleep (Nidra)
 
     /// Fetch last night's sleep stages and compute totals.

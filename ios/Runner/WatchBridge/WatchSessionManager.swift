@@ -21,8 +21,25 @@ class WatchSessionManager: NSObject, ObservableObject {
 
     private var session: WCSession?
 
+    /// Buffer for data received before Dart is ready.
+    /// Flushed via getPendingData() when Flutter calls back.
+    private var pendingDataBuffer: [[String: Any]] = []
+    private let bufferLock = NSLock()
+
     private override init() {
         super.init()
+    }
+
+    /// Return and clear all buffered data that arrived before Dart was ready.
+    func getPendingData() -> [[String: Any]] {
+        bufferLock.lock()
+        let data = pendingDataBuffer
+        pendingDataBuffer.removeAll()
+        bufferLock.unlock()
+        if !data.isEmpty {
+            print("📱 Flushing \(data.count) buffered watch payloads to Dart")
+        }
+        return data
     }
 
     // MARK: - Lifecycle
@@ -174,6 +191,12 @@ extension WatchSessionManager: WCSessionDelegate {
         let type = userInfo["type"] as? String ?? "unknown"
         let keys = userInfo.keys.sorted().joined(separator: ", ")
         print("📱 Received \(type) from watch (\(userInfo.count) keys): \(keys)")
+
+        // Always buffer so getPendingData() can replay if Dart wasn't ready
+        bufferLock.lock()
+        pendingDataBuffer.append(userInfo)
+        bufferLock.unlock()
+
         onWatchData?(userInfo)
     }
 }

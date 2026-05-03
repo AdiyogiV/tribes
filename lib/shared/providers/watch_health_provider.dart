@@ -47,6 +47,12 @@ class WatchHealthProvider extends ChangeNotifier {
     // Subscribe to live watch data
     _sub = WatchService.instance.onWatchData.listen(_handleWatchData);
 
+    // Replay any data that arrived before we subscribed
+    final buffered = WatchService.instance.drainReplayBuffer();
+    for (final data in buffered) {
+      _handleWatchData(data);
+    }
+
     // Hydrate from local DB immediately (instant, no network)
     _hydrateFromLocalStore();
 
@@ -75,8 +81,9 @@ class WatchHealthProvider extends ChangeNotifier {
         _appendToHistory(_healthData!);
       }
 
-      // Handle batch HR readings — each gets its own DB row for granular charts
+      // Handle batch readings — each gets its own DB row for granular charts
       _insertBatchHeartRateReadings(data);
+      _insertBatchSignalReadings(data);
 
       notifyListeners();
     } else if (type == 'nadiReading' && _healthData == null) {
@@ -176,7 +183,6 @@ class WatchHealthProvider extends ChangeNotifier {
       final ts = (r['t'] as num?)?.toDouble();
       if (value == null || ts == null) continue;
 
-      // Create a minimal health data row with just the heart rate + timestamp
       final hrReading = WatchHealthData(
         heartRate: value,
         timestamp: DateTime.fromMillisecondsSinceEpoch(
@@ -189,6 +195,46 @@ class WatchHealthProvider extends ChangeNotifier {
     if (count > 0) {
       AppLogger.i('WatchHealthProvider: inserted $count batch HR readings',
           category: LogCategory.general);
+    }
+  }
+
+  /// Insert batch readings for any signal type.
+  /// The watch now sends batch arrays for HRV, SpO2, respRate, restingHR.
+  void _insertBatchSignalReadings(Map<String, dynamic> data) {
+    final store = LocalStore.instance;
+    if (!store.isReady) return;
+
+    // Map of payload key → WatchHealthData constructor
+    final batchKeys = <String, WatchHealthData Function(double value, DateTime time)>{
+      'hrvReadings': (v, t) => WatchHealthData(hrv: v, timestamp: t),
+      'spO2Readings': (v, t) => WatchHealthData(spO2: v, timestamp: t),
+      'respRateReadings': (v, t) => WatchHealthData(respRate: v, timestamp: t),
+      'restingHRReadings': (v, t) => WatchHealthData(restingHR: v, timestamp: t),
+    };
+
+    for (final entry in batchKeys.entries) {
+      final readings = data[entry.key];
+      if (readings == null || readings is! List || readings.isEmpty) continue;
+
+      int count = 0;
+      for (final r in readings) {
+        if (r is! Map) continue;
+        final value = (r['v'] as num?)?.toDouble();
+        final ts = (r['t'] as num?)?.toDouble();
+        if (value == null || ts == null) continue;
+
+        final reading = entry.value(
+          value,
+          DateTime.fromMillisecondsSinceEpoch((ts * 1000).toInt()),
+        );
+        store.insertReading(reading);
+        count++;
+      }
+
+      if (count > 0) {
+        AppLogger.i('WatchHealthProvider: inserted $count batch ${entry.key} readings',
+            category: LogCategory.general);
+      }
     }
   }
 

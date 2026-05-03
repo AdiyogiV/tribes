@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as p;
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -46,15 +47,34 @@ class LocalStore {
   // ─── Initialization ─────────────────────────────────────────────────────
 
   /// Open (or create) the local database. Call once at app startup.
+  /// If the database is corrupted (e.g., partial creation), deletes and retries.
   Future<void> initialize() async {
     if (_db != null) return;
 
     final dbPath = p.join(await getDatabasesPath(), 'aurogram_health.db');
-    _db = await openDatabase(
-      dbPath,
-      version: 1,
-      onCreate: _createTables,
-    );
+
+    try {
+      _db = await openDatabase(
+        dbPath,
+        version: 1,
+        onCreate: _createTables,
+      );
+    } catch (e) {
+      AppLogger.w('LocalStore: init failed, deleting corrupt DB and retrying',
+          category: LogCategory.general, data: {'error': e.toString()});
+
+      // Delete the corrupted file and retry once
+      try {
+        final file = File(dbPath);
+        if (file.existsSync()) file.deleteSync();
+      } catch (_) {}
+
+      _db = await openDatabase(
+        dbPath,
+        version: 1,
+        onCreate: _createTables,
+      );
+    }
 
     AppLogger.i('LocalStore: initialized at $dbPath',
         category: LogCategory.general);
@@ -126,7 +146,8 @@ class LocalStore {
   // ─── Health Readings ────────────────────────────────────────────────────
 
   /// Insert a health reading from the watch.
-  /// Deduplicates by timestamp (within 30-second window).
+  /// Smart dedup: skips if all key metric values are identical to the latest row.
+  /// Timestamp-only rows (e.g., batch HR) always insert if they have unique timestamps.
   Future<void> insertReading(WatchHealthData data) async {
     final db = _db;
     if (db == null) return;
@@ -134,12 +155,37 @@ class LocalStore {
     final ts = data.timestamp?.millisecondsSinceEpoch ??
         DateTime.now().millisecondsSinceEpoch;
 
-    // Deduplicate: skip if we already have a reading within ±30s
+    // Exact timestamp dedup: skip if we already have this exact reading (±5s)
     final existing = await db.rawQuery(
-      'SELECT id FROM health_readings WHERE ABS(timestamp - ?) < 30000 LIMIT 1',
+      'SELECT id FROM health_readings WHERE ABS(timestamp - ?) < 5000 LIMIT 1',
       [ts],
     );
     if (existing.isNotEmpty) return;
+
+    // Value-change dedup: for full health payloads (multiple signals),
+    // skip if all key metrics are identical to the most recent row.
+    // This prevents 19 identical rows from repeated 3-min syncs.
+    if (data.signalCount > 2) {
+      final latest = await db.rawQuery(
+        'SELECT heart_rate, hrv, resting_hr, spo2, resp_rate, steps, active_energy '
+        'FROM health_readings ORDER BY timestamp DESC LIMIT 1',
+      );
+      if (latest.isNotEmpty) {
+        final row = latest.first;
+        final same = _valuesMatch(row['heart_rate'], data.heartRate) &&
+            _valuesMatch(row['hrv'], data.hrv) &&
+            _valuesMatch(row['resting_hr'], data.restingHR) &&
+            _valuesMatch(row['spo2'], data.spO2) &&
+            _valuesMatch(row['resp_rate'], data.respRate) &&
+            _intValuesMatch(row['steps'], data.steps) &&
+            _valuesMatch(row['active_energy'], data.activeEnergy);
+        if (same) {
+          AppLogger.d('LocalStore: skipped duplicate reading (values unchanged)',
+              category: LogCategory.general);
+          return;
+        }
+      }
+    }
 
     await db.insert('health_readings', {
       'timestamp': ts,
@@ -167,6 +213,20 @@ class LocalStore {
     AppLogger.d('LocalStore: inserted reading',
         category: LogCategory.general,
         data: {'ts': ts, 'signals': data.signalCount});
+  }
+
+  /// Compare two numeric values with tolerance for floating-point noise.
+  static bool _valuesMatch(dynamic dbVal, double? newVal) {
+    if (dbVal == null && newVal == null) return true;
+    if (dbVal == null || newVal == null) return false;
+    final a = (dbVal as num).toDouble();
+    return (a - newVal).abs() < 0.01;
+  }
+
+  static bool _intValuesMatch(dynamic dbVal, int? newVal) {
+    if (dbVal == null && newVal == null) return true;
+    if (dbVal == null || newVal == null) return false;
+    return (dbVal as num).toInt() == newVal;
   }
 
   /// Insert a health reading from a raw map (e.g., directly from watch payload).
