@@ -44,7 +44,7 @@ struct RituView: View {
         GeometryReader { geo in
             let w = max(geo.size.width, 1)
             let h = max(geo.size.height, 1)
-            let history = cache.ojasHistory
+            let history = cache.ojasHistoryFlat
             let current = cache.ojasScore ?? 0
 
             VStack(spacing: 6) {
@@ -379,7 +379,7 @@ struct TrendDetailView: View {
     private func buildCharts() -> [TrendChartData] {
         var charts: [TrendChartData] = []
 
-        let ojasData = cache.ojasHistory.map { Double($0) }
+        let ojasData = cache.ojasHistoryFlat.map { Double($0) }
         if ojasData.count >= 2 {
             charts.append(TrendChartData(title: "Ojas", data: ojasData, color: AuroTheme.goldAccent, suffix: ""))
         }

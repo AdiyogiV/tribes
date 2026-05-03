@@ -29,6 +29,8 @@ class WatchHealthData {
   // Body
   final double? wristTemp;
   final List<double> ojasHistory;
+  /// Timestamped Ojas scores: [{"s": score, "t": epochSec}, ...]
+  final List<Map<String, dynamic>> ojasHistoryTimestamped;
   final DateTime? timestamp;
 
   const WatchHealthData({
@@ -52,6 +54,7 @@ class WatchHealthData {
     this.remSleepMins,
     this.wristTemp,
     this.ojasHistory = const [],
+    this.ojasHistoryTimestamped = const [],
     this.timestamp,
   });
 
@@ -77,7 +80,8 @@ class WatchHealthData {
       deepSleepMins: _toDouble(map['deepSleepMins']),
       remSleepMins: _toDouble(map['remSleepMins']),
       wristTemp: _toDouble(map['wristTemp']),
-      ojasHistory: _toDoubleList(map['ojasHistory']),
+      ojasHistory: _toDoubleList(map['ojasHistoryFlat'] ?? map['ojasHistory']),
+      ojasHistoryTimestamped: _toTimestampedList(map['ojasHistory']),
       timestamp: map['timestamp'] != null
           ? DateTime.fromMillisecondsSinceEpoch(
               ((map['timestamp'] as num) * 1000).toInt())
@@ -162,6 +166,19 @@ class WatchHealthData {
       return v
           .map((e) => _toDouble(e))
           .whereType<double>()
+          .toList();
+    }
+    return [];
+  }
+
+  /// Parse timestamped Ojas history: [{"s": score, "t": epochSec}, ...]
+  static List<Map<String, dynamic>> _toTimestampedList(dynamic v) {
+    if (v == null) return [];
+    if (v is List) {
+      return v
+          .whereType<Map>()
+          .where((m) => m.containsKey('s') && m.containsKey('t'))
+          .map((m) => Map<String, dynamic>.from(m))
           .toList();
     }
     return [];

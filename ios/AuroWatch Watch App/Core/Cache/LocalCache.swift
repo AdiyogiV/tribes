@@ -77,8 +77,11 @@ class LocalCache: ObservableObject {
     /// Agni type ("Sama", "Vishama", "Tikshna", "Manda")
     @Published var agniType: String?
 
-    /// Last 7 days of Ojas scores for sparkline
-    @Published var ojasHistory: [Int] = []
+    /// Timestamped Ojas scores for granular charting: [{"s": score, "t": epochSeconds}]
+    @Published var ojasHistory: [[String: Any]] = []
+
+    /// Legacy flat history (kept for sparkline fallback)
+    @Published var ojasHistoryFlat: [Int] = []
 
     /// Timestamp of last Ojas computation
     @Published var ojasComputedAt: Date?
@@ -261,8 +264,12 @@ class LocalCache: ObservableObject {
         ojasSummary = defaults.string(forKey: key("ojasSummary"))
         agniType = defaults.string(forKey: key("agniType"))
         if let data = defaults.data(forKey: key("ojasHistory")),
-           let decoded = try? JSONDecoder().decode([Int].self, from: data) {
+           let decoded = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] {
             ojasHistory = decoded
+        }
+        if let data = defaults.data(forKey: key("ojasHistoryFlat")),
+           let decoded = try? JSONDecoder().decode([Int].self, from: data) {
+            ojasHistoryFlat = decoded
         }
         let ojasTs = defaults.double(forKey: key("ojasComputedAt"))
         ojasComputedAt = ojasTs > 0 ? Date(timeIntervalSince1970: ojasTs) : nil
@@ -394,18 +401,52 @@ class LocalCache: ObservableObject {
         agniType = result.agniType.rawValue
         ojasComputedAt = result.computedAt
 
-        // Append to history (keep last 7)
-        var history = ojasHistory
-        history.append(result.score)
-        if history.count > 7 { history.removeFirst(history.count - 7) }
-        ojasHistory = history
+        // Append timestamped entry (keep last 48 — ~24h at 30-min intervals)
+        let entry: [String: Any] = ["s": result.score, "t": result.computedAt.timeIntervalSince1970]
+        ojasHistory.append(entry)
+        if ojasHistory.count > 48 { ojasHistory.removeFirst(ojasHistory.count - 48) }
+
+        // Also maintain flat array for sparkline fallback
+        ojasHistoryFlat.append(result.score)
+        if ojasHistoryFlat.count > 48 { ojasHistoryFlat.removeFirst(ojasHistoryFlat.count - 48) }
 
         defaults.set(ojasScore, forKey: key("ojasScore"))
         defaults.set(ojasSummary, forKey: key("ojasSummary"))
         defaults.set(agniType, forKey: key("agniType"))
         defaults.set(result.computedAt.timeIntervalSince1970, forKey: key("ojasComputedAt"))
-        if let encoded = try? JSONEncoder().encode(ojasHistory) {
+        if let encoded = try? JSONSerialization.data(withJSONObject: ojasHistory) {
             defaults.set(encoded, forKey: key("ojasHistory"))
+        }
+        if let encoded = try? JSONEncoder().encode(ojasHistoryFlat) {
+            defaults.set(encoded, forKey: key("ojasHistoryFlat"))
+        }
+    }
+
+    /// Compute and store Ojas from current body signals.
+    /// Call this during every health refresh cycle for granular data.
+    func computeAndStoreOjas(from health: HealthKitManager) {
+        let signals = HealthSignals(
+            hrv: health.latestHRV,
+            restingHR: health.latestRestingHR,
+            sleepDuration: health.lastSleepDuration,
+            deepSleepMinutes: health.lastDeepSleepMinutes,
+            remSleepMinutes: health.lastREMSleepMinutes,
+            sleepOnsetHour: health.lastSleepOnsetHour,
+            wristTemp: health.latestWristTemp,
+            respiratoryRate: health.latestRespiratoryRate,
+            vo2Max: health.latestVO2Max,
+            walkingSteadiness: health.latestWalkingSteadiness,
+            steps: health.todaySteps,
+            hrRecovery: health.latestHRRecovery,
+            spO2: health.latestSpO2,
+            activeEnergy: health.todayActiveEnergy,
+            mindfulMinutes: health.todayMindfulMinutes
+        )
+
+        let healthBase = HealthBaseline.populationDefaults
+        if let result = OjasEngine.computeOjas(signals: signals, baseline: healthBase) {
+            updateOjas(result)
+            AuroLog.ojasComputed(score: result.score, signalCount: result.signalCount, reliable: result.isReliable)
         }
     }
 
@@ -537,6 +578,7 @@ class LocalCache: ObservableObject {
         // Body
         if let v = wristTempDeviation { payload["wristTemp"] = v }
         if !ojasHistory.isEmpty { payload["ojasHistory"] = ojasHistory }
+        if !ojasHistoryFlat.isEmpty { payload["ojasHistoryFlat"] = ojasHistoryFlat }
         payload["timestamp"] = Date.now.timeIntervalSince1970
 
         // Per-signal timestamps: when HealthKit actually recorded each metric.

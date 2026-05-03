@@ -279,12 +279,21 @@ class WatchHealthProvider extends ChangeNotifier {
   ///
   /// Use this instead of [metricTrend] when you need real timestamps
   /// for granular chart display (minute/hour resolution).
+  ///
+  /// Special case: 'ojasScore' computes a rolling Ojas time series from
+  /// all available batch readings for maximum granularity.
   Future<List<({DateTime time, double value})>> metricTimeSeries(
     String metric, {
     int days = 7,
   }) async {
     final store = LocalStore.instance;
     if (!store.isReady) return [];
+
+    // For Ojas, use the rolling computation for richer data
+    if (metric == 'ojasScore') {
+      return store.computeOjasTimeSeries(days: days);
+    }
+
     return store.getMetricTrend(metric, days: days);
   }
 

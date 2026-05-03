@@ -214,6 +214,27 @@ const metricInfoMap = <String, MetricInfo>{
       MetricRange('Very Low', 'Unstable', Color(0xFFE74C3C)),
     ],
   ),
+
+  // ── Ojas Vitality ──────────────────────────────────────────────────────
+  'ojasScore': MetricInfo(
+    explanation:
+        'Ojas is a composite vitality score (0–100) computed from all your '
+        'Apple Watch signals. It combines sleep quality, heart rhythm, '
+        'blood oxygen, breathing, movement, fitness, and recovery into '
+        'a single measure of overall wellbeing.',
+    ayurvedicNote:
+        'In Ayurveda, Ojas is the subtle essence of all seven Dhatus '
+        '(tissues). It represents your immunity, vitality, and life '
+        'force. High Ojas means strong immunity and mental clarity. '
+        'Low Ojas manifests as fatigue, low immunity, and brain fog.',
+    ranges: [
+      MetricRange('Vital', '85–100', Color(0xFF27AE60)),
+      MetricRange('Steady', '70–84', Color(0xFF27AE60)),
+      MetricRange('Moderate', '55–69', Color(0xFFE67E22)),
+      MetricRange('Depleted', '40–54', Color(0xFFE67E22)),
+      MetricRange('Rest', '< 40', Color(0xFFE74C3C)),
+    ],
+  ),
 };
 
 /// Get info for a metric key, with a safe fallback.

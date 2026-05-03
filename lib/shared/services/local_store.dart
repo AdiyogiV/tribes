@@ -7,6 +7,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:aurogram/shared/models/watch_health_data.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:aurogram/features/ayurveda/domain/ojas_engine.dart';
 
 /// Local-first data store using sqflite.
 ///
@@ -341,6 +342,100 @@ class LocalStore {
         value: (r[column] as num).toDouble(),
       );
     }).toList();
+  }
+
+  /// Compute a rolling Ojas time series from all available batch readings.
+  ///
+  /// Algorithm: walks through all readings sorted by time, maintaining a
+  /// "latest known" value for each signal. At each reading that brings new
+  /// data, recomputes Ojas using the OjasEngine.
+  ///
+  /// This gives us minute-level Ojas granularity — far richer than the
+  /// watch's periodic snapshot approach.
+  Future<List<({DateTime time, double value})>> computeOjasTimeSeries({
+    int days = 7,
+  }) async {
+    final db = _db;
+    if (db == null) return [];
+
+    final cutoff = DateTime.now()
+        .subtract(Duration(days: days))
+        .millisecondsSinceEpoch;
+
+    final rows = await db.rawQuery(
+      'SELECT timestamp, heart_rate, hrv, resting_hr, spo2, resp_rate, '
+      'steps, active_energy, sleep_hours, deep_sleep_mins, rem_sleep_mins, '
+      'vo2_max, hr_recovery, wrist_temp, mindful_mins, ojas_score '
+      'FROM health_readings '
+      'WHERE timestamp >= ? '
+      'ORDER BY timestamp ASC',
+      [cutoff],
+    );
+
+    if (rows.isEmpty) return [];
+
+    // Rolling latest-known values
+    double? hrv, spO2, respRate, sleepHours, deepSleepMins, remSleepMins;
+    double? vo2Max, hrRecovery, activeEnergy, wristTemp, mindfulMins;
+    int? steps;
+
+    final result = <({DateTime time, double value})>[];
+    DateTime? lastEmitted;
+
+    for (final row in rows) {
+      // Update latest-known values (only if non-null in this row)
+      if (row['hrv'] != null) hrv = (row['hrv'] as num).toDouble();
+      if (row['spo2'] != null) spO2 = (row['spo2'] as num).toDouble();
+      if (row['resp_rate'] != null) respRate = (row['resp_rate'] as num).toDouble();
+      if (row['sleep_hours'] != null) sleepHours = (row['sleep_hours'] as num).toDouble();
+      if (row['deep_sleep_mins'] != null) deepSleepMins = (row['deep_sleep_mins'] as num).toDouble();
+      if (row['rem_sleep_mins'] != null) remSleepMins = (row['rem_sleep_mins'] as num).toDouble();
+      if (row['vo2_max'] != null) vo2Max = (row['vo2_max'] as num).toDouble();
+      if (row['hr_recovery'] != null) hrRecovery = (row['hr_recovery'] as num).toDouble();
+      if (row['active_energy'] != null) activeEnergy = (row['active_energy'] as num).toDouble();
+      if (row['wrist_temp'] != null) wristTemp = (row['wrist_temp'] as num).toDouble();
+      if (row['mindful_mins'] != null) mindfulMins = (row['mindful_mins'] as num).toDouble();
+      if (row['steps'] != null) steps = (row['steps'] as num).toInt();
+
+      final ts = DateTime.fromMillisecondsSinceEpoch(row['timestamp'] as int);
+
+      // Throttle: emit at most one point per 2 minutes to avoid chart clutter
+      if (lastEmitted != null && ts.difference(lastEmitted).inSeconds < 120) continue;
+
+      // If this row already has an ojas_score from the watch, prefer it
+      if (row['ojas_score'] != null) {
+        result.add((time: ts, value: (row['ojas_score'] as num).toDouble()));
+        lastEmitted = ts;
+        continue;
+      }
+
+      // Need at least HRV or sleep to compute
+      if (hrv == null && sleepHours == null) continue;
+
+      // Compute Ojas from rolling state
+      final ojasResult = OjasEngine.compute(
+        hrv: hrv,
+        spO2: spO2,
+        respRate: respRate,
+        sleepHours: sleepHours,
+        deepSleepMins: deepSleepMins,
+        remSleepMins: remSleepMins,
+        vo2Max: vo2Max,
+        hrRecovery: hrRecovery,
+        activeEnergy: activeEnergy,
+        wristTemp: wristTemp,
+        mindfulMins: mindfulMins,
+        steps: steps,
+        timestamp: ts,
+      );
+
+      if (ojasResult != null) {
+        result.add((time: ts, value: ojasResult.score.toDouble()));
+        lastEmitted = ts;
+      }
+    }
+
+    return result;
   }
 
   /// Total number of readings in the local store.

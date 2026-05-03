@@ -81,7 +81,25 @@ class OjasScoreCard extends StatelessWidget {
     final scoreInt = score.round();
     final fraction = (score / 100).clamp(0.0, 1.0);
 
-    return AyurvedaCardContainer(
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        Navigator.of(context).push(
+          CupertinoPageRoute<void>(
+            builder: (_) => SignalDetailPage(
+              label: 'Ojas · Vitality',
+              value: '$scoreInt',
+              unit: '',
+              status: data.ojasSummary ?? _ojasLabel(score),
+              statusColor: _ojasColor(score),
+              icon: CupertinoIcons.heart_circle_fill,
+              metricKey: 'ojasScore',
+              info: getMetricInfo('ojasScore'),
+            ),
+          ),
+        );
+      },
+      child: AyurvedaCardContainer(
       isDark: isDark,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -248,7 +266,8 @@ class OjasScoreCard extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ),  // close GestureDetector child (AyurvedaCardContainer)
+    );  // close GestureDetector
   }
 
   Widget _buildBadge(String text, Color bg, Color fg) {
