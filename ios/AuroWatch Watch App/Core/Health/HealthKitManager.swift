@@ -272,6 +272,20 @@ class HealthKitManager: ObservableObject {
         }
     }
 
+    /// Fetch ALL heart rate readings since `since`. Returns timestamped pairs.
+    /// This captures every sample Apple Watch recorded — no data loss.
+    func fetchHeartRateReadings(
+        since: Date,
+        completion: @escaping ([TimestampedValue]) -> Void
+    ) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .heartRate) else {
+            completion([])
+            return
+        }
+        let bpm = HKUnit.count().unitDivided(by: .minute())
+        fetchHistory(type: type, unit: bpm, since: since, completion: completion)
+    }
+
     // MARK: - Sleep (Nidra)
 
     /// Fetch last night's sleep stages and compute totals.
@@ -656,6 +670,11 @@ class HealthKitManager: ObservableObject {
 
     private func fetchHistory(type: HKQuantityType, unit: HKUnit, days: Int, completion: @escaping ([TimestampedValue]) -> Void) {
         let start = Calendar.current.date(byAdding: .day, value: -days, to: .now)!
+        fetchHistory(type: type, unit: unit, since: start, completion: completion)
+    }
+
+    /// Fetch all samples of `type` since a specific date.
+    private func fetchHistory(type: HKQuantityType, unit: HKUnit, since start: Date, completion: @escaping ([TimestampedValue]) -> Void) {
         let predicate = HKQuery.predicateForSamples(withStart: start, end: .now)
         let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)
 

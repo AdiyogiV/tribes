@@ -135,6 +135,16 @@ class LocalCache: ObservableObject {
     /// Walking steadiness (0.0–1.0)
     @Published var walkingSteadiness: Double?
 
+    /// Batch of recent HR readings since last sync (timestamped).
+    /// Populated by fetchHeartRateReadings(since:) for zero-loss capture.
+    var recentHeartRateReadings: [TimestampedValue] = []
+
+    /// When we last batch-synced HR readings to the phone.
+    var lastHRBatchSync: Date {
+        get { defaults.object(forKey: key("lastHRBatchSync")) as? Date ?? Date.distantPast }
+        set { defaults.set(newValue, forKey: key("lastHRBatchSync")) }
+    }
+
     // MARK: - Timestamps (when each reading was recorded)
 
     @Published var hrvTimestamp: Date?
@@ -464,6 +474,12 @@ class LocalCache: ObservableObject {
         if let v = latestRestingHR { payload["restingHR"] = v }
         if let v = spO2 { payload["spO2"] = v }
         if let v = respiratoryRate { payload["respRate"] = v }
+        // Batch HR readings — every sample since last sync (zero data loss)
+        if !recentHeartRateReadings.isEmpty {
+            payload["heartRateReadings"] = recentHeartRateReadings.map {
+                ["v": $0.value, "t": $0.date.timeIntervalSince1970]
+            }
+        }
         // Activity
         if let v = todaySteps { payload["steps"] = v }
         if let v = activeEnergy { payload["activeEnergy"] = v }

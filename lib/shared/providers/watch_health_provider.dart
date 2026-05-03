@@ -64,6 +64,7 @@ class WatchHealthProvider extends ChangeNotifier {
           data: {
             'hasData': _healthData?.hasData,
             'signals': _healthData?.signalCount,
+            'heartRate': _healthData?.heartRate,
             'hrv': _healthData?.hrv,
             'spO2': _healthData?.spO2,
             'steps': _healthData?.steps,
@@ -73,6 +74,9 @@ class WatchHealthProvider extends ChangeNotifier {
       if (_healthData != null && _healthData!.hasData) {
         _appendToHistory(_healthData!);
       }
+
+      // Handle batch HR readings — each gets its own DB row for granular charts
+      _insertBatchHeartRateReadings(data);
 
       notifyListeners();
     } else if (type == 'nadiReading' && _healthData == null) {
@@ -154,6 +158,38 @@ class WatchHealthProvider extends ChangeNotifier {
     final cutoff = DateTime.now().subtract(const Duration(days: 7));
     _history.removeWhere(
         (d) => d.timestamp != null && d.timestamp!.isBefore(cutoff));
+  }
+
+  /// Insert batch heart rate readings as individual DB rows.
+  /// Each reading from the watch gets its own row for granular charting.
+  void _insertBatchHeartRateReadings(Map<String, dynamic> data) {
+    final readings = data['heartRateReadings'];
+    if (readings == null || readings is! List || readings.isEmpty) return;
+
+    final store = LocalStore.instance;
+    if (!store.isReady) return;
+
+    int count = 0;
+    for (final r in readings) {
+      if (r is! Map) continue;
+      final value = (r['v'] as num?)?.toDouble();
+      final ts = (r['t'] as num?)?.toDouble();
+      if (value == null || ts == null) continue;
+
+      // Create a minimal health data row with just the heart rate + timestamp
+      final hrReading = WatchHealthData(
+        heartRate: value,
+        timestamp: DateTime.fromMillisecondsSinceEpoch(
+            (ts * 1000).toInt()),
+      );
+      store.insertReading(hrReading);
+      count++;
+    }
+
+    if (count > 0) {
+      AppLogger.i('WatchHealthProvider: inserted $count batch HR readings',
+          category: LogCategory.general);
+    }
   }
 
   // ── Helpers for trend extraction ────────────────────────────────────────
