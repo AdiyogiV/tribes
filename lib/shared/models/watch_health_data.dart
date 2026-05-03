@@ -3,23 +3,31 @@
 /// Maps directly to the `healthPayload()` dictionary sent by
 /// `LocalCache.swift` on the watch via `transferUserInfo`.
 class WatchHealthData {
+  // Ayurveda
   final double? ojasScore;
   final String? ojasSummary;
   final String? agniType;
   final String? nadiDosha;
+  // Core vitals
+  final double? heartRate;
   final double? hrv;
   final double? restingHR;
+  final double? spO2;
+  final double? respRate;
+  // Activity
+  final int? steps;
+  final double? activeEnergy;
+  final double? mindfulMins;
+  // Fitness
+  final double? vo2Max;
+  final double? hrRecovery;
+  final double? walkingSteadiness;
+  // Sleep
   final double? sleepHours;
   final double? deepSleepMins;
   final double? remSleepMins;
+  // Body
   final double? wristTemp;
-  final double? respRate;
-  final double? vo2Max;
-  final int? steps;
-  final double? hrRecovery;
-  final double? spO2;
-  final double? activeEnergy;
-  final double? mindfulMins;
   final List<double> ojasHistory;
   final DateTime? timestamp;
 
@@ -28,19 +36,21 @@ class WatchHealthData {
     this.ojasSummary,
     this.agniType,
     this.nadiDosha,
+    this.heartRate,
     this.hrv,
     this.restingHR,
+    this.spO2,
+    this.respRate,
+    this.steps,
+    this.activeEnergy,
+    this.mindfulMins,
+    this.vo2Max,
+    this.hrRecovery,
+    this.walkingSteadiness,
     this.sleepHours,
     this.deepSleepMins,
     this.remSleepMins,
     this.wristTemp,
-    this.respRate,
-    this.vo2Max,
-    this.steps,
-    this.hrRecovery,
-    this.spO2,
-    this.activeEnergy,
-    this.mindfulMins,
     this.ojasHistory = const [],
     this.timestamp,
   });
@@ -52,19 +62,21 @@ class WatchHealthData {
       ojasSummary: map['ojasSummary'] as String?,
       agniType: map['agniType'] as String?,
       nadiDosha: map['nadiDosha'] as String?,
+      heartRate: _toDouble(map['heartRate']),
       hrv: _toDouble(map['hrv']),
       restingHR: _toDouble(map['restingHR']),
+      spO2: _toDouble(map['spO2']),
+      respRate: _toDouble(map['respRate']),
+      steps: _toInt(map['steps']),
+      activeEnergy: _toDouble(map['activeEnergy']),
+      mindfulMins: _toDouble(map['mindfulMins']),
+      vo2Max: _toDouble(map['vo2Max']),
+      hrRecovery: _toDouble(map['hrRecovery']),
+      walkingSteadiness: _toDouble(map['walkingSteadiness']),
       sleepHours: _toDouble(map['sleepHours']),
       deepSleepMins: _toDouble(map['deepSleepMins']),
       remSleepMins: _toDouble(map['remSleepMins']),
       wristTemp: _toDouble(map['wristTemp']),
-      respRate: _toDouble(map['respRate']),
-      vo2Max: _toDouble(map['vo2Max']),
-      steps: _toInt(map['steps']),
-      hrRecovery: _toDouble(map['hrRecovery']),
-      spO2: _toDouble(map['spO2']),
-      activeEnergy: _toDouble(map['activeEnergy']),
-      mindfulMins: _toDouble(map['mindfulMins']),
       ojasHistory: _toDoubleList(map['ojasHistory']),
       timestamp: map['timestamp'] != null
           ? DateTime.fromMillisecondsSinceEpoch(
@@ -76,6 +88,7 @@ class WatchHealthData {
   /// True when at least one health signal is available.
   bool get hasData =>
       ojasScore != null ||
+      heartRate != null ||
       hrv != null ||
       restingHR != null ||
       sleepHours != null ||
@@ -85,19 +98,21 @@ class WatchHealthData {
   /// Number of active signals being tracked.
   int get signalCount {
     int count = 0;
+    if (heartRate != null) count++;
     if (hrv != null) count++;
     if (restingHR != null) count++;
+    if (spO2 != null) count++;
+    if (respRate != null) count++;
+    if (steps != null) count++;
+    if (activeEnergy != null) count++;
+    if (mindfulMins != null) count++;
+    if (vo2Max != null) count++;
+    if (hrRecovery != null) count++;
+    if (walkingSteadiness != null) count++;
     if (sleepHours != null) count++;
     if (deepSleepMins != null) count++;
     if (remSleepMins != null) count++;
     if (wristTemp != null) count++;
-    if (respRate != null) count++;
-    if (vo2Max != null) count++;
-    if (steps != null) count++;
-    if (hrRecovery != null) count++;
-    if (spO2 != null) count++;
-    if (activeEnergy != null) count++;
-    if (mindfulMins != null) count++;
     return count;
   }
 

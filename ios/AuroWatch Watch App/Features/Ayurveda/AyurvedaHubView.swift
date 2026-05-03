@@ -1,50 +1,101 @@
 import SwiftUI
 
-/// Ayurveda Hub — compact grid of all deeper features.
-/// Sits as the last page in the main vertical pager.
-/// Two-column icon grid with section dividers. Tap any cell to drill in.
+/// Ayurveda Hub — last page in the main vertical pager.
 ///
-/// Sections:
-///   Sharira (Body)    — Hridaya, Prana, Nidra, Dhatu, Sensors
-///   Nadi (Pulse)      — Nadi, Prakriti, Vikriti, Agni, Remedy
-///   Dinacharya (Day)  — Dinacharya, Ritu
-///   Sadhana (Practice) — Pranayama, Abhyanga, Mantra, Vyayama
+/// Navigation approach: simple state-swap.
+///   Hub state → scrollable list of features
+///   Active state → back bar (VStack sibling) + feature view
+///
+/// Why not NavigationStack/sheets:
+///   Child views have their own NavigationStack with .toolbar(.hidden),
+///   which kills nested push back-buttons AND sheet dismiss controls.
+///   A VStack sibling back-bar cannot be hidden by the child view.
 struct AyurvedaHubView: View {
+    @State private var activeView: HubDestination?
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 16) {
-                    // Title
-                    Text("Ayurveda")
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundColor(AuroTheme.goldAccent)
-                        .padding(.top, 8)
-
-                    // Body Signals
-                    sectionHeader("Sharira", icon: "figure.mind.and.body")
-                    hubGrid(items: bodyItems)
-
-                    // Nadi & Dosha
-                    sectionHeader("Nadi", icon: "waveform.path")
-                    hubGrid(items: nadiItems)
-
-                    // Daily & Seasons
-                    sectionHeader("Kala", icon: "clock.arrow.circlepath")
-                    hubGrid(items: timeItems)
-
-                    // Practices
-                    sectionHeader("Sadhana", icon: "sparkles")
-                    hubGrid(items: practiceItems)
-                }
-                .padding(.horizontal, 6)
-                .padding(.bottom, 16)
-            }
-            .toolbar(.hidden, for: .navigationBar)
-            .navigationDestination(for: HubDestination.self) { dest in
-                destinationView(dest)
-            }
+        if let active = activeView {
+            activeContent(active)
+        } else {
+            hubContent
         }
+    }
+
+    // MARK: - Active View (feature + back bar)
+
+    private func activeContent(_ dest: HubDestination) -> some View {
+        VStack(spacing: 0) {
+            // Back bar — sits ABOVE child view in VStack.
+            // Child view cannot hide this because it's a sibling, not a toolbar.
+            Button {
+                withAnimation(.easeOut(duration: 0.15)) {
+                    activeView = nil
+                }
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 11, weight: .bold))
+                    Text("Ayurveda")
+                        .font(.system(size: 12, weight: .semibold))
+                    Spacer()
+                }
+                .foregroundColor(AuroTheme.goldAccent)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .frame(maxWidth: .infinity)
+                .background(Color.black)
+            }
+            .buttonStyle(.plain)
+
+            // Feature view fills remaining space
+            destinationView(dest)
+                .frame(maxHeight: .infinity)
+        }
+        .ignoresSafeArea(edges: .bottom)
+    }
+
+    // MARK: - Hub List
+
+    private var hubContent: some View {
+        ScrollView {
+            VStack(spacing: 10) {
+                Text("Ayurveda")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundColor(AuroTheme.goldAccent)
+                    .padding(.top, 8)
+
+                // Sharira (Body)
+                sectionHeader("Sharira", icon: "figure.mind.and.body")
+                hubRow(label: "Heart", icon: "heart.fill", color: AuroTheme.pittaColor, dest: .hridaya)
+                hubRow(label: "Breath", icon: "lungs.fill", color: AuroTheme.vataColor, dest: .prana)
+                hubRow(label: "Sleep", icon: "moon.fill", color: AuroTheme.kaphaColor, dest: .nidra)
+                hubRow(label: "Tissues", icon: "circle.hexagongrid.fill", color: AuroTheme.goldAccent, dest: .dhatu)
+                hubRow(label: "Sensors", icon: "antenna.radiowaves.left.and.right", color: AuroTheme.textLight, dest: .sensors)
+
+                // Nadi (Pulse)
+                sectionHeader("Nadi", icon: "waveform.path")
+                hubRow(label: "Pulse", icon: "waveform.path.ecg", color: AuroTheme.primaryColor, dest: .nadi)
+                hubRow(label: "Prakriti", icon: "person.crop.circle", color: AuroTheme.kaphaColor, dest: .prakriti)
+                hubRow(label: "Vikriti", icon: "arrow.triangle.swap", color: AuroTheme.pittaColor, dest: .vikriti)
+                hubRow(label: "Agni", icon: "flame.fill", color: .orange, dest: .agni)
+                hubRow(label: "Remedy", icon: "leaf.fill", color: .green, dest: .remedy)
+
+                // Kala (Time)
+                sectionHeader("Kala", icon: "clock.arrow.circlepath")
+                hubRow(label: "Routine", icon: "calendar.day.timeline.leading", color: AuroTheme.goldAccent, dest: .dinacharya)
+                hubRow(label: "Seasons", icon: "cloud.sun.fill", color: AuroTheme.vataColor, dest: .ritu)
+
+                // Sadhana (Practice)
+                sectionHeader("Sadhana", icon: "sparkles")
+                hubRow(label: "Breathe", icon: "wind", color: AuroTheme.vataColor, dest: .pranayama)
+                hubRow(label: "Massage", icon: "hand.raised.fingers.spread.fill", color: AuroTheme.kaphaColor, dest: .abhyanga)
+                hubRow(label: "Mantra", icon: "music.note", color: AuroTheme.primaryColor, dest: .mantra)
+                hubRow(label: "Exercise", icon: "figure.run", color: AuroTheme.pittaColor, dest: .vyayama)
+            }
+            .padding(.horizontal, 6)
+            .padding(.bottom, 16)
+        }
+        .toolbar(.hidden, for: .navigationBar)
     }
 
     // MARK: - Section Header
@@ -61,76 +112,44 @@ struct AyurvedaHubView: View {
             Spacer()
         }
         .padding(.horizontal, 4)
+        .padding(.top, 4)
     }
 
-    // MARK: - Grid
+    // MARK: - Hub Row
 
-    private func hubGrid(items: [HubItem]) -> some View {
-        LazyVGrid(columns: [
-            GridItem(.flexible(), spacing: 8),
-            GridItem(.flexible(), spacing: 8),
-        ], spacing: 8) {
-            ForEach(items) { item in
-                NavigationLink(value: item.destination) {
-                    VStack(spacing: 4) {
-                        Image(systemName: item.icon)
-                            .font(.system(size: 20))
-                            .foregroundColor(item.color)
-                        Text(item.label)
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundColor(AuroTheme.textLight.opacity(0.7))
-                    }
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 56)
-                    .background(
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(item.color.opacity(0.08))
-                    )
-                }
-                .buttonStyle(.plain)
+    private func hubRow(label: String, icon: String, color: Color, dest: HubDestination) -> some View {
+        Button {
+            withAnimation(.easeIn(duration: 0.15)) {
+                activeView = dest
             }
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: icon)
+                    .font(.system(size: 16))
+                    .foregroundColor(color)
+                    .frame(width: 28, height: 28)
+                    .background(
+                        RoundedRectangle(cornerRadius: 7)
+                            .fill(color.opacity(0.12))
+                    )
+
+                Text(label)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(AuroTheme.textLight.opacity(0.85))
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(AuroTheme.textLight.opacity(0.2))
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 6)
         }
+        .buttonStyle(.plain)
     }
 
-    // MARK: - Items
-
-    private var bodyItems: [HubItem] {
-        [
-            HubItem(label: "Heart", icon: "heart.fill", color: AuroTheme.pittaColor, destination: .hridaya),
-            HubItem(label: "Breath", icon: "lungs.fill", color: AuroTheme.vataColor, destination: .prana),
-            HubItem(label: "Sleep", icon: "moon.fill", color: AuroTheme.kaphaColor, destination: .nidra),
-            HubItem(label: "Tissues", icon: "circle.hexagongrid.fill", color: AuroTheme.goldAccent, destination: .dhatu),
-            HubItem(label: "Sensors", icon: "antenna.radiowaves.left.and.right", color: AuroTheme.textLight, destination: .sensors),
-        ]
-    }
-
-    private var nadiItems: [HubItem] {
-        [
-            HubItem(label: "Pulse", icon: "waveform.path.ecg", color: AuroTheme.primaryColor, destination: .nadi),
-            HubItem(label: "Prakriti", icon: "person.crop.circle", color: AuroTheme.kaphaColor, destination: .prakriti),
-            HubItem(label: "Vikriti", icon: "arrow.triangle.swap", color: AuroTheme.pittaColor, destination: .vikriti),
-            HubItem(label: "Agni", icon: "flame.fill", color: .orange, destination: .agni),
-            HubItem(label: "Remedy", icon: "leaf.fill", color: .green, destination: .remedy),
-        ]
-    }
-
-    private var timeItems: [HubItem] {
-        [
-            HubItem(label: "Routine", icon: "calendar.day.timeline.leading", color: AuroTheme.goldAccent, destination: .dinacharya),
-            HubItem(label: "Seasons", icon: "cloud.sun.fill", color: AuroTheme.vataColor, destination: .ritu),
-        ]
-    }
-
-    private var practiceItems: [HubItem] {
-        [
-            HubItem(label: "Breathe", icon: "wind", color: AuroTheme.vataColor, destination: .pranayama),
-            HubItem(label: "Massage", icon: "hand.raised.fingers.spread.fill", color: AuroTheme.kaphaColor, destination: .abhyanga),
-            HubItem(label: "Mantra", icon: "music.note", color: AuroTheme.primaryColor, destination: .mantra),
-            HubItem(label: "Exercise", icon: "figure.run", color: AuroTheme.pittaColor, destination: .vyayama),
-        ]
-    }
-
-    // MARK: - Navigation
+    // MARK: - Destinations
 
     @ViewBuilder
     private func destinationView(_ dest: HubDestination) -> some View {
@@ -155,21 +174,15 @@ struct AyurvedaHubView: View {
     }
 }
 
-// MARK: - Models
+// MARK: - Destination Enum
 
-enum HubDestination: Hashable {
+enum HubDestination: Identifiable, Hashable {
     case hridaya, prana, nidra, dhatu, sensors
     case nadi, prakriti, vikriti, agni, remedy
     case dinacharya, ritu
     case pranayama, abhyanga, mantra, vyayama
-}
 
-struct HubItem: Identifiable {
-    let id = UUID()
-    let label: String
-    let icon: String
-    let color: Color
-    let destination: HubDestination
+    var id: Self { self }
 }
 
 #Preview {

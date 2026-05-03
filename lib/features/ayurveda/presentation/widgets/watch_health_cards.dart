@@ -403,7 +403,24 @@ class BodySignalsGrid extends StatelessWidget {
     final d = data;
     final list = <_SignalData>[];
 
-    // Heart
+    // Current Heart Rate — the most useful live signal
+    if (d.heartRate != null) {
+      final v = d.heartRate!;
+      list.add(_SignalData(
+        icon: Icons.favorite_rounded,
+        label: 'Heart Rate',
+        value: '${v.round()}',
+        unit: 'bpm',
+        status: v < 60 ? 'Low' : v <= 100 ? 'Normal' : v <= 120 ? 'Elevated' : 'High',
+        statusColor: (v >= 60 && v <= 100)
+            ? kaphaColor
+            : v <= 120 ? Colors.amber.shade600 : pittaColor,
+        ayurvedaHint: v > 100 ? 'Pitta ↑' : v < 55 ? 'Kapha ↑' : null,
+        metricKey: 'heartRate',
+      ));
+    }
+
+    // Heart variability
     if (d.hrv != null) {
       final v = d.hrv!;
       list.add(_SignalData(
@@ -538,6 +555,59 @@ class BodySignalsGrid extends StatelessWidget {
         status: d.mindfulMins! >= 10 ? 'Good' : 'Brief',
         statusColor: d.mindfulMins! >= 10 ? kaphaColor : Colors.amber.shade600,
         metricKey: 'mindfulMins',
+      ));
+    }
+
+    // Walking Steadiness
+    if (d.walkingSteadiness != null) {
+      final v = d.walkingSteadiness!;
+      // Apple returns percentage 0-100 (higher = more stable)
+      list.add(_SignalData(
+        icon: Icons.accessibility_new,
+        label: 'Steadiness',
+        value: '${v.round()}',
+        unit: '%',
+        status: v >= 70 ? 'OK' : v >= 40 ? 'Low' : 'Very Low',
+        statusColor: v >= 70 ? kaphaColor : v >= 40 ? Colors.amber.shade600 : pittaColor,
+        metricKey: 'walkingSteadiness',
+      ));
+    }
+
+    // Sleep
+    if (d.sleepHours != null) {
+      final v = d.sleepHours!;
+      list.add(_SignalData(
+        icon: Icons.bedtime_outlined,
+        label: 'Sleep',
+        value: v.toStringAsFixed(1),
+        unit: 'hrs',
+        status: v >= 7 ? 'Good' : v >= 5 ? 'Fair' : 'Low',
+        statusColor: v >= 7 ? kaphaColor : v >= 5 ? Colors.amber.shade600 : pittaColor,
+        metricKey: 'sleepHours',
+      ));
+    }
+    if (d.deepSleepMins != null) {
+      final v = d.deepSleepMins!;
+      list.add(_SignalData(
+        icon: Icons.nightlight_round,
+        label: 'Deep Sleep',
+        value: '${v.round()}',
+        unit: 'min',
+        status: v >= 60 ? 'Good' : v >= 30 ? 'Fair' : 'Low',
+        statusColor: v >= 60 ? kaphaColor : v >= 30 ? Colors.amber.shade600 : pittaColor,
+        metricKey: 'deepSleepMins',
+      ));
+    }
+    if (d.remSleepMins != null) {
+      final v = d.remSleepMins!;
+      list.add(_SignalData(
+        icon: Icons.visibility_outlined,
+        label: 'REM Sleep',
+        value: '${v.round()}',
+        unit: 'min',
+        status: v >= 90 ? 'Good' : v >= 60 ? 'Fair' : 'Low',
+        statusColor: v >= 90 ? kaphaColor : v >= 60 ? Colors.amber.shade600 : pittaColor,
+        metricKey: 'remSleepMins',
       ));
     }
 

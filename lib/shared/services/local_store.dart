@@ -145,6 +145,7 @@ class LocalStore {
       'timestamp': ts,
       'hrv': data.hrv,
       'resting_hr': data.restingHR,
+      'heart_rate': data.heartRate,
       'steps': data.steps,
       'spo2': data.spO2,
       'resp_rate': data.respRate,
@@ -553,19 +554,20 @@ class LocalStore {
   WatchHealthData _rowToHealthData(Map<String, dynamic> row) {
     final ts = row['timestamp'] as int?;
     return WatchHealthData(
+      heartRate: _toDouble(row['heart_rate']),
       hrv: _toDouble(row['hrv']),
       restingHR: _toDouble(row['resting_hr']),
-      steps: row['steps'] as int?,
       spO2: _toDouble(row['spo2']),
       respRate: _toDouble(row['resp_rate']),
-      wristTemp: _toDouble(row['wrist_temp']),
-      vo2Max: _toDouble(row['vo2_max']),
+      steps: row['steps'] as int?,
       activeEnergy: _toDouble(row['active_energy']),
+      mindfulMins: _toDouble(row['mindful_mins']),
+      vo2Max: _toDouble(row['vo2_max']),
+      hrRecovery: _toDouble(row['hr_recovery']),
       sleepHours: _toDouble(row['sleep_hours']),
       deepSleepMins: _toDouble(row['deep_sleep_mins']),
       remSleepMins: _toDouble(row['rem_sleep_mins']),
-      mindfulMins: _toDouble(row['mindful_mins']),
-      hrRecovery: _toDouble(row['hr_recovery']),
+      wristTemp: _toDouble(row['wrist_temp']),
       ojasScore: _toDouble(row['ojas_score']),
       ojasSummary: row['ojas_summary'] as String?,
       agniType: row['agni_type'] as String?,
@@ -577,6 +579,7 @@ class LocalStore {
   Map<String, dynamic> _rowToFirestoreMap(Map<String, dynamic> row) {
     // Convert DB row to the same shape that was previously written directly
     final map = <String, dynamic>{};
+    if (row['heart_rate'] != null) map['heartRate'] = row['heart_rate'];
     if (row['hrv'] != null) map['hrv'] = row['hrv'];
     if (row['resting_hr'] != null) map['restingHR'] = row['resting_hr'];
     if (row['steps'] != null) map['steps'] = row['steps'];
@@ -603,19 +606,20 @@ class LocalStore {
 
   String? _metricToColumn(String metric) {
     const mapping = {
+      'heartRate': 'heart_rate',
       'hrv': 'hrv',
       'restingHR': 'resting_hr',
-      'steps': 'steps',
       'spO2': 'spo2',
       'respRate': 'resp_rate',
-      'wristTemp': 'wrist_temp',
-      'vo2Max': 'vo2_max',
+      'steps': 'steps',
       'activeEnergy': 'active_energy',
+      'mindfulMins': 'mindful_mins',
+      'vo2Max': 'vo2_max',
+      'hrRecovery': 'hr_recovery',
       'sleepHours': 'sleep_hours',
       'deepSleepMins': 'deep_sleep_mins',
       'remSleepMins': 'rem_sleep_mins',
-      'mindfulMins': 'mindful_mins',
-      'hrRecovery': 'hr_recovery',
+      'wristTemp': 'wrist_temp',
       'ojasScore': 'ojas_score',
     };
     return mapping[metric];

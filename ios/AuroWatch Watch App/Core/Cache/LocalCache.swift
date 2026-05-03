@@ -453,23 +453,31 @@ class LocalCache: ObservableObject {
     /// Build a health data payload to send to the phone.
     func healthPayload() -> [String: Any] {
         var payload: [String: Any] = ["type": "healthData"]
+        // Ayurveda signals
         if let v = ojasScore { payload["ojasScore"] = v }
         if let v = ojasSummary { payload["ojasSummary"] = v }
         if let v = agniType { payload["agniType"] = v }
         if let v = nadiDominantDosha { payload["nadiDosha"] = v }
+        // Core vitals
+        if let v = currentHeartRate { payload["heartRate"] = v }
         if let v = latestHRV { payload["hrv"] = v }
         if let v = latestRestingHR { payload["restingHR"] = v }
+        if let v = spO2 { payload["spO2"] = v }
+        if let v = respiratoryRate { payload["respRate"] = v }
+        // Activity
+        if let v = todaySteps { payload["steps"] = v }
+        if let v = activeEnergy { payload["activeEnergy"] = v }
+        if let v = mindfulMinutes { payload["mindfulMins"] = v }
+        // Fitness
+        if let v = vo2Max { payload["vo2Max"] = v }
+        if let v = hrRecovery { payload["hrRecovery"] = v }
+        if let v = walkingSteadiness { payload["walkingSteadiness"] = v }
+        // Sleep
         if let v = sleepHours { payload["sleepHours"] = v }
         if let v = deepSleepMinutes { payload["deepSleepMins"] = v }
         if let v = remSleepMinutes { payload["remSleepMins"] = v }
+        // Body
         if let v = wristTempDeviation { payload["wristTemp"] = v }
-        if let v = respiratoryRate { payload["respRate"] = v }
-        if let v = vo2Max { payload["vo2Max"] = v }
-        if let v = todaySteps { payload["steps"] = v }
-        if let v = hrRecovery { payload["hrRecovery"] = v }
-        if let v = spO2 { payload["spO2"] = v }
-        if let v = activeEnergy { payload["activeEnergy"] = v }
-        if let v = mindfulMinutes { payload["mindfulMins"] = v }
         if !ojasHistory.isEmpty { payload["ojasHistory"] = ojasHistory }
         payload["timestamp"] = Date.now.timeIntervalSince1970
         return payload

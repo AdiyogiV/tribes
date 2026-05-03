@@ -173,19 +173,21 @@ class WatchHealthProvider extends ChangeNotifier {
   /// Extract a metric from a single health data snapshot.
   static double? _extractMetric(WatchHealthData d, String metric) {
     switch (metric) {
+      case 'heartRate': return d.heartRate;
       case 'hrv': return d.hrv;
       case 'restingHR': return d.restingHR;
-      case 'steps': return d.steps?.toDouble();
       case 'spO2': return d.normalizedSpO2;
       case 'respRate': return d.respRate;
+      case 'steps': return d.steps?.toDouble();
       case 'activeEnergy': return d.activeEnergy;
-      case 'sleepHours': return d.sleepHours;
-      case 'wristTemp': return d.wristTemp;
+      case 'mindfulMins': return d.mindfulMins;
       case 'vo2Max': return d.vo2Max;
+      case 'hrRecovery': return d.hrRecovery;
+      case 'walkingSteadiness': return d.walkingSteadiness;
+      case 'sleepHours': return d.sleepHours;
       case 'deepSleepMins': return d.deepSleepMins;
       case 'remSleepMins': return d.remSleepMins;
-      case 'hrRecovery': return d.hrRecovery;
-      case 'mindfulMins': return d.mindfulMins;
+      case 'wristTemp': return d.wristTemp;
       default: return null;
     }
   }

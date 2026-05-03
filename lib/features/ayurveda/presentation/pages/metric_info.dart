@@ -23,6 +23,19 @@ class MetricInfo {
 }
 
 const metricInfoMap = <String, MetricInfo>{
+  'heartRate': MetricInfo(
+    explanation:
+        'Your current heart rate — how fast your heart is beating right now. '
+        'Varies with activity, stress, caffeine, and emotions.',
+    ayurvedicNote:
+        'Directly reflects Vyana Vayu (circulatory force). Fast pulse may indicate '
+        'Pitta or Vata aggravation. Slow, steady pulse suggests Kapha dominance.',
+    ranges: [
+      MetricRange('Resting', '60–100 bpm', Color(0xFF27AE60)),
+      MetricRange('Elevated', '100–120 bpm', Color(0xFFE67E22)),
+      MetricRange('High', '> 120 bpm', Color(0xFFE74C3C)),
+    ],
+  ),
   'hrv': MetricInfo(
     explanation:
         'Variation between heartbeats, controlled by your nervous system. '
@@ -186,6 +199,19 @@ const metricInfoMap = <String, MetricInfo>{
       MetricRange('Good', '≥ 90 min', Color(0xFF27AE60)),
       MetricRange('Fair', '60–90 min', Color(0xFFE67E22)),
       MetricRange('Low', '< 60 min', Color(0xFFE74C3C)),
+    ],
+  ),
+  'walkingSteadiness': MetricInfo(
+    explanation:
+        'How steady you are on your feet during daily movement. '
+        'Changes may indicate balance issues, fatigue, or injury risk.',
+    ayurvedicNote:
+        'Balance reflects harmony of all three doshas. Unsteadiness '
+        'suggests Vata aggravation affecting Asthi Dhatu (bones/joints).',
+    ranges: [
+      MetricRange('OK', 'Stable', Color(0xFF27AE60)),
+      MetricRange('Low', 'Declining', Color(0xFFE67E22)),
+      MetricRange('Very Low', 'Unstable', Color(0xFFE74C3C)),
     ],
   ),
 };
