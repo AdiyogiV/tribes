@@ -1,7 +1,7 @@
-/// Ojas (Vitality) Engine — Dart port of the watch-side OjasEngine.
+/// Ojas (Vitality) Engine — Dart port of the watch-side OjasEngine v2.
 ///
-/// Computes Ayurvedic vitality scores from stored health readings.
-/// Used to produce granular Ojas timelines from batch data in SQLite.
+/// Computes Ayurvedic vitality scores from health signals with full
+/// transparency: per-signal contributors, modifiers, base/final breakdown.
 ///
 /// Formula mirrors `ios/AuroWatch Watch App/Core/Health/OjasEngine.swift`.
 library;
@@ -10,17 +10,77 @@ import 'dart:math';
 
 // ─── Data Structures ──────────────────────────────────────────────────────────
 
+/// Full result of an Ojas computation with transparent breakdown.
 class OjasResult {
   final int score;
+  final int baseScore;
   final String summary;
-  final DateTime computedAt;
+  final String agniType;
+  final String agniDescription;
+  final List<OjasContributor> contributors;
+  final List<OjasModifier> modifiers;
+  final int ceiling;
   final int signalCount;
+  final bool isReliable;
+  final DateTime computedAt;
 
   const OjasResult({
     required this.score,
+    required this.baseScore,
     required this.summary,
-    required this.computedAt,
+    required this.agniType,
+    required this.agniDescription,
+    required this.contributors,
+    required this.modifiers,
+    required this.ceiling,
     required this.signalCount,
+    required this.isReliable,
+    required this.computedAt,
+  });
+
+  /// Sum of modifier deltas applied to base.
+  int get modifierDelta =>
+      modifiers.fold(0, (sum, m) => sum + m.delta.round());
+}
+
+/// One primary contributor to the Ojas score.
+class OjasContributor {
+  final String name;
+  final String signal;
+  final double score; // 0.0–1.0
+  final String status; // good / moderate / low
+  final double weight; // 0.0–1.0
+  final String rawDisplay; // "42 ms"
+  final String baselineDisplay; // "base 45 ± 12"
+  final String explanation;
+
+  const OjasContributor({
+    required this.name,
+    required this.signal,
+    required this.score,
+    required this.status,
+    required this.weight,
+    required this.rawDisplay,
+    required this.baselineDisplay,
+    required this.explanation,
+  });
+
+  /// Weighted contribution to final score on 0–100 scale.
+  double get contribution => score * weight * 100;
+}
+
+/// A modifier that adds/subtracts from the base score.
+class OjasModifier {
+  final String name;
+  final String detail;
+  final double delta;
+  final String? note; // e.g. "caps total at 60"
+
+  const OjasModifier({
+    required this.name,
+    required this.detail,
+    required this.delta,
+    this.note,
   });
 }
 
@@ -32,12 +92,35 @@ class OjasDataPoint {
   const OjasDataPoint({required this.score, required this.timestamp});
 }
 
+/// Personal health baselines computed from historical data.
+class HealthBaseline {
+  final double avgHRV;
+  final double stdHRV;
+  final double avgRHR;
+  final double stdRHR;
+  final double avgResp;
+  final double? avgSleepOnset;
+  final int sampleDays;
+
+  const HealthBaseline({
+    this.avgHRV = 45.0,
+    this.stdHRV = 12.0,
+    this.avgRHR = 68.0,
+    this.stdRHR = 6.0,
+    this.avgResp = 15.0,
+    this.avgSleepOnset = 22.5,
+    this.sampleDays = 0,
+  });
+
+  static const populationDefaults = HealthBaseline();
+}
+
 // ─── Engine ───────────────────────────────────────────────────────────────────
 
 class OjasEngine {
   OjasEngine._();
 
-  /// Compute Ojas from available signals at a point in time.
+  /// Compute Ojas with full transparency — contributors + modifiers.
   /// Returns null if insufficient data (need at least HRV or sleep).
   static OjasResult? compute({
     double? hrv,
@@ -45,6 +128,7 @@ class OjasEngine {
     double? sleepHours,
     double? deepSleepMins,
     double? remSleepMins,
+    double? sleepOnsetHour,
     double? spO2,
     double? wristTemp,
     double? respRate,
@@ -53,88 +137,337 @@ class OjasEngine {
     double? hrRecovery,
     double? activeEnergy,
     double? mindfulMins,
+    int? standHours,
+    double? daylightMins,
+    double? envAudioExposure,
+    double? afibBurden,
+    int? highHRCount,
+    int? irregularRhythmCount,
+    int? sleepApneaCount,
+    int? fallCount,
+    int? lowCardioFitnessCount,
+    double? walkingSteadiness,
+    double? rmssd,
+    double? uvExposure,
+    HealthBaseline? baseline,
     DateTime? timestamp,
   }) {
     if (hrv == null && sleepHours == null) return null;
+    final base = baseline ?? HealthBaseline.populationDefaults;
 
-    double totalWeight = 0;
+    // ── PRIMARY CONTRIBUTORS ─────────────────────────────────────────
+    final contributors = <OjasContributor>[];
     double weightedSum = 0;
-    int signalCount = 0;
+    double totalWeight = 0;
 
-    void addSignal(double score, double weight) {
-      weightedSum += score * weight;
-      totalWeight += weight;
-      signalCount++;
-    }
-
-    // 1. Sleep (25%)
-    if (sleepHours != null) {
-      addSignal(_sleepScore(sleepHours, deepSleepMins, remSleepMins), 0.25);
-    }
-
-    // 2. HRV / Pulse (20%) — against population baseline
+    // 1. HRV — 35%
     if (hrv != null) {
-      addSignal(_hrvScore(hrv, 45.0, 12.0), 0.20);
+      final s = _hrvScore(hrv, base.avgHRV, base.stdHRV);
+      const w = 0.35;
+      contributors.add(OjasContributor(
+        name: 'HRV',
+        signal: 'pulse',
+        score: s,
+        status: _signalStatus(s),
+        weight: w,
+        rawDisplay: '${hrv.round()} ms',
+        baselineDisplay: 'base ${base.avgHRV.round()} ± ${base.stdHRV.round()}',
+        explanation: 'Z-score from personal baseline. Closer to your norm = better recovery.',
+      ));
+      weightedSum += s * w;
+      totalWeight += w;
     }
 
-    // 3. SpO2 / Oxygen (10%)
-    if (spO2 != null) {
-      addSignal(_spO2Score(spO2), 0.10);
+    // 2. Sleep — 22%
+    if (sleepHours != null) {
+      final s = _sleepScore(sleepHours, deepSleepMins, remSleepMins);
+      const w = 0.22;
+      final archParts = <String>[
+        if (deepSleepMins != null) 'deep ${deepSleepMins.round()}m',
+        if (remSleepMins != null) 'rem ${remSleepMins.round()}m',
+      ];
+      contributors.add(OjasContributor(
+        name: 'Sleep',
+        signal: 'sleep',
+        score: s,
+        status: _signalStatus(s),
+        weight: w,
+        rawDisplay: '${sleepHours.toStringAsFixed(1)} h',
+        baselineDisplay: archParts.isEmpty ? 'ideal 7–8.5 h' : archParts.join(' · '),
+        explanation: 'Duration peaks at 7.5 h. Deep + REM architecture adds bonus.',
+      ));
+      weightedSum += s * w;
+      totalWeight += w;
     }
 
-    // 4. Temperature / Warmth (8%)
+    // 3. Resting HR — 18%
+    if (restingHR != null) {
+      final s = _restingHRScore(restingHR, base.avgRHR, base.stdRHR);
+      const w = 0.18;
+      contributors.add(OjasContributor(
+        name: 'RHR',
+        signal: 'restingHR',
+        score: s,
+        status: _signalStatus(s),
+        weight: w,
+        rawDisplay: '${restingHR.round()} bpm',
+        baselineDisplay: 'base ${base.avgRHR.round()} ± ${base.stdRHR.round()}',
+        explanation: 'Lower than your baseline = better cardiac efficiency.',
+      ));
+      weightedSum += s * w;
+      totalWeight += w;
+    }
+
+    // 4. Wrist Temp — 10%
     if (wristTemp != null) {
-      addSignal(_temperatureScore(wristTemp), 0.08);
+      final s = _temperatureScore(wristTemp);
+      const w = 0.10;
+      contributors.add(OjasContributor(
+        name: 'Warmth',
+        signal: 'warmth',
+        score: s,
+        status: _signalStatus(s),
+        weight: w,
+        rawDisplay: '${wristTemp >= 0 ? "+" : ""}${wristTemp.toStringAsFixed(2)}°C',
+        baselineDisplay: 'vs your norm',
+        explanation: 'Stable wrist temp = no illness/stress signal.',
+      ));
+      weightedSum += s * w;
+      totalWeight += w;
     }
 
-    // 5. Respiratory rate / Breath (8%)
+    // 5. Respiration — 8%
     if (respRate != null) {
-      addSignal(_respiratoryScore(respRate, 15.0), 0.08);
+      final s = _respiratoryScore(respRate, base.avgResp);
+      const w = 0.08;
+      contributors.add(OjasContributor(
+        name: 'Breath',
+        signal: 'breath',
+        score: s,
+        status: _signalStatus(s),
+        weight: w,
+        rawDisplay: '${respRate.toStringAsFixed(1)} /min',
+        baselineDisplay: 'base ${base.avgResp.toStringAsFixed(1)}',
+        explanation: '12–20 normal; close to baseline preferred.',
+      ));
+      weightedSum += s * w;
+      totalWeight += w;
     }
 
-    // 6. VO2 Max / Fitness (7%)
-    if (vo2Max != null) {
-      addSignal(_vo2Score(vo2Max, 35.0), 0.07);
-    }
-
-    // 7. Steps / Movement (7%)
-    if (steps != null) {
-      addSignal(_movementScore(steps), 0.07);
-    }
-
-    // 8. HR Recovery (5%)
-    if (hrRecovery != null) {
-      addSignal(_recoveryScore(hrRecovery), 0.05);
-    }
-
-    // 9. Active Energy (5%)
-    if (activeEnergy != null) {
-      addSignal(_activeEnergyScore(activeEnergy), 0.05);
-    }
-
-    // 10. Mindfulness (5%)
-    if (mindfulMins != null && mindfulMins > 0) {
-      addSignal(_mindfulScore(mindfulMins), 0.05);
+    // 6. Activity blend — 7%
+    final stepsS = steps != null ? _movementScore(steps) : null;
+    final energyS = activeEnergy != null ? _activeEnergyScore(activeEnergy) : null;
+    if (stepsS != null || energyS != null) {
+      final blended = [stepsS, energyS].whereType<double>().toList();
+      final s = blended.reduce((a, b) => a + b) / blended.length;
+      const w = 0.07;
+      final parts = <String>[
+        if (steps != null) '$steps steps',
+        if (activeEnergy != null) '${activeEnergy.round()} kcal',
+      ];
+      contributors.add(OjasContributor(
+        name: 'Activity',
+        signal: 'movement',
+        score: s,
+        status: _signalStatus(s),
+        weight: w,
+        rawDisplay: parts.join(' · '),
+        baselineDisplay: '5–12k steps · 200–800 kcal',
+        explanation: 'Daily movement and active energy blended.',
+      ));
+      weightedSum += s * w;
+      totalWeight += w;
     }
 
     if (totalWeight <= 0) return null;
 
-    // Normalize: redistribute weights proportionally
-    final score = ((weightedSum / totalWeight) * 100).round().clamp(0, 100);
-    final ts = timestamp ?? DateTime.now();
+    // Base 0–100 score (renormalized over available primary weight)
+    final baseScoreVal = (weightedSum / totalWeight) * 100;
+
+    // ── MODIFIERS ────────────────────────────────────────────────────
+    final modifiers = <OjasModifier>[];
+    double modSum = 0;
+    double ceilingVal = 100;
+
+    // HR Recovery (±5)
+    if (hrRecovery != null) {
+      final double delta;
+      if (hrRecovery >= 25) { delta = 5; }
+      else if (hrRecovery >= 15) { delta = 2; }
+      else if (hrRecovery >= 8) { delta = -1; }
+      else { delta = -5; }
+      modifiers.add(OjasModifier(
+        name: 'HR Recovery', detail: '${hrRecovery.round()} bpm drop', delta: delta,
+      ));
+      modSum += delta;
+    }
+
+    // Stand hours (±4)
+    if (standHours != null) {
+      final double delta;
+      if (standHours >= 12) { delta = 2; }
+      else if (standHours >= 8) { delta = 0; }
+      else if (standHours >= 5) { delta = -2; }
+      else { delta = -4; }
+      modifiers.add(OjasModifier(
+        name: 'Stand Hours', detail: '$standHours h', delta: delta,
+      ));
+      modSum += delta;
+    }
+
+    // SpO₂ cap
+    if (spO2 != null) {
+      final pct = spO2 > 1 ? spO2 : spO2 * 100;
+      if (pct < 92) {
+        ceilingVal = min(ceilingVal, 60);
+        modifiers.add(OjasModifier(
+          name: 'SpO₂ Cap', detail: '${pct.round()}%', delta: 0, note: 'caps total at 60',
+        ));
+      } else if (pct < 95) {
+        modifiers.add(OjasModifier(name: 'SpO₂', detail: '${pct.round()}%', delta: -2));
+        modSum += -2;
+      }
+    }
+
+    // Daylight (±5)
+    if (daylightMins != null) {
+      final double delta;
+      if (daylightMins >= 120) { delta = 3; }
+      else if (daylightMins >= 60) { delta = 1; }
+      else if (daylightMins >= 30) { delta = 0; }
+      else { delta = -5; }
+      modifiers.add(OjasModifier(
+        name: 'Daylight', detail: '${daylightMins.round()} min', delta: delta,
+      ));
+      modSum += delta;
+    }
+
+    // Audio exposure
+    if (envAudioExposure != null && envAudioExposure > 85) {
+      final delta = envAudioExposure > 90 ? -5.0 : -2.0;
+      modifiers.add(OjasModifier(
+        name: 'Audio Load', detail: '${envAudioExposure.round()} dB', delta: delta,
+      ));
+      modSum += delta;
+    }
+
+    // Mindfulness (+5)
+    if (mindfulMins != null && mindfulMins > 0) {
+      final double delta;
+      if (mindfulMins >= 20) { delta = 5; }
+      else if (mindfulMins >= 10) { delta = 3; }
+      else { delta = 1; }
+      modifiers.add(OjasModifier(
+        name: 'Mindful', detail: '${mindfulMins.round()} min', delta: delta,
+      ));
+      modSum += delta;
+    }
+
+    // Cardiac alerts
+    final irregCount = irregularRhythmCount ?? 0;
+    final afib = afibBurden ?? 0;
+    final highHR = highHRCount ?? 0;
+    if (irregCount > 0 || afib > 0 || highHR > 0) {
+      final delta = afib > 0 ? -10.0 : -5.0;
+      final detail = afib > 0
+          ? 'afib ${(afib * 100).toStringAsFixed(1)}%'
+          : '$irregCount irreg · $highHR high';
+      modifiers.add(OjasModifier(name: 'Cardiac Alerts', detail: detail, delta: delta));
+      modSum += delta;
+    }
+
+    // Walking steadiness
+    if (walkingSteadiness != null && walkingSteadiness < 0.4) {
+      modifiers.add(OjasModifier(
+        name: 'Gait Steadiness', detail: '${(walkingSteadiness * 100).round()}%', delta: -5,
+      ));
+      modSum += -5;
+    }
+
+    // Sleep apnea
+    if (sleepApneaCount != null && sleepApneaCount > 0) {
+      final delta = sleepApneaCount >= 3 ? -10.0 : -5.0;
+      modifiers.add(OjasModifier(
+        name: 'Sleep Apnea',
+        detail: '$sleepApneaCount event${sleepApneaCount == 1 ? "" : "s"}',
+        delta: delta,
+      ));
+      modSum += delta;
+    }
+
+    // Falls
+    if (fallCount != null && fallCount > 0) {
+      modifiers.add(OjasModifier(name: 'Falls', detail: '$fallCount today', delta: -10));
+      modSum += -10;
+    }
+
+    // Low cardio fitness
+    if (lowCardioFitnessCount != null && lowCardioFitnessCount > 0) {
+      modifiers.add(OjasModifier(
+        name: 'Low Cardio Fit',
+        detail: '$lowCardioFitnessCount alert${lowCardioFitnessCount == 1 ? "" : "s"}',
+        delta: -3,
+      ));
+      modSum += -3;
+    }
+
+    // Vagal tone (RMSSD)
+    if (rmssd != null) {
+      if (rmssd >= 50) {
+        final delta = rmssd >= 80 ? 5.0 : 3.0;
+        modifiers.add(OjasModifier(
+          name: 'Vagal Tone', detail: 'RMSSD ${rmssd.round()} ms', delta: delta,
+        ));
+        modSum += delta;
+      } else if (rmssd < 15) {
+        modifiers.add(OjasModifier(
+          name: 'Vagal Tone', detail: 'RMSSD ${rmssd.round()} ms', delta: -3,
+        ));
+        modSum += -3;
+      }
+    }
+
+    // UV
+    if (uvExposure != null && uvExposure > 6) {
+      modifiers.add(OjasModifier(
+        name: 'UV Load', detail: '${uvExposure.toStringAsFixed(1)} MED', delta: -2,
+      ));
+      modSum += -2;
+    }
+
+    // ── FINAL SCORE ──────────────────────────────────────────────────
+    final preFinal = baseScoreVal + modSum;
+    final finalScore = min(ceilingVal, max(0, preFinal)).round();
+
+    final agni = _computeAgniType(
+      sleepHours: sleepHours,
+      sleepOnsetHour: sleepOnsetHour,
+      avgSleepOnset: base.avgSleepOnset,
+      wristTemp: wristTemp,
+      restingHR: restingHR,
+      avgRHR: base.avgRHR,
+      steps: steps,
+      hrRecovery: hrRecovery,
+    );
 
     return OjasResult(
-      score: score,
-      summary: _summary(score),
-      computedAt: ts,
-      signalCount: signalCount,
+      score: finalScore,
+      baseScore: baseScoreVal.round(),
+      summary: _summary(finalScore),
+      agniType: agni.$1,
+      agniDescription: agni.$2,
+      contributors: contributors,
+      modifiers: modifiers,
+      ceiling: ceilingVal.round(),
+      signalCount: contributors.length + modifiers.length,
+      isReliable: base.sampleDays >= 14,
+      computedAt: timestamp ?? DateTime.now(),
     );
   }
 
-  // ─── Individual Signal Scoring (0.0–1.0) ──────────────────────────────────
+  // ─── Individual Signal Scoring (0.0–1.0) ──────────────────────────────
 
   static double _sleepScore(double hours, double? deepMins, double? remMins) {
-    // Duration component
     double dur;
     if (hours < 4.0) {
       dur = 0.15;
@@ -146,7 +479,6 @@ class OjasEngine {
       dur = max(0.5, 1.0 - (hours - 9.0) * 0.15);
     }
 
-    // Deep sleep bonus
     double deep = 0;
     if (deepMins != null) {
       if (deepMins >= 45 && deepMins <= 90) {
@@ -156,7 +488,6 @@ class OjasEngine {
       }
     }
 
-    // REM bonus
     double rem = 0;
     if (remMins != null) {
       if (remMins >= 60 && remMins <= 120) {
@@ -179,13 +510,14 @@ class OjasEngine {
     return max(0.25, 0.55 - (z - 2.0) * 0.15);
   }
 
-  static double _spO2Score(double spo2) {
-    final pct = spo2 > 1 ? spo2 : spo2 * 100;
-    if (pct >= 97) return 0.95;
-    if (pct >= 95) return 0.85;
-    if (pct >= 93) return 0.65;
-    if (pct >= 90) return 0.40;
-    return 0.20;
+  static double _restingHRScore(double rhr, double baseline, double std) {
+    final effectiveStd = max(std, 4.0);
+    final z = (rhr - baseline) / effectiveStd;
+    if (z <= -0.5) return 0.95;
+    if (z <= 0.3) return 0.88;
+    if (z <= 1.0) return 0.70;
+    if (z <= 2.0) return 0.50;
+    return 0.30;
   }
 
   static double _temperatureScore(double deviation) {
@@ -206,31 +538,11 @@ class OjasEngine {
     return 0.40;
   }
 
-  static double _vo2Score(double vo2, double baseline) {
-    if (baseline > 0) {
-      final change = (vo2 - baseline) / baseline;
-      if (change >= 0) return min(1.0, 0.80 + change * 2.0);
-      if (change > -0.05) return 0.75;
-      return max(0.40, 0.75 + change * 3.0);
-    }
-    if (vo2 >= 40) return 0.90;
-    if (vo2 >= 30) return 0.75;
-    if (vo2 >= 20) return 0.55;
-    return 0.40;
-  }
-
   static double _movementScore(int steps) {
     if (steps >= 5000 && steps <= 12000) return 0.90;
     if (steps >= 3000) return 0.70;
     if (steps >= 1000) return 0.50;
     return 0.30;
-  }
-
-  static double _recoveryScore(double drop) {
-    if (drop >= 30) return 0.95;
-    if (drop >= 20) return 0.80;
-    if (drop >= 12) return 0.65;
-    return 0.40;
   }
 
   static double _activeEnergyScore(double kcal) {
@@ -240,11 +552,10 @@ class OjasEngine {
     return 0.30;
   }
 
-  static double _mindfulScore(double minutes) {
-    if (minutes >= 20) return 0.95;
-    if (minutes >= 10) return 0.85;
-    if (minutes >= 5) return 0.70;
-    return 0.55;
+  static String _signalStatus(double score) {
+    if (score >= 0.75) return 'good';
+    if (score >= 0.50) return 'moderate';
+    return 'low';
   }
 
   static String _summary(int score) {
@@ -253,5 +564,37 @@ class OjasEngine {
     if (score >= 55) return 'Moderate';
     if (score >= 40) return 'Depleted';
     return 'Rest';
+  }
+
+  static (String, String) _computeAgniType({
+    double? sleepHours,
+    double? sleepOnsetHour,
+    double? avgSleepOnset,
+    double? wristTemp,
+    double? restingHR,
+    double? avgRHR,
+    int? steps,
+    double? hrRecovery,
+  }) {
+    // Vishama (Vata): erratic sleep onset
+    if (sleepOnsetHour != null) {
+      final onsetVar = (sleepOnsetHour - (avgSleepOnset ?? 22.5)).abs();
+      if (onsetVar > 1.0) return ('Vishama', 'Irregular rhythm');
+    }
+    // Tikshna (Pitta)
+    final shortSleep = (sleepHours ?? 8) < 6;
+    final warmTemp = (wristTemp ?? 0) > 0.4;
+    final fastHR = restingHR != null && restingHR > (avgRHR ?? 68) * 1.08;
+    if ((shortSleep && warmTemp) || (shortSleep && fastHR)) {
+      return ('Tikshna', 'Running intense');
+    }
+    // Manda (Kapha)
+    final longSleep = (sleepHours ?? 0) > 9.5;
+    final lowSteps = (steps ?? 5000) < 3000;
+    final slowRecovery = (hrRecovery ?? 25) < 12;
+    if ((longSleep && lowSteps) || (lowSteps && slowRecovery)) {
+      return ('Manda', 'Sluggish metabolism');
+    }
+    return ('Sama', 'Balanced digestion');
   }
 }

@@ -11,14 +11,50 @@ import 'package:aurogram/shared/providers/watch_health_provider.dart';
 import 'package:aurogram/features/ayurveda/presentation/pages/signal_detail_page.dart';
 import 'package:aurogram/features/ayurveda/presentation/pages/metric_info.dart';
 import 'package:aurogram/features/ayurveda/presentation/pages/nadi_detail_page.dart';
+import 'package:aurogram/features/ayurveda/presentation/pages/ojas_detail_page.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Dosha Balance Computation — shared between NadiCard and NadiDetailPage
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Compute approximate dosha balance from watch health signals.
-/// Returns {'vata': %, 'pitta': %, 'kapha': %} normalized to 100.
+/// Dosha balance from health signals.
+/// Priority: backend engine > watch engine > heuristic fallback.
+///
+/// Backend engine (Cloud Functions) uses the full signal set with personal
+/// baselines and is the most accurate. Watch engine runs on-device with
+/// 11 weighted signals. Heuristic is a crude approximation from raw vitals.
 Map<String, double> computeDoshaBalance(WatchHealthData data) {
+  // 1. Prefer backend-computed dosha breakdown (most accurate, cross-platform)
+  if (data.hasBackendNadi) {
+    final v = data.engineNadiVata!;
+    final p = data.engineNadiPitta!;
+    final k = data.engineNadiKapha!;
+    final total = v + p + k;
+    if (total > 0) {
+      return {
+        'vata': (v / total) * 100,
+        'pitta': (p / total) * 100,
+        'kapha': (k / total) * 100,
+      };
+    }
+  }
+
+  // 2. Fall back to watch-computed dosha breakdown (on-device NadiEngine)
+  if (data.hasNadiBreakdown) {
+    final v = data.nadiVata!;
+    final p = data.nadiPitta!;
+    final k = data.nadiKapha!;
+    final total = v + p + k;
+    if (total > 0) {
+      return {
+        'vata': (v / total) * 100,
+        'pitta': (p / total) * 100,
+        'kapha': (k / total) * 100,
+      };
+    }
+  }
+
+  // Fallback: approximate from raw signals (less accurate)
   double vata = 33, pitta = 33, kapha = 34;
 
   if (data.hrv != null) {
@@ -75,27 +111,20 @@ class OjasScoreCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppTheme.primaryColor;
-    final score = data.ojasScore;
+    // Prefer backend engine score, fall back to watch-computed
+    final score = data.bestOjasScore;
     if (score == null) return const SizedBox.shrink();
 
     final scoreInt = score.round();
     final fraction = (score / 100).clamp(0.0, 1.0);
+    final summary = data.bestOjasSummary ?? _ojasLabel(score);
 
     return GestureDetector(
       onTap: () {
         HapticFeedback.lightImpact();
         Navigator.of(context).push(
           CupertinoPageRoute<void>(
-            builder: (_) => SignalDetailPage(
-              label: 'Ojas · Vitality',
-              value: '$scoreInt',
-              unit: '',
-              status: data.ojasSummary ?? _ojasLabel(score),
-              statusColor: _ojasColor(score),
-              icon: CupertinoIcons.heart_circle_fill,
-              metricKey: 'ojasScore',
-              info: getMetricInfo('ojasScore'),
-            ),
+            builder: (_) => OjasDetailPage(data: data),
           ),
         );
       },
@@ -178,7 +207,7 @@ class OjasScoreCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        data.ojasSummary ?? _ojasLabel(score),
+                        summary,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -232,25 +261,28 @@ class OjasScoreCard extends StatelessWidget {
             ),
           ],
 
-          // Agni + Nadi badges
-          if (data.agniType != null || data.nadiDosha != null) ...[
+          // Agni + Nadi badges (prefer backend engine values)
+          if (data.bestAgniType != null || data.engineNadiDominant != null || data.nadiDosha != null) ...[
             const SizedBox(height: AppDimensions.spacingMd),
             Row(
               children: [
-                if (data.agniType != null)
+                if (data.bestAgniType != null)
                   _buildBadge(
-                    '🔥 ${_agniLabel(data.agniType!)}',
+                    '🔥 ${_agniLabel(data.bestAgniType!)}',
                     isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade50,
                     isDark ? Colors.white60 : Colors.black54,
                   ),
-                if (data.agniType != null && data.nadiDosha != null)
+                if (data.bestAgniType != null && (data.engineNadiDominant ?? data.nadiDosha) != null)
                   const SizedBox(width: 8),
-                if (data.nadiDosha != null)
-                  _buildBadge(
-                    '${_nadiGlyph(data.nadiDosha!)} ${capitalize(data.nadiDosha!)} Nadi',
-                    getDoshaColor(data.nadiDosha!).withValues(alpha: 0.1),
-                    getDoshaColor(data.nadiDosha!),
-                  ),
+                if ((data.engineNadiDominant ?? data.nadiDosha) != null)
+                  Builder(builder: (context) {
+                    final d = data.engineNadiDominant ?? data.nadiDosha!;
+                    return _buildBadge(
+                      '${_nadiGlyph(d)} ${capitalize(d)} Nadi',
+                      getDoshaColor(d).withValues(alpha: 0.1),
+                      getDoshaColor(d),
+                    );
+                  }),
               ],
             ),
           ],
@@ -577,10 +609,80 @@ class BodySignalsGrid extends StatelessWidget {
       ));
     }
 
+    // RMSSD (parasympathetic tone — gold standard beat-to-beat HRV)
+    if (d.rmssd != null) {
+      final v = d.rmssd!;
+      list.add(_SignalData(
+        icon: Icons.monitor_heart,
+        label: 'RMSSD',
+        value: '${v.round()}',
+        unit: 'ms',
+        status: v >= 50 ? 'Good' : v >= 20 ? 'Fair' : 'Low',
+        statusColor: v >= 50 ? kaphaColor : v >= 20 ? Colors.amber.shade600 : pittaColor,
+        ayurvedaHint: v >= 80 ? 'Vagal ↑' : v < 15 ? 'Vata ↑' : null,
+        metricKey: 'rmssd',
+      ));
+    }
+
+    // Walking HR
+    if (d.walkingHR != null) {
+      final v = d.walkingHR!;
+      list.add(_SignalData(
+        icon: Icons.directions_walk,
+        label: 'Walking HR',
+        value: '${v.round()}',
+        unit: 'bpm',
+        status: v < 110 ? 'Normal' : v < 130 ? 'Elevated' : 'High',
+        statusColor: v < 110 ? kaphaColor : v < 130 ? Colors.amber.shade600 : pittaColor,
+        metricKey: 'walkingHR',
+      ));
+    }
+
+    // Stand Hours
+    if (d.standHours != null) {
+      final v = d.standHours!;
+      list.add(_SignalData(
+        icon: Icons.accessibility,
+        label: 'Stand Hrs',
+        value: '$v',
+        unit: 'hrs',
+        status: v >= 10 ? 'Good' : v >= 6 ? 'Fair' : 'Low',
+        statusColor: v >= 10 ? kaphaColor : v >= 6 ? Colors.amber.shade600 : pittaColor,
+        metricKey: 'standHours',
+      ));
+    }
+
+    // Exercise Minutes
+    if (d.exerciseMins != null && d.exerciseMins! > 0) {
+      final v = d.exerciseMins!;
+      list.add(_SignalData(
+        icon: Icons.fitness_center,
+        label: 'Exercise',
+        value: '${v.round()}',
+        unit: 'min',
+        status: v >= 30 ? 'Good' : v >= 15 ? 'Fair' : 'Low',
+        statusColor: v >= 30 ? kaphaColor : v >= 15 ? Colors.amber.shade600 : pittaColor,
+        metricKey: 'exerciseMins',
+      ));
+    }
+
+    // Distance
+    if (d.distance != null && d.distance! > 0) {
+      final km = d.distance! / 1000;
+      list.add(_SignalData(
+        icon: Icons.straighten,
+        label: 'Distance',
+        value: km.toStringAsFixed(1),
+        unit: 'km',
+        status: km >= 5 ? 'Active' : km >= 2 ? 'Fair' : 'Low',
+        statusColor: km >= 5 ? kaphaColor : km >= 2 ? Colors.amber.shade600 : pittaColor,
+        metricKey: 'distance',
+      ));
+    }
+
     // Walking Steadiness
     if (d.walkingSteadiness != null) {
       final v = d.walkingSteadiness!;
-      // Apple returns percentage 0-100 (higher = more stable)
       list.add(_SignalData(
         icon: Icons.accessibility_new,
         label: 'Steadiness',
@@ -589,6 +691,19 @@ class BodySignalsGrid extends StatelessWidget {
         status: v >= 70 ? 'OK' : v >= 40 ? 'Low' : 'Very Low',
         statusColor: v >= 70 ? kaphaColor : v >= 40 ? Colors.amber.shade600 : pittaColor,
         metricKey: 'walkingSteadiness',
+      ));
+    }
+
+    // Workout summary
+    if (d.workoutCount != null && d.workoutCount! > 0) {
+      list.add(_SignalData(
+        icon: Icons.timer,
+        label: 'Workouts',
+        value: '${d.workoutCount}',
+        unit: d.workoutMins != null ? '(${d.workoutMins!.round()}m)' : '',
+        status: d.workoutCount! >= 1 ? 'Active' : 'None',
+        statusColor: kaphaColor,
+        metricKey: 'workoutMins',
       ));
     }
 
@@ -814,9 +929,15 @@ class WatchNadiCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppTheme.primaryColor;
-    if (data.nadiDosha == null && data.hrv == null) return const SizedBox.shrink();
+    // Best available dominant dosha: backend > watch
+    final dominant = data.engineNadiDominant ?? data.nadiDosha;
+    if (dominant == null && data.hrv == null) return const SizedBox.shrink();
 
     final doshaBalance = computeDoshaBalance(data);
+
+    // Best available confidence/signal count: backend > watch
+    final confidence = data.engineNadiConfidence ?? data.nadiConfidence;
+    final signalCount = data.engineNadiSignalCount ?? data.nadiSignalCount;
 
     return GestureDetector(
       onTap: () {
@@ -854,11 +975,11 @@ class WatchNadiCard extends StatelessWidget {
             const SizedBox(height: AppDimensions.spacingMd),
 
             // Nadi type
-            if (data.nadiDosha != null) ...[
+            if (dominant != null) ...[
               Row(
                 children: [
                   Text(
-                    _nadiGlyph(data.nadiDosha!),
+                    _nadiGlyph(dominant),
                     style: const TextStyle(fontSize: 24),
                   ),
                   const SizedBox(width: 10),
@@ -867,15 +988,15 @@ class WatchNadiCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${capitalize(data.nadiDosha!)} Nadi',
+                          '${capitalize(dominant)} Nadi',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
-                            color: getDoshaColor(data.nadiDosha!),
+                            color: getDoshaColor(dominant),
                           ),
                         ),
                         Text(
-                          _nadiDescription(data.nadiDosha!),
+                          _nadiDescription(dominant),
                           style: TextStyle(
                             fontSize: 12,
                             color: isDark ? Colors.white54 : Colors.black45,
@@ -895,6 +1016,33 @@ class WatchNadiCard extends StatelessWidget {
             _buildDoshaBar('Pitta', doshaBalance['pitta']!, pittaColor),
             const SizedBox(height: 8),
             _buildDoshaBar('Kapha', doshaBalance['kapha']!, kaphaColor),
+
+            // Confidence & signal count
+            if (confidence != null || signalCount != null) ...[
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  if (confidence != null)
+                    Text(
+                      '${(confidence * 100).round()}% confidence',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white30 : Colors.black26,
+                      ),
+                    ),
+                  const Spacer(),
+                  if (signalCount != null)
+                    Text(
+                      '$signalCount signals',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: isDark ? Colors.white24 : Colors.black26,
+                      ),
+                    ),
+                ],
+              ),
+            ],
           ],
         ),
       ),

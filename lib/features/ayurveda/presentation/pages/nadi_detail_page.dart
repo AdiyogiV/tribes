@@ -8,6 +8,7 @@ import 'package:aurogram/shared/providers/watch_health_provider.dart';
 import 'package:aurogram/features/ayurveda/presentation/widgets/ayurveda_theme.dart';
 import 'package:aurogram/features/ayurveda/presentation/widgets/watch_health_cards.dart';
 import 'package:aurogram/features/ayurveda/presentation/pages/dosha_trend_painter.dart';
+import 'package:aurogram/features/ayurveda/presentation/widgets/nadi_calculation_section.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NadiDetailPage — Pulse reading / Dosha balance drill-down
@@ -65,8 +66,9 @@ class _NadiDetailPageState extends State<NadiDetailPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final c = AppTheme.primaryColor;
     final balance = computeDoshaBalance(widget.data);
+    // Prefer backend engine dominant, then watch, then infer from balance
     final dominant =
-        widget.data.nadiDosha ?? _dominantFromBalance(balance);
+        widget.data.engineNadiDominant ?? widget.data.nadiDosha ?? _dominantFromBalance(balance);
 
     return Scaffold(
       backgroundColor: isDark
@@ -112,6 +114,10 @@ class _NadiDetailPageState extends State<NadiDetailPage> {
               _buildDoshaStats(isDark),
             ],
 
+            // ── Signal contributors + calculation ───────────
+            const SizedBox(height: 12),
+            NadiCalculationSection(data: widget.data),
+
             // ── Prahar context ────────────────────────────────
             const SizedBox(height: 12),
             _buildPraharCard(isDark, dominant),
@@ -150,13 +156,50 @@ class _NadiDetailPageState extends State<NadiDetailPage> {
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            _nadiDescription(dominant),
-            style: TextStyle(
-              fontSize: 13,
-              color: isDark ? Colors.white54 : Colors.black45,
-            ),
-          ),
+          Builder(builder: (context) {
+            final gati = widget.data.engineNadiGati ?? widget.data.nadiGati;
+            return Text(
+              gati != null
+                  ? _gatiDescription(gati)
+                  : _nadiDescription(dominant),
+              style: TextStyle(
+                fontSize: 13,
+                color: isDark ? Colors.white54 : Colors.black45,
+              ),
+            );
+          }),
+          Builder(builder: (context) {
+            final confidence = widget.data.engineNadiConfidence ?? widget.data.nadiConfidence;
+            final signalCount = widget.data.engineNadiSignalCount ?? widget.data.nadiSignalCount;
+            if (confidence == null) return const SizedBox.shrink();
+            return Column(
+              children: [
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      '${(confidence * 100).round()}% confidence',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white30 : Colors.black26,
+                      ),
+                    ),
+                    if (signalCount != null) ...[
+                      Text(
+                        ' · $signalCount signals',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: isDark ? Colors.white24 : Colors.black26,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            );
+          }),
           const SizedBox(height: 20),
           _doshaBar('Vata', balance['vata']!, vataColor, isDark),
           const SizedBox(height: 8),
@@ -635,6 +678,20 @@ class _NadiDetailPageState extends State<NadiDetailPage> {
         return 'Hamsa gati · Swan-like pulse';
       default:
         return 'Pulse pattern';
+    }
+  }
+
+  /// When the watch sends the actual gati name, display it directly.
+  static String _gatiDescription(String gati) {
+    switch (gati.toLowerCase()) {
+      case 'sarpa':
+        return 'Sarpa gati · Snake-like pulse';
+      case 'manduka':
+        return 'Manduka gati · Frog-like pulse';
+      case 'hamsa':
+        return 'Hamsa gati · Swan-like pulse';
+      default:
+        return '${capitalize(gati)} gati';
     }
   }
 
