@@ -46,6 +46,14 @@ class _AyurvedaDetailsPageState extends State<AyurvedaDetailsPage> {
   final _msgController = TextEditingController();
   final _focusNode = FocusNode();
 
+  // Cache streams once in initState — never recreate in build().
+  // Creating streams inside build() causes StreamBuilder to unsubscribe/
+  // resubscribe on every rebuild, which introduces a race condition where
+  // one stream emits before the other, triggering a spurious
+  // _calculateProfile() that overwrites vikriti data in Firestore.
+  late final Stream<AstrologyProfile?> _astroStream;
+  late final Stream<AyurvedaProfile?> _ayurvedaStream;
+
   @override
   void dispose() {
     _msgController.dispose();
@@ -56,13 +64,26 @@ class _AyurvedaDetailsPageState extends State<AyurvedaDetailsPage> {
   @override
   void initState() {
     super.initState();
+    _astroStream = _astrologyService.streamProfile(widget.uid);
+    _ayurvedaStream = _ayurvedaService.streamProfile(widget.uid);
   }
 
-  /// Check if Ayurveda needs to be calculated and trigger it if needed
+  /// Check if Ayurveda needs to be calculated and trigger it if needed.
+  /// IMPORTANT: Both streams must have emitted at least once before we
+  /// decide the profile is truly missing. Otherwise a slow ayurveda stream
+  /// looks like "no profile" and triggers a cloud-function recalculation
+  /// that overwrites existing data (including vikriti).
   void _checkAndCalculateIfNeeded(
-      AyurvedaProfile? profile, AstrologyProfile? astroProfile) {
+      AyurvedaProfile? profile,
+      AstrologyProfile? astroProfile, {
+      required bool ayurvedaStreamHasEmitted,
+  }) {
     // Only check once to avoid multiple calls
     if (_hasCheckedInitialCalculation) return;
+
+    // Don't act until the ayurveda stream has actually emitted — a null
+    // profile might just mean the stream hasn't delivered data yet.
+    if (!ayurvedaStreamHasEmitted) return;
 
     // If no Ayurveda profile but has astrology, calculate it
     if (profile == null && astroProfile?.hasCalculatedData == true) {
@@ -282,12 +303,12 @@ class _AyurvedaDetailsPageState extends State<AyurvedaDetailsPage> {
           // Loading overlay when resetting
           if (_isResetting) AyurvedaResetOverlay(isDark: isDark),
           StreamBuilder<AstrologyProfile?>(
-            stream: _astrologyService.streamProfile(widget.uid),
+            stream: _astroStream,
             builder: (context, astroSnapshot) {
               final astroProfile = astroSnapshot.data;
 
               return StreamBuilder<AyurvedaProfile?>(
-                stream: _ayurvedaService.streamProfile(widget.uid),
+                stream: _ayurvedaStream,
                 builder: (context, ayurSnapshot) {
                   final ayurProfile = ayurSnapshot.data;
                   final isLoading = (astroSnapshot.connectionState ==
@@ -298,6 +319,12 @@ class _AyurvedaDetailsPageState extends State<AyurvedaDetailsPage> {
                           ayurProfile == null);
 
                   // Update state when streams emit new data (for use in callbacks)
+                  // Track whether the ayurveda stream has actually emitted
+                  // (vs still being in ConnectionState.waiting with no data).
+                  final ayurvedaHasEmitted =
+                      ayurSnapshot.connectionState != ConnectionState.waiting ||
+                      ayurProfile != null;
+
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     if (mounted) {
                       bool shouldUpdate = false;
@@ -313,7 +340,11 @@ class _AyurvedaDetailsPageState extends State<AyurvedaDetailsPage> {
 
                       if (shouldUpdate) {
                         // Check if Ayurveda needs to be calculated
-                        _checkAndCalculateIfNeeded(ayurProfile, astroProfile);
+                        _checkAndCalculateIfNeeded(
+                          ayurProfile,
+                          astroProfile,
+                          ayurvedaStreamHasEmitted: ayurvedaHasEmitted,
+                        );
                         // Update Vikriti
                         _updateVikriti(ayurProfile, astroProfile);
                       }
@@ -347,12 +378,12 @@ class _AyurvedaDetailsPageState extends State<AyurvedaDetailsPage> {
             },
           ),
 
-          // AI Chat Input at bottom - use stream data
+          // AI Chat Input at bottom — reuse cached streams
           StreamBuilder<AstrologyProfile?>(
-            stream: _astrologyService.streamProfile(widget.uid),
+            stream: _astroStream,
             builder: (context, astroSnapshot) {
               return StreamBuilder<AyurvedaProfile?>(
-                stream: _ayurvedaService.streamProfile(widget.uid),
+                stream: _ayurvedaStream,
                 builder: (context, ayurSnapshot) {
                   final chatAyurProfile = ayurSnapshot.data;
                   final chatAstroProfile = astroSnapshot.data;
