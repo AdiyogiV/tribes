@@ -51,6 +51,7 @@ class AstrologyProfile {
   final Map<String, dynamic>? muhurat; // Auspicious/inauspicious times
   final Map<String, dynamic>? navamsa; // D9 divisional chart
   final Map<String, dynamic>? houseInterpretations; // AI-generated house interpretations
+  final Map<String, dynamic>? skyHouseReadings; // Biweekly per-house current-state readings
 
   // Cached Periodic Data (refresh monthly)
   final Map<String, dynamic>? currentDasha;
@@ -98,6 +99,7 @@ class AstrologyProfile {
     this.muhurat,
     this.navamsa,
     this.houseInterpretations,
+    this.skyHouseReadings,
     this.currentDasha,
     this.dashaLastUpdated,
     this.syncStatus,
@@ -212,6 +214,11 @@ class AstrologyProfile {
               map['houseInterpretations'] as Map<String, dynamic>,
             )
           : null,
+      skyHouseReadings: map['skyHouseReadings'] != null
+          ? Map<String, dynamic>.from(
+              map['skyHouseReadings'] as Map<String, dynamic>,
+            )
+          : null,
       currentDasha: map['currentDasha'] != null
           ? Map<String, dynamic>.from(
               map['currentDasha'] as Map<String, dynamic>,
@@ -267,6 +274,7 @@ class AstrologyProfile {
       'muhurat': muhurat,
       'navamsa': navamsa,
       'houseInterpretations': houseInterpretations,
+      'skyHouseReadings': skyHouseReadings,
       'currentDasha': currentDasha,
       'dashaLastUpdated': dashaLastUpdated != null
           ? Timestamp.fromDate(dashaLastUpdated!)
@@ -313,6 +321,7 @@ class AstrologyProfile {
     Map<String, dynamic>? muhurat,
     Map<String, dynamic>? navamsa,
     Map<String, dynamic>? houseInterpretations,
+    Map<String, dynamic>? skyHouseReadings,
     Map<String, dynamic>? currentDasha,
     DateTime? dashaLastUpdated,
     String? syncStatus,
@@ -353,6 +362,7 @@ class AstrologyProfile {
       muhurat: muhurat ?? this.muhurat,
       navamsa: navamsa ?? this.navamsa,
       houseInterpretations: houseInterpretations ?? this.houseInterpretations,
+      skyHouseReadings: skyHouseReadings ?? this.skyHouseReadings,
       currentDasha: currentDasha ?? this.currentDasha,
       dashaLastUpdated: dashaLastUpdated ?? this.dashaLastUpdated,
       syncStatus: syncStatus ?? this.syncStatus,

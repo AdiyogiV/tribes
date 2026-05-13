@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:screenshot/screenshot.dart';
-import 'package:social_share/social_share.dart';
 
 /// On Android, share-to-Instagram-Story often fails or does nothing (plugin/visibility).
 /// Use system share sheet so the user always gets a dialog and can pick Instagram or others.
@@ -135,42 +134,23 @@ class ShareMedia {
       return;
     }
 
-    // iOS: try Instagram story first, fallback to system share on error
-    File? file;
+    // iOS: use system share sheet (same as Android)
     try {
-      file = await _captureWidgetToFile(
+      final file = await _captureWidgetToFile(
         context: context,
         card: card,
         filePrefix: filePrefix,
       );
-
-      await SocialShare.shareInstagramStory(
-        appId: _instagramAppId,
-        imagePath: file.path,
-        backgroundTopColor: backgroundTopColor,
-        backgroundBottomColor: backgroundBottomColor,
-        attributionURL: shareUrl,
+      await SharePlus.instance.share(
+        ShareParams(files: [XFile(file.path)], text: shareUrl),
       );
+      Future.delayed(const Duration(seconds: 30), () {
+        if (file.existsSync()) file.deleteSync();
+      });
     } catch (e) {
       final label = logLabel ?? filePrefix;
       AppLogger.e('Error sharing $label to Instagram', error: e);
-      if (!context.mounted) return;
-      if (file != null && file.existsSync()) {
-        try {
-          await SharePlus.instance.share(
-            ShareParams(files: [XFile(file.path)], text: shareUrl),
-          );
-          final f = file;
-          Future.delayed(const Duration(seconds: 30), () {
-            if (f.existsSync()) f.deleteSync();
-          });
-        } catch (fallbackError) {
-          AppLogger.e('Fallback share failed for $label', error: fallbackError);
-          if (context.mounted) {
-            ShareUi.showErrorSnackbar(context, 'Failed to share to Instagram');
-          }
-        }
-      } else {
+      if (context.mounted) {
         ShareUi.showErrorSnackbar(context, 'Failed to share to Instagram');
       }
     }

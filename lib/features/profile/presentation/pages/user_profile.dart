@@ -107,8 +107,12 @@ class UserProfilePageState extends State<UserProfilePage>
   String? get followTargetUid => widget.uid;
   @override
   User? get followCurrentUser => _user;
+  // Trigger a rebuild to update compatibility card and follow-dependent UI.
+  // Do NOT increment _refreshKey here — that would destroy all FutureBuilder
+  // states in the cards Column (insights, rank, astrology would flash back to
+  // loading state).
   @override
-  void onFollowChanged() => setState(() => _refreshKey++);
+  void onFollowChanged() => setState(() {});
 
   // ProfileNavigation mixin interface
   @override
@@ -314,29 +318,57 @@ class UserProfilePageState extends State<UserProfilePage>
 
   Future<void> _handleRefresh() async {
     if (_isRefreshing || widget.uid == null) return;
+    final uid = widget.uid!;
 
     if (mounted) {
       setState(() => _isRefreshing = true);
     }
 
-    // Yield a frame so shimmer appears before work starts
+    // Yield a frame so the refresh indicator appears before network work.
     await Future.delayed(Duration.zero);
 
     try {
-      // Fetch fresh data in parallel
+      // Fire ALL requests in parallel — including the ones whose results we
+      // need to wrap as pre-resolved futures afterwards.
+      final astroFuture =
+          AstrologyService().getProfile(uid, forceRefresh: true);
+      final rankFuture = _auraService.getUserRank(uid);
+
       await Future.wait([
-        _userRepo.getUser(widget.uid!),
-        loadFollowData(forceRefresh: true), // Refresh follow counts
+        _userRepo.getUser(uid),
+        loadFollowData(forceRefresh: true),
+        astroFuture.catchError((_) => null),
+        rankFuture.catchError((_) => null),
       ]);
 
-      // Refresh astrology profile future (force refresh to bypass cache)
-      _astrologyProfileFuture =
-          AstrologyService().getProfile(widget.uid!, forceRefresh: true);
-      // Force rebuild to refresh FutureBuilders (astrology cards, insights)
+      // By now astroFuture and rankFuture have settled.  Wrap their results
+      // as already-completed futures so FutureBuilders receive data on the
+      // very first frame — no loading/skeleton flash.
+      final resolvedAstro = await astroFuture.catchError((_) => null);
+      final resolvedRank = await rankFuture.catchError((_) => null);
+
       if (mounted) {
         setState(() {
-          _refreshKey++;
-          _cachedProfileData = null;
+          _astrologyProfileFuture = Future.value(resolvedAstro);
+          _userRankFuture = Future.value(resolvedRank);
+          // Refresh the daily-insight stream so the inner StreamBuilder
+          // gets a fresh subscription (the old stream may have been consumed
+          // or closed after the FutureBuilder cycled through loading state).
+          _dailyInsightStream =
+              AstrologyService().streamTodayInsight(uid).timeout(
+            const Duration(seconds: 5),
+            onTimeout: (sink) {
+              AppLogger.w('dailyInsightStream timed out on refresh',
+                  category: LogCategory.general);
+              sink.add(null);
+            },
+          );
+          // Refresh ayurveda stream too
+          _ayurvedaProfileStream = _ayurvedaService.streamProfile(uid);
+          // NOTE: Do NOT clear _cachedProfileData.  The Firestore user-
+          // stream will deliver updated data naturally; clearing the cache
+          // removes the safety net and can cause the name/avatar to flash
+          // empty if the stream is momentarily between snapshots.
         });
       }
     } catch (e) {
@@ -354,7 +386,7 @@ class UserProfilePageState extends State<UserProfilePage>
     final data = snapshot.data() as Map<String, dynamic>?;
     if (data == null) return null;
 
-    _cachedProfileData = {
+    final newData = {
       'name': data['name'] ?? '',
       'nickname': data['nickname'] ?? '',
       'displayPicture': data['displayPicture'],
@@ -366,17 +398,32 @@ class UserProfilePageState extends State<UserProfilePage>
       'ascendant': data['ascendant'],
     };
 
-    // Update follow counts from real-time stream (keeps UI in sync automatically)
+    // Guard: don't overwrite good cached data with empty name
+    // (can happen if Firestore stream delivers a partial/stale snapshot)
+    final newName = newData['name'] as String? ?? '';
+    final cachedName = _cachedProfileData?['name'] as String? ?? '';
+    if (newName.isEmpty && cachedName.isNotEmpty) {
+      // Keep the existing cached data – the stream snapshot is degraded
+      return _cachedProfileData;
+    }
+
+    _cachedProfileData = newData;
+
+    // Update follow counts from real-time stream.
+    // Use a post-frame callback to avoid calling setState inside build().
+    // The callback is guarded to fire only once per distinct count change.
     final newFollowerCount = (data['followerCount'] as int?) ?? 0;
     final newFollowingCount = (data['followingCount'] as int?) ?? 0;
     if (newFollowerCount != followerCount ||
         newFollowingCount != followingCount) {
-      // Schedule state update after current build
+      // Capture values to avoid reading stale fields in the callback
+      final capturedFollowers = newFollowerCount;
+      final capturedFollowing = newFollowingCount;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           setState(() {
-            followerCount = newFollowerCount;
-            followingCount = newFollowingCount;
+            followerCount = capturedFollowers;
+            followingCount = capturedFollowing;
           });
         }
       });
@@ -559,10 +606,11 @@ class UserProfilePageState extends State<UserProfilePage>
                         stream: _userStream,
                         builder: (context, snapshot) {
                           final profileData =
-                              _extractProfileData(snapshot.data);
+                              _extractProfileData(snapshot.data)
+                                  ?? _cachedProfileData; // fallback to cache
                           final isLoading = snapshot.connectionState ==
                                   ConnectionState.waiting &&
-                              profileData == null;
+                              profileData == null && !_profileTimedOut;
 
                           if (isLoading) {
                             return _buildLoadingStateContent(isDark);

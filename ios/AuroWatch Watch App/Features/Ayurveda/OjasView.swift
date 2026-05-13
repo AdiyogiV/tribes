@@ -179,7 +179,10 @@ struct OjasView: View {
         health.fetchAllReadings {
             let signals = HealthSignals(
                 hrv: health.latestHRV,
+                rmssd: health.latestRMSSD,
+                pnn50: health.latestPNN50,
                 restingHR: health.latestRestingHR,
+                walkingHR: health.latestWalkingHR,
                 sleepDuration: health.lastSleepDuration,
                 deepSleepMinutes: health.lastDeepSleepMinutes,
                 remSleepMinutes: health.lastREMSleepMinutes,
@@ -188,27 +191,63 @@ struct OjasView: View {
                 respiratoryRate: health.latestRespiratoryRate,
                 vo2Max: health.latestVO2Max,
                 walkingSteadiness: health.latestWalkingSteadiness,
+                walkingAsymmetry: health.latestWalkingAsymmetry,
+                walkingDoubleSupport: health.latestWalkingDoubleSupport,
                 steps: health.todaySteps,
                 hrRecovery: health.latestHRRecovery,
                 spO2: health.latestSpO2,
                 activeEnergy: health.todayActiveEnergy,
-                mindfulMinutes: health.todayMindfulMinutes
+                mindfulMinutes: health.todayMindfulMinutes,
+                standHours: health.todayStandHours,
+                daylightMinutes: health.todayDaylightMinutes,
+                envAudioExposure: health.latestEnvAudioExposure,
+                afibBurden: health.latestAFibBurden,
+                highHRCount: health.todayHighHRCount,
+                irregularRhythmCount: health.todayIrregularRhythmCount,
+                sleepApneaCount: health.todaySleepApneaCount,
+                fallCount: health.todayFallCount,
+                lowCardioFitnessCount: health.todayLowCardioFitnessCount,
+                uvExposure: health.latestUVExposure,
+                heartRate: health.latestHeartRate,
+                exerciseMinutes: health.todayExerciseMinutes,
+                coreSleepMinutes: health.lastCoreSleepMinutes,
+                headphoneAudioExposure: health.latestHeadphoneAudioExposure,
+                lowHRCount: health.todayLowHRCount,
+                bodyTemp: health.latestBodyTemperature
+            )
+
+            // Feed the same multi-signal set into Nadi v2.
+            let nadiSignals = NadiSignals(
+                hrv: health.latestHRV,
+                rmssd: health.latestRMSSD,
+                pnn50: health.latestPNN50,
+                restingHR: health.latestRestingHR,
+                walkingHR: health.latestWalkingHR,
+                respiratoryRate: health.latestRespiratoryRate,
+                sleepDuration: health.lastSleepDuration,
+                deepSleepMinutes: health.lastDeepSleepMinutes,
+                remSleepMinutes: health.lastREMSleepMinutes,
+                wristTempDeviation: health.latestWristTemp,
+                walkingAsymmetry: health.latestWalkingAsymmetry,
+                walkingDoubleSupport: health.latestWalkingDoubleSupport,
+                irregularRhythmCount: health.todayIrregularRhythmCount,
+                afibBurden: health.latestAFibBurden,
+                highHRCount: health.todayHighHRCount,
+                sleepApneaCount: health.todaySleepApneaCount,
+                fallCount: health.todayFallCount
             )
 
             health.fetchHRVHistory(days: 14) { samples in
                 DispatchQueue.main.async {
                     let baseline = NadiEngine.computeBaseline(hrvHistory: samples, restingHRHistory: nil)
-                    nadiReading = NadiEngine.analyze(
-                        hrv: health.latestHRV,
-                        restingHR: health.latestRestingHR,
-                        baseline: baseline
-                    )
+                    nadiReading = NadiEngine.analyze(signals: nadiSignals, baseline: baseline)
 
                     var healthBase = HealthBaseline.populationDefaults
                     if let b = baseline {
                         healthBase.avgHRV = b.avgHRV
                         healthBase.stdHRV = b.stdHRV
                         healthBase.avgRHR = b.avgRHR
+                        healthBase.stdRHR = b.stdRHR
                         healthBase.sampleDays = b.sampleCount
                     }
 
@@ -274,19 +313,20 @@ struct OjasDetailView: View {
 
     var body: some View {
         TabView(selection: $detailPage) {
-            // Page 0: Signal contributors (icon + bar only, no text labels)
-            signalsPage
-                .tag(0)
+            // Page 0: Signal contributors (compact bars)
+            signalsPage.tag(0)
 
-            // Page 1: Nadi dosha breakdown (only if available)
-            if nadi != nil {
-                nadiPage
-                    .tag(1)
-            }
+            // Page 1: Live math — full transparency on the calculation
+            mathPage.tag(1)
 
-            // Page 2 (or 1): Info footer
-            infoPage
-                .tag(nadi != nil ? 2 : 1)
+            // Page 2: Modifier ledger
+            modifiersPage.tag(2)
+
+            // Page 3 (optional): Nadi dosha breakdown
+            if nadi != nil { nadiPage.tag(3) }
+
+            // Last: Info footer
+            infoPage.tag(nadi != nil ? 4 : 3)
         }
         .tabViewStyle(.verticalPage)
         .ignoresSafeArea(.all)
@@ -348,31 +388,238 @@ struct OjasDetailView: View {
     private func signalRow(_ c: OjasContributor, barWidth: CGFloat, rowHeight: CGFloat) -> some View {
         HStack(spacing: 6) {
             Image(systemName: signalIcon(c.signal))
-                .font(.system(size: 12))
+                .font(.system(size: 11))
                 .foregroundColor(statusColor(c.status))
-                .frame(width: 18)
+                .frame(width: 16)
 
-            // Full-width bar — color conveys status, no text needed
+            // Compact label
+            Text(c.name)
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundColor(AuroTheme.textLight.opacity(0.85))
+                .frame(width: 50, alignment: .leading)
+
+            // Score bar
             ZStack(alignment: .leading) {
                 RoundedRectangle(cornerRadius: 3)
                     .fill(Color.white.opacity(0.06))
-                    .frame(height: 7)
+                    .frame(height: 6)
                 RoundedRectangle(cornerRadius: 3)
                     .fill(statusColor(c.status).opacity(0.75))
-                    .frame(width: max(barWidth, 1) * c.score, height: 7)
+                    .frame(width: max(barWidth, 1) * c.score, height: 6)
             }
+
+            // Weight tag
+            Text("\(Int(c.weight * 100))%")
+                .font(.system(size: 9, weight: .medium, design: .monospaced))
+                .foregroundColor(AuroTheme.textLight.opacity(0.4))
+                .frame(width: 26, alignment: .trailing)
         }
         .frame(height: rowHeight)
     }
 
     private func maxSignalRows(height: CGFloat) -> Int {
-        // header ~60pt, leave ~10pt bottom margin
         let available = height - 70
-        let perRow: CGFloat = 24
+        let perRow: CGFloat = 22
         return max(Int(available / perRow), 4)
     }
 
-    // MARK: - Page 1: Nadi
+    // MARK: - Page 1: Live Math (transparent calculation)
+
+    private var mathPage: some View {
+        GeometryReader { geo in
+            let w = max(geo.size.width, 1)
+            let h = max(geo.size.height, 1)
+
+            VStack(spacing: 0) {
+                Text("CALCULATION")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(AuroTheme.goldAccent.opacity(0.7))
+                    .tracking(1.5)
+                    .padding(.top, 6)
+                    .padding(.bottom, 4)
+
+                if let result = result {
+                    ScrollView {
+                        VStack(spacing: 4) {
+                            ForEach(result.contributors) { c in
+                                mathRow(c)
+                            }
+
+                            Divider()
+                                .background(Color.white.opacity(0.15))
+                                .padding(.vertical, 4)
+
+                            // Base score line
+                            HStack {
+                                Text("Base")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundColor(AuroTheme.textLight.opacity(0.85))
+                                Spacer()
+                                Text("\(result.baseScore)")
+                                    .font(.system(size: 13, weight: .bold, design: .monospaced))
+                                    .foregroundColor(AuroTheme.textLight)
+                            }
+                            .padding(.horizontal, 8)
+
+                            // Modifier total
+                            if !result.modifiers.isEmpty {
+                                HStack {
+                                    Text("Modifiers")
+                                        .font(.system(size: 10, weight: .medium))
+                                        .foregroundColor(AuroTheme.textLight.opacity(0.6))
+                                    Spacer()
+                                    Text(String(format: "%+d", result.modifierDelta))
+                                        .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                                        .foregroundColor(result.modifierDelta >= 0
+                                                         ? AuroTheme.kaphaColor
+                                                         : AuroTheme.pittaColor)
+                                }
+                                .padding(.horizontal, 8)
+                            }
+
+                            if result.ceiling < 100 {
+                                HStack {
+                                    Text("Ceiling")
+                                        .font(.system(size: 10))
+                                        .foregroundColor(AuroTheme.pittaColor.opacity(0.7))
+                                    Spacer()
+                                    Text("≤ \(result.ceiling)")
+                                        .font(.system(size: 10, weight: .medium, design: .monospaced))
+                                        .foregroundColor(AuroTheme.pittaColor.opacity(0.7))
+                                }
+                                .padding(.horizontal, 8)
+                            }
+
+                            // Final
+                            HStack {
+                                Text("Ojas")
+                                    .font(.system(size: 13, weight: .bold))
+                                    .foregroundColor(ojasColor(score: result.score))
+                                Spacer()
+                                Text("\(result.score)")
+                                    .font(.system(size: 18, weight: .bold, design: .monospaced))
+                                    .foregroundColor(ojasColor(score: result.score))
+                            }
+                            .padding(.horizontal, 8)
+                            .padding(.top, 2)
+                        }
+                        .padding(.bottom, 12)
+                    }
+                }
+            }
+            .frame(width: w, height: h)
+        }
+    }
+
+    /// One math row showing: signal · raw · score × weight = contribution
+    @ViewBuilder
+    private func mathRow(_ c: OjasContributor) -> some View {
+        VStack(alignment: .leading, spacing: 1) {
+            HStack(spacing: 4) {
+                Image(systemName: signalIcon(c.signal))
+                    .font(.system(size: 9))
+                    .foregroundColor(statusColor(c.status))
+                    .frame(width: 12)
+                Text(c.name)
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(AuroTheme.textLight.opacity(0.85))
+                Spacer()
+                Text(c.rawDisplay)
+                    .font(.system(size: 9, weight: .medium, design: .monospaced))
+                    .foregroundColor(AuroTheme.textLight.opacity(0.6))
+            }
+            HStack(spacing: 3) {
+                Text(String(format: "%.0f", c.score * 100))
+                    .font(.system(size: 9, design: .monospaced))
+                    .foregroundColor(AuroTheme.textLight.opacity(0.5))
+                Text("×")
+                    .font(.system(size: 8))
+                    .foregroundColor(AuroTheme.textLight.opacity(0.3))
+                Text("\(Int(c.weight * 100))%")
+                    .font(.system(size: 9, design: .monospaced))
+                    .foregroundColor(AuroTheme.textLight.opacity(0.5))
+                Text("=")
+                    .font(.system(size: 8))
+                    .foregroundColor(AuroTheme.textLight.opacity(0.3))
+                Text(String(format: "%.1f", c.contribution))
+                    .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                    .foregroundColor(statusColor(c.status))
+                Spacer()
+            }
+            .padding(.leading, 14)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 1)
+    }
+
+    // MARK: - Page 2: Modifier Ledger
+
+    private var modifiersPage: some View {
+        GeometryReader { geo in
+            let w = max(geo.size.width, 1)
+            let h = max(geo.size.height, 1)
+
+            VStack(spacing: 0) {
+                Text("MODIFIERS")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(AuroTheme.goldAccent.opacity(0.7))
+                    .tracking(1.5)
+                    .padding(.top, 6)
+                    .padding(.bottom, 6)
+
+                if let result = result, !result.modifiers.isEmpty {
+                    ScrollView {
+                        VStack(spacing: 5) {
+                            ForEach(result.modifiers) { m in
+                                modifierRow(m)
+                            }
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.bottom, 12)
+                    }
+                } else {
+                    Spacer()
+                    Text("No modifiers applied")
+                        .font(.system(size: 11))
+                        .foregroundColor(AuroTheme.textLight.opacity(0.4))
+                    Spacer()
+                }
+            }
+            .frame(width: w, height: h)
+        }
+    }
+
+    @ViewBuilder
+    private func modifierRow(_ m: OjasModifier) -> some View {
+        let isPositive = m.delta > 0
+        let isCap = m.note != nil
+
+        HStack(alignment: .center, spacing: 6) {
+            VStack(alignment: .leading, spacing: 1) {
+                Text(m.name)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(AuroTheme.textLight.opacity(0.85))
+                Text(m.note ?? m.detail)
+                    .font(.system(size: 9, design: .monospaced))
+                    .foregroundColor(AuroTheme.textLight.opacity(0.45))
+            }
+            Spacer()
+            Text(isCap ? "cap" : String(format: "%+.0f", m.delta))
+                .font(.system(size: 13, weight: .bold, design: .monospaced))
+                .foregroundColor(
+                    isCap ? AuroTheme.pittaColor :
+                    (isPositive ? AuroTheme.kaphaColor : AuroTheme.pittaColor)
+                )
+        }
+        .padding(.horizontal, 6)
+        .padding(.vertical, 3)
+        .background(
+            RoundedRectangle(cornerRadius: 5)
+                .fill(Color.white.opacity(0.04))
+        )
+    }
+
+    // MARK: - Page 3: Nadi
 
     private var nadiPage: some View {
         GeometryReader { geo in
@@ -492,7 +739,8 @@ struct OjasDetailView: View {
     private func signalIcon(_ signal: SignalType) -> String {
         switch signal {
         case .sleep:      return "moon.fill"
-        case .pulse:      return "heart.fill"
+        case .pulse:      return "waveform.path.ecg"
+        case .restingHR:  return "heart.fill"
         case .warmth:     return "thermometer.medium"
         case .breath:     return "wind"
         case .fitness:    return "figure.run"

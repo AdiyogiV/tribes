@@ -36,8 +36,8 @@ const bool _kShowMandala = false;
 class _DashboardConstants {
   static const int sliderRangeDays = 30;
   static const int maxSkyLoadRetries = 2;
-  static const Duration retryBaseDelay = Duration(seconds: 2);
-  static const Duration cachePopulationDelay = Duration(seconds: 3);
+  static const Duration retryBaseDelay = Duration(seconds: 5);
+  static const Duration cachePopulationDelay = Duration(seconds: 8);
 }
 
 /// Cosmic Dashboard - Today's cosmic snapshot

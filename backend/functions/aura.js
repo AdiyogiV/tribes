@@ -126,20 +126,17 @@ export const awardCreateSpacePostAura = onDocumentCreated(
  * This trigger is kept for backward compatibility but skips namaste notifications
  * to prevent double-awarding.
  */
+// NOTE: This trigger fires on EVERY notification doc but does nothing useful.
+// It was kept for backward compatibility but always returns null.
+// The concurrency inherited from setGlobalOptions prevents 429 cascades.
 export const awardNamasteAura = onDocumentCreated(
-    "notifications/{userId}/notifications/{notificationId}",
+    {
+        document: "notifications/{userId}/notifications/{notificationId}",
+        region: "asia-southeast2",
+    },
     async (event) => {
-        const notification = event.data.data();
-
-        // Skip namaste notifications - now handled by namaste.js with rate limiting
-        // This prevents double aura awards since namaste.js creates the notification
-        // AND awards aura with proper trackingId deduplication
-        if (notification.type === "namaste") {
-            logger.info("Skipping namaste aura - handled by namaste.js");
-            return null;
-        }
-
-        // This trigger can be extended for other notification types if needed
+        // This is a no-op: namaste aura is handled by namaste.js
+        // Other notification types don't award aura
         return null;
     },
 );

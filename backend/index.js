@@ -1,4 +1,5 @@
 // Cloud Functions exports
+// Global options (region, concurrency, memory) are set in lib/firebase.js
 // OPTIMIZED: addPostToGlobalFeed and newSpacePost merged into addPostToFeeds
 // This reduces 3 function invocations to 1 per space post
 export {
@@ -45,6 +46,15 @@ export {
     cleanupExpiredCacheEntries, // Cleanup expired astroCache/astroCurrent entries
 } from "./functions/daily_astro_insights.js";
 export { processInsightTask } from "./functions/insight_worker.js"; // Queue-based insight generation worker
+
+// ---------------------------------------------------------------------------
+// Insights Engine — unified pipeline for AI-powered readings
+// ---------------------------------------------------------------------------
+export {
+    enqueuePerHouseReadings,  // Daily scheduler: finds users with expired cycles
+    processPerHouseTask,      // Cloud Tasks worker: runs one user's biweekly batch
+    generatePerHouseNow,      // onCall: force regenerate for current user
+} from "./insights/orchestration/per_house_scheduler.js";
 export {
     trackInsightView,
     submitInsightFeedback,

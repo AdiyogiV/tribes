@@ -7,6 +7,7 @@ import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/widgets/chart_blend_slider.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/widgets/timeline_slider.dart';
+import 'package:aurogram/features/astrology/presentation/widgets/kundali_house_hit_test.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 
 /// Card widget displaying the current sky chart with optional birth chart overlay
@@ -28,6 +29,15 @@ class CosmicSkyChartCard extends StatelessWidget {
   final VoidCallback? onTriggerCachePopulation;
   final Map<String, dynamic>? Function(DateTime) getPositionsForDate;
   final Map<String, dynamic>? Function(DateTime) getInterpolatedPositions;
+  /// Optional callback to navigate to the full Current Sky page.
+  final VoidCallback? onExploreSky;
+  /// Optional callback to navigate to the Astrology Details (birth chart) page.
+  final VoidCallback? onExploreBirthChart;
+  /// Optional callback fired when the user taps a house in the sky chart.
+  /// Receives the house number (1..12). Used by the parent to show a
+  /// per-house current-state popup (HouseDetailsDialog).
+  final void Function(int houseNumber, Map<String, dynamic> currentPositions)?
+      onHouseTap;
 
   const CosmicSkyChartCard({
     super.key,
@@ -48,6 +58,9 @@ class CosmicSkyChartCard extends StatelessWidget {
     this.onTriggerCachePopulation,
     required this.getPositionsForDate,
     required this.getInterpolatedPositions,
+    this.onExploreSky,
+    this.onExploreBirthChart,
+    this.onHouseTap,
   });
 
   @override
@@ -140,6 +153,40 @@ class CosmicSkyChartCard extends StatelessWidget {
             onForceRefresh: onTriggerCachePopulation,
             isDark: isDark,
           ),
+
+          // Explore birth chart affordance
+          if (onExploreBirthChart != null && hasBirthChart)
+            GestureDetector(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                onExploreBirthChart!();
+              },
+              child: Padding(
+                padding: const EdgeInsets.only(
+                  bottom: AppDimensions.paddingLg,
+                  top: AppDimensions.spacingSm,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Explore birth chart',
+                      style: TextStyle(
+                        fontSize: AppTheme.holyCowTextSize,
+                        fontWeight: FontWeight.w600,
+                        color: c.withValues(alpha: 0.5),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 11,
+                      color: c.withValues(alpha: 0.4),
+                    ),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -210,14 +257,35 @@ class CosmicSkyChartCard extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Date/Title
+          // Date/Title — tappable to explore full Current Sky page
           Expanded(
-            child: Text(
-              isSliderOnToday ? 'Current Sky' : dateStr,
-              style: TextStyle(
-                fontSize: AppTheme.holyCowTextSize,
-                fontWeight: FontWeight.w700,
-                color: c,
+            child: GestureDetector(
+              onTap: onExploreSky != null
+                  ? () {
+                      HapticFeedback.lightImpact();
+                      onExploreSky!();
+                    }
+                  : null,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    isSliderOnToday ? 'Current Sky' : dateStr,
+                    style: TextStyle(
+                      fontSize: AppTheme.holyCowTextSize,
+                      fontWeight: FontWeight.w700,
+                      color: c,
+                    ),
+                  ),
+                  if (onExploreSky != null) ...[
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 11,
+                      color: c.withValues(alpha: 0.4),
+                    ),
+                  ],
+                ],
               ),
             ),
           ),
@@ -304,7 +372,25 @@ class CosmicSkyChartCard extends StatelessWidget {
 
         return Center(
           child: RepaintBoundary(
-            child: Container(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTapUp: onHouseTap == null
+                  ? null
+                  : (details) {
+                      final houseNumber = houseFromLocalTap(
+                        localX: details.localPosition.dx,
+                        localY: details.localPosition.dy,
+                        containerWidth: chartWidth,
+                        containerHeight: chartWidth,
+                        padding: padding,
+                        scaleX: baseScale,
+                        scaleY: baseScale,
+                      );
+                      if (houseNumber != null) {
+                        onHouseTap!(houseNumber, _calculatePositions());
+                      }
+                    },
+              child: Container(
               width: chartWidth,
               height: chartWidth,
               padding: const EdgeInsets.all(padding),
@@ -388,6 +474,7 @@ class CosmicSkyChartCard extends StatelessWidget {
                 ),
               ),
             ),
+          ),
           ),
         );
       },

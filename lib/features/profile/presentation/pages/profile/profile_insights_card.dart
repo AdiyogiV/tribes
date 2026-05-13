@@ -27,9 +27,16 @@ class ProfileInsightsCard extends StatelessWidget {
     return FutureBuilder<AstrologyProfile?>(
       future: astrologyProfileFuture,
       builder: (context, snapshot) {
+        final isLoading = snapshot.connectionState == ConnectionState.waiting;
         final profile = snapshot.data;
         final hasProfile =
             profile != null && profile.isEnabled && profile.hasCalculatedData;
+
+        // While the astrology future is still loading, show a skeleton
+        // placeholder so the card reserves space instead of being invisible.
+        if (isLoading) {
+          return _buildInsightsLoadingSkeleton(context, primaryColor);
+        }
 
         if (!hasProfile) {
           return const SizedBox.shrink();
@@ -124,6 +131,56 @@ class ProfileInsightsCard extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  /// Skeleton placeholder shown while the astrology profile future resolves.
+  /// Reserves the same height as a loaded insights card so the layout doesn't
+  /// jump when the real content appears.
+  Widget _buildInsightsLoadingSkeleton(BuildContext context, Color primaryColor) {
+    final skeletonBase = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : primaryColor.withValues(alpha: 0.1);
+
+    return TransparentToolbox.buildCard(
+      context: context,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'INSIGHTS',
+            style: AppTheme.cardLabelStyle,
+          ),
+          const SizedBox(height: AppDimensions.spacingSm),
+          Container(
+            width: double.infinity,
+            height: 12,
+            decoration: BoxDecoration(
+              color: skeletonBase,
+              borderRadius: BorderRadius.circular(AppDimensions.radiusSmMd),
+            ),
+          ),
+          const SizedBox(height: AppDimensions.spacingSm),
+          Container(
+            width: MediaQuery.of(context).size.width * 0.7,
+            height: 12,
+            decoration: BoxDecoration(
+              color: skeletonBase,
+              borderRadius: BorderRadius.circular(AppDimensions.radiusSmMd),
+            ),
+          ),
+          const SizedBox(height: AppDimensions.spacingSm),
+          Container(
+            width: MediaQuery.of(context).size.width * 0.5,
+            height: 12,
+            decoration: BoxDecoration(
+              color: skeletonBase,
+              borderRadius: BorderRadius.circular(AppDimensions.radiusSmMd),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

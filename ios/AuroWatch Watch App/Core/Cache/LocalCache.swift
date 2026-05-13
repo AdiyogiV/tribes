@@ -138,6 +138,96 @@ class LocalCache: ObservableObject {
     /// Walking steadiness (0.0–1.0)
     @Published var walkingSteadiness: Double?
 
+    /// Core Sleep minutes (last night)
+    @Published var coreSleepMinutes: Double?
+
+    /// Sleep onset hour as decimal hour (e.g., 22.5 = 10:30 PM)
+    @Published var sleepOnsetHour: Double?
+
+    /// Apple stand-hour count for today
+    @Published var standHours: Int?
+
+    /// Apple exercise minutes for today
+    @Published var exerciseMinutes: Double?
+
+    /// Walking heart-rate average (bpm)
+    @Published var walkingHR: Double?
+
+    /// Time spent in daylight today (minutes)
+    @Published var daylightMinutes: Double?
+
+    /// Environmental audio exposure (dB, A-weighted)
+    @Published var envAudioExposure: Double?
+
+    /// Headphone audio exposure (dB, A-weighted)
+    @Published var headphoneAudioExposure: Double?
+
+    // Cardiac events
+    @Published var afibBurden: Double?
+    @Published var todayHighHRCount: Int?
+    @Published var todayLowHRCount: Int?
+    @Published var todayIrregularRhythmCount: Int?
+    @Published var todayECGCount: Int?
+
+    // Activity (more)
+    @Published var basalEnergy: Double?
+    @Published var todayDistanceMeters: Double?
+    @Published var todayFlightsClimbed: Double?
+    @Published var todayStandMinutes: Double?
+    @Published var todayWorkoutCount: Int?
+    @Published var todayWorkoutMinutes: Double?
+
+    // Gait / mobility
+    @Published var walkingSpeed: Double?
+    @Published var walkingStepLength: Double?
+    @Published var walkingDoubleSupport: Double?
+    @Published var walkingAsymmetry: Double?
+    @Published var stairAscentSpeed: Double?
+    @Published var stairDescentSpeed: Double?
+    @Published var sixMinuteWalk: Double?
+
+    // Running
+    @Published var runningSpeed: Double?
+    @Published var runningPower: Double?
+    @Published var runningStrideLength: Double?
+    @Published var runningGroundContact: Double?
+    @Published var runningVerticalOsc: Double?
+
+    // Body composition
+    @Published var bodyMass: Double?
+    @Published var bodyMassIndex: Double?
+    @Published var bodyFatPercentage: Double?
+    @Published var leanBodyMass: Double?
+    @Published var height: Double?
+
+    // Body temperature (non-sleep)
+    @Published var bodyTemperature: Double?
+
+    // Beat-to-beat HRV (HKHeartbeatSeriesSample-derived)
+    @Published var latestRMSSD: Double?
+    @Published var latestPNN50: Double?
+    @Published var latestRRSampleCount: Int?
+
+    // Sleep / respiration health
+    @Published var todaySleepApneaCount: Int?
+
+    // Environment exposure
+    @Published var latestUVExposure: Double?
+    @Published var todayEnvAudioEventCount: Int?
+    @Published var todayHeadphoneAudioEventCount: Int?
+
+    // Fall / cardio fitness alerts
+    @Published var todayFallCount: Int?
+    @Published var todayLowCardioFitnessCount: Int?
+
+    // Latest workout details
+    @Published var latestWorkoutType: String?
+    @Published var latestWorkoutDuration: Double?
+    @Published var latestWorkoutEnergyKcal: Double?
+    @Published var latestWorkoutAvgHR: Double?
+    @Published var latestWorkoutMaxHR: Double?
+    @Published var latestWorkoutDate: Date?
+
     /// Batch of recent HR readings since last sync (timestamped).
     /// Populated by fetchHeartRateReadings(since:) for zero-loss capture.
     var recentHeartRateReadings: [TimestampedValue] = []
@@ -180,6 +270,49 @@ class LocalCache: ObservableObject {
     @Published var activeEnergyTimestamp: Date?
     @Published var mindfulTimestamp: Date?
     @Published var walkingSteadinessTimestamp: Date?
+    @Published var standHoursTimestamp: Date?
+    @Published var exerciseMinutesTimestamp: Date?
+    @Published var walkingHRTimestamp: Date?
+    @Published var daylightTimestamp: Date?
+    @Published var envAudioTimestamp: Date?
+    @Published var headphoneAudioTimestamp: Date?
+    @Published var afibTimestamp: Date?
+    @Published var highHREventTimestamp: Date?
+    @Published var lowHREventTimestamp: Date?
+    @Published var irregularRhythmTimestamp: Date?
+    @Published var ecgTimestamp: Date?
+    @Published var basalEnergyTimestamp: Date?
+    @Published var distanceTimestamp: Date?
+    @Published var flightsTimestamp: Date?
+    @Published var standMinutesTimestamp: Date?
+    @Published var workoutTimestamp: Date?
+    @Published var walkingSpeedTimestamp: Date?
+    @Published var walkingStepLengthTimestamp: Date?
+    @Published var walkingDoubleSupportTimestamp: Date?
+    @Published var walkingAsymmetryTimestamp: Date?
+    @Published var stairAscentTimestamp: Date?
+    @Published var stairDescentTimestamp: Date?
+    @Published var sixMinuteWalkTimestamp: Date?
+    @Published var runningSpeedTimestamp: Date?
+    @Published var runningPowerTimestamp: Date?
+    @Published var runningStrideTimestamp: Date?
+    @Published var runningGroundContactTimestamp: Date?
+    @Published var runningVerticalOscTimestamp: Date?
+    @Published var bodyMassTimestamp: Date?
+    @Published var bmiTimestamp: Date?
+    @Published var bodyFatTimestamp: Date?
+    @Published var leanMassTimestamp: Date?
+    @Published var heightTimestamp: Date?
+    @Published var bodyTempTimestamp: Date?
+    @Published var rmssdTimestamp: Date?
+    @Published var pnn50Timestamp: Date?
+    @Published var sleepApneaTimestamp: Date?
+    @Published var uvExposureTimestamp: Date?
+    @Published var envAudioEventTimestamp: Date?
+    @Published var headphoneAudioEventTimestamp: Date?
+    @Published var fallTimestamp: Date?
+    @Published var lowCardioFitnessTimestamp: Date?
+    @Published var latestWorkoutTimestamp: Date?
 
     /// When health data was last fetched from HealthKit
     @Published var lastHealthFetch: Date?
@@ -278,6 +411,8 @@ class LocalCache: ObservableObject {
         sleepHours = defaults.object(forKey: key("sleepHours")) as? Double
         deepSleepMinutes = defaults.object(forKey: key("deepSleepMins")) as? Double
         remSleepMinutes = defaults.object(forKey: key("remSleepMins")) as? Double
+        coreSleepMinutes = defaults.object(forKey: key("coreSleepMins")) as? Double
+        sleepOnsetHour = defaults.object(forKey: key("sleepOnset")) as? Double
         wristTempDeviation = defaults.object(forKey: key("wristTemp")) as? Double
         respiratoryRate = defaults.object(forKey: key("respRate")) as? Double
         vo2Max = defaults.object(forKey: key("vo2Max")) as? Double
@@ -288,6 +423,59 @@ class LocalCache: ObservableObject {
         activeEnergy = defaults.object(forKey: key("activeEnergy")) as? Double
         mindfulMinutes = defaults.object(forKey: key("mindfulMins")) as? Double
         walkingSteadiness = defaults.object(forKey: key("walkSteady")) as? Double
+        standHours = defaults.object(forKey: key("standHours")) as? Int
+        exerciseMinutes = defaults.object(forKey: key("exerciseMins")) as? Double
+        walkingHR = defaults.object(forKey: key("walkingHR")) as? Double
+        daylightMinutes = defaults.object(forKey: key("daylightMins")) as? Double
+        envAudioExposure = defaults.object(forKey: key("envAudio")) as? Double
+        headphoneAudioExposure = defaults.object(forKey: key("headAudio")) as? Double
+        afibBurden = defaults.object(forKey: key("afib")) as? Double
+        todayHighHRCount = defaults.object(forKey: key("highHRCount")) as? Int
+        todayLowHRCount = defaults.object(forKey: key("lowHRCount")) as? Int
+        todayIrregularRhythmCount = defaults.object(forKey: key("irregCount")) as? Int
+        todayECGCount = defaults.object(forKey: key("ecgCount")) as? Int
+        basalEnergy = defaults.object(forKey: key("basalEnergy")) as? Double
+        todayDistanceMeters = defaults.object(forKey: key("distance")) as? Double
+        todayFlightsClimbed = defaults.object(forKey: key("flights")) as? Double
+        todayStandMinutes = defaults.object(forKey: key("standMins")) as? Double
+        todayWorkoutCount = defaults.object(forKey: key("workoutCount")) as? Int
+        todayWorkoutMinutes = defaults.object(forKey: key("workoutMins")) as? Double
+        walkingSpeed = defaults.object(forKey: key("walkSpeed")) as? Double
+        walkingStepLength = defaults.object(forKey: key("stepLen")) as? Double
+        walkingDoubleSupport = defaults.object(forKey: key("dblSup")) as? Double
+        walkingAsymmetry = defaults.object(forKey: key("asym")) as? Double
+        stairAscentSpeed = defaults.object(forKey: key("stairUp")) as? Double
+        stairDescentSpeed = defaults.object(forKey: key("stairDn")) as? Double
+        sixMinuteWalk = defaults.object(forKey: key("sixMinWalk")) as? Double
+        runningSpeed = defaults.object(forKey: key("runSpeed")) as? Double
+        runningPower = defaults.object(forKey: key("runPower")) as? Double
+        runningStrideLength = defaults.object(forKey: key("runStride")) as? Double
+        runningGroundContact = defaults.object(forKey: key("runGC")) as? Double
+        runningVerticalOsc = defaults.object(forKey: key("runVO")) as? Double
+        bodyMass = defaults.object(forKey: key("bodyMass")) as? Double
+        bodyMassIndex = defaults.object(forKey: key("bmi")) as? Double
+        bodyFatPercentage = defaults.object(forKey: key("bodyFat")) as? Double
+        leanBodyMass = defaults.object(forKey: key("leanMass")) as? Double
+        height = defaults.object(forKey: key("height")) as? Double
+        bodyTemperature = defaults.object(forKey: key("bodyTemp")) as? Double
+
+        // Beat-to-beat HRV, env exposure, fall/cardio alerts, workout
+        latestRMSSD = defaults.object(forKey: key("rmssd")) as? Double
+        latestPNN50 = defaults.object(forKey: key("pnn50")) as? Double
+        latestRRSampleCount = defaults.object(forKey: key("rrCount")) as? Int
+        todaySleepApneaCount = defaults.object(forKey: key("apneaCount")) as? Int
+        latestUVExposure = defaults.object(forKey: key("uvExposure")) as? Double
+        todayEnvAudioEventCount = defaults.object(forKey: key("envAudioEvt")) as? Int
+        todayHeadphoneAudioEventCount = defaults.object(forKey: key("headAudioEvt")) as? Int
+        todayFallCount = defaults.object(forKey: key("fallCount")) as? Int
+        todayLowCardioFitnessCount = defaults.object(forKey: key("lowFitCount")) as? Int
+        latestWorkoutType = defaults.string(forKey: key("workoutType"))
+        latestWorkoutDuration = defaults.object(forKey: key("workoutDur")) as? Double
+        latestWorkoutEnergyKcal = defaults.object(forKey: key("workoutKcal")) as? Double
+        latestWorkoutAvgHR = defaults.object(forKey: key("workoutAvgHR")) as? Double
+        latestWorkoutMaxHR = defaults.object(forKey: key("workoutMaxHR")) as? Double
+        let woTs = defaults.double(forKey: key("workoutDate"))
+        latestWorkoutDate = woTs > 0 ? Date(timeIntervalSince1970: woTs) : nil
 
         // Timestamps
         restoreTimestamp("hrvTs", to: &hrvTimestamp)
@@ -302,6 +490,49 @@ class LocalCache: ObservableObject {
         restoreTimestamp("energyTs", to: &activeEnergyTimestamp)
         restoreTimestamp("mindfulTs", to: &mindfulTimestamp)
         restoreTimestamp("steadyTs", to: &walkingSteadinessTimestamp)
+        restoreTimestamp("standTs", to: &standHoursTimestamp)
+        restoreTimestamp("exerciseTs", to: &exerciseMinutesTimestamp)
+        restoreTimestamp("walkHRTs", to: &walkingHRTimestamp)
+        restoreTimestamp("daylightTs", to: &daylightTimestamp)
+        restoreTimestamp("envAudioTs", to: &envAudioTimestamp)
+        restoreTimestamp("headAudioTs", to: &headphoneAudioTimestamp)
+        restoreTimestamp("afibTs", to: &afibTimestamp)
+        restoreTimestamp("highHRTs", to: &highHREventTimestamp)
+        restoreTimestamp("lowHRTs", to: &lowHREventTimestamp)
+        restoreTimestamp("irregTs", to: &irregularRhythmTimestamp)
+        restoreTimestamp("ecgTs", to: &ecgTimestamp)
+        restoreTimestamp("basalTs", to: &basalEnergyTimestamp)
+        restoreTimestamp("distTs", to: &distanceTimestamp)
+        restoreTimestamp("flightsTs", to: &flightsTimestamp)
+        restoreTimestamp("standMinTs", to: &standMinutesTimestamp)
+        restoreTimestamp("workoutTs", to: &workoutTimestamp)
+        restoreTimestamp("walkSpdTs", to: &walkingSpeedTimestamp)
+        restoreTimestamp("stepLenTs", to: &walkingStepLengthTimestamp)
+        restoreTimestamp("dblSupTs", to: &walkingDoubleSupportTimestamp)
+        restoreTimestamp("asymTs", to: &walkingAsymmetryTimestamp)
+        restoreTimestamp("stairUpTs", to: &stairAscentTimestamp)
+        restoreTimestamp("stairDnTs", to: &stairDescentTimestamp)
+        restoreTimestamp("sixMinTs", to: &sixMinuteWalkTimestamp)
+        restoreTimestamp("runSpdTs", to: &runningSpeedTimestamp)
+        restoreTimestamp("runPwrTs", to: &runningPowerTimestamp)
+        restoreTimestamp("runStrTs", to: &runningStrideTimestamp)
+        restoreTimestamp("runGCTs", to: &runningGroundContactTimestamp)
+        restoreTimestamp("runVOTs", to: &runningVerticalOscTimestamp)
+        restoreTimestamp("massTs", to: &bodyMassTimestamp)
+        restoreTimestamp("bmiTs", to: &bmiTimestamp)
+        restoreTimestamp("fatTs", to: &bodyFatTimestamp)
+        restoreTimestamp("leanTs", to: &leanMassTimestamp)
+        restoreTimestamp("heightTs", to: &heightTimestamp)
+        restoreTimestamp("bodyTempTs", to: &bodyTempTimestamp)
+        restoreTimestamp("rmssdTs", to: &rmssdTimestamp)
+        restoreTimestamp("pnn50Ts", to: &pnn50Timestamp)
+        restoreTimestamp("apneaTs", to: &sleepApneaTimestamp)
+        restoreTimestamp("uvTs", to: &uvExposureTimestamp)
+        restoreTimestamp("envAudioEvtTs", to: &envAudioEventTimestamp)
+        restoreTimestamp("headAudioEvtTs", to: &headphoneAudioEventTimestamp)
+        restoreTimestamp("fallTs", to: &fallTimestamp)
+        restoreTimestamp("lowFitTs", to: &lowCardioFitnessTimestamp)
+        restoreTimestamp("workoutDetailsTs", to: &latestWorkoutTimestamp)
         restoreTimestamp("lastHealthFetch", to: &lastHealthFetch)
 
         // Signal histories
@@ -427,7 +658,10 @@ class LocalCache: ObservableObject {
     func computeAndStoreOjas(from health: HealthKitManager) {
         let signals = HealthSignals(
             hrv: health.latestHRV,
+            rmssd: health.latestRMSSD,
+            pnn50: health.latestPNN50,
             restingHR: health.latestRestingHR,
+            walkingHR: health.latestWalkingHR,
             sleepDuration: health.lastSleepDuration,
             deepSleepMinutes: health.lastDeepSleepMinutes,
             remSleepMinutes: health.lastREMSleepMinutes,
@@ -436,11 +670,29 @@ class LocalCache: ObservableObject {
             respiratoryRate: health.latestRespiratoryRate,
             vo2Max: health.latestVO2Max,
             walkingSteadiness: health.latestWalkingSteadiness,
+            walkingAsymmetry: health.latestWalkingAsymmetry,
+            walkingDoubleSupport: health.latestWalkingDoubleSupport,
             steps: health.todaySteps,
             hrRecovery: health.latestHRRecovery,
             spO2: health.latestSpO2,
             activeEnergy: health.todayActiveEnergy,
-            mindfulMinutes: health.todayMindfulMinutes
+            mindfulMinutes: health.todayMindfulMinutes,
+            standHours: health.todayStandHours,
+            daylightMinutes: health.todayDaylightMinutes,
+            envAudioExposure: health.latestEnvAudioExposure,
+            afibBurden: health.latestAFibBurden,
+            highHRCount: health.todayHighHRCount,
+            irregularRhythmCount: health.todayIrregularRhythmCount,
+            sleepApneaCount: health.todaySleepApneaCount,
+            fallCount: health.todayFallCount,
+            lowCardioFitnessCount: health.todayLowCardioFitnessCount,
+            uvExposure: health.latestUVExposure,
+            heartRate: health.latestHeartRate,
+            exerciseMinutes: health.todayExerciseMinutes,
+            coreSleepMinutes: health.lastCoreSleepMinutes,
+            headphoneAudioExposure: health.latestHeadphoneAudioExposure,
+            lowHRCount: health.todayLowHRCount,
+            bodyTemp: health.latestBodyTemperature
         )
 
         let healthBase = HealthBaseline.populationDefaults
@@ -455,6 +707,8 @@ class LocalCache: ObservableObject {
         sleepHours = health.lastSleepDuration.map { $0 / 3600.0 }
         deepSleepMinutes = health.lastDeepSleepMinutes
         remSleepMinutes = health.lastREMSleepMinutes
+        coreSleepMinutes = health.lastCoreSleepMinutes
+        sleepOnsetHour = health.lastSleepOnsetHour
         wristTempDeviation = health.latestWristTemp
         respiratoryRate = health.latestRespiratoryRate
         vo2Max = health.latestVO2Max
@@ -465,6 +719,64 @@ class LocalCache: ObservableObject {
         activeEnergy = health.todayActiveEnergy
         mindfulMinutes = health.todayMindfulMinutes
         walkingSteadiness = health.latestWalkingSteadiness
+        standHours = health.todayStandHours
+        exerciseMinutes = health.todayExerciseMinutes
+        walkingHR = health.latestWalkingHR
+        daylightMinutes = health.todayDaylightMinutes
+        envAudioExposure = health.latestEnvAudioExposure
+        headphoneAudioExposure = health.latestHeadphoneAudioExposure
+
+        afibBurden = health.latestAFibBurden
+        todayHighHRCount = health.todayHighHRCount
+        todayLowHRCount = health.todayLowHRCount
+        todayIrregularRhythmCount = health.todayIrregularRhythmCount
+        todayECGCount = health.todayECGCount
+
+        basalEnergy = health.todayBasalEnergy
+        todayDistanceMeters = health.todayDistanceMeters
+        todayFlightsClimbed = health.todayFlightsClimbed
+        todayStandMinutes = health.todayStandMinutes
+        todayWorkoutCount = health.todayWorkoutCount
+        todayWorkoutMinutes = health.todayWorkoutMinutes
+
+        walkingSpeed = health.latestWalkingSpeed
+        walkingStepLength = health.latestWalkingStepLength
+        walkingDoubleSupport = health.latestWalkingDoubleSupport
+        walkingAsymmetry = health.latestWalkingAsymmetry
+        stairAscentSpeed = health.latestStairAscentSpeed
+        stairDescentSpeed = health.latestStairDescentSpeed
+        sixMinuteWalk = health.latestSixMinuteWalk
+
+        runningSpeed = health.latestRunningSpeed
+        runningPower = health.latestRunningPower
+        runningStrideLength = health.latestRunningStrideLength
+        runningGroundContact = health.latestRunningGroundContact
+        runningVerticalOsc = health.latestRunningVerticalOsc
+
+        bodyMass = health.latestBodyMass
+        bodyMassIndex = health.latestBodyMassIndex
+        bodyFatPercentage = health.latestBodyFatPercentage
+        leanBodyMass = health.latestLeanBodyMass
+        height = health.latestHeight
+
+        bodyTemperature = health.latestBodyTemperature
+
+        // Beat-to-beat HRV + new health signals
+        latestRMSSD = health.latestRMSSD
+        latestPNN50 = health.latestPNN50
+        latestRRSampleCount = health.latestRRSampleCount
+        todaySleepApneaCount = health.todaySleepApneaCount
+        latestUVExposure = health.latestUVExposure
+        todayEnvAudioEventCount = health.todayEnvAudioEventCount
+        todayHeadphoneAudioEventCount = health.todayHeadphoneAudioEventCount
+        todayFallCount = health.todayFallCount
+        todayLowCardioFitnessCount = health.todayLowCardioFitnessCount
+        latestWorkoutType = health.latestWorkoutType
+        latestWorkoutDuration = health.latestWorkoutDuration
+        latestWorkoutEnergyKcal = health.latestWorkoutEnergyKcal
+        latestWorkoutAvgHR = health.latestWorkoutAvgHR
+        latestWorkoutMaxHR = health.latestWorkoutMaxHR
+        latestWorkoutDate = health.latestWorkoutDate
 
         // Timestamps
         hrvTimestamp = health.hrvTimestamp
@@ -479,6 +791,49 @@ class LocalCache: ObservableObject {
         activeEnergyTimestamp = health.activeEnergyTimestamp
         mindfulTimestamp = health.mindfulTimestamp
         walkingSteadinessTimestamp = health.walkingSteadinessTimestamp
+        standHoursTimestamp = health.standHoursTimestamp
+        exerciseMinutesTimestamp = health.exerciseMinutesTimestamp
+        walkingHRTimestamp = health.walkingHRTimestamp
+        daylightTimestamp = health.daylightTimestamp
+        envAudioTimestamp = health.envAudioTimestamp
+        headphoneAudioTimestamp = health.headphoneAudioTimestamp
+        afibTimestamp = health.afibTimestamp
+        highHREventTimestamp = health.highHREventTimestamp
+        lowHREventTimestamp = health.lowHREventTimestamp
+        irregularRhythmTimestamp = health.irregularRhythmTimestamp
+        ecgTimestamp = health.ecgTimestamp
+        basalEnergyTimestamp = health.basalEnergyTimestamp
+        distanceTimestamp = health.distanceTimestamp
+        flightsTimestamp = health.flightsTimestamp
+        standMinutesTimestamp = health.standMinutesTimestamp
+        workoutTimestamp = health.workoutTimestamp
+        walkingSpeedTimestamp = health.walkingSpeedTimestamp
+        walkingStepLengthTimestamp = health.walkingStepLengthTimestamp
+        walkingDoubleSupportTimestamp = health.walkingDoubleSupportTimestamp
+        walkingAsymmetryTimestamp = health.walkingAsymmetryTimestamp
+        stairAscentTimestamp = health.stairAscentTimestamp
+        stairDescentTimestamp = health.stairDescentTimestamp
+        sixMinuteWalkTimestamp = health.sixMinuteWalkTimestamp
+        runningSpeedTimestamp = health.runningSpeedTimestamp
+        runningPowerTimestamp = health.runningPowerTimestamp
+        runningStrideTimestamp = health.runningStrideTimestamp
+        runningGroundContactTimestamp = health.runningGroundContactTimestamp
+        runningVerticalOscTimestamp = health.runningVerticalOscTimestamp
+        bodyMassTimestamp = health.bodyMassTimestamp
+        bmiTimestamp = health.bmiTimestamp
+        bodyFatTimestamp = health.bodyFatTimestamp
+        leanMassTimestamp = health.leanMassTimestamp
+        heightTimestamp = health.heightTimestamp
+        bodyTempTimestamp = health.bodyTempTimestamp
+        rmssdTimestamp = health.rmssdTimestamp
+        pnn50Timestamp = health.pnn50Timestamp
+        sleepApneaTimestamp = health.sleepApneaTimestamp
+        uvExposureTimestamp = health.uvExposureTimestamp
+        envAudioEventTimestamp = health.envAudioEventTimestamp
+        headphoneAudioEventTimestamp = health.headphoneAudioEventTimestamp
+        fallTimestamp = health.fallTimestamp
+        lowCardioFitnessTimestamp = health.lowCardioFitnessTimestamp
+        latestWorkoutTimestamp = health.latestWorkoutTimestamp
         lastHealthFetch = health.lastFetchTime
 
         saveBodySignals()
@@ -575,8 +930,71 @@ class LocalCache: ObservableObject {
         if let v = sleepHours { payload["sleepHours"] = v }
         if let v = deepSleepMinutes { payload["deepSleepMins"] = v }
         if let v = remSleepMinutes { payload["remSleepMins"] = v }
+        if let v = coreSleepMinutes { payload["coreSleepMins"] = v }
+        if let v = sleepOnsetHour { payload["sleepOnset"] = v }
+        // Activity rings extras
+        if let v = standHours { payload["standHours"] = v }
+        if let v = exerciseMinutes { payload["exerciseMins"] = v }
+        if let v = walkingHR { payload["walkingHR"] = v }
+        // Environment / circadian
+        if let v = daylightMinutes { payload["daylightMins"] = v }
+        if let v = envAudioExposure { payload["envAudio"] = v }
+        if let v = headphoneAudioExposure { payload["headAudio"] = v }
+        // Cardiac events
+        if let v = afibBurden { payload["afibBurden"] = v }
+        if let v = todayHighHRCount { payload["highHRCount"] = v }
+        if let v = todayLowHRCount { payload["lowHRCount"] = v }
+        if let v = todayIrregularRhythmCount { payload["irregCount"] = v }
+        if let v = todayECGCount { payload["ecgCount"] = v }
+        // Activity (more)
+        if let v = basalEnergy { payload["basalEnergy"] = v }
+        if let v = todayDistanceMeters { payload["distance"] = v }
+        if let v = todayFlightsClimbed { payload["flights"] = v }
+        if let v = todayStandMinutes { payload["standMins"] = v }
+        if let v = todayWorkoutCount { payload["workoutCount"] = v }
+        if let v = todayWorkoutMinutes { payload["workoutMins"] = v }
+        // Gait / mobility
+        if let v = walkingSpeed { payload["walkSpeed"] = v }
+        if let v = walkingStepLength { payload["stepLen"] = v }
+        if let v = walkingDoubleSupport { payload["dblSup"] = v }
+        if let v = walkingAsymmetry { payload["asym"] = v }
+        if let v = stairAscentSpeed { payload["stairUp"] = v }
+        if let v = stairDescentSpeed { payload["stairDn"] = v }
+        if let v = sixMinuteWalk { payload["sixMinWalk"] = v }
+        // Running
+        if let v = runningSpeed { payload["runSpeed"] = v }
+        if let v = runningPower { payload["runPower"] = v }
+        if let v = runningStrideLength { payload["runStride"] = v }
+        if let v = runningGroundContact { payload["runGC"] = v }
+        if let v = runningVerticalOsc { payload["runVO"] = v }
+        // Body composition
+        if let v = bodyMass { payload["bodyMass"] = v }
+        if let v = bodyMassIndex { payload["bmi"] = v }
+        if let v = bodyFatPercentage { payload["bodyFat"] = v }
+        if let v = leanBodyMass { payload["leanMass"] = v }
+        if let v = height { payload["height"] = v }
         // Body
+        if let v = bodyTemperature { payload["bodyTemp"] = v }
         if let v = wristTempDeviation { payload["wristTemp"] = v }
+        // Beat-to-beat HRV (HKHeartbeatSeriesSample-derived)
+        if let v = latestRMSSD { payload["rmssd"] = v }
+        if let v = latestPNN50 { payload["pnn50"] = v }
+        if let v = latestRRSampleCount { payload["rrSamples"] = v }
+        // Breathing / environment
+        if let v = todaySleepApneaCount { payload["apneaCount"] = v }
+        if let v = latestUVExposure { payload["uvExposure"] = v }
+        if let v = todayEnvAudioEventCount { payload["envAudioEvents"] = v }
+        if let v = todayHeadphoneAudioEventCount { payload["headAudioEvents"] = v }
+        // Fall / cardio fitness alerts
+        if let v = todayFallCount { payload["fallCount"] = v }
+        if let v = todayLowCardioFitnessCount { payload["lowCardioFitCount"] = v }
+        // Latest workout details
+        if let v = latestWorkoutType { payload["workoutType"] = v }
+        if let v = latestWorkoutDuration { payload["workoutDuration"] = v }
+        if let v = latestWorkoutEnergyKcal { payload["workoutKcal"] = v }
+        if let v = latestWorkoutAvgHR { payload["workoutAvgHR"] = v }
+        if let v = latestWorkoutMaxHR { payload["workoutMaxHR"] = v }
+        if let d = latestWorkoutDate { payload["workoutDate"] = d.timeIntervalSince1970 }
         if !ojasHistory.isEmpty { payload["ojasHistory"] = ojasHistory }
         if !ojasHistoryFlat.isEmpty { payload["ojasHistoryFlat"] = ojasHistoryFlat }
         payload["timestamp"] = Date.now.timeIntervalSince1970
@@ -667,6 +1085,8 @@ class LocalCache: ObservableObject {
         defaults.set(sleepHours, forKey: key("sleepHours"))
         defaults.set(deepSleepMinutes, forKey: key("deepSleepMins"))
         defaults.set(remSleepMinutes, forKey: key("remSleepMins"))
+        defaults.set(coreSleepMinutes, forKey: key("coreSleepMins"))
+        defaults.set(sleepOnsetHour, forKey: key("sleepOnset"))
         defaults.set(wristTempDeviation, forKey: key("wristTemp"))
         defaults.set(respiratoryRate, forKey: key("respRate"))
         defaults.set(vo2Max, forKey: key("vo2Max"))
@@ -677,6 +1097,60 @@ class LocalCache: ObservableObject {
         defaults.set(activeEnergy, forKey: key("activeEnergy"))
         defaults.set(mindfulMinutes, forKey: key("mindfulMins"))
         defaults.set(walkingSteadiness, forKey: key("walkSteady"))
+        defaults.set(standHours, forKey: key("standHours"))
+        defaults.set(exerciseMinutes, forKey: key("exerciseMins"))
+        defaults.set(walkingHR, forKey: key("walkingHR"))
+        defaults.set(daylightMinutes, forKey: key("daylightMins"))
+        defaults.set(envAudioExposure, forKey: key("envAudio"))
+        defaults.set(headphoneAudioExposure, forKey: key("headAudio"))
+        defaults.set(afibBurden, forKey: key("afib"))
+        defaults.set(todayHighHRCount, forKey: key("highHRCount"))
+        defaults.set(todayLowHRCount, forKey: key("lowHRCount"))
+        defaults.set(todayIrregularRhythmCount, forKey: key("irregCount"))
+        defaults.set(todayECGCount, forKey: key("ecgCount"))
+        defaults.set(basalEnergy, forKey: key("basalEnergy"))
+        defaults.set(todayDistanceMeters, forKey: key("distance"))
+        defaults.set(todayFlightsClimbed, forKey: key("flights"))
+        defaults.set(todayStandMinutes, forKey: key("standMins"))
+        defaults.set(todayWorkoutCount, forKey: key("workoutCount"))
+        defaults.set(todayWorkoutMinutes, forKey: key("workoutMins"))
+        defaults.set(walkingSpeed, forKey: key("walkSpeed"))
+        defaults.set(walkingStepLength, forKey: key("stepLen"))
+        defaults.set(walkingDoubleSupport, forKey: key("dblSup"))
+        defaults.set(walkingAsymmetry, forKey: key("asym"))
+        defaults.set(stairAscentSpeed, forKey: key("stairUp"))
+        defaults.set(stairDescentSpeed, forKey: key("stairDn"))
+        defaults.set(sixMinuteWalk, forKey: key("sixMinWalk"))
+        defaults.set(runningSpeed, forKey: key("runSpeed"))
+        defaults.set(runningPower, forKey: key("runPower"))
+        defaults.set(runningStrideLength, forKey: key("runStride"))
+        defaults.set(runningGroundContact, forKey: key("runGC"))
+        defaults.set(runningVerticalOsc, forKey: key("runVO"))
+        defaults.set(bodyMass, forKey: key("bodyMass"))
+        defaults.set(bodyMassIndex, forKey: key("bmi"))
+        defaults.set(bodyFatPercentage, forKey: key("bodyFat"))
+        defaults.set(leanBodyMass, forKey: key("leanMass"))
+        defaults.set(height, forKey: key("height"))
+        defaults.set(bodyTemperature, forKey: key("bodyTemp"))
+
+        // Beat-to-beat HRV + new signals
+        defaults.set(latestRMSSD, forKey: key("rmssd"))
+        defaults.set(latestPNN50, forKey: key("pnn50"))
+        defaults.set(latestRRSampleCount, forKey: key("rrCount"))
+        defaults.set(todaySleepApneaCount, forKey: key("apneaCount"))
+        defaults.set(latestUVExposure, forKey: key("uvExposure"))
+        defaults.set(todayEnvAudioEventCount, forKey: key("envAudioEvt"))
+        defaults.set(todayHeadphoneAudioEventCount, forKey: key("headAudioEvt"))
+        defaults.set(todayFallCount, forKey: key("fallCount"))
+        defaults.set(todayLowCardioFitnessCount, forKey: key("lowFitCount"))
+        defaults.set(latestWorkoutType, forKey: key("workoutType"))
+        defaults.set(latestWorkoutDuration, forKey: key("workoutDur"))
+        defaults.set(latestWorkoutEnergyKcal, forKey: key("workoutKcal"))
+        defaults.set(latestWorkoutAvgHR, forKey: key("workoutAvgHR"))
+        defaults.set(latestWorkoutMaxHR, forKey: key("workoutMaxHR"))
+        if let d = latestWorkoutDate {
+            defaults.set(d.timeIntervalSince1970, forKey: key("workoutDate"))
+        }
 
         // Save timestamps
         saveTimestamp(hrvTimestamp, key: "hrvTs")
@@ -691,6 +1165,49 @@ class LocalCache: ObservableObject {
         saveTimestamp(activeEnergyTimestamp, key: "energyTs")
         saveTimestamp(mindfulTimestamp, key: "mindfulTs")
         saveTimestamp(walkingSteadinessTimestamp, key: "steadyTs")
+        saveTimestamp(standHoursTimestamp, key: "standTs")
+        saveTimestamp(exerciseMinutesTimestamp, key: "exerciseTs")
+        saveTimestamp(walkingHRTimestamp, key: "walkHRTs")
+        saveTimestamp(daylightTimestamp, key: "daylightTs")
+        saveTimestamp(envAudioTimestamp, key: "envAudioTs")
+        saveTimestamp(headphoneAudioTimestamp, key: "headAudioTs")
+        saveTimestamp(afibTimestamp, key: "afibTs")
+        saveTimestamp(highHREventTimestamp, key: "highHRTs")
+        saveTimestamp(lowHREventTimestamp, key: "lowHRTs")
+        saveTimestamp(irregularRhythmTimestamp, key: "irregTs")
+        saveTimestamp(ecgTimestamp, key: "ecgTs")
+        saveTimestamp(basalEnergyTimestamp, key: "basalTs")
+        saveTimestamp(distanceTimestamp, key: "distTs")
+        saveTimestamp(flightsTimestamp, key: "flightsTs")
+        saveTimestamp(standMinutesTimestamp, key: "standMinTs")
+        saveTimestamp(workoutTimestamp, key: "workoutTs")
+        saveTimestamp(walkingSpeedTimestamp, key: "walkSpdTs")
+        saveTimestamp(walkingStepLengthTimestamp, key: "stepLenTs")
+        saveTimestamp(walkingDoubleSupportTimestamp, key: "dblSupTs")
+        saveTimestamp(walkingAsymmetryTimestamp, key: "asymTs")
+        saveTimestamp(stairAscentTimestamp, key: "stairUpTs")
+        saveTimestamp(stairDescentTimestamp, key: "stairDnTs")
+        saveTimestamp(sixMinuteWalkTimestamp, key: "sixMinTs")
+        saveTimestamp(runningSpeedTimestamp, key: "runSpdTs")
+        saveTimestamp(runningPowerTimestamp, key: "runPwrTs")
+        saveTimestamp(runningStrideTimestamp, key: "runStrTs")
+        saveTimestamp(runningGroundContactTimestamp, key: "runGCTs")
+        saveTimestamp(runningVerticalOscTimestamp, key: "runVOTs")
+        saveTimestamp(bodyMassTimestamp, key: "massTs")
+        saveTimestamp(bmiTimestamp, key: "bmiTs")
+        saveTimestamp(bodyFatTimestamp, key: "fatTs")
+        saveTimestamp(leanMassTimestamp, key: "leanTs")
+        saveTimestamp(heightTimestamp, key: "heightTs")
+        saveTimestamp(bodyTempTimestamp, key: "bodyTempTs")
+        saveTimestamp(rmssdTimestamp, key: "rmssdTs")
+        saveTimestamp(pnn50Timestamp, key: "pnn50Ts")
+        saveTimestamp(sleepApneaTimestamp, key: "apneaTs")
+        saveTimestamp(uvExposureTimestamp, key: "uvTs")
+        saveTimestamp(envAudioEventTimestamp, key: "envAudioEvtTs")
+        saveTimestamp(headphoneAudioEventTimestamp, key: "headAudioEvtTs")
+        saveTimestamp(fallTimestamp, key: "fallTs")
+        saveTimestamp(lowCardioFitnessTimestamp, key: "lowFitTs")
+        saveTimestamp(latestWorkoutTimestamp, key: "workoutDetailsTs")
         saveTimestamp(lastHealthFetch, key: "lastHealthFetch")
     }
 

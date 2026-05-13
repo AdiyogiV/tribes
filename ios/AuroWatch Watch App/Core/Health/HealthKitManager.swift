@@ -55,6 +55,9 @@ class HealthKitManager: ObservableObject {
     // Movement (Vyayama)
     @Published var todaySteps: Int?
     @Published var latestHRRecovery: Double?    // bpm drop 1-min post-workout
+    @Published var todayStandHours: Int?        // Apple stand hours today
+    @Published var todayExerciseMinutes: Double? // Apple exercise minutes today
+    @Published var latestWalkingHR: Double?     // walking HR average (bpm)
 
     // Blood Oxygen (Prana)
     @Published var latestSpO2: Double?          // 0.0–1.0 (e.g., 0.98 = 98%)
@@ -64,6 +67,81 @@ class HealthKitManager: ObservableObject {
 
     // Mindfulness (Sattva)
     @Published var todayMindfulMinutes: Double?  // minutes of mindful sessions today
+
+    // Environment / Circadian
+    @Published var todayDaylightMinutes: Double?       // time in daylight today (minutes)
+    @Published var latestEnvAudioExposure: Double?     // environmental audio exposure (dB)
+    @Published var latestHeadphoneAudioExposure: Double? // headphone audio exposure (dB)
+
+    // Cardiac events
+    @Published var latestAFibBurden: Double?           // % time in AFib
+    @Published var todayHighHRCount: Int?              // count of high HR events today
+    @Published var todayLowHRCount: Int?               // count of low HR events today
+    @Published var todayIrregularRhythmCount: Int?     // count of irregular rhythm events today
+    @Published var todayECGCount: Int?                 // count of ECG samples today
+
+    // Activity (more)
+    @Published var todayBasalEnergy: Double?           // basal kcal burned today
+    @Published var todayDistanceMeters: Double?        // walking/running distance today (meters)
+    @Published var todayFlightsClimbed: Double?        // flights climbed today (count)
+    @Published var todayStandMinutes: Double?          // actual stand minutes today
+    @Published var todayWorkoutCount: Int?             // workouts done today
+    @Published var todayWorkoutMinutes: Double?        // total workout duration today (minutes)
+
+    // Gait / Mobility
+    @Published var latestWalkingSpeed: Double?         // m/s
+    @Published var latestWalkingStepLength: Double?    // cm
+    @Published var latestWalkingDoubleSupport: Double? // 0–1 fraction
+    @Published var latestWalkingAsymmetry: Double?     // 0–1 fraction
+    @Published var latestStairAscentSpeed: Double?     // m/s
+    @Published var latestStairDescentSpeed: Double?    // m/s
+    @Published var latestSixMinuteWalk: Double?        // meters
+
+    // Running
+    @Published var latestRunningSpeed: Double?         // m/s
+    @Published var latestRunningPower: Double?         // watts
+    @Published var latestRunningStrideLength: Double?  // meters
+    @Published var latestRunningGroundContact: Double? // ms
+    @Published var latestRunningVerticalOsc: Double?   // cm
+
+    // Body composition
+    @Published var latestBodyMass: Double?             // kg
+    @Published var latestBodyMassIndex: Double?        // count
+    @Published var latestBodyFatPercentage: Double?    // 0–1 fraction
+    @Published var latestLeanBodyMass: Double?         // kg
+    @Published var latestHeight: Double?               // meters
+
+    // Temperature (non-sleep)
+    @Published var latestBodyTemperature: Double?      // °C
+
+    // Beat-to-beat HRV (computed from HKHeartbeatSeriesSample RR intervals)
+    @Published var latestRMSSD: Double?                // ms — root mean square of successive RR diffs
+    @Published var latestPNN50: Double?                // 0–1 — fraction of NN50+ pairs
+    @Published var latestRRSampleCount: Int?           // total RR pairs analyzed
+
+    // Sleep disturbances (watchOS 11+)
+    @Published var todaySleepApneaCount: Int?          // count of elevated breathing-disturbance samples
+
+    // Environment (more)
+    @Published var latestUVExposure: Double?           // count (UV index)
+
+    // Audio exposure events (registered loud-sound alerts)
+    @Published var todayEnvAudioEventCount: Int?
+    @Published var todayHeadphoneAudioEventCount: Int?
+
+    // Fall detection
+    @Published var todayFallCount: Int?
+
+    // Low cardio fitness event (Apple's low-VO₂ flag)
+    @Published var todayLowCardioFitnessCount: Int?
+
+    // Most recent workout details
+    @Published var latestWorkoutType: String?          // localized workout type name
+    @Published var latestWorkoutDuration: Double?      // seconds
+    @Published var latestWorkoutEnergyKcal: Double?    // kcal
+    @Published var latestWorkoutAvgHR: Double?         // bpm (avg during workout)
+    @Published var latestWorkoutMaxHR: Double?         // bpm (max during workout)
+    @Published var latestWorkoutDate: Date?            // when workout ended
 
     // MARK: - Timestamps (when HealthKit sample was recorded)
 
@@ -80,6 +158,49 @@ class HealthKitManager: ObservableObject {
     @Published var spO2Timestamp: Date?
     @Published var activeEnergyTimestamp: Date?
     @Published var mindfulTimestamp: Date?
+    @Published var standHoursTimestamp: Date?
+    @Published var exerciseMinutesTimestamp: Date?
+    @Published var walkingHRTimestamp: Date?
+    @Published var daylightTimestamp: Date?
+    @Published var envAudioTimestamp: Date?
+    @Published var headphoneAudioTimestamp: Date?
+    @Published var afibTimestamp: Date?
+    @Published var highHREventTimestamp: Date?
+    @Published var lowHREventTimestamp: Date?
+    @Published var irregularRhythmTimestamp: Date?
+    @Published var ecgTimestamp: Date?
+    @Published var basalEnergyTimestamp: Date?
+    @Published var distanceTimestamp: Date?
+    @Published var flightsTimestamp: Date?
+    @Published var standMinutesTimestamp: Date?
+    @Published var workoutTimestamp: Date?
+    @Published var walkingSpeedTimestamp: Date?
+    @Published var walkingStepLengthTimestamp: Date?
+    @Published var walkingDoubleSupportTimestamp: Date?
+    @Published var walkingAsymmetryTimestamp: Date?
+    @Published var stairAscentTimestamp: Date?
+    @Published var stairDescentTimestamp: Date?
+    @Published var sixMinuteWalkTimestamp: Date?
+    @Published var runningSpeedTimestamp: Date?
+    @Published var runningPowerTimestamp: Date?
+    @Published var runningStrideTimestamp: Date?
+    @Published var runningGroundContactTimestamp: Date?
+    @Published var runningVerticalOscTimestamp: Date?
+    @Published var bodyMassTimestamp: Date?
+    @Published var bmiTimestamp: Date?
+    @Published var bodyFatTimestamp: Date?
+    @Published var leanMassTimestamp: Date?
+    @Published var heightTimestamp: Date?
+    @Published var bodyTempTimestamp: Date?
+    @Published var rmssdTimestamp: Date?
+    @Published var pnn50Timestamp: Date?
+    @Published var sleepApneaTimestamp: Date?
+    @Published var uvExposureTimestamp: Date?
+    @Published var envAudioEventTimestamp: Date?
+    @Published var headphoneAudioEventTimestamp: Date?
+    @Published var fallTimestamp: Date?
+    @Published var lowCardioFitnessTimestamp: Date?
+    @Published var latestWorkoutTimestamp: Date?
 
     /// Master timestamp — when fetchAllReadings was last called
     @Published var lastFetchTime: Date?
@@ -125,6 +246,77 @@ class HealthKitManager: ObservableObject {
         // Mindfulness (Sattva)
         if let t = HKCategoryType.categoryType(forIdentifier: .mindfulSession) { types.insert(t) }
 
+        // Activity rings extras
+        if let t = HKCategoryType.categoryType(forIdentifier: .appleStandHour) { types.insert(t) }
+        if let t = HKQuantityType.quantityType(forIdentifier: .appleExerciseTime) { types.insert(t) }
+        if let t = HKQuantityType.quantityType(forIdentifier: .walkingHeartRateAverage) { types.insert(t) }
+
+        // Environment / circadian
+        if #available(watchOS 10.0, *) {
+            if let t = HKQuantityType.quantityType(forIdentifier: .timeInDaylight) { types.insert(t) }
+        }
+        if let t = HKQuantityType.quantityType(forIdentifier: .environmentalAudioExposure) { types.insert(t) }
+        if let t = HKQuantityType.quantityType(forIdentifier: .headphoneAudioExposure) { types.insert(t) }
+
+        // Cardiac events
+        if let t = HKQuantityType.quantityType(forIdentifier: .atrialFibrillationBurden) { types.insert(t) }
+        if let t = HKCategoryType.categoryType(forIdentifier: .highHeartRateEvent) { types.insert(t) }
+        if let t = HKCategoryType.categoryType(forIdentifier: .lowHeartRateEvent) { types.insert(t) }
+        if let t = HKCategoryType.categoryType(forIdentifier: .irregularHeartRhythmEvent) { types.insert(t) }
+        types.insert(HKObjectType.electrocardiogramType())
+
+        // Activity (more)
+        if let t = HKQuantityType.quantityType(forIdentifier: .basalEnergyBurned) { types.insert(t) }
+        if let t = HKQuantityType.quantityType(forIdentifier: .distanceWalkingRunning) { types.insert(t) }
+        if let t = HKQuantityType.quantityType(forIdentifier: .flightsClimbed) { types.insert(t) }
+        if let t = HKQuantityType.quantityType(forIdentifier: .appleStandTime) { types.insert(t) }
+        types.insert(HKObjectType.workoutType())
+
+        // Gait / Mobility
+        if let t = HKQuantityType.quantityType(forIdentifier: .walkingSpeed) { types.insert(t) }
+        if let t = HKQuantityType.quantityType(forIdentifier: .walkingStepLength) { types.insert(t) }
+        if let t = HKQuantityType.quantityType(forIdentifier: .walkingDoubleSupportPercentage) { types.insert(t) }
+        if let t = HKQuantityType.quantityType(forIdentifier: .walkingAsymmetryPercentage) { types.insert(t) }
+        if let t = HKQuantityType.quantityType(forIdentifier: .stairAscentSpeed) { types.insert(t) }
+        if let t = HKQuantityType.quantityType(forIdentifier: .stairDescentSpeed) { types.insert(t) }
+        if let t = HKQuantityType.quantityType(forIdentifier: .sixMinuteWalkTestDistance) { types.insert(t) }
+
+        // Running
+        if let t = HKQuantityType.quantityType(forIdentifier: .runningSpeed) { types.insert(t) }
+        if let t = HKQuantityType.quantityType(forIdentifier: .runningPower) { types.insert(t) }
+        if let t = HKQuantityType.quantityType(forIdentifier: .runningStrideLength) { types.insert(t) }
+        if let t = HKQuantityType.quantityType(forIdentifier: .runningGroundContactTime) { types.insert(t) }
+        if let t = HKQuantityType.quantityType(forIdentifier: .runningVerticalOscillation) { types.insert(t) }
+
+        // Body composition
+        if let t = HKQuantityType.quantityType(forIdentifier: .bodyMass) { types.insert(t) }
+        if let t = HKQuantityType.quantityType(forIdentifier: .bodyMassIndex) { types.insert(t) }
+        if let t = HKQuantityType.quantityType(forIdentifier: .bodyFatPercentage) { types.insert(t) }
+        if let t = HKQuantityType.quantityType(forIdentifier: .leanBodyMass) { types.insert(t) }
+        if let t = HKQuantityType.quantityType(forIdentifier: .height) { types.insert(t) }
+
+        // Body temperature (non-sleep)
+        if let t = HKQuantityType.quantityType(forIdentifier: .bodyTemperature) { types.insert(t) }
+
+        // Beat-to-beat (RR-interval) source for RMSSD / pNN50
+        types.insert(HKSeriesType.heartbeat())
+
+        // Sleep apnea events — iOS-only HealthKit category (.appleSleepingBreathingDisturbances).
+        // Not available on watchOS; phone app must read this and sync the count down.
+
+        // UV exposure (Tejas / Pitta provocation)
+        if let t = HKQuantityType.quantityType(forIdentifier: .uvExposure) { types.insert(t) }
+
+        // Audio exposure events
+        if let t = HKCategoryType.categoryType(forIdentifier: .environmentalAudioExposureEvent) { types.insert(t) }
+        if let t = HKCategoryType.categoryType(forIdentifier: .headphoneAudioExposureEvent) { types.insert(t) }
+
+        // Fall detection
+        if let t = HKQuantityType.quantityType(forIdentifier: .numberOfTimesFallen) { types.insert(t) }
+
+        // Low cardio fitness flag
+        if let t = HKCategoryType.categoryType(forIdentifier: .lowCardioFitnessEvent) { types.insert(t) }
+
         return types
     }
 
@@ -155,7 +347,7 @@ class HealthKitManager: ObservableObject {
 
     /// Fetch all available health readings. Calls completion when all fetches done.
     func fetchAllReadings(completion: (() -> Void)? = nil) {
-        let totalFetches = 13 // number of individual fetch calls
+        let totalFetches = 55 // number of individual fetch calls
         var completed = 0
         let lock = NSLock()
         let startTime = Date()
@@ -197,6 +389,68 @@ class HealthKitManager: ObservableObject {
         fetchSpO2(completion: onFetchDone)
         fetchTodayActiveEnergy(completion: onFetchDone)
         fetchTodayMindfulMinutes(completion: onFetchDone)
+        fetchTodayStandHours(completion: onFetchDone)
+        fetchTodayExerciseMinutes(completion: onFetchDone)
+        fetchWalkingHR(completion: onFetchDone)
+        fetchTodayDaylight(completion: onFetchDone)
+        fetchEnvAudioExposure(completion: onFetchDone)
+        fetchHeadphoneAudioExposure(completion: onFetchDone)
+
+        // Cardiac events
+        fetchAFibBurden(completion: onFetchDone)
+        fetchTodayHighHRCount(completion: onFetchDone)
+        fetchTodayLowHRCount(completion: onFetchDone)
+        fetchTodayIrregularRhythmCount(completion: onFetchDone)
+        fetchTodayECGCount(completion: onFetchDone)
+
+        // Activity (more)
+        fetchTodayBasalEnergy(completion: onFetchDone)
+        fetchTodayDistance(completion: onFetchDone)
+        fetchTodayFlightsClimbed(completion: onFetchDone)
+        fetchTodayStandMinutes(completion: onFetchDone)
+        fetchTodayWorkoutSummary(completion: onFetchDone)
+
+        // Gait / mobility
+        fetchWalkingSpeed(completion: onFetchDone)
+        fetchWalkingStepLength(completion: onFetchDone)
+        fetchWalkingDoubleSupport(completion: onFetchDone)
+        fetchWalkingAsymmetry(completion: onFetchDone)
+        fetchStairAscentSpeed(completion: onFetchDone)
+        fetchStairDescentSpeed(completion: onFetchDone)
+        fetchSixMinuteWalk(completion: onFetchDone)
+
+        // Running
+        fetchRunningSpeed(completion: onFetchDone)
+        fetchRunningPower(completion: onFetchDone)
+        fetchRunningStrideLength(completion: onFetchDone)
+        fetchRunningGroundContact(completion: onFetchDone)
+        fetchRunningVerticalOsc(completion: onFetchDone)
+
+        // Body composition
+        fetchBodyMass(completion: onFetchDone)
+        fetchBodyMassIndex(completion: onFetchDone)
+        fetchBodyFatPercentage(completion: onFetchDone)
+        fetchLeanBodyMass(completion: onFetchDone)
+        fetchHeight(completion: onFetchDone)
+
+        // Body temperature (non-sleep)
+        fetchBodyTemperature(completion: onFetchDone)
+
+        // Beat-to-beat HRV (RMSSD / pNN50) — heartbeat series counts as one fetch
+        fetchHeartbeatSeriesMetrics(completion: onFetchDone)
+
+        // Sleep apnea / breathing disturbances (today)
+        fetchTodaySleepApneaCount(completion: onFetchDone)
+
+        // Environment + safety extras
+        fetchUVExposure(completion: onFetchDone)
+        fetchTodayEnvAudioEventCount(completion: onFetchDone)
+        fetchTodayHeadphoneAudioEventCount(completion: onFetchDone)
+        fetchTodayFallCount(completion: onFetchDone)
+        fetchTodayLowCardioFitnessCount(completion: onFetchDone)
+
+        // Most recent workout details
+        fetchLatestWorkoutDetails(completion: onFetchDone)
     }
 
     /// Log a summary of all available signals after a full fetch.
@@ -208,7 +462,24 @@ class HealthKitManager: ObservableObject {
             ("Sleep", lastSleepDuration), ("Deep", lastDeepSleepMinutes), ("REM", lastREMSleepMinutes),
             ("Temp", latestWristTemp), ("Resp", latestRespiratoryRate), ("VO2", latestVO2Max),
             ("Steps", todaySteps), ("Recovery", latestHRRecovery), ("SpO2", latestSpO2),
-            ("Energy", todayActiveEnergy), ("Mindful", todayMindfulMinutes)
+            ("Energy", todayActiveEnergy), ("Mindful", todayMindfulMinutes),
+            ("Stand", todayStandHours), ("Exercise", todayExerciseMinutes), ("WalkHR", latestWalkingHR),
+            ("Daylight", todayDaylightMinutes), ("EnvAudio", latestEnvAudioExposure),
+            ("HeadAudio", latestHeadphoneAudioExposure),
+            ("AFib", latestAFibBurden), ("HighHR", todayHighHRCount), ("LowHR", todayLowHRCount),
+            ("Irreg", todayIrregularRhythmCount), ("ECG", todayECGCount),
+            ("Basal", todayBasalEnergy), ("Dist", todayDistanceMeters), ("Flights", todayFlightsClimbed),
+            ("StandMin", todayStandMinutes), ("Workouts", todayWorkoutCount),
+            ("WalkSpd", latestWalkingSpeed), ("StepLen", latestWalkingStepLength),
+            ("DblSup", latestWalkingDoubleSupport), ("Asym", latestWalkingAsymmetry),
+            ("StairUp", latestStairAscentSpeed), ("StairDn", latestStairDescentSpeed),
+            ("6MWT", latestSixMinuteWalk),
+            ("RunSpd", latestRunningSpeed), ("RunPwr", latestRunningPower),
+            ("RunStr", latestRunningStrideLength), ("RunGC", latestRunningGroundContact),
+            ("RunVO", latestRunningVerticalOsc),
+            ("Mass", latestBodyMass), ("BMI", latestBodyMassIndex), ("Fat", latestBodyFatPercentage),
+            ("Lean", latestLeanBodyMass), ("Height", latestHeight),
+            ("BodyT", latestBodyTemperature)
         ]
         for (name, val) in signals {
             if val != nil { available.append(name) } else { missing.append(name) }
@@ -699,7 +970,825 @@ class HealthKitManager: ObservableObject {
         fetchHistory(type: type, unit: unit, days: days, completion: completion)
     }
 
+    // MARK: - Activity Rings Extras
+
+    /// Fetch today's stand-hour count (Apple stand hours).
+    func fetchTodayStandHours(completion: (() -> Void)? = nil) {
+        guard let type = HKCategoryType.categoryType(forIdentifier: .appleStandHour) else {
+            completion?()
+            return
+        }
+        let start = Calendar.current.startOfDay(for: .now)
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: .now)
+        let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)
+        let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: HKObjectQueryNoLimit,
+                                   sortDescriptors: [sort]) { _, samples, _ in
+            // Stood = HKCategoryValueAppleStandHour.stood (rawValue 0)
+            let stood = (samples as? [HKCategorySample])?.filter {
+                $0.value == HKCategoryValueAppleStandHour.stood.rawValue
+            }.count ?? 0
+            DispatchQueue.main.async {
+                self.todayStandHours = stood
+                self.standHoursTimestamp = .now
+            }
+            completion?()
+        }
+        store.execute(query)
+    }
+
+    /// Fetch today's exercise minutes (cumulative).
+    func fetchTodayExerciseMinutes(completion: (() -> Void)? = nil) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .appleExerciseTime) else {
+            completion?()
+            return
+        }
+        let start = Calendar.current.startOfDay(for: .now)
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: .now)
+        let query = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: predicate,
+                                       options: .cumulativeSum) { _, stats, _ in
+            let mins = stats?.sumQuantity()?.doubleValue(for: .minute())
+            DispatchQueue.main.async {
+                self.todayExerciseMinutes = mins
+                self.exerciseMinutesTimestamp = .now
+            }
+            completion?()
+        }
+        store.execute(query)
+    }
+
+    /// Fetch the most recent walking heart-rate average.
+    func fetchWalkingHR(completion: (() -> Void)? = nil) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .walkingHeartRateAverage) else {
+            completion?()
+            return
+        }
+        let bpm = HKUnit.count().unitDivided(by: .minute())
+        fetchMostRecentWithDate(type: type, unit: bpm) { value, date in
+            DispatchQueue.main.async {
+                self.latestWalkingHR = value
+                self.walkingHRTimestamp = date
+            }
+            completion?()
+        }
+    }
+
+    // MARK: - Environment / Circadian
+
+    /// Fetch today's time-in-daylight (watchOS 10+).
+    func fetchTodayDaylight(completion: (() -> Void)? = nil) {
+        guard #available(watchOS 10.0, *),
+              let type = HKQuantityType.quantityType(forIdentifier: .timeInDaylight) else {
+            completion?()
+            return
+        }
+        let start = Calendar.current.startOfDay(for: .now)
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: .now)
+        let query = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: predicate,
+                                       options: .cumulativeSum) { _, stats, _ in
+            let mins = stats?.sumQuantity()?.doubleValue(for: .minute())
+            DispatchQueue.main.async {
+                self.todayDaylightMinutes = mins
+                self.daylightTimestamp = .now
+            }
+            completion?()
+        }
+        store.execute(query)
+    }
+
+    /// Fetch the most recent environmental audio exposure sample.
+    func fetchEnvAudioExposure(completion: (() -> Void)? = nil) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .environmentalAudioExposure) else {
+            completion?()
+            return
+        }
+        let unit = HKUnit.decibelAWeightedSoundPressureLevel()
+        fetchMostRecentWithDate(type: type, unit: unit) { value, date in
+            DispatchQueue.main.async {
+                self.latestEnvAudioExposure = value
+                self.envAudioTimestamp = date
+            }
+            completion?()
+        }
+    }
+
+    /// Fetch the most recent headphone audio exposure sample.
+    func fetchHeadphoneAudioExposure(completion: (() -> Void)? = nil) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .headphoneAudioExposure) else {
+            completion?()
+            return
+        }
+        let unit = HKUnit.decibelAWeightedSoundPressureLevel()
+        fetchMostRecentWithDate(type: type, unit: unit) { value, date in
+            DispatchQueue.main.async {
+                self.latestHeadphoneAudioExposure = value
+                self.headphoneAudioTimestamp = date
+            }
+            completion?()
+        }
+    }
+
+    // MARK: - Cardiac Events
+
+    /// Fetch most recent atrial-fibrillation burden (% time in AFib).
+    func fetchAFibBurden(completion: (() -> Void)? = nil) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .atrialFibrillationBurden) else {
+            completion?()
+            return
+        }
+        fetchMostRecentWithDate(type: type, unit: .percent()) { value, date in
+            DispatchQueue.main.async {
+                self.latestAFibBurden = value
+                self.afibTimestamp = date
+            }
+            completion?()
+        }
+    }
+
+    /// Count today's high heart rate events.
+    func fetchTodayHighHRCount(completion: (() -> Void)? = nil) {
+        guard let type = HKCategoryType.categoryType(forIdentifier: .highHeartRateEvent) else {
+            completion?()
+            return
+        }
+        countTodayCategory(type: type) { count, date in
+            DispatchQueue.main.async {
+                self.todayHighHRCount = count
+                self.highHREventTimestamp = date
+            }
+            completion?()
+        }
+    }
+
+    /// Count today's low heart rate events.
+    func fetchTodayLowHRCount(completion: (() -> Void)? = nil) {
+        guard let type = HKCategoryType.categoryType(forIdentifier: .lowHeartRateEvent) else {
+            completion?()
+            return
+        }
+        countTodayCategory(type: type) { count, date in
+            DispatchQueue.main.async {
+                self.todayLowHRCount = count
+                self.lowHREventTimestamp = date
+            }
+            completion?()
+        }
+    }
+
+    /// Count today's irregular rhythm events.
+    func fetchTodayIrregularRhythmCount(completion: (() -> Void)? = nil) {
+        guard let type = HKCategoryType.categoryType(forIdentifier: .irregularHeartRhythmEvent) else {
+            completion?()
+            return
+        }
+        countTodayCategory(type: type) { count, date in
+            DispatchQueue.main.async {
+                self.todayIrregularRhythmCount = count
+                self.irregularRhythmTimestamp = date
+            }
+            completion?()
+        }
+    }
+
+    /// Count today's ECG samples.
+    func fetchTodayECGCount(completion: (() -> Void)? = nil) {
+        let type = HKObjectType.electrocardiogramType()
+        let start = Calendar.current.startOfDay(for: .now)
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: .now)
+        let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
+        let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: HKObjectQueryNoLimit,
+                                   sortDescriptors: [sort]) { _, samples, _ in
+            let count = samples?.count ?? 0
+            let latest = (samples?.first as? HKSample)?.startDate
+            DispatchQueue.main.async {
+                self.todayECGCount = count
+                self.ecgTimestamp = latest ?? .now
+            }
+            completion?()
+        }
+        store.execute(query)
+    }
+
+    // MARK: - Activity (more)
+
+    /// Fetch today's basal (resting) energy burned.
+    func fetchTodayBasalEnergy(completion: (() -> Void)? = nil) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .basalEnergyBurned) else {
+            completion?()
+            return
+        }
+        sumTodayQuantity(type: type, unit: .kilocalorie()) { value, date in
+            DispatchQueue.main.async {
+                self.todayBasalEnergy = value
+                self.basalEnergyTimestamp = date
+            }
+            completion?()
+        }
+    }
+
+    /// Fetch today's walking + running distance (meters).
+    func fetchTodayDistance(completion: (() -> Void)? = nil) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .distanceWalkingRunning) else {
+            completion?()
+            return
+        }
+        sumTodayQuantity(type: type, unit: .meter()) { value, date in
+            DispatchQueue.main.async {
+                self.todayDistanceMeters = value
+                self.distanceTimestamp = date
+            }
+            completion?()
+        }
+    }
+
+    /// Fetch today's flights climbed.
+    func fetchTodayFlightsClimbed(completion: (() -> Void)? = nil) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .flightsClimbed) else {
+            completion?()
+            return
+        }
+        sumTodayQuantity(type: type, unit: .count()) { value, date in
+            DispatchQueue.main.async {
+                self.todayFlightsClimbed = value
+                self.flightsTimestamp = date
+            }
+            completion?()
+        }
+    }
+
+    /// Fetch today's actual stand minutes (different from stand-hour count).
+    func fetchTodayStandMinutes(completion: (() -> Void)? = nil) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .appleStandTime) else {
+            completion?()
+            return
+        }
+        sumTodayQuantity(type: type, unit: .minute()) { value, date in
+            DispatchQueue.main.async {
+                self.todayStandMinutes = value
+                self.standMinutesTimestamp = date
+            }
+            completion?()
+        }
+    }
+
+    /// Fetch today's workout count + total duration.
+    func fetchTodayWorkoutSummary(completion: (() -> Void)? = nil) {
+        let type = HKObjectType.workoutType()
+        let start = Calendar.current.startOfDay(for: .now)
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: .now)
+        let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
+        let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: HKObjectQueryNoLimit,
+                                   sortDescriptors: [sort]) { _, samples, _ in
+            let workouts = (samples as? [HKWorkout]) ?? []
+            let count = workouts.count
+            let totalSec = workouts.reduce(0.0) { $0 + $1.duration }
+            let mostRecent = workouts.first?.endDate
+            DispatchQueue.main.async {
+                self.todayWorkoutCount = count
+                self.todayWorkoutMinutes = totalSec / 60.0
+                self.workoutTimestamp = mostRecent ?? .now
+            }
+            completion?()
+        }
+        store.execute(query)
+    }
+
+    // MARK: - Gait / Mobility
+
+    func fetchWalkingSpeed(completion: (() -> Void)? = nil) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .walkingSpeed) else {
+            completion?()
+            return
+        }
+        let unit = HKUnit.meter().unitDivided(by: .second())
+        fetchMostRecentWithDate(type: type, unit: unit) { value, date in
+            DispatchQueue.main.async {
+                self.latestWalkingSpeed = value
+                self.walkingSpeedTimestamp = date
+            }
+            completion?()
+        }
+    }
+
+    func fetchWalkingStepLength(completion: (() -> Void)? = nil) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .walkingStepLength) else {
+            completion?()
+            return
+        }
+        fetchMostRecentWithDate(type: type, unit: .meterUnit(with: .centi)) { value, date in
+            DispatchQueue.main.async {
+                self.latestWalkingStepLength = value
+                self.walkingStepLengthTimestamp = date
+            }
+            completion?()
+        }
+    }
+
+    func fetchWalkingDoubleSupport(completion: (() -> Void)? = nil) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .walkingDoubleSupportPercentage) else {
+            completion?()
+            return
+        }
+        fetchMostRecentWithDate(type: type, unit: .percent()) { value, date in
+            DispatchQueue.main.async {
+                self.latestWalkingDoubleSupport = value
+                self.walkingDoubleSupportTimestamp = date
+            }
+            completion?()
+        }
+    }
+
+    func fetchWalkingAsymmetry(completion: (() -> Void)? = nil) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .walkingAsymmetryPercentage) else {
+            completion?()
+            return
+        }
+        fetchMostRecentWithDate(type: type, unit: .percent()) { value, date in
+            DispatchQueue.main.async {
+                self.latestWalkingAsymmetry = value
+                self.walkingAsymmetryTimestamp = date
+            }
+            completion?()
+        }
+    }
+
+    func fetchStairAscentSpeed(completion: (() -> Void)? = nil) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .stairAscentSpeed) else {
+            completion?()
+            return
+        }
+        let unit = HKUnit.meter().unitDivided(by: .second())
+        fetchMostRecentWithDate(type: type, unit: unit) { value, date in
+            DispatchQueue.main.async {
+                self.latestStairAscentSpeed = value
+                self.stairAscentTimestamp = date
+            }
+            completion?()
+        }
+    }
+
+    func fetchStairDescentSpeed(completion: (() -> Void)? = nil) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .stairDescentSpeed) else {
+            completion?()
+            return
+        }
+        let unit = HKUnit.meter().unitDivided(by: .second())
+        fetchMostRecentWithDate(type: type, unit: unit) { value, date in
+            DispatchQueue.main.async {
+                self.latestStairDescentSpeed = value
+                self.stairDescentTimestamp = date
+            }
+            completion?()
+        }
+    }
+
+    func fetchSixMinuteWalk(completion: (() -> Void)? = nil) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .sixMinuteWalkTestDistance) else {
+            completion?()
+            return
+        }
+        fetchMostRecentWithDate(type: type, unit: .meter()) { value, date in
+            DispatchQueue.main.async {
+                self.latestSixMinuteWalk = value
+                self.sixMinuteWalkTimestamp = date
+            }
+            completion?()
+        }
+    }
+
+    // MARK: - Running
+
+    func fetchRunningSpeed(completion: (() -> Void)? = nil) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .runningSpeed) else {
+            completion?()
+            return
+        }
+        let unit = HKUnit.meter().unitDivided(by: .second())
+        fetchMostRecentWithDate(type: type, unit: unit) { value, date in
+            DispatchQueue.main.async {
+                self.latestRunningSpeed = value
+                self.runningSpeedTimestamp = date
+            }
+            completion?()
+        }
+    }
+
+    func fetchRunningPower(completion: (() -> Void)? = nil) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .runningPower) else {
+            completion?()
+            return
+        }
+        fetchMostRecentWithDate(type: type, unit: .watt()) { value, date in
+            DispatchQueue.main.async {
+                self.latestRunningPower = value
+                self.runningPowerTimestamp = date
+            }
+            completion?()
+        }
+    }
+
+    func fetchRunningStrideLength(completion: (() -> Void)? = nil) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .runningStrideLength) else {
+            completion?()
+            return
+        }
+        fetchMostRecentWithDate(type: type, unit: .meter()) { value, date in
+            DispatchQueue.main.async {
+                self.latestRunningStrideLength = value
+                self.runningStrideTimestamp = date
+            }
+            completion?()
+        }
+    }
+
+    func fetchRunningGroundContact(completion: (() -> Void)? = nil) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .runningGroundContactTime) else {
+            completion?()
+            return
+        }
+        fetchMostRecentWithDate(type: type, unit: .secondUnit(with: .milli)) { value, date in
+            DispatchQueue.main.async {
+                self.latestRunningGroundContact = value
+                self.runningGroundContactTimestamp = date
+            }
+            completion?()
+        }
+    }
+
+    func fetchRunningVerticalOsc(completion: (() -> Void)? = nil) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .runningVerticalOscillation) else {
+            completion?()
+            return
+        }
+        fetchMostRecentWithDate(type: type, unit: .meterUnit(with: .centi)) { value, date in
+            DispatchQueue.main.async {
+                self.latestRunningVerticalOsc = value
+                self.runningVerticalOscTimestamp = date
+            }
+            completion?()
+        }
+    }
+
+    // MARK: - Body Composition
+
+    func fetchBodyMass(completion: (() -> Void)? = nil) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .bodyMass) else {
+            completion?()
+            return
+        }
+        fetchMostRecentWithDate(type: type, unit: .gramUnit(with: .kilo)) { value, date in
+            DispatchQueue.main.async {
+                self.latestBodyMass = value
+                self.bodyMassTimestamp = date
+            }
+            completion?()
+        }
+    }
+
+    func fetchBodyMassIndex(completion: (() -> Void)? = nil) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .bodyMassIndex) else {
+            completion?()
+            return
+        }
+        fetchMostRecentWithDate(type: type, unit: .count()) { value, date in
+            DispatchQueue.main.async {
+                self.latestBodyMassIndex = value
+                self.bmiTimestamp = date
+            }
+            completion?()
+        }
+    }
+
+    func fetchBodyFatPercentage(completion: (() -> Void)? = nil) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .bodyFatPercentage) else {
+            completion?()
+            return
+        }
+        fetchMostRecentWithDate(type: type, unit: .percent()) { value, date in
+            DispatchQueue.main.async {
+                self.latestBodyFatPercentage = value
+                self.bodyFatTimestamp = date
+            }
+            completion?()
+        }
+    }
+
+    func fetchLeanBodyMass(completion: (() -> Void)? = nil) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .leanBodyMass) else {
+            completion?()
+            return
+        }
+        fetchMostRecentWithDate(type: type, unit: .gramUnit(with: .kilo)) { value, date in
+            DispatchQueue.main.async {
+                self.latestLeanBodyMass = value
+                self.leanMassTimestamp = date
+            }
+            completion?()
+        }
+    }
+
+    func fetchHeight(completion: (() -> Void)? = nil) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .height) else {
+            completion?()
+            return
+        }
+        fetchMostRecentWithDate(type: type, unit: .meter()) { value, date in
+            DispatchQueue.main.async {
+                self.latestHeight = value
+                self.heightTimestamp = date
+            }
+            completion?()
+        }
+    }
+
+    // MARK: - Body Temperature (non-sleep)
+
+    func fetchBodyTemperature(completion: (() -> Void)? = nil) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .bodyTemperature) else {
+            completion?()
+            return
+        }
+        fetchMostRecentWithDate(type: type, unit: .degreeCelsius()) { value, date in
+            DispatchQueue.main.async {
+                self.latestBodyTemperature = value
+                self.bodyTempTimestamp = date
+            }
+            completion?()
+        }
+    }
+
+    // MARK: - Beat-to-beat HRV (RMSSD / pNN50)
+
+    /// Fetch the most recent HKHeartbeatSeriesSamples (last 24 h, up to 5 series)
+    /// and compute time-domain HRV: RMSSD and pNN50.
+    /// RMSSD = root mean square of successive RR-interval differences (in ms).
+    /// pNN50 = fraction of successive RR pairs differing by > 50 ms.
+    /// Both are gold-standard parasympathetic-tone markers (richer than the aggregated SDNN).
+    func fetchHeartbeatSeriesMetrics(completion: (() -> Void)? = nil) {
+        let type = HKSeriesType.heartbeat()
+        let start = Calendar.current.date(byAdding: .hour, value: -24, to: .now) ?? .now
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: .now)
+        let sort = NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: false)
+
+        let query = HKSampleQuery(
+            sampleType: type,
+            predicate: predicate,
+            limit: 5,
+            sortDescriptors: [sort]
+        ) { [weak self] _, samples, error in
+            guard let self = self else { completion?(); return }
+            if let error = error {
+                AuroLog.error("Heartbeat-series fetch error: \(error.localizedDescription)", category: .health)
+                completion?()
+                return
+            }
+            guard let series = samples as? [HKHeartbeatSeriesSample], !series.isEmpty else {
+                DispatchQueue.main.async {
+                    self.latestRMSSD = nil
+                    self.latestPNN50 = nil
+                    self.latestRRSampleCount = 0
+                }
+                completion?()
+                return
+            }
+
+            var rrIntervalsMs: [Double] = []
+            let group = DispatchGroup()
+
+            for series in series {
+                group.enter()
+                var beatTimes: [TimeInterval] = []
+                let beatQuery = HKHeartbeatSeriesQuery(heartbeatSeries: series) { _, t, precededByGap, done, _ in
+                    // Gaps invalidate the differential, but t itself is still relative to series start.
+                    if !precededByGap { beatTimes.append(t) }
+                    if done {
+                        // Convert successive beat times to RR ms
+                        let rr = zip(beatTimes.dropFirst(), beatTimes).map { ($0 - $1) * 1000.0 }
+                        rrIntervalsMs.append(contentsOf: rr.filter { $0 > 200 && $0 < 2000 }) // physiological filter
+                        group.leave()
+                    }
+                }
+                self.store.execute(beatQuery)
+            }
+
+            group.notify(queue: .main) {
+                guard rrIntervalsMs.count >= 5 else {
+                    self.latestRMSSD = nil
+                    self.latestPNN50 = nil
+                    self.latestRRSampleCount = rrIntervalsMs.count
+                    completion?()
+                    return
+                }
+                // RMSSD
+                let diffs = zip(rrIntervalsMs.dropFirst(), rrIntervalsMs).map { $0 - $1 }
+                let meanSq = diffs.map { $0 * $0 }.reduce(0, +) / Double(diffs.count)
+                let rmssd = sqrt(meanSq)
+                // pNN50
+                let nn50 = diffs.filter { abs($0) > 50 }.count
+                let pnn50 = Double(nn50) / Double(diffs.count)
+
+                self.latestRMSSD = rmssd
+                self.latestPNN50 = pnn50
+                self.latestRRSampleCount = rrIntervalsMs.count
+                self.rmssdTimestamp = .now
+                self.pnn50Timestamp = .now
+                completion?()
+            }
+        }
+        store.execute(query)
+    }
+
+    // MARK: - Sleep Apnea (watchOS 11+)
+
+    /// Sleep apnea (`.appleSleepingBreathingDisturbances`) is iOS-only — the watch HealthKit
+    /// API does not expose this category type. The phone app must read it and sync the count
+    /// down to the watch via WatchSyncManager. This stub keeps the call site uniform.
+    func fetchTodaySleepApneaCount(completion: (() -> Void)? = nil) {
+        // No-op on watchOS; value is populated from phone-side sync when available.
+        completion?()
+    }
+
+    // MARK: - UV / Audio events / Falls / Low fitness
+
+    func fetchUVExposure(completion: (() -> Void)? = nil) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .uvExposure) else {
+            completion?()
+            return
+        }
+        fetchMostRecentWithDate(type: type, unit: .count()) { value, date in
+            DispatchQueue.main.async {
+                self.latestUVExposure = value
+                self.uvExposureTimestamp = date
+            }
+            completion?()
+        }
+    }
+
+    func fetchTodayEnvAudioEventCount(completion: (() -> Void)? = nil) {
+        guard let type = HKCategoryType.categoryType(forIdentifier: .environmentalAudioExposureEvent) else {
+            completion?()
+            return
+        }
+        countTodayCategory(type: type) { count, date in
+            DispatchQueue.main.async {
+                self.todayEnvAudioEventCount = count
+                self.envAudioEventTimestamp = date
+            }
+            completion?()
+        }
+    }
+
+    func fetchTodayHeadphoneAudioEventCount(completion: (() -> Void)? = nil) {
+        guard let type = HKCategoryType.categoryType(forIdentifier: .headphoneAudioExposureEvent) else {
+            completion?()
+            return
+        }
+        countTodayCategory(type: type) { count, date in
+            DispatchQueue.main.async {
+                self.todayHeadphoneAudioEventCount = count
+                self.headphoneAudioEventTimestamp = date
+            }
+            completion?()
+        }
+    }
+
+    func fetchTodayFallCount(completion: (() -> Void)? = nil) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .numberOfTimesFallen) else {
+            completion?()
+            return
+        }
+        sumTodayQuantity(type: type, unit: .count()) { value, date in
+            DispatchQueue.main.async {
+                self.todayFallCount = value.map { Int($0) }
+                self.fallTimestamp = date
+            }
+            completion?()
+        }
+    }
+
+    func fetchTodayLowCardioFitnessCount(completion: (() -> Void)? = nil) {
+        guard let type = HKCategoryType.categoryType(forIdentifier: .lowCardioFitnessEvent) else {
+            completion?()
+            return
+        }
+        countTodayCategory(type: type) { count, date in
+            DispatchQueue.main.async {
+                self.todayLowCardioFitnessCount = count
+                self.lowCardioFitnessTimestamp = date
+            }
+            completion?()
+        }
+    }
+
+    // MARK: - Latest Workout Details (with avg/max HR via per-workout query)
+
+    /// Fetch the most recent workout (any type, last 7 days) and its avg/max HR.
+    func fetchLatestWorkoutDetails(completion: (() -> Void)? = nil) {
+        let type = HKObjectType.workoutType()
+        let start = Calendar.current.date(byAdding: .day, value: -7, to: .now) ?? .now
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: .now)
+        let sort = NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: false)
+        let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: 1,
+                                   sortDescriptors: [sort]) { [weak self] _, samples, _ in
+            guard let self = self,
+                  let workout = (samples as? [HKWorkout])?.first else {
+                completion?()
+                return
+            }
+            // Basic fields
+            let typeName = self.workoutTypeName(workout.workoutActivityType)
+            let duration = workout.duration
+            let kcal: Double?
+            if #available(watchOS 11.0, *) {
+                let energyType = HKQuantityType(.activeEnergyBurned)
+                kcal = workout.statistics(for: energyType)?.sumQuantity()?.doubleValue(for: .kilocalorie())
+            } else {
+                kcal = workout.totalEnergyBurned?.doubleValue(for: .kilocalorie())
+            }
+
+            // Query average + max heart rate during the workout window
+            self.fetchHRStatsForWorkout(workout) { avgHR, maxHR in
+                DispatchQueue.main.async {
+                    self.latestWorkoutType = typeName
+                    self.latestWorkoutDuration = duration
+                    self.latestWorkoutEnergyKcal = kcal
+                    self.latestWorkoutAvgHR = avgHR
+                    self.latestWorkoutMaxHR = maxHR
+                    self.latestWorkoutDate = workout.endDate
+                    self.latestWorkoutTimestamp = workout.endDate
+                }
+                completion?()
+            }
+        }
+        store.execute(query)
+    }
+
+    /// Private — get avg + max HR over the workout's time window.
+    private func fetchHRStatsForWorkout(_ workout: HKWorkout, completion: @escaping (Double?, Double?) -> Void) {
+        guard let hrType = HKQuantityType.quantityType(forIdentifier: .heartRate) else {
+            completion(nil, nil)
+            return
+        }
+        let predicate = HKQuery.predicateForSamples(withStart: workout.startDate, end: workout.endDate)
+        let query = HKStatisticsQuery(quantityType: hrType, quantitySamplePredicate: predicate,
+                                       options: [.discreteAverage, .discreteMax]) { _, stats, _ in
+            let unit = HKUnit.count().unitDivided(by: .minute())
+            let avg = stats?.averageQuantity()?.doubleValue(for: unit)
+            let max = stats?.maximumQuantity()?.doubleValue(for: unit)
+            completion(avg, max)
+        }
+        store.execute(query)
+    }
+
+    /// Map HKWorkoutActivityType to a short readable label.
+    private func workoutTypeName(_ t: HKWorkoutActivityType) -> String {
+        switch t {
+        case .running: return "Run"
+        case .walking: return "Walk"
+        case .cycling: return "Cycle"
+        case .yoga: return "Yoga"
+        case .traditionalStrengthTraining, .functionalStrengthTraining: return "Strength"
+        case .highIntensityIntervalTraining: return "HIIT"
+        case .hiking: return "Hike"
+        case .swimming: return "Swim"
+        case .mindAndBody, .flexibility: return "Mind/Body"
+        case .pilates: return "Pilates"
+        case .coreTraining: return "Core"
+        case .dance: return "Dance"
+        case .elliptical: return "Elliptical"
+        case .rowing: return "Row"
+        case .stairs: return "Stairs"
+        case .other: return "Workout"
+        default: return "Workout"
+        }
+    }
+
     // MARK: - Generic Helpers
+
+    /// Count today's category samples (e.g., high-HR events).
+    private func countTodayCategory(type: HKCategoryType, completion: @escaping (Int, Date?) -> Void) {
+        let start = Calendar.current.startOfDay(for: .now)
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: .now)
+        let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
+        let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: HKObjectQueryNoLimit,
+                                   sortDescriptors: [sort]) { _, samples, _ in
+            let count = samples?.count ?? 0
+            let latest = (samples?.first as? HKSample)?.startDate
+            completion(count, latest)
+        }
+        store.execute(query)
+    }
+
+    /// Sum a quantity-type's samples from today's start until now.
+    private func sumTodayQuantity(type: HKQuantityType, unit: HKUnit, completion: @escaping (Double?, Date?) -> Void) {
+        let start = Calendar.current.startOfDay(for: .now)
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: .now)
+        let query = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: predicate,
+                                       options: .cumulativeSum) { _, stats, _ in
+            let value = stats?.sumQuantity()?.doubleValue(for: unit)
+            completion(value, .now)
+        }
+        store.execute(query)
+    }
 
     private func fetchMostRecentWithDate(type: HKQuantityType, unit: HKUnit, completion: @escaping (Double?, Date?) -> Void) {
         let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)

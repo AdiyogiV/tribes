@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:aurogram/features/astrology/domain/current_sky_service.dart';
+import 'package:aurogram/features/astrology/domain/astrology_service.dart';
 
 /// Current Sky Page — Global Cosmic Intelligence Dashboard.
 ///
@@ -18,15 +19,55 @@ class CurrentSkyPage extends StatefulWidget {
 
 class _CurrentSkyPageState extends State<CurrentSkyPage> {
   final _skyService = CurrentSkyService();
+  final _astroService = AstrologyService();
   late String _selectedDate;
   /// Bumps [FutureBuilder] for non-today dates after a manual run.
   int _refreshNonce = 0;
   bool _generating = false;
+  bool _generatingHouses = false;
 
   @override
   void initState() {
     super.initState();
     _selectedDate = _todayKey();
+  }
+
+  /// Calls `generatePerHouseNow` (asia-southeast2) — force-regenerates the
+  /// biweekly per-house current-state readings. After this returns success,
+  /// the per-house popup on HolyCow's Current Sky chart will show the gold
+  /// "RIGHT NOW" gradient block populated for all 12 houses.
+  Future<void> _runPerHouse() async {
+    if (_generatingHouses) return;
+    setState(() => _generatingHouses = true);
+    try {
+      final r = await _astroService.generatePerHouseReadings(force: true);
+      if (!mounted) return;
+      final ok = r['success'] == true;
+      final msg = ok
+          ? (r['alreadyFresh'] == true
+              ? '✅ Already fresh — ${r['houseCount'] ?? 12} houses cached.'
+              : '✅ Generated ${r['houseCount'] ?? 12} houses. Tap a house on HolyCow.')
+          : '❌ [${r['code']}] ${r['message']}';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(msg),
+          backgroundColor: ok ? null : Colors.red.shade800,
+          duration: Duration(seconds: ok ? 4 : 10),
+          action: ok
+              ? null
+              : SnackBarAction(
+                  label: 'Copy',
+                  textColor: Colors.white,
+                  onPressed: () {
+                    // ignore: avoid_print
+                    debugPrint('PER-HOUSE FAIL DETAIL: ${r['details']}');
+                  },
+                ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _generatingHouses = false);
+    }
   }
 
   /// Calls [cosmicDailyManual] (us-central1). User must be signed in; SDK sends ID token.
@@ -84,6 +125,17 @@ class _CurrentSkyPageState extends State<CurrentSkyPage> {
                 : const Icon(Icons.sync, size: 22),
             onPressed: _generating ? null : _runCosmicDaily,
             tooltip: 'Run cosmic analysis for this date',
+          ),
+          IconButton(
+            icon: _generatingHouses
+                ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.home_work_outlined, size: 22),
+            onPressed: _generatingHouses ? null : _runPerHouse,
+            tooltip: 'Force-regenerate per-house biweekly readings',
           ),
           IconButton(
             icon: const Icon(Icons.calendar_today, size: 20),
@@ -301,17 +353,16 @@ class _CurrentSkyPageState extends State<CurrentSkyPage> {
               ),
             ),
             const SizedBox(height: 8),
-            Row(
+            // Wrap (not Row) so chips flow to next line on narrow widths
+            // instead of overflowing on the right by 30px / 6.5px.
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 _chip(prediction.timeframe, isDark),
-                const SizedBox(width: 6),
-                _chip(prediction.confidenceLabel, isDark,
-                    color: confColor),
-                const Spacer(),
-                ...prediction.domains.take(2).map((d) => Padding(
-                      padding: const EdgeInsets.only(left: 4),
-                      child: _chip(d, isDark),
-                    )),
+                _chip(prediction.confidenceLabel, isDark, color: confColor),
+                ...prediction.domains.take(2).map((d) => _chip(d, isDark)),
               ],
             ),
           ],

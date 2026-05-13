@@ -149,6 +149,16 @@ class OjasEngine {
     double? walkingSteadiness,
     double? rmssd,
     double? uvExposure,
+    double? heartRate,
+    double? exerciseMins,
+    double? coreSleepMins,
+    double? pnn50,
+    double? walkingHR,
+    double? walkingAsymmetry,
+    double? walkingDoubleSupport,
+    double? headphoneAudioExposure,
+    int? lowHRCount,
+    double? bodyTemp,
     HealthBaseline? baseline,
     DateTime? timestamp,
   }) {
@@ -180,11 +190,12 @@ class OjasEngine {
 
     // 2. Sleep — 22%
     if (sleepHours != null) {
-      final s = _sleepScore(sleepHours, deepSleepMins, remSleepMins);
+      final s = _sleepScore(sleepHours, deepSleepMins, remSleepMins, coreSleepMins);
       const w = 0.22;
       final archParts = <String>[
         if (deepSleepMins != null) 'deep ${deepSleepMins.round()}m',
         if (remSleepMins != null) 'rem ${remSleepMins.round()}m',
+        if (coreSleepMins != null) 'core ${coreSleepMins.round()}m',
       ];
       contributors.add(OjasContributor(
         name: 'Sleep',
@@ -194,7 +205,7 @@ class OjasEngine {
         weight: w,
         rawDisplay: '${sleepHours.toStringAsFixed(1)} h',
         baselineDisplay: archParts.isEmpty ? 'ideal 7–8.5 h' : archParts.join(' · '),
-        explanation: 'Duration peaks at 7.5 h. Deep + REM architecture adds bonus.',
+        explanation: 'Duration peaks at 7.5 h. Deep + REM + core architecture adds bonus.',
       ));
       weightedSum += s * w;
       totalWeight += w;
@@ -435,6 +446,158 @@ class OjasEngine {
       modSum += -2;
     }
 
+    // Heart Rate Stress — current HR / resting HR ratio (Nadi Pariksha proxy)
+    if (heartRate != null && restingHR != null && restingHR! > 0) {
+      final ratio = heartRate / restingHR!;
+      if (ratio <= 1.10) {
+        modifiers.add(OjasModifier(
+          name: 'Pulse Calm',
+          detail: '${heartRate.round()} bpm (${ratio.toStringAsFixed(1)}× RHR)',
+          delta: 2,
+        ));
+        modSum += 2;
+      } else if (ratio > 2.0) {
+        modifiers.add(OjasModifier(
+          name: 'Pulse Stress',
+          detail: '${heartRate.round()} bpm (${ratio.toStringAsFixed(1)}× RHR)',
+          delta: -5,
+        ));
+        modSum += -5;
+      } else if (ratio > 1.5) {
+        modifiers.add(OjasModifier(
+          name: 'Pulse Elevated',
+          detail: '${heartRate.round()} bpm (${ratio.toStringAsFixed(1)}× RHR)',
+          delta: -3,
+        ));
+        modSum += -3;
+      }
+    }
+
+    // VO₂ Max — aerobic capacity / Prana reservoir
+    if (vo2Max != null) {
+      final double delta;
+      if (vo2Max >= 50) { delta = 5; }
+      else if (vo2Max >= 42) { delta = 3; }
+      else if (vo2Max >= 35) { delta = 0; }
+      else if (vo2Max >= 25) { delta = -2; }
+      else { delta = -5; }
+      if (delta != 0) {
+        modifiers.add(OjasModifier(
+          name: 'Cardio Fitness',
+          detail: '${vo2Max.toStringAsFixed(1)} mL/kg/min',
+          delta: delta,
+        ));
+        modSum += delta;
+      }
+    }
+
+    // Exercise minutes — Vyayama (half-capacity effort is ideal in Ayurveda)
+    if (exerciseMins != null && exerciseMins > 0) {
+      final double delta;
+      if (exerciseMins > 150) { delta = -2; }
+      else if (exerciseMins >= 20) { delta = 3; }
+      else if (exerciseMins >= 10) { delta = 1; }
+      else { delta = 0; }
+      if (delta != 0) {
+        modifiers.add(OjasModifier(
+          name: 'Exercise', detail: '${exerciseMins.round()} min', delta: delta,
+        ));
+        modSum += delta;
+      }
+    }
+
+    // PNN50 — parasympathetic strength (supplements RMSSD vagal tone)
+    if (pnn50 != null) {
+      if (pnn50 >= 0.25) {
+        modifiers.add(OjasModifier(
+          name: 'Vagal PNN50', detail: '${(pnn50 * 100).toStringAsFixed(1)}%', delta: 2,
+        ));
+        modSum += 2;
+      } else if (pnn50 < 0.03) {
+        modifiers.add(OjasModifier(
+          name: 'Vagal PNN50', detail: '${(pnn50 * 100).toStringAsFixed(1)}%', delta: -2,
+        ));
+        modSum += -2;
+      }
+    }
+
+    // Walking HR efficiency — cardiac recovery during movement
+    if (walkingHR != null && restingHR != null && restingHR! > 0) {
+      final ratio = walkingHR / restingHR!;
+      if (ratio < 1.3) {
+        modifiers.add(OjasModifier(
+          name: 'Walk Efficiency',
+          detail: '${walkingHR.round()} / ${restingHR!.round()} bpm',
+          delta: 3,
+        ));
+        modSum += 3;
+      } else if (ratio > 1.8) {
+        modifiers.add(OjasModifier(
+          name: 'Walk Efficiency',
+          detail: '${walkingHR.round()} / ${restingHR!.round()} bpm',
+          delta: -3,
+        ));
+        modSum += -3;
+      }
+    }
+
+    // Gait asymmetry — structural Vata imbalance
+    if (walkingAsymmetry != null && walkingAsymmetry > 0.10) {
+      modifiers.add(OjasModifier(
+        name: 'Gait Asymmetry',
+        detail: '${(walkingAsymmetry * 100).toStringAsFixed(0)}%',
+        delta: -2,
+      ));
+      modSum += -2;
+    }
+
+    // Gait double support — instability indicator
+    if (walkingDoubleSupport != null && walkingDoubleSupport > 0.30) {
+      modifiers.add(OjasModifier(
+        name: 'Gait Support',
+        detail: '${(walkingDoubleSupport * 100).toStringAsFixed(0)}% dbl',
+        delta: -2,
+      ));
+      modSum += -2;
+    }
+
+    // Headphone audio — additional ear stress (separate from environmental)
+    if (headphoneAudioExposure != null && headphoneAudioExposure > 85) {
+      final delta = headphoneAudioExposure > 90 ? -3.0 : -1.0;
+      modifiers.add(OjasModifier(
+        name: 'Headphone Load',
+        detail: '${headphoneAudioExposure.round()} dB',
+        delta: delta,
+      ));
+      modSum += delta;
+    }
+
+    // Low HR events — bradycardia (Kapha excess / cardiac concern)
+    if (lowHRCount != null && lowHRCount > 0) {
+      modifiers.add(OjasModifier(
+        name: 'Low HR Events',
+        detail: '$lowHRCount alert${lowHRCount == 1 ? "" : "s"}',
+        delta: -2,
+      ));
+      modSum += -2;
+    }
+
+    // Body temperature — fever = active illness = Ojas critically depleted
+    if (bodyTemp != null) {
+      if (bodyTemp > 38.0) {
+        ceilingVal = min(ceilingVal, 55);
+        modifiers.add(OjasModifier(
+          name: 'Fever Cap', detail: '${bodyTemp.toStringAsFixed(1)}°C', delta: 0,
+          note: 'caps total at 55',
+        ));
+      } else if (bodyTemp > 37.5) {
+        modifiers.add(OjasModifier(
+          name: 'Warm Temp', detail: '${bodyTemp.toStringAsFixed(1)}°C', delta: -3,
+        ));
+        modSum += -3;
+      }
+    }
+
     // ── FINAL SCORE ──────────────────────────────────────────────────
     final preFinal = baseScoreVal + modSum;
     final finalScore = min(ceilingVal, max(0, preFinal)).round();
@@ -467,7 +630,7 @@ class OjasEngine {
 
   // ─── Individual Signal Scoring (0.0–1.0) ──────────────────────────────
 
-  static double _sleepScore(double hours, double? deepMins, double? remMins) {
+  static double _sleepScore(double hours, double? deepMins, double? remMins, double? coreMins) {
     double dur;
     if (hours < 4.0) {
       dur = 0.15;
@@ -497,7 +660,16 @@ class OjasEngine {
       }
     }
 
-    return min(1.0, dur + deep + rem);
+    double core = 0;
+    if (coreMins != null) {
+      if (coreMins >= 180 && coreMins <= 300) {
+        core = 0.03;
+      } else if (coreMins >= 120) {
+        core = 0.01;
+      }
+    }
+
+    return min(1.0, dur + deep + rem + core);
   }
 
   static double _hrvScore(double hrv, double baseline, double std) {

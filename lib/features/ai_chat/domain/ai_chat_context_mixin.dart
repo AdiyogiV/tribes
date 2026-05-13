@@ -71,8 +71,9 @@ mixin AiChatContextMixin on ChangeNotifier {
 
   /// Fetch system prompt from backend once per session/context; cache and return.
   Future<String?> getChatSystemPrompt(String? location) async {
+    // Cache key: use actual chatSource (null = unified HolyCow mode)
     final key =
-        '${_chatSource ?? "astrology"}|${_astrologyContext != null}|$location';
+        '${_chatSource ?? "holycow"}|${_astrologyContext != null}|$location';
     if (_cachedPromptKey == key && _cachedSystemPrompt != null) {
       return _cachedSystemPrompt;
     }
@@ -80,7 +81,8 @@ mixin AiChatContextMixin on ChangeNotifier {
       final callable = FirebaseFunctions.instanceFor(region: 'asia-southeast2')
           .httpsCallable('getChatPromptConfig');
       final result = await callable.call(<String, dynamic>{
-        'chatSource': _chatSource ?? 'astrology',
+        // Let backend handle null → unified prompt (don't default to 'astrology')
+        if (_chatSource != null) 'chatSource': _chatSource,
         'astrologyContext': _astrologyContext,
         'userLocation': location,
         'isVoice': true,

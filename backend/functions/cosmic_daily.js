@@ -133,7 +133,7 @@ export async function generateDailyOutput(geminiApiKeyValue, dateStr = null) {
 
     const genAI = new GoogleGenerativeAI(geminiApiKeyValue);
     const model = genAI.getGenerativeModel({
-        model: AI_MODELS?.GEMINI_FLASH || "gemini-2.0-flash",
+        model: AI_MODELS?.GEMINI_FLASH || "gemini-2.5-flash",
         systemInstruction: SYSTEM_PROMPT,
         generationConfig: {
             temperature: 0.4,

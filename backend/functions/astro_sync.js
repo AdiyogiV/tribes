@@ -332,13 +332,22 @@ export const syncAstroProfile = onCall({
         // Don't fail the sync if cache invalidation fails
     }
 
-    // Reset and recalculate Ayurveda profile if user had existing ayurvedaData
-    // Birth chart changed = Prakriti must be recalculated fresh
-    if (userData.ayurvedaData) {
+    // Only reset Ayurveda profile when birth details actually changed
+    // (ascendant, birth coordinates, or nakshatra). Routine syncs that just
+    // upgrade sync status / add muhurat / add house interpretations should
+    // NOT nuke the user's vikriti, check-in history, and questionnaire data.
+    const birthDetailsChanged = userData.ayurvedaData && (
+        mergedAstroData.ascendant !== astroData.ascendant ||
+        mergedAstroData.moonNakshatra !== (astroData.moonNakshatra || astroData.nakshatra) ||
+        mergedAstroData.birthLatitude !== astroData.birthLatitude ||
+        mergedAstroData.birthLongitude !== astroData.birthLongitude
+    );
+
+    if (birthDetailsChanged) {
         logger.info("🌿 Birth details changed - resetting Ayurveda profile", { uid });
         resetAndRecalculateAyurveda(uid, mergedAstroData)
             .catch((e) => logger.warn("Ayurveda reset failed", { error: e.message }));
-    } else if (mergedAstroData.ascendant) {
+    } else if (!userData.ayurvedaData && mergedAstroData.ascendant) {
         // Create Ayurveda profile automatically if it doesn't exist and astrology data is ready
         // This ensures Ayurveda is created when astrology is first calculated
         logger.info("🌿 Creating Ayurveda profile automatically", { uid });
@@ -637,10 +646,46 @@ async function triggerHouseInterpretations(uid, astroData) {
             });
 
             logger.info("✅ House interpretations saved", { uid, housesGenerated: Object.keys(interpretations).length });
+
+            // Chain into per-house biweekly readings now that natal context exists.
+            // Fire-and-forget; failures here don't affect the user's main sync flow.
+            triggerPerHouseReadings(uid)
+                .catch((e) => logger.warn("Per-house readings trigger failed", { uid, error: e.message }));
         }
     } catch (error) {
         logger.error("❌ House interpretations failed", { uid, error: error.message });
         // Don't throw - this is a background operation
+    }
+}
+
+/**
+ * Trigger biweekly per-house current-state readings for a user.
+ * Runs the per_house flavor in-process (background) so the readings are ready
+ * the moment the user opens astro details. Subsequent regenerations are handled
+ * by the daily scheduler in insights/orchestration/per_house_scheduler.js.
+ */
+async function triggerPerHouseReadings(uid) {
+    try {
+        const { runFlavor } = await import("../insights/engine/insight_engine.js");
+        const { perHouseFlavor, computeCycleWindow, needsRegeneration } =
+            await import("../insights/flavors/per_house.js");
+
+        // Re-read the user doc since we just wrote to it.
+        const snap = await db.collection("users").doc(uid).get();
+        const astro = snap.data()?.astrologyData;
+        if (!astro) return;
+        if (!needsRegeneration(astro.skyHouseReadings)) {
+            logger.info("🏠 Per-house readings already fresh, skipping", { uid });
+            return;
+        }
+
+        const window = computeCycleWindow();
+        logger.info("🏠 Generating per-house biweekly readings", { uid, ...window });
+        const { latencyMs } = await runFlavor(perHouseFlavor, { uid, ...window });
+        logger.info("✅ Per-house readings saved", { uid, latencyMs });
+    } catch (error) {
+        logger.error("❌ Per-house readings failed", { uid, error: error.message });
+        // Don't throw - background operation
     }
 }
 

@@ -142,7 +142,12 @@ class ProfileContentBody extends StatelessWidget {
           padding: const EdgeInsets.symmetric(
               horizontal: AppHeaderStyle.contentHorizontalPadding),
           child: Column(
-            key: ValueKey('profile_cards_$refreshKey'),
+            // NOTE: Do NOT add a ValueKey keyed on refreshKey here.
+            // A changing key causes Flutter to unmount/remount ALL children,
+            // which destroys FutureBuilder/StreamBuilder internal state and
+            // forces insights, rank, and astrology cards back into loading
+            // states. Instead, FutureBuilders detect future-object changes
+            // via didUpdateWidget and re-subscribe automatically.
             children: [
               // Auroboard (rank, score)
               ProfileAuroboardCard(

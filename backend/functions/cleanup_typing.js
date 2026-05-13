@@ -9,6 +9,7 @@ import { db, logger } from "../lib/firebase.js";
 export const cleanupTypingIndicators = onSchedule(
   {
     schedule: "every 1 minutes",
+    region: "asia-southeast2",
     timeZone: "UTC",
     retryCount: 0, // Don't retry - next scheduled run will handle it
   },

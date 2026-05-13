@@ -57,8 +57,9 @@ class LocalStore {
     try {
       _db = await openDatabase(
         dbPath,
-        version: 1,
+        version: 2,
         onCreate: _createTables,
+        onUpgrade: _onUpgrade,
       );
     } catch (e) {
       AppLogger.w('LocalStore: init failed, deleting corrupt DB and retrying',
@@ -72,8 +73,9 @@ class LocalStore {
 
       _db = await openDatabase(
         dbPath,
-        version: 1,
+        version: 2,
         onCreate: _createTables,
+        onUpgrade: _onUpgrade,
       );
     }
 
@@ -111,7 +113,31 @@ class LocalStore {
         vata REAL,
         pitta REAL,
         kapha REAL,
-        synced INTEGER DEFAULT 0
+        synced INTEGER DEFAULT 0,
+        rmssd REAL,
+        pnn50 REAL,
+        walking_hr REAL,
+        stand_hours INTEGER,
+        exercise_mins REAL,
+        basal_energy REAL,
+        distance REAL,
+        daylight_mins REAL,
+        walking_speed REAL,
+        step_length REAL,
+        double_support REAL,
+        walking_asymmetry REAL,
+        workout_count INTEGER,
+        workout_mins REAL,
+        afib_burden REAL,
+        high_hr_count INTEGER,
+        irreg_rhythm_count INTEGER,
+        ecg_count INTEGER,
+        env_audio REAL,
+        fall_count INTEGER,
+        low_cardio_fit_count INTEGER,
+        uv_exposure REAL,
+        nadi_confidence REAL,
+        nadi_gati TEXT
       )
     ''');
     await db.execute(
@@ -141,7 +167,46 @@ class LocalStore {
       )
     ''');
 
-    AppLogger.i('LocalStore: tables created', category: LogCategory.general);
+    AppLogger.i('LocalStore: tables created (v$version)',
+        category: LogCategory.general);
+  }
+
+  /// Migrate from v1 → v2: add columns for expanded signal set.
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      final newColumns = [
+        'rmssd REAL',
+        'pnn50 REAL',
+        'walking_hr REAL',
+        'stand_hours INTEGER',
+        'exercise_mins REAL',
+        'basal_energy REAL',
+        'distance REAL',
+        'daylight_mins REAL',
+        'walking_speed REAL',
+        'step_length REAL',
+        'double_support REAL',
+        'walking_asymmetry REAL',
+        'workout_count INTEGER',
+        'workout_mins REAL',
+        'afib_burden REAL',
+        'high_hr_count INTEGER',
+        'irreg_rhythm_count INTEGER',
+        'ecg_count INTEGER',
+        'env_audio REAL',
+        'fall_count INTEGER',
+        'low_cardio_fit_count INTEGER',
+        'uv_exposure REAL',
+        'nadi_confidence REAL',
+        'nadi_gati TEXT',
+      ];
+      for (final col in newColumns) {
+        await db.execute('ALTER TABLE health_readings ADD COLUMN $col');
+      }
+      AppLogger.i('LocalStore: migrated v$oldVersion → v$newVersion '
+          '(${newColumns.length} columns added)',
+          category: LogCategory.general);
+    }
   }
 
   // ─── Health Readings ────────────────────────────────────────────────────
@@ -208,6 +273,33 @@ class LocalStore {
       'ojas_summary': data.ojasSummary,
       'agni_type': data.agniType,
       'nadi_dosha': data.nadiDosha,
+      'vata': data.nadiVata,
+      'pitta': data.nadiPitta,
+      'kapha': data.nadiKapha,
+      'rmssd': data.rmssd,
+      'pnn50': data.pnn50,
+      'walking_hr': data.walkingHR,
+      'stand_hours': data.standHours,
+      'exercise_mins': data.exerciseMins,
+      'basal_energy': data.basalEnergy,
+      'distance': data.distance,
+      'daylight_mins': data.daylightMins,
+      'walking_speed': data.walkSpeed,
+      'step_length': data.stepLength,
+      'double_support': data.doubleSupport,
+      'walking_asymmetry': data.walkingAsymmetry,
+      'workout_count': data.workoutCount,
+      'workout_mins': data.workoutMins,
+      'afib_burden': data.afibBurden,
+      'high_hr_count': data.highHRCount,
+      'irreg_rhythm_count': data.irregularRhythmCount,
+      'ecg_count': data.ecgCount,
+      'env_audio': data.envAudioExposure,
+      'fall_count': data.fallCount,
+      'low_cardio_fit_count': data.lowCardioFitnessCount,
+      'uv_exposure': data.uvExposure,
+      'nadi_confidence': data.nadiConfidence,
+      'nadi_gati': data.nadiGati,
       'synced': 0,
     });
 
@@ -821,26 +913,58 @@ class LocalStore {
       restingHR: _toDouble(row['resting_hr']),
       spO2: _toDouble(row['spo2']),
       respRate: _toDouble(row['resp_rate']),
+      rmssd: _toDouble(row['rmssd']),
+      pnn50: _toDouble(row['pnn50']),
       steps: row['steps'] as int?,
       activeEnergy: _toDouble(row['active_energy']),
+      basalEnergy: _toDouble(row['basal_energy']),
       mindfulMins: _toDouble(row['mindful_mins']),
+      exerciseMins: _toDouble(row['exercise_mins']),
+      standHours: row['stand_hours'] as int?,
+      distance: _toDouble(row['distance']),
+      daylightMins: _toDouble(row['daylight_mins']),
       vo2Max: _toDouble(row['vo2_max']),
       hrRecovery: _toDouble(row['hr_recovery']),
+      walkingSteadiness: _toDouble(row['walking_steadiness']),
+      walkingHR: _toDouble(row['walking_hr']),
+      walkSpeed: _toDouble(row['walking_speed']),
+      stepLength: _toDouble(row['step_length']),
+      doubleSupport: _toDouble(row['double_support']),
+      walkingAsymmetry: _toDouble(row['walking_asymmetry']),
+      workoutCount: row['workout_count'] as int?,
+      workoutMins: _toDouble(row['workout_mins']),
       sleepHours: _toDouble(row['sleep_hours']),
       deepSleepMins: _toDouble(row['deep_sleep_mins']),
       remSleepMins: _toDouble(row['rem_sleep_mins']),
       wristTemp: _toDouble(row['wrist_temp']),
+      envAudioExposure: _toDouble(row['env_audio']),
+      afibBurden: _toDouble(row['afib_burden']),
+      highHRCount: row['high_hr_count'] as int?,
+      irregularRhythmCount: row['irreg_rhythm_count'] as int?,
+      ecgCount: row['ecg_count'] as int?,
+      fallCount: row['fall_count'] as int?,
+      lowCardioFitnessCount: row['low_cardio_fit_count'] as int?,
+      uvExposure: _toDouble(row['uv_exposure']),
       ojasScore: _toDouble(row['ojas_score']),
       ojasSummary: row['ojas_summary'] as String?,
       agniType: row['agni_type'] as String?,
       nadiDosha: row['nadi_dosha'] as String?,
+      nadiVata: _toDouble(row['vata']),
+      nadiPitta: _toDouble(row['pitta']),
+      nadiKapha: _toDouble(row['kapha']),
+      nadiConfidence: _toDouble(row['nadi_confidence']),
+      nadiGati: row['nadi_gati'] as String?,
       timestamp: ts != null ? DateTime.fromMillisecondsSinceEpoch(ts) : null,
     );
   }
 
   Map<String, dynamic> _rowToFirestoreMap(Map<String, dynamic> row) {
-    // Convert DB row to the same shape that was previously written directly
+    // Convert DB row to the same shape the backend expects.
+    // All new signals are included so the backend OjasEngine/NadiEngine
+    // can compute from the full signal set.
     final map = <String, dynamic>{};
+
+    // Core vitals
     if (row['heart_rate'] != null) map['heartRate'] = row['heart_rate'];
     if (row['hrv'] != null) map['hrv'] = row['hrv'];
     if (row['resting_hr'] != null) map['restingHR'] = row['resting_hr'];
@@ -850,15 +974,59 @@ class LocalStore {
     if (row['wrist_temp'] != null) map['wristTemp'] = row['wrist_temp'];
     if (row['vo2_max'] != null) map['vo2Max'] = row['vo2_max'];
     if (row['active_energy'] != null) map['activeEnergy'] = row['active_energy'];
+
+    // Sleep
     if (row['sleep_hours'] != null) map['sleepHours'] = row['sleep_hours'];
     if (row['deep_sleep_mins'] != null) map['deepSleepMins'] = row['deep_sleep_mins'];
     if (row['rem_sleep_mins'] != null) map['remSleepMins'] = row['rem_sleep_mins'];
     if (row['mindful_mins'] != null) map['mindfulMins'] = row['mindful_mins'];
     if (row['hr_recovery'] != null) map['hrRecovery'] = row['hr_recovery'];
-    if (row['ojas_score'] != null) map['ojasScore'] = row['ojas_score'];
-    if (row['ojas_summary'] != null) map['ojasSummary'] = row['ojas_summary'];
-    if (row['agni_type'] != null) map['agniType'] = row['agni_type'];
-    if (row['nadi_dosha'] != null) map['nadiDosha'] = row['nadi_dosha'];
+
+    // Beat-to-beat HRV
+    if (row['rmssd'] != null) map['rmssd'] = row['rmssd'];
+    if (row['pnn50'] != null) map['pnn50'] = row['pnn50'];
+
+    // Activity
+    if (row['basal_energy'] != null) map['basalEnergy'] = row['basal_energy'];
+    if (row['exercise_mins'] != null) map['exerciseMins'] = row['exercise_mins'];
+    if (row['stand_hours'] != null) map['standHours'] = row['stand_hours'];
+    if (row['distance'] != null) map['distance'] = row['distance'];
+    if (row['daylight_mins'] != null) map['daylightMins'] = row['daylight_mins'];
+
+    // Fitness / gait
+    if (row['walking_hr'] != null) map['walkingHR'] = row['walking_hr'];
+    if (row['walking_speed'] != null) map['walkSpeed'] = row['walking_speed'];
+    if (row['step_length'] != null) map['stepLen'] = row['step_length'];
+    if (row['double_support'] != null) map['dblSup'] = row['double_support'];
+    if (row['walking_asymmetry'] != null) map['asym'] = row['walking_asymmetry'];
+    if (row['workout_count'] != null) map['workoutCount'] = row['workout_count'];
+    if (row['workout_mins'] != null) map['workoutMins'] = row['workout_mins'];
+
+    // Cardiac alerts
+    if (row['afib_burden'] != null) map['afibBurden'] = row['afib_burden'];
+    if (row['high_hr_count'] != null) map['highHRCount'] = row['high_hr_count'];
+    if (row['irreg_rhythm_count'] != null) map['irregCount'] = row['irreg_rhythm_count'];
+    if (row['ecg_count'] != null) map['ecgCount'] = row['ecg_count'];
+
+    // Audio / environment
+    if (row['env_audio'] != null) map['envAudio'] = row['env_audio'];
+
+    // Safety
+    if (row['fall_count'] != null) map['fallCount'] = row['fall_count'];
+    if (row['low_cardio_fit_count'] != null) map['lowCardioFitCount'] = row['low_cardio_fit_count'];
+    if (row['uv_exposure'] != null) map['uvExposure'] = row['uv_exposure'];
+
+    // Ayurveda (watch-computed, preserved as baseline)
+    if (row['ojas_score'] != null) map['watchOjasScore'] = row['ojas_score'];
+    if (row['ojas_summary'] != null) map['watchOjasSummary'] = row['ojas_summary'];
+    if (row['agni_type'] != null) map['watchAgniType'] = row['agni_type'];
+    if (row['nadi_dosha'] != null) map['watchNadiDosha'] = row['nadi_dosha'];
+    if (row['vata'] != null) map['watchNadiVata'] = row['vata'];
+    if (row['pitta'] != null) map['watchNadiPitta'] = row['pitta'];
+    if (row['kapha'] != null) map['watchNadiKapha'] = row['kapha'];
+    if (row['nadi_confidence'] != null) map['watchNadiConfidence'] = row['nadi_confidence'];
+    if (row['nadi_gati'] != null) map['watchNadiGati'] = row['nadi_gati'];
+
     if (row['timestamp'] != null) {
       map['timestamp'] = (row['timestamp'] as int) / 1000; // Back to seconds
     }
@@ -873,15 +1041,25 @@ class LocalStore {
       'restingHR': 'resting_hr',
       'spO2': 'spo2',
       'respRate': 'resp_rate',
+      'rmssd': 'rmssd',
+      'pnn50': 'pnn50',
       'steps': 'steps',
       'activeEnergy': 'active_energy',
+      'basalEnergy': 'basal_energy',
       'mindfulMins': 'mindful_mins',
+      'exerciseMins': 'exercise_mins',
+      'standHours': 'stand_hours',
+      'distance': 'distance',
+      'daylightMins': 'daylight_mins',
       'vo2Max': 'vo2_max',
       'hrRecovery': 'hr_recovery',
+      'walkingHR': 'walking_hr',
+      'walkSpeed': 'walking_speed',
       'sleepHours': 'sleep_hours',
       'deepSleepMins': 'deep_sleep_mins',
       'remSleepMins': 'rem_sleep_mins',
       'wristTemp': 'wrist_temp',
+      'workoutMins': 'workout_mins',
       'ojasScore': 'ojas_score',
     };
     return mapping[metric];

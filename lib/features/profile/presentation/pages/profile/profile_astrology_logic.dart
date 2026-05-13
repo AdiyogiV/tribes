@@ -115,9 +115,15 @@ mixin ProfileAstrologyLogic<T extends StatefulWidget> on State<T> {
           timer.cancel();
           isAstroCalculating = false;
           if (mounted) {
+            // Only update the future — do NOT increment astroRefreshKey.
+            // Incrementing the key was causing the ValueKey-keyed Column in
+            // ProfileContentBody to unmount/remount all cards, destroying
+            // every FutureBuilder & StreamBuilder state and sending insights,
+            // rank, and astrology cards back into loading states.
+            // FutureBuilders detect the new future via didUpdateWidget and
+            // re-subscribe automatically.
             setState(() {
               astrologyProfileFuture = Future.value(profile);
-              astroRefreshKey = astroRefreshKey + 1;
             });
           }
         }
@@ -139,10 +145,12 @@ mixin ProfileAstrologyLogic<T extends StatefulWidget> on State<T> {
       final success = await AstrologyService().calculateAndSaveAll(astroUid!);
 
       if (mounted) {
+        // Only update the future — FutureBuilders detect the change via
+        // didUpdateWidget and re-subscribe automatically. No need to
+        // increment astroRefreshKey which would destroy all card states.
         setState(() {
           astrologyProfileFuture =
               AstrologyService().getProfile(astroUid!, forceRefresh: true);
-          astroRefreshKey = astroRefreshKey + 1;
         });
       }
 

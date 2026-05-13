@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:aurogram/shared/services/media/audio_input_service.dart';
+import 'package:aurogram/shared/models/astrology_profile.dart';
+import 'package:aurogram/shared/models/ayurveda_profile.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
@@ -11,6 +14,9 @@ import 'package:aurogram/shared/presentation/responsive/responsive.dart';
 import 'package:aurogram/features/ai_chat/presentation/widgets/ai_chat_input.dart';
 import 'package:aurogram/features/ai_chat/presentation/widgets/ai_chat_message_list.dart';
 import 'package:aurogram/features/ai_chat/domain/ai_chat_provider.dart';
+import 'package:aurogram/features/astrology/domain/astrology_service.dart';
+import 'package:aurogram/features/ayurveda/domain/ayurveda_service.dart';
+import 'package:aurogram/features/astrology/data/utils/astrology_context_builder.dart';
 
 /// Dedicated AI chat screen — pushed from HolyCow dashboard or history.
 ///
@@ -77,9 +83,13 @@ class AiChatPageState extends State<AiChatPage> with WidgetsBindingObserver {
     });
   }
 
-  void _initializeChat() {
+  Future<void> _initializeChat() async {
     final provider = _provider;
     if (provider == null) return;
+
+    // Auto-load user's astrology + ayurveda context so the AI can give
+    // personalized responses when the question warrants it.
+    await _loadUserContext();
 
     if (widget.conversationId != null) {
       // Load existing conversation
@@ -105,6 +115,52 @@ class AiChatPageState extends State<AiChatPage> with WidgetsBindingObserver {
     }
   }
 
+  /// Load user's astrology + ayurveda profiles into chat context.
+  /// Services cache aggressively so this is typically instant (<50ms).
+  /// The AI uses this to give personalized answers only when relevant.
+  Future<void> _loadUserContext() async {
+    // Skip if context already set (e.g. from AstroChatPage)
+    if (_provider?.astrologyContext != null) return;
+
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return; // Guest user — generic chat is fine
+
+    try {
+      final astroService = AstrologyService();
+      final ayurvedaService = AyurvedaService();
+
+      // Fetch cached profiles in parallel
+      final results = await Future.wait([
+        astroService.getProfile(uid),
+        ayurvedaService.getProfile(uid),
+      ]);
+
+      final profile = results[0] as AstrologyProfile?;
+      final ayurveda = results[1] as AyurvedaProfile?;
+
+      if (!mounted) return;
+
+      if (profile != null || (ayurveda != null && ayurveda.hasData)) {
+        final context = AstrologyContextBuilder.buildContext(
+          profile: profile,
+          ayurveda: ayurveda,
+        );
+        _provider?.setAstrologyContext(context);
+
+        AppLogger.i('Loaded user context for HolyCow chat', data: {
+          'hasProfile': profile != null,
+          'hasAyurveda': ayurveda?.hasData ?? false,
+          'sunSign': profile?.sunSign,
+          'prakriti': ayurveda?.prakritiType,
+        });
+      }
+    } catch (e) {
+      // Context loading is non-critical — chat works fine without it
+      AppLogger.e('Failed to load user context for chat',
+          category: LogCategory.ui, error: e);
+    }
+  }
+
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
@@ -114,6 +170,15 @@ class AiChatPageState extends State<AiChatPage> with WidgetsBindingObserver {
     _focusNode.dispose();
     _contentFocusNode.dispose();
     _scrollController.dispose();
+
+    // Clean up auto-loaded context (same pattern as AstroChatPage)
+    final providerToClean = _provider;
+    if (providerToClean != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        providerToClean.clearAstrologyContext();
+      });
+    }
+
     super.dispose();
   }
 

@@ -59,8 +59,8 @@ class HolyCowPageState extends State<HolyCowPage>
   // Sky slider state
   static const int _sliderRangeDays = 30;
   static const int _maxSkyLoadRetries = 2;
-  static const Duration _retryBaseDelay = Duration(seconds: 2);
-  static const Duration _cachePopulationDelay = Duration(seconds: 3);
+  static const Duration _retryBaseDelay = Duration(seconds: 5);
+  static const Duration _cachePopulationDelay = Duration(seconds: 8);
 
   final ValueNotifier<double> _sliderValueNotifier = ValueNotifier(0.5);
   final ValueNotifier<DateTime> _sliderDateNotifier = ValueNotifier(DateTime.now());
@@ -641,6 +641,7 @@ class HolyCowPageState extends State<HolyCowPage>
                 return HolyCowCosmicContent(
                   profile: profile,
                   insight: insight,
+                  ayurvedaProfile: ayurvedaSnapshot.data,
                   loadingState: _loadingState,
                   skyService: _skyService,
                   sliderValueNotifier: _sliderValueNotifier,

@@ -354,6 +354,84 @@ extension AstrologyInsightsExtension on AstrologyService {
     }
   }
 
+  /// Force-regenerate the biweekly per-house current-state readings
+  /// (powering the per-house popup on the astro details page).
+  ///
+  /// Normally these are generated automatically (after first sync, then
+  /// refreshed every 14 days by a backend scheduler). Use this only for a
+  /// manual "refresh now" affordance in the UI.
+  ///
+  /// Returns a map with `success`, and on failure a `code` and `message` so
+  /// callers can surface the real cloud-function error (e.g. in a snackbar)
+  /// instead of a generic INTERNAL.
+  Future<Map<String, dynamic>> generatePerHouseReadings({bool force = false}) async {
+    final user = currentUser;
+    if (user == null) {
+      AppLogger.w('Cannot generate per-house readings: no user',
+          category: LogCategory.network);
+      return {'success': false, 'code': 'no-user', 'message': 'Not signed in'};
+    }
+
+    try {
+      AppLogger.i('Calling generatePerHouseNow cloud function',
+          category: LogCategory.network);
+
+      final result = await callWithFunctionsFallback(
+        functionName: 'generatePerHouseNow',
+        data: <String, dynamic>{'force': force},
+        options: HttpsCallableOptions(timeout: const Duration(seconds: 75)),
+      );
+
+      final data = result.data as Map<String, dynamic>?;
+      if (data != null && data['success'] == true) {
+        AppLogger.i('Per-house readings generated',
+            category: LogCategory.network,
+            data: {'alreadyFresh': data['alreadyFresh']});
+        AstrologyService.clearUserCache(user.uid);
+        return {
+          'success': true,
+          'alreadyFresh': data['alreadyFresh'] == true,
+          'houseCount': (data['houses'] is Map)
+              ? (data['houses'] as Map).length
+              : null,
+        };
+      }
+      AppLogger.w('Per-house readings returned failure',
+          category: LogCategory.network, data: {'response': data});
+      return {
+        'success': false,
+        'code': 'no-success',
+        'message': 'Backend returned no success flag',
+      };
+    } on FirebaseFunctionsException catch (e) {
+      // Extract every scrap of detail the SDK gives us so we can see WHY.
+      AppLogger.e('Per-house cloud function threw',
+          category: LogCategory.network,
+          error: e,
+          data: {
+            'code': e.code,
+            'message': e.message,
+            'details': e.details?.toString(),
+          });
+      return {
+        'success': false,
+        'code': e.code,
+        'message': e.message ?? 'No message',
+        'details': e.details?.toString(),
+      };
+    } catch (e, stackTrace) {
+      AppLogger.e('Failed to generate per-house readings (non-Functions error)',
+          category: LogCategory.network,
+          error: e,
+          data: {'stack': stackTrace.toString().substring(0, 400)});
+      return {
+        'success': false,
+        'code': 'unknown',
+        'message': e.toString(),
+      };
+    }
+  }
+
   /// Generate current times reading for the current user.
   Future<bool> generateCurrentTimesReading() async {
     final user = currentUser;

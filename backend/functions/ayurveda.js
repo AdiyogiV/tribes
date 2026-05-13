@@ -38,6 +38,9 @@ import {
     getTransitBinduScore,
 } from "./vedic_analysis.js";
 import { extractAscendantDegree as extractAscendantDegreeFromAstroData } from "../lib/astro_helpers.js";
+import { computeOjas } from "../lib/ojas_engine.js";
+import { computeNadi, computeBaseline as computeNadiBaseline } from "../lib/nadi_engine.js";
+import { getWeights } from "../lib/engine_weights.js";
 
 const VIKRITI_TRANSIT_MAX_SHIFT = 12; // keep low-impact: transits refine, don't override
 
@@ -478,168 +481,9 @@ export const calculateCurrentVikriti = onCall({
             );
         }
 
-        // Extract current dasha planet
-        let currentDashaPlanet = null;
-        let currentAntarDashaPlanet = null;
-
-        if (astroData?.currentDasha) {
-            currentDashaPlanet = astroData.currentDasha.currentMaha?.planet ||
-                astroData.currentDasha.mahadasha?.planet;
-            currentAntarDashaPlanet = astroData.currentDasha.currentAntar?.planet ||
-                astroData.currentDasha.antardasha?.planet;
-        }
-
-        // Calculate age
-        let age = null;
-        if (astroData?.birthYear) {
-            age = new Date().getFullYear() - astroData.birthYear;
-        }
-
-        // Current month for season
-        const currentMonth = new Date().getMonth() + 1;
-
-        // === Dasha Planet Strength (prefer Shadbala from API, fallback to dignity) ===
-        let dashaPlanetDignity = null;
-        if (currentDashaPlanet && astroData?.processedPlanets) {
-            const dashaPlanetData = astroData.processedPlanets.find(
-                (p) => (p.name || p.planet) === currentDashaPlanet,
-            );
-
-            if (dashaPlanetData) {
-                // Get natal dignity from processedPlanets (now included from API sync)
-                let dignity = dashaPlanetData.dignity || "neutral";
-                let dignityScore = dashaPlanetData.dignityScore || 50;
-
-                // Check yogakaraka and dusthana lordship
-                const ascSign = astroData.ascendant;
-                const isYK = isYogakaraka(currentDashaPlanet, ascSign);
-                const dusthana = checkDusthanaLordship(currentDashaPlanet, ascSign);
-
-                // PREFER SHADBALA FROM API (more accurate than dignity alone)
-                // Shadbala considers 6 types of strength including temporal and directional
-                let shadBalaStrength = null;
-                if (astroData.shadBala && astroData.shadBala[currentDashaPlanet]) {
-                    const shadBalaValue = astroData.shadBala[currentDashaPlanet];
-                    // Shadbala values typically range from 0.5 (weak) to 2.0+ (strong)
-                    // Standard threshold is 1.0 (100% of required strength)
-                    if (typeof shadBalaValue === "number") {
-                        shadBalaStrength = shadBalaValue;
-                    } else if (shadBalaValue?.total || shadBalaValue?.strength) {
-                        shadBalaStrength = shadBalaValue.total || shadBalaValue.strength;
-                    }
-                }
-
-                dashaPlanetDignity = {
-                    dignity,
-                    dignityScore,
-                    isYogakaraka: isYK,
-                    isDusthanaLord: dusthana?.isDusthanaLord || false,
-                    dusthanaHouses: dusthana?.houses || [],
-                    // Include Shadbala if available (from API)
-                    ...(shadBalaStrength != null && { shadBalaStrength }),
-                    // Mark if using API Shadbala (more accurate)
-                    usingShadBala: shadBalaStrength != null,
-                };
-            }
-        }
-
-        // === NEW: Calculate Ashtakavarga for transits ===
-        let ashtakavarga = null;
-        let transitBinduScores = null;
-        if (astroData?.processedPlanets && astroData?.ascendant) {
-            try {
-                ashtakavarga = calculateAshtakavarga(astroData.processedPlanets, astroData.ascendant);
-            } catch (e) {
-                logger.warn("⚠️ Ashtakavarga calculation failed", { error: e?.message });
-            }
-        }
-
-        // === Transits (cached) + aspects refinement ===
-        // We use globally cached sky positions (no external API calls) for a lightweight
-        // "cosmic weather" refinement. This is intentionally low-impact.
-        let transitEffect = null;
-        let transitFactors = [];
-        let tarabala = null;
-        let chandrabala = null;
-
-        try {
-            const todayKey = getTodayDateKeyUTC();
-            const skyDoc = await db.collection("global_astro").doc("sky_positions").get();
-            const skyPositions = skyDoc.exists ? (skyDoc.data()?.positions || {}) : {};
-            const todayTransits = skyPositions?.[todayKey] || null;
-
-            if (todayTransits) {
-                const ascendantDegree = extractAscendantDegreeFromAstroData(astroData);
-                const natalPlanets = buildNatalPlanetsForAspects(astroData);
-
-                const computed = computeTransitEffectAndFactors({
-                    transits: todayTransits,
-                    ascendantDegree,
-                    // Pass simplified dasha data for correct scoring.
-                    // (scoreAspects expects dashaData.mahadasha / dashaData.antardasha to be strings)
-                    dashaData: {
-                        mahadasha: currentDashaPlanet,
-                        antardasha: currentAntarDashaPlanet,
-                    },
-                    natalPlanets,
-                });
-
-                transitEffect = computed.transitEffect;
-                transitFactors = computed.transitFactors;
-
-                // === NEW: Calculate Tarabala (Moon nakshatra relationship) ===
-                const birthNakshatra = astroData?.moonNakshatra || astroData?.nakshatra;
-                const currentMoon = todayTransits?.Moon;
-                if (birthNakshatra && currentMoon?.nakshatra) {
-                    tarabala = calculateTarabala(birthNakshatra, currentMoon.nakshatra);
-                }
-
-                // === NEW: Calculate Chandrabala (Moon sign relationship) ===
-                const birthMoonSign = astroData?.moonSign || getBirthMoonSign(astroData);
-                const currentMoonSign = currentMoon?.sign;
-                if (birthMoonSign && currentMoonSign) {
-                    chandrabala = calculateChandrabala(birthMoonSign, currentMoonSign);
-                }
-
-                // === NEW: Calculate Transit Bindu Scores using Ashtakavarga ===
-                if (ashtakavarga) {
-                    transitBinduScores = {};
-                    // Focus on slow-moving planets for meaningful transit effects
-                    const slowPlanets = ["Saturn", "Jupiter", "Rahu"];
-                    for (const planet of slowPlanets) {
-                        const transitData = todayTransits[planet];
-                        if (transitData?.sign) {
-                            const score = getTransitBinduScore(planet, transitData.sign, ashtakavarga);
-                            if (score) {
-                                transitBinduScores[planet] = score;
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (e) {
-            logger.warn("⚠️ Transit refinement skipped", {
-                uid,
-                error: e?.message || String(e),
-            });
-        }
-
-        // Calculate Vikriti with all enhanced factors
-        const vikriti = calculateVikriti({
-            prakriti: ayurvedaData.prakriti,
-            currentDashaPlanet,
-            currentAntarDashaPlanet,
-            age,
-            currentMonth,
-            symptoms,
-            transitEffect,
-            transitFactors,
-            // Enhanced factors
-            dashaPlanetDignity,
-            tarabala,
-            chandrabala,
-            transitBinduScores,
-        });
+        const vikriti = await computeVikritiFromUserData(
+            astroData, ayurvedaData.prakriti, { symptoms },
+        );
 
         return vikriti;
     } catch (error) {
@@ -650,6 +494,174 @@ export const calculateCurrentVikriti = onCall({
         throw error;
     }
 });
+
+// ============================================================================
+// VIKRITI COMPUTATION HELPER
+// Shared by calculateCurrentVikriti (on-demand) and onHealthSnapshotWrite (auto)
+// ============================================================================
+
+/**
+ * Compute Vikriti from user's astrology + ayurveda data.
+ * Assembles dasha, transits, tarabala, chandrabala, ashtakavarga inputs
+ * and calls calculateVikriti.
+ *
+ * @param {object} astroData  - User's astrologyData from Firestore
+ * @param {object} prakriti   - User's ayurvedaData.prakriti
+ * @param {object} [options]  - Optional overrides (symptoms, etc.)
+ * @returns {Promise<object|null>} Vikriti result or null if insufficient data
+ */
+async function computeVikritiFromUserData(astroData, prakriti, options = {}) {
+    if (!prakriti || !astroData) return null;
+
+    const { symptoms } = options;
+
+    // Extract current dasha planet
+    let currentDashaPlanet = null;
+    let currentAntarDashaPlanet = null;
+
+    if (astroData?.currentDasha) {
+        currentDashaPlanet = astroData.currentDasha.currentMaha?.planet ||
+            astroData.currentDasha.mahadasha?.planet;
+        currentAntarDashaPlanet = astroData.currentDasha.currentAntar?.planet ||
+            astroData.currentDasha.antardasha?.planet;
+    }
+
+    // Calculate age
+    let age = null;
+    if (astroData?.birthYear) {
+        age = new Date().getFullYear() - astroData.birthYear;
+    }
+
+    // Current month for season
+    const currentMonth = new Date().getMonth() + 1;
+
+    // === Dasha Planet Strength (prefer Shadbala from API, fallback to dignity) ===
+    let dashaPlanetDignity = null;
+    if (currentDashaPlanet && astroData?.processedPlanets) {
+        const dashaPlanetData = astroData.processedPlanets.find(
+            (p) => (p.name || p.planet) === currentDashaPlanet,
+        );
+
+        if (dashaPlanetData) {
+            let dignity = dashaPlanetData.dignity || "neutral";
+            let dignityScore = dashaPlanetData.dignityScore || 50;
+
+            const ascSign = astroData.ascendant;
+            const isYK = isYogakaraka(currentDashaPlanet, ascSign);
+            const dusthana = checkDusthanaLordship(currentDashaPlanet, ascSign);
+
+            let shadBalaStrength = null;
+            if (astroData.shadBala && astroData.shadBala[currentDashaPlanet]) {
+                const shadBalaValue = astroData.shadBala[currentDashaPlanet];
+                if (typeof shadBalaValue === "number") {
+                    shadBalaStrength = shadBalaValue;
+                } else if (shadBalaValue?.total || shadBalaValue?.strength) {
+                    shadBalaStrength = shadBalaValue.total || shadBalaValue.strength;
+                }
+            }
+
+            dashaPlanetDignity = {
+                dignity,
+                dignityScore,
+                isYogakaraka: isYK,
+                isDusthanaLord: dusthana?.isDusthanaLord || false,
+                dusthanaHouses: dusthana?.houses || [],
+                ...(shadBalaStrength != null && { shadBalaStrength }),
+                usingShadBala: shadBalaStrength != null,
+            };
+        }
+    }
+
+    // === Ashtakavarga for transits ===
+    let ashtakavarga = null;
+    let transitBinduScores = null;
+    if (astroData?.processedPlanets && astroData?.ascendant) {
+        try {
+            ashtakavarga = calculateAshtakavarga(astroData.processedPlanets, astroData.ascendant);
+        } catch (e) {
+            logger.warn("⚠️ Ashtakavarga calculation failed", { error: e?.message });
+        }
+    }
+
+    // === Transits (cached) + aspects refinement ===
+    let transitEffect = null;
+    let transitFactors = [];
+    let tarabala = null;
+    let chandrabala = null;
+
+    try {
+        const todayKey = getTodayDateKeyUTC();
+        const skyDoc = await db.collection("global_astro").doc("sky_positions").get();
+        const skyPositions = skyDoc.exists ? (skyDoc.data()?.positions || {}) : {};
+        const todayTransits = skyPositions?.[todayKey] || null;
+
+        if (todayTransits) {
+            const ascendantDegree = extractAscendantDegreeFromAstroData(astroData);
+            const natalPlanets = buildNatalPlanetsForAspects(astroData);
+
+            const computed = computeTransitEffectAndFactors({
+                transits: todayTransits,
+                ascendantDegree,
+                dashaData: {
+                    mahadasha: currentDashaPlanet,
+                    antardasha: currentAntarDashaPlanet,
+                },
+                natalPlanets,
+            });
+
+            transitEffect = computed.transitEffect;
+            transitFactors = computed.transitFactors;
+
+            // Tarabala (Moon nakshatra relationship)
+            const birthNakshatra = astroData?.moonNakshatra || astroData?.nakshatra;
+            const currentMoon = todayTransits?.Moon;
+            if (birthNakshatra && currentMoon?.nakshatra) {
+                tarabala = calculateTarabala(birthNakshatra, currentMoon.nakshatra);
+            }
+
+            // Chandrabala (Moon sign relationship)
+            const birthMoonSign = astroData?.moonSign || getBirthMoonSign(astroData);
+            const currentMoonSign = currentMoon?.sign;
+            if (birthMoonSign && currentMoonSign) {
+                chandrabala = calculateChandrabala(birthMoonSign, currentMoonSign);
+            }
+
+            // Transit Bindu Scores using Ashtakavarga
+            if (ashtakavarga) {
+                transitBinduScores = {};
+                const slowPlanets = ["Saturn", "Jupiter", "Rahu"];
+                for (const planet of slowPlanets) {
+                    const transitData = todayTransits[planet];
+                    if (transitData?.sign) {
+                        const score = getTransitBinduScore(planet, transitData.sign, ashtakavarga);
+                        if (score) {
+                            transitBinduScores[planet] = score;
+                        }
+                    }
+                }
+            }
+        }
+    } catch (e) {
+        logger.warn("⚠️ computeVikritiFromUserData: transit refinement skipped", {
+            error: e?.message || String(e),
+        });
+    }
+
+    return calculateVikriti({
+        prakriti,
+        currentDashaPlanet,
+        currentAntarDashaPlanet,
+        age,
+        currentMonth,
+        symptoms,
+        transitEffect,
+        transitFactors,
+        dashaPlanetDignity,
+        tarabala,
+        chandrabala,
+        transitBinduScores,
+    });
+}
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -1313,11 +1325,67 @@ export const weeklyHealthAggregation = onSchedule({
  *  - `concurrency: 1` (inherited from global) ensures one call per
  *    instance so retries don't compound.
  */
+/**
+ * Input fields hashed for loop guard. We hash ALL health signal fields
+ * that the engines read — so the function only re-runs when actual
+ * health data changes, not when we write back engine results.
+ *
+ * IMPORTANT: Do NOT include fields the function writes (analysis.*,
+ * engineOjas.*, engineNadi.*) or server timestamps.
+ */
 const HEALTH_INPUT_FIELDS = (d) => ({
+    // Primary vitals
     hrv: d.hrv ?? null,
     restingHR: d.restingHR ?? null,
     sleepHours: d.sleepHours ?? null,
-    ojasScore: d.ojasScore ?? null,
+    deepSleepMins: d.deepSleepMins ?? null,
+    remSleepMins: d.remSleepMins ?? null,
+    spO2: d.spO2 ?? null,
+    respRate: d.respRate ?? null,
+    wristTemp: d.wristTemp ?? null,
+    // Activity
+    steps: d.steps ?? null,
+    activeEnergy: d.activeEnergy ?? null,
+    standHours: d.standHours ?? null,
+    exerciseMins: d.exerciseMins ?? null,
+    distance: d.distance ?? null,
+    daylightMins: d.daylightMins ?? null,
+    // Beat-to-beat HRV
+    rmssd: d.rmssd ?? null,
+    pnn50: d.pnn50 ?? null,
+    // Fitness / recovery
+    vo2Max: d.vo2Max ?? null,
+    hrRecovery: d.hrRecovery ?? null,
+    // Cardiac
+    afibBurden: d.afibBurden ?? null,
+    highHRCount: d.highHRCount ?? null,
+    irregularRhythmCount: d.irregularRhythmCount ?? null,
+    // Gait
+    walkingHR: d.walkingHR ?? null,
+    walkingAsymmetry: d.walkingAsymmetry ?? null,
+    doubleSupport: d.doubleSupport ?? null,
+    walkingSteadiness: d.walkingSteadiness ?? null,
+    // Safety / environment
+    fallCount: d.fallCount ?? null,
+    sleepApneaCount: d.sleepApneaCount ?? null,
+    lowCardioFitnessCount: d.lowCardioFitnessCount ?? null,
+    uvExposure: d.uvExposure ?? null,
+    envAudioExposure: d.envAudioExposure ?? null,
+    mindfulMins: d.mindfulMins ?? null,
+    // v2 signals
+    heartRate: d.heartRate ?? null,
+    vo2Max: d.vo2Max ?? null,
+    exerciseMins: d.exerciseMins ?? null,
+    coreSleepMins: d.coreSleepMins ?? null,
+    walkingHR: d.walkingHR ?? null,
+    walkingAsymmetry: d.walkingAsymmetry ?? null,
+    doubleSupport: d.doubleSupport ?? null,
+    headphoneAudio: d.headphoneAudio ?? null,
+    lowHRCount: d.lowHRCount ?? null,
+    bodyTemp: d.bodyTemp ?? null,
+    // Watch-computed (used for comparison, not overwritten)
+    watchOjasScore: d.watchOjasScore ?? null,
+    watchNadiDosha: d.watchNadiDosha ?? null,
 });
 
 export const onHealthSnapshotWrite = onDocumentWritten({
@@ -1329,76 +1397,209 @@ export const onHealthSnapshotWrite = onDocumentWritten({
     const after = ctx.after;
 
     try {
-        // Read user's Prakriti
+        // Read user doc for Prakriti + stored baseline
         const userDoc = await db.collection("users").doc(userId).get();
-        const ayurveda = userDoc.data()?.ayurvedaData;
+        const userData = userDoc.data() ?? {};
+        const ayurveda = userData.ayurvedaData;
         const prakriti = ayurveda?.prakriti;
+
         if (!prakriti) {
-            // Still stamp the meta block so we don't re-run on every retry
+            // Still stamp meta so we don't re-run on every retry
             // for a user who hasn't completed Prakriti onboarding.
             await event.data.after.ref.update(ctx.metaPatch);
             return;
         }
 
-        // Quick dosha signal analysis from snapshot
-        const hrv = after.hrv;
-        const restingHR = after.restingHR;
-        const sleep = after.sleepHours;
-        const ojas = after.ojasScore;
+        // Load engine weights (Firestore-configurable, cached 5 min)
+        const weights = await getWeights();
 
-        let vataSignal = 0, pittaSignal = 0, kaphaSignal = 0;
+        // Load personal baseline from user doc (computed nightly/weekly)
+        const storedBaseline = ayurveda?.healthBaseline ?? null;
 
-        if (hrv != null) {
-            if (hrv < 30) vataSignal += 3;
-            else if (hrv > 80) kaphaSignal += 1;
-        }
-        if (restingHR != null) {
-            if (restingHR > 80) pittaSignal += 2;
-            else if (restingHR < 55) kaphaSignal += 2;
-        }
-        if (sleep != null) {
-            if (sleep < 5.5) vataSignal += 3;
-            else if (sleep > 9.5) kaphaSignal += 3;
-        }
+        // ── Compute backend Ojas ────────────────────────────────────────
+        const ojasResult = computeOjas(after, storedBaseline, weights);
 
-        const dominant = vataSignal >= pittaSignal && vataSignal >= kaphaSignal ? "vata" :
-            pittaSignal >= vataSignal && pittaSignal >= kaphaSignal ? "pitta" : "kapha";
+        // ── Compute backend Nadi ────────────────────────────────────────
+        const nadiResult = computeNadi(after, storedBaseline, weights);
 
-        // Generate quick recommendations
-        const recs = generateQuickRecommendations(dominant, { hrv, restingHR, sleep, ojas });
+        // ── Determine dominant dosha for recommendations ────────────────
+        const dominant = nadiResult?.dominant?.toLowerCase()
+            ?? (after.watchNadiDosha?.toLowerCase())
+            ?? inferDominantFallback(after);
 
-        // Store recommendations on the snapshot itself.
-        // CRITICAL: `ctx.metaPatch` MUST be included in this single update
+        // ── Generate recommendations ────────────────────────────────────
+        const recs = generateQuickRecommendations(dominant, {
+            hrv: after.hrv,
+            restingHR: after.restingHR,
+            sleep: after.sleepHours,
+            ojas: ojasResult?.score ?? after.watchOjasScore ?? after.ojasScore,
+        });
+
+        // ── Build update payload ────────────────────────────────────────
+        // CRITICAL: ctx.metaPatch MUST be included in this single update
         // so the new inputHash is persisted atomically with the result.
-        // Otherwise the next event sees stale meta and re-runs.
-        await event.data.after.ref.update({
+        const updatePayload = {
+            // Legacy analysis fields (kept for backward compat)
             "analysis.signalDosha": dominant,
-            "analysis.vataSignal": vataSignal,
-            "analysis.pittaSignal": pittaSignal,
-            "analysis.kaphaSignal": kaphaSignal,
             "analysis.recommendations": recs,
             "analysis.analyzedAt": FieldValue.serverTimestamp(),
             ...ctx.metaPatch,
-        });
+        };
 
-        // Also update the user's latest recommendations for watch sync.
+        // Backend Ojas result
+        if (ojasResult) {
+            updatePayload["engineOjas.score"] = ojasResult.score;
+            updatePayload["engineOjas.baseScore"] = ojasResult.baseScore;
+            updatePayload["engineOjas.summary"] = ojasResult.summary;
+            updatePayload["engineOjas.agniType"] = ojasResult.agniType;
+            updatePayload["engineOjas.agniDescription"] = ojasResult.agniDescription;
+            updatePayload["engineOjas.modifierDelta"] = ojasResult.modifierDelta;
+            updatePayload["engineOjas.ceiling"] = ojasResult.ceiling;
+            updatePayload["engineOjas.signalCount"] = ojasResult.signalCount;
+            updatePayload["engineOjas.isReliable"] = ojasResult.isReliable;
+            updatePayload["engineOjas.computedAt"] = FieldValue.serverTimestamp();
+            // Store contributors + modifiers as arrays for transparency
+            updatePayload["engineOjas.contributors"] = ojasResult.contributors.map((c) => ({
+                name: c.name,
+                score: Math.round(c.score * 100) / 100,
+                status: c.status,
+                weight: c.weight,
+            }));
+            updatePayload["engineOjas.modifiers"] = ojasResult.modifiers.map((m) => ({
+                name: m.name,
+                delta: m.delta,
+                ...(m.note ? { note: m.note } : {}),
+            }));
+        }
+
+        // Backend Nadi result
+        if (nadiResult) {
+            updatePayload["engineNadi.vata"] = nadiResult.vata;
+            updatePayload["engineNadi.pitta"] = nadiResult.pitta;
+            updatePayload["engineNadi.kapha"] = nadiResult.kapha;
+            updatePayload["engineNadi.dominant"] = nadiResult.dominant;
+            updatePayload["engineNadi.gati"] = nadiResult.gati;
+            updatePayload["engineNadi.confidence"] = nadiResult.confidence;
+            updatePayload["engineNadi.signalCount"] = nadiResult.signalCount;
+            updatePayload["engineNadi.computedAt"] = FieldValue.serverTimestamp();
+            updatePayload["engineNadi.contributors"] = nadiResult.contributors;
+        }
+
+        // Write everything in one atomic update (loop-safe)
+        await event.data.after.ref.update(updatePayload);
+
+        // Also update user's latest results for watch sync + quick reads.
         // (Different document, no loop risk.)
-        await db.collection("users").doc(userId).update({
+        const userUpdate = {
             "ayurvedaData.latestRecommendations": {
                 dosha: dominant,
                 items: recs,
                 basedOn: dayKey,
                 updatedAt: FieldValue.serverTimestamp(),
             },
-        });
+        };
 
-        logger.info(`onHealthSnapshotWrite: analyzed ${dayKey} for ${userId}, dominant=${dominant}`);
+        if (ojasResult) {
+            userUpdate["ayurvedaData.latestOjas"] = {
+                score: ojasResult.score,
+                summary: ojasResult.summary,
+                agniType: ojasResult.agniType,
+                signalCount: ojasResult.signalCount,
+                isReliable: ojasResult.isReliable,
+                dayKey,
+                updatedAt: FieldValue.serverTimestamp(),
+            };
+        }
+
+        if (nadiResult) {
+            userUpdate["ayurvedaData.latestNadi"] = {
+                vata: nadiResult.vata,
+                pitta: nadiResult.pitta,
+                kapha: nadiResult.kapha,
+                dominant: nadiResult.dominant,
+                gati: nadiResult.gati,
+                confidence: nadiResult.confidence,
+                dayKey,
+                updatedAt: FieldValue.serverTimestamp(),
+            };
+        }
+
+        // ── Compute Vikriti (current balance) ───────────────────────────
+        // Keeps ayurvedaData.vikriti fresh so the HolyCow dashboard card
+        // always has up-to-date balance data without requiring the user
+        // to visit the Ayurveda Details page.
+        const astroData = userData.astrologyData;
+        try {
+            const vikriti = await computeVikritiFromUserData(astroData, prakriti);
+            if (vikriti) {
+                userUpdate["ayurvedaData.vikriti"] = {
+                    vata: vikriti.dosha.vata,
+                    pitta: vikriti.dosha.pitta,
+                    kapha: vikriti.dosha.kapha,
+                    balanced: vikriti.balanced,
+                    imbalances: (vikriti.imbalances || []).map((i) => ({
+                        dosha: i.dosha,
+                        shift: i.shift,
+                        severity: i.severity,
+                        prakritiValue: i.prakritiValue,
+                        vikritiValue: i.vikritiValue,
+                    })),
+                    factors: (vikriti.factors || []).map((f) => ({
+                        source: f.source,
+                        dosha: f.dosha,
+                        description: f.description,
+                        strength: f.strength,
+                        ...(f.guidance ? { guidance: f.guidance } : {}),
+                    })),
+                    calculatedAt: FieldValue.serverTimestamp(),
+                };
+            }
+        } catch (e) {
+            // Non-fatal — nadi/ojas/recs still get written
+            logger.warn(`onHealthSnapshotWrite: vikriti computation skipped for ${userId}`, {
+                error: e?.message || String(e),
+            });
+        }
+
+        await db.collection("users").doc(userId).update(userUpdate);
+
+        logger.info(`onHealthSnapshotWrite: analyzed ${dayKey} for ${userId}`, {
+            dominant,
+            ojasScore: ojasResult?.score ?? null,
+            nadiDominant: nadiResult?.dominant ?? null,
+            nadiConfidence: nadiResult?.confidence ?? null,
+            hasVikriti: !!userUpdate["ayurvedaData.vikriti"],
+            signalCount: (ojasResult?.signalCount ?? 0) + (nadiResult?.signalCount ?? 0),
+        });
     } catch (err) {
         logger.warn(`onHealthSnapshotWrite: error for ${userId}/${dayKey}`, err);
         // Stamp meta even on error so a retry storm doesn't loop.
         try { await event.data.after.ref.update(ctx.metaPatch); } catch (_) { /* ignore */ }
     }
 }));
+
+/**
+ * Fallback dominant dosha inference when NadiEngine has no HRV data.
+ * Uses the simple heuristic from the original implementation.
+ */
+function inferDominantFallback(after) {
+    let vata = 0, pitta = 0, kapha = 0;
+    if (after.hrv != null) {
+        if (after.hrv < 30) vata += 3;
+        else if (after.hrv > 80) kapha += 1;
+    }
+    if (after.restingHR != null) {
+        if (after.restingHR > 80) pitta += 2;
+        else if (after.restingHR < 55) kapha += 2;
+    }
+    if (after.sleepHours != null) {
+        if (after.sleepHours < 5.5) vata += 3;
+        else if (after.sleepHours > 9.5) kapha += 3;
+    }
+    if (vata >= pitta && vata >= kapha) return "vata";
+    if (pitta >= vata && pitta >= kapha) return "pitta";
+    return "kapha";
+}
 
 /**
  * Generate quick dosha-aware recommendations from health signals.

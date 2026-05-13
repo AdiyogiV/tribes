@@ -22,7 +22,8 @@ class VedicClockPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2;
+    // Scale up so the outermost ring (0.76 * radius) fills closer to the edge
+    final radius = size.width / 2 * 1.2;
 
     final hour = time.hour;
     final minute = time.minute;
@@ -35,6 +36,7 @@ class VedicClockPainter extends CustomPainter {
     final praharIndex = _currentPraharIndex();
 
     canvas.save();
+    canvas.clipRect(Rect.fromLTWH(0, 0, size.width, size.height));
     canvas.translate(center.dx, center.dy);
 
     _drawPraharRing(canvas, radius, praharIndex);

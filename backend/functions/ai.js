@@ -279,7 +279,9 @@ export const aiChat = onRequest(
             const astrologyContext = body.astrologyContext || null;
             const userLocation = body.location || null;
             const audioUrl = body.audioUrl || null;
-            const chatSource = body.chatSource === "wellness" ? "wellness" : "astrology";
+            // Preserve explicit chatSource from dedicated pages (astrology/wellness).
+            // null = unified HolyCow mode (main chat with auto-loaded context).
+            const chatSource = body.chatSource || null;
 
             logger.info("AI chat context", {
                 structuredData: true,
@@ -808,7 +810,8 @@ export const getChatPromptConfig = onCall(
     { region: "asia-southeast2" },
     (request) => {
         const { chatSource, astrologyContext, userLocation, isVoice } = request.data || {};
-        const source = chatSource === "wellness" ? "wellness" : "astrology";
+        // Preserve explicit chatSource; null = unified HolyCow mode
+        const source = chatSource || null;
         const systemPrompt = getChatSystemPrompt(
             astrologyContext || null,
             userLocation || null,

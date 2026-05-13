@@ -611,6 +611,7 @@ extension _AstrologyDetailsPageContent on _AstrologyDetailsPageState {
               KundaliChartWidget(
                 birthChartData: p.birthChartData,
                 houseInterpretations: p.houseInterpretations,
+                skyHouseReadings: p.skyHouseReadings,
               ),
               SizedBox(height: spacing),
 

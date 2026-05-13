@@ -130,7 +130,39 @@ class ProfileAuroboardCard extends StatelessWidget {
                 FutureBuilder<int?>(
                   future: userRankFuture,
                   builder: (context, snapshot) {
+                    final isLoading = snapshot.connectionState == ConnectionState.waiting;
                     final rank = snapshot.data;
+
+                    if (isLoading) {
+                      // Show shimmer placeholder while rank is loading
+                      final skeletonColor = isDark
+                          ? Colors.white.withValues(alpha: 0.08)
+                          : primaryColor.withValues(alpha: 0.1);
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Rank',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: primaryColor.withValues(alpha: 0.7),
+                            ),
+                          ),
+                          const SizedBox(height: AppDimensions.spacingXxs),
+                          Container(
+                            width: 32,
+                            height: 14,
+                            decoration: BoxDecoration(
+                              color: skeletonColor,
+                              borderRadius: BorderRadius.circular(AppDimensions.radiusSmMd),
+                            ),
+                          ),
+                        ],
+                      );
+                    }
+
                     final value = rank != null ? rank.toString() : '—';
                     return ProfileStatItem(
                       label: 'Rank',

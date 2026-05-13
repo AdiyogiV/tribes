@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:aurogram/shared/models/watch_health_data.dart';
 import 'package:aurogram/shared/services/watch_service.dart';
 import 'package:aurogram/shared/services/local_store.dart';
@@ -23,6 +25,7 @@ class WatchHealthProvider extends ChangeNotifier {
   WatchHealthData? _healthData;
   List<WatchHealthData> _history = [];
   StreamSubscription<Map<String, dynamic>>? _sub;
+  StreamSubscription<DocumentSnapshot>? _userDocSub;
   bool _initialized = false;
 
   /// The latest health data from the watch, or null if none received yet.
@@ -56,6 +59,9 @@ class WatchHealthProvider extends ChangeNotifier {
     // Hydrate from local DB immediately (instant, no network)
     _hydrateFromLocalStore();
 
+    // Listen for backend engine results on the user document
+    _listenForBackendEngine();
+
     AppLogger.i('WatchHealthProvider: initialized with local-first architecture',
         category: LogCategory.general);
   }
@@ -86,18 +92,34 @@ class WatchHealthProvider extends ChangeNotifier {
       _insertBatchSignalReadings(data);
 
       notifyListeners();
-    } else if (type == 'nadiReading' && _healthData == null) {
-      // Use Nadi reading as initial health data if no full payload yet
-      _healthData = WatchHealthData.fromMap(data);
-      if (_healthData!.hasData) {
-        AppLogger.i('WatchHealthProvider: using nadiReading as initial health data',
-            category: LogCategory.general,
-            data: {
-              'signals': _healthData?.signalCount,
-              'hrv': _healthData?.hrv,
-            });
-        notifyListeners();
+    } else if (type == 'nadiReading') {
+      // nadiReading payloads carry the actual dosha percentages (vata/pitta/kapha)
+      // computed by the watch NadiEngine — much richer than the crude heuristic.
+      final nadiData = WatchHealthData.fromMap(data);
+      if (_healthData != null) {
+        // Merge dosha values into existing health data
+        _healthData = _healthData!.copyWithNadi(
+          nadiVata: nadiData.nadiVata,
+          nadiPitta: nadiData.nadiPitta,
+          nadiKapha: nadiData.nadiKapha,
+          nadiDosha: nadiData.nadiDosha,
+          nadiGati: nadiData.nadiGati,
+          nadiConfidence: nadiData.nadiConfidence,
+          nadiSignalCount: nadiData.nadiSignalCount,
+        );
+      } else {
+        _healthData = nadiData;
       }
+      AppLogger.i('WatchHealthProvider: merged nadiReading',
+          category: LogCategory.general,
+          data: {
+            'dominant': nadiData.nadiDosha,
+            'vata': nadiData.nadiVata,
+            'pitta': nadiData.nadiPitta,
+            'kapha': nadiData.nadiKapha,
+            'confidence': nadiData.nadiConfidence,
+          });
+      notifyListeners();
     }
   }
 
@@ -147,6 +169,80 @@ class WatchHealthProvider extends ChangeNotifier {
       AppLogger.w('WatchHealthProvider: failed to hydrate from LocalStore',
           category: LogCategory.general, data: {'error': e.toString()});
     }
+  }
+
+  // ── Backend Engine Listener ─────────────────────────────────────────────
+
+  /// Listen for backend-computed Ojas and Nadi from the user document.
+  /// The Cloud Function writes `ayurvedaData.latestOjas` and
+  /// `ayurvedaData.latestNadi` after processing each healthSnapshot.
+  void _listenForBackendEngine() {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    _userDocSub?.cancel();
+    _userDocSub = FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .snapshots()
+        .listen((snapshot) {
+      final data = snapshot.data();
+      if (data == null) return;
+
+      final ayurveda = data['ayurvedaData'] as Map<String, dynamic>?;
+      if (ayurveda == null) return;
+
+      final latestOjas = ayurveda['latestOjas'] as Map<String, dynamic>?;
+      final latestNadi = ayurveda['latestNadi'] as Map<String, dynamic>?;
+
+      if (latestOjas == null && latestNadi == null) return;
+
+      // Merge backend results into the current healthData
+      if (_healthData != null) {
+        _healthData = _healthData!.copyWithBackendEngine(
+          engineOjasScore: _toDouble(latestOjas?['score']),
+          engineOjasSummary: latestOjas?['summary'] as String?,
+          engineAgniType: latestOjas?['agniType'] as String?,
+          engineOjasSignalCount: _toInt(latestOjas?['signalCount']),
+          engineOjasReliable: latestOjas?['isReliable'] as bool?,
+          engineNadiVata: _toDouble(latestNadi?['vata']),
+          engineNadiPitta: _toDouble(latestNadi?['pitta']),
+          engineNadiKapha: _toDouble(latestNadi?['kapha']),
+          engineNadiDominant: latestNadi?['dominant'] as String?,
+          engineNadiGati: latestNadi?['gati'] as String?,
+          engineNadiConfidence: _toDouble(latestNadi?['confidence']),
+          engineNadiSignalCount: _toInt(latestNadi?['signalCount']),
+        );
+
+        AppLogger.i('WatchHealthProvider: merged backend engine results',
+            category: LogCategory.general,
+            data: {
+              'ojasScore': latestOjas?['score'],
+              'nadiDominant': latestNadi?['dominant'],
+              'nadiConfidence': latestNadi?['confidence'],
+            });
+        notifyListeners();
+      }
+    }, onError: (e) {
+      AppLogger.w('WatchHealthProvider: backend engine listener error',
+          category: LogCategory.general, data: {'error': e.toString()});
+    });
+  }
+
+  static double? _toDouble(dynamic v) {
+    if (v == null) return null;
+    if (v is double) return v;
+    if (v is int) return v.toDouble();
+    if (v is num) return v.toDouble();
+    return null;
+  }
+
+  static int? _toInt(dynamic v) {
+    if (v == null) return null;
+    if (v is int) return v;
+    if (v is double) return v.toInt();
+    if (v is num) return v.toInt();
+    return null;
   }
 
   /// Append a reading to the in-memory history list (avoids re-querying DB).
@@ -260,16 +356,26 @@ class WatchHealthProvider extends ChangeNotifier {
       case 'restingHR': return d.restingHR;
       case 'spO2': return d.normalizedSpO2;
       case 'respRate': return d.respRate;
+      case 'rmssd': return d.rmssd;
+      case 'pnn50': return d.pnn50 != null ? d.pnn50! * 100 : null;
       case 'steps': return d.steps?.toDouble();
       case 'activeEnergy': return d.activeEnergy;
+      case 'basalEnergy': return d.basalEnergy;
       case 'mindfulMins': return d.mindfulMins;
+      case 'exerciseMins': return d.exerciseMins;
+      case 'standHours': return d.standHours?.toDouble();
+      case 'distance': return d.distance;
+      case 'daylightMins': return d.daylightMins;
       case 'vo2Max': return d.vo2Max;
       case 'hrRecovery': return d.hrRecovery;
       case 'walkingSteadiness': return d.walkingSteadiness;
+      case 'walkingHR': return d.walkingHR;
+      case 'walkSpeed': return d.walkSpeed;
       case 'sleepHours': return d.sleepHours;
       case 'deepSleepMins': return d.deepSleepMins;
       case 'remSleepMins': return d.remSleepMins;
       case 'wristTemp': return d.wristTemp;
+      case 'workoutMins': return d.workoutMins;
       default: return null;
     }
   }
@@ -339,6 +445,7 @@ class WatchHealthProvider extends ChangeNotifier {
   @override
   void dispose() {
     _sub?.cancel();
+    _userDocSub?.cancel();
     super.dispose();
   }
 }

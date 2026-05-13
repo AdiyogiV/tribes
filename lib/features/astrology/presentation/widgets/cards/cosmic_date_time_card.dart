@@ -57,9 +57,25 @@ class _CosmicDateTimeCardState extends State<CosmicDateTimeCard> {
 
     final vedicPrahar = VedicTimeUtils.getVedicPrahar(_now);
     final vedicTimeShort = VedicTimeUtils.getVedicTimeShort(_now);
-    final fullVedicDate = VedicTimeUtils.buildFullVedicDate(samvat);
     final samvatYear = VedicTimeUtils.buildSamvatYearNameOnly(samvat);
     final vedicNumericDate = VedicTimeUtils.buildVedicNumericDate(samvat);
+
+    // Split Vedic date into tithi line + month line
+    // e.g. "Krishna Navami" and "Vaishakha Masa"
+    final fullVedicDate = VedicTimeUtils.buildFullVedicDate(samvat);
+    final lunarMonth = samvat?['lunar_month_full_name']?.toString() ??
+        samvat?['lunar_month_name']?.toString() ??
+        samvat?['lunarMonthFull']?.toString() ??
+        samvat?['lunarMonth']?.toString();
+    // Remove month from fullVedicDate to get just "Paksha Tithi"
+    String? tithiLine;
+    if (fullVedicDate != null && lunarMonth != null) {
+      tithiLine = fullVedicDate.replaceFirst(lunarMonth, '').trim();
+      if (tithiLine.isEmpty) tithiLine = null;
+    } else {
+      tithiLine = fullVedicDate;
+    }
+    final monthLine = lunarMonth != null ? '$lunarMonth Masa' : null;
 
     // Extract moon phase data
     int? tithiNumber = _extractTithiNumber(samvat);
@@ -99,120 +115,120 @@ class _CosmicDateTimeCardState extends State<CosmicDateTimeCard> {
         elevation: 2,
         shadowColor: Colors.black.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-        child: InkWell(
-          onTap: () => _showVedicTimeInfo(context, isDark, c),
-          borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-          child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-              const SizedBox(height: 8),
-              // 0. Vedic Analog Clock — full card width, no padding
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final clockSize = constraints.maxWidth * 0.85;
-                  return VedicClockWidget(
+        child: Stack(
+          children: [
+            // Card content — horizontal: clock left, text right
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppDimensions.paddingLg,
+                AppDimensions.paddingMd,
+                AppDimensions.paddingLg,
+                AppDimensions.paddingMd,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Text content — left side
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Prahar name
+                        Text(
+                          vedicPrahar,
+                          style: TextStyle(
+                            fontSize: AppTheme.holyCowTextSize,
+                            fontWeight: FontWeight.w600,
+                            color: c,
+                            height: 1.4,
+                          ),
+                        ),
+                        // Ghati · Pala
+                        Text(
+                          vedicTimeShort,
+                          style: TextStyle(
+                            fontSize: AppTheme.holyCowTextSize,
+                            fontWeight: FontWeight.w500,
+                            color: c,
+                            height: 1.4,
+                          ),
+                        ),
+                        // Month: Vaishakha Masa
+                        if (monthLine != null)
+                          Text(
+                            monthLine,
+                            style: TextStyle(
+                              fontSize: AppTheme.holyCowTextSize,
+                              fontWeight: FontWeight.w500,
+                              color: c,
+                              height: 1.4,
+                            ),
+                          ),
+                        // Tithi: Krishna Navami
+                        if (tithiLine != null)
+                          Text(
+                            tithiLine,
+                            style: TextStyle(
+                              fontSize: AppTheme.holyCowTextSize,
+                              fontWeight: FontWeight.w500,
+                              color: c,
+                              height: 1.4,
+                            ),
+                          ),
+                        // Samvat year name
+                        if (samvatYear != null)
+                          Text(
+                            samvatYear,
+                            style: TextStyle(
+                              fontSize: AppTheme.holyCowTextSize,
+                              fontWeight: FontWeight.w500,
+                              color: c,
+                              height: 1.4,
+                            ),
+                          ),
+                        // Numeric date
+                        if (vedicNumericDate != null)
+                          Text(
+                            vedicNumericDate,
+                            style: TextStyle(
+                              fontSize: AppTheme.holyCowTextSize,
+                              fontWeight: FontWeight.w500,
+                              color: c.withValues(alpha: 0.5),
+                              height: 1.4,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: AppDimensions.spacingMdLg),
+                  // Vedic Clock — right side
+                  VedicClockWidget(
                     time: _now,
                     isDark: isDark,
-                    size: clockSize,
-                  );
-                },
+                    size: 120,
+                  ),
+                ],
               ),
-              // Text content with card padding
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppDimensions.paddingLg,
-                  AppDimensions.spacingSm,
-                  AppDimensions.paddingLg,
-                  0,
-                ),
-                child: Column(
-                  children: [
-                    // Line 1: Usha Prahar
-                    Text(
-                      vedicPrahar,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: AppTheme.holyCowTextSize,
-                        fontWeight: FontWeight.w500,
-                        color: c,
-                        height: 1.5,
-                      ),
-                    ),
-                    // Line 2: Ghati 52 · Pala 29
-                    Text(
-                      vedicTimeShort,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: AppTheme.holyCowTextSize,
-                        fontWeight: FontWeight.w500,
-                        color: c,
-                        height: 1.5,
-                      ),
-                    ),
-                    // Line 2: Chaitram Krishna Shashthi
-                    if (fullVedicDate != null)
-                      Text(
-                        fullVedicDate,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: AppTheme.holyCowTextSize,
-                          fontWeight: FontWeight.w500,
-                          color: c,
-                          height: 1.5,
-                        ),
-                      ),
-                    // Line 3: Vikram Samvat Rowdri
-                    if (samvatYear != null)
-                      Text(
-                        samvatYear,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: AppTheme.holyCowTextSize,
-                          fontWeight: FontWeight.w500,
-                          color: c,
-                          height: 1.5,
-                        ),
-                      ),
-                    // Line 4: 6/2/1/2083
-                    if (vedicNumericDate != null)
-                      Text(
-                        vedicNumericDate,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: AppTheme.holyCowTextSize,
-                          fontWeight: FontWeight.w500,
-                          color: c.withValues(alpha: 0.5),
-                          height: 1.5,
-                        ),
-                      ),
-                  ],
+            ),
+            // Info button — top-right corner
+            Positioned(
+              top: 8,
+              right: 8,
+              child: GestureDetector(
+                onTap: () => _showVedicTimeInfo(context, isDark, c),
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Icon(
+                    Icons.info_outline_rounded,
+                    size: 15,
+                    color: c.withValues(alpha: 0.3),
+                  ),
                 ),
               ),
-              // 5. Moon Phase Strip — hidden for now
-              // TODO: Re-enable moon phase strip
-              // if (hasMoonPhase) ...[
-              //   ClipRRect(
-              //     borderRadius: const BorderRadius.only(
-              //       bottomLeft: Radius.circular(AppDimensions.radiusXl),
-              //       bottomRight: Radius.circular(AppDimensions.radiusXl),
-              //     ),
-              //     child: Padding(
-              //       padding: const EdgeInsets.only(
-              //         top: AppDimensions.paddingSm,
-              //         bottom: AppDimensions.paddingSm,
-              //       ),
-              //       child: MoonPhaseStrip(
-              //         tithiNumber: tithiNumber,
-              //         paksha: paksha,
-              //         isDark: isDark,
-              //       ),
-              //     ),
-              //   ),
-              // ] else
-              const SizedBox(height: AppDimensions.paddingLg),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

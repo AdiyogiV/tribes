@@ -633,7 +633,8 @@ export const getSkyPositions = onCall({
     timeoutSeconds: 30,
     memory: "256MiB",
     region: "asia-southeast2",
-    invoker: "public", // Allow client apps to invoke
+    minInstances: 1,  // Always warm — called on every app open
+    invoker: "public",
 }, async (request) => {
     try {
         const docRef = db.collection("global_astro").doc("sky_positions");

@@ -3,18 +3,21 @@ import 'package:kundali_chart/kundali_chart.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/dialogs/house_details_dialog.dart';
+import 'package:aurogram/features/astrology/presentation/widgets/kundali_house_hit_test.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 
 /// Professional North Indian Kundali Chart with tappable houses
 class KundaliChartWidget extends StatelessWidget {
   final Map<String, dynamic>? birthChartData;
   final Map<String, dynamic>? houseInterpretations;
+  final Map<String, dynamic>? skyHouseReadings;
   final bool enableHouseTap;
 
   const KundaliChartWidget({
     super.key,
     required this.birthChartData,
     this.houseInterpretations,
+    this.skyHouseReadings,
     this.enableHouseTap = true,
   });
 
@@ -130,90 +133,17 @@ class KundaliChartWidget extends StatelessWidget {
     double scaleY,
     bool isDark,
   ) {
-    // Get tap position relative to the container
-    final localPosition = details.localPosition;
-
-    // The chart is drawn with 0.8 factor in the painter, centered
-    // Account for padding first
-    final innerHeight = chartHeight - (padding * 2);
-
-    // Center of the container (accounting for padding)
-    final containerCenterX = chartWidth / 2;
-    final containerCenterY = chartHeight / 2;
-
-    // Convert tap to coordinates relative to center
-    // We need to reverse the scale transform to get actual chart coordinates
-    final tapX = (localPosition.dx - containerCenterX) / scaleX;
-    final tapY = (localPosition.dy - containerCenterY) / scaleY;
-
-    // The chart uses 0.8 * min(width, height) for its size
-    // Since innerHeight is used as the base square size
-    final chartSize = innerHeight * 0.8;
-    final halfSize = chartSize / 2;
-
-    // Normalize coordinates to -1..1 range
-    final nx = tapX / halfSize;
-    final ny = tapY / halfSize;
-
-    // Check if tap is within the chart bounds
-    if (nx.abs() > 1.1 || ny.abs() > 1.1) {
-      return; // Tap outside chart area
-    }
-
-    // Determine which house was tapped
-    final houseNumber = _getHouseFromTap(nx, ny);
-
-    if (houseNumber > 0) {
+    final houseNumber = houseFromLocalTap(
+      localX: details.localPosition.dx,
+      localY: details.localPosition.dy,
+      containerWidth: chartWidth,
+      containerHeight: chartHeight,
+      padding: padding,
+      scaleX: scaleX,
+      scaleY: scaleY,
+    );
+    if (houseNumber != null) {
       _showHouseDetails(context, houseNumber, isDark);
-    }
-  }
-
-  /// Determines which house (1-12) was tapped based on normalized coordinates
-  /// The North Indian chart has:
-  /// - Houses 1, 4, 7, 10 inside the diamond (center triangles)
-  /// - Houses 2, 6, 8, 12 in the corners (outside diamond)
-  /// - Houses 3, 5, 9, 11 on the edges (outside diamond)
-  int _getHouseFromTap(double nx, double ny) {
-    // Check if inside the diamond: |x| + |y| <= 1
-    final insideDiamond = nx.abs() + ny.abs() <= 1.0;
-
-    if (insideDiamond) {
-      // Inside diamond: 4 triangular regions
-      // Determine which triangle based on which coordinate dominates
-      if (ny < 0 && nx.abs() <= ny.abs()) {
-        return 1; // Top center triangle
-      } else if (nx < 0 && ny.abs() <= nx.abs()) {
-        return 4; // Left center triangle
-      } else if (ny > 0 && nx.abs() <= ny.abs()) {
-        return 7; // Bottom center triangle
-      } else {
-        return 10; // Right center triangle
-      }
-    }
-
-    // Outside diamond: 8 regions divided by the main diagonals
-    // Main diagonal: y = x (top-left to bottom-right)
-    // Anti-diagonal: y = -x (top-right to bottom-left)
-
-    final isTop = ny < 0;
-    final isLeft = nx < 0;
-
-    if (isTop && isLeft) {
-      // Top-left quadrant: House 2 (corner) or House 3 (left edge)
-      // Diagonal y = x divides them
-      return (ny < nx) ? 2 : 3;
-    } else if (isTop && !isLeft) {
-      // Top-right quadrant: House 12 (corner) or House 11 (right edge)
-      // Anti-diagonal y = -x divides them
-      return (ny < -nx) ? 12 : 11;
-    } else if (!isTop && isLeft) {
-      // Bottom-left quadrant: House 6 (corner) or House 5 (left edge)
-      // Anti-diagonal y = -x divides them
-      return (ny > -nx) ? 6 : 5;
-    } else {
-      // Bottom-right quadrant: House 8 (corner) or House 9 (right edge)
-      // Main diagonal y = x divides them
-      return (ny > nx) ? 8 : 9;
     }
   }
 
@@ -240,6 +170,7 @@ class KundaliChartWidget extends StatelessWidget {
       }
     }
 
+    // Birth chart context — natal interpretation only, no current-sky reading.
     final houseInfo = HouseInfo(
       houseNumber: houseNumber,
       zodiacSign: zodiacSign,

@@ -27,7 +27,7 @@
 
 export const AI_MODELS = {
     // Gemini model for insights and interpretations
-    GEMINI_FLASH: "gemini-2.0-flash",
+    GEMINI_FLASH: "gemini-2.5-flash",
     GEMINI_PRO: "gemini-1.5-pro",
 
     // OpenRouter models (via AI_CONFIG in constants.js)

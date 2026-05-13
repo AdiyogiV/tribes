@@ -4,7 +4,11 @@ import { withIdempotency } from "../lib/idempotency.js";
 import { getOrdinal } from "../lib/utils.js";
 import { getUserFcmTokens, removeInvalidTokens, isInvalidTokenError } from "../lib/fcm_utils.js";
 
-export const sendPushNotification = onDocumentCreated("notifications/{userId}/notifications/{notificationId}", withIdempotency("sendPushNotification", async (event) => {
+export const sendPushNotification = onDocumentCreated({
+    document: "notifications/{userId}/notifications/{notificationId}",
+    region: "asia-southeast2",
+    memory: "256MiB",
+}, withIdempotency("sendPushNotification", async (event) => {
     const snap = event.data;
     const notificationData = snap.data();
     const userId = event.params.userId;

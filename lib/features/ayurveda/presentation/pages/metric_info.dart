@@ -215,6 +215,92 @@ const metricInfoMap = <String, MetricInfo>{
     ],
   ),
 
+  // ── Beat-to-beat HRV ───────────────────────────────────────────────────
+  'rmssd': MetricInfo(
+    explanation:
+        'RMSSD (Root Mean Square of Successive Differences) measures '
+        'beat-to-beat heart rate variability — the gold standard marker '
+        'of parasympathetic (vagal) tone. Higher values indicate better '
+        'recovery and stress resilience.',
+    ayurvedicNote:
+        'High vagal tone reflects strong Prana Vayu and balanced Ojas. '
+        'Low RMSSD suggests Vata aggravation and depleted vitality.',
+    ranges: [
+      MetricRange('Good', '≥ 50 ms', Color(0xFF27AE60)),
+      MetricRange('Fair', '20–49 ms', Color(0xFFE67E22)),
+      MetricRange('Low', '< 20 ms', Color(0xFFE74C3C)),
+    ],
+  ),
+
+  // ── Walking & Gait ────────────────────────────────────────────────────
+  'walkingHR': MetricInfo(
+    explanation:
+        'Your average heart rate during walking. Lower values suggest '
+        'better cardiovascular efficiency.',
+    ayurvedicNote:
+        'Elevated walking HR may signal Pitta aggravation or Agni '
+        'working hard to metabolize during movement.',
+    ranges: [
+      MetricRange('Normal', '< 110 bpm', Color(0xFF27AE60)),
+      MetricRange('Elevated', '110–130 bpm', Color(0xFFE67E22)),
+      MetricRange('High', '> 130 bpm', Color(0xFFE74C3C)),
+    ],
+  ),
+
+  // ── Activity ──────────────────────────────────────────────────────────
+  'standHours': MetricInfo(
+    explanation:
+        'Hours during which you stood and moved for at least 1 minute. '
+        'Consistent standing breaks improve circulation and posture.',
+    ayurvedicNote:
+        'Regular movement prevents Kapha stagnation and supports '
+        'Vyana Vayu (circulation of energy through the body).',
+    ranges: [
+      MetricRange('Good', '≥ 10 hrs', Color(0xFF27AE60)),
+      MetricRange('Fair', '6–9 hrs', Color(0xFFE67E22)),
+      MetricRange('Low', '< 6 hrs', Color(0xFFE74C3C)),
+    ],
+  ),
+  'exerciseMins': MetricInfo(
+    explanation:
+        'Minutes of exercise at or above a brisk walk, as measured by '
+        'your Apple Watch activity ring.',
+    ayurvedicNote:
+        'Balanced exercise supports Agni and all doshas. Over-exercise '
+        'aggravates Vata; under-exercise allows Kapha accumulation.',
+    ranges: [
+      MetricRange('Good', '≥ 30 min', Color(0xFF27AE60)),
+      MetricRange('Fair', '15–29 min', Color(0xFFE67E22)),
+      MetricRange('Low', '< 15 min', Color(0xFFE74C3C)),
+    ],
+  ),
+  'distance': MetricInfo(
+    explanation:
+        'Total distance covered today from walking, running, and other '
+        'movement tracked by your Apple Watch.',
+    ayurvedicNote:
+        'Movement supports Vyana Vayu (circulation) and helps balance '
+        'Kapha. Excessive distance may aggravate Vata.',
+    ranges: [
+      MetricRange('Active', '≥ 5 km', Color(0xFF27AE60)),
+      MetricRange('Fair', '2–5 km', Color(0xFFE67E22)),
+      MetricRange('Low', '< 2 km', Color(0xFFE74C3C)),
+    ],
+  ),
+  'workoutMins': MetricInfo(
+    explanation:
+        'Total recorded workout minutes today. Includes all workout '
+        'types tracked by the Apple Watch Workout app.',
+    ayurvedicNote:
+        'Structured exercise strengthens Ojas and supports Agni. '
+        'The type and intensity should match your Prakriti.',
+    ranges: [
+      MetricRange('Active', '≥ 30 min', Color(0xFF27AE60)),
+      MetricRange('Moderate', '15–29 min', Color(0xFFE67E22)),
+      MetricRange('Light', '< 15 min', Color(0xFFE74C3C)),
+    ],
+  ),
+
   // ── Ojas Vitality ──────────────────────────────────────────────────────
   'ojasScore': MetricInfo(
     explanation:
