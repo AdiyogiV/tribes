@@ -189,13 +189,8 @@ class HolyCowCosmicContent extends StatelessWidget {
                           getPositionsForDate: skyService.getPositionsForDate,
                           getInterpolatedPositions:
                               skyService.getInterpolatedPositions,
-                          onExploreSky: () {
-                            final uid =
-                                FirebaseAuth.instance.currentUser?.uid ?? '';
-                            context.push(RouteNames.currentSky, extra: {
-                              'uid': uid,
-                            });
-                          },
+                          // TODO: re-enable when Current Sky page is improved
+                          onExploreSky: null,
                           onExploreBirthChart: profile != null
                               ? () {
                                   final uid =

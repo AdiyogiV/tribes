@@ -91,8 +91,8 @@ async function testCriticalFunctions() {
     
     // Test 2: Import all critical functions
     try {
-        const cacheUtils = await import('../functions/cache_utils.js');
-        const vedicAnalysis = await import('../functions/vedic_analysis.js');
+        const cacheUtils = await import('../lib/cache_utils.js');
+        const vedicAnalysis = await import('../lib/vedic_analysis.js');
         
         logTest('infrastructure', 'Cache utils import', !!cacheUtils.generateLatLngHash);
         logTest('infrastructure', 'Vedic analysis import', !!vedicAnalysis.calculateHouseActivations);
@@ -109,7 +109,7 @@ async function testCacheUtils() {
             generateLatLngHash, 
             generateChartSignature, 
             generateTransitHash 
-        } = await import('../functions/cache_utils.js');
+        } = await import('../lib/cache_utils.js');
         
         // Test: Lat/Lng hash is deterministic
         const hash1 = generateLatLngHash(28.6139, 77.2090);
@@ -152,7 +152,7 @@ async function testVedicAnalysis() {
             calculateTransitAspects,
             scoreHouseActivations,
             scoreAspects
-        } = await import('../functions/vedic_analysis.js');
+        } = await import('../lib/vedic_analysis.js');
         
         const natalChart = {
             ascendant: 240, // Scorpio

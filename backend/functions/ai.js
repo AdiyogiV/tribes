@@ -4,8 +4,8 @@ import { logger } from "../lib/firebase.js";
 import { db, FieldValue } from "../lib/firebase.js";
 import { geminiApiKey } from "../lib/secrets.js";
 import { getChatSystemPrompt } from "./prompts/chat.js";
-import { getDashaMeaning, getHouseMeaning, getTransitMeaning } from "./search.js";
-import { getDailySearchContext } from "./astro_context.js";
+import { getDashaMeaning, getHouseMeaning, getTransitMeaning } from "../lib/search.js";
+import { getDailySearchContext } from "../lib/astro_context.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { checkRateLimit as checkPersistentRateLimit, RATE_LIMIT_PRESETS } from "../lib/rate_limiter.js";
 import { CHAT_CONFIG, AI_MODELS } from "../lib/config.js";
@@ -829,13 +829,7 @@ export const getChatPromptConfig = onCall(
 // Global sequence counter per chat to ensure step ordering
 const stepSequenceCounters = new Map();
 
-// Export for use by search.js
-export function getNextSequence(chatId) {
-    const currentSeq = stepSequenceCounters.get(chatId) || 0;
-    const newSeq = currentSeq + 1;
-    stepSequenceCounters.set(chatId, newSeq);
-    return newSeq;
-}
+// REMOVED: getNextSequence — was exported "for use by search.js" but never imported anywhere.
 
 function addThoughtStep(chatId, stepData) { // eslint-disable-line no-unused-vars
     const currentSeq = stepSequenceCounters.get(chatId) || 0;

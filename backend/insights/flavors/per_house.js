@@ -27,7 +27,7 @@ import { db, FieldValue, logger } from "../../lib/firebase.js";
 import { DateTime } from "luxon";
 import {
     calculateWholeSignHouse,
-} from "../../functions/vedic_analysis.js";
+} from "../../lib/vedic_analysis.js";
 import {
     getUpcomingSignIngresses,
 } from "../../functions/sky_positions.js";

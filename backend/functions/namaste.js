@@ -24,10 +24,13 @@ async function checkBlocked(db, userA, userB) {
 }
 
 /**
- * Award aura points for namaste with deduplication
- * Only awards once per sender->recipient per day
+ * Award aura points to the namaste recipient with deduplication.
+ * Only awards once per sender->recipient per day.
+ *
+ * NOTE: Local helper (not a Cloud Function). The old `awardNamasteAura`
+ * Firestore trigger in aura.js was a no-op and has been removed.
  */
-async function awardNamasteAura(db, recipientUid, senderUid, today) {
+async function awardNamasteAuraToRecipient(db, recipientUid, senderUid, today) {
     const trackingId = `namaste_${senderUid}_${recipientUid}_${today}`;
     const trackingRef = db
         .collection("users")
@@ -264,7 +267,7 @@ export const sendNamaste = onCall({
         });
 
         // Award aura points to recipient (outside transaction for dedup logic)
-        const recipientAwarded = await awardNamasteAura(db, recipientUid, senderId, today);
+        const recipientAwarded = await awardNamasteAuraToRecipient(db, recipientUid, senderId, today);
 
         const newRemaining = NAMASTE_CONFIG.DAILY_LIMIT - currentSent - 1;
         const senderPointsAwarded = NAMASTE_CONFIG.AURA_POINTS_SENT;
@@ -331,65 +334,6 @@ export const getNamasteQuota = onCall({
     };
 });
 
-/**
- * Check if can send namaste to a specific user
- * Lightweight check without sending
- * 
- * @param {string} request.data.recipientUid - User to check
- * @returns {Object} { canSend: boolean, reason?: string }
- */
-export const canSendNamaste = onCall({
-    region: "asia-southeast2",
-    invoker: "public", // Allow client apps to invoke (Firebase Auth handles actual auth)
-}, async (request) => {
-    const db = getFirestore();
-    const senderId = request.auth?.uid;
-    const { recipientUid } = request.data || {};
-
-    if (!senderId) {
-        throw new HttpsError("unauthenticated", "User must be authenticated");
-    }
-
-    if (!recipientUid) {
-        throw new HttpsError("invalid-argument", "recipientUid is required");
-    }
-
-    // Self check
-    if (senderId === recipientUid) {
-        return { canSend: false, reason: "SELF_NAMASTE" };
-    }
-
-    // Block check
-    const isBlocked = await checkBlocked(db, senderId, recipientUid);
-    if (isBlocked) {
-        return { canSend: false, reason: "BLOCKED" };
-    }
-
-    // Quota check
-    const today = getTodayDateString();
-    const quotaDoc = await db
-        .collection("users")
-        .doc(senderId)
-        .collection("namasteQuota")
-        .doc(today)
-        .get();
-
-    if (!quotaDoc.exists) {
-        return { canSend: true };
-    }
-
-    const data = quotaDoc.data();
-    const sent = data.sent || 0;
-    const recipients = data.recipients || [];
-
-    if (sent >= NAMASTE_CONFIG.DAILY_LIMIT) {
-        return { canSend: false, reason: "QUOTA_EXCEEDED" };
-    }
-
-    if (recipients.includes(recipientUid)) {
-        return { canSend: false, reason: "ALREADY_SENT_TODAY" };
-    }
-
-    return { canSend: true };
-});
+// REMOVED: canSendNamaste — Flutter derives this state from getNamasteQuota's
+// response (NamasteService.canSendTo()), so the server-side check was unused.
 

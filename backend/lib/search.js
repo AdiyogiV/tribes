@@ -1,5 +1,5 @@
-import { logger } from "../lib/firebase.js";
-import { geminiApiKey } from "../lib/secrets.js";
+import { logger } from "./firebase.js";
+import { geminiApiKey } from "./secrets.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import {
     getCachedAstroKnowledge,
@@ -7,8 +7,8 @@ import {
     getCachedAstroCurrent,
     cacheAstroCurrent,
 } from "./cache_utils.js";
-import { getOrdinal } from "../lib/utils.js";
-import { AI_MODELS } from "../lib/config.js";
+import { getOrdinal } from "./utils.js";
+import { AI_MODELS } from "./config.js";
 
 // =============================================================================
 // WEB SEARCH (VIA GEMINI GOOGLE SEARCH GROUNDING)

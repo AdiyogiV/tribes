@@ -173,9 +173,9 @@ service cloud.firestore {
     }
     
     // Global Astro - shared data like sky positions, muhurat, panchang
-    // Authenticated users can read, only backend writes
+    // Public read (data is global, not user-specific) - backend only writes
     match /global_astro/{docId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if false; // Backend only via Admin SDK
     }
 

@@ -11,7 +11,7 @@ importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-comp
 
 // IMPORTANT: Update this version when deploying new builds to bust the cache
 // Should match the version in pubspec.yaml for consistency
-const CACHE_VERSION = '57';
+const CACHE_VERSION = '65';
 const CACHE_NAME = `aurogram-v${CACHE_VERSION}`;
 
 // Static assets to pre-cache on install
@@ -20,7 +20,7 @@ const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/offline.html',
-  '/flutter.js',
+  '/flutter_bootstrap.js',
   '/manifest.json',
   '/icons/Icon-192.png',
   '/icons/Icon-512.png',
@@ -31,10 +31,13 @@ const STATIC_ASSETS = [
   '/favicon.png',
 ];
 
-// Critical app files that should always check network first (stale-while-revalidate)
+// Critical app files that should always check network first.
+// HTML must be here so users always get the latest shell after deploys.
 const NETWORK_FIRST_PATTERNS = [
   /main\.dart\.js$/,
   /flutter_bootstrap\.js$/,
+  /\/$/,           // navigation to root
+  /index\.html$/,  // direct index.html requests
 ];
 
 // Assets to cache on first fetch (dynamic caching)
@@ -147,6 +150,13 @@ self.addEventListener('notificationclick', (event) => {
 // CACHE MANAGEMENT
 // =============================================
 
+// Handle messages from the page (e.g. force skipWaiting)
+self.addEventListener('message', (event) => {
+  if (event.data === 'skipWaiting') {
+    self.skipWaiting();
+  }
+});
+
 // Handle service worker installation - pre-cache static assets
 self.addEventListener('install', (event) => {
   console.log('[firebase-messaging-sw.js] Service worker installing...');
@@ -187,6 +197,9 @@ self.addEventListener('activate', (event) => {
       })
       .then(() => {
         console.log('[firebase-messaging-sw.js] Service worker activated');
+        // clients.claim() makes this SW take control of all open tabs.
+        // The page's 'controllerchange' listener handles the reload.
+        // Do NOT broadcast additional messages — that caused infinite reload loops.
         return clients.claim();
       })
   );

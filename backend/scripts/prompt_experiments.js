@@ -15,7 +15,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 process.env.GOOGLE_APPLICATION_CREDENTIALS = "serviceAccountKey.json";
 const { db } = await import("../lib/firebase.js");
-const { extractSignals, diffSky, getTopSignals } = await import("../functions/signal_engine.js");
+const { extractSignals, diffSky, getTopSignals } = await import("../lib/signal_engine.js");
 const { getPanchanga, getNakshatra, getNakshatraMundane } = await import("../lib/vedic_utils.js");
 const { scanUpcomingTransits } = await import("../lib/upcoming_transits.js");
 const { initMemory, listMemories, recallMemory } = await import("../lib/agent_memory.js");

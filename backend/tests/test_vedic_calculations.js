@@ -14,7 +14,7 @@ import {
     checkKemadrumaYoga,
     getNakshatraFromDegree,
     getSignFromDegree,
-} from "../functions/vedic_analysis.js";
+} from "../lib/vedic_analysis.js";
 
 // ANSI colors for terminal output
 const colors = {

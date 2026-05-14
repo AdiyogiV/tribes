@@ -39,13 +39,13 @@ class CurrentSkyService {
   }
 
   /// Manually trigger a cosmic daily run.
-  /// Deployed in `us-central1` (see `functions/cosmic_daily.js`).
+  /// Deployed in `asia-southeast2` (see `functions/cosmic_daily.js`).
   Future<Map<String, dynamic>> triggerDailyRun({String? date}) async {
     try {
-      final callable = FirebaseFunctions.instanceFor(region: 'us-central1')
+      final callable = FirebaseFunctions.instanceFor(region: 'asia-southeast2')
           .httpsCallable(
         'cosmicDailyManual',
-        options: HttpsCallableOptions(timeout: const Duration(minutes: 3)),
+        options: HttpsCallableOptions(timeout: const Duration(minutes: 5)),
       );
       final result = await callable.call({'date': date});
       return Map<String, dynamic>.from(result.data);

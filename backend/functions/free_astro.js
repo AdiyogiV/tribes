@@ -8,7 +8,7 @@ import {
     calculatePlanetDignity,
     checkKemadrumaYoga,
     calculateHouseFromDegree,
-} from "./vedic_analysis.js";
+} from "../lib/vedic_analysis.js";
 import { freeAstrologyApiKey } from "../lib/secrets.js";
 import { requireAuth } from "../lib/auth_utils.js";
 import { GANDMOOL_NAKSHATRAS, FREE_ASTROLOGY_API, ZODIAC_SIGNS, NAKSHATRAS } from "../lib/constants.js";

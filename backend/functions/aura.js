@@ -119,27 +119,10 @@ export const awardCreateSpacePostAura = onDocumentCreated(
     }),
 );
 
-/**
- * Cloud Function: Award aura when a namaste notification is created
- * 
- * NOTE: Namaste aura is now handled directly in namaste.js with proper deduplication.
- * This trigger is kept for backward compatibility but skips namaste notifications
- * to prevent double-awarding.
- */
-// NOTE: This trigger fires on EVERY notification doc but does nothing useful.
-// It was kept for backward compatibility but always returns null.
-// The concurrency inherited from setGlobalOptions prevents 429 cascades.
-export const awardNamasteAura = onDocumentCreated(
-    {
-        document: "notifications/{userId}/notifications/{notificationId}",
-        region: "asia-southeast2",
-    },
-    async (event) => {
-        // This is a no-op: namaste aura is handled by namaste.js
-        // Other notification types don't award aura
-        return null;
-    },
-);
+// REMOVED: awardNamasteAura Cloud Function trigger.
+// It was a no-op that fired on EVERY notification doc create and just returned null,
+// wasting invocations. Namaste aura is awarded inline in namaste.js via the local
+// helper `awardNamasteAuraToRecipient()` (see sendNamaste flow).
 
 /**
  * Cloud Function: Handle new reply - increment replyCount and award aura
@@ -382,108 +365,12 @@ export const awardAuraAction = onCall(
     },
 );
 
-/**
- * Callable Cloud Function: Get user's aura leaderboard position
- */
-export const getUserAuraRank = onCall({
-    region: "asia-southeast2",
-    invoker: "public", // Allow client apps to invoke (Firebase Auth handles actual auth)
-}, async (request) => {
-    const userId = request.auth?.uid;
-
-    if (!userId) {
-        throw new HttpsError("unauthenticated", "Must be authenticated");
-    }
-
-    const db = getFirestore();
-
-    try {
-        // Get user's aura score
-        const userDoc = await db.collection("users").doc(userId).get();
-        if (!userDoc.exists) {
-            throw new HttpsError("not-found", "User not found");
-        }
-
-        const userScore = userDoc.data().auraScore || 0;
-
-        // Count users with higher scores
-        const higherScoresSnapshot = await db
-            .collection("users")
-            .where("auraScore", ">", userScore)
-            .get();
-
-        const rank = higherScoresSnapshot.size + 1;
-
-        return { rank, score: userScore };
-    } catch (error) {
-        if (error instanceof HttpsError) throw error;
-        logger.error("Error getting user aura rank:", error);
-        throw new HttpsError("internal", "Failed to get aura rank");
-    }
-});
-
-/**
- * Callable Cloud Function: Get aura leaderboard
- */
-export const getAuraLeaderboard = onCall({
-    region: "asia-southeast2",
-    invoker: "public", // Allow client apps to invoke (Firebase Auth handles actual auth)
-}, async (request) => {
-    const limit = request.data?.limit || 50;
-
-    const db = getFirestore();
-
-    try {
-        const leaderboardSnapshot = await db
-            .collection("users")
-            .orderBy("auraScore", "desc")
-            .limit(limit)
-            .get();
-
-        const leaderboard = leaderboardSnapshot.docs.map((doc) => {
-            const data = doc.data();
-            return {
-                userId: doc.id,
-                name: data.name || "Unknown",
-                nickname: data.nickname || "",
-                displayPicture: data.displayPicture || "",
-                auraScore: data.auraScore || 0,
-            };
-        });
-
-        return { leaderboard };
-    } catch (error) {
-        logger.error("Error getting aura leaderboard:", error);
-        throw new HttpsError("internal", "Failed to get leaderboard");
-    }
-});
-
-/**
- * Callable Cloud Function: Manual aura award (for admin or special events)
- */
-export const awardManualAura = onCall({
-    region: "asia-southeast2",
-    invoker: "public", // Allow client apps to invoke (Firebase Auth handles actual auth)
-}, async (request) => {
-    const adminUserId = request.auth?.uid;
-    const { userId, points, reason } = request.data || {};
-
-    if (!adminUserId) {
-        throw new HttpsError("unauthenticated", "Must be authenticated");
-    }
-
-    if (!userId || !points || !reason) {
-        throw new HttpsError("invalid-argument", "Missing required parameters: userId, points, reason");
-    }
-
-    try {
-        await awardAura(userId, points, reason, { awardedBy: adminUserId, action: "manual_award" });
-
-        return { success: true, message: `Awarded ${points} aura to user ${userId}` };
-    } catch (error) {
-        logger.error("Error awarding manual aura:", error);
-        throw new HttpsError("internal", "Failed to award aura");
-    }
-});
+// REMOVED: getUserAuraRank, getAuraLeaderboard, awardManualAura.
+// - getUserAuraRank / getAuraLeaderboard: Flutter app computes rank/leaderboard
+//   client-side from Firestore reads (see lib aura_service.dart). The backend
+//   callables were never wired into the active UI code path.
+// - awardManualAura: SECURITY HOLE — `invoker: public` + no admin role check
+//   meant any authenticated user could award arbitrary aura to anyone.
+//   No admin UI existed to use it safely; removed.
 
 

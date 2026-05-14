@@ -9,7 +9,7 @@ import { db, FieldValue } from "../lib/firebase.js";
 import { requireAuth } from "../lib/auth_utils.js";
 import { runAstroFlow, invalidateCompatibilityCache } from "./free_astro.js";
 import { freeAstrologyApiKey, geminiApiKey } from "../lib/secrets.js";
-import { generateHouseInterpretations } from "./house_interpretations.js";
+import { generateHouseInterpretations } from "../lib/house_interpretations.js";
 import { resetAndRecalculateAyurveda } from "./ayurveda.js";
 
 // ============================================================================

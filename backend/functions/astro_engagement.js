@@ -3,105 +3,10 @@ import { db, FieldValue, logger } from "../lib/firebase.js";
 import { DateTime } from "luxon";
 import { requireAuth } from "../lib/auth_utils.js";
 
-/**
- * Track insight view for streak calculation
- */
-export const trackInsightView = onCall({
-    region: "asia-southeast2",
-    timeoutSeconds: 30,
-    memory: "256MiB",
-    invoker: "public", // Allow client apps to invoke (Firebase Auth handles actual auth)
-}, async (request) => {
-    const userId = requireAuth(request, "track insight view");
-    const { insightId, date } = request.data || {};
-
-    if (!insightId && !date) {
-        throw new HttpsError(
-            "invalid-argument",
-            "insightId or date is required",
-        );
-    }
-
-    // Define outside try block so it's available in catch
-    const insightDate = date || insightId || DateTime.now().toFormat("yyyy-MM-dd");
-    
-    try {
-        const today = DateTime.now().toFormat("yyyy-MM-dd");
-        const yesterday = DateTime.now().minus({ days: 1 }).toFormat("yyyy-MM-dd");
-
-        const userRef = db.collection("users").doc(userId);
-        const userDoc = await userRef.get();
-
-        if (!userDoc.exists) {
-            logger.warn("User not found for tracking", {
-                structuredData: true,
-                userId,
-            });
-            return {
-                success: false,
-                streak: 0,
-                date: insightDate,
-                error: "User not found",
-            };
-        }
-
-        const userData = userDoc.data();
-        const currentStreak = userData.insightStreak || 0;
-        const lastInsightView = userData.lastInsightView;
-
-        let newStreak = currentStreak;
-
-        // Check if this is a consecutive day
-        if (lastInsightView === yesterday || lastInsightView === today) {
-            // Continue streak
-            if (insightDate === today && lastInsightView !== today) {
-                // New day, increment streak
-                newStreak = currentStreak + 1;
-            }
-        } else if (insightDate === today) {
-            // Starting new streak
-            newStreak = 1;
-        }
-
-        // Update user document (only update fields that changed)
-        const updateData = {
-            lastInsightView: insightDate,
-            insightStreak: newStreak,
-            lastStreakUpdate: FieldValue.serverTimestamp(),
-        };
-        
-        // Use set with merge - Cloud Functions bypass Firestore rules
-        await userRef.set(updateData, { merge: true });
-
-        logger.info("Tracked insight view", {
-            structuredData: true,
-            userId,
-            insightDate,
-            streak: newStreak,
-        });
-
-        return {
-            success: true,
-            streak: newStreak,
-            date: insightDate,
-        };
-    } catch (error) {
-        logger.error("Failed to track insight view", {
-            structuredData: true,
-            userId,
-            error: String(error),
-            stack: error.stack,
-        });
-
-        // Return error instead of throwing to prevent constant retries
-        return {
-            success: false,
-            streak: 0,
-            date: insightDate || DateTime.now().toFormat("yyyy-MM-dd"),
-            error: error.message || "Unknown error",
-        };
-    }
-});
+// REMOVED: trackInsightView — Flutter app tracks insight views via Firebase
+// Analytics client-side (lib/shared/services/analytics_service.dart), not via
+// this backend function. The insightStreak/lastInsightView fields it wrote were
+// never read by any active feature.
 
 /**
  * Submit feedback for an insight (thumbs up/down)
@@ -252,64 +157,7 @@ export const toggleFavoriteInsight = onCall({
     }
 });
 
-/**
- * Get user's streak and favorite insights
- */
-export const getUserEngagement = onCall({
-    region: "asia-southeast2",
-    timeoutSeconds: 30,
-    memory: "256MiB",
-    invoker: "public", // Allow client apps to invoke (Firebase Auth handles actual auth)
-}, async (request) => {
-    const userId = requireAuth(request, "get engagement data");
-
-    try {
-        const userDoc = await db.collection("users").doc(userId).get();
-        if (!userDoc.exists) {
-            throw new HttpsError("not-found", "User not found");
-        }
-
-        const userData = userDoc.data();
-        const streak = userData.insightStreak || 0;
-        const lastInsightView = userData.lastInsightView;
-
-        // Get favorite insights
-        const favoritesSnapshot = await db
-            .collection("users")
-            .doc(userId)
-            .collection("favoriteInsights")
-            .orderBy("createdAt", "desc")
-            .limit(50)
-            .get();
-
-        const favorites = favoritesSnapshot.docs.map((doc) => ({
-            insightId: doc.data().insightId || doc.id,
-            date: doc.data().date,
-            createdAt: doc.data().createdAt?.toDate?.() || null,
-        }));
-
-        return {
-            success: true,
-            streak,
-            lastInsightView,
-            favorites,
-            favoriteCount: favorites.length,
-        };
-    } catch (error) {
-        logger.error("Failed to get engagement data", {
-            structuredData: true,
-            userId,
-            error: String(error),
-        });
-
-        if (error instanceof HttpsError) {
-            throw error;
-        }
-
-        throw new HttpsError(
-            "internal",
-            `Failed to get engagement data: ${error.message}`,
-        );
-    }
-});
+// REMOVED: getUserEngagement — No UI feature ever displayed engagement stats
+// (streak/favorites count). The Flutter app reads favorites directly from
+// Firestore where needed; this callable was orphan code.
 

@@ -14,3 +14,11 @@
 .gitignore
 
 node_modules
+
+# Non-runtime directories — not needed by Cloud Functions
+public/
+tests/
+tools/
+scripts/
+docs/
+*.md

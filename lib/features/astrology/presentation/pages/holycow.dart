@@ -69,6 +69,9 @@ class HolyCowPageState extends State<HolyCowPage>
   bool _showTransitOverlay = false;
   double _chartBlendValue = 0.0;
 
+  // Key for desktop layout — allows parent to trigger inline chat
+  final _desktopLayoutKey = GlobalKey<HolyCowDesktopLayoutState>();
+
   @override
   void initState() {
     super.initState();
@@ -81,28 +84,29 @@ class HolyCowPageState extends State<HolyCowPage>
       CurvedAnimation(parent: _micAnimationController, curve: Curves.easeInOut),
     );
 
-    // Cache streams once — they persist for the widget's lifetime
+    // User-specific streams (only for logged-in users)
     if (_user != null) {
       _profileStream = _astrologyService.streamProfile(_user!.uid);
       _insightStream = _astrologyService.streamTodayInsight(_user!.uid);
       _ayurvedaStream = _ayurvedaService.streamProfile(_user!.uid);
+    }
 
-      // Skip loading→loaded flash if service already has cached data
-      if (_skyService.availableDays > 0) {
-        _loadingState = _loadingState.copyWith(sky: DashboardLoadState.loaded);
-      } else {
-        _loadSkyPositions();
-      }
-      if (_skyService.hasUpcomingEvents) {
-        _loadingState = _loadingState.copyWith(events: DashboardLoadState.loaded);
-      } else {
-        _loadUpcomingEvents();
-      }
-      if (_skyService.globalMuhurat != null) {
-        _loadingState = _loadingState.copyWith(muhurat: DashboardLoadState.loaded);
-      } else {
-        _loadGlobalMuhurat();
-      }
+    // Global data — load for everyone (sky positions, events, muhurat are
+    // not user-specific and make the page useful even for logged-out visitors)
+    if (_skyService.availableDays > 0) {
+      _loadingState = _loadingState.copyWith(sky: DashboardLoadState.loaded);
+    } else {
+      _loadSkyPositions();
+    }
+    if (_skyService.hasUpcomingEvents) {
+      _loadingState = _loadingState.copyWith(events: DashboardLoadState.loaded);
+    } else {
+      _loadUpcomingEvents();
+    }
+    if (_skyService.globalMuhurat != null) {
+      _loadingState = _loadingState.copyWith(muhurat: DashboardLoadState.loaded);
+    } else {
+      _loadGlobalMuhurat();
     }
   }
 
@@ -127,13 +131,16 @@ class HolyCowPageState extends State<HolyCowPage>
     _inputFocusNode.unfocus();
     HapticFeedback.lightImpact();
 
+    // On wide layout, show chat inline instead of navigating
+    if (Responsive.isWideLayout(context)) {
+      _desktopLayoutKey.currentState?.startChatWithMessage(text);
+      return;
+    }
     context.push('/ai/chat', extra: {'initialMessage': text});
   }
 
-  void _openNewChat() {
-    HapticFeedback.lightImpact();
-    context.push('/ai/chat');
-  }
+  // _openNewChat removed — on desktop, "+" calls showDashboard() directly;
+  // on mobile, the floating input handles new chat initiation.
 
   // ─────────────────────────────────────────────────────────────
   // Voice recording on dashboard — record here, navigate after
@@ -158,8 +165,13 @@ class HolyCowPageState extends State<HolyCowPage>
 
     await audioService.startRecording(
       onResult: (AudioInputResult result) {
-        // Recording finished — navigate to AiChatPage with the voice result
+        // Recording finished — show chat with voice result
         if (!mounted) return;
+        // On wide layout, show chat inline instead of navigating
+        if (Responsive.isWideLayout(context)) {
+          _desktopLayoutKey.currentState?.startChatWithVoice(result);
+          return;
+        }
         context.push('/ai/chat', extra: {'initialVoiceResult': result});
       },
       onTranscriptUpdate: (String transcript) {
@@ -294,8 +306,9 @@ class HolyCowPageState extends State<HolyCowPage>
         extendBody: true,
         backgroundColor: Colors.transparent,
         body: HolyCowDesktopLayout(
-          onStartNewChat: _openNewChat,
+          key: _desktopLayoutKey,
           cosmicDashboardBuilder: _buildCosmicDashboardContent,
+          dashboardInputBuilder: _buildDashboardInput,
         ),
       );
     }
@@ -616,8 +629,30 @@ class HolyCowPageState extends State<HolyCowPage>
   // ─────────────────────────────────────────────────────────────
 
   Widget _buildCosmicDashboardContent() {
-    if (_user == null) return const SizedBox.shrink();
+    // Logged-out users: show global content (sky chart, muhurat, panchang,
+    // events) with null profile/insight/ayurveda — the content widget's
+    // existing `if` guards naturally hide personal sections.
+    if (_user == null) {
+      return HolyCowCosmicContent(
+        profile: null,
+        insight: null,
+        ayurvedaProfile: null,
+        loadingState: _loadingState,
+        skyService: _skyService,
+        sliderValueNotifier: _sliderValueNotifier,
+        sliderDateNotifier: _sliderDateNotifier,
+        showTransitOverlay: _showTransitOverlay,
+        chartBlendValue: _chartBlendValue,
+        onSliderChanged: _onSliderChanged,
+        onResetToToday: _resetSliderToToday,
+        onToggleTransitOverlay: _toggleTransitOverlay,
+        onBlendValueChanged: _onBlendValueChanged,
+        onLoadSkyPositions: _loadSkyPositions,
+        onTriggerCachePopulation: _triggerSkyPositionsCachePopulation,
+      );
+    }
 
+    // Logged-in users: wait for user streams before rendering
     return StreamBuilder<AstrologyProfile?>(
       stream: _profileStream,
       builder: (context, profileSnapshot) {

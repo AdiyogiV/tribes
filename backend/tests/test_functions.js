@@ -12,13 +12,13 @@ import {
     cacheTransitData,
     getCachedAIInsight,
     cacheAIInsight,
-} from "./functions/cache_utils.js";
+} from "./lib/cache_utils.js";
 import {
     calculateHouseActivations,
     calculateTransitAspects,
     scoreHouseActivations,
     scoreAspects,
-} from "./functions/vedic_analysis.js";
+} from "./lib/vedic_analysis.js";
 import { DateTime } from "luxon";
 
 async function testCacheUtils() {
@@ -121,8 +121,8 @@ async function testImports() {
     
     try {
         // Test that all imports work
-        const cacheUtils = await import("./functions/cache_utils.js");
-        const vedicAnalysis = await import("./functions/vedic_analysis.js");
+        const cacheUtils = await import("./lib/cache_utils.js");
+        const vedicAnalysis = await import("./lib/vedic_analysis.js");
         
         console.log(`✅ Cache Utils imported: ${cacheUtils ? "✅" : "❌"}`);
         console.log(`✅ Vedic Analysis imported: ${vedicAnalysis ? "✅" : "❌"}`);

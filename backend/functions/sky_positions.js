@@ -633,7 +633,8 @@ export const getSkyPositions = onCall({
     timeoutSeconds: 30,
     memory: "256MiB",
     region: "asia-southeast2",
-    minInstances: 1,  // Always warm — called on every app open
+    // No minInstances — cold start is ~1s on first open, then concurrency=80
+    // keeps subsequent calls warm. Saves ~₹20/mo of idle instance time.
     invoker: "public",
 }, async (request) => {
     try {

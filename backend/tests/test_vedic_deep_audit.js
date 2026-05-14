@@ -13,7 +13,7 @@ import {
     calculateVedicAspect,
     getNakshatraFromDegree,
     getSignFromDegree,
-} from "../functions/vedic_analysis.js";
+} from "../lib/vedic_analysis.js";
 
 // Colors
 const C = {

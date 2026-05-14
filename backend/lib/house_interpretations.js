@@ -7,11 +7,11 @@
  * Called on-demand when user taps a house (if not already generated).
  */
 
-import { logger } from "../lib/firebase.js";
-import { geminiApiKey } from "../lib/secrets.js";
+import { logger } from "./firebase.js";
+import { geminiApiKey } from "./secrets.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { HOUSE_SIGNIFICATIONS } from "../lib/constants.js";
-import { AI_MODELS } from "../lib/config.js";
+import { HOUSE_SIGNIFICATIONS } from "./constants.js";
+import { AI_MODELS } from "./config.js";
 
 const ZODIAC_SIGNS = [
     "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",

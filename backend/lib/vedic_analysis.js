@@ -20,7 +20,7 @@ import {
     GANDMOOL_NAKSHATRAS, 
     HOUSE_SIGNIFICATIONS,
     NAKSHATRAS as SHARED_NAKSHATRAS,
-} from "../lib/constants.js";
+} from "./constants.js";
 
 // ============================================================================
 // FOUNDATIONAL VEDIC CONSTANTS

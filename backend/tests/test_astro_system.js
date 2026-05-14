@@ -11,12 +11,12 @@ import {
     scoreHouseActivations,
     scoreAspects,
     getHouseSignification,
-} from "./functions/vedic_analysis.js";
+} from "./lib/vedic_analysis.js";
 import {
     calculateFutureTransits,
     detectUpcomingEvents,
     formatUpcomingEvents,
-} from "./functions/future_transits.js";
+} from "./lib/future_transits.js";
 import { runAstroFlow } from "./functions/free_astro.js";
 
 // ANSI colors for terminal output

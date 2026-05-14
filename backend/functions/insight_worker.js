@@ -22,7 +22,7 @@ export const processInsightTask = onTaskDispatched({
         maxDispatchesPerSecond: 2, // 2 tasks/sec = ~120/min = steady load
     },
     region: "asia-southeast2",
-    memory: "1GiB",
+    memory: "512MiB", // Reduced from 1GiB — per-user insight generation is well under this budget
     timeoutSeconds: 120, // Each user gets 2 minutes max
     secrets: [geminiApiKey, freeAstrologyApiKey],
 }, async (req) => {

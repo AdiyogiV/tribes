@@ -19,30 +19,23 @@ export { newLike, removeLike, newInvite } from "./functions/likes_and_invites.js
 export { aiChat, getChatPromptConfig } from "./functions/ai.js";
 export { cleanupAiChatSessions } from "./functions/cleanup_ai_sessions.js";
 export {
-    awardNamasteAura,
     awardCreatePostAura,
     awardCreateSpacePostAura,
     awardReplyAura,
     onReplyDeleted,
     awardLikeAura,
     awardAuraAction,
-    getUserAuraRank,
-    getAuraLeaderboard,
-    awardManualAura,
 } from "./functions/aura.js";
 export { freeAstroCalculate, calculateCompatibility, invalidateCompatibilityCache, searchGeoLocation } from "./functions/free_astro.js";
 export { syncAstroProfile } from "./functions/astro_sync.js";
-export { generateFirstReading, getFirstReading } from "./functions/first_reading.js";
+export { generateFirstReading } from "./functions/first_reading.js";
 export { generateCurrentTimesReading } from "./functions/current_times_reading.js";
 export {
     generateDailyAstroInsights,
-    dispatchCardNotification, // NEW: Cloud Tasks worker for scheduled card notifications
-    dispatchScheduledInsights, // DEPRECATED: Kept for backward compatibility
+    dispatchCardNotification, // Cloud Tasks worker for scheduled card notifications
     generateInsightForCurrentUser,
-    getAstroInsightSystemHealth,
-    checkPendingPredictions,
     clearAstroCaches,
-    cleanupOldDispatchEntries, // DEPRECATED: Cleanup old dispatch entries (kept for migration)
+    cleanupOldDispatchEntries, // Cleanup old insightDispatch entries (still needed by Cloud Tasks dispatch flow)
     cleanupExpiredCacheEntries, // Cleanup expired astroCache/astroCurrent entries
 } from "./functions/daily_astro_insights.js";
 export { processInsightTask } from "./functions/insight_worker.js"; // Queue-based insight generation worker
@@ -56,10 +49,8 @@ export {
     generatePerHouseNow,      // onCall: force regenerate for current user
 } from "./insights/orchestration/per_house_scheduler.js";
 export {
-    trackInsightView,
     submitInsightFeedback,
     toggleFavoriteInsight,
-    getUserEngagement,
 } from "./functions/astro_engagement.js";
 // Migration functions removed after hash migration completed
 export {
@@ -67,12 +58,10 @@ export {
 } from "./functions/phone_index.js";
 export {
     matchContacts,
-    getMatchingInsights,
 } from "./functions/contact_matching.js";
 export {
     sendNamaste,
     getNamasteQuota,
-    canSendNamaste,
 } from "./functions/namaste.js";
 export {
     onFollow,
@@ -122,10 +111,6 @@ export {
     onOriginalPostDeleted,
     onSpacePostDeleted,
 } from "./functions/reposts.js";
-export {
-    generateDailyNewsDigest,
-    testDailyNewsDigest,
-} from "./functions/ai_daily_digest.js";
 // Cosmic Daily Intelligence
 export {
     cosmicDailyScheduled,

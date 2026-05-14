@@ -26,7 +26,7 @@ import {
     calculateIntensity,
     mergeDomains,
     makeSignalId,
-} from "../lib/signal_types.js";
+} from "./signal_types.js";
 
 import {
     findAllAspects,
@@ -34,15 +34,15 @@ import {
     findEclipseProximity,
     findSpeedAnomalies,
     angularSeparation,
-} from "../lib/aspect_calculator.js";
+} from "./aspect_calculator.js";
 
 import {
     ZODIAC_SIGNS,
     getSignFromLongitude,
-} from "../lib/constants.js";
+} from "./constants.js";
 
-import { getNakshatra } from "../lib/vedic_utils.js";
-import { detectMundaneYogas } from "../lib/vedic_yogas.js";
+import { getNakshatra } from "./vedic_utils.js";
+import { detectMundaneYogas } from "./vedic_yogas.js";
 
 // Only Navagraha — no Uranus, Neptune, Pluto
 const NAVAGRAHA_SET = new Set(NAVAGRAHA);

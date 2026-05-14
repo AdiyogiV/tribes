@@ -1,4 +1,4 @@
-import { db, logger } from "../lib/firebase.js";
+import { db, logger } from "./firebase.js";
 import { DateTime } from "luxon";
 
 /**

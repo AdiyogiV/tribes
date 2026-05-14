@@ -36,7 +36,7 @@ import {
     calculatePlanetDignity,
     calculateAshtakavarga,
     getTransitBinduScore,
-} from "./vedic_analysis.js";
+} from "../lib/vedic_analysis.js";
 import { extractAscendantDegree as extractAscendantDegreeFromAstroData } from "../lib/astro_helpers.js";
 import { computeOjas } from "../lib/ojas_engine.js";
 import { computeNadi, computeBaseline as computeNadiBaseline } from "../lib/nadi_engine.js";

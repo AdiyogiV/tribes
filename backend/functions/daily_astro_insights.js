@@ -6,7 +6,7 @@ import { requireAuth } from "../lib/auth_utils.js";
 import { geminiApiKey, freeAstrologyApiKey } from "../lib/secrets.js";
 import { DateTime } from "luxon";
 import { runAstroFlow } from "./free_astro.js";
-import { buildAstroSearchContext } from "./search.js";
+import { buildAstroSearchContext } from "../lib/search.js";
 import {
     getCachedSearchContext,
     getCacheStats,
@@ -15,11 +15,11 @@ import {
     clearOldVersionedCaches,
     getCacheVersion,
     cleanupExpiredCache,
-} from "./cache_utils.js";
+} from "../lib/cache_utils.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { AI_MODELS } from "../lib/config.js";
 import { getFunctions } from "firebase-admin/functions";
-import { calculateWholeSignHouse } from "./vedic_analysis.js";
+import { calculateWholeSignHouse } from "../lib/vedic_analysis.js";
 import { getUpcomingSignIngresses, getUpcomingRetrogrades } from "./sky_positions.js";
 import { extractAscendantDegree, stripMarkdown } from "../lib/astro_helpers.js";
 import { INSIGHT_SYSTEM_PROMPT, buildInsightUserPrompt } from "./prompts/daily_insights.js";
@@ -454,6 +454,8 @@ async function generateInsightWithAI(userAstroData, todayAstroData, searchContex
             generationConfig: {
                 temperature: 0.92, // Higher for more creative, engaging outputs
                 maxOutputTokens: 1500, // Room for richer content
+                // NOTE: responseMimeType "application/json" is incompatible with googleSearch tool
+                // — we ask for JSON in the prompt instead and parse robustly below.
             },
         });
 
@@ -474,19 +476,31 @@ async function generateInsightWithAI(userAstroData, todayAstroData, searchContex
             throw new Error("AI returned empty response");
         }
 
-        // Parse JSON
+        // Parse JSON – robust extraction handles markdown fences, preamble text, etc.
         let parsed;
         try {
             let cleaned = rawContent;
-            if (cleaned.startsWith("```json")) cleaned = cleaned.slice(7);
-            if (cleaned.startsWith("```")) cleaned = cleaned.slice(3);
-            if (cleaned.endsWith("```")) cleaned = cleaned.slice(0, -3);
+
+            // Strip markdown code fences anywhere in the response
+            const fenceMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/);
+            if (fenceMatch) {
+                cleaned = fenceMatch[1];
+            }
+
+            // If no fences, try to extract the JSON object directly
+            if (!fenceMatch) {
+                const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+                if (jsonMatch) {
+                    cleaned = jsonMatch[0];
+                }
+            }
+
             parsed = JSON.parse(cleaned.trim());
         } catch (parseError) {
             logger.error("JSON parse failed", { rawContent: rawContent.substring(0, 500) });
             parsed = {
                 theme: "Today's Guidance",
-                message: rawContent.substring(0, 300),
+                message: "Your cosmic blueprint holds unique potential today. Trust the energies aligning in your favor and take inspired action where you feel called.",
                 sections: [],
             };
         }
@@ -802,35 +816,9 @@ async function getSearchContext(userAstroData, todayAstroData) {
     }
 }
 
-/**
- * Generate insight for a specific user
- * @param {boolean} forceRegenerate - If true, always generate new content (for 4x daily runs)
- */
-async function generateInsightForUser(userId, userAstroData, forceRegenerate = true) {
-    const today = DateTime.now().toFormat("yyyy-MM-dd");
-    const insightRef = db
-        .collection("users")
-        .doc(userId)
-        .collection("dailyInsights")
-        .doc(today);
-
-    // With 4x daily generations, we ALWAYS regenerate to give fresh content
-    // Each generation sends all card notifications
-    if (forceRegenerate) {
-        logger.info("🔄 Generating fresh insight (4x daily mode)", { userId, date: today });
-    } else {
-        // Check if already exists (legacy behavior)
-        const existing = await insightRef.get();
-        if (existing.exists) {
-            logger.info("Insight already exists", { userId, date: today });
-            return { ...existing.data(), date: today, alreadyExists: true };
-        }
-    }
-
-    // Generate new insight; first-time gets immediate delivery, else staggered
-    const existing = await insightRef.get();
-    return generateNewInsight(userId, userAstroData, insightRef, today, false, !existing.exists);
-}
+// REMOVED: generateInsightForUser — unused dead code (zero call sites).
+// All callers (insight_worker.js, internal endpoint) use generateInsightForUserForce below,
+// which has the cooldown + skipNotification logic that the deleted version lacked.
 
 /**
  * Generate insight for user with force option
@@ -1470,7 +1458,7 @@ export const generateInsightForCurrentUser = onCall({
     region: "asia-southeast2",
     secrets: [geminiApiKey, freeAstrologyApiKey],
     timeoutSeconds: 120,
-    memory: "1GiB",
+    memory: "512MiB", // Reduced from 1GiB — single-user insight generation fits comfortably
     invoker: "public", // Allow client apps to invoke (Firebase Auth handles actual auth)
     // AppCheck: DISABLED until Flutter client enables FirebaseAppCheck
     // TODO: Set to true after enabling AppCheck in lib/main.dart
@@ -1830,373 +1818,22 @@ export const dispatchCardNotification = onTaskDispatched({
     }
 });
 
-/**
- * DISPATCH: Runs 4 times daily (6 AM, 12 PM, 5 PM, 9 PM IST)
- * DEPRECATED: Replaced by Cloud Tasks scheduling (dispatchCardNotification)
- * Kept for backward compatibility during migration
- * @deprecated Use Cloud Tasks scheduling instead
- */
-export const dispatchScheduledInsights = onSchedule({
-    schedule: "0 6,12,17,21 * * *", // 6 AM, 12 PM, 5 PM, 9 PM IST
-    region: "asia-southeast2",
-    timeZone: "Asia/Kolkata",
-    memory: "512MiB",
-    timeoutSeconds: 300,
-}, async (event) => {
-    const now = DateTime.now().setZone("Asia/Kolkata");
-    const currentHour = now.hour;
-    const today = now.toFormat("yyyy-MM-dd");
-
-    // Determine which scheduledFor time we're dispatching
-    let targetTime;
-    if (currentHour >= 5 && currentHour < 11) targetTime = "06:00";
-    else if (currentHour >= 11 && currentHour < 16) targetTime = "12:00";
-    else if (currentHour >= 16 && currentHour < 20) targetTime = "17:00";
-    else targetTime = "21:00";
-
-    // Convert to collection name format (06:00 -> 0600)
-    const timeSlot = targetTime.replace(":", "");
-
-    logger.info("📬 Starting INDEX-DRIVEN insight dispatch", {
-        structuredData: true,
-        targetTime,
-        timeSlot,
-        currentHour,
-        date: today,
-    });
-
-    try {
-        // INDEX-DRIVEN: Query only the specific time slot subcollection
-        // Path: insightDispatch/{date}/{timeSlot}/*
-        const dispatchSnapshot = await db
-            .collection("insightDispatch")
-            .doc(today)
-            .collection(timeSlot)
-            .where("dispatched", "==", false)
-            .get();
-
-        if (dispatchSnapshot.empty) {
-            logger.info("No cards to dispatch for this time slot", {
-                structuredData: true,
-                date: today,
-                timeSlot,
-            });
-            return { success: true, dispatched: 0, errors: 0 };
-        }
-
-        logger.info(`Found ${dispatchSnapshot.size} cards to dispatch`, {
-            structuredData: true,
-            date: today,
-            timeSlot,
-            cardCount: dispatchSnapshot.size,
-        });
-
-        let dispatched = 0;
-        let errors = 0;
-
-        for (const dispatchDoc of dispatchSnapshot.docs) {
-            const dispatchData = dispatchDoc.data();
-            const { userId, cardIndex, cardType, title, content } = dispatchData;
-
-            if (!userId) {
-                errors++;
-                continue;
-            }
-
-            try {
-                // Send notification for this card
-                const notificationRef = db
-                    .collection("notifications")
-                    .doc(userId)
-                    .collection("notifications")
-                    .doc();
-
-                await notificationRef.set({
-                    type: "dailyAstroInsight",
-                    cardType: cardType || "insight",
-                    cardIndex: cardIndex || 0,
-                    totalCards: 4, // Standard 4 cards per day
-                    title: title || "",
-                    preview: stripMarkdown(content || "").substring(0, 150),
-                    insightId: today,
-                    date: today,
-                    timestamp: FieldValue.serverTimestamp(),
-                    read: false,
-                });
-
-                // Mark dispatch entry as dispatched (instead of deleting, for audit trail)
-                await dispatchDoc.ref.update({
-                    dispatched: true,
-                    dispatchedAt: new Date().toISOString(),
-                });
-
-                // Also update the insight document's cardNotifications
-                try {
-                    const insightRef = db
-                        .collection("users")
-                        .doc(userId)
-                        .collection("dailyInsights")
-                        .doc(today);
-
-                    await insightRef.update({
-                        [`cardNotifications.${cardIndex}.sent`]: true,
-                        [`cardNotifications.${cardIndex}.sentAt`]: FieldValue.serverTimestamp(),
-                    });
-                } catch (updateError) {
-                    // Don't fail dispatch if insight update fails
-                    logger.warn("Failed to update insight cardNotifications", {
-                        structuredData: true,
-                        userId,
-                        cardIndex,
-                        error: String(updateError),
-                    });
-                }
-
-                dispatched++;
-                logger.info("Dispatched card", {
-                    structuredData: true,
-                    userId,
-                    cardIndex,
-                    timeSlot,
-                });
-            } catch (e) {
-                errors++;
-                logger.error("Failed to dispatch card", {
-                    structuredData: true,
-                    userId,
-                    cardIndex,
-                    error: String(e),
-                });
-            }
-        }
-
-        logger.info("📬 INDEX-DRIVEN dispatch completed", {
-            structuredData: true,
-            targetTime,
-            timeSlot,
-            date: today,
-            dispatched,
-            errors,
-            totalCards: dispatchSnapshot.size,
-        });
-
-        return { success: true, dispatched, errors };
-    } catch (error) {
-        logger.error("Dispatch failed", {
-            structuredData: true,
-            error: String(error),
-            stack: error.stack?.substring(0, 500),
-        });
-        throw error;
-    }
-});
-
-/**
- * Monitoring endpoint - check system health, cache stats, and debug info
- */
-export const getAstroInsightSystemHealth = onCall({
-    region: "asia-southeast2",
-    timeoutSeconds: 30,
-    memory: "256MiB",
-    invoker: "public", // Allow client apps to invoke (Firebase Auth handles actual auth)
-}, async (request) => {
-    const userId = requireAuth(request, "get astro insight system health");
-
-    try {
-        const health = {
-            timestamp: new Date().toISOString(),
-            status: "healthy",
-            checks: {},
-        };
-
-        // 1. Check cache stats
-        try {
-            const cacheStats = await getCacheStats();
-            health.checks.cache = {
-                status: "ok",
-                ...cacheStats,
-            };
-        } catch (e) {
-            health.checks.cache = { status: "error", error: String(e) };
-        }
-
-        // 2. Check if Gemini is configured (used for Google Search grounding)
-        const apiKey = geminiApiKey.value();
-        health.checks.gemini = {
-            status: apiKey ? "configured" : "not_configured",
-            hasApiKey: !!apiKey,
-        };
-
-        // 3. Check today's global cache
-        const today = DateTime.now().toFormat("yyyy-MM-dd");
-        const cachedContext = await getCachedSearchContext(today);
-        health.checks.todayCache = {
-            status: cachedContext ? "cached" : "not_cached",
-            date: today,
-            hasGlobal: !!cachedContext?.global,
-            hasRetrogrades: cachedContext?.global?.events?.retrogrades?.length || 0,
-            hasTodayNews: !!cachedContext?.global?.todayNews,
-            hasWeekly: !!cachedContext?.global?.weekly,
-        };
-
-        // 4. Check user's astrology data availability
-        const userDoc = await db.collection("users").doc(userId).get();
-        const userData = userDoc.data();
-        const astroData = userData?.astrologyData;
-
-        health.checks.userData = {
-            status: astroData ? "available" : "not_setup",
-            hasLagna: !!(astroData?.ascendant || astroData?.lagna),
-            hasMoonSign: !!astroData?.moonSign,
-            hasSunSign: !!astroData?.sunSign,
-            hasNakshatra: !!(astroData?.nakshatra || astroData?.moonNakshatra),
-            hasDasha: !!astroData?.currentDasha,
-            hasRajYogas: (astroData?.rajYogas?.length || 0) > 0,
-            hasDoshas: !!astroData?.doshas,
-            hasLocation: !!(astroData?.birthLatitude && astroData?.birthLongitude),
-        };
-
-        // 5. Check today's insight for user
-        const insightDoc = await db.collection("users").doc(userId).collection("dailyInsights").doc(today).get();
-        health.checks.todayInsight = {
-            status: insightDoc.exists ? "generated" : "not_generated",
-            date: today,
-            theme: insightDoc.data()?.theme || null,
-            sectionCount: insightDoc.data()?.sections?.length || 0,
-            version: insightDoc.data()?.version || null,
-        };
-
-        // Set overall status
-        if (!astroData) {
-            health.status = "needs_setup";
-        } else if (!apiKey) {
-            health.status = "limited"; // Works but no Gemini/search
-        }
-
-        logger.info("🏥 Health check completed", {
-            structuredData: true,
-            userId,
-            status: health.status,
-            cacheEntries: health.checks.cache?.cacheEntries || 0,
-            todayCached: health.checks.todayCache?.status,
-        });
-
-        return health;
-    } catch (error) {
-        logger.error("Health check failed", { error: String(error) });
-        return {
-            timestamp: new Date().toISOString(),
-            status: "error",
-            error: String(error),
-        };
-    }
-});
-
-// ═══════════════════════════════════════════════════════════════
-// PREDICTION VALIDATION
-// Checks for predictions due today and sends validation notifications
-// ═══════════════════════════════════════════════════════════════
-
-/**
- * Check for predictions due today and send validation notifications
- * Runs at 9 AM IST daily
- */
-export const checkPendingPredictions = onSchedule({
-    schedule: "0 9 * * *",
-    region: "asia-southeast2",
-    timeZone: "Asia/Kolkata",
-    memory: "256MiB",
-    timeoutSeconds: 300,
-}, async (event) => {
-    const today = DateTime.now().setZone("Asia/Kolkata").toFormat("yyyy-MM-dd");
-
-    logger.info("[PREDICTIONS-CHECK] Starting prediction validation check", {
-        structuredData: true,
-        targetDate: today,
-    });
-
-    try {
-        // Query all users
-        const usersSnapshot = await db.collection("users").get();
-        let validationsSent = 0;
-        let errorsCount = 0;
-
-        for (const userDoc of usersSnapshot.docs) {
-            const userId = userDoc.id;
-
-            try {
-                // Find predictions due today that are still pending
-                const predictionsSnapshot = await db
-                    .collection("users")
-                    .doc(userId)
-                    .collection("predictions")
-                    .where("targetDate", "==", today)
-                    .where("status", "==", "pending")
-                    .get();
-
-                if (predictionsSnapshot.empty) {
-                    continue;
-                }
-
-                for (const predDoc of predictionsSnapshot.docs) {
-                    const prediction = predDoc.data();
-
-                    // Create validation notification
-                    const notificationRef = db
-                        .collection("notifications")
-                        .doc(userId)
-                        .collection("notifications")
-                        .doc();
-
-                    const planetText = prediction.planet ? `${prediction.planet} ` : "";
-                    const eventText = prediction.event || "prediction";
-
-                    await notificationRef.set({
-                        type: "predictionValidation",
-                        predictionId: predDoc.id,
-                        title: `${planetText}${eventText} - Did it happen?`,
-                        preview: stripMarkdown(prediction.prediction || "").substring(0, 100) || "Check if this prediction came true",
-                        planet: prediction.planet,
-                        event: prediction.event,
-                        insightDate: prediction.insightDate,
-                        timestamp: FieldValue.serverTimestamp(),
-                        read: false,
-                    });
-
-                    validationsSent++;
-
-                    logger.info("[PREDICTIONS-CHECK] Sent validation notification", {
-                        structuredData: true,
-                        userId,
-                        predictionId: predDoc.id,
-                        planet: prediction.planet,
-                    });
-                }
-            } catch (userError) {
-                logger.error(`[PREDICTIONS-CHECK] Failed for user ${userId}`, {
-                    structuredData: true,
-                    error: String(userError),
-                });
-                errorsCount++;
-            }
-        }
-
-        logger.info("[PREDICTIONS-CHECK] Completed", {
-            structuredData: true,
-            targetDate: today,
-            validationsSent,
-            errorsCount,
-            totalUsers: usersSnapshot.size,
-        });
-    } catch (error) {
-        logger.error("[PREDICTIONS-CHECK] Failed", {
-            structuredData: true,
-            error: String(error),
-            stack: error.stack?.substring(0, 500),
-        });
-        throw error;
-    }
-});
+// ─────────────────────────────────────────────────────────────────────────────
+// REMOVED FUNCTIONS (cleanup pass):
+//
+//   • dispatchScheduledInsights — Old cron-based 4×/day dispatcher.
+//     Replaced by Cloud Tasks scheduling via `dispatchCardNotification` above,
+//     which delivers per-card with exact `scheduleDelaySeconds`, retries, and
+//     rate limits. Keeping both produced duplicate notifications.
+//
+//   • getAstroInsightSystemHealth — Diagnostics endpoint, no caller in Flutter
+//     or backend. Cache stats are still introspectable via `clearAstroCaches`.
+//
+//   • checkPendingPredictions — Daily scheduler sending `predictionValidation`
+//     notifications. Flutter has no handler for that notification type
+//     (NotificationType enum lacks the case), so output was silently dropped.
+//     Can be restored when a prediction-tracking UI is built.
+// ─────────────────────────────────────────────────────────────────────────────
 
 /**
  * Admin function to clear caches

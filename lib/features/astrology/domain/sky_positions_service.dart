@@ -320,30 +320,42 @@ class SkyPositionsService {
 
     try {
       // Try Firestore first (fast path)
-      final doc = await FirebaseFirestore.instance
-          .collection('global_astro')
-          .doc('muhurat')
-          .get();
+      bool firestoreSucceeded = false;
+      try {
+        final doc = await FirebaseFirestore.instance
+            .collection('global_astro')
+            .doc('muhurat')
+            .get();
 
-      if (doc.exists && doc.data() != null) {
-        final data = doc.data()!;
-        final dateKeys =
-            (data['dateKeys'] as List<dynamic>?)?.cast<String>() ?? [];
-        final isForToday = dateKeys.isNotEmpty && dateKeys[0] == todayKey;
+        if (doc.exists && doc.data() != null) {
+          final data = doc.data()!;
+          final dateKeys =
+              (data['dateKeys'] as List<dynamic>?)?.cast<String>() ?? [];
+          final isForToday = dateKeys.isNotEmpty && dateKeys[0] == todayKey;
 
-        if (isForToday &&
-            data['muhurat'] is Map &&
-            (data['muhurat'] as Map).isNotEmpty) {
-          _muhurat = Map<String, dynamic>.from(data['muhurat'] as Map);
-          _muhuratDateKey = todayKey;
-          AppLogger.d('Muhurat loaded from Firestore (valid for today)',
-              category: LogCategory.general);
-          return true;
+          if (isForToday &&
+              data['muhurat'] is Map &&
+              (data['muhurat'] as Map).isNotEmpty) {
+            _muhurat = Map<String, dynamic>.from(data['muhurat'] as Map);
+            _muhuratDateKey = todayKey;
+            AppLogger.d('Muhurat loaded from Firestore (valid for today)',
+                category: LogCategory.general);
+            return true;
+          }
         }
+        firestoreSucceeded = true; // Read worked but data was stale/empty
+      } catch (e) {
+        // Firestore may fail (e.g. permission-denied for unauthenticated users)
+        // Fall through to Cloud Function
+        AppLogger.d('Firestore muhurat read failed, trying Cloud Function',
+            category: LogCategory.general, data: {'error': e.toString()});
       }
 
-      // Firestore stale or empty - call Cloud Function to get fresh data
-      AppLogger.d('Muhurat cache stale, fetching fresh data',
+      // Firestore stale, empty, or failed - call Cloud Function to get fresh data
+      AppLogger.d(
+          firestoreSucceeded
+              ? 'Muhurat cache stale, fetching fresh data'
+              : 'Fetching muhurat via Cloud Function (Firestore unavailable)',
           category: LogCategory.general);
 
       final functions =

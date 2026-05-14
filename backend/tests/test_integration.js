@@ -14,13 +14,13 @@ import {
     cacheTransitData,
     getCachedAIInsight,
     cacheAIInsight,
-} from "./functions/cache_utils.js";
+} from "./lib/cache_utils.js";
 import {
     calculateHouseActivations,
     calculateTransitAspects,
     scoreHouseActivations,
     scoreAspects,
-} from "./functions/vedic_analysis.js";
+} from "./lib/vedic_analysis.js";
 
 // Test user data (mock)
 const TEST_USER_ID = "test_user_" + Date.now();

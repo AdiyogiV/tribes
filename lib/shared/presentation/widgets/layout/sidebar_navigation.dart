@@ -113,12 +113,15 @@ class _SidebarNavigationState extends State<SidebarNavigation>
                 padding: EdgeInsets.symmetric(
                     horizontal: widget.isCollapsed ? 12 : 16),
                 children: [
+                  // Tab order must match tab_handler.dart:
+                  // 0=HolyCow, 1=Grams, 2=Messages, 3=Profile
                   _buildNavItem(
                     index: 0,
-                    icon: Icons.explore_outlined,
-                    selectedIcon: Icons.explore,
-                    label: 'Discover',
+                    icon: Icons.chat_bubble_outline,
+                    selectedIcon: Icons.chat_bubble,
+                    label: 'HolyCow',
                     isDark: isDark,
+                    useCustomIcon: true,
                   ),
                   _buildNavItem(
                     index: 1,
@@ -127,18 +130,10 @@ class _SidebarNavigationState extends State<SidebarNavigation>
                     label: 'Grams',
                     isDark: isDark,
                   ),
-                  _buildNavItem(
-                    index: 2,
-                    icon: Icons.chat_bubble_outline,
-                    selectedIcon: Icons.chat_bubble,
-                    label: 'HolyCow',
-                    isDark: isDark,
-                    useCustomIcon: true,
-                  ),
                   // Messages and Profile only when signed in
                   if (widget.isAuthenticated) ...[
                     _buildNavItem(
-                      index: 3,
+                      index: 2,
                       icon: Icons.send_outlined,
                       selectedIcon: Icons.send,
                       label: 'Messages',
@@ -146,7 +141,7 @@ class _SidebarNavigationState extends State<SidebarNavigation>
                       badgeCount: widget.unreadMessages,
                     ),
                     _buildNavItem(
-                      index: 4,
+                      index: 3,
                       icon: Icons.person_outline,
                       selectedIcon: Icons.person,
                       label: 'Profile',
@@ -574,7 +569,7 @@ class _SidebarNavItemState extends State<_SidebarNavItem> {
                 children: [
                   if (widget.showUserAvatar && widget.userId != null)
                     widget.buildUserAvatar(widget.isSelected)
-                  else if (widget.useCustomIcon && widget.index == 2)
+                  else if (widget.useCustomIcon && widget.index == 0)
                     widget.buildAiIcon(
                         widget.isSelected, activeColor, inactiveColor)
                   else

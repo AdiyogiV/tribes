@@ -25,10 +25,8 @@
         "check": "npm run lint && npm run audit"
     },
     "dependencies": {
-        "@google-cloud/tasks": "^6.2.1",
         "@google/generative-ai": "^0.21.0",
         "agora-token": "^2.0.5",
-        "cheerio": "^1.1.2",
         "firebase-admin": "^12.7.0",
         "firebase-functions": "^7.0.3",
         "jsonwebtoken": "^9.0.2",

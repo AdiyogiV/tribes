@@ -92,6 +92,24 @@
         ]
       },
       {
+        "source": "canvaskit/**/*.wasm",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=31536000, immutable"
+          }
+        ]
+      },
+      {
+        "source": "canvaskit/**/*.symbols",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=31536000, immutable"
+          }
+        ]
+      },
+      {
         "source": "**/*.@(jpg|jpeg|gif|png|svg|webp|ico)",
         "headers": [
           {
@@ -110,11 +128,11 @@
         ]
       },
       {
-        "source": "flutter_service_worker.js",
+        "source": "flutter_bootstrap.js",
         "headers": [
           {
             "key": "Cache-Control",
-            "value": "no-cache"
+            "value": "no-cache, must-revalidate"
           }
         ]
       },

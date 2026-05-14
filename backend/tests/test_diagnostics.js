@@ -65,13 +65,13 @@ async function testCodeStructure() {
         
         // Check for required imports
         checkIssue(
-            code.includes('from "./cache_utils.js"'),
+            code.includes('from "../lib/cache_utils.js"'),
             'cache_utils.js is imported',
             false
         );
         
         checkIssue(
-            code.includes('from "./vedic_analysis.js"'),
+            code.includes('from "../lib/vedic_analysis.js"'),
             'vedic_analysis.js is imported',
             false
         );
@@ -115,7 +115,7 @@ async function testImports() {
     
     try {
         // Test cache_utils imports
-        const cacheUtils = await import('./functions/cache_utils.js');
+        const cacheUtils = await import('./lib/cache_utils.js');
         checkIssue(
             typeof cacheUtils.generateChartSignature === 'function',
             'generateChartSignature imported',
@@ -133,7 +133,7 @@ async function testImports() {
         );
         
         // Test vedic_analysis imports
-        const vedicAnalysis = await import('./functions/vedic_analysis.js');
+        const vedicAnalysis = await import('./lib/vedic_analysis.js');
         checkIssue(
             typeof vedicAnalysis.calculateHouseActivations === 'function',
             'calculateHouseActivations imported',
@@ -163,17 +163,18 @@ async function testFunctionLogic() {
         const filePath = join(__dirname, 'functions', 'daily_astro_insights.js');
         const code = readFileSync(filePath, 'utf-8');
         
-        // Check if generateInsightForUser function exists
+        // Check if generateInsightForUserForce function exists
+        // (The legacy generateInsightForUser was removed as dead code; Force is the live path.)
         checkIssue(
-            code.includes('async function generateInsightForUser'),
-            'generateInsightForUser function defined',
+            code.includes('async function generateInsightForUserForce'),
+            'generateInsightForUserForce function defined',
             false
         );
-        
+
         // Check if it's called correctly
         checkIssue(
-            code.includes('await generateInsightForUser('),
-            'generateInsightForUser is called with await',
+            code.includes('generateInsightForUserForce('),
+            'generateInsightForUserForce is called',
             false
         );
         

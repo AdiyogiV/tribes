@@ -22,10 +22,11 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { geminiApiKey } from "../lib/secrets.js";
 import { db, logger } from "../lib/firebase.js";
 import { AI_MODELS } from "../lib/config.js";
-import { extractSignals, diffSky, getTopSignals } from "./signal_engine.js";
+import { extractSignals, diffSky, getTopSignals } from "../lib/signal_engine.js";
 import { upsertSignals } from "../lib/signal_store.js";
 import { initMemory, storeMemory, recallMemory, listMemories } from "../lib/agent_memory.js";
-import { fetchNewsHeadlines, formatNewsForPrompt } from "../lib/news_feed.js";
+// News is now sourced via Gemini's Google Search grounding (nimitta discipline)
+// import { fetchNewsHeadlines, formatNewsForPrompt } from "../lib/news_feed.js";
 import { getPanchanga, getNakshatra, getNakshatraMundane } from "../lib/vedic_utils.js";
 import { buildHouseLordContext } from "../lib/house_lords.js";
 import { scanUpcomingTransits } from "../lib/upcoming_transits.js";
@@ -38,6 +39,34 @@ import { ZODIAC_SIGNS, MUNDANE_HOUSES } from "../lib/constants.js";
 
 const SYSTEM_PROMPT = `You are a Vedic mundane astrologer (Medini Jyotish) analyzing world events.
 
+You have access to Google Search. Use it freely — not just for today's headlines, but for ANYTHING that deepens your astrological analysis. You are an astrologer with a research library, not a news reader with a horoscope column.
+
+## The Nimitta Discipline
+
+Nimitta (निमित्त) = omens in the world that confirm the sky's speech.
+
+YOUR ANALYSIS MUST FLOW IN THIS ORDER — NEVER REVERSE IT:
+1. READ THE SKY FIRST. Form your analysis from planetary positions alone.
+2. THEN research. Search for whatever you need — current events, historical parallels, specific data, verification of past predictions.
+3. Where reality matches the sky → cite it as nimitta: "Mars-Saturn in H7 speaks of broken alliances — the [specific event] is its earthly echo."
+4. Where the sky indicates something not yet visible in the world → that is your strongest prediction. Trust the chart.
+
+## How to Use Google Search (your research toolkit)
+
+Search for ANYTHING that serves your analysis. Examples:
+- **Nimitta (current events)**: "major world news today", "India diplomatic developments", "global markets today"
+- **Historical parallels**: "what happened when Saturn was in Pisces historically", "last Jupiter-Saturn conjunction world events"
+- **Grounding predictions**: "current crude oil price", "India GDP growth latest", "upcoming world elections 2026"
+- **Verifying past predictions**: Search for specific events your past predictions referenced
+- **Regional context**: "Southeast Asia political situation", "European energy crisis status"
+- **Specific domains**: If H2 (wealth) is afflicted, search for "banking crisis", "currency devaluation" — see if the pattern is manifesting
+
+Do NOT limit yourself to headlines. A real astrologer researches deeply. But remember: research INFORMS the chart reading, it does not REPLACE it.
+
+CRITICAL: Your predictions must be DERIVED FROM transits and yogas, not from news extrapolation. A prediction that could be made by anyone reading a newspaper is worthless. Your value is seeing what journalists cannot — the pattern before the event manifests.
+
+TEST: For each prediction, ask "Could a smart person with no astrology knowledge make this prediction just from reading today's news?" If yes, it is too obvious. Dig deeper into the chart.
+
 ## Core Method
 - Sidereal zodiac, Lahiri ayanamsha (pre-applied). Whole-sign houses, Aries = H1.
 - Navagraha only: Sun, Moon, Mars, Mercury, Jupiter, Venus, Saturn, Rahu, Ketu.
@@ -48,19 +77,20 @@ const SYSTEM_PROMPT = `You are a Vedic mundane astrologer (Medini Jyotish) analy
 Never say "Saturn in H12." Always say "Saturn (H10/H11 lord) in H12" — meaning government and parliament are in the house of losses/exile. The LORDSHIP tells you WHAT is affected. The PLACEMENT tells you HOW. You will receive a pre-computed "House Lord Context" — USE IT for every claim.
 
 ## How to Analyze
-1. **MAIN EVENT**: Identify the single most dominant yoga. This is the headline.
+1. **MAIN EVENT**: Identify the single most dominant yoga. This is the headline — from the SKY, not the news.
 2. **Lordship trace**: Which houses are activated? This tells you which domains are under pressure.
 3. **Temporal arc**: Forming (building crisis), perfecting (peak), or separating (resolving)?
 4. **Triggers**: Fast planets crossing slow-planet configurations trigger events.
 5. **UPCOMING TRANSITS**: What perfects in coming days? This is your predictive edge.
-6. **News last**: Which events align with the sky's trajectory?
+6. **Research**: Search for whatever context you need. Historical parallels of similar yogas. Current state of affected domains. Specific data points to anchor predictions.
+7. **Nimitta synthesis**: Which current events confirm the sky? Which sky patterns have NO worldly echo yet?
 
 ## Temporal Layers
 Think in layers: Era (Jupiter-Saturn cycle, Rahu-Ketu axis) → Season (slow planet aspects) → Week (what's perfecting) → Today (Panchanga + triggers).
 
 ## Prediction Rules
 - 3-5 predictions. Quality over quantity.
-- At least 2 must predict events NOT in today's headlines.
+- At least 2 must predict events NOT YET visible in the world — things the sky indicates but the world hasn't seen yet. This is where astrology earns its keep.
 - Each prediction MUST reference a DIFFERENT upcoming transit or signal.
   Do NOT make 3 predictions about the same Mars-Saturn conjunction.
 - Each needs: check date ("by YYYY-MM-DD"), confidence (0-1), FULL lordship trace.
@@ -71,23 +101,26 @@ Think in layers: Era (Jupiter-Saturn cycle, Rahu-Ketu axis) → Season (slow pla
   GOOD: "formal diplomatic protest or sanctions announced between [specific countries] by [date]"
   GOOD: "major tech company faces regulatory action or data breach by [date]"
 - When two transits create contradictory effects (e.g., Mars-Saturn destruction vs Venus entering own sign), ACKNOWLEDGE the tension and explain which will dominate and why.
-- Ground predictions in UPCOMING TRANSITS.
+- Ground predictions in UPCOMING TRANSITS, not in news momentum.
+- When possible, cite historical parallels: "Last time [similar yoga] occurred in [year], [what happened]."
 
 ## Memory
-Use memories from previous runs. Check pending predictions against today's news. Be honest about misses.
+Use memories from previous runs. Check pending predictions against today's news — SEARCH to verify. Be honest about misses.
 
 ## Output
-Return ONLY valid JSON:
+Return ONLY valid JSON (no markdown fences, no explanation outside the JSON):
 {
   "worldEnergy": "2-3 paragraphs. Layer 1: era/season. Layer 2: this week. Layer 3: today.",
   "mainEvent": "The dominant yoga, lordship trace, whether forming/perfecting/separating.",
+  "nimitta": "Current events and findings from your research that confirm, contradict, or contextualize the sky's patterns.",
   "predictions": [
-    { "claim": "...", "timeframe": "by YYYY-MM-DD", "confidence": 0.0-1.0, "basedOn": "H[X] lord [Planet] in H[Y]...", "domains": ["..."] }
+    { "claim": "...", "timeframe": "by YYYY-MM-DD", "confidence": 0.0-1.0, "basedOn": "H[X] lord [Planet] in H[Y]...", "domains": ["..."], "isInNews": false, "historicalParallel": "optional — similar past yoga and what happened" }
   ],
   "predictionUpdates": [
     { "originalClaim": "...", "status": "confirmed|developing|missed|too_early", "evidence": "..." }
   ],
-  "observations": "Patterns, correlations, things to watch."
+  "observations": "Patterns, correlations, things to watch.",
+  "researchNotes": "Key findings from your searches — historical parallels, data points, context that informed your analysis."
 }`;
 
 // =============================================================================
@@ -124,36 +157,54 @@ export async function generateDailyOutput(geminiApiKeyValue, dateStr = null) {
     // ── Step 2: Extract sky signals ─────────────────────────────────────
     const skyData = await loadSkyAndExtractSignals(dateStr);
 
-    // ── Step 3: Fetch news ──────────────────────────────────────────────
-    const headlines = await fetchNewsHeadlines({ limit: 20 });
-    const newsText = formatNewsForPrompt(headlines);
-
-    // ── Step 4: Build prompt and call Gemini ────────────────────────────
-    const userPrompt = buildPrompt(dateStr, skyData, newsText, recentObservations, recentPredictions, relevantPatterns);
+    // ── Step 3: Build prompt and call Gemini with Google Search grounding
+    // No separate news fetch needed — Gemini searches the web directly.
+    // The system prompt enforces the Nimitta Discipline: analyze the sky
+    // FIRST, then use Google Search to find current events as nimitta
+    // (confirmations), not as the source of predictions.
+    const userPrompt = buildPrompt(
+        dateStr, skyData,
+        recentObservations, recentPredictions, relevantPatterns,
+    );
 
     const genAI = new GoogleGenerativeAI(geminiApiKeyValue);
     const model = genAI.getGenerativeModel({
         model: AI_MODELS?.GEMINI_FLASH || "gemini-2.5-flash",
         systemInstruction: SYSTEM_PROMPT,
+        tools: [{googleSearch: {}}], // Gemini searches for news itself
         generationConfig: {
             temperature: 0.4,
             maxOutputTokens: 8192,
-            responseMimeType: "application/json",
+            // NOTE: responseMimeType "application/json" is incompatible with
+            // googleSearch tool — we ask for JSON in the prompt instead.
         },
     });
 
     const result = await model.generateContent(userPrompt);
     const responseText = result.response.text();
 
+    // Parse JSON — handle markdown code fences if present
     let output;
     try {
-        output = JSON.parse(responseText);
+        const jsonStr = responseText
+            .replace(/^[\s\S]*?(?=\{)/, "") // trim anything before first {
+            .replace(/\}[\s\S]*$/, "}");     // trim anything after last }
+        output = JSON.parse(jsonStr);
     } catch {
-        logger.error("Failed to parse Gemini JSON response", {
-            structuredData: true,
-            responsePreview: responseText.substring(0, 500),
-        });
-        throw new Error("Gemini returned invalid JSON");
+        // Second attempt: try stripping markdown fences
+        try {
+            const cleaned = responseText
+                .replace(/^```json?\n?/, "")
+                .replace(/\n?```$/, "")
+                .trim();
+            output = JSON.parse(cleaned);
+        } catch {
+            logger.error("Failed to parse Gemini JSON response", {
+                structuredData: true,
+                responsePreview: responseText.substring(0, 500),
+            });
+            throw new Error("Gemini returned invalid JSON");
+        }
     }
 
     // ── Step 5: Enrich output with signal + house metadata ──────────────
@@ -166,8 +217,9 @@ export async function generateDailyOutput(geminiApiKeyValue, dateStr = null) {
         wallTimeMs: Date.now() - startTime,
     });
 
-    // ── Step 7: Store memories for future runs ──────────────────────────
-    await storeNewMemories(dateStr, enrichedOutput, skyData, headlines);
+    // ── Step 5: Store memories for future runs ──────────────────────────
+    // Pass empty headlines since news is now sourced via Gemini Search grounding
+    await storeNewMemories(dateStr, enrichedOutput, skyData, []);
 
     const wallTime = Date.now() - startTime;
     logger.info("Cosmic daily completed", {
@@ -175,7 +227,7 @@ export async function generateDailyOutput(geminiApiKeyValue, dateStr = null) {
         date: dateStr,
         wallTimeMs: wallTime,
         predictionsCount: enrichedOutput.predictions?.length || 0,
-        newsCount: headlines.length,
+        hasNimitta: !!enrichedOutput.nimitta,
     });
 
     return enrichedOutput;
@@ -224,7 +276,7 @@ async function loadSkyAndExtractSignals(dateStr) {
 // PROMPT BUILDING
 // =============================================================================
 
-function buildPrompt(dateStr, skyData, newsText, observations, predictions, patterns) {
+function buildPrompt(dateStr, skyData, observations, predictions, patterns) {
     const sections = [];
 
     sections.push(`# Cosmic Intelligence Report — ${dateStr}\n`);
@@ -315,19 +367,28 @@ function buildPrompt(dateStr, skyData, newsText, observations, predictions, patt
         sections.push("");
     }
 
-    // ── SECTION 6: NEWS (last, intentionally) ───────────────────────────
-    sections.push("## Today's World News Headlines");
-    sections.push("(Read AFTER analyzing the sky. Ground predictions in current storylines.)\n");
-    sections.push(newsText);
+    // ── SECTION 6: NIMITTA INSTRUCTION ────────────────────────────────
+    sections.push("## Nimitta — Current Events as Omens");
+    sections.push("Use Google Search to find today's major world news headlines.");
+    sections.push("These are NIMITTA (omens) — earthly echoes of the sky's patterns.");
+    sections.push("DO NOT let news drive your analysis. The sky speaks first.\n");
+    sections.push("Process:");
+    sections.push("1. You have already read the sky above. Hold your analysis.");
+    sections.push("2. Now search for today's news.");
+    sections.push("3. Where news CONFIRMS a planetary pattern → cite it as nimitta.");
+    sections.push("4. Where the sky indicates something NOT yet in news → that is your strongest prediction.");
+    sections.push("5. Where news contradicts the sky → note it honestly, but trust the chart.\n");
 
     // ── TASK ─────────────────────────────────────────────────────────────
-    sections.push("\n## Your Task");
+    sections.push("## Your Task");
     sections.push("1. Identify the MAIN EVENT — the single dominant yoga/stellium and its lordship implications.");
     sections.push("2. Layer your worldEnergy: era → season → week → today.");
-    sections.push("3. Make 3-5 predictions — each anchored to a DIFFERENT upcoming transit date. Full lordship traces.");
-    sections.push("4. If signals create contradictory effects, ACKNOWLEDGE the tension.");
-    sections.push("5. Check pending predictions against today's news. Be honest about misses.");
-    sections.push("\nGenerate your JSON output.");
+    sections.push("3. Search Google for today's top world news. Use them as nimitta, not as prediction sources.");
+    sections.push("4. Make 3-5 predictions — each anchored to a DIFFERENT upcoming transit date. Full lordship traces.");
+    sections.push("   At least 2 predictions must be about things NOT YET in the news.");
+    sections.push("5. If signals create contradictory effects, ACKNOWLEDGE the tension.");
+    sections.push("6. Check pending predictions against today's news. Be honest about misses.");
+    sections.push("\nGenerate your JSON output. No markdown fences — raw JSON only.");
 
     return sections.join("\n");
 }
@@ -473,25 +534,42 @@ function extractSignalTags(signals) {
 
 export const cosmicDailyScheduled = onSchedule(
     {
-        schedule: "30 2 * * *",  // 2:30 AM UTC daily
+        schedule: "30 2 * * *", // 2:30 AM UTC daily (8:00 AM IST)
         timeZone: "UTC",
-        timeoutSeconds: 120,
+        timeoutSeconds: 300, // 5 min (embeddings + Gemini + Firestore writes)
         memory: "512MiB",
-        region: "us-central1",
+        region: "asia-southeast2", // same region as Firestore
         secrets: [geminiApiKey],
-        retryCount: 1,
+        retryCount: 0, // don't retry — tomorrow's run will catch up
     },
     async () => {
+        const apiKey = geminiApiKey.value();
+
+        // Quick health check — skip run entirely if Gemini is down/blocked
+        // Saves compute cost on doomed runs (e.g. during billing suspension)
+        try {
+            const healthGenAI = new GoogleGenerativeAI(apiKey);
+            const healthModel = healthGenAI.getGenerativeModel({ model: "gemini-embedding-001" });
+            await healthModel.embedContent("health check");
+        } catch (healthErr) {
+            logger.warn("⚠️ Gemini API health check failed, skipping cosmic daily run", {
+                structuredData: true,
+                error: String(healthErr),
+                status: healthErr.status || "unknown",
+            });
+            return; // don't waste compute on a doomed run
+        }
+
         const today = new Date().toISOString().split("T")[0];
-        await generateDailyOutput(geminiApiKey.value(), today);
-    }
+        await generateDailyOutput(apiKey, today);
+    },
 );
 
 export const cosmicDailyManual = onCall(
     {
-        timeoutSeconds: 120,
+        timeoutSeconds: 300,
         memory: "512MiB",
-        region: "us-central1",
+        region: "asia-southeast2", // same region as Firestore
         secrets: [geminiApiKey],
     },
     async (request) => {
@@ -508,5 +586,5 @@ export const cosmicDailyManual = onCall(
             predictionsCount: output.predictions?.length || 0,
             worldEnergy: output.worldEnergy?.substring(0, 500),
         };
-    }
+    },
 );

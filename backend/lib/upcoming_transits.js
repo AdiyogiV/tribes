@@ -7,9 +7,9 @@
  * Pure math. No LLM. No cost. This is the predictive edge.
  */
 
-import { angularSeparation } from "../lib/aspect_calculator.js";
-import { ASPECT_ANGLES } from "../lib/signal_types.js";
-import { ZODIAC_SIGNS } from "../lib/constants.js";
+import { angularSeparation } from "./aspect_calculator.js";
+import { ASPECT_ANGLES } from "./signal_types.js";
+import { ZODIAC_SIGNS } from "./constants.js";
 
 const SLOW_PLANETS = ["Mars", "Jupiter", "Saturn", "Rahu", "Ketu"];
 const ALL_PLANETS = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu"];

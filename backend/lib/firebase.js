@@ -14,7 +14,9 @@ setGlobalOptions({
     timeoutSeconds: 60,
     memory: "256MiB",
     concurrency: 80,
-    maxInstances: 10,
+    // maxInstances: 3 × concurrency 80 = 240 concurrent requests — plenty for ~100 users.
+    // Acts as a safety net against runaway scale-out (e.g., a retry loop).
+    maxInstances: 3,
 });
 
 // Initialize Firebase Admin exactly once

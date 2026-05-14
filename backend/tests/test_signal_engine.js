@@ -27,7 +27,7 @@ import {
     extractSignals,
     diffSky,
     getTopSignals,
-} from "../functions/signal_engine.js";
+} from "../lib/signal_engine.js";
 
 // =============================================================================
 // TEST HELPERS

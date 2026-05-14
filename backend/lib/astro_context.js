@@ -10,8 +10,8 @@
  * Web-grounded search context is cached daily and reused across all users.
  */
 
-import { logger } from "../lib/firebase.js";
-import { db } from "../lib/firebase.js";
+import { logger } from "./firebase.js";
+import { db } from "./firebase.js";
 import { DateTime } from "luxon";
 import { 
     getCachedSearchContext, 

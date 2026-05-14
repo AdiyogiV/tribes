@@ -41,7 +41,7 @@ async function testCacheExports() {
     logSection("TEST 1: Cache Utils Exports");
     
     try {
-        const cacheUtils = await import("./functions/cache_utils.js");
+        const cacheUtils = await import("./lib/cache_utils.js");
         const exports = Object.keys(cacheUtils);
         
         // Check for new tiered caching functions
@@ -76,7 +76,7 @@ async function testSearchExports() {
     logSection("TEST 2: Search Functions Exports");
     
     try {
-        const search = await import("./functions/search.js");
+        const search = await import("./lib/search.js");
         const exports = Object.keys(search);
         
         // Check for new astro search functions
@@ -205,7 +205,7 @@ async function testVedicAnalysisIntegration() {
     logSection("TEST 5: Vedic Analysis Integration");
     
     try {
-        const vedic = await import("./functions/vedic_analysis.js");
+        const vedic = await import("./lib/vedic_analysis.js");
         
         // Test calculateHouseActivations
         const natalChart = {

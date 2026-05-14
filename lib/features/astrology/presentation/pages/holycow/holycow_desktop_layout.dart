@@ -8,37 +8,83 @@ import 'package:aurogram/features/chat/domain/chat_dialogs.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/features/ai_chat/presentation/pages/ai_chat_page.dart';
 import 'package:aurogram/features/astrology/presentation/pages/holycow/holycow_empty_states.dart';
+import 'package:aurogram/shared/services/media/audio_input_models.dart';
 import 'package:intl/intl.dart';
 import 'package:aurogram/features/ai_chat/domain/ai_chat_provider.dart';
 
 /// Desktop master-detail layout: conversation sidebar on the left,
 /// AiChatPage (inline) or cosmic dashboard on the right.
+///
+/// Right panel states:
+/// 1. Cosmic dashboard with floating input (default / after "+")
+/// 2. Inline AiChatPage for a selected conversation
+/// 3. Inline AiChatPage for a new chat (from floating input send)
 class HolyCowDesktopLayout extends StatefulWidget {
-  final VoidCallback onStartNewChat;
   final Widget Function() cosmicDashboardBuilder;
+
+  /// Builder for the floating chat input bar (same as mobile dashboard input)
+  final Widget Function()? dashboardInputBuilder;
 
   const HolyCowDesktopLayout({
     super.key,
-    required this.onStartNewChat,
     required this.cosmicDashboardBuilder,
+    this.dashboardInputBuilder,
   });
 
   @override
-  State<HolyCowDesktopLayout> createState() => _HolyCowDesktopLayoutState();
+  HolyCowDesktopLayoutState createState() => HolyCowDesktopLayoutState();
 }
 
-class _HolyCowDesktopLayoutState extends State<HolyCowDesktopLayout> {
+class HolyCowDesktopLayoutState extends State<HolyCowDesktopLayout> {
   String? _selectedConversationId;
 
-  void _selectConversation(String conversationId) {
-    setState(() => _selectedConversationId = conversationId);
+  // New chat state — when user sends from floating input
+  String? _pendingMessage;
+  AudioInputResult? _pendingVoiceResult;
+  bool _showingInlineChat = false;
+  int _chatSessionKey = 0; // Incremented to force new AiChatPage instances
+
+  /// Start an inline chat with a text message (called from parent)
+  void startChatWithMessage(String message) {
+    setState(() {
+      _selectedConversationId = null;
+      _pendingMessage = message;
+      _pendingVoiceResult = null;
+      _showingInlineChat = true;
+      _chatSessionKey++;
+    });
   }
 
-  void _startNewChat() {
+  /// Start an inline chat with a voice result (called from parent)
+  void startChatWithVoice(AudioInputResult voiceResult) {
+    setState(() {
+      _selectedConversationId = null;
+      _pendingMessage = null;
+      _pendingVoiceResult = voiceResult;
+      _showingInlineChat = true;
+      _chatSessionKey++;
+    });
+  }
+
+  /// Return to the cosmic dashboard view
+  void showDashboard() {
     final provider = Provider.of<AiChatProvider>(context, listen: false);
     provider.startNewSession();
-    setState(() => _selectedConversationId = null);
-    widget.onStartNewChat();
+    setState(() {
+      _selectedConversationId = null;
+      _pendingMessage = null;
+      _pendingVoiceResult = null;
+      _showingInlineChat = false;
+    });
+  }
+
+  void _selectConversation(String conversationId) {
+    setState(() {
+      _selectedConversationId = conversationId;
+      _showingInlineChat = false;
+      _pendingMessage = null;
+      _pendingVoiceResult = null;
+    });
   }
 
   @override
@@ -64,7 +110,7 @@ class _HolyCowDesktopLayoutState extends State<HolyCowDesktopLayout> {
                   context,
                   title: 'HolyCow',
                   trailing: IconButton(
-                    onPressed: _startNewChat,
+                    onPressed: showDashboard,
                     icon: Icon(
                       Icons.add_rounded,
                       color: AppTheme.primaryColor,
@@ -83,16 +129,51 @@ class _HolyCowDesktopLayoutState extends State<HolyCowDesktopLayout> {
           ),
         ),
 
-        // Right panel — AiChatPage (own Scaffold) or cosmic dashboard
+        // Right panel — cosmic dashboard (with floating input) or inline chat
         Expanded(
-          child: _selectedConversationId != null
-              ? AiChatPage(
-                  key: ValueKey(_selectedConversationId),
-                  conversationId: _selectedConversationId,
-                  embedded: true,
-                )
-              : widget.cosmicDashboardBuilder(),
+          child: _buildRightPanel(),
         ),
+      ],
+    );
+  }
+
+  Widget _buildRightPanel() {
+    // State 1: Selected conversation from history
+    if (_selectedConversationId != null) {
+      return AiChatPage(
+        key: ValueKey(_selectedConversationId),
+        conversationId: _selectedConversationId,
+        embedded: true,
+      );
+    }
+
+    // State 2: New inline chat (from floating input or voice)
+    if (_showingInlineChat) {
+      return AiChatPage(
+        key: ValueKey('inline_chat_$_chatSessionKey'),
+        embedded: true,
+        initialMessage: _pendingMessage,
+        initialVoiceResult: _pendingVoiceResult,
+      );
+    }
+
+    // State 3: Cosmic dashboard with floating input
+    return Stack(
+      children: [
+        SingleChildScrollView(
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
+          ),
+          padding: const EdgeInsets.only(bottom: 90), // Space for floating input
+          child: widget.cosmicDashboardBuilder(),
+        ),
+        if (widget.dashboardInputBuilder != null)
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: widget.dashboardInputBuilder!(),
+          ),
       ],
     );
   }

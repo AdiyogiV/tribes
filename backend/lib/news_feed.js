@@ -1,32 +1,59 @@
 /**
- * News Feed — Google News RSS Parser
+ * News Feed — Google News headlines via RSS + Gemini Search fallback
  *
- * Fetches top world headlines from Google News RSS.
- * No API key needed. No dependencies. Just fetch + regex parse.
+ * Primary:  Google News RSS (free, no API key, fast)
+ * Fallback: Gemini with Google Search grounding (reliable from Cloud Run)
+ *
+ * Why fallback? Google News blocks requests from Cloud Run/GCP IPs with
+ * 503 errors. Gemini's built-in Google Search grounding is NOT blocked
+ * because it uses Google's own internal search infrastructure.
  *
  * Returns ~20 headlines with title, source, and published date.
  * Used to give the cosmic daily function real-world context.
  */
 
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
 const GOOGLE_NEWS_RSS = "https://news.google.com/rss?hl=en&gl=US&ceid=US:en";
 
 /**
- * Fetch top headlines from Google News RSS.
+ * Fetch top headlines — tries RSS first, falls back to Gemini Search.
  * @param {Object} [options]
  * @param {number} [options.limit=20] - Max headlines to return
- * @param {number} [options.timeoutMs=10000] - Fetch timeout
+ * @param {number} [options.timeoutMs=10000] - Fetch timeout for RSS
+ * @param {string} [options.geminiApiKey] - Gemini API key for search fallback
  * @returns {Promise<Array<{title: string, source: string, pubDate: string, link: string}>>}
  */
 export async function fetchNewsHeadlines(options = {}) {
-    const { limit = 20, timeoutMs = 10000 } = options;
+    const { limit = 20, timeoutMs = 10000, geminiApiKey } = options;
 
+    // Try RSS first (faster, free)
+    const rssHeadlines = await fetchViaRSS(limit, timeoutMs);
+    if (rssHeadlines.length > 0) {
+        return rssHeadlines;
+    }
+
+    // RSS failed — fall back to Gemini with Google Search grounding
+    if (geminiApiKey) {
+        console.warn("RSS failed, falling back to Gemini Search grounding");
+        return fetchViaGeminiSearch(geminiApiKey, limit);
+    }
+
+    console.warn("RSS failed and no Gemini API key for fallback");
+    return [];
+}
+
+/**
+ * Fetch headlines via Google News RSS.
+ */
+async function fetchViaRSS(limit, timeoutMs) {
     try {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
         const response = await fetch(GOOGLE_NEWS_RSS, {
             signal: controller.signal,
-            headers: { "User-Agent": "CosmicAgent/1.0" },
+            headers: {"User-Agent": "CosmicAgent/1.0"},
         });
         clearTimeout(timeout);
 
@@ -37,8 +64,51 @@ export async function fetchNewsHeadlines(options = {}) {
         const xml = await response.text();
         return parseRSS(xml, limit);
     } catch (error) {
-        // Non-fatal — agent can still run without news
-        console.warn("News feed fetch failed:", error.message);
+        console.warn("News feed RSS fetch failed:", error.message);
+        return [];
+    }
+}
+
+/**
+ * Fetch headlines via Gemini with Google Search grounding.
+ * Gemini's search is not blocked from Cloud Run (it uses Google's internal infra).
+ */
+async function fetchViaGeminiSearch(apiKey, limit) {
+    try {
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({
+            model: "gemini-2.5-flash",
+            tools: [{googleSearch: {}}],
+            generationConfig: {
+                temperature: 0.1, // low temp for factual headlines
+                maxOutputTokens: 2000,
+                // NOTE: responseMimeType "application/json" is incompatible with googleSearch tool
+            },
+        });
+
+        const result = await model.generateContent(
+            `Return today's top ${limit} world news headlines as a JSON array. ` +
+            "Focus on major global events, India/South Asia, geopolitics, markets, and technology. " +
+            "Each item: {\"title\": \"headline\", \"source\": \"publication name\"}. " +
+            "Use Google Search to get real, current headlines. " +
+            "Return ONLY the JSON array, no explanation, no markdown fences.",
+        );
+
+        const text = result.response.text().trim();
+        // Parse JSON — handle markdown code blocks if present
+        const jsonStr = text.replace(/^```json?\n?/, "").replace(/\n?```$/, "");
+        const headlines = JSON.parse(jsonStr);
+
+        if (!Array.isArray(headlines)) return [];
+
+        return headlines.slice(0, limit).map((h) => ({
+            title: h.title || "",
+            source: h.source || "",
+            pubDate: new Date().toISOString(),
+            link: "",
+        }));
+    } catch (error) {
+        console.warn("Gemini Search news fallback failed:", error.message);
         return [];
     }
 }

@@ -367,51 +367,9 @@ export const generateFirstReading = onCall(
     }
 );
 
-/**
- * Get first reading - for retrieving existing reading
- */
-export const getFirstReading = onCall(
-    {
-        timeoutSeconds: 30,
-        region: "asia-southeast2",
-        invoker: "public", // Allow client apps to invoke (Firebase Auth handles actual auth)
-    },
-    async (request) => {
-        const { auth } = request;
-        if (!auth) {
-            throw new HttpsError("unauthenticated", "Must be authenticated");
-        }
-
-        const uid = auth.uid;
-
-        try {
-            const userSnap = await db.collection("users").doc(uid).get();
-
-            if (!userSnap.exists) {
-                return { success: false, error: "User not found" };
-            }
-
-            const astroData = userSnap.data()?.astrologyData;
-
-            if (!astroData?.firstReading?.content) {
-                return { success: false, error: "No first reading found" };
-            }
-
-            return {
-                success: true,
-                data: {
-                    content: astroData.firstReading.content,
-                    highlights: astroData.firstReading.highlights || buildCosmicHighlights(astroData),
-                    generatedAt: astroData.firstReading.generatedAt,
-                    sunSign: astroData.sunSign,
-                    moonSign: astroData.moonSign,
-                    ascendant: astroData.ascendant || astroData.lagna,
-                },
-            };
-        } catch (error) {
-            logger.error("Failed to get first reading", { uid, error: error.message });
-            return { success: false, error: error.message };
-        }
-    }
-);
+// REMOVED: getFirstReading callable.
+// Flutter reads users/{uid}/astrologyData.firstReading directly from Firestore
+// (lib/.../data_polling_mixin.dart), so this retrieval wrapper was never called
+// by the app. Use generateFirstReading (above) to create the reading; the client
+// reads it from Firestore once written.
 

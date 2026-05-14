@@ -199,62 +199,8 @@ async function saveMatchAnalytics(userId, stats, samplePhones) {
     }
 }
 
-/**
- * Get phone matching insights for admin
- */
-export const getMatchingInsights = onCall({
-    region: "asia-southeast2",
-    invoker: "public", // Allow client apps to invoke (admin check inside)
-}, async (request) => {
-    const callerUid = requireAuth(request, "get matching insights");
-
-    // Check if user is admin (you can customize this check)
-    const userDoc = await db.collection('users').doc(callerUid).get();
-    if (!userDoc.exists || !userDoc.data()?.isAdmin) {
-        throw new HttpsError('permission-denied', 'Admin only');
-    }
-    
-    // Get recent analytics
-    const recentAnalytics = await db
-        .collection('contactMatchAnalytics')
-        .orderBy('timestamp', 'desc')
-        .limit(100)
-        .get();
-    
-    // Aggregate stats
-    let totalSyncs = 0;
-    let totalContacts = 0;
-    let totalMatches = 0;
-    let avgMatchRate = 0;
-    
-    for (const doc of recentAnalytics.docs) {
-        const data = doc.data();
-        totalSyncs++;
-        totalContacts += data.stats?.totalContacts || 0;
-        totalMatches += data.stats?.matchesFound || 0;
-    }
-    
-    if (totalContacts > 0) {
-        avgMatchRate = (totalMatches / totalContacts * 100).toFixed(2);
-    }
-    
-    // Get phoneIndex count
-    const phoneIndexCount = await db.collection('phoneIndex').count().get();
-    
-    return {
-        summary: {
-            totalSyncs,
-            totalContactsProcessed: totalContacts,
-            totalMatchesFound: totalMatches,
-            avgMatchRate: avgMatchRate + '%',
-            phoneIndexSize: phoneIndexCount.data().count,
-        },
-        recentSyncs: recentAnalytics.docs.slice(0, 10).map(doc => ({
-            timestamp: doc.data().timestamp?.toDate()?.toISOString(),
-            stats: doc.data().stats,
-        })),
-    };
-});
+// REMOVED: getMatchingInsights — admin-only analytics endpoint with no callers.
+// `contactMatchAnalytics` is still populated by saveMatchAnalytics() for future use.
 
 /**
  * Debug endpoint to check if a specific phone would match

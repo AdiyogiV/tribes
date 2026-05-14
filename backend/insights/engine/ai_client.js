@@ -22,15 +22,22 @@ const DEFAULTS = {
 
 /**
  * Strip markdown code fences that Gemini sometimes wraps JSON in.
- * Handles ```json ... ``` and ``` ... ``` and trims whitespace.
+ * Handles fences anywhere in the response (with preamble/trailing text),
+ * and falls back to extracting bare JSON objects.
  */
 function stripCodeFences(text) {
     if (!text) return text;
     let s = text.trim();
-    if (s.startsWith("```json")) s = s.slice(7);
-    else if (s.startsWith("```")) s = s.slice(3);
-    if (s.endsWith("```")) s = s.slice(0, -3);
-    return s.trim();
+
+    // Match ```json ... ``` or ``` ... ``` anywhere in the response
+    const fenceMatch = s.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (fenceMatch) return fenceMatch[1].trim();
+
+    // No fences — try to extract a bare JSON object
+    const jsonMatch = s.match(/\{[\s\S]*\}/);
+    if (jsonMatch) return jsonMatch[0].trim();
+
+    return s;
 }
 
 /**

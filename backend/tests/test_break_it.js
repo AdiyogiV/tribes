@@ -11,14 +11,14 @@ import {
     calculateTransitAspects,
     scoreHouseActivations,
     scoreAspects,
-} from "./functions/vedic_analysis.js";
+} from "./lib/vedic_analysis.js";
 import {
     generateChartSignature,
     getCachedTransitData,
     cacheTransitData,
     getCachedAIInsight,
     cacheAIInsight,
-} from "./functions/cache_utils.js";
+} from "./lib/cache_utils.js";
 
 const failures = [];
 const warnings = [];

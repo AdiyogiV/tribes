@@ -4,7 +4,7 @@
  */
 
 import { DateTime } from "luxon";
-import { runAstroFlow } from "./free_astro.js";
+import { runAstroFlow } from "../functions/free_astro.js";
 import { calculateHouseFromDegree } from "./vedic_analysis.js";
 
 /**

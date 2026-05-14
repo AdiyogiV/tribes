@@ -244,8 +244,11 @@ class AppBootstrap {
         }
 
         // Initialize local health DB (offline-first, before watch bridge)
-        await LocalStore.instance.initialize();
-        LocalStore.instance.startSyncTimer();
+        // sqflite is not available on web — skip initialization
+        if (!kIsWeb) {
+          await LocalStore.instance.initialize();
+          LocalStore.instance.startSyncTimer();
+        }
 
         // Initialize Apple Watch companion bridge (iOS only, no-op elsewhere)
         WatchService.instance.initialize();

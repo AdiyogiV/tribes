@@ -10,7 +10,8 @@ import 'package:aurogram/features/astrology/presentation/pages/holycow.dart';
 import 'package:aurogram/app/tabs/messages.dart';
 import 'package:aurogram/features/profile/presentation/pages/user_profile.dart';
 import 'package:aurogram/features/settings/presentation/pages/user_settings.dart';
-import 'package:aurogram/features/creation/pages/creation_hub_page.dart';
+// CreationHubPage temporarily removed from PageView — will be re-added later
+// import 'package:aurogram/features/creation/pages/creation_hub_page.dart';
 import 'package:aurogram/features/auth/auth_service.dart';
 import 'package:aurogram/shared/services/media/media_compression_service.dart';
 import 'package:aurogram/features/notifications/domain/notification_service.dart';
@@ -94,11 +95,9 @@ class TabHandlerState extends State<TabHandler>
     WidgetsBinding.instance.addObserver(this);
 
     // Initialize PageController for mobile swipe navigation
-    // PageView index 0 = CreationHubPage (not a tab)
-    // PageView index 1 = HolyCow tab (selectedIndex 0)
-    // So initialPage should be _selectedIndex + 1
+    // PageView indices match tab indices directly (0=HolyCow, 1=Grams, etc.)
     if (!kIsWeb) {
-      _pageController = PageController(initialPage: _selectedIndex + 1);
+      _pageController = PageController(initialPage: _selectedIndex);
     }
 
     // Defer initialization to after first frame to avoid blocking UI
@@ -358,11 +357,10 @@ class TabHandlerState extends State<TabHandler>
       }
 
       // On mobile, animate PageView to the selected tab
-      // PageView index = tab index + 1 (because CreationHubPage is at index 0)
+      // PageView indices match tab indices directly
       if (!kIsWeb && _pageController != null && _pageController!.hasClients) {
-        final pageViewIndex = index + 1; // Convert tab index to PageView index
         _pageController!.animateToPage(
-          pageViewIndex,
+          index,
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
         );
@@ -378,11 +376,10 @@ class TabHandlerState extends State<TabHandler>
   void switchToTab(int index) {
     if (mounted && _selectedIndex != index && index >= 0 && index <= 3) {
       // On mobile, animate PageView to the selected tab
-      // PageView index = tab index + 1 (because CreationHubPage is at index 0)
+      // PageView indices match tab indices directly
       if (!kIsWeb && _pageController != null && _pageController!.hasClients) {
-        final pageViewIndex = index + 1; // Convert tab index to PageView index
         _pageController!.animateToPage(
-          pageViewIndex,
+          index,
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
         );
@@ -518,79 +515,53 @@ class TabHandlerState extends State<TabHandler>
     } else {
       // Mobile: Use PageView for swipe navigation between tabs
       // PageView automatically handles gesture conflicts with vertical scrolling
-      // Add CreationHubPage as first page (index 0), then regular tabs (index 1-5)
+      // Tab indices match directly: 0=HolyCow, 1=Grams, 2=Messages, 3=Profile
+      // CreationHubPage temporarily removed — will be re-added later
       final tabs = isAuthenticated
           ? <Widget>[
-              // Index 0: CreationHubPage (swipe right from HolyCow to access)
-              const CreationHubPage(),
-              // Index 1: HolyCow (actual tab index 0)
+              // Index 0: HolyCow (tab index 0)
               _getAuthenticatedTab(0, auth.userId),
-              // Index 2: Grams (actual tab index 1)
+              // Index 1: Grams (tab index 1)
               _getAuthenticatedTab(1, auth.userId),
-              // Index 3: Messages (actual tab index 2)
+              // Index 2: Messages (tab index 2)
               _getAuthenticatedTab(2, auth.userId),
-              // Index 4: Profile (actual tab index 3)
+              // Index 3: Profile (tab index 3)
               _getAuthenticatedTab(3, auth.userId),
-              // Index 5: Settings (swipe right from Profile to access, not a tab)
-              const UserSettingsPage(showBackButton: false),
             ]
           : <Widget>[
-              // Index 0: CreationHubPage (swipe right from HolyCow to access)
-              const CreationHubPage(),
-              // Index 1: HolyCow (actual tab index 0)
+              // Index 0: HolyCow (tab index 0)
               _getUnauthenticatedTab(0),
-              // Index 2: Grams (actual tab index 1)
+              // Index 1: Grams (tab index 1)
               _getUnauthenticatedTab(1),
-              // Index 3: Login (actual tab index 2)
+              // Index 2: Login (tab index 2)
               _getUnauthenticatedTab(2),
-              // Index 4: Settings (actual tab index 3)
+              // Index 3: Settings (tab index 3)
               _getUnauthenticatedTab(3),
             ];
 
       // Ensure PageController is initialized
-      // PageView index 0 = CreationHubPage (not a tab)
-      // PageView index 1 = HolyCow tab (selectedIndex 0)
-      // So initialPage should be _selectedIndex + 1
+      // PageView indices match tab indices directly (0=HolyCow, 1=Grams, etc.)
       if (_pageController == null) {
-        _pageController = PageController(initialPage: _selectedIndex + 1);
+        _pageController = PageController(initialPage: _selectedIndex);
       } else if (_pageController!.hasClients) {
         // If controller exists but page changed, update it
         final currentPage =
-            _pageController!.page?.round() ?? (_selectedIndex + 1);
-        if (currentPage != _selectedIndex + 1) {
-          _pageController!.jumpToPage(_selectedIndex + 1);
+            _pageController!.page?.round() ?? _selectedIndex;
+        if (currentPage != _selectedIndex) {
+          _pageController!.jumpToPage(_selectedIndex);
         }
       }
 
       tabContent = PageView(
         controller: _pageController,
         onPageChanged: (pageIndex) {
-          // Convert PageView index to tab index
-          // PageView index 0 = CreationHubPage (not a tab, ignore)
-          // PageView index 1 = HolyCow (tab index 0)
-          // PageView index 2 = Grams (tab index 1)
-          // PageView index 3 = Messages (tab index 2)
-          // PageView index 4 = Profile (tab index 3)
-          // PageView index 5 = Settings (not a tab, ignore)
-          if (pageIndex == 0) {
-            // User swiped to CreationHubPage - don't update selectedIndex
-            // CreationHubPage is not a tab, it's a special page
-            return;
-          }
-
-          if (pageIndex == 5 && isAuthenticated) {
-            // User swiped to Settings - don't update selectedIndex
-            // Settings is not a tab, it's a special page accessible via swipe
-            return;
-          }
-
-          final tabIndex = pageIndex - 1;
+          // PageView indices match tab indices directly
           if (mounted &&
-              _selectedIndex != tabIndex &&
-              tabIndex >= 0 &&
-              tabIndex <= 3) {
+              _selectedIndex != pageIndex &&
+              pageIndex >= 0 &&
+              pageIndex <= 3) {
             setState(() {
-              _selectedIndex = tabIndex;
+              _selectedIndex = pageIndex;
             });
           }
         },
@@ -705,5 +676,5 @@ class TabHandlerState extends State<TabHandler>
     });
   }
 
-  // CreationHubPage is now integrated into PageView - no separate method needed
+  // CreationHubPage temporarily removed from PageView — will be re-added later
 }

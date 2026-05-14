@@ -70,7 +70,7 @@ class _CurrentSkyPageState extends State<CurrentSkyPage> {
     }
   }
 
-  /// Calls [cosmicDailyManual] (us-central1). User must be signed in; SDK sends ID token.
+  /// Calls [cosmicDailyManual] (asia-southeast2). User must be signed in; SDK sends ID token.
   Future<void> _runCosmicDaily() async {
     if (_generating) return;
     setState(() => _generating = true);
