@@ -5,19 +5,28 @@ import { getMessaging } from "firebase-admin/messaging";
 export { logger } from "firebase-functions";
 
 // Global defaults for all Gen2 functions
-// NOTE: concurrency=80 is critical — Node.js handles async I/O concurrently.
-// concurrency=1 caused 429 "no available instance" errors because each instance
-// could only serve 1 request at a time, and with minInstances=0, instances scaled
-// down immediately, forcing cold starts.
-// Also: concurrency=80 enables fractional vCPU per function (~0.083 vCPU each),
-// keeping total CPU usage well under quota. concurrency=1 forces 1 full vCPU per
-// function — at 80+ functions this blows past the 20 vCPU quota.
+//
+// CRITICAL CPU/CONCURRENCY TUNING:
+// - Without an explicit `cpu` value, Gen2 instances default to 1 full vCPU.
+//   With 80+ functions in this project and Cloud Run starting 1 instance per
+//   function during deploy health checks, the deploy burst alone exceeded the
+//   20 vCPU regional quota — causing partial deploys, trigger-type mismatches,
+//   and infinite delete/recreate loops.
+// - Cloud Run links CPU and concurrency: cpu < 1 caps concurrency. cpu: 0.5
+//   allows concurrency up to ~60. That's plenty for these low-traffic functions
+//   (~100 users) while halving the per-instance CPU footprint.
+// - 25 functions creating in parallel during deploy × 0.5 vCPU = 12.5 vCPU,
+//   safely under the 20 vCPU quota.
+// - Node.js handles async I/O concurrently, so concurrency=40 is more than
+//   enough to avoid 429 "no available instance" errors that concurrency=1
+//   previously caused.
 setGlobalOptions({
     region: "asia-southeast2",
     timeoutSeconds: 60,
     memory: "256MiB",
-    concurrency: 80,
-    // maxInstances: 3 × concurrency 80 = 240 concurrent requests — plenty for ~100 users.
+    cpu: 0.5,
+    concurrency: 40,
+    // maxInstances: 3 × concurrency 40 = 120 concurrent requests — plenty for ~100 users.
     // Acts as a safety net against runaway scale-out (e.g., a retry loop).
     maxInstances: 3,
 });
