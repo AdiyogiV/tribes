@@ -6,9 +6,12 @@ export { logger } from "firebase-functions";
 
 // Global defaults for all Gen2 functions
 // NOTE: concurrency=80 is critical — Node.js handles async I/O concurrently.
-// concurrency=1 (the old value) caused 429 "no available instance" errors
-// because each instance could only serve 1 request at a time, and with
-// minInstances=0, instances scaled down immediately, forcing cold starts.
+// concurrency=1 caused 429 "no available instance" errors because each instance
+// could only serve 1 request at a time, and with minInstances=0, instances scaled
+// down immediately, forcing cold starts.
+// Also: concurrency=80 enables fractional vCPU per function (~0.083 vCPU each),
+// keeping total CPU usage well under quota. concurrency=1 forces 1 full vCPU per
+// function — at 80+ functions this blows past the 20 vCPU quota.
 setGlobalOptions({
     region: "asia-southeast2",
     timeoutSeconds: 60,
