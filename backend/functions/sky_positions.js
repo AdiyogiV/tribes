@@ -287,8 +287,6 @@ async function fetchMuhuratForDate(date) {
     return response.json();
 }
 
-// parseMuhuratDay and processUnifiedTimeline imported from lib/muhurat_helpers.js
-
 // ============================================================================
 // UPCOMING EVENTS CALCULATION (Sign Ingresses, Retrogrades)
 // ============================================================================

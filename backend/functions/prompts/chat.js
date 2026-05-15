@@ -3,6 +3,8 @@
  * Used by ai.js and by getChatPromptConfig callable.
  */
 
+import { normalizeDasha } from "../../lib/astro_helpers.js";
+
 /**
  * Build wellness (Ayurveda) context string for Gemini prompt. No chart data.
  * @param {Object} ayurveda - User's ayurveda data (from astrologyContext.ayurveda)
@@ -77,13 +79,13 @@ function buildAstrologyContextString(astrologyContext) {
     if (astrologyContext.nakshatra) lines.push(`✧ Nakshatra: ${astrologyContext.nakshatra}`);
 
     if (astrologyContext.currentDasha) {
-        const dasha = astrologyContext.currentDasha;
+        const { mahaDasha, antarDasha, pratyantarDasha } = normalizeDasha(astrologyContext.currentDasha);
         const dashaText = [];
-        if (dasha.mahadasha || dasha.maha_dasha) dashaText.push(`Mahadasha: ${dasha.mahadasha || dasha.maha_dasha}`);
-        if (dasha.antardasha || dasha.antar_dasha) dashaText.push(`Antardasha: ${dasha.antardasha || dasha.antar_dasha}`);
-        if (dasha.levels?.pratyantar?.lord) dashaText.push(`Pratyantar: ${dasha.levels.pratyantar.lord}`);
+        if (mahaDasha) dashaText.push(`Mahadasha: ${mahaDasha}`);
+        if (antarDasha) dashaText.push(`Antardasha: ${antarDasha}`);
+        if (pratyantarDasha) dashaText.push(`Pratyantar: ${pratyantarDasha}`);
         if (dashaText.length > 0) lines.push(`⟳ Current Dasha: ${dashaText.join(", ")}`);
-        if (dasha.endDate) lines.push(`   Mahadasha ends: ${dasha.endDate}`);
+        if (astrologyContext.currentDasha.endDate) lines.push(`   Mahadasha ends: ${astrologyContext.currentDasha.endDate}`);
     }
 
     if (astrologyContext.planets && Array.isArray(astrologyContext.planets)) {

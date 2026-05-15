@@ -15,14 +15,10 @@ import {
 } from "../lib/cache_utils.js";
 import { getFunctions } from "firebase-admin/functions";
 import { getUpcomingSignIngresses, getUpcomingRetrogrades } from "./sky_positions.js";
-import { stripMarkdown } from "../lib/astro_helpers.js";
+import { stripMarkdown, normalizeDasha, normalizeChart } from "../lib/astro_helpers.js";
 import { INSIGHT_SYSTEM_PROMPT, buildInsightUserPrompt } from "./prompts/daily_insights.js";
 import { callGemini } from "../insights/engine/ai_client.js";
 import { buildDashaContext, getTodayAstroData, getSearchContext } from "../lib/daily_insight_context.js";
-
-// BATCH_SIZE removed - now using queue-based processing
-// stripMarkdown and extractAscendantDegree imported from lib/astro_helpers.js
-// buildDashaContext, getTodayAstroData, getSearchContext extracted to lib/daily_insight_context.js
 
 /**
  * Generate personalized daily astrology insight using AI
@@ -30,16 +26,8 @@ import { buildDashaContext, getTodayAstroData, getSearchContext } from "../lib/d
  */
 async function generateInsightWithAI(userAstroData, todayAstroData, searchContext) {
     // Extract user's core chart data
-    const lagna = userAstroData.ascendant || userAstroData.lagna || "Unknown";
-    const moonSign = userAstroData.moonSign || "Unknown";
-    const sunSign = userAstroData.sunSign || "Unknown";
-    const nakshatra = userAstroData.nakshatra || userAstroData.moonNakshatra || "Unknown";
-
-    // Extract dasha (all levels)
-    const currentDasha = userAstroData.currentDasha || {};
-    const mahaDasha = currentDasha.mahadasha || currentDasha.maha_dasha || "";
-    const antarDasha = currentDasha.antardasha || currentDasha.antar_dasha || "";
-    const levels = currentDasha.levels || {};
+    const { ascendant: lagna, moonSign, sunSign, nakshatra, currentDasha } = normalizeChart(userAstroData);
+    const { mahaDasha, antarDasha, levels } = currentDasha;
 
     let dashaText = "";
     if (mahaDasha) dashaText += `Mahadasha: ${mahaDasha}`;
@@ -395,10 +383,6 @@ async function generateInsightWithAI(userAstroData, todayAstroData, searchContex
 
     return parsed;
 }
-
-// REMOVED: generateInsightForUser — unused dead code (zero call sites).
-// All callers (insight_worker.js, internal endpoint) use generateInsightForUserForce below,
-// which has the cooldown + skipNotification logic that the deleted version lacked.
 
 /**
  * Generate insight for user with force option
@@ -808,17 +792,18 @@ async function generateNewInsight(userId, userAstroData, insightRef, today, skip
         const startTime = Date.now();
 
         // Log what user data we have
+        const chart = normalizeChart(userAstroData);
         logger.info("🌟 Starting insight generation", {
             structuredData: true,
             userId,
             date: today,
             userDataAvailable: {
-                lagna: !!(userAstroData.ascendant || userAstroData.lagna),
-                moonSign: !!userAstroData.moonSign,
-                sunSign: !!userAstroData.sunSign,
-                nakshatra: !!(userAstroData.nakshatra || userAstroData.moonNakshatra),
+                lagna: chart.ascendant !== "Unknown",
+                moonSign: chart.moonSign !== "Unknown",
+                sunSign: chart.sunSign !== "Unknown",
+                nakshatra: chart.nakshatra !== "Unknown",
                 dasha: !!userAstroData.currentDasha,
-                dashaLord: userAstroData.currentDasha?.mahadasha || userAstroData.currentDasha?.maha_dasha || "none",
+                dashaLord: chart.currentDasha.mahaDasha || "none",
                 rajYogas: userAstroData.rajYogas?.length || 0,
                 doshas: Object.keys(userAstroData.doshas || {}).length,
                 location: !!(userAstroData.birthLatitude && userAstroData.birthLongitude),
@@ -898,10 +883,7 @@ async function generateNewInsight(userId, userAstroData, insightRef, today, skip
             astroContext: {
                 // User's birth chart (static)
                 userChart: {
-                    sunSign: userAstroData.sunSign,
-                    moonSign: userAstroData.moonSign,
-                    ascendant: userAstroData.ascendant || userAstroData.lagna,
-                    nakshatra: userAstroData.nakshatra || userAstroData.moonNakshatra,
+                    ...normalizeChart(userAstroData),
                     currentDasha: userAstroData.currentDasha,
                     rajYogas: userAstroData.rajYogas?.map((y) => y.name || y) || [],
                     doshas: userAstroData.doshas,
@@ -1397,23 +1379,6 @@ export const dispatchCardNotification = onTaskDispatched({
         throw error;
     }
 });
-
-// ─────────────────────────────────────────────────────────────────────────────
-// REMOVED FUNCTIONS (cleanup pass):
-//
-//   • dispatchScheduledInsights — Old cron-based 4×/day dispatcher.
-//     Replaced by Cloud Tasks scheduling via `dispatchCardNotification` above,
-//     which delivers per-card with exact `scheduleDelaySeconds`, retries, and
-//     rate limits. Keeping both produced duplicate notifications.
-//
-//   • getAstroInsightSystemHealth — Diagnostics endpoint, no caller in Flutter
-//     or backend. Cache stats are still introspectable via `clearAstroCaches`.
-//
-//   • checkPendingPredictions — Daily scheduler sending `predictionValidation`
-//     notifications. Flutter has no handler for that notification type
-//     (NotificationType enum lacks the case), so output was silently dropped.
-//     Can be restored when a prediction-tracking UI is built.
-// ─────────────────────────────────────────────────────────────────────────────
 
 /**
  * Admin function to clear caches

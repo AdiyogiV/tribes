@@ -20,6 +20,7 @@ import {
     cacheAstroKnowledge 
 } from "./cache_utils.js";
 import { buildAstroSearchContext } from "./search.js";
+import { normalizeDasha } from "./astro_helpers.js";
 
 // =============================================================================
 // CONTEXT BUILDING FUNCTIONS
@@ -270,14 +271,14 @@ export function formatContextForAI(context, mode = 'chat') {
         
         // Dasha with all levels
         if (chart.currentDasha) {
-            const dasha = chart.currentDasha;
+            const { mahaDasha, antarDasha, pratyantarDasha, levels } = normalizeDasha(chart.currentDasha);
             const parts = [];
-            if (dasha.mahadasha || dasha.maha_dasha) parts.push(`Mahadasha: ${dasha.mahadasha || dasha.maha_dasha}`);
-            if (dasha.antardasha || dasha.antar_dasha) parts.push(`Antardasha: ${dasha.antardasha || dasha.antar_dasha}`);
-            if (dasha.levels?.pratyantar?.lord) parts.push(`Pratyantar: ${dasha.levels.pratyantar.lord}`);
-            if (dasha.levels?.sookshma?.lord) parts.push(`Sookshma: ${dasha.levels.sookshma.lord}`);
+            if (mahaDasha) parts.push(`Mahadasha: ${mahaDasha}`);
+            if (antarDasha) parts.push(`Antardasha: ${antarDasha}`);
+            if (pratyantarDasha) parts.push(`Pratyantar: ${pratyantarDasha}`);
+            if (levels.sookshma?.lord) parts.push(`Sookshma: ${levels.sookshma.lord}`);
             if (parts.length > 0) lines.push(`⟳ Current Dasha: ${parts.join(", ")}`);
-            if (dasha.endDate) lines.push(`   Mahadasha ends: ${dasha.endDate}`);
+            if (chart.currentDasha.endDate) lines.push(`   Mahadasha ends: ${chart.currentDasha.endDate}`);
         }
         
         // Yogas (with details - type, strength, planets)

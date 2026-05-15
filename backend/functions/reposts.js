@@ -70,8 +70,6 @@ async function getOriginalPost(postId, contextType, spaceId = null) {
     }
 }
 
-// isPublicSpace imported from ../lib/utils.js
-
 /**
  * Validate repost permissions
  * @param {string} reposterId - User ID of reposter

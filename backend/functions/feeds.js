@@ -52,8 +52,6 @@ async function fetchSpaceMemberIds(spaceId) {
     return memberIds;
 }
 
-// isPublicSpace imported from ../lib/utils.js
-
 /**
  * Handle space post creation
  * - Add to globalFeed if public

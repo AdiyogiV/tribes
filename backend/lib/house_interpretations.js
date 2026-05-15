@@ -12,6 +12,7 @@ import { geminiApiKey } from "./secrets.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { HOUSE_SIGNIFICATIONS } from "./constants.js";
 import { AI_MODELS } from "./config.js";
+import { normalizeDasha } from "./astro_helpers.js";
 
 const ZODIAC_SIGNS = [
     "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
@@ -140,9 +141,7 @@ function buildHouseContext(houseNumber, lagnaSignIndex, planets, astroData) {
     const aspectsToHouse = calculateAspectsToHouse(houseNumber, planets, lagnaSignIndex);
 
     // Check if house lord is current dasha planet
-    const currentDasha = astroData.currentDasha || {};
-    const mahaDasha = currentDasha.mahadasha || currentDasha.maha_dasha;
-    const antarDasha = currentDasha.antardasha || currentDasha.antar_dasha;
+    const { mahaDasha, antarDasha } = normalizeDasha(astroData.currentDasha);
     const isActiveDasha = signLord === mahaDasha || signLord === antarDasha;
 
     // Check yogas involving this house
@@ -325,12 +324,12 @@ Speak directly, warmly, and with conviction. Every insight should feel like a gi
  * Build comprehensive prompt for AI
  */
 function buildInterpretationPrompt(houseContexts, lagnaSign, astroData) {
-    const currentDasha = astroData.currentDasha || {};
-    const mahaDasha = currentDasha.mahadasha || currentDasha.maha_dasha || "Unknown";
+    const { mahaDasha } = normalizeDasha(astroData.currentDasha);
+    const mahaDashaLabel = mahaDasha || "Unknown";
 
     let prompt = `You are a Vedic astrologer giving personalized readings.
 
-CHART: ${lagnaSign} Rising | ${mahaDasha} Mahadasha${astroData.moonSign ? ` | ${astroData.moonSign} Moon` : ""}
+CHART: ${lagnaSign} Rising | ${mahaDashaLabel} Mahadasha${astroData.moonSign ? ` | ${astroData.moonSign} Moon` : ""}
 
 TASK: Write ONE flowing paragraph (2-3 sentences) per house that weaves ALL factors together.
 

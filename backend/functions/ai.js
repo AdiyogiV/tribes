@@ -9,6 +9,7 @@ import { getDailySearchContext } from "../lib/astro_context.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { checkRateLimit as checkPersistentRateLimit, RATE_LIMIT_PRESETS } from "../lib/rate_limiter.js";
 import { CHAT_CONFIG, AI_MODELS } from "../lib/config.js";
+import { normalizeDasha } from "../lib/astro_helpers.js";
 
 // =============================================================================
 // TOPIC-AWARE ASTROLOGY SEARCH SYSTEM
@@ -535,10 +536,7 @@ async function enrichAstrologyContext(astrologyContext, userMessage, chatId) {
         const questionTopic = detectAstroQuestionTopic(userMessage);
         const relevantHouses = getRelevantHousesForTopic(questionTopic);
 
-        const mahaDasha = astrologyContext.currentDasha?.mahadasha ||
-            astrologyContext.currentDasha?.maha_dasha;
-        const antarDasha = astrologyContext.currentDasha?.antardasha ||
-            astrologyContext.currentDasha?.antar_dasha;
+        const { mahaDasha, antarDasha } = normalizeDasha(astrologyContext.currentDasha);
 
         const topicKnowledge = await fetchTopicSpecificKnowledge({
             topic: questionTopic,

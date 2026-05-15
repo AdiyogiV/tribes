@@ -115,10 +115,7 @@ const callFreeAstroSafe = async (endpoint, payload) => {
     }
 };
 
-// parseApiTimeString imported from lib/astro_helpers.js
 const parseTimeString = parseApiTimeString;
-
-// extractApiOutput and unwrapJsonOutput are imported from lib/astro_helpers.js and lib/utils.js
 
 /**
  * Parse a dasha date string to a JavaScript Date object.

@@ -8,7 +8,8 @@
  */
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { logger } from "../../lib/firebase.js";
+import { db, logger } from "../../lib/firebase.js";
+import { FieldValue } from "firebase-admin/firestore";
 import { geminiApiKey } from "../../lib/secrets.js";
 import { AI_MODELS } from "../../lib/config.js";
 
@@ -19,6 +20,51 @@ const DEFAULTS = {
     maxRetries: 2,
     retryDelayMs: 800,
 };
+
+/**
+ * Fire-and-forget: track Gemini call metrics per flavor per day.
+ * Writes to `geminiUsage/{yyyy-MM-dd}` with atomic increments.
+ * Failures are silently swallowed — observability should never break AI calls.
+ *
+ * Document shape:
+ * {
+ *   date: "2026-05-15",
+ *   totalCalls: 42,
+ *   totalLatencyMs: 85000,
+ *   totalErrors: 3,
+ *   byFlavor: {
+ *     daily_insight: { calls: 30, latencyMs: 60000, errors: 2 },
+ *     first_reading: { calls: 12, latencyMs: 25000, errors: 1 },
+ *   },
+ *   updatedAt: <serverTimestamp>
+ * }
+ */
+function trackUsage({ flavorName, latencyMs, failed, errorCategory }) {
+    const today = new Date().toISOString().slice(0, 10); // yyyy-MM-dd
+    const ref = db.collection("geminiUsage").doc(today);
+
+    const update = {
+        date: today,
+        totalCalls: FieldValue.increment(1),
+        totalLatencyMs: FieldValue.increment(latencyMs || 0),
+        [`byFlavor.${flavorName}.calls`]: FieldValue.increment(1),
+        [`byFlavor.${flavorName}.latencyMs`]: FieldValue.increment(latencyMs || 0),
+        updatedAt: FieldValue.serverTimestamp(),
+    };
+    if (failed) {
+        update.totalErrors = FieldValue.increment(1);
+        update[`byFlavor.${flavorName}.errors`] = FieldValue.increment(1);
+        if (errorCategory) {
+            update[`errorsByCategory.${errorCategory}`] = FieldValue.increment(1);
+        }
+    }
+
+    ref.set(update, { merge: true }).catch((err) => {
+        logger.warn("⚠️ Gemini usage tracking failed (non-fatal)", {
+            error: String(err?.message || err),
+        });
+    });
+}
 
 /**
  * Strip markdown code fences that Gemini sometimes wraps JSON in.
@@ -51,6 +97,31 @@ function tryParseJson(text) {
     } catch {
         return null;
     }
+}
+
+/**
+ * Classify a Gemini error into a filterable category for Cloud Logging.
+ * Categories map to actionability:
+ *   - BLOCKED: content/safety filter triggered — prompt needs review
+ *   - RATE_LIMIT: 429 / quota — back off or upgrade quota
+ *   - AUTH: API key invalid or missing
+ *   - PARSE_FAIL: AI returned non-JSON when JSON was expected
+ *   - EMPTY: AI returned empty/no candidates
+ *   - NETWORK: timeout, DNS, socket errors
+ *   - UNKNOWN: everything else
+ */
+function classifyError(error) {
+    const msg = String(error?.message || error).toLowerCase();
+    const status = error?.status || error?.code;
+
+    if (msg.includes("blocked") || msg.includes("safety")) return "BLOCKED";
+    if (status === 429 || msg.includes("quota") || msg.includes("rate")) return "RATE_LIMIT";
+    if (status === 401 || status === 403 || msg.includes("api key")) return "AUTH";
+    if (msg.includes("unparseable json") || msg.includes("parse")) return "PARSE_FAIL";
+    if (msg.includes("empty response") || msg.includes("no candidates")) return "EMPTY";
+    if (msg.includes("timeout") || msg.includes("econnreset") ||
+        msg.includes("enotfound") || msg.includes("socket")) return "NETWORK";
+    return "UNKNOWN";
 }
 
 /**
@@ -132,6 +203,7 @@ export async function callGemini(opts) {
                     structuredData: true,
                     flavor: flavorName,
                     attempt,
+                    errorCategory: "PARSE_FAIL",
                     textPreview: text.substring(0, 200),
                 });
                 if (attempt < DEFAULTS.maxRetries) {
@@ -151,6 +223,7 @@ export async function callGemini(opts) {
                 expectJson,
             });
 
+            trackUsage({ flavorName, latencyMs, failed: false });
             return { text, json, latencyMs };
         } catch (error) {
             lastError = error;
@@ -158,6 +231,7 @@ export async function callGemini(opts) {
                 structuredData: true,
                 flavor: flavorName,
                 attempt,
+                errorCategory: classifyError(error),
                 error: String(error?.message || error),
             });
             if (attempt < DEFAULTS.maxRetries) {
@@ -166,5 +240,7 @@ export async function callGemini(opts) {
         }
     }
 
+    // Track the final failure (latency of last attempt is unknown, use 0)
+    trackUsage({ flavorName, latencyMs: 0, failed: true, errorCategory: classifyError(lastError) });
     throw lastError || new Error("Gemini call failed after retries");
 }

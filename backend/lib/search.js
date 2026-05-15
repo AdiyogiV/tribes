@@ -9,6 +9,7 @@ import {
 } from "./cache_utils.js";
 import { getOrdinal } from "./utils.js";
 import { AI_MODELS } from "./config.js";
+import { normalizeDasha } from "./astro_helpers.js";
 
 // =============================================================================
 // WEB SEARCH (VIA GEMINI GOOGLE SEARCH GROUNDING)
@@ -382,8 +383,6 @@ export async function getPlanetRemedies(planet, isWeak = true) {
     return remedies;
 }
 
-// getOrdinal imported from lib/utils.js
-
 /**
  * Get House signification - Cache Forever
  * @param {number} house - House number (1-12)
@@ -656,8 +655,7 @@ export async function buildAstroSearchContext(userAstroData, todayAstroData) {
     const userLagna = userAstroData.ascendant || userAstroData.lagna || "";
     const userMoonSign = userAstroData.moonSign || "";
     const userNakshatra = userAstroData.nakshatra || userAstroData.moonNakshatra || "";
-    const mahaDasha = userAstroData.currentDasha?.mahadasha || userAstroData.currentDasha?.maha_dasha || "";
-    const antarDasha = userAstroData.currentDasha?.antardasha || userAstroData.currentDasha?.antar_dasha || "";
+    const { mahaDasha, antarDasha } = normalizeDasha(userAstroData.currentDasha);
 
     // BATCH 1: Global knowledge (what's happening in the sky NOW)
     const [

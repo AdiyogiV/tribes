@@ -11,6 +11,7 @@
  */
 
 import { db, FieldValue, logger } from "../../lib/firebase.js";
+import { normalizeDasha } from "../../lib/astro_helpers.js";
 
 // ── Nakshatra lookup (pure data, no API call) ───────────────────────
 
@@ -78,10 +79,7 @@ export function buildCosmicHighlights(astroData) {
         });
     }
 
-    const currentDasha = astroData.currentDasha || {};
-    const mahaDasha = currentDasha.mahadasha || currentDasha.maha_dasha;
-    const antarDasha = currentDasha.antardasha || currentDasha.antar_dasha;
-    const levels = currentDasha.levels || {};
+    const { mahaDasha, antarDasha, levels } = normalizeDasha(astroData.currentDasha);
 
     if (mahaDasha) {
         let endInfo = "";

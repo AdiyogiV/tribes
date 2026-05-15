@@ -1,10 +1,12 @@
 /**
  * Vedic Compatibility Constants and Calculations
- * 
+ *
  * This module provides:
  * 1. Universal Cosmic Match (Graha Maitri + Gana + Tara + Rashi) - Gender neutral
  * 2. Traditional Ashtakoot (8 kootas) - Uses gender when available
  */
+
+import { normalizeDasha } from "./astro_helpers.js";
 
 // =============================================================================
 // NAKSHATRA DATA
@@ -1524,16 +1526,14 @@ const SYNC_INTERPRETATIONS = {
  */
 export function calculateLifePhaseSync(dasha1, dasha2) {
     // Extract Mahadasha lords
-    const maha1 = dasha1?.mahadasha || dasha1?.maha_dasha || 
-                  dasha1?.levels?.maha?.lord || null;
-    const maha2 = dasha2?.mahadasha || dasha2?.maha_dasha ||
-                  dasha2?.levels?.maha?.lord || null;
-    
+    const n1 = normalizeDasha(dasha1);
+    const n2 = normalizeDasha(dasha2);
+    const maha1 = n1.mahaDasha || n1.levels.maha?.lord || null;
+    const maha2 = n2.mahaDasha || n2.levels.maha?.lord || null;
+
     // Extract Antardasha lords (optional, for more detail)
-    const antar1 = dasha1?.antardasha || dasha1?.antar_dasha ||
-                   dasha1?.levels?.antar?.lord || null;
-    const antar2 = dasha2?.antardasha || dasha2?.antar_dasha ||
-                   dasha2?.levels?.antar?.lord || null;
+    const antar1 = n1.antarDasha || n1.levels.antar?.lord || null;
+    const antar2 = n2.antarDasha || n2.levels.antar?.lord || null;
     
     // If we don't have dasha data for either person, return null
     if (!maha1 || !maha2) {

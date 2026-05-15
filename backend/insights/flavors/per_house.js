@@ -31,7 +31,7 @@ import {
 import {
     getUpcomingSignIngresses,
 } from "../../functions/sky_positions.js";
-import { extractAscendantDegree } from "../../lib/astro_helpers.js";
+import { extractAscendantDegree, normalizeDasha } from "../../lib/astro_helpers.js";
 
 const CYCLE_DAYS = 14;
 
@@ -419,15 +419,15 @@ export const perHouseFlavor = {
             if (ingressesByHouse[ing.house]) ingressesByHouse[ing.house].push(ing);
         }
 
-        const currentDasha = astro.currentDasha || {};
+        const { mahaDasha, antarDasha } = normalizeDasha(astro.currentDasha);
 
         return {
             userName: userData.name || userData.displayName || "",
             lagnaSign: astro.ascendant || astro.lagna || "Unknown",
             moonSign: astro.moonSign || "Unknown",
             sunSign: astro.sunSign || "Unknown",
-            mahaDasha: currentDasha.mahadasha || currentDasha.maha_dasha || "",
-            antarDasha: currentDasha.antardasha || currentDasha.antar_dasha || "",
+            mahaDasha,
+            antarDasha,
             transitsByHouse,
             ingressesByHouse,
             natalHouseInterpretations: astro.houseInterpretations || null,

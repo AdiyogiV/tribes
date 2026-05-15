@@ -23,8 +23,6 @@ import {
 // Re-export for astro_sync.js backward compatibility
 export { buildCosmicHighlights };
 
-// REMOVED: generateFirstReadingContent — astro_sync now uses runFlavor(firstReadingFlavor, ...) directly.
-
 /**
  * Generate first reading — Cloud Function (onCall).
  * Called after astro sync completes for new users.

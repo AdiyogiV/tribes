@@ -16,17 +16,16 @@
  */
 
 import { logger } from "firebase-functions";
-import { 
-    GANDMOOL_NAKSHATRAS, 
+import {
+    GANDMOOL_NAKSHATRAS,
     HOUSE_SIGNIFICATIONS,
     NAKSHATRAS as SHARED_NAKSHATRAS,
 } from "./constants.js";
+import { normalizeDasha } from "./astro_helpers.js";
 
 // ============================================================================
 // FOUNDATIONAL VEDIC CONSTANTS
 // ============================================================================
-
-// HOUSE_SIGNIFICATIONS imported from lib/constants.js
 
 /**
  * Planet natural friendship chart (Naisargika Maitri)
@@ -119,9 +118,6 @@ const YOGAKARAKA = {
     Aquarius: "Venus",     // Rules 4th & 9th
     Pisces: null,          // No Yogakaraka (Mars rules 9, Moon rules 5)
 };
-
-// GANDMOOL_NAKSHATRAS imported from lib/constants.js
-
 
 // ============================================================================
 // SCORING CONSTANTS
@@ -696,9 +692,7 @@ export function scoreHouseActivations(houseActivations, dashaData) {
 
         // Dasha interaction (if transit planet is Dasha lord)
         if (dashaData) {
-            const mahaDasha = dashaData.mahaDasha || dashaData.mahadasha;
-            const antarDasha = dashaData.antarDasha || dashaData.antardasha;
-
+            const { mahaDasha, antarDasha } = normalizeDasha(dashaData);
             if (activation.planet === mahaDasha || activation.planet === antarDasha) {
                 significance += 8;
             }
@@ -728,9 +722,7 @@ export function scoreAspects(aspects, dashaData) {
 
         // Dasha interaction
         if (dashaData) {
-            const mahaDasha = dashaData.mahaDasha || dashaData.mahadasha;
-            const antarDasha = dashaData.antarDasha || dashaData.antardasha;
-
+            const { mahaDasha, antarDasha } = normalizeDasha(dashaData);
             if (aspect.transitPlanet === mahaDasha || aspect.transitPlanet === antarDasha) {
                 significance += 8;
             }

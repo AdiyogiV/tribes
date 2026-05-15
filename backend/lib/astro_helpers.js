@@ -177,8 +177,8 @@ export function normalizeDasha(currentDasha) {
         return { mahaDasha: "", antarDasha: "", pratyantarDasha: null, levels: {} };
     }
     return {
-        mahaDasha: currentDasha.mahadasha || currentDasha.maha_dasha || "",
-        antarDasha: currentDasha.antardasha || currentDasha.antar_dasha || "",
+        mahaDasha: currentDasha.mahaDasha || currentDasha.mahadasha || currentDasha.maha_dasha || "",
+        antarDasha: currentDasha.antarDasha || currentDasha.antardasha || currentDasha.antar_dasha || "",
         pratyantarDasha: currentDasha.levels?.pratyantar?.lord || null,
         levels: currentDasha.levels || {},
     };
