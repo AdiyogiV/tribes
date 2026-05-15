@@ -155,3 +155,78 @@ export function parseApiTimeString(timeStr) {
         return null;
     }
 }
+
+// =============================================================================
+// FIELD NAME NORMALIZATION
+// =============================================================================
+
+/**
+ * Normalize dasha data to consistent camelCase field names.
+ *
+ * The astro API returns snake_case (`maha_dasha`, `antar_dasha`) but the
+ * codebase and Firestore prefer camelCase (`mahadasha`, `antardasha`).
+ * This helper eliminates the `x || y` fallback pattern scattered across
+ * 10+ files. Call once when reading dasha data; downstream code uses
+ * the normalized names.
+ *
+ * @param {Object} currentDasha - Raw dasha object from user profile
+ * @returns {{ mahaDasha: string, antarDasha: string, pratyantarDasha: string|null, levels: Object }}
+ */
+export function normalizeDasha(currentDasha) {
+    if (!currentDasha) {
+        return { mahaDasha: "", antarDasha: "", pratyantarDasha: null, levels: {} };
+    }
+    return {
+        mahaDasha: currentDasha.mahadasha || currentDasha.maha_dasha || "",
+        antarDasha: currentDasha.antardasha || currentDasha.antar_dasha || "",
+        pratyantarDasha: currentDasha.levels?.pratyantar?.lord || null,
+        levels: currentDasha.levels || {},
+    };
+}
+
+/**
+ * Normalize core chart field names to consistent accessors.
+ *
+ * Handles the `ascendant/lagna`, `nakshatra/moonNakshatra`, and planet
+ * degree field duality.
+ *
+ * @param {Object} astroData - User's astrologyData from Firestore
+ * @returns {{ ascendant, moonSign, sunSign, nakshatra, currentDasha: normalized }}
+ */
+export function normalizeChart(astroData) {
+    if (!astroData) {
+        return {
+            ascendant: "Unknown",
+            moonSign: "Unknown",
+            sunSign: "Unknown",
+            nakshatra: "Unknown",
+            currentDasha: normalizeDasha(null),
+        };
+    }
+    return {
+        ascendant: astroData.ascendant || astroData.lagna || "Unknown",
+        moonSign: astroData.moonSign || "Unknown",
+        sunSign: astroData.sunSign || "Unknown",
+        nakshatra: astroData.nakshatra || astroData.moonNakshatra || "Unknown",
+        currentDasha: normalizeDasha(astroData.currentDasha),
+    };
+}
+
+/**
+ * Normalize a planet position entry from the astro API.
+ * Handles fullDegree/full_degree, zodiac_sign_name/sign, house_number/house duality.
+ *
+ * @param {Object} planetData - Raw planet entry from API
+ * @returns {{ degree: number|null, sign: string, house: number|null, isRetro: boolean }}
+ */
+export function normalizePlanet(planetData) {
+    if (!planetData || typeof planetData !== "object") {
+        return { degree: null, sign: "Unknown", house: null, isRetro: false };
+    }
+    return {
+        degree: planetData.fullDegree ?? planetData.full_degree ?? null,
+        sign: planetData.zodiac_sign_name || planetData.sign || "Unknown",
+        house: planetData.house_number ?? planetData.house ?? null,
+        isRetro: planetData.isRetro === true || planetData.isRetro === "true",
+    };
+}

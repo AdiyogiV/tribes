@@ -23,35 +23,7 @@ import {
 // Re-export for astro_sync.js backward compatibility
 export { buildCosmicHighlights };
 
-/**
- * Generate reading content only (no storage).
- * Used by astro_sync.js which handles its own Firestore writes.
- * Delegates to the flavor's prompt template + shared AI client.
- */
-export async function generateFirstReadingContent(userName, astroData) {
-    const { callGemini } = await import("../insights/engine/ai_client.js");
-
-    const ctx = {
-        userName: userName || "",
-        sunSign: astroData.sunSign || "Unknown",
-        moonSign: astroData.moonSign || "Unknown",
-        ascendant: astroData.ascendant || astroData.lagna || "Unknown",
-        rajYogas: astroData.rajYogas || [],
-        astroData,
-    };
-
-    const promptSpec = firstReadingFlavor.prompt({ ctx, params: {} });
-    const aiResponse = await callGemini({
-        systemPrompt: promptSpec.system,
-        userPrompt: promptSpec.user,
-        temperature: promptSpec.options?.temperature,
-        maxOutputTokens: promptSpec.options?.maxOutputTokens,
-        expectJson: false,
-        flavorName: "first_reading",
-    });
-
-    return aiResponse.text;
-}
+// REMOVED: generateFirstReadingContent — astro_sync now uses runFlavor(firstReadingFlavor, ...) directly.
 
 /**
  * Generate first reading — Cloud Function (onCall).

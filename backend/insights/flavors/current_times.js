@@ -10,6 +10,7 @@
  */
 
 import { db, FieldValue, logger } from "../../lib/firebase.js";
+import { normalizeDasha } from "../../lib/astro_helpers.js";
 
 // ── Dasha descriptions (plain language, no jargon) ─────────────────
 
@@ -113,9 +114,7 @@ Write the current times reading now (180–220 words, rich markdown):`,
 // ── Helper ──────────────────────────────────────────────────────────
 
 function buildCtx(userName, astroData) {
-    const currentDasha = astroData.currentDasha || {};
-    const mahaDasha = currentDasha.mahadasha || currentDasha.maha_dasha || "";
-    const antarDasha = currentDasha.antardasha || currentDasha.antar_dasha || "";
+    const { mahaDasha, antarDasha } = normalizeDasha(astroData.currentDasha);
     const lifePhase = mahaDasha ?
         DASHA_DESCRIPTIONS[mahaDasha] || "a significant life phase" :
         null;

@@ -16,7 +16,7 @@ import { DateTime } from "luxon";
 import { runAstroFlow } from "../functions/free_astro.js";
 import { buildAstroSearchContext } from "./search.js";
 import { calculateWholeSignHouse } from "./vedic_analysis.js";
-import { extractAscendantDegree } from "./astro_helpers.js";
+import { extractAscendantDegree, normalizeDasha } from "./astro_helpers.js";
 
 // ── Dasha context ───────────────────────────────────────────────────
 
@@ -28,9 +28,7 @@ import { extractAscendantDegree } from "./astro_helpers.js";
  * @returns {Object} Dasha context for AI prompt
  */
 export async function buildDashaContext(userId, currentDasha) {
-    const mahaDasha = currentDasha?.mahadasha || currentDasha?.maha_dasha || "";
-    const antarDasha = currentDasha?.antardasha || currentDasha?.antar_dasha || "";
-    const levels = currentDasha?.levels || {};
+    const { mahaDasha, antarDasha, levels } = normalizeDasha(currentDasha);
 
     // Calculate phase in Antar Dasha (if dates available)
     let phase = "ACTIVE"; // Default
