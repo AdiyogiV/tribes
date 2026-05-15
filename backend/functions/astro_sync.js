@@ -472,11 +472,10 @@ export const syncAstroProfile = onCall({
 
 /**
  * Generate and save first reading for a user.
+ * Delegates to the insights engine first_reading flavor (prompt + AI + storage).
  * @returns {Promise<boolean>} True if successful, false if failed
  */
 async function triggerFirstReading(uid, userName, astroData) {
-    const { generateFirstReadingContent, buildCosmicHighlights } = await import("./first_reading.js");
-
     // Check if already exists
     if (astroData.firstReading?.content) {
         logger.info("First reading already exists, skipping", { uid });
@@ -486,30 +485,19 @@ async function triggerFirstReading(uid, userName, astroData) {
     logger.info("📖 Generating first reading internally", { uid });
 
     try {
-        const highlights = buildCosmicHighlights(astroData);
-        const readingContent = await generateFirstReadingContent(userName, astroData);
-        logger.info("AI reading generated", { uid, length: readingContent?.length });
+        const { runFlavor } = await import("../insights/engine/insight_engine.js");
+        const { firstReadingFlavor } = await import("../insights/flavors/first_reading.js");
 
-        const firstReading = {
-            content: readingContent,
-            highlights: highlights,
-            generatedAt: FieldValue.serverTimestamp(),
-            sunSign: astroData.sunSign,
-            moonSign: astroData.moonSign,
-            ascendant: astroData.ascendant,
-        };
+        // Pass pre-loaded data to avoid redundant Firestore read
+        await runFlavor(firstReadingFlavor, { uid, userName, astroData });
 
-        await db.collection("users").doc(uid).update({
-            "astrologyData.firstReading": firstReading,
-        });
-
-        logger.info("✅ First reading generated and saved", { uid, contentLength: readingContent?.length });
+        logger.info("✅ First reading generated and saved", { uid });
         return true;
     } catch (error) {
         logger.error("❌ First reading generation failed", {
             uid,
             error: error.message,
-            stack: error.stack?.substring(0, 500)
+            stack: error.stack?.substring(0, 500),
         });
         throw error; // Re-throw so caller can handle
     }
