@@ -28,6 +28,16 @@ import {
     isYogakaraka,
     getDignityMultiplier,
 } from "../lib/ayurveda.js";
+// Shared helpers — extracted to lib/ so astro domain can import without
+// pulling in this Cloud Function file.
+import {
+    resetAndRecalculateAyurveda,
+    findWeakPlanets,
+    getSixthHouseSign,
+    getPlanetsInHouse,
+} from "../lib/ayurveda_service.js";
+// Re-export so existing callers (astro_sync.js) still work via this file
+export { resetAndRecalculateAyurveda };
 import { DateTime } from "luxon";
 import {
     calculateHouseFromDegree,
@@ -187,100 +197,8 @@ function computeTransitEffectAndFactors({ transits, ascendantDegree, dashaData, 
 
 // ============================================================================
 // INTERNAL HELPER: Reset and Recalculate Ayurveda from Astrology Data
-// Called internally when birth details change (not a Cloud Function)
+// → Moved to lib/ayurveda_service.js (imported + re-exported above)
 // ============================================================================
-
-/**
- * Completely reset and recalculate Ayurveda profile from astrology data.
- * DELETES all existing ayurvedaData first, then creates fresh profile.
- * Called internally after astrology sync when birth details change.
- *
- * @param {string} uid - User ID
- * @param {object} astroData - Fresh astrology data
- * @returns {Promise<boolean>} - True if successful
- */
-export async function resetAndRecalculateAyurveda(uid, astroData) {
-    if (!astroData) {
-        logger.warn("🌿 No astro data for Ayurveda reset", { uid });
-        return false;
-    }
-
-    const ascendantSign = astroData.ascendant;
-    const moonNakshatra = astroData.moonNakshatra || astroData.nakshatra;
-    const birthLatitude = astroData.birthLatitude;
-    const planets = astroData.processedPlanets || [];
-
-    if (!ascendantSign) {
-        logger.warn("🌿 No ascendant for Ayurveda calculation", { uid });
-        return false;
-    }
-
-    try {
-        logger.info("🌿 Resetting Ayurveda profile completely", { uid });
-
-        // STEP 1: Delete entire ayurvedaData field first (complete clean slate)
-        await db.collection("users").doc(uid).update({
-            ayurvedaData: FieldValue.delete(),
-        });
-
-        logger.info("🗑️ Old ayurvedaData deleted", { uid });
-
-        // STEP 2: Calculate fresh Prakriti
-        const prakritiResult = calculatePrakriti({
-            ascendantSign,
-            planets,
-            moonNakshatra,
-            birthLatitude,
-        });
-
-        // Analyze health vulnerabilities from chart
-        const weakPlanets = findWeakPlanets(astroData);
-        const sixthHouseSign = getSixthHouseSign(astroData);
-        const planetsIn6th = getPlanetsInHouse(astroData, 6);
-
-        const healthVulnerabilities = analyzeHealthVulnerabilities({
-            sixthHouseSign,
-            planetsIn6th,
-            weakPlanets,
-        });
-
-        // STEP 3: Build completely fresh Ayurveda profile
-        const freshAyurvedaProfile = {
-            prakriti: {
-                ...prakritiResult.dosha,
-                type: prakritiResult.type,
-                dominant: prakritiResult.dominant,
-                secondary: prakritiResult.secondary,
-            },
-            agniType: prakritiResult.agniType,
-            agni: AGNI_TYPES[prakritiResult.agniType],
-            manasPrakriti: prakritiResult.manasPrakriti,
-            healthVulnerabilities,
-            prakritiRefined: false,
-            calculatedAt: Timestamp.now(),
-            version: "v1",
-        };
-
-        // STEP 4: Write fresh profile
-        await db.collection("users").doc(uid).update({
-            ayurvedaData: freshAyurvedaProfile,
-        });
-
-        logger.info("✅ Ayurveda profile reset and recalculated", {
-            uid,
-            type: prakritiResult.type,
-            agniType: prakritiResult.agniType,
-        });
-
-        return true;
-    } catch (error) {
-        logger.error("❌ Error resetting Ayurveda profile", {
-            uid,
-            error: error.message,
-        });
-        return false;
-    }
-}
 
 // ============================================================================
 // RESET AYURVEDA PROFILE (User-callable)
@@ -689,76 +607,8 @@ function getBirthMoonSign(astroData) {
     return null;
 }
 
-/**
- * Find weak planets from astrology data
- * Looks for combust, debilitated, or low strength planets
- */
-function findWeakPlanets(astroData) {
-    const weakPlanets = [];
-    const planets = astroData.processedPlanets || [];
-
-    for (const planet of planets) {
-        const name = planet.name || planet.planet;
-        if (!name) continue;
-
-        // Check for combust
-        if (planet.isCombust || planet.combust) {
-            weakPlanets.push({ planet: name, reason: "combust" });
-        }
-
-        // Check for debilitated
-        if (planet.dignity === "debilitated" || planet.isDebilitated) {
-            weakPlanets.push({ planet: name, reason: "debilitated" });
-        }
-
-        // Check for low strength (if Shadbala available)
-        if (planet.strength !== undefined && planet.strength < 1) {
-            weakPlanets.push({ planet: name, reason: "low strength" });
-        }
-    }
-
-    return weakPlanets;
-}
-
-/**
- * Get the sign on the 6th house
- */
-function getSixthHouseSign(astroData) {
-    // Try to get from houses data
-    if (astroData.birthChartData?.output?.houses) {
-        const houses = astroData.birthChartData.output.houses;
-        if (houses[5]) { // 0-indexed, so 6th house is index 5
-            return houses[5].sign || houses[5];
-        }
-    }
-
-    // Fallback: calculate from ascendant (whole sign houses)
-    const ascendant = astroData.ascendant;
-    if (ascendant) {
-        const signs = [
-            "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
-            "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces",
-        ];
-        const ascIndex = signs.findIndex(
-            (s) => s.toLowerCase() === ascendant.toLowerCase(),
-        );
-        if (ascIndex >= 0) {
-            return signs[(ascIndex + 5) % 12]; // 6th from ascendant
-        }
-    }
-
-    return null;
-}
-
-/**
- * Get planets in a specific house
- */
-function getPlanetsInHouse(astroData, houseNumber) {
-    const planets = astroData.processedPlanets || [];
-    return planets
-        .filter((p) => p.house === houseNumber)
-        .map((p) => p.name || p.planet);
-}
+// findWeakPlanets, getSixthHouseSign, getPlanetsInHouse
+// → Moved to lib/ayurveda_service.js (imported above)
 
 // ============================================================================
 // AI-POWERED AYURVEDA RECOMMENDATIONS

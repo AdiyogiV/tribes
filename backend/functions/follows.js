@@ -3,7 +3,7 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { db, FieldValue, logger } from "../lib/firebase.js";
 import { withIdempotency } from "../lib/idempotency.js";
 import { isBlockedEitherWay as _isBlockedEitherWay } from "../lib/utils.js";
-import { awardAura } from "./aura.js";
+import { awardAura } from "../lib/aura_service.js";
 import { AURA_POINTS } from "../lib/constants.js";
 
 /**

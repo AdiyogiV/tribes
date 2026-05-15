@@ -4,57 +4,10 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { FieldValue, getFirestore } from "firebase-admin/firestore";
 import { withIdempotency } from "../lib/idempotency.js";
 import { AURA_POINTS } from "../lib/constants.js";
-
-/**
- * Helper: award aura points to a user (positive only). Exported for use by follows.js etc.
- */
-export async function awardAura(userId, points, reason, metadata = {}) {
-    if (!userId || points <= 0) {
-        logger.warn("awardAura: skipped (invalid params)", {
-            structuredData: true,
-            userId: userId || null,
-            points,
-            reason,
-        });
-        return false;
-    }
-
-    const db = getFirestore();
-    const batch = db.batch();
-
-    try {
-        const userRef = db.collection("users").doc(userId);
-        batch.set(
-            userRef,
-            {
-                auraScore: FieldValue.increment(points),
-                lastAuraUpdate: FieldValue.serverTimestamp(),
-            },
-            { merge: true },
-        );
-
-        const historyRef = db
-            .collection("users")
-            .doc(userId)
-            .collection("auraHistory")
-            .doc();
-
-        batch.set(historyRef, {
-            points,
-            reason,
-            timestamp: FieldValue.serverTimestamp(),
-            metadata,
-        });
-
-        await batch.commit();
-
-        logger.info(`Awarded ${points} aura to user ${userId} for: ${reason}`);
-        return true;
-    } catch (error) {
-        logger.error("Error awarding aura:", error);
-        return false;
-    }
-}
+// Shared aura helper — lives in lib/ so any domain can import without
+// pulling in this Cloud Function file. Re-exported here for backward compat.
+import { awardAura } from "../lib/aura_service.js";
+export { awardAura };
 
 /**
  * Cloud Function: Award aura when a top-level post is created in posts/ (writes to auraHistory).
