@@ -1621,15 +1621,10 @@ export const runAstroFlow = async ({
     return result;
 };
 
-export const freeAstroCalculate = onCall({
-    secrets: [freeAstrologyApiKey],
-    timeoutSeconds: 120,
-    memory: "512MiB",
-    region: "asia-southeast2",
-    invoker: "public", // Allow client apps to invoke (Firebase Auth handles actual auth)
-    // AppCheck: DISABLED until Flutter client enables FirebaseAppCheck
-    // TODO: Set enforceAppCheck: true after enabling AppCheck in lib/main.dart
-}, async (request) => {
+// ---------------------------------------------------------------------------
+// Gateway-callable handler (plain async — called by both onCall + gateway)
+// ---------------------------------------------------------------------------
+export async function handleFreeAstroCalculate(request) {
     try {
         requireAuth(request, "request astrology data");
 
@@ -1742,6 +1737,16 @@ export const freeAstroCalculate = onCall({
         });
         throw error;
     }
+}
+
+export const freeAstroCalculate = onCall({
+    secrets: [freeAstrologyApiKey],
+    timeoutSeconds: 120,
+    memory: "512MiB",
+    region: "asia-southeast2",
+    invoker: "public",
+}, async (request) => {
+    return handleFreeAstroCalculate(request);
 });
 
 // Constants for compatibility calculation
@@ -1993,15 +1998,7 @@ const checkMutualFollow = async (userId1, userId2) => {
     }
 };
 
-export const calculateCompatibility = onCall({
-    secrets: [freeAstrologyApiKey],
-    timeoutSeconds: 120,
-    memory: "512MiB",
-    region: "asia-southeast2",
-    invoker: "public", // Allow client apps to invoke (Firebase Auth handles actual auth)
-    // AppCheck: DISABLED until Flutter client enables FirebaseAppCheck
-    // TODO: Set enforceAppCheck: true after enabling AppCheck in lib/main.dart
-}, async (request) => {
+export async function handleCalculateCompatibility(request) {
     try {
         const currentUserId = requireAuth(request, "calculate compatibility");
 
@@ -2410,6 +2407,16 @@ export const calculateCompatibility = onCall({
             "Failed to calculate compatibility. Please try again later.",
         );
     }
+}
+
+export const calculateCompatibility = onCall({
+    secrets: [freeAstrologyApiKey],
+    timeoutSeconds: 120,
+    memory: "512MiB",
+    region: "asia-southeast2",
+    invoker: "public",
+}, async (request) => {
+    return handleCalculateCompatibility(request);
 });
 
 // ============================================================================
@@ -2418,15 +2425,9 @@ export const calculateCompatibility = onCall({
 // ============================================================================
 const GEO_DETAILS_ENDPOINT = "/geo-details";
 
-export const searchGeoLocation = onCall({
-    secrets: [freeAstrologyApiKey],
-    timeoutSeconds: 30,
-    memory: "256MiB",
-    region: "asia-southeast2",
-    invoker: "public", // Allow client apps to invoke (no auth required for location search)
-}, async (request) => {
+export async function handleSearchGeoLocation(request, data) {
     try {
-        const { query } = request.data || {};
+        const { query } = data || request.data || {};
 
         if (!query || typeof query !== "string" || query.trim().length < 2) {
             return { success: true, results: [] };
@@ -2492,4 +2493,14 @@ export const searchGeoLocation = onCall({
             error: "Location search failed. Please try again.",
         };
     }
+}
+
+export const searchGeoLocation = onCall({
+    secrets: [freeAstrologyApiKey],
+    timeoutSeconds: 30,
+    memory: "256MiB",
+    region: "asia-southeast2",
+    invoker: "public",
+}, async (request) => {
+    return handleSearchGeoLocation(request, request.data);
 });

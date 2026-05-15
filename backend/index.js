@@ -1,7 +1,16 @@
 // Cloud Functions exports
 // Global options (region, concurrency, memory) are set in lib/firebase.js
-// OPTIMIZED: addPostToGlobalFeed and newSpacePost merged into addPostToFeeds
-// This reduces 3 function invocations to 1 per space post
+
+// ---------------------------------------------------------------------------
+// Gateways — consolidated onCall routers (1 Cloud Run service = many methods)
+// Deploy these ALONGSIDE the old individual functions during migration.
+// Once Flutter switches to gateway calls, delete the old individual exports.
+// ---------------------------------------------------------------------------
+export { astroGateway } from "./gateways/astro.js";
+
+// ---------------------------------------------------------------------------
+// Individual function exports (legacy — will be removed after gateway migration)
+// ---------------------------------------------------------------------------
 export {
     addPostToFeeds,
     addProfilePostToGlobalFeed,

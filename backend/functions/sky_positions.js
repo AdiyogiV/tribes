@@ -604,37 +604,20 @@ async function smartPrefetch() {
 // EXPORTED FUNCTIONS
 // ============================================================================
 
-/**
- * Manual trigger for smart prefetch
- * Note: enforceAppCheck: false allows calls without App Check verification
- */
-export const prefetchSkyPositions = onCall({
-    timeoutSeconds: 300,
-    memory: "512MiB",
-    secrets: [freeAstrologyApiKey],
-    region: "asia-southeast2",
-    invoker: "public", // Allow client apps to invoke
-    enforceAppCheck: false,
-}, async (request) => {
-    // Optional: Add basic auth check if desired
-    // For now, allow any authenticated user to trigger
+// ---------------------------------------------------------------------------
+// Gateway-callable handlers (plain async functions)
+// These are the inner logic, reusable by both the onCall wrappers below
+// and the astroGateway router.
+// ---------------------------------------------------------------------------
+
+export async function handlePrefetchSkyPositions(request) {
     logger.info("📡 Manual prefetch triggered", {
         uid: request.auth?.uid || "anonymous",
     });
     return await smartPrefetch();
-});
+}
 
-/**
- * Get cached sky positions AND global panchang
- */
-export const getSkyPositions = onCall({
-    timeoutSeconds: 30,
-    memory: "256MiB",
-    region: "asia-southeast2",
-    // No minInstances — cold start is ~1s on first open, then concurrency=80
-    // keeps subsequent calls warm. Saves ~₹20/mo of idle instance time.
-    invoker: "public",
-}, async (request) => {
+export async function handleGetSkyPositions() {
     try {
         const docRef = db.collection("global_astro").doc("sky_positions");
         const doc = await docRef.get();
@@ -665,18 +648,9 @@ export const getSkyPositions = onCall({
             panchang: {},
         };
     }
-});
+}
 
-/**
- * Get pre-calculated upcoming events (sign ingresses, retrogrades)
- * This is the FAST path - just reads from Firestore, no calculation
- */
-export const getUpcomingEvents = onCall({
-    timeoutSeconds: 30,
-    memory: "256MiB",
-    region: "asia-southeast2",
-    invoker: "public", // Allow client apps to invoke
-}, async (request) => {
+export async function handleGetUpcomingEvents() {
     try {
         const docRef = db.collection("global_astro").doc("upcoming_events");
         const doc = await docRef.get();
@@ -706,30 +680,15 @@ export const getUpcomingEvents = onCall({
             retrogrades: [],
         };
     }
-});
+}
 
-/**
- * Get cached global muhurat timeline (Ujjain reference)
- * 
- * SIMPLE LOGIC:
- * - Always shows 3 days: today, tomorrow, day after
- * - Cache is valid if dateKeys[0] === today (date-based, not time-based)
- * - Fetches fresh data when date changes
- */
-export const getGlobalMuhurat = onCall({
-    timeoutSeconds: 30,
-    memory: "256MiB",
-    region: "asia-southeast2",
-    secrets: [freeAstrologyApiKey],
-    invoker: "public",
-}, async (request) => {
+export async function handleGetGlobalMuhurat() {
     try {
         const today = DateTime.now().setZone(DEFAULT_TZ_ID).startOf("day");
         const todayKey = today.toFormat("yyyy-MM-dd");
         const docRef = db.collection("global_astro").doc("muhurat");
         const doc = await docRef.get();
 
-        // Check if cache is valid: dateKeys[0] must be today
         if (doc.exists) {
             const data = doc.data();
             const cachedDateKeys = data.dateKeys || [];
@@ -745,7 +704,6 @@ export const getGlobalMuhurat = onCall({
             }
         }
 
-        // Fetch fresh data for 3 days: today, tomorrow, day after
         logger.info("Fetching fresh muhurat data", { todayKey });
         const dateKeys = [];
         const dayPromises = [];
@@ -772,7 +730,6 @@ export const getGlobalMuhurat = onCall({
             return { success: false, error: "No muhurat data available", muhurat: {} };
         }
 
-        // Build unified timeline for smooth scrolling
         const unifiedTimeline = processUnifiedTimeline(daysData, DEFAULT_TZ_ID);
 
         const muhuratData = {
@@ -783,7 +740,6 @@ export const getGlobalMuhurat = onCall({
             timeZoneId: DEFAULT_TZ_ID,
         };
 
-        // Save to cache
         await docRef.set({
             muhurat: muhuratData,
             dateKeys,
@@ -796,6 +752,66 @@ export const getGlobalMuhurat = onCall({
         logger.error("Error fetching global muhurat:", error);
         return { success: false, error: error.message, muhurat: {} };
     }
+}
+
+// ---------------------------------------------------------------------------
+// onCall wrappers (backward-compatible — existing Flutter calls still work)
+// ---------------------------------------------------------------------------
+
+/**
+ * Manual trigger for smart prefetch
+ */
+export const prefetchSkyPositions = onCall({
+    timeoutSeconds: 300,
+    memory: "512MiB",
+    secrets: [freeAstrologyApiKey],
+    region: "asia-southeast2",
+    invoker: "public",
+    enforceAppCheck: false,
+}, async (request) => {
+    return handlePrefetchSkyPositions(request);
+});
+
+/**
+ * Get cached sky positions AND global panchang
+ */
+export const getSkyPositions = onCall({
+    timeoutSeconds: 30,
+    memory: "256MiB",
+    region: "asia-southeast2",
+    invoker: "public",
+}, async () => {
+    return handleGetSkyPositions();
+});
+
+/**
+ * Get pre-calculated upcoming events (sign ingresses, retrogrades)
+ */
+export const getUpcomingEvents = onCall({
+    timeoutSeconds: 30,
+    memory: "256MiB",
+    region: "asia-southeast2",
+    invoker: "public",
+}, async () => {
+    return handleGetUpcomingEvents();
+});
+
+/**
+ * Get cached global muhurat timeline (Ujjain reference)
+ * 
+ * SIMPLE LOGIC:
+ * - Always shows 3 days: today, tomorrow, day after
+ * - Cache is valid if dateKeys[0] === today (date-based, not time-based)
+ * - Fetches fresh data when date changes
+ */
+export const getGlobalMuhurat = onCall({
+    timeoutSeconds: 30,
+    memory: "256MiB",
+    region: "asia-southeast2",
+    secrets: [freeAstrologyApiKey],
+    invoker: "public",
+}, async () => {
+    return handleGetGlobalMuhurat();
 });
 
 /**

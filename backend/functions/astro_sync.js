@@ -128,14 +128,8 @@ const computeOffsetHours = (dateParts, timeParts, timeZoneId) => {
     }
 };
 
-export const syncAstroProfile = onCall({
-    secrets: [freeAstrologyApiKey, geminiApiKey],
-    timeoutSeconds: 120,
-    memory: "512MiB",
-    region: "asia-southeast2",
-    maxInstances: 2,
-    invoker: "public", // Allow client apps to invoke (Firebase Auth handles actual auth)
-}, async (request) => {
+// Gateway-callable handler
+export async function handleSyncAstroProfile(request) {
     const uid = requireAuth(request, "refresh astrology data");
     const data = request.data;
     logger.info("🧭 syncAstroProfile invoked", JSON.stringify({ uid, data }));
@@ -468,6 +462,17 @@ export const syncAstroProfile = onCall({
             rajYogasCount: Array.isArray(mergedAstroData.rajYogas) ? mergedAstroData.rajYogas.length : 0,
         },
     };
+}
+
+export const syncAstroProfile = onCall({
+    secrets: [freeAstrologyApiKey, geminiApiKey],
+    timeoutSeconds: 120,
+    memory: "512MiB",
+    region: "asia-southeast2",
+    maxInstances: 2,
+    invoker: "public",
+}, async (request) => {
+    return handleSyncAstroProfile(request);
 });
 
 /**
