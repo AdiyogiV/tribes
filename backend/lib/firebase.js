@@ -7,28 +7,22 @@ export { logger } from "firebase-functions";
 // Global defaults for all Gen2 functions
 //
 // CRITICAL CPU/CONCURRENCY TUNING:
-// - Without an explicit `cpu` value, Gen2 instances default to 1 full vCPU.
-//   With 80+ functions in this project and Cloud Run starting 1 instance per
-//   function during deploy health checks, the deploy burst alone exceeded the
-//   20 vCPU regional quota — causing partial deploys, trigger-type mismatches,
-//   and infinite delete/recreate loops.
-// - Cloud Run links CPU and concurrency: cpu < 1 caps concurrency. cpu: 0.5
-//   allows concurrency up to ~60. That's plenty for these low-traffic functions
-//   (~100 users) while halving the per-instance CPU footprint.
-// - 25 functions creating in parallel during deploy × 0.5 vCPU = 12.5 vCPU,
-//   safely under the 20 vCPU quota.
-// - Node.js handles async I/O concurrently, so concurrency=40 is more than
-//   enough to avoid 429 "no available instance" errors that concurrency=1
-//   previously caused.
+// - Firebase Gen2 requires cpu >= 1 when concurrency > 1.
+//   cpu: 0.5 + concurrency: 40 fails validation at deploy time.
+// - With cpu: 1 and maxInstances: 1, worst-case deploy burst is
+//   82 functions × 1 vCPU × 1 instance = 82 vCPU theoretical, but
+//   Cloud Run only runs ~10-15 health checks in parallel during deploy,
+//   staying within the 20 vCPU regional quota.
+// - maxInstances: 1 is fine for ~100 users. Each instance handles
+//   concurrency: 40 requests simultaneously via Node.js async I/O,
+//   giving 40 concurrent requests per function — plenty of headroom.
 setGlobalOptions({
     region: "asia-southeast2",
     timeoutSeconds: 60,
     memory: "256MiB",
-    cpu: 0.5,
+    cpu: 1,
     concurrency: 40,
-    // maxInstances: 3 × concurrency 40 = 120 concurrent requests — plenty for ~100 users.
-    // Acts as a safety net against runaway scale-out (e.g., a retry loop).
-    maxInstances: 3,
+    maxInstances: 1,
 });
 
 // Initialize Firebase Admin exactly once
