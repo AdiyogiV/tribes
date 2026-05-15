@@ -5,10 +5,7 @@ import { db, FieldValue, logger } from "../lib/firebase.js";
 import { requireAuth } from "../lib/auth_utils.js";
 import { geminiApiKey, freeAstrologyApiKey } from "../lib/secrets.js";
 import { DateTime } from "luxon";
-import { runAstroFlow } from "./free_astro.js";
-import { buildAstroSearchContext } from "../lib/search.js";
 import {
-    getCachedSearchContext,
     getCacheStats,
     clearAllCaches,
     clearAIInsightCaches,
@@ -16,106 +13,22 @@ import {
     getCacheVersion,
     cleanupExpiredCache,
 } from "../lib/cache_utils.js";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import { AI_MODELS } from "../lib/config.js";
 import { getFunctions } from "firebase-admin/functions";
-import { calculateWholeSignHouse } from "../lib/vedic_analysis.js";
 import { getUpcomingSignIngresses, getUpcomingRetrogrades } from "./sky_positions.js";
-import { extractAscendantDegree, stripMarkdown } from "../lib/astro_helpers.js";
+import { stripMarkdown } from "../lib/astro_helpers.js";
 import { INSIGHT_SYSTEM_PROMPT, buildInsightUserPrompt } from "./prompts/daily_insights.js";
+import { callGemini } from "../insights/engine/ai_client.js";
+import { buildDashaContext, getTodayAstroData, getSearchContext } from "../lib/daily_insight_context.js";
 
 // BATCH_SIZE removed - now using queue-based processing
 // stripMarkdown and extractAscendantDegree imported from lib/astro_helpers.js
-
-/**
- * Build Dasha context for narrative continuity
- * Calculates phase in current period and fetches recent themes
- * @param {string} userId - User ID
- * @param {Object} currentDasha - Current dasha data from user profile
- * @returns {Object} Dasha context for AI prompt
- */
-async function buildDashaContext(userId, currentDasha) {
-    const mahaDasha = currentDasha?.mahadasha || currentDasha?.maha_dasha || "";
-    const antarDasha = currentDasha?.antardasha || currentDasha?.antar_dasha || "";
-    const levels = currentDasha?.levels || {};
-
-    // Calculate phase in Antar Dasha (if dates available)
-    let phase = "ACTIVE"; // Default
-    let percentComplete = 50;
-    let daysRemaining = null;
-
-    if (levels.antar?.start && levels.antar?.end) {
-        try {
-            const start = DateTime.fromISO(levels.antar.start);
-            const end = DateTime.fromISO(levels.antar.end);
-            const now = DateTime.now();
-
-            const totalDays = end.diff(start, "days").days;
-            const elapsedDays = now.diff(start, "days").days;
-            daysRemaining = Math.max(0, Math.floor(end.diff(now, "days").days));
-
-            percentComplete = Math.min(100, Math.max(0, Math.round((elapsedDays / totalDays) * 100)));
-
-            if (percentComplete < 20) {
-                phase = "BEGINNING";
-            } else if (percentComplete > 80) {
-                phase = "CLOSING";
-            } else {
-                phase = "ACTIVE";
-            }
-        } catch (e) {
-            logger.warn("Could not calculate dasha phase", { error: String(e) });
-        }
-    }
-
-    // Fetch recent insights for theme extraction
-    let recentThemes = [];
-    try {
-        const sevenDaysAgo = DateTime.now().minus({ days: 7 });
-        const recentInsights = await db
-            .collection("users")
-            .doc(userId)
-            .collection("dailyInsights")
-            .where("date", ">=", sevenDaysAgo.toFormat("yyyy-MM-dd"))
-            .orderBy("date", "desc")
-            .limit(7)
-            .get();
-
-        recentThemes = recentInsights.docs
-            .map((doc) => doc.data().theme)
-            .filter(Boolean);
-    } catch (e) {
-        logger.warn("Could not fetch recent themes", { error: String(e) });
-    }
-
-    return {
-        period: mahaDasha && antarDasha ? `${mahaDasha}-${antarDasha}` : mahaDasha || "Unknown",
-        mahaDasha,
-        antarDasha,
-        pratyantarDasha: levels.pratyantar?.lord || null,
-        phase,
-        percentComplete,
-        daysRemaining,
-        recentThemes: recentThemes.slice(0, 5),
-        // Phase-specific guidance for AI
-        phaseGuidance: phase === "BEGINNING" ?
-            "New energies are emerging. Focus on initiating and setting intentions." :
-            phase === "CLOSING" ?
-                "This period is completing. Focus on integration and preparation for transition." :
-                "Period is in full effect. Work actively with these energies.",
-    };
-}
+// buildDashaContext, getTodayAstroData, getSearchContext extracted to lib/daily_insight_context.js
 
 /**
  * Generate personalized daily astrology insight using AI
  * Uses ALL available data: API + Google Search
  */
 async function generateInsightWithAI(userAstroData, todayAstroData, searchContext) {
-    const apiKey = geminiApiKey.value();
-    if (!apiKey) {
-        throw new Error("Gemini API key missing");
-    }
-
     // Extract user's core chart data
     const lagna = userAstroData.ascendant || userAstroData.lagna || "Unknown";
     const moonSign = userAstroData.moonSign || "Unknown";
@@ -437,383 +350,50 @@ async function generateInsightWithAI(userAstroData, todayAstroData, searchContex
         searchInsights,
     });
 
-    logger.info("🤖 Sending to Gemini", {
-        structuredData: true,
-        promptLength: prompt.length,
-        model: AI_MODELS.GEMINI_FLASH,
+    // Call Gemini via shared AI client (handles retries, code-fence stripping, logging)
+    // Google Search grounding enabled so Gemini can enrich with current cosmic events
+    const aiResponse = await callGemini({
+        systemPrompt: INSIGHT_SYSTEM_PROMPT,
+        userPrompt: prompt,
+        temperature: 0.92,
+        maxOutputTokens: 1500,
+        expectJson: true,
+        googleSearch: true,
+        flavorName: "daily_insight",
     });
 
-    try {
-        // Initialize Gemini
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({
-            model: AI_MODELS.GEMINI_FLASH,
-            // Enable Google Search grounding so Gemini can fetch current info directly.
-            // (We no longer rely on Google Custom Search API keys.)
-            tools: [{ googleSearch: {} }],
-            generationConfig: {
-                temperature: 0.92, // Higher for more creative, engaging outputs
-                maxOutputTokens: 1500, // Room for richer content
-                // NOTE: responseMimeType "application/json" is incompatible with googleSearch tool
-                // — we ask for JSON in the prompt instead and parse robustly below.
-            },
-        });
+    // Use parsed JSON from ai_client (handles code-fence stripping + JSON extraction)
+    const FALLBACK_MESSAGE = "Your cosmic blueprint holds unique potential today. " +
+        "Trust the energies aligning in your favor and take inspired action where you feel called.";
+    const parsed = aiResponse.json || {
+        theme: "Today's Guidance",
+        message: FALLBACK_MESSAGE,
+        sections: [],
+    };
 
-        const result = await model.generateContent([
-            { text: INSIGHT_SYSTEM_PROMPT },
-            { text: prompt },
-        ]);
+    // Ensure required fields
+    if (!parsed.theme) parsed.theme = "Today's Guidance";
+    if (!parsed.message) parsed.message = FALLBACK_MESSAGE;
+    if (!parsed.sections) parsed.sections = [];
 
-        const response = result.response;
-        const rawContent = response.text()?.trim();
+    // Ensure each section has displayOrder and scheduledFor (4 insights for full day)
+    const defaultSchedules = ["06:00", "12:00", "17:00", "21:00"];
+    parsed.sections = parsed.sections.slice(0, 4).map((section, index) => ({
+        title: section.title || `Section ${index + 1}`,
+        content: section.content || "",
+        cardType: section.cardType || "insight",
+        displayOrder: section.displayOrder || (index + 1),
+        scheduledFor: section.scheduledFor || defaultSchedules[index] || "06:00",
+    }));
 
-        logger.info("🤖 Gemini Response received", {
-            structuredData: true,
-            responseLength: rawContent?.length || 0,
-        });
+    logger.info("✅ Insight generated", {
+        structuredData: true,
+        theme: parsed.theme,
+        messageLength: parsed.message?.length,
+        sectionCount: parsed.sections?.length,
+    });
 
-        if (!rawContent) {
-            throw new Error("AI returned empty response");
-        }
-
-        // Parse JSON – robust extraction handles markdown fences, preamble text, etc.
-        let parsed;
-        try {
-            let cleaned = rawContent;
-
-            // Strip markdown code fences anywhere in the response
-            const fenceMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/);
-            if (fenceMatch) {
-                cleaned = fenceMatch[1];
-            }
-
-            // If no fences, try to extract the JSON object directly
-            if (!fenceMatch) {
-                const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
-                if (jsonMatch) {
-                    cleaned = jsonMatch[0];
-                }
-            }
-
-            parsed = JSON.parse(cleaned.trim());
-        } catch (parseError) {
-            logger.error("JSON parse failed", { rawContent: rawContent.substring(0, 500) });
-            parsed = {
-                theme: "Today's Guidance",
-                message: "Your cosmic blueprint holds unique potential today. Trust the energies aligning in your favor and take inspired action where you feel called.",
-                sections: [],
-            };
-        }
-
-        // Ensure required fields
-        if (!parsed.theme) parsed.theme = "Today's Guidance";
-        if (!parsed.message) parsed.message = "Your cosmic blueprint holds unique potential today. Trust the energies aligning in your favor and take inspired action where you feel called.";
-        if (!parsed.sections) parsed.sections = [];
-
-        // Ensure each section has displayOrder and scheduledFor (4 insights for full day)
-        const defaultSchedules = ["06:00", "12:00", "17:00", "21:00"];
-        parsed.sections = parsed.sections.slice(0, 4).map((section, index) => ({
-            title: section.title || `Section ${index + 1}`,
-            content: section.content || "",
-            cardType: section.cardType || "insight", // Unified type for backward compatibility
-            displayOrder: section.displayOrder || (index + 1),
-            scheduledFor: section.scheduledFor || defaultSchedules[index] || "06:00",
-        }));
-
-        logger.info("✅ Insight generated", {
-            structuredData: true,
-            theme: parsed.theme,
-            messageLength: parsed.message?.length,
-            sectionCount: parsed.sections?.length,
-        });
-
-        return parsed;
-    } catch (error) {
-        logger.error("AI insight generation failed", { error: String(error) });
-        throw error;
-    }
-}
-
-/**
- * Get today's astrological data for a user's location
- * Fetches ALL available data from API
- * Uses current location if provided, otherwise falls back to birth location
- */
-async function getTodayAstroData(userAstroData) {
-    const { birthLatitude, birthLongitude, timeZone, timeZoneOffset } = userAstroData;
-
-    // For "today's" data, prefer current location over birth location
-    // Current location can be passed in userAstroData.currentLatitude/currentLongitude
-    // or we can use device location if available
-    const latitude = userAstroData.currentLatitude ?? birthLatitude;
-    const longitude = userAstroData.currentLongitude ?? birthLongitude;
-
-    // Use current timezone if provided, otherwise use birth timezone
-    const currentTimeZone = userAstroData.currentTimeZone ?? timeZone;
-    const currentTimeZoneOffset = typeof userAstroData.currentTimeZoneOffset === "number"
-        ? userAstroData.currentTimeZoneOffset
-        : (typeof timeZoneOffset === "number" ? timeZoneOffset : 0);
-
-    if (!latitude || !longitude) {
-        logger.warn("Missing location data for user");
-        return { panchang: {}, transits: {}, shadBala: {} };
-    }
-
-    try {
-        const now = DateTime.now().setZone(currentTimeZone || "UTC");
-        const todayPayload = {
-            year: now.year,
-            month: now.month,
-            date: now.day,
-            hours: now.hour,
-            minutes: now.minute,
-            seconds: Math.floor(now.second),
-            latitude: latitude,
-            longitude: longitude,
-            timezone: currentTimeZoneOffset,
-        };
-
-        logger.info("📅 Fetching today's astro data", {
-            structuredData: true,
-            userId: userAstroData.userId || "unknown",
-            date: now.toFormat("yyyy-MM-dd HH:mm"),
-            timezone: currentTimeZone || "UTC",
-            timezoneOffset: currentTimeZoneOffset,
-            location: `${latitude}, ${longitude}`,
-            usingCurrentLocation: !!(userAstroData.currentLatitude && userAstroData.currentLongitude),
-            birthLocation: `${birthLatitude}, ${birthLongitude}`,
-            birthTimezone: timeZone || "UTC",
-            payload: JSON.stringify(todayPayload),
-        });
-
-        const result = await runAstroFlow({
-            mode: "full",
-            payload: todayPayload,
-            // IMPORTANT: use *current* timezone inputs (not birth timezone)
-            timeZoneId: currentTimeZone || "UTC",
-            timeZoneOffset: currentTimeZoneOffset,
-        });
-
-        // Extract panchang (no samvat fallback merge)
-        const panchang = result.panchang || {};
-
-        // Log panchang data for debugging - this will show what's different between users
-        logger.info("📊 Panchang data received", {
-            structuredData: true,
-            userId: userAstroData.userId || "unknown",
-            tithi: panchang.tithi || "missing",
-            nakshatra: panchang.nakshatra || "missing",
-            yoga: panchang.yoga || "missing",
-            karana: panchang.karana || "missing",
-            tithiPaksha: panchang.tithiPaksha || "missing",
-            tithiName: panchang.name || "missing",
-            paksha: panchang.paksha || "missing",
-            lunarMonthFull: panchang.lunar_month_full_name || "missing",
-            lunarMonth: panchang.lunar_month_name || "missing",
-            vikramYear: panchang.vikram_chaitradi_number || "missing",
-            vikramYearName: panchang.vikram_chaitradi_year_name || "missing",
-            fullPanchang: JSON.stringify(panchang),
-        });
-
-        // Log samvat info if available
-        if (result.samvatInfo) {
-            logger.info("📅 Samvat info received", {
-                structuredData: true,
-                userId: userAstroData.userId || "unknown",
-                timestamp: result.samvatInfo.timestamp || "missing",
-                tithiName: result.samvatInfo.name || "missing",
-                paksha: result.samvatInfo.paksha || "missing",
-                lunarMonthFull: result.samvatInfo.lunar_month_full_name || "missing",
-                lunarMonth: result.samvatInfo.lunar_month_name || "missing",
-                vikramYear: result.samvatInfo.vikram_chaitradi_number || "missing",
-                vikramYearName: result.samvatInfo.vikram_chaitradi_year_name || "missing",
-                fullSamvatInfo: JSON.stringify(result.samvatInfo),
-            });
-        } else {
-            logger.warn("⚠️ Samvat info is MISSING for today", {
-                structuredData: true,
-                userId: userAstroData.userId || "unknown",
-            });
-        }
-
-        // Extract planetary positions (transits)
-        // CRITICAL FIX: Calculate transit houses relative to USER'S natal ascendant
-        // The API returns house numbers based on the CURRENT sky's ascendant (changes every ~2 hours)
-        // But in Vedic astrology, transit houses must be calculated from the user's BIRTH ascendant
-        const planets = result.birthChartData?.output || result.birthChartData?.planets || {};
-        const transits = {};
-
-        // Get user's natal ascendant degree for correct transit house calculation
-        const userAscendantDegree = extractAscendantDegree(userAstroData);
-
-        if (userAscendantDegree == null) {
-            logger.warn("⚠️ Could not extract user's natal ascendant degree - transit houses may be inaccurate", {
-                structuredData: true,
-                userId: userAstroData.userId || "unknown",
-                hasProcessedPlanets: !!userAstroData.processedPlanets,
-                hasBirthChartData: !!userAstroData.birthChartData,
-            });
-        } else {
-            // Calculate the sign name for logging
-            const SIGN_NAMES = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
-                "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
-            const ascSignIndex = Math.floor(userAscendantDegree / 30);
-            logger.info("📊 Using WHOLE SIGN houses for transit calculation", {
-                structuredData: true,
-                userId: userAstroData.userId || "unknown",
-                userAscendantDegree: userAscendantDegree.toFixed(2),
-                ascendantSign: SIGN_NAMES[ascSignIndex] || "Unknown",
-                ascendantSignIndex: ascSignIndex,
-                note: "Whole sign = planet in same sign as Lagna is in 1st house",
-            });
-        }
-
-        if (planets && typeof planets === "object") {
-            Object.entries(planets).forEach(([key, data]) => {
-                if (data && typeof data === "object") {
-                    const name = data.name || key;
-                    const transitDegree = data.fullDegree || data.full_degree;
-
-                    // Calculate transit house using WHOLE SIGN houses (standard for transit analysis)
-                    // In whole sign system: planet in same sign as Lagna = 1st house
-                    // This is different from Bhava calculation which uses exact degrees
-                    let transitHouse = null;
-                    if (transitDegree != null && userAscendantDegree != null) {
-                        transitHouse = calculateWholeSignHouse(transitDegree, userAscendantDegree);
-                    } else {
-                        // Fallback to API's house number if we can't calculate correctly
-                        transitHouse = data.house_number || data.house;
-                    }
-
-                    transits[name] = {
-                        sign: data.zodiac_sign_name || data.sign,
-                        house: transitHouse,
-                        degree: transitDegree,
-                        isRetro: data.isRetro === true || data.isRetro === "true",
-                    };
-                }
-            });
-        }
-
-        // Extract Shad Bala (planetary strength)
-        const shadBala = result.shadBala || {};
-
-        // Extract Muhurat data (good/bad times)
-        const muhurat = {};
-        const muhuratSource = result.muhurat?.days?.[DateTime.now().toFormat("yyyy-MM-dd")] || {};
-        if (muhuratSource.rahuKala) muhurat.rahuKaal = muhuratSource.rahuKala;
-        if (muhuratSource.yamaganda) muhurat.yamaganda = muhuratSource.yamaganda;
-        if (muhuratSource.gulikaKala) muhurat.gulikaKala = muhuratSource.gulikaKala;
-        if (muhuratSource.abhijit) muhurat.abhijit = muhuratSource.abhijit;
-        if (muhuratSource.amrit) muhurat.amritKaal = muhuratSource.amrit;
-        if (muhuratSource.brahmaMuhurat) muhurat.brahmaMuhurat = muhuratSource.brahmaMuhurat;
-        if (muhuratSource.durMuhurat) muhurat.durMuhurat = muhuratSource.durMuhurat;
-        if (muhuratSource.varjyam) muhurat.varjyam = muhuratSource.varjyam;
-
-        // TODAY's samvat info (lunar month + vikram year + calendar data)
-        // This is calculated for TODAY's date (not birth date).
-        // Stored separately so frontend can distinguish from birth samvat.
-        const todaySamvat = result.samvatInfo || null;
-
-        logger.info("✅ Today's data fetched", {
-            structuredData: true,
-            panchangKeys: Object.keys(panchang).filter((k) => panchang[k]).length,
-            transitCount: Object.keys(transits).length,
-            hasShadBala: Object.keys(shadBala).length > 0,
-            hasMuhurat: Object.keys(muhurat).length > 0,
-            muhuratKeys: Object.keys(muhurat).join(", "),
-            hasTodaySamvat: !!todaySamvat,
-            todaySamvatLunarMonth: todaySamvat?.lunar_month_full_name || "missing",
-            todaySamvatVikram: todaySamvat?.vikram_chaitradi_number || "missing",
-        });
-
-        return { panchang, transits, shadBala, muhurat, todaySamvat };
-    } catch (error) {
-        logger.error("Failed to get today's astro data", { error: String(error) });
-        return { panchang: {}, transits: {}, shadBala: {}, todaySamvat: null };
-    }
-}
-
-/**
- * Build Google Search context for a user
- * Uses tiered caching:
- * - Global data (retrogrades, weekly, monthly): cached for all users
- * - User-specific data (lagna forecast, dasha forecast): cached per user combination
- */
-async function getSearchContext(userAstroData, todayAstroData) {
-    try {
-        // Search context is powered by Gemini Google Search grounding (no Custom Search API).
-        // If Gemini isn't configured, skip gracefully.
-        const apiKey = geminiApiKey.value();
-        if (!apiKey) {
-            logger.warn("⚠️ Gemini not configured, skipping search context");
-            return null;
-        }
-
-        const today = DateTime.now().toFormat("yyyy-MM-dd");
-        const startTime = Date.now();
-
-        // Build context - the buildAstroSearchContext already uses caching internally
-        // Each search function (getLagnaMeaning, getDashaMeaning, etc.) has its own cache
-        logger.info("🔍 Building search context...", {
-            structuredData: true,
-            date: today,
-            userLagna: userAstroData.ascendant || userAstroData.lagna || "unknown",
-            userMoon: userAstroData.moonSign || "unknown",
-            userDasha: userAstroData.currentDasha?.mahadasha || "unknown",
-        });
-
-        const context = await buildAstroSearchContext(userAstroData, todayAstroData);
-
-        const duration = Date.now() - startTime;
-
-        // Count what we got
-        const stats = {
-            durationMs: duration,
-            // Global
-            hasRetrogrades: context?.global?.events?.retrogrades?.length || 0,
-            hasMoonPhase: !!context?.global?.events?.moonPhase,
-            hasEclipse: !!context?.global?.events?.eclipse,
-            hasTodayNews: !!context?.global?.todayNews?.summary,
-            hasWeekly: !!context?.global?.weekly?.overview,
-            hasMonthly: !!context?.global?.monthly?.overview,
-            hasFestivals: !!context?.global?.festivals?.list,
-            // Panchang
-            hasTithiMeaning: !!context?.panchang?.tithi?.meaning,
-            hasNakshatraMeaning: !!context?.panchang?.nakshatra?.characteristics,
-            hasYogaMeaning: !!context?.panchang?.yoga?.meaning,
-            // User profile
-            hasLagnaMeaning: !!context?.userProfile?.lagna?.characteristics,
-            hasNakshatraProfile: !!context?.userProfile?.nakshatra?.characteristics,
-            hasDashaMeaning: !!context?.dasha?.general?.interpretation,
-            // User forecasts
-            hasLagnaForecast: !!context?.userSpecific?.lagnaForecast,
-            hasMoonForecast: !!context?.userSpecific?.moonSignForecast,
-            hasDashaForecast: !!context?.userSpecific?.dashaForecast,
-            hasMajorTransit: !!context?.userSpecific?.majorTransitEffect,
-            // Remedies
-            hasRemedies: !!context?.remedies?.advice,
-            retrogradeGuides: context?.retrogradeGuides?.length || 0,
-        };
-
-        // Count total data points
-        const dataPoints = Object.values(stats).filter((v) => v === true || (typeof v === "number" && v > 0)).length;
-
-        logger.info("✅ Search context built", {
-            structuredData: true,
-            totalDataPoints: dataPoints,
-            ...stats,
-        });
-
-        return context;
-    } catch (error) {
-        logger.error("❌ Search context build failed (continuing without search)", {
-            error: String(error),
-            stack: error.stack?.substring(0, 500),
-        });
-        // Don't fail the whole insight - just return null and continue
-        return null;
-    }
+    return parsed;
 }
 
 // REMOVED: generateInsightForUser — unused dead code (zero call sites).

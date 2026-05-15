@@ -1,0 +1,302 @@
+/**
+ * Daily Insight Context — data-gathering helpers for daily insight generation.
+ *
+ * Extracted from functions/daily_astro_insights.js to reduce that file's size
+ * and make these helpers importable by the insights engine if needed.
+ *
+ * Three main functions:
+ *   buildDashaContext()   — dasha phase + recent themes for narrative continuity
+ *   getTodayAstroData()   — today's panchang, transits, shadBala, muhurat from API
+ *   getSearchContext()     — Google Search grounding context for AI enrichment
+ */
+
+import { db, logger } from "./firebase.js";
+import { geminiApiKey } from "./secrets.js";
+import { DateTime } from "luxon";
+import { runAstroFlow } from "../functions/free_astro.js";
+import { buildAstroSearchContext } from "./search.js";
+import { calculateWholeSignHouse } from "./vedic_analysis.js";
+import { extractAscendantDegree } from "./astro_helpers.js";
+
+// ── Dasha context ───────────────────────────────────────────────────
+
+/**
+ * Build Dasha context for narrative continuity.
+ * Calculates phase in current period and fetches recent themes.
+ * @param {string} userId - User ID
+ * @param {Object} currentDasha - Current dasha data from user profile
+ * @returns {Object} Dasha context for AI prompt
+ */
+export async function buildDashaContext(userId, currentDasha) {
+    const mahaDasha = currentDasha?.mahadasha || currentDasha?.maha_dasha || "";
+    const antarDasha = currentDasha?.antardasha || currentDasha?.antar_dasha || "";
+    const levels = currentDasha?.levels || {};
+
+    // Calculate phase in Antar Dasha (if dates available)
+    let phase = "ACTIVE"; // Default
+    let percentComplete = 50;
+    let daysRemaining = null;
+
+    if (levels.antar?.start && levels.antar?.end) {
+        try {
+            const start = DateTime.fromISO(levels.antar.start);
+            const end = DateTime.fromISO(levels.antar.end);
+            const now = DateTime.now();
+
+            const totalDays = end.diff(start, "days").days;
+            const elapsedDays = now.diff(start, "days").days;
+            daysRemaining = Math.max(0, Math.floor(end.diff(now, "days").days));
+
+            percentComplete = Math.min(100, Math.max(0, Math.round((elapsedDays / totalDays) * 100)));
+
+            if (percentComplete < 20) {
+                phase = "BEGINNING";
+            } else if (percentComplete > 80) {
+                phase = "CLOSING";
+            } else {
+                phase = "ACTIVE";
+            }
+        } catch (e) {
+            logger.warn("Could not calculate dasha phase", { error: String(e) });
+        }
+    }
+
+    // Fetch recent insights for theme extraction
+    let recentThemes = [];
+    try {
+        const sevenDaysAgo = DateTime.now().minus({ days: 7 });
+        const recentInsights = await db
+            .collection("users")
+            .doc(userId)
+            .collection("dailyInsights")
+            .where("date", ">=", sevenDaysAgo.toFormat("yyyy-MM-dd"))
+            .orderBy("date", "desc")
+            .limit(7)
+            .get();
+
+        recentThemes = recentInsights.docs
+            .map((doc) => doc.data().theme)
+            .filter(Boolean);
+    } catch (e) {
+        logger.warn("Could not fetch recent themes", { error: String(e) });
+    }
+
+    return {
+        period: mahaDasha && antarDasha ? `${mahaDasha}-${antarDasha}` : mahaDasha || "Unknown",
+        mahaDasha,
+        antarDasha,
+        pratyantarDasha: levels.pratyantar?.lord || null,
+        phase,
+        percentComplete,
+        daysRemaining,
+        recentThemes: recentThemes.slice(0, 5),
+        // Phase-specific guidance for AI
+        phaseGuidance: phase === "BEGINNING" ?
+            "New energies are emerging. Focus on initiating and setting intentions." :
+            phase === "CLOSING" ?
+                "This period is completing. Focus on integration and preparation for transition." :
+                "Period is in full effect. Work actively with these energies.",
+    };
+}
+
+// ── Today's astronomical data ───────────────────────────────────────
+
+/**
+ * Get today's astrological data for a user's location.
+ * Fetches panchang, transits, shadBala, muhurat, and samvat from the astro API.
+ * Calculates transit houses relative to user's natal Lagna (Whole Sign).
+ * @param {Object} userAstroData - User's astrology profile from Firestore
+ * @returns {{ panchang, transits, shadBala, muhurat, todaySamvat }}
+ */
+export async function getTodayAstroData(userAstroData) {
+    const { birthLatitude, birthLongitude, timeZone, timeZoneOffset } = userAstroData;
+
+    // Prefer current location over birth location
+    const latitude = userAstroData.currentLatitude ?? birthLatitude;
+    const longitude = userAstroData.currentLongitude ?? birthLongitude;
+
+    // Use current timezone if provided, otherwise use birth timezone
+    const currentTimeZone = userAstroData.currentTimeZone ?? timeZone;
+    const currentTimeZoneOffset = typeof userAstroData.currentTimeZoneOffset === "number" ?
+        userAstroData.currentTimeZoneOffset :
+        (typeof timeZoneOffset === "number" ? timeZoneOffset : 0);
+
+    if (!latitude || !longitude) {
+        logger.warn("Missing location data for user");
+        return { panchang: {}, transits: {}, shadBala: {}, todaySamvat: null };
+    }
+
+    try {
+        const now = DateTime.now().setZone(currentTimeZone || "UTC");
+        const todayPayload = {
+            year: now.year,
+            month: now.month,
+            date: now.day,
+            hours: now.hour,
+            minutes: now.minute,
+            seconds: Math.floor(now.second),
+            latitude: latitude,
+            longitude: longitude,
+            timezone: currentTimeZoneOffset,
+        };
+
+        logger.info("📅 Fetching today's astro data", {
+            structuredData: true,
+            userId: userAstroData.userId || "unknown",
+            date: now.toFormat("yyyy-MM-dd HH:mm"),
+            timezone: currentTimeZone || "UTC",
+            timezoneOffset: currentTimeZoneOffset,
+            location: `${latitude}, ${longitude}`,
+            usingCurrentLocation: !!(userAstroData.currentLatitude && userAstroData.currentLongitude),
+        });
+
+        const result = await runAstroFlow({
+            mode: "full",
+            payload: todayPayload,
+            timeZoneId: currentTimeZone || "UTC",
+            timeZoneOffset: currentTimeZoneOffset,
+        });
+
+        // Extract panchang
+        const panchang = result.panchang || {};
+
+        logger.info("📊 Panchang data received", {
+            structuredData: true,
+            userId: userAstroData.userId || "unknown",
+            tithi: panchang.tithi || "missing",
+            nakshatra: panchang.nakshatra || "missing",
+            yoga: panchang.yoga || "missing",
+            karana: panchang.karana || "missing",
+        });
+
+        // Extract planetary positions — transit houses relative to USER'S natal Lagna
+        const planets = result.birthChartData?.output || result.birthChartData?.planets || {};
+        const transits = {};
+
+        const userAscendantDegree = extractAscendantDegree(userAstroData);
+
+        if (userAscendantDegree == null) {
+            logger.warn("⚠️ Could not extract user's natal ascendant degree", {
+                structuredData: true,
+                userId: userAstroData.userId || "unknown",
+            });
+        }
+
+        if (planets && typeof planets === "object") {
+            Object.entries(planets).forEach(([key, data]) => {
+                if (data && typeof data === "object") {
+                    const name = data.name || key;
+                    const transitDegree = data.fullDegree || data.full_degree;
+
+                    // Whole Sign houses: planet in same sign as Lagna = 1st house
+                    let transitHouse = null;
+                    if (transitDegree != null && userAscendantDegree != null) {
+                        transitHouse = calculateWholeSignHouse(transitDegree, userAscendantDegree);
+                    } else {
+                        transitHouse = data.house_number || data.house;
+                    }
+
+                    transits[name] = {
+                        sign: data.zodiac_sign_name || data.sign,
+                        house: transitHouse,
+                        degree: transitDegree,
+                        isRetro: data.isRetro === true || data.isRetro === "true",
+                    };
+                }
+            });
+        }
+
+        // Extract Shad Bala, Muhurat, and Samvat
+        const shadBala = result.shadBala || {};
+
+        const muhurat = {};
+        const muhuratSource = result.muhurat?.days?.[DateTime.now().toFormat("yyyy-MM-dd")] || {};
+        if (muhuratSource.rahuKala) muhurat.rahuKaal = muhuratSource.rahuKala;
+        if (muhuratSource.yamaganda) muhurat.yamaganda = muhuratSource.yamaganda;
+        if (muhuratSource.gulikaKala) muhurat.gulikaKala = muhuratSource.gulikaKala;
+        if (muhuratSource.abhijit) muhurat.abhijit = muhuratSource.abhijit;
+        if (muhuratSource.amrit) muhurat.amritKaal = muhuratSource.amrit;
+        if (muhuratSource.brahmaMuhurat) muhurat.brahmaMuhurat = muhuratSource.brahmaMuhurat;
+        if (muhuratSource.durMuhurat) muhurat.durMuhurat = muhuratSource.durMuhurat;
+        if (muhuratSource.varjyam) muhurat.varjyam = muhuratSource.varjyam;
+
+        const todaySamvat = result.samvatInfo || null;
+
+        logger.info("✅ Today's data fetched", {
+            structuredData: true,
+            panchangKeys: Object.keys(panchang).filter((k) => panchang[k]).length,
+            transitCount: Object.keys(transits).length,
+            hasShadBala: Object.keys(shadBala).length > 0,
+            hasMuhurat: Object.keys(muhurat).length > 0,
+            hasTodaySamvat: !!todaySamvat,
+        });
+
+        return { panchang, transits, shadBala, muhurat, todaySamvat };
+    } catch (error) {
+        logger.error("Failed to get today's astro data", { error: String(error) });
+        return { panchang: {}, transits: {}, shadBala: {}, todaySamvat: null };
+    }
+}
+
+// ── Google Search context ───────────────────────────────────────────
+
+/**
+ * Build Google Search context for enriching AI insights.
+ * Uses tiered caching: global data cached for all users,
+ * user-specific data cached per user combination.
+ * @param {Object} userAstroData - User's astrology profile
+ * @param {Object} todayAstroData - Today's astronomical data
+ * @returns {Object|null} Search context or null if unavailable
+ */
+export async function getSearchContext(userAstroData, todayAstroData) {
+    try {
+        const apiKey = geminiApiKey.value();
+        if (!apiKey) {
+            logger.warn("⚠️ Gemini not configured, skipping search context");
+            return null;
+        }
+
+        const today = DateTime.now().toFormat("yyyy-MM-dd");
+        const startTime = Date.now();
+
+        logger.info("🔍 Building search context...", {
+            structuredData: true,
+            date: today,
+            userLagna: userAstroData.ascendant || userAstroData.lagna || "unknown",
+            userMoon: userAstroData.moonSign || "unknown",
+            userDasha: userAstroData.currentDasha?.mahadasha || "unknown",
+        });
+
+        const context = await buildAstroSearchContext(userAstroData, todayAstroData);
+
+        const duration = Date.now() - startTime;
+
+        // Count what we got
+        const dataPoints = [
+            context?.global?.events?.retrogrades?.length > 0,
+            !!context?.global?.events?.moonPhase,
+            !!context?.global?.todayNews?.summary,
+            !!context?.global?.weekly?.overview,
+            !!context?.panchang?.tithi?.meaning,
+            !!context?.userProfile?.lagna?.characteristics,
+            !!context?.dasha?.general?.interpretation,
+            !!context?.userSpecific?.lagnaForecast,
+            !!context?.userSpecific?.moonSignForecast,
+            !!context?.remedies?.advice,
+        ].filter(Boolean).length;
+
+        logger.info("✅ Search context built", {
+            structuredData: true,
+            durationMs: duration,
+            totalDataPoints: dataPoints,
+        });
+
+        return context;
+    } catch (error) {
+        logger.error("❌ Search context build failed (continuing without search)", {
+            error: String(error),
+            stack: error.stack?.substring(0, 500),
+        });
+        return null;
+    }
+}
