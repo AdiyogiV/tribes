@@ -1283,11 +1283,11 @@
 				CODE_SIGN_ENTITLEMENTS = Runner/Release.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 67;
+				CURRENT_PROJECT_VERSION = 68;
 				DEVELOPMENT_TEAM = 6CF95PPRR7;
 				ENABLE_BITCODE = NO;
-				FLUTTER_BUILD_NAME = 67.0.0;
-				FLUTTER_BUILD_NUMBER = 67;
+				FLUTTER_BUILD_NAME = 68.0.0;
+				FLUTTER_BUILD_NUMBER = 68;
 				INFOPLIST_FILE = Runner/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Aurogram;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
@@ -1296,7 +1296,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 67.0.0;
+				MARKETING_VERSION = 68.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.canay.dhaara;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1502,11 +1502,11 @@
 				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 67;
+				CURRENT_PROJECT_VERSION = 68;
 				DEVELOPMENT_TEAM = 6CF95PPRR7;
 				ENABLE_BITCODE = NO;
-				FLUTTER_BUILD_NAME = 67.0.0;
-				FLUTTER_BUILD_NUMBER = 67;
+				FLUTTER_BUILD_NAME = 68.0.0;
+				FLUTTER_BUILD_NUMBER = 68;
 				INFOPLIST_FILE = Runner/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Aurogram;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
@@ -1515,7 +1515,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 67.0.0;
+				MARKETING_VERSION = 68.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.canay.dhaara;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1541,11 +1541,11 @@
 				CODE_SIGN_ENTITLEMENTS = Runner/Release.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 67;
+				CURRENT_PROJECT_VERSION = 68;
 				DEVELOPMENT_TEAM = 6CF95PPRR7;
 				ENABLE_BITCODE = NO;
-				FLUTTER_BUILD_NAME = 67.0.0;
-				FLUTTER_BUILD_NUMBER = 67;
+				FLUTTER_BUILD_NAME = 68.0.0;
+				FLUTTER_BUILD_NUMBER = 68;
 				INFOPLIST_FILE = Runner/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Aurogram;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
@@ -1554,7 +1554,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 67.0.0;
+				MARKETING_VERSION = 68.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.canay.dhaara;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
