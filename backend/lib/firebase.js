@@ -12,7 +12,7 @@ export { logger } from "firebase-functions";
 //
 // Current architecture (post-consolidation):
 //   5 gateways + 1 orchestrator + ~11 merged triggers + 1 task worker
-//   + aiChat + onUserDeleted ≈ 20 functions = 20 vCPU
+//   + aiChat ≈ 20 functions = 20 vCPU
 //
 setGlobalOptions({
     region: "asia-southeast2",

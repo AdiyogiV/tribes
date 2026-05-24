@@ -668,7 +668,7 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
             const SizedBox(height: AppDimensions.spacingMd),
 
             // ───────────────────────────────────────────────────────────
-            // 2) Hero row — big emoji + (label / nakshatra·tara) stack
+            // 2) Hero row — icon badge + (label / nakshatra·tara) stack
             // ───────────────────────────────────────────────────────────
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -679,10 +679,19 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
                     opacity: anim,
                     child: ScaleTransition(scale: anim, child: child),
                   ),
-                  child: Text(
-                    vibe.emoji,
-                    key: ValueKey('emoji_$activeIdx'),
-                    style: const TextStyle(fontSize: 36, height: 1.0),
+                  child: Container(
+                    key: ValueKey('icon_$activeIdx'),
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: accent.withValues(alpha: isDark ? 0.16 : 0.10),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      vibe.icon,
+                      size: 24,
+                      color: accent,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -737,17 +746,14 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
                                     : _taraColor(tara.isFavorable, isDark),
                               ),
                             ),
-                            TextSpan(
-                              text: isJanmaActive
-                                  ? '  ✨'
-                                  : (tara.isFavorable ? '  ✓' : '  ⚠'),
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: isJanmaActive
-                                    ? const Color(0xFFB8860B)
-                                    : _taraAccent(tara.isFavorable),
+                            if (!isJanmaActive)
+                              TextSpan(
+                                text: tara.isFavorable ? '  ✓' : '  ⚠',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: _taraAccent(tara.isFavorable),
+                                ),
                               ),
-                            ),
                           ]),
                           key: ValueKey(
                               '${activeInfo?.name}_${tara.name}_$isJanmaActive'),
@@ -1061,8 +1067,19 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
                 // Title row.
                 Row(
                   children: [
-                    Text(vibe.emoji,
-                        style: const TextStyle(fontSize: 26)),
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: accent.withValues(alpha: isDark ? 0.16 : 0.10),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        vibe.icon,
+                        size: 20,
+                        color: accent,
+                      ),
+                    ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(
@@ -1208,7 +1225,7 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
                         ),
                         child: Text.rich(TextSpan(children: [
                           TextSpan(
-                            text: '⏭ Next: ${nextInfo.name}',
+                            text: 'Next: ${nextInfo.name}',
                             style: TextStyle(
                               fontSize: AppTheme.holyCowTextSize - 1,
                               fontWeight: FontWeight.w600,
@@ -1509,21 +1526,6 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
 
   // ─── Small helpers ─────────────────────────────────────────────────────────
 
-  Widget _badge(String label, Color bg, Color fg) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
-          color: bg.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
-          border: Border.all(color: bg.withValues(alpha: 0.2)),
-        ),
-        child: Text(label,
-            style: TextStyle(
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
-                color: fg,
-                letterSpacing: 0.8)),
-      );
-
   Widget _meta(String label, String value, Color c) => Expanded(
         child: Column(children: [
           Text(label,
@@ -1754,7 +1756,11 @@ class _NakshatraMoodCheckInCardState extends State<NakshatraMoodCheckInCard> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('🔥', style: TextStyle(fontSize: 11)),
+          Icon(
+            Icons.local_fire_department_rounded,
+            size: 13,
+            color: const Color(0xFFE65100),
+          ),
           const SizedBox(width: 4),
           Text(
             '$streak day${streak == 1 ? "" : "s"}',
@@ -1905,8 +1911,8 @@ class NakshatraWeekForecastCard extends StatelessWidget {
                       onTap: () => controller.jumpToIndex(birthIndex),
                       child: Text(
                         daysUntilJanma == 1
-                            ? 'Janma Day tomorrow ✨'
-                            : 'Janma Day in $daysUntilJanma days ✨',
+                            ? 'Janma Day tomorrow'
+                            : 'Janma Day in $daysUntilJanma days',
                         style: const TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
@@ -1945,7 +1951,7 @@ class NakshatraWeekForecastCard extends StatelessWidget {
                     dayGlyph: dayGlyph,
                     dayNum: date.day.toString(),
                     tithiLabel: chipTithi,
-                    emoji: vibe.emoji,
+                    icon: vibe.icon,
                     accent: accent,
                     isFocused: isFocused,
                     isToday: i == 0,
@@ -1967,7 +1973,7 @@ class NakshatraWeekForecastCard extends StatelessWidget {
     required String dayLabel,
     required String dayGlyph,
     required String dayNum,
-    required String emoji,
+    required IconData icon,
     required Color accent,
     required bool isFocused,
     required bool isToday,
@@ -2067,7 +2073,13 @@ class NakshatraWeekForecastCard extends StatelessWidget {
                   ),
                 ],
                 const SizedBox(height: 3),
-                Text(emoji, style: const TextStyle(fontSize: 16)),
+                Icon(
+                  icon,
+                  size: 16,
+                  color: isBestDay
+                      ? const Color(0xFFB8860B)
+                      : (isFocused ? accent : c.withValues(alpha: 0.45)),
+                ),
               ],
             ),
           ),
@@ -2265,63 +2277,6 @@ class _TaraRingPainter extends CustomPainter {
       old.primaryColor != primaryColor ||
       old.isDark != isDark ||
       old.isJanmaDay != isJanmaDay;
-}
-
-// =============================================================================
-// Pulsing icon (Moon marker) — bare icon with breathing opacity, no container
-// =============================================================================
-
-class _PulsingIcon extends StatefulWidget {
-  final double size;
-  final Color color;
-  final IconData icon;
-
-  const _PulsingIcon({
-    required this.size,
-    required this.color,
-    required this.icon,
-  });
-
-  @override
-  State<_PulsingIcon> createState() => _PulsingIconState();
-}
-
-class _PulsingIconState extends State<_PulsingIcon>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _pulse;
-
-  @override
-  void initState() {
-    super.initState();
-    _pulse = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2000),
-    )..repeat(reverse: true);
-  }
-
-  @override
-  void dispose() {
-    _pulse.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _pulse,
-      builder: (context, child) {
-        final t = _pulse.value;
-        return Opacity(
-          opacity: 0.7 + t * 0.3,
-          child: Icon(
-            widget.icon,
-            size: widget.size,
-            color: widget.color,
-          ),
-        );
-      },
-    );
-  }
 }
 
 // =============================================================================

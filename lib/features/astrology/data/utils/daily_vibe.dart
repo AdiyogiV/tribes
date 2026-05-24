@@ -16,8 +16,8 @@ class DailyVibe {
   /// Short, evocative name — e.g. "Building Energy".
   final String label;
 
-  /// Single emoji that carries the mood.
-  final String emoji;
+  /// Material icon representing this vibe's character.
+  final IconData icon;
 
   /// One-to-two sentence narrative.  Plain English, no jargon.
   final String narrative;
@@ -34,7 +34,7 @@ class DailyVibe {
 
   const DailyVibe({
     required this.label,
-    required this.emoji,
+    required this.icon,
     required this.narrative,
     required this.goodFor,
     required this.avoid,
@@ -62,29 +62,29 @@ class DailyVibe {
   static const Map<TaraType, DailyVibe> _byTara = {
     TaraType.janma: DailyVibe(
       label: 'Sacred Energy',
-      emoji: '☽',
+      icon: Icons.spa_rounded,
       narrative:
-          'Your soul-birthday returns today — the Moon is in your birth star. '
-          'A quiet, inward day; honour what your inner self is asking for.',
+          'The Moon returns to your birth star today. '
+          'An inward day — take time for reflection and honour what feels true.',
       goodFor: ['Self-reflection', 'Rituals & prayer', 'Resting deeply'],
       avoid: ['Big launches', 'Overcommitting socially'],
       tone: VibeTone.sacred,
     ),
     TaraType.sampat: DailyVibe(
       label: 'Building Energy',
-      emoji: '🌱',
+      icon: Icons.trending_up_rounded,
       narrative:
-          'Growth is in the air. The day rewards what you plant — '
-          'intentions set now tend to take root and flourish.',
+          'A growth-oriented day. What you plant now tends to take root — '
+          'set intentions and follow through on new beginnings.',
       goodFor: ['Starting projects', 'Learning something new', 'Money matters'],
       avoid: ['Closing things prematurely'],
       tone: VibeTone.favorable,
     ),
     TaraType.vipat: DailyVibe(
       label: 'Cautious Energy',
-      emoji: '⚠️',
+      icon: Icons.visibility_rounded,
       narrative:
-          'Subtle friction in the air. Not a bad day — just one that '
+          'Subtle friction today. Not a bad day — just one that '
           'punishes shortcuts. Slow down and double-check the details.',
       goodFor: ['Reviewing work', 'Routine tasks', 'Careful planning'],
       avoid: ['Big decisions', 'Signing contracts'],
@@ -92,60 +92,60 @@ class DailyVibe {
     ),
     TaraType.kshema: DailyVibe(
       label: 'Easy Energy',
-      emoji: '🌊',
+      icon: Icons.water_drop_rounded,
       narrative:
-          'A gentle, well-supported day. Things tend to land softly. '
-          'Lean into comfort and let small good things accumulate.',
+          'A gentle, well-supported day. Things tend to land softly — '
+          'lean into comfort and let small good things accumulate.',
       goodFor: ['Family time', 'Healing & self-care', 'Important meetings'],
       avoid: ['Forcing aggressive moves'],
       tone: VibeTone.favorable,
     ),
     TaraType.pratyari: DailyVibe(
       label: 'Resistance Energy',
-      emoji: '🪨',
+      icon: Icons.shield_rounded,
       narrative:
           'Headwinds today. Push too hard and things push back. '
-          'Patience and diplomacy will get you further than force.',
+          'Patience and diplomacy will carry you further than force.',
       goodFor: ['Diplomatic conversations', 'Persistence on long projects'],
       avoid: ['Confrontations', 'Critical negotiations'],
       tone: VibeTone.cautious,
     ),
     TaraType.sadhaka: DailyVibe(
       label: 'Focused Energy',
-      emoji: '🎯',
+      icon: Icons.center_focus_strong_rounded,
       narrative:
           'Discipline pays a premium today. Pick one important thing '
-          'and pour yourself into it — the day backs the brave and focused.',
+          'and commit fully — the day rewards depth over breadth.',
       goodFor: ['Deep work', 'Launches', 'Bold initiatives'],
       avoid: ['Multitasking', 'Distractions'],
       tone: VibeTone.favorable,
     ),
     TaraType.vadha: DailyVibe(
       label: 'Restraint Energy',
-      emoji: '🛡️',
+      icon: Icons.pause_circle_outline_rounded,
       narrative:
           'A day that rewards stillness over reaction. Take care of '
-          'yourself; let any provocations pass without picking them up.',
+          'yourself and let any provocations pass without engaging.',
       goodFor: ['Rest', 'Gentle routine', 'Health appointments'],
       avoid: ['Risky activity', 'Conflict', 'Long travel'],
       tone: VibeTone.cautious,
     ),
     TaraType.mitra: DailyVibe(
       label: 'Connected Energy',
-      emoji: '🤝',
+      icon: Icons.people_outline_rounded,
       narrative:
-          'A people day. Doors open with conversations, and luck shows '
-          'up through other humans. Reach out instead of going it alone.',
+          'Doors open through conversation today. Good outcomes '
+          'arrive through other people — reach out instead of going it alone.',
       goodFor: ['Networking', 'Collaboration', 'Calling old friends'],
       avoid: ['Withdrawing into isolation'],
       tone: VibeTone.favorable,
     ),
     TaraType.paramaMitra: DailyVibe(
       label: 'Flow Energy',
-      emoji: '✨',
+      icon: Icons.auto_awesome_rounded,
       narrative:
-          'The most auspicious day of your cycle — your "best friend" star. '
-          'Things align almost effortlessly. Use the day deliberately.',
+          'The most auspicious day of your cycle. '
+          'Things align with less effort than usual — use the day deliberately.',
       goodFor: ['Anything important', 'Big moves', 'Asking for what you want'],
       avoid: ['Wasting the day passively'],
       tone: VibeTone.flow,
