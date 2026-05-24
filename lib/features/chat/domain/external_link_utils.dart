@@ -164,8 +164,8 @@ class ExternalLinkUtils {
   /// Fetch preview via Cloud Function (for web to bypass CORS)
   static Future<ExternalLinkPreview?> _fetchViaCloudFunction(String url) async {
     try {
-      final callable = FirebaseFunctions.instance.httpsCallable('getLinkPreview');
-      final result = await callable.call({'url': url});
+      final callable = FirebaseFunctions.instance.httpsCallable('commsGateway');
+      final result = await callable.call({'method': 'getLinkPreview', 'url': url});
       
       if (result.data == null) {
         return null;

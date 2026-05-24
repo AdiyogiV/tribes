@@ -40,9 +40,8 @@ class TabBottomNav extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               // New Feed (HolyCow AI) - Default tab
-              _NavItem(
-                iconData: CupertinoIcons.compass,
-                selectedIconData: CupertinoIcons.compass_fill,
+              _NavItemWithImage(
+                assetPath: 'assets/images/cow1.png',
                 isSelected: selectedIndex == 0,
                 activeColor: activeColor,
                 inactiveColor: inactiveColor,
@@ -147,6 +146,62 @@ class _NavItem extends StatelessWidget {
                   key: ValueKey<bool>(isSelected),
                   color: isSelected ? activeColor : inactiveColor,
                   size: isSelected ? 32 : 24,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NavItemWithImage extends StatelessWidget {
+  final String assetPath;
+  final bool isSelected;
+  final Color activeColor;
+  final Color inactiveColor;
+  final VoidCallback onTap;
+
+  const _NavItemWithImage({
+    required this.assetPath,
+    required this.isSelected,
+    required this.activeColor,
+    required this.inactiveColor,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppDimensions.radiusMdLg),
+      splashFactory: NoSplash.splashFactory,
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
+      hoverColor: Colors.transparent,
+      focusColor: Colors.transparent,
+      child: SizedBox(
+        width: 64,
+        height: 70,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            AnimatedOpacity(
+              opacity: isSelected ? 1.0 : 0.9,
+              duration: const Duration(milliseconds: 180),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 180),
+                switchInCurve: Curves.easeOut,
+                switchOutCurve: Curves.easeIn,
+                transitionBuilder: (child, animation) =>
+                    ScaleTransition(scale: animation, child: child),
+                child: Image.asset(
+                  assetPath,
+                  key: ValueKey<bool>(isSelected),
+                  width: isSelected ? 44 : 36,
+                  height: isSelected ? 44 : 36,
+                  fit: BoxFit.contain,
                 ),
               ),
             ),

@@ -84,8 +84,9 @@ class AnonymousMessageService {
     String? recipientId,
     required String text,
   }) async {
-    final callable = _functions.httpsCallable('submitAnonymousMessage');
+    final callable = _functions.httpsCallable('socialGateway');
     await callable.call({
+      'method': 'submitAnonymousMessage',
       if (slug != null) 'slug': slug,
       if (recipientId != null) 'recipientId': recipientId,
       'text': text,

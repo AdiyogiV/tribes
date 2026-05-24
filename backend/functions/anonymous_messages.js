@@ -1,4 +1,4 @@
-import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { HttpsError } from "firebase-functions/v2/https";
 import { db, FieldValue, logger } from "../lib/firebase.js";
 import { checkRateLimit } from "../lib/rate_limiter.js";
 import { normalizeText, containsBlockedText } from "../lib/utils.js";
@@ -62,12 +62,7 @@ async function enforceRateLimits({ recipientId, uid, ip }) {
     }
 }
 
-export const submitAnonymousMessage = onCall(
-    {
-        region: "asia-southeast2",
-        invoker: "public", // Allow unauthenticated (guest) senders via /s/ link
-    },
-    async (request) => {
+export async function handleSubmitAnonymousMessage(request) {
     try {
         const { slug, recipientId, text } = request.data || {};
         const trimmedText = normalizeText(text);
@@ -153,4 +148,4 @@ export const submitAnonymousMessage = onCall(
 
         throw new HttpsError("internal", "UNKNOWN");
     }
-});
+}

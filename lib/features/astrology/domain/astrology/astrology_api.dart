@@ -76,8 +76,8 @@ extension AstrologyApiExtension on AstrologyService {
 
     try {
       final result = await callWithFunctionsFallback(
-        functionName: 'searchGeoLocation',
-        data: {'query': query},
+        functionName: 'astroGateway',
+        data: {'method': 'searchGeoLocation', 'query': query},
         options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
       );
 

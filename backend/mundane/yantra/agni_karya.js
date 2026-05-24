@@ -3,10 +3,12 @@
  *
  * Firebase Cloud Functions for the Brihat Samhita mundane astrology system.
  *
- * Two endpoints:
- * 1. generateMundaneForecast (onCall) — manual trigger, returns full forecast
- * 2. getMundaneForecast (onCall) — fast cache read
- * 3. refreshMundanePanchanga (onSchedule) — Panchanga-aware cron
+ * Exports:
+ * 1. handleGenerateMundaneForecast — handler for gateway; manual trigger, returns full forecast
+ * 2. handleGetMundaneForecast     — handler for gateway; fast cache read
+ * 3. runRefreshMundanePanchanga   — extracted runner, invoked by `unifiedOrchestrator`
+ *                                   (Phase 3, content generation). The standalone
+ *                                   `onSchedule` export has been removed.
  *
  * WIRED TO EXISTING BACKEND:
  * Uses performReading() from samhita.js which handles:
@@ -17,8 +19,6 @@
  * - Prediction storage via lib/signal_store.js
  */
 
-import { onCall } from "firebase-functions/v2/https";
-import { onSchedule } from "firebase-functions/v2/scheduler";
 import { logger } from "firebase-functions";
 import { db, FieldValue } from "../../lib/firebase.js";
 import { geminiApiKey } from "../../lib/secrets.js";
@@ -30,14 +30,8 @@ import { getPurnimaAmavasyaDates } from "../kriya/kaal_nirnaya.js";
  * Now uses the full Varahamihira pipeline:
  *   News (Nimitta) → Sky → Rules (with Nimitta boost) → Memory → Synthesis → Store
  */
-export const generateMundaneForecast = onCall({
-    timeoutSeconds: 120,
-    memory: "512MiB",
-    secrets: [geminiApiKey],
-    region: "asia-southeast2",
-    invoker: "public",
-    enforceAppCheck: false,
-}, async (request) => {
+/** Handler: Generate mundane forecast. Extracted for gateway reuse. */
+export async function handleGenerateMundaneForecast(request) {
     const startMs = Date.now();
     const dateKey = request.data?.date || null;
     const skipLLM = request.data?.skipLLM || false;
@@ -47,16 +41,14 @@ export const generateMundaneForecast = onCall({
     try {
         const apiKey = skipLLM ? null : geminiApiKey.value();
 
-        // Full Varahamihira reading pipeline
         const reading = await performReading({
             date: dateKey,
             geminiApiKey: apiKey,
             validate,
-            learn: validate, // If validating, also learn
-            skipNews: false, // Always observe the world
+            learn: validate,
+            skipNews: false,
         });
 
-        // Store in Firestore
         const storeData = {
             ...reading.forecast,
             steps: reading.steps,
@@ -97,23 +89,14 @@ export const generateMundaneForecast = onCall({
                 wallTimeMs: Date.now() - startMs,
             },
         };
-
     } catch (error) {
         logger.error("🌍 Mundane forecast failed", { error: String(error), dateKey });
         return { success: false, error: error.message };
     }
-});
+}
 
-/**
- * Get the latest mundane forecast from cache.
- * Fast read — no computation, just Firestore lookup.
- */
-export const getMundaneForecast = onCall({
-    timeoutSeconds: 30,
-    memory: "256MiB",
-    region: "asia-southeast2",
-    invoker: "public",
-}, async (request) => {
+/** Handler: Get mundane forecast from cache. Extracted for gateway reuse. */
+export async function handleGetMundaneForecast(request) {
     const dateKey = request.data?.date || new Date().toISOString().split("T")[0];
 
     try {
@@ -128,7 +111,7 @@ export const getMundaneForecast = onCall({
         logger.error("Error fetching mundane forecast", { error: String(error) });
         return { success: false, error: error.message, forecast: null };
     }
-});
+}
 
 /**
  * Panchanga-aware scheduled mundane forecast generation.
@@ -140,14 +123,8 @@ export const getMundaneForecast = onCall({
  * Now uses the FULL pipeline: News → Sky → Rules (Nimitta boost) →
  * Memory → Synthesis → Store → Learn
  */
-export const refreshMundanePanchanga = onSchedule({
-    schedule: "every day 03:30",
-    timeZone: "UTC",
-    timeoutSeconds: 180,
-    memory: "512MiB",
-    secrets: [geminiApiKey],
-    region: "asia-southeast2",
-}, async () => {
+/** Extracted runner for orchestrator consolidation. */
+export async function runRefreshMundanePanchanga() {
     const today = new Date().toISOString().split("T")[0];
 
     // Check if today is a Panchanga trigger (±1 day tolerance)
@@ -178,9 +155,9 @@ export const refreshMundanePanchanga = onSchedule({
         // Full Varahamihira pipeline with validation and learning
         const reading = await performReading({
             geminiApiKey: apiKey,
-            validate: true,  // Validate against news
-            learn: true,     // Update confidence from validation
-            skipNews: false,  // Always observe the world
+            validate: true, // Validate against news
+            learn: true, // Update confidence from validation
+            skipNews: false, // Always observe the world
         });
 
         // Tag with Panchanga metadata
@@ -208,8 +185,11 @@ export const refreshMundanePanchanga = onSchedule({
             confidenceUpdates: reading.steps.smritiLearn?.updatesApplied || 0,
             wallTimeMs: Date.now() - startMs,
         });
-
     } catch (error) {
         logger.error("🌙 Panchanga mundane forecast failed", { error: String(error) });
     }
-});
+}
+
+// NOTE: `refreshMundanePanchanga` was a standalone `onSchedule` export.
+// It is now invoked by `unifiedOrchestrator` Phase 3 (content generation)
+// via the `runRefreshMundanePanchanga` runner above.

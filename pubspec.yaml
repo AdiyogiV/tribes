@@ -5,8 +5,8 @@ description: Aurogram - Social Platform with Astrology Insights
 publish_to: "none"
 
 # Versioning
-version: 67.0.0+67
-versionCode: 67
+version: 68.0.0+68
+versionCode: 68
 # Minimum Flutter SDK version requirement
 environment:
   sdk: ">=3.0.0 <4.0.0" # Dart 3.0+ required for records syntax
@@ -109,6 +109,8 @@ dependencies:
 
   logger: any
   metadata_fetch: ^0.4.2
+  lottie: ^3.3.1
+  dotlottie_loader: ^0.0.4
 dependency_overrides:
   geolocator_android: ^5.0.2
   uuid: ^4.0.0
@@ -137,6 +139,7 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+    - assets/animations/
 
   # Deferred components for faster initial load (disabled due to Android build issues)
   # deferred-components:

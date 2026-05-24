@@ -5,8 +5,7 @@
  * Vikriti calculation, and wellness recommendations.
  */
 
-import { onCall, HttpsError } from "firebase-functions/v2/https";
-import { onSchedule } from "firebase-functions/v2/scheduler";
+import { HttpsError } from "firebase-functions/v2/https";
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
 import { logger } from "firebase-functions";
 import { Timestamp, FieldValue } from "firebase-admin/firestore";
@@ -87,22 +86,22 @@ function getHouseWeight(house) {
 function getPlanetWeight(planet) {
     // Slow planets get a bit more weight (longer-lasting influence)
     switch (planet) {
-        case "Saturn":
-        case "Rahu":
-        case "Ketu":
-            return 1.0;
-        case "Jupiter":
-            return 0.9;
-        case "Mars":
-            return 0.85;
-        case "Sun":
-        case "Moon":
-            return 0.8;
-        case "Mercury":
-        case "Venus":
-            return 0.65;
-        default:
-            return 0.6;
+    case "Saturn":
+    case "Rahu":
+    case "Ketu":
+        return 1.0;
+    case "Jupiter":
+        return 0.9;
+    case "Mars":
+        return 0.85;
+    case "Sun":
+    case "Moon":
+        return 0.8;
+    case "Mercury":
+    case "Venus":
+        return 0.65;
+    default:
+        return 0.6;
     }
 }
 
@@ -205,12 +204,7 @@ function computeTransitEffectAndFactors({ transits, ascendantDegree, dashaData, 
 // Allows user to manually reset and recalculate their Ayurveda profile
 // ============================================================================
 
-export const resetAyurvedaProfile = onCall({
-    timeoutSeconds: 60,
-    memory: "256MiB",
-    region: "asia-southeast2",
-    invoker: "public", // Allow client apps to invoke (Firebase Auth handles actual auth)
-}, async (request) => {
+export async function handleResetAyurvedaProfile(request) {
     const uid = requireAuth(request, "reset Ayurveda profile");
     logger.info("🌿 Manual Ayurveda profile reset requested", { uid });
 
@@ -261,19 +255,14 @@ export const resetAyurvedaProfile = onCall({
         });
         throw error;
     }
-});
+}
 
 // ============================================================================
 // CALCULATE AYURVEDA PROFILE
 // Called to calculate/recalculate Prakriti from birth chart
 // ============================================================================
 
-export const calculateAyurvedaProfile = onCall({
-    timeoutSeconds: 60,
-    memory: "256MiB",
-    region: "asia-southeast2",
-    invoker: "public", // Allow client apps to invoke (Firebase Auth handles actual auth)
-}, async (request) => {
+export async function handleCalculateAyurvedaProfile(request) {
     const uid = requireAuth(request, "calculate Ayurveda profile");
     logger.info("🌿 Calculating Ayurveda profile", { uid });
 
@@ -365,19 +354,14 @@ export const calculateAyurvedaProfile = onCall({
         });
         throw error;
     }
-});
+}
 
 // ============================================================================
 // CALCULATE VIKRITI (Current State)
 // Called on-demand to get current dosha balance
 // ============================================================================
 
-export const calculateCurrentVikriti = onCall({
-    timeoutSeconds: 30,
-    memory: "256MiB",
-    region: "asia-southeast2",
-    invoker: "public", // Allow client apps to invoke (Firebase Auth handles actual auth)
-}, async (request) => {
+export async function handleCalculateCurrentVikriti(request) {
     const uid = requireAuth(request, "calculate current vikriti");
     const { symptoms } = request.data || {};
 
@@ -411,7 +395,7 @@ export const calculateCurrentVikriti = onCall({
         });
         throw error;
     }
-});
+}
 
 // ============================================================================
 // VIKRITI COMPUTATION HELPER
@@ -461,8 +445,8 @@ async function computeVikritiFromUserData(astroData, prakriti, options = {}) {
         );
 
         if (dashaPlanetData) {
-            let dignity = dashaPlanetData.dignity || "neutral";
-            let dignityScore = dashaPlanetData.dignityScore || 50;
+            const dignity = dashaPlanetData.dignity || "neutral";
+            const dignityScore = dashaPlanetData.dignityScore || 50;
 
             const ascSign = astroData.ascendant;
             const isYK = isYogakaraka(currentDashaPlanet, ascSign);
@@ -618,14 +602,7 @@ function getBirthMoonSign(astroData) {
 /**
  * Get AI-powered Ayurveda recommendations based on user's profile and current state
  */
-export const getAyurvedaRecommendations = onCall({
-    timeoutSeconds: 60,
-    memory: "512MiB",
-    region: "asia-southeast2",
-    invoker: "public",
-    secrets: [geminiApiKey],
-    enforceAppCheck: false, // Disabled until Flutter client enables FirebaseAppCheck
-}, async (request) => {
+export async function handleGetAyurvedaRecommendations(request) {
     const uid = requireAuth(request, "get Ayurveda recommendations");
     logger.info("🌿 Generating AI Ayurveda recommendations", { uid });
 
@@ -733,7 +710,7 @@ export const getAyurvedaRecommendations = onCall({
         });
         throw error;
     }
-});
+}
 
 /**
  * Build the Ayurveda recommendation prompt for Gemini
@@ -749,17 +726,17 @@ function buildAyurvedaPrompt({
     currentSeason,
 }) {
     // Format imbalances
-    const imbalanceText = imbalances.length > 0
-        ? imbalances.map((i) => `${i.dosha} (shifted +${i.shift}%, ${i.severity} severity)`).join(", ")
-        : "Currently balanced";
+    const imbalanceText = imbalances.length > 0 ?
+        imbalances.map((i) => `${i.dosha} (shifted +${i.shift}%, ${i.severity} severity)`).join(", ") :
+        "Currently balanced";
 
     // Format contributing factors
-    const factorText = factors.length > 0
-        ? factors.map((f) => {
+    const factorText = factors.length > 0 ?
+        factors.map((f) => {
             const guidance = f.guidance ? ` - ${f.guidance}` : "";
             return `• ${f.description}: affects ${f.dosha}${guidance}`;
-        }).join("\n")
-        : "No specific factors identified";
+        }).join("\n") :
+        "No specific factors identified";
 
     // Format vulnerabilities
     const vulnText = vulnerabilities.slice(0, 3).map((v) => v.description).join("; ");
@@ -827,10 +804,7 @@ Important:
  * Reads the last 7 daily snapshots from healthSnapshots subcollection,
  * computes trend direction for each signal, and stores a summary.
  */
-export const analyzeHealthTrends = onCall({
-    region: "asia-southeast2",
-    memory: "256MiB",
-}, async (request) => {
+export async function handleAnalyzeHealthTrends(request) {
     const uid = requireAuth(request);
 
     try {
@@ -909,7 +883,7 @@ export const analyzeHealthTrends = onCall({
         logger.error("analyzeHealthTrends error:", error);
         throw new HttpsError("internal", "Failed to analyze health trends");
     }
-});
+}
 
 /**
  * Derive dosha trend from health signal trends.
@@ -970,17 +944,8 @@ function deriveDoshaTrend(trends) {
 // SCHEDULED: Nightly Health Trend Analysis
 // =============================================================================
 
-/**
- * Runs every night at 23:30 UTC. For each user with recent health snapshots,
- * computes 7-day trend analysis and stores it on the user doc.
- */
-export const nightlyHealthAnalysis = onSchedule({
-    schedule: "30 23 * * *",
-    timeZone: "UTC",
-    region: "asia-southeast2",
-    memory: "512MiB",
-    timeoutSeconds: 540,
-}, async () => {
+/** Extracted runner for orchestrator consolidation. */
+export async function runNightlyHealthAnalysis() {
     logger.info("nightlyHealthAnalysis: starting");
 
     const cutoff = new Date();
@@ -1056,24 +1021,23 @@ export const nightlyHealthAnalysis = onSchedule({
     }
 
     logger.info(`nightlyHealthAnalysis: done. processed=${processed}, errors=${errors}`);
-});
+}
+
+/**
+ * Runs every night at 23:30 UTC. For each user with recent health snapshots,
+ * computes 7-day trend analysis and stores it on the user doc.
+ */
+// NOTE: `nightlyHealthAnalysis` was a standalone `onSchedule` export at 23:30 UTC.
+// It is now invoked by `unifiedOrchestrator` Phase 5 (health) via the
+// `runNightlyHealthAnalysis` runner above.
 
 
 // =============================================================================
 // SCHEDULED: Weekly Health Aggregation
 // =============================================================================
 
-/**
- * Runs every Monday at 00:15 UTC. Rolls up the past 7 days of health snapshots
- * into a weekly summary stored in users/{uid}/healthTrends/{weekKey}.
- */
-export const weeklyHealthAggregation = onSchedule({
-    schedule: "15 0 * * 1",
-    timeZone: "UTC",
-    region: "asia-southeast2",
-    memory: "512MiB",
-    timeoutSeconds: 540,
-}, async () => {
+/** Extracted runner for orchestrator consolidation. */
+export async function runWeeklyHealthAggregation() {
     logger.info("weeklyHealthAggregation: starting");
 
     const now = DateTime.now().setZone("UTC");
@@ -1152,7 +1116,15 @@ export const weeklyHealthAggregation = onSchedule({
     }
 
     logger.info(`weeklyHealthAggregation: done. processed=${processed}, weekKey=${weekKey}`);
-});
+}
+
+/**
+ * Runs every Monday at 00:15 UTC. Rolls up the past 7 days of health snapshots
+ * into a weekly summary stored in users/{uid}/healthTrends/{weekKey}.
+ */
+// NOTE: `weeklyHealthAggregation` was a standalone `onSchedule` export at
+// 00:15 UTC on Mondays. It is now invoked by `unifiedOrchestrator` Phase 5
+// (health, Monday-only branch) via the `runWeeklyHealthAggregation` runner above.
 
 
 // =============================================================================
@@ -1273,9 +1245,9 @@ export const onHealthSnapshotWrite = onDocumentWritten({
         const nadiResult = computeNadi(after, storedBaseline, weights);
 
         // ── Determine dominant dosha for recommendations ────────────────
-        const dominant = nadiResult?.dominant?.toLowerCase()
-            ?? (after.watchNadiDosha?.toLowerCase())
-            ?? inferDominantFallback(after);
+        const dominant = nadiResult?.dominant?.toLowerCase() ??
+            (after.watchNadiDosha?.toLowerCase()) ??
+            inferDominantFallback(after);
 
         // ── Generate recommendations ────────────────────────────────────
         const recs = generateQuickRecommendations(dominant, {
@@ -1424,7 +1396,9 @@ export const onHealthSnapshotWrite = onDocumentWritten({
     } catch (err) {
         logger.warn(`onHealthSnapshotWrite: error for ${userId}/${dayKey}`, err);
         // Stamp meta even on error so a retry storm doesn't loop.
-        try { await event.data.after.ref.update(ctx.metaPatch); } catch (_) { /* ignore */ }
+        try {
+            await event.data.after.ref.update(ctx.metaPatch);
+        } catch (_) {/* ignore */}
     }
 }));
 
@@ -1433,7 +1407,7 @@ export const onHealthSnapshotWrite = onDocumentWritten({
  * Uses the simple heuristic from the original implementation.
  */
 function inferDominantFallback(after) {
-    let vata = 0, pitta = 0, kapha = 0;
+    let vata = 0; let pitta = 0; let kapha = 0;
     if (after.hrv != null) {
         if (after.hrv < 30) vata += 3;
         else if (after.hrv > 80) kapha += 1;

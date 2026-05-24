@@ -267,8 +267,9 @@ extension AstrologyInsightsExtension on AstrologyService {
       );
 
       final result = await callWithFunctionsFallback(
-        functionName: 'generateInsightForCurrentUser',
+        functionName: 'insightGateway',
         data: {
+          'method': 'generateInsightForCurrentUser',
           'forceRegenerate': forceRegenerate,
           if (currentLat != null) 'currentLatitude': currentLat,
           if (currentLng != null) 'currentLongitude': currentLng,
@@ -311,8 +312,8 @@ extension AstrologyInsightsExtension on AstrologyService {
           category: LogCategory.network);
 
       final result = await callWithFunctionsFallback(
-        functionName: 'generateFirstReading',
-        data: <String, dynamic>{},
+        functionName: 'insightGateway',
+        data: <String, dynamic>{'method': 'generateFirstReading'},
         options: HttpsCallableOptions(timeout: const Duration(seconds: 45)),
       );
 
@@ -377,8 +378,8 @@ extension AstrologyInsightsExtension on AstrologyService {
           category: LogCategory.network);
 
       final result = await callWithFunctionsFallback(
-        functionName: 'generatePerHouseNow',
-        data: <String, dynamic>{'force': force},
+        functionName: 'insightGateway',
+        data: <String, dynamic>{'method': 'generatePerHouseNow', 'force': force},
         options: HttpsCallableOptions(timeout: const Duration(seconds: 75)),
       );
 
@@ -446,8 +447,8 @@ extension AstrologyInsightsExtension on AstrologyService {
           category: LogCategory.network);
 
       final result = await callWithFunctionsFallback(
-        functionName: 'generateCurrentTimesReading',
-        data: <String, dynamic>{},
+        functionName: 'insightGateway',
+        data: <String, dynamic>{'method': 'generateCurrentTimesReading'},
         options: HttpsCallableOptions(timeout: const Duration(seconds: 45)),
       );
 
@@ -479,8 +480,9 @@ extension AstrologyInsightsExtension on AstrologyService {
 
     try {
       await callWithFunctionsFallback(
-        functionName: 'submitInsightFeedback',
+        functionName: 'insightGateway',
         data: {
+          'method': 'submitInsightFeedback',
           'insightId': insightId,
           if (date != null) 'date': date,
           if (feedback != null) 'feedback': feedback,
@@ -502,8 +504,9 @@ extension AstrologyInsightsExtension on AstrologyService {
 
     try {
       final result = await callWithFunctionsFallback(
-        functionName: 'toggleFavoriteInsight',
+        functionName: 'insightGateway',
         data: {
+          'method': 'toggleFavoriteInsight',
           'insightId': insightId,
           if (date != null) 'date': date,
         },
@@ -550,8 +553,8 @@ extension AstrologyInsightsExtension on AstrologyService {
 
     try {
       final result = await callWithFunctionsFallback(
-        functionName: 'clearAstroCaches',
-        data: {'mode': mode},
+        functionName: 'insightGateway',
+        data: {'method': 'clearAstroCaches', 'mode': mode},
       );
 
       if (result.data is Map) {

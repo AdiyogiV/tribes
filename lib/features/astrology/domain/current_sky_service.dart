@@ -44,10 +44,10 @@ class CurrentSkyService {
     try {
       final callable = FirebaseFunctions.instanceFor(region: 'asia-southeast2')
           .httpsCallable(
-        'cosmicDailyManual',
+        'insightGateway',
         options: HttpsCallableOptions(timeout: const Duration(minutes: 5)),
       );
-      final result = await callable.call({'date': date});
+      final result = await callable.call({'method': 'cosmicDailyManual', 'date': date});
       return Map<String, dynamic>.from(result.data);
     } catch (e) {
       return {'success': false, 'error': e.toString()};

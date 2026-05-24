@@ -79,8 +79,9 @@ mixin AiChatContextMixin on ChangeNotifier {
     }
     try {
       final callable = FirebaseFunctions.instanceFor(region: 'asia-southeast2')
-          .httpsCallable('getChatPromptConfig');
+          .httpsCallable('commsGateway');
       final result = await callable.call(<String, dynamic>{
+        'method': 'getChatPromptConfig',
         // Let backend handle null → unified prompt (don't default to 'astrology')
         if (_chatSource != null) 'chatSource': _chatSource,
         'astrologyContext': _astrologyContext,

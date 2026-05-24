@@ -356,8 +356,9 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
 
       final functions =
           FirebaseFunctions.instanceFor(region: 'asia-southeast2');
-      final callable = functions.httpsCallable('prefetchSkyPositions');
+      final callable = functions.httpsCallable('astroGateway');
       await callable.call({
+        'method': 'prefetchSkyPositions',
         'daysBack': 30,
         'daysAhead': 30,
       });

@@ -15,8 +15,7 @@
  * Memories stored in: cosmic_memory (via agent_memory.js)
  */
 
-import { onSchedule } from "firebase-functions/v2/scheduler";
-import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { HttpsError } from "firebase-functions/v2/https";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 import { geminiApiKey } from "../lib/secrets.js";
@@ -145,8 +144,8 @@ export async function generateDailyOutput(geminiApiKeyValue, dateStr = null) {
 
     // ── Step 1: Recall memories ─────────────────────────────────────────
     const [recentObservations, recentPredictions, relevantPatterns] = await Promise.all([
-        listMemories("observations", 7),       // Last 7 daily observations
-        listMemories("predictions", 15),        // Recent predictions (may be pending)
+        listMemories("observations", 7), // Last 7 daily observations
+        listMemories("predictions", 15), // Recent predictions (may be pending)
         recallMemory("current major world events planetary patterns", {
             namespace: "patterns",
             topK: 5,
@@ -171,7 +170,7 @@ export async function generateDailyOutput(geminiApiKeyValue, dateStr = null) {
     const model = genAI.getGenerativeModel({
         model: AI_MODELS?.GEMINI_FLASH || "gemini-2.5-flash",
         systemInstruction: SYSTEM_PROMPT,
-        tools: [{googleSearch: {}}], // Gemini searches for news itself
+        tools: [{ googleSearch: {} }], // Gemini searches for news itself
         generationConfig: {
             temperature: 0.4,
             maxOutputTokens: 8192,
@@ -188,7 +187,7 @@ export async function generateDailyOutput(geminiApiKeyValue, dateStr = null) {
     try {
         const jsonStr = responseText
             .replace(/^[\s\S]*?(?=\{)/, "") // trim anything before first {
-            .replace(/\}[\s\S]*$/, "}");     // trim anything after last }
+            .replace(/\}[\s\S]*$/, "}"); // trim anything after last }
         output = JSON.parse(jsonStr);
     } catch {
         // Second attempt: try stripping markdown fences
@@ -416,8 +415,8 @@ function enrichOutput(output, dateStr, skyData) {
 
         // Find planets in this house from house lord data
         const planetsInHouse = hlPlacements
-            .filter(p => p.occupiedHouse === h)
-            .map(p => ({
+            .filter((p) => p.occupiedHouse === h)
+            .map((p) => ({
                 planet: p.planet,
                 degree: p.signDegree != null ? +p.signDegree.toFixed(1) : null,
                 isRetro: p.isRetro,
@@ -443,7 +442,7 @@ function enrichOutput(output, dateStr, skyData) {
         observations: output.observations || "",
         panchanga: skyData.panchanga || null,
         upcomingTransits: (skyData.upcoming || []).slice(0, 10),
-        signalsSummary: skyData.topSignals.slice(0, 8).map(s => ({
+        signalsSummary: skyData.topSignals.slice(0, 8).map((s) => ({
             id: s.id, type: s.type, planets: s.planets,
             aspect: s.aspect, dignity: s.dignity, yogaName: s.yogaName,
             sign: s.sign, house: s.house, count: s.count,
@@ -463,9 +462,9 @@ async function storeNewMemories(dateStr, output, skyData, headlines) {
 
     // Store today's observation
     const topSignalsSummary = skyData.topSignals.slice(0, 5)
-        .map(s => `${s.planets.join("-")} ${s.aspect || s.dignity || s.yogaName || (s.type === "stellium" ? s.count + "-planet stellium" : "") || ""} (${s.intensity}/10)`)
+        .map((s) => `${s.planets.join("-")} ${s.aspect || s.dignity || s.yogaName || (s.type === "stellium" ? s.count + "-planet stellium" : "") || ""} (${s.intensity}/10)`)
         .join(", ");
-    const topHeadlines = headlines.slice(0, 5).map(h => h.title).join("; ");
+    const topHeadlines = headlines.slice(0, 5).map((h) => h.title).join("; ");
 
     const observationContent = `[${dateStr}] Signals: ${topSignalsSummary}. News: ${topHeadlines}. Observations: ${output.observations || "none"}`;
 
@@ -532,59 +531,46 @@ function extractSignalTags(signals) {
 // CLOUD FUNCTION TRIGGERS
 // =============================================================================
 
-export const cosmicDailyScheduled = onSchedule(
-    {
-        schedule: "30 2 * * *", // 2:30 AM UTC daily (8:00 AM IST)
-        timeZone: "UTC",
-        timeoutSeconds: 300, // 5 min (embeddings + Gemini + Firestore writes)
-        memory: "512MiB",
-        region: "asia-southeast2", // same region as Firestore
-        secrets: [geminiApiKey],
-        retryCount: 0, // don't retry — tomorrow's run will catch up
-    },
-    async () => {
-        const apiKey = geminiApiKey.value();
+/** Extracted runner for orchestrator consolidation. */
+export async function runCosmicDailyScheduled() {
+    const apiKey = geminiApiKey.value();
 
-        // Quick health check — skip run entirely if Gemini is down/blocked
-        // Saves compute cost on doomed runs (e.g. during billing suspension)
-        try {
-            const healthGenAI = new GoogleGenerativeAI(apiKey);
-            const healthModel = healthGenAI.getGenerativeModel({ model: "gemini-embedding-001" });
-            await healthModel.embedContent("health check");
-        } catch (healthErr) {
-            logger.warn("⚠️ Gemini API health check failed, skipping cosmic daily run", {
-                structuredData: true,
-                error: String(healthErr),
-                status: healthErr.status || "unknown",
-            });
-            return; // don't waste compute on a doomed run
-        }
+    // Quick health check — skip run entirely if Gemini is down/blocked
+    // Saves compute cost on doomed runs (e.g. during billing suspension)
+    try {
+        const healthGenAI = new GoogleGenerativeAI(apiKey);
+        const healthModel = healthGenAI.getGenerativeModel({ model: "gemini-embedding-001" });
+        await healthModel.embedContent("health check");
+    } catch (healthErr) {
+        logger.warn("⚠️ Gemini API health check failed, skipping cosmic daily run", {
+            structuredData: true,
+            error: String(healthErr),
+            status: healthErr.status || "unknown",
+        });
+        return; // don't waste compute on a doomed run
+    }
 
-        const today = new Date().toISOString().split("T")[0];
-        await generateDailyOutput(apiKey, today);
-    },
-);
+    const today = new Date().toISOString().split("T")[0];
+    await generateDailyOutput(apiKey, today);
+}
 
-export const cosmicDailyManual = onCall(
-    {
-        timeoutSeconds: 300,
-        memory: "512MiB",
-        region: "asia-southeast2", // same region as Firestore
-        secrets: [geminiApiKey],
-    },
-    async (request) => {
-        if (!request.auth) {
-            throw new HttpsError("unauthenticated", "Authentication required");
-        }
+// NOTE: `cosmicDailyScheduled` was a standalone `onSchedule` export.
+// It is now invoked by `unifiedOrchestrator` Phase 3 (content generation)
+// via the `runCosmicDailyScheduled` runner above.
 
-        const dateStr = request.data?.date || new Date().toISOString().split("T")[0];
-        const output = await generateDailyOutput(geminiApiKey.value(), dateStr);
+/** Handler: Manual cosmic daily generation. Extracted for gateway reuse. */
+export async function handleCosmicDailyManual(request) {
+    if (!request.auth) {
+        throw new HttpsError("unauthenticated", "Authentication required");
+    }
 
-        return {
-            success: true,
-            date: dateStr,
-            predictionsCount: output.predictions?.length || 0,
-            worldEnergy: output.worldEnergy?.substring(0, 500),
-        };
-    },
-);
+    const dateStr = request.data?.date || new Date().toISOString().split("T")[0];
+    const output = await generateDailyOutput(geminiApiKey.value(), dateStr);
+
+    return {
+        success: true,
+        date: dateStr,
+        predictionsCount: output.predictions?.length || 0,
+        worldEnergy: output.worldEnergy?.substring(0, 500),
+    };
+}

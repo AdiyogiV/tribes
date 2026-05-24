@@ -52,7 +52,6 @@ RULES:
  * @param {string} params.weakPlanets - Formatted weak planets
  * @param {string} params.transitList - Formatted transit list
  * @param {string} params.upcomingEventsText - Upcoming planetary events
- * @param {string} params.searchInsights - Search context insights
  * @returns {string} Formatted prompt string
  */
 export function buildInsightUserPrompt({
@@ -71,7 +70,6 @@ export function buildInsightUserPrompt({
     weakPlanets,
     transitList,
     upcomingEventsText,
-    searchInsights,
 }) {
     return `You're a bold astrologer who creates SHAREABLE insights that make users say "THIS is so me!" and want to share with friends.
 
@@ -86,7 +84,6 @@ Ruler: ${todayLord} | Tithi: ${tithi} | Moon Nakshatra: ${todayNakshatra}
 Strong: ${strongPlanets} | Weak: ${weakPlanets}
 Transits (houses relative to ${lagna} Lagna): ${transitList}
 ${upcomingEventsText ? `\n\n═══ UPCOMING PLANETARY EVENTS (AUTHORITATIVE DATES) ═══\n${upcomingEventsText}\n⚠️ IMPORTANT: Use ONLY these dates for sign change and retrograde predictions. Do NOT guess or use other sources.` : ""}
-${searchInsights ? `\n═══ COSMIC EVENTS ═══${searchInsights}` : ""}
 
 ═══ CREATE 4 SHAREABLE INSIGHT CARDS ═══
 

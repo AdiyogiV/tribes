@@ -18,12 +18,14 @@ import 'package:aurogram/features/ayurveda/domain/ayurveda_service.dart';
 import 'package:aurogram/features/astrology/domain/sky_positions_service.dart';
 import 'package:aurogram/shared/services/media/audio_input_service.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/cosmic_dashboard_data.dart';
-import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard.dart';
 import 'package:aurogram/shared/presentation/widgets/media/glass_container.dart';
 import 'package:aurogram/features/astrology/presentation/pages/holycow/holycow_desktop_layout.dart';
 import 'package:aurogram/features/astrology/presentation/pages/holycow/holycow_empty_states.dart';
 import 'package:aurogram/features/astrology/presentation/pages/holycow/holycow_cosmic_content.dart';
+import 'package:aurogram/features/astrology/presentation/widgets/nakshatra_ring_widget.dart';
 import 'package:aurogram/features/ai_chat/domain/ai_chat_provider.dart';
+import 'package:aurogram/shared/presentation/widgets/universal/dark_mode_toggle.dart';
+import 'package:aurogram/shared/providers/theme_provider.dart';
 
 class HolyCowPage extends StatefulWidget {
   const HolyCowPage({super.key});
@@ -64,6 +66,13 @@ class HolyCowPageState extends State<HolyCowPage>
 
   final ValueNotifier<double> _sliderValueNotifier = ValueNotifier(0.5);
   final ValueNotifier<DateTime> _sliderDateNotifier = ValueNotifier(DateTime.now());
+  /// Incremented whenever the user taps "Today" — the nakshatra wheel listens
+  /// and snaps back to today in sync with the sky chart.
+  final ValueNotifier<int> _wheelResetNotifier = ValueNotifier(0);
+
+  /// Live wheel state — the controller is notified on every nakshatra boundary
+  /// crossing during drag, enabling the sky chart to move in real time.
+  final NakshatraWheelController _nakshatraController = NakshatraWheelController();
 
   DashboardLoadingState _loadingState = const DashboardLoadingState();
   bool _showTransitOverlay = false;
@@ -71,6 +80,20 @@ class HolyCowPageState extends State<HolyCowPage>
 
   // Key for desktop layout — allows parent to trigger inline chat
   final _desktopLayoutKey = GlobalKey<HolyCowDesktopLayoutState>();
+
+  bool _didPrecache = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_didPrecache) {
+      _didPrecache = true;
+      precacheImage(
+        const AssetImage('assets/images/nakshatra_wheel.jpeg'),
+        context,
+      );
+    }
+  }
 
   @override
   void initState() {
@@ -83,6 +106,10 @@ class HolyCowPageState extends State<HolyCowPage>
     _micPulseAnimation = Tween<double>(begin: 0.9, end: 1.1).animate(
       CurvedAnimation(parent: _micAnimationController, curve: Curves.easeInOut),
     );
+
+    // Live wheel → sky chart bridge: whenever the wheel crosses a nakshatra
+    // boundary during drag the controller notifies and we update the sky slider.
+    _nakshatraController.addListener(_onWheelControllerChanged);
 
     // User-specific streams (only for logged-in users)
     if (_user != null) {
@@ -112,10 +139,13 @@ class HolyCowPageState extends State<HolyCowPage>
 
   @override
   void dispose() {
+    _nakshatraController.removeListener(_onWheelControllerChanged);
+    _nakshatraController.dispose();
     _inputController.dispose();
     _inputFocusNode.dispose();
     _sliderValueNotifier.dispose();
     _sliderDateNotifier.dispose();
+    _wheelResetNotifier.dispose();
     _micAnimationController.dispose();
     super.dispose();
   }
@@ -244,8 +274,8 @@ class HolyCowPageState extends State<HolyCowPage>
   Future<void> _triggerSkyPositionsCachePopulation() async {
     try {
       final functions = FirebaseFunctions.instanceFor(region: 'asia-southeast2');
-      await functions.httpsCallable('prefetchSkyPositions').call({
-        'daysBack': 30, 'daysAhead': 30,
+      await functions.httpsCallable('astroGateway').call({
+        'method': 'prefetchSkyPositions', 'daysBack': 30, 'daysAhead': 30,
       });
       await Future.delayed(_cachePopulationDelay);
       if (mounted) _loadSkyPositions(isRetry: true);
@@ -265,6 +295,22 @@ class HolyCowPageState extends State<HolyCowPage>
   }
 
   // ─────────────────────────────────────────────────────────────
+  // Wheel controller bridge
+  // ─────────────────────────────────────────────────────────────
+
+  /// Called live on every nakshatra boundary crossing during wheel drag.
+  /// Updates the sky-chart slider in real time so the sky moves with the wheel.
+  void _onWheelControllerChanged() {
+    final date = _nakshatraController.displayedDate;
+    final today = DateTime.now();
+    final daysOffset = date
+        .difference(DateTime(today.year, today.month, today.day))
+        .inDays;
+    _sliderValueNotifier.value = (0.5 + daysOffset / 60.0).clamp(0.0, 1.0);
+    _sliderDateNotifier.value = date;
+  }
+
+  // ─────────────────────────────────────────────────────────────
   // Slider
   // ─────────────────────────────────────────────────────────────
 
@@ -278,6 +324,8 @@ class HolyCowPageState extends State<HolyCowPage>
     HapticFeedback.lightImpact();
     _sliderValueNotifier.value = 0.5;
     _sliderDateNotifier.value = DateTime.now();
+    // Signal the nakshatra wheel to also snap back to today.
+    _wheelResetNotifier.value++;
   }
 
   void _toggleTransitOverlay() {
@@ -372,21 +420,13 @@ class HolyCowPageState extends State<HolyCowPage>
     return AppHeaderStyle.buildStandardHeader(
       context: context,
       title: "aurogram",
-      actionButton: IconButton(
-        onPressed: () => CosmicDashboard.show(context),
-        icon: Icon(
-          Icons.notifications_outlined,
-          color: AppTheme.primaryColor,
-          size: AppHeaderStyle.headerIconSize,
-        ),
-        padding: EdgeInsets.zero,
-        constraints: const BoxConstraints(),
+      actionButton: DarkModeToggle(
+        isDark: Theme.of(context).brightness == Brightness.dark,
+        size: 100,
+        onChanged: (_) =>
+            context.read<ThemeProvider>().temporaryToggle(),
       ),
-      leadingWidget: AppHeaderStyle.buildCompactIconButton(
-        icon: Icons.history_rounded,
-        onPressed: _showRecentConversations,
-        tooltip: 'Recent Conversations',
-      ),
+      // Default: shows aurogram app icon (icon_transparent.png) via logoWidget fallback
       showSearchField: false,
     );
   }
@@ -429,16 +469,21 @@ class HolyCowPageState extends State<HolyCowPage>
                       // Left gap — aligns with tab bar leading space
                       SizedBox(width: gap),
 
-                      // Cow icon — 64×70, aligned with first tab icon
+                      // Past chats icon — 64×70, aligned with first tab icon
                       SizedBox(
                         width: 64,
                         height: 70,
                         child: Center(
-                          child: Image.asset(
-                            'assets/images/cow1.png',
-                            width: 48,
-                            height: 48,
-                            fit: BoxFit.contain,
+                          child: IconButton(
+                            onPressed: _showRecentConversations,
+                            icon: Icon(
+                              Icons.history_rounded,
+                              color: AppTheme.primaryColor.withValues(alpha: 0.7),
+                              size: 24,
+                            ),
+                            tooltip: 'Recent Conversations',
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
                           ),
                         ),
                       ),
@@ -649,6 +694,8 @@ class HolyCowPageState extends State<HolyCowPage>
         onBlendValueChanged: _onBlendValueChanged,
         onLoadSkyPositions: _loadSkyPositions,
         onTriggerCachePopulation: _triggerSkyPositionsCachePopulation,
+        wheelResetSignal: _wheelResetNotifier,
+        nakshatraController: _nakshatraController,
       );
     }
 
@@ -689,6 +736,8 @@ class HolyCowPageState extends State<HolyCowPage>
                   onBlendValueChanged: _onBlendValueChanged,
                   onLoadSkyPositions: _loadSkyPositions,
                   onTriggerCachePopulation: _triggerSkyPositionsCachePopulation,
+                  wheelResetSignal: _wheelResetNotifier,
+                  nakshatraController: _nakshatraController,
                 );
               },
             );

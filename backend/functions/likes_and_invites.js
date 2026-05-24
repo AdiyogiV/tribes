@@ -1,84 +1,14 @@
-import { onDocumentCreated, onDocumentDeleted } from "firebase-functions/v2/firestore";
+import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import { db, FieldValue, logger } from "../lib/firebase.js";
 import { withIdempotency } from "../lib/idempotency.js";
 
 /**
- * Handle new like - increment likeCount and send notification
+ * NOTE: `newLike` and `removeLike` have been merged into
+ * `functions/triggers/on_post_like_write.js` (path-based onDocumentWritten
+ * on `postLikes/{postId}/likes/{userId}`). This file now only contains
+ * `newInvite`, which listens on a different path
+ * (`userSpaces/{userId}/spaces/{space}`).
  */
-export const newLike = onDocumentCreated("postLikes/{postId}/likes/{userId}", withIdempotency("newLike", async (event) => {
-    const postId = event.params.postId;
-    const likerId = event.params.userId;
-    
-    try {
-        const postDoc = await db.collection("posts").doc(postId).get();
-        if (!postDoc.exists) {
-            logger.warn("Post not found for like", { postId, likerId });
-            return;
-        }
-        
-        const postData = postDoc.data();
-        const postAuthor = postData.author;
-        
-        // Increment likeCount on the post (always, even for self-likes)
-        await db.collection("posts").doc(postId).update({
-            likeCount: FieldValue.increment(1),
-        });
-        
-        logger.info("Like count incremented", { postId, likerId });
-        
-        // Skip notification if liking own post
-        if (likerId === postAuthor) {
-            return;
-        }
-        
-        // Send notification to post author
-        const likerDoc = await db.collection("users").doc(likerId).get();
-        const likerData = likerDoc.data() || {};
-        
-        const notification = {
-            type: "like",
-            read: false,
-            postId: postId,
-            liker: likerId,
-            likerName: likerData.name || "Someone",
-            likerDisplayPicture: likerData.displayPicture || "",
-            thumbnail: postData.thumbnail,
-            space: postData.space,
-            timestamp: FieldValue.serverTimestamp(),
-        };
-        
-        await db.collection("notifications").doc(postAuthor).collection("notifications").add(notification);
-        
-    } catch (error) {
-        logger.error("Error processing like", { structuredData: true, error: error.message, postId, likerId });
-    }
-}));
-
-/**
- * Handle unlike - decrement likeCount
- */
-export const removeLike = onDocumentDeleted("postLikes/{postId}/likes/{userId}", withIdempotency("removeLike", async (event) => {
-    const postId = event.params.postId;
-    const likerId = event.params.userId;
-    
-    try {
-        const postDoc = await db.collection("posts").doc(postId).get();
-        if (!postDoc.exists) {
-            logger.warn("Post not found for unlike", { postId, likerId });
-            return;
-        }
-        
-        // Decrement likeCount on the post
-        await db.collection("posts").doc(postId).update({
-            likeCount: FieldValue.increment(-1),
-        });
-        
-        logger.info("Like count decremented", { postId, likerId });
-        
-    } catch (error) {
-        logger.error("Error processing unlike", { structuredData: true, error: error.message, postId, likerId });
-    }
-}));
 
 export const newInvite = onDocumentCreated("userSpaces/{userId}/spaces/{space}", withIdempotency("newInvite", async (event) => {
     const snap = event.data;
@@ -86,7 +16,7 @@ export const newInvite = onDocumentCreated("userSpaces/{userId}/spaces/{space}",
     const { role, inviter } = postData;
     const userId = event.params.userId;
     const spaceId = event.params.space;
-    
+
     // Helper function to get user name and avatar
     const getUserInfo = async (uid) => {
         if (!uid) return { name: "Someone", avatar: "" };
@@ -102,7 +32,7 @@ export const newInvite = onDocumentCreated("userSpaces/{userId}/spaces/{space}",
             return { name: "Someone", avatar: "" };
         }
     };
-    
+
     // Helper function to get space name
     const getSpaceName = async (sid) => {
         if (!sid) return "";
@@ -114,14 +44,14 @@ export const newInvite = onDocumentCreated("userSpaces/{userId}/spaces/{space}",
             return "";
         }
     };
-    
+
     if (role == "invited") {
         try {
             const [inviterInfo, spaceName] = await Promise.all([
                 getUserInfo(postData.inviter),
                 getSpaceName(spaceId),
             ]);
-            
+
             const notification = {
                 type: "invite",
                 read: false,
@@ -146,9 +76,9 @@ export const newInvite = onDocumentCreated("userSpaces/{userId}/spaces/{space}",
             }
             const spaceData = spaceDoc.data();
             const creator = spaceData.creatorId;
-            
+
             const requestorInfo = await getUserInfo(userId);
-            
+
             const notification = {
                 type: "request",
                 read: false,
@@ -171,7 +101,7 @@ export const newInvite = onDocumentCreated("userSpaces/{userId}/spaces/{space}",
                 getUserInfo(inviter),
                 getSpaceName(spaceId),
             ]);
-            
+
             const notification = {
                 type: "addedtogroup",
                 read: false,

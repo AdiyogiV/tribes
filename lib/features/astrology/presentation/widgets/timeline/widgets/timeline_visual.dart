@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:aurogram/features/astrology/data/utils/astrology_formatters.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
+import 'package:aurogram/features/astrology/presentation/widgets/common/pulsing_dot.dart';
 
 /// The core visual rendering of the horizontal timeline: bars, markers,
 /// hour labels, live-time dot, and event labels.
@@ -263,37 +264,19 @@ class TimelineVisual extends StatelessWidget {
                   ],
                 );
               }),
-              // Live time dot (if current day) - blinking, centered on timeline
+              // Live time dot (if current day) - pulsing, centered on timeline
               if (currentTimeMinutes != null &&
                   currentTimeMinutes! >= startTime &&
-                  currentTimeMinutes! <= endTime &&
-                  blinkController != null)
+                  currentTimeMinutes! <= endTime)
                 Positioned(
                   left: ((currentTimeMinutes! - startTime) / 60.0) * hourWidth -
                       6,
                   top:
                       9, // Centered: line at 14 with height 2 (center=15), dot is 12px, so top=15-6=9
-                  child: FadeTransition(
-                    opacity: blinkController!,
-                    child: Container(
-                      width: 12,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: Colors.blue.shade600,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.white,
-                          width: 2,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.blue.shade600.withValues(alpha: 0.6),
-                            blurRadius: 6,
-                            spreadRadius: 2,
-                          ),
-                        ],
-                      ),
-                    ),
+                  child: const PulsingDot(
+                    size: 12,
+                    borderWidth: 2,
+                    showShadow: true,
                   ),
                 ),
             ],

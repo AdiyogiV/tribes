@@ -795,13 +795,13 @@ class _AstrologySetupPageState extends State<AstrologySetupPage> {
       // Save profile first
       await _service.saveProfile(profile);
 
-      // Aura: award astrology setup (+10) via backend (fire-and-forget)
+      // Aura: award astrology setup (+10) via socialGateway (fire-and-forget)
       try {
         await FirebaseFunctions.instanceFor(region: 'asia-southeast2')
-            .httpsCallable('awardAstrologySetup')
-            .call();
+            .httpsCallable('socialGateway')
+            .call({'method': 'awardAuraAction', 'action': 'astrology_setup'});
       } catch (_) {
-        AppLogger.w('AstrologySetupPage: awardAstrologySetup call failed', category: LogCategory.general);
+        AppLogger.w('AstrologySetupPage: awardAuraAction(astrology_setup) call failed', category: LogCategory.general);
       }
 
       if (mounted) {

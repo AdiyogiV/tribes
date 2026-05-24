@@ -233,8 +233,9 @@ class ContactService {
           category: LogCategory.general);
 
       // Call backend Cloud Function
-      final callable = _functions.httpsCallable('matchContacts');
+      final callable = _functions.httpsCallable('socialGateway');
       final result = await callable.call({
+        'method': 'matchContacts',
         'contacts': contactList,
       });
 

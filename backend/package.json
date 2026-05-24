@@ -5,7 +5,7 @@
     "main": "index.js",
     "type": "module",
     "engines": {
-        "node": "20"
+        "node": "22"
     },
     "scripts": {
         "serve": "firebase emulators:start --only functions",
@@ -15,17 +15,12 @@
         "deploy:all": "firebase deploy --only functions --force",
         "deploy:list": "bash scripts/deploy.sh --list",
         "deploy:dry": "bash scripts/deploy.sh --dry-run",
-        "deploy:feeds": "bash scripts/deploy.sh feeds",
-        "deploy:posts": "bash scripts/deploy.sh posts",
-        "deploy:aura": "bash scripts/deploy.sh aura",
-        "deploy:people": "bash scripts/deploy.sh people",
-        "deploy:astro-core": "bash scripts/deploy.sh astro-core",
-        "deploy:astro-daily": "bash scripts/deploy.sh astro-daily",
-        "deploy:astro-readings": "bash scripts/deploy.sh astro-readings",
-        "deploy:astro-sky": "bash scripts/deploy.sh astro-sky",
-        "deploy:health": "bash scripts/deploy.sh health",
-        "deploy:comms": "bash scripts/deploy.sh comms",
-        "deploy:system": "bash scripts/deploy.sh system",
+        "deploy:gateways": "bash scripts/deploy.sh gateways",
+        "deploy:workers": "bash scripts/deploy.sh workers",
+        "deploy:triggers-content": "bash scripts/deploy.sh triggers-content",
+        "deploy:triggers-engagement": "bash scripts/deploy.sh triggers-engagement",
+        "deploy:triggers-unique": "bash scripts/deploy.sh triggers-unique",
+        "deploy:standalone": "bash scripts/deploy.sh standalone",
         "logs": "firebase functions:log",
         "lint": "eslint .",
         "lint:fix": "eslint . --fix",

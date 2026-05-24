@@ -1,5 +1,5 @@
 import { logger } from "firebase-functions";
-import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { HttpsError } from "firebase-functions/v2/https";
 import { FieldValue, getFirestore } from "firebase-admin/firestore";
 import { RATE_LIMITS, AURA_POINTS } from "../lib/constants.js";
 import { isBlockedEitherWay } from "../lib/utils.js";
@@ -108,10 +108,7 @@ async function awardNamasteAuraToRecipient(db, recipientUid, senderUid, today) {
  * 
  * @returns {Object} { success: boolean, remaining: number, error?: string }
  */
-export const sendNamaste = onCall({
-    region: "asia-southeast2",
-    invoker: "public", // Allow client apps to invoke (Firebase Auth handles actual auth)
-}, async (request) => {
+export async function handleSendNamaste(request) {
     const db = getFirestore();
     const senderId = request.auth?.uid;
     const { recipientUid, sendChatMessage, dmId } = request.data || {};
@@ -290,17 +287,14 @@ export const sendNamaste = onCall({
         logger.error("Error sending namaste:", error);
         throw new HttpsError("internal", "Failed to send namaste");
     }
-});
+}
 
 /**
  * Get Namaste Quota - Returns user's remaining namastes for today
  * 
  * @returns {Object} { remaining: number, sent: number, recipients: string[] }
  */
-export const getNamasteQuota = onCall({
-    region: "asia-southeast2",
-    invoker: "public", // Allow client apps to invoke (Firebase Auth handles actual auth)
-}, async (request) => {
+export async function handleGetNamasteQuota(request) {
     const db = getFirestore();
     const userId = request.auth?.uid;
 
@@ -332,7 +326,7 @@ export const getNamasteQuota = onCall({
         sent: sent,
         recipients: data.recipients || [],
     };
-});
+}
 
 // REMOVED: canSendNamaste — Flutter derives this state from getNamasteQuota's
 // response (NamasteService.canSendTo()), so the server-side check was unused.

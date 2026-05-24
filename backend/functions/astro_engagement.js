@@ -1,4 +1,4 @@
-import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { HttpsError } from "firebase-functions/v2/https";
 import { db, FieldValue, logger } from "../lib/firebase.js";
 import { DateTime } from "luxon";
 import { requireAuth } from "../lib/auth_utils.js";
@@ -8,15 +8,8 @@ import { requireAuth } from "../lib/auth_utils.js";
 // this backend function. The insightStreak/lastInsightView fields it wrote were
 // never read by any active feature.
 
-/**
- * Submit feedback for an insight (thumbs up/down)
- */
-export const submitInsightFeedback = onCall({
-    region: "asia-southeast2",
-    timeoutSeconds: 30,
-    memory: "256MiB",
-    invoker: "public", // Allow client apps to invoke (Firebase Auth handles actual auth)
-}, async (request) => {
+/** Handler: Submit feedback for an insight. Extracted for gateway reuse. */
+export async function handleSubmitInsightFeedback(request) {
     const userId = requireAuth(request, "submit feedback");
     const { insightId, date, feedback, rating } = request.data || {};
 
@@ -80,17 +73,10 @@ export const submitInsightFeedback = onCall({
             `Failed to submit feedback: ${error.message}`,
         );
     }
-});
+}
 
-/**
- * Toggle favorite status for an insight
- */
-export const toggleFavoriteInsight = onCall({
-    region: "asia-southeast2",
-    timeoutSeconds: 30,
-    memory: "256MiB",
-    invoker: "public", // Allow client apps to invoke (Firebase Auth handles actual auth)
-}, async (request) => {
+/** Handler: Toggle favorite status for an insight. Extracted for gateway reuse. */
+export async function handleToggleFavoriteInsight(request) {
     const userId = requireAuth(request, "toggle favorite");
     const { insightId, date } = request.data || {};
 
@@ -155,7 +141,7 @@ export const toggleFavoriteInsight = onCall({
             `Failed to toggle favorite: ${error.message}`,
         );
     }
-});
+}
 
 // REMOVED: getUserEngagement — No UI feature ever displayed engagement stats
 // (streak/favorites count). The Flutter app reads favorites directly from

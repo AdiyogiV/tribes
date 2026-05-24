@@ -58,8 +58,8 @@ class CompatibilityService {
     }
 
     try {
-      final callable = _functions.httpsCallable('calculateCompatibility');
-      final result = await callable.call({'otherUserId': otherUserId});
+      final callable = _functions.httpsCallable('astroGateway');
+      final result = await callable.call({'method': 'calculateCompatibility', 'otherUserId': otherUserId});
 
       // Safely convert the result data to Map<String, dynamic>
       // Firebase can return _Map<Object?, Object?> which needs explicit conversion

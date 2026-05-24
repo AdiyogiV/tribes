@@ -12,7 +12,7 @@
  */
 
 import { db, FieldValue } from "../lib/firebase.js";
-import { createRepostHandler, deleteRepostHandler } from "../functions/reposts.js";
+import { handleCreateRepost, handleDeleteRepost } from "../functions/reposts.js";
 import { HttpsError } from "firebase-functions/v2/https";
 
 const TEST_USER_ID = process.env.TEST_USER_ID || "test_user_" + Date.now();
@@ -134,7 +134,7 @@ async function testCreateRepost_Basic() {
             timestamp: FieldValue.serverTimestamp(),
         });
         
-        const result = await createRepostHandler(createMockRequest(TEST_USER_ID, {
+        const result = await handleCreateRepost(createMockRequest(TEST_USER_ID, {
             originalPostId: postRef.id,
             contextType: "profile",
             contextId: null,
@@ -182,11 +182,11 @@ async function testCreateRepost_Duplicate() {
             contextId: null,
         });
         
-        const result1 = await createRepostHandler(mockRequest);
+        const result1 = await handleCreateRepost(mockRequest);
         logTest("First repost created", !!result1.repostId);
         
         try {
-            await createRepostHandler(mockRequest);
+            await handleCreateRepost(mockRequest);
             logTest("Duplicate repost prevented", false, "Should have thrown error");
         } catch (error) {
             const isDuplicate = error instanceof HttpsError && error.code === "already-exists";
@@ -228,7 +228,7 @@ async function testCreateRepost_PrivateProfile() {
         });
         
         try {
-            await createRepostHandler(mockRequest);
+            await handleCreateRepost(mockRequest);
             logTest("Private post repost blocked", false, "Should have thrown error");
         } catch (error) {
             const isPermissionError = error instanceof HttpsError && error.code === "permission-denied";
@@ -242,7 +242,7 @@ async function testCreateRepost_PrivateProfile() {
             .set({ timestamp: FieldValue.serverTimestamp() });
         
         try {
-            const result = await createRepostHandler(mockRequest);
+            const result = await handleCreateRepost(mockRequest);
             logTest("Follower can repost", !!result.repostId);
             await db.collection("reposts").doc(result.repostId).delete();
         } catch (error) {
@@ -286,7 +286,7 @@ async function testDeleteRepost_Basic() {
             timestamp: FieldValue.serverTimestamp(),
         });
         
-        const result = await deleteRepostHandler(createMockRequest(TEST_USER_ID, {
+        const result = await handleDeleteRepost(createMockRequest(TEST_USER_ID, {
             repostId: repostRef.id,
         }));
         
@@ -339,7 +339,7 @@ async function testCreateRepost_SpacePost() {
             timestamp: FieldValue.serverTimestamp(),
         });
         
-        const result = await createRepostHandler(createMockRequest(TEST_USER_ID, {
+        const result = await handleCreateRepost(createMockRequest(TEST_USER_ID, {
             originalPostId: spacePostRef.id,
             contextType: "profile",
             contextId: null,
@@ -381,7 +381,7 @@ async function testCreateRepost_InvalidData() {
     try {
         // Empty originalPostId
         try {
-            await createRepostHandler(createMockRequest(TEST_USER_ID, {
+            await handleCreateRepost(createMockRequest(TEST_USER_ID, {
                 originalPostId: "",
                 contextType: "profile",
                 contextId: null,
@@ -394,7 +394,7 @@ async function testCreateRepost_InvalidData() {
         
         // Missing contextId for space
         try {
-            await createRepostHandler(createMockRequest(TEST_USER_ID, {
+            await handleCreateRepost(createMockRequest(TEST_USER_ID, {
                 originalPostId: "some-id",
                 contextType: "space",
                 contextId: null,
@@ -417,7 +417,7 @@ async function testCreateRepost_MissingPost() {
     
     try {
         try {
-            await createRepostHandler(createMockRequest(TEST_USER_ID, {
+            await handleCreateRepost(createMockRequest(TEST_USER_ID, {
                 originalPostId: "non-existent-post-id",
                 contextType: "profile",
                 contextId: null,
@@ -451,7 +451,7 @@ async function testDeleteRepost_PermissionDenied() {
         });
         
         try {
-            await deleteRepostHandler(createMockRequest(TEST_USER_ID, {
+            await handleDeleteRepost(createMockRequest(TEST_USER_ID, {
                 repostId: repostRef.id,
             }));
             logTest("Permission denied for other user's repost", false, "Should have thrown error");
@@ -474,7 +474,7 @@ async function testDeleteRepost_MissingRepost() {
     
     try {
         try {
-            await deleteRepostHandler(createMockRequest(TEST_USER_ID, {
+            await handleDeleteRepost(createMockRequest(TEST_USER_ID, {
                 repostId: "non-existent-repost-id",
             }));
             logTest("Missing repost deletion blocked", false, "Should have thrown error");
@@ -533,7 +533,7 @@ async function testDeleteRepost_SpacePost() {
             timestamp: FieldValue.serverTimestamp(),
         });
         
-        await deleteRepostHandler(createMockRequest(TEST_USER_ID, {
+        await handleDeleteRepost(createMockRequest(TEST_USER_ID, {
             repostId: repostRef.id,
         }));
         
@@ -574,7 +574,7 @@ async function testDataConsistency() {
         const repostIds = [];
         
         // Create repost
-        const result1 = await createRepostHandler(createMockRequest(TEST_USER_ID, {
+        const result1 = await handleCreateRepost(createMockRequest(TEST_USER_ID, {
             originalPostId: postRef.id,
             contextType: "profile",
             contextId: null,
@@ -587,7 +587,7 @@ async function testDataConsistency() {
             `Expected: 1, Got: ${postDoc.data()?.repostCount}`);
         
         // Delete repost
-        await deleteRepostHandler(createMockRequest(TEST_USER_ID, {
+        await handleDeleteRepost(createMockRequest(TEST_USER_ID, {
             repostId: result1.repostId,
         }));
         
@@ -597,7 +597,7 @@ async function testDataConsistency() {
             `Expected: 0, Got: ${postDoc.data()?.repostCount}`);
         
         // Create again (should work after deletion)
-        const result2 = await createRepostHandler(createMockRequest(TEST_USER_ID, {
+        const result2 = await handleCreateRepost(createMockRequest(TEST_USER_ID, {
             originalPostId: postRef.id,
             contextType: "profile",
             contextId: null,
@@ -618,7 +618,7 @@ async function testDataConsistency() {
             `Expected: 1, Got: ${repostsSnapshot.size}`);
         
         // Cleanup
-        await deleteRepostHandler(createMockRequest(TEST_USER_ID, {
+        await handleDeleteRepost(createMockRequest(TEST_USER_ID, {
             repostId: result2.repostId,
         }));
         await db.collection("posts").doc(postRef.id).delete();
@@ -665,7 +665,7 @@ async function testCreateRepost_PrivateSpace() {
         
         // Test: Non-member cannot repost
         try {
-            await createRepostHandler(createMockRequest(TEST_USER_ID, {
+            await handleCreateRepost(createMockRequest(TEST_USER_ID, {
                 originalPostId: spacePostRef.id,
                 contextType: "profile",
                 contextId: null,
@@ -682,7 +682,7 @@ async function testCreateRepost_PrivateSpace() {
         });
         
         try {
-            const result = await createRepostHandler(createMockRequest(TEST_USER_ID, {
+            const result = await handleCreateRepost(createMockRequest(TEST_USER_ID, {
                 originalPostId: spacePostRef.id,
                 contextType: "profile",
                 contextId: null,
@@ -718,7 +718,7 @@ async function testCreateRepost_SelfRepost() {
         });
         
         // Self-repost should work (no restriction)
-        const result = await createRepostHandler(createMockRequest(TEST_USER_ID, {
+        const result = await handleCreateRepost(createMockRequest(TEST_USER_ID, {
             originalPostId: postRef.id,
             contextType: "profile",
             contextId: null,
@@ -752,14 +752,14 @@ async function testCreateRepost_MultipleUsers() {
         });
         
         // User 1 reposts
-        const result1 = await createRepostHandler(createMockRequest(TEST_USER_ID, {
+        const result1 = await handleCreateRepost(createMockRequest(TEST_USER_ID, {
             originalPostId: postRef.id,
             contextType: "profile",
             contextId: null,
         }));
         
         // User 2 reposts (different user, should work)
-        const result2 = await createRepostHandler(createMockRequest(TEST_USER_2_ID, {
+        const result2 = await handleCreateRepost(createMockRequest(TEST_USER_2_ID, {
             originalPostId: postRef.id,
             contextType: "profile",
             contextId: null,
@@ -804,7 +804,7 @@ async function testCreateRepost_MissingAuthor() {
         });
         
         try {
-            await createRepostHandler(createMockRequest(TEST_USER_ID, {
+            await handleCreateRepost(createMockRequest(TEST_USER_ID, {
                 originalPostId: postRef.id,
                 contextType: "profile",
                 contextId: null,
@@ -852,7 +852,7 @@ async function testDeleteRepost_DeletedOriginalPost() {
         await db.collection("posts").doc(postRef.id).delete();
         
         // Delete repost (should still work even if original post is deleted)
-        const result = await deleteRepostHandler(createMockRequest(TEST_USER_ID, {
+        const result = await handleDeleteRepost(createMockRequest(TEST_USER_ID, {
             repostId: repostRef.id,
         }));
         
@@ -881,7 +881,7 @@ async function testTransactionAtomicity() {
         });
         
         // Create repost (transaction should ensure atomicity)
-        const result = await createRepostHandler(createMockRequest(TEST_USER_ID, {
+        const result = await handleCreateRepost(createMockRequest(TEST_USER_ID, {
             originalPostId: postRef.id,
             contextType: "profile",
             contextId: null,
@@ -926,8 +926,8 @@ async function testRaceCondition() {
         });
         
         // Start both requests concurrently (don't await individually)
-        const promise1 = createRepostHandler(mockRequest);
-        const promise2 = createRepostHandler(mockRequest);
+        const promise1 = handleCreateRepost(mockRequest);
+        const promise2 = handleCreateRepost(mockRequest);
         
         // Wait for both to settle
         const [result1, result2] = await Promise.allSettled([promise1, promise2]);

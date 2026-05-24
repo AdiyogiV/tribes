@@ -1,4 +1,4 @@
-import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { HttpsError } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions/v2";
 import { DateTime } from "luxon";
 import { db, FieldValue } from "../lib/firebase.js";
@@ -1622,7 +1622,7 @@ export const runAstroFlow = async ({
 };
 
 // ---------------------------------------------------------------------------
-// Gateway-callable handler (plain async — called by both onCall + gateway)
+// Gateway-callable handler (plain async — called by the astroGateway router)
 // ---------------------------------------------------------------------------
 export async function handleFreeAstroCalculate(request) {
     try {
@@ -1738,16 +1738,6 @@ export async function handleFreeAstroCalculate(request) {
         throw error;
     }
 }
-
-export const freeAstroCalculate = onCall({
-    secrets: [freeAstrologyApiKey],
-    timeoutSeconds: 120,
-    memory: "512MiB",
-    region: "asia-southeast2",
-    invoker: "public",
-}, async (request) => {
-    return handleFreeAstroCalculate(request);
-});
 
 // Constants for compatibility calculation
 const COMPATIBILITY_CACHE_TTL_DAYS = 30;
@@ -2409,16 +2399,6 @@ export async function handleCalculateCompatibility(request) {
     }
 }
 
-export const calculateCompatibility = onCall({
-    secrets: [freeAstrologyApiKey],
-    timeoutSeconds: 120,
-    memory: "512MiB",
-    region: "asia-southeast2",
-    invoker: "public",
-}, async (request) => {
-    return handleCalculateCompatibility(request);
-});
-
 // ============================================================================
 // GEO SEARCH - Search locations using Free Astrology API
 // Returns proper city data with coordinates and timezone
@@ -2495,12 +2475,3 @@ export async function handleSearchGeoLocation(request, data) {
     }
 }
 
-export const searchGeoLocation = onCall({
-    secrets: [freeAstrologyApiKey],
-    timeoutSeconds: 30,
-    memory: "256MiB",
-    region: "asia-southeast2",
-    invoker: "public",
-}, async (request) => {
-    return handleSearchGeoLocation(request, request.data);
-});

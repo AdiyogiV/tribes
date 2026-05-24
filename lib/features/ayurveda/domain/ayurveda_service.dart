@@ -236,8 +236,8 @@ class AyurvedaService {
       AppLogger.i('Calculating Ayurveda profile',
           category: LogCategory.general);
 
-      final callable = _functions.httpsCallable('calculateAyurvedaProfile');
-      final result = await callable.call();
+      final callable = _functions.httpsCallable('healthGateway');
+      final result = await callable.call({'method': 'calculateAyurvedaProfile'});
 
       if (result.data != null && result.data['success'] == true) {
         // Clear cache and refetch
@@ -264,8 +264,8 @@ class AyurvedaService {
       AppLogger.i('Resetting Ayurveda profile completely',
           category: LogCategory.general);
 
-      final callable = _functions.httpsCallable('resetAyurvedaProfile');
-      final result = await callable.call();
+      final callable = _functions.httpsCallable('healthGateway');
+      final result = await callable.call({'method': 'resetAyurvedaProfile'});
 
       if (result.data != null && result.data['success'] == true) {
         // Clear cache and refetch fresh profile
@@ -296,8 +296,9 @@ class AyurvedaService {
     if (profile.prakriti == null) return null;
 
     try {
-      final callable = _functions.httpsCallable('calculateCurrentVikriti');
+      final callable = _functions.httpsCallable('healthGateway');
       final result = await callable.call({
+        'method': 'calculateCurrentVikriti',
         'prakriti': profile.prakriti!.toMap(),
         'currentDasha': astroProfile.currentDasha,
         'birthYear': astroProfile.birthYear,

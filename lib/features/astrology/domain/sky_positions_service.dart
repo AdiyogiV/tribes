@@ -249,8 +249,8 @@ class SkyPositionsService {
 
       final functions =
           FirebaseFunctions.instanceFor(region: 'asia-southeast2');
-      final callable = functions.httpsCallable('getUpcomingEvents');
-      final result = await callable.call();
+      final callable = functions.httpsCallable('astroGateway');
+      final result = await callable.call({'method': 'getUpcomingEvents'});
 
       final data = result.data as Map<String, dynamic>;
 
@@ -361,11 +361,11 @@ class SkyPositionsService {
       final functions =
           FirebaseFunctions.instanceFor(region: 'asia-southeast2');
       final callable = functions.httpsCallable(
-        'getGlobalMuhurat',
+        'astroGateway',
         options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),
       );
 
-      final result = await callable.call<Map<String, dynamic>>();
+      final result = await callable.call<Map<String, dynamic>>({'method': 'getGlobalMuhurat'});
       final data = result.data;
 
       if (data['success'] == true && data['muhurat'] is Map) {
@@ -414,8 +414,8 @@ class SkyPositionsService {
 
       final functions =
           FirebaseFunctions.instanceFor(region: 'asia-southeast2');
-      final callable = functions.httpsCallable('getSkyPositions');
-      final result = await callable.call();
+      final callable = functions.httpsCallable('astroGateway');
+      final result = await callable.call({'method': 'getSkyPositions'});
 
       final data = result.data as Map<String, dynamic>;
 
@@ -716,8 +716,8 @@ class SkyPositionsService {
     try {
       final functions =
           FirebaseFunctions.instanceFor(region: 'asia-southeast2');
-      final callable = functions.httpsCallable('prefetchSkyPositions');
-      await callable.call();
+      final callable = functions.httpsCallable('astroGateway');
+      await callable.call({'method': 'prefetchSkyPositions'});
 
       AppLogger.i('Prefetch completed, reloading data',
           category: LogCategory.general);

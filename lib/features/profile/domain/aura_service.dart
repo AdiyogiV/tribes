@@ -373,12 +373,18 @@ class AuraService {
 
   /// Check and award profile completion bonus if eligible (via backend callable).
   /// Backend awards aura and writes to auraHistory; avoids double-award and ensures history.
+  ///
+  /// Routed through `socialGateway` (method: 'awardAuraAction'); the standalone
+  /// `awardAuraAction` function was retired in the 20 vCPU consolidation.
   Future<void> checkAndAwardProfileComplete(String userId) async {
     if (_auth.currentUser?.uid != userId) return;
     try {
       final callable = FirebaseFunctions.instanceFor(region: 'asia-southeast2')
-          .httpsCallable('awardAuraAction');
-      final result = await callable.call({'action': 'profile_complete'});
+          .httpsCallable('socialGateway');
+      final result = await callable.call({
+        'method': 'awardAuraAction',
+        'action': 'profile_complete',
+      });
       final data = result.data as Map<String, dynamic>?;
       if (data != null &&
           data['success'] == true &&

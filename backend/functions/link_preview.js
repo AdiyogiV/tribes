@@ -1,4 +1,4 @@
-import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { HttpsError } from "firebase-functions/v2/https";
 import { logger } from "../lib/firebase.js";
 
 /**
@@ -139,14 +139,9 @@ function decodeHtmlEntities(text) {
  * Called by web clients to bypass CORS restrictions
  * Mobile clients use direct client-side fetching
  */
-export const getLinkPreview = onCall(
-    {
-        maxInstances: 10,
-        timeoutSeconds: 15,
-        memory: "256MiB",
-    },
-    async (request) => {
-        const { url } = request.data;
+/** Handler: Fetch link preview metadata. Extracted for gateway reuse. */
+export async function handleGetLinkPreview(request) {
+    const { url } = request.data;
 
         if (!url || typeof url !== 'string') {
             throw new HttpsError('invalid-argument', 'URL is required');
@@ -252,5 +247,4 @@ export const getLinkPreview = onCall(
             });
             throw new HttpsError('unavailable', 'Failed to fetch link preview');
         }
-    }
-);
+}

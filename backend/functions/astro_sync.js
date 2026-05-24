@@ -1,4 +1,4 @@
-import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { HttpsError } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions/v2";
 import { Timestamp } from "firebase-admin/firestore";
 import { getFunctions } from "firebase-admin/functions";
@@ -8,7 +8,6 @@ import { DateTime } from "luxon";
 import { db, FieldValue } from "../lib/firebase.js";
 import { requireAuth } from "../lib/auth_utils.js";
 import { runAstroFlow, invalidateCompatibilityCache } from "./free_astro.js";
-import { freeAstrologyApiKey, geminiApiKey } from "../lib/secrets.js";
 import { generateHouseInterpretations } from "../lib/house_interpretations.js";
 import { resetAndRecalculateAyurveda } from "../lib/ayurveda_service.js";
 
@@ -427,9 +426,15 @@ export async function handleSyncAstroProfile(request) {
         if (!todayInsightSnap.exists) {
             try {
                 const functions = getFunctions();
-                const queue = functions.taskQueue("locations/asia-southeast2/functions/processInsightTask");
+                // Unified taskRouter — see backend/functions/task_router.js
+                const queue = functions.taskQueue("locations/asia-southeast2/functions/taskRouter");
                 await queue.enqueue(
-                    { userId: uid, astrologyData: mergedAstroData, date: today },
+                    {
+                        taskType: "process_insight",
+                        userId: uid,
+                        astrologyData: mergedAstroData,
+                        date: today,
+                    },
                     { scheduleDelaySeconds: 5 },
                 );
                 logger.info("📬 Enqueued daily insight for new user (post-sync)", {
@@ -463,17 +468,6 @@ export async function handleSyncAstroProfile(request) {
         },
     };
 }
-
-export const syncAstroProfile = onCall({
-    secrets: [freeAstrologyApiKey, geminiApiKey],
-    timeoutSeconds: 120,
-    memory: "512MiB",
-    region: "asia-southeast2",
-    maxInstances: 2,
-    invoker: "public",
-}, async (request) => {
-    return handleSyncAstroProfile(request);
-});
 
 /**
  * Generate and save first reading for a user.

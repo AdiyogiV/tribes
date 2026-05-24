@@ -1,4 +1,3 @@
-import { onCall } from "firebase-functions/v2/https";
 import { onDocumentDeleted } from "firebase-functions/v2/firestore";
 import { HttpsError } from "firebase-functions/v2/https";
 import { db, FieldValue, logger } from "../lib/firebase.js";
@@ -156,7 +155,7 @@ async function validateRepostPermissions(reposterId, originalPost, targetContext
     }
 
     // Query for potential duplicates (get multiple to filter by contextId)
-    let duplicateQuery = db.collection("reposts")
+    const duplicateQuery = db.collection("reposts")
         .where("reposterId", "==", reposterId)
         .where("originalPostId", "==", postIdToCheck)
         .where("contextType", "==", targetContextType)
@@ -339,7 +338,7 @@ async function removeRepostFromGlobalFeed(originalPostId, reposterId) {
         }
 
         const feedData = feedDoc.data();
-        const repostedBy = (feedData.repostedBy || []).filter(id => id !== reposterId);
+        const repostedBy = (feedData.repostedBy || []).filter((id) => id !== reposterId);
 
         await feedRef.update({
             repostCount: FieldValue.increment(-1),
@@ -374,8 +373,8 @@ async function sendRepostNotification(originalAuthorId, reposterId, originalPost
 
         // Get original post for thumbnail
         // Try top-level posts first, then check if it's a space post
-        let originalPostDoc = await db.collection("posts").doc(originalPostId).get();
-        let originalPostData = originalPostDoc.data() || {};
+        const originalPostDoc = await db.collection("posts").doc(originalPostId).get();
+        const originalPostData = originalPostDoc.data() || {};
         let thumbnail = originalPostData.thumbnail || null;
 
         // If not found in top-level posts, it might be a space post
@@ -433,7 +432,7 @@ async function sendRepostNotification(originalAuthorId, reposterId, originalPost
  * Create a repost handler (core logic)
  * Extracted for testability - can be tested directly without onCall wrapper
  */
-export async function createRepostHandler(request) {
+export async function handleCreateRepost(request) {
     const userId = request.auth?.uid;
     if (!userId) {
         throw new HttpsError("unauthenticated", "User must be authenticated");
@@ -442,7 +441,7 @@ export async function createRepostHandler(request) {
     const { originalPostId, contextType, contextId } = validateRequest(
         CreateRepostSchema,
         request.data,
-        "createRepost"
+        "createRepost",
     );
 
     // Validate context
@@ -549,7 +548,7 @@ export async function createRepostHandler(request) {
 
             // Build query for duplicate check
             // Note: We query without contextId filter (handled in memory) to avoid index issues
-            let duplicateQuery = db.collection("reposts")
+            const duplicateQuery = db.collection("reposts")
                 .where("reposterId", "==", userId)
                 .where("originalPostId", "==", postIdToCheck)
                 .where("contextType", "==", contextType)
@@ -627,8 +626,8 @@ export async function createRepostHandler(request) {
         }
 
         // 6. Send notification (async, non-critical, best-effort)
-        sendRepostNotification(originalPost.author, userId, originalPostId).catch(err =>
-            logger.warn("Failed to send repost notification", { error: err })
+        sendRepostNotification(originalPost.author, userId, originalPostId).catch((err) =>
+            logger.warn("Failed to send repost notification", { error: err }),
         );
 
         logger.info("Repost created successfully", {
@@ -655,16 +654,10 @@ export async function createRepostHandler(request) {
 }
 
 /**
- * Create a repost (callable function)
- * Client calls this instead of writing directly to Firestore
- */
-export const createRepost = onCall(createRepostHandler);
-
-/**
  * Delete a repost handler (core logic)
  * Extracted for testability - can be tested directly without onCall wrapper
  */
-export async function deleteRepostHandler(request) {
+export async function handleDeleteRepost(request) {
     const userId = request.auth?.uid;
     if (!userId) {
         throw new HttpsError("unauthenticated", "User must be authenticated");
@@ -779,11 +772,6 @@ export async function deleteRepostHandler(request) {
 }
 
 /**
- * Delete a repost (callable function)
- */
-export const deleteRepost = onCall(deleteRepostHandler);
-
-/**
  * Helper function to cascade delete all reposts of a deleted post
  * Also decrements repostCount on the original post (if it still exists)
  * Exported for testing
@@ -871,24 +859,10 @@ export async function cascadeDeleteReposts(deletedPostId, deletedPostData) {
     }
 }
 
-/**
- * Handle original post deletion - cascade delete all reposts
- * Handles profile posts (posts/{postId})
- */
-export const onOriginalPostDeleted = onDocumentDeleted(
-    "posts/{postId}",
-    withIdempotency("onOriginalPostDeleted", async (event) => {
-        const deletedPostId = event.params.postId;
-        const postData = event.data.data();
-
-        // Skip if this was a repost (shouldn't happen with new model, but safety check)
-        if (postData?.isRepost) {
-            return;
-        }
-
-        await cascadeDeleteReposts(deletedPostId, postData);
-    })
-);
+// NOTE: `onOriginalPostDeleted` (was `posts/{postId}` onDocumentDeleted)
+// is now part of the merged `functions/triggers/on_post_write.js` trigger
+// (delete branch). The `cascadeDeleteReposts` helper above is imported by
+// that file.
 
 /**
  * Handle space post deletion - cascade delete all reposts
@@ -906,5 +880,5 @@ export const onSpacePostDeleted = onDocumentDeleted(
         }
 
         await cascadeDeleteReposts(deletedPostId, postData);
-    })
+    }),
 );

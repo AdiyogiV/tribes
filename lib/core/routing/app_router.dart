@@ -517,6 +517,14 @@ GoRouter createAppRouter(GlobalKey<NavigatorState> navigatorKey) {
         name: 'login',
         builder: (_, __) => LoginPage(),
       ),
+
+      // /signup uses the same phone-auth flow as /login (first OTP verify
+      // creates the account). Aliasing keeps deep-links + analytics happy.
+      GoRoute(
+        path: RouteNames.signup,
+        name: 'signup',
+        builder: (_, __) => LoginPage(),
+      ),
     ],
 
     // ── Error page ─────────────────────────────────────────────────────

@@ -2,7 +2,7 @@
  * Agora RTC Token Generation for Group Calls
  */
 
-import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { HttpsError } from "firebase-functions/v2/https";
 import { logger } from "../lib/firebase.js";
 import { agoraAppCertificate, agoraAppId } from "../lib/secrets.js";
 import pkg from 'agora-token';
@@ -17,13 +17,8 @@ const TOKEN_EXPIRY_SECONDS = 3600;
  * SECURITY: App Certificate is stored in Firebase Secrets
  * To set it: firebase functions:secrets:set AGORA_APP_CERTIFICATE
  */
-export const generateAgoraToken = onCall({
-  region: 'asia-southeast2',
-  invoker: 'public', // Allow client apps to invoke (Firebase Auth handles actual auth)
-  secrets: [agoraAppCertificate], // Load secret at runtime
-  // NOTE: App Check disabled to support web platform which doesn't initialize App Check
-  enforceAppCheck: false,
-}, async (request) => {
+/** Handler: Generate Agora RTC token. Extracted for gateway reuse. */
+export async function handleGenerateAgoraToken(request) {
   // Log auth state for debugging
   logger.info('generateAgoraToken called', { 
     hasAuth: !!request.auth,
@@ -108,4 +103,4 @@ export const generateAgoraToken = onCall({
       'Failed to generate Agora token: ' + error.message
     );
   }
-});
+}

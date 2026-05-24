@@ -180,11 +180,12 @@ class GroupCallMediaManager {
           category: LogCategory.general);
 
       final callable = FirebaseFunctions.instanceFor(region: 'asia-southeast2')
-          .httpsCallable('generateAgoraToken',
+          .httpsCallable('commsGateway',
               options: HttpsCallableOptions(timeout: const Duration(seconds: 10)));
 
       AppLogger.i('Calling generateAgoraToken function...', category: LogCategory.general);
       final result = await callable.call({
+        'method': 'generateAgoraToken',
         'channelName': channelName,
         'uid': uid,
       });

@@ -1,9 +1,10 @@
-import { onSchedule } from "firebase-functions/v2/scheduler";
-import { onCall, HttpsError } from "firebase-functions/v2/https";
-import { onTaskDispatched } from "firebase-functions/v2/tasks";
+// NOTE: onSchedule and onTaskDispatched imports removed — the scheduler and
+// task-worker entry points that lived in this file are now part of the
+// unified orchestrator (unified_orchestrator.js) and task router (task_router.js).
+// All work is invoked via the extracted `run*` runner functions below.
+import { HttpsError } from "firebase-functions/v2/https";
 import { db, FieldValue, logger } from "../lib/firebase.js";
 import { requireAuth } from "../lib/auth_utils.js";
-import { geminiApiKey, freeAstrologyApiKey } from "../lib/secrets.js";
 import { DateTime } from "luxon";
 import {
     getCacheStats,
@@ -18,13 +19,13 @@ import { getUpcomingSignIngresses, getUpcomingRetrogrades } from "./sky_position
 import { stripMarkdown, normalizeDasha, normalizeChart } from "../lib/astro_helpers.js";
 import { INSIGHT_SYSTEM_PROMPT, buildInsightUserPrompt } from "./prompts/daily_insights.js";
 import { callGemini } from "../insights/engine/ai_client.js";
-import { buildDashaContext, getTodayAstroData, getSearchContext } from "../lib/daily_insight_context.js";
+import { buildDashaContext, getTodayAstroData } from "../lib/daily_insight_context.js";
 
 /**
  * Generate personalized daily astrology insight using AI
  * Uses ALL available data: API + Google Search
  */
-async function generateInsightWithAI(userAstroData, todayAstroData, searchContext) {
+async function generateInsightWithAI(userAstroData, todayAstroData) {
     // Extract user's core chart data
     const { ascendant: lagna, moonSign, sunSign, nakshatra, currentDasha } = normalizeChart(userAstroData);
     const { mahaDasha, antarDasha, levels } = currentDasha;
@@ -134,26 +135,26 @@ async function generateInsightWithAI(userAstroData, todayAstroData, searchContex
         // Format sign ingresses
         if (ingresses.length > 0) {
             const relevantIngresses = ingresses
-                .filter(ing => majorPlanets.includes(ing.planet))
+                .filter((ing) => majorPlanets.includes(ing.planet))
                 .slice(0, 6);
 
             if (relevantIngresses.length > 0) {
                 const ingressText = relevantIngresses
-                    .map(ing => `${ing.planet} enters ${ing.toSign} on ${ing.date}`)
+                    .map((ing) => `${ing.planet} enters ${ing.toSign} on ${ing.date}`)
                     .join("; ");
                 eventParts.push(`Sign Changes: ${ingressText}`);
             }
         }
 
-        // Format retrogrades  
+        // Format retrogrades
         if (retrogrades.length > 0) {
             const relevantRetros = retrogrades
-                .filter(r => majorPlanets.includes(r.planet))
+                .filter((r) => majorPlanets.includes(r.planet))
                 .slice(0, 4);
 
             if (relevantRetros.length > 0) {
                 const retroText = relevantRetros
-                    .map(r => `${r.planet} ${r.type === "retrograde_start" ? "goes retrograde" : "goes direct"} on ${r.date}`)
+                    .map((r) => `${r.planet} ${r.type === "retrograde_start" ? "goes retrograde" : "goes direct"} on ${r.date}`)
                     .join("; ");
                 eventParts.push(`Retrogrades: ${retroText}`);
             }
@@ -183,120 +184,6 @@ async function generateInsightWithAI(userAstroData, todayAstroData, searchContex
     if (muhurat.gulikaKala) muhuratList.push(`⚠ Gulika Kala: ${muhurat.gulikaKala.start}-${muhurat.gulikaKala.end}`);
     if (muhurat.varjyam) muhuratList.push(`⚠ Varjyam: ${muhurat.varjyam.start}-${muhurat.varjyam.end}`);
 
-    // Extract Google Search context (if available) - SEND MAXIMUM DATA
-    let searchInsights = "";
-    if (searchContext) {
-        const global = searchContext.global || {};
-        const userSpec = searchContext.userSpecific || {};
-        const panchangMeanings = searchContext.panchang || {};
-        const userProfile = searchContext.userProfile || {};
-        const dashaContext = searchContext.dasha || {};
-
-        // ============ GLOBAL COSMIC WEATHER (affects everyone) ============
-        searchInsights += "\n\n=== CURRENT COSMIC WEATHER ===";
-
-        // Retrogrades - VERY important for predictions
-        if (global.events?.retrogrades?.length > 0) {
-            searchInsights += `\n🔄 RETROGRADES NOW: ${global.events.retrogrades.join(", ")}`;
-        } else {
-            searchInsights += `\n✓ NO MAJOR RETROGRADES currently`;
-        }
-
-        // Moon phase
-        if (global.events?.moonPhase) {
-            const mp = global.events.moonPhase;
-            searchInsights += `\n🌙 MOON PHASE: ${mp.type}${mp.sign ? ` in ${mp.sign}` : ""}${mp.date ? ` (${mp.date})` : ""}`;
-        }
-
-        // Eclipse warnings
-        if (global.events?.eclipse) {
-            searchInsights += `\n⚠️ ECLIPSE: ${global.events.eclipse.type} on ${global.events.eclipse.date}`;
-        }
-
-        // Today's cosmic news - full context
-        if (global.todayNews?.summary) {
-            searchInsights += `\n📰 TODAY'S NEWS: ${global.todayNews.summary.substring(0, 500)}`;
-        }
-
-        // Weekly outlook
-        if (global.weekly?.overview) {
-            searchInsights += `\n📅 THIS WEEK: ${global.weekly.overview.substring(0, 400)}`;
-        }
-
-        // Monthly context
-        if (global.monthly?.overview) {
-            searchInsights += `\n📆 THIS MONTH: ${global.monthly.overview.substring(0, 300)}`;
-        }
-
-        // Festivals (spiritual energy peaks)
-        if (global.festivals?.list) {
-            searchInsights += `\n🕉️ FESTIVALS: ${global.festivals.list.substring(0, 200)}`;
-        }
-
-        // ============ TODAY'S PANCHANG MEANINGS ============
-        searchInsights += "\n\n=== TODAY'S PANCHANG SIGNIFICANCE ===";
-
-        if (panchangMeanings.tithi?.meaning) {
-            searchInsights += `\n• TITHI (${tithi}): ${panchangMeanings.tithi.meaning.substring(0, 300)}`;
-        }
-        if (panchangMeanings.nakshatra?.characteristics) {
-            searchInsights += `\n• NAKSHATRA (${todayNakshatra}): ${panchangMeanings.nakshatra.characteristics.substring(0, 300)}`;
-        }
-        if (panchangMeanings.yoga?.meaning) {
-            searchInsights += `\n• YOGA (${yoga}): ${panchangMeanings.yoga.meaning.substring(0, 200)}`;
-        }
-
-        // ============ USER'S PROFILE KNOWLEDGE ============
-        searchInsights += "\n\n=== YOUR ASTROLOGICAL PROFILE ===";
-
-        // Lagna (ascendant) meaning - who you are
-        if (userProfile.lagna?.characteristics) {
-            searchInsights += `\n• YOUR ${lagna} LAGNA: ${userProfile.lagna.characteristics.substring(0, 400)}`;
-        }
-
-        // Birth nakshatra - your soul nature
-        if (userProfile.nakshatra?.characteristics) {
-            searchInsights += `\n• YOUR ${nakshatra} NAKSHATRA: ${userProfile.nakshatra.characteristics.substring(0, 300)}`;
-        }
-
-        // Dasha period interpretation - current life chapter
-        if (dashaContext.general?.interpretation) {
-            searchInsights += `\n• YOUR ${mahaDasha}-${antarDasha} DASHA: ${dashaContext.general.interpretation.substring(0, 400)}`;
-        }
-
-        // ============ USER-SPECIFIC FORECASTS ============
-        searchInsights += "\n\n=== YOUR CURRENT FORECASTS ===";
-
-        if (userSpec.lagnaForecast) {
-            searchInsights += `\n• ${lagna} ASCENDANT NOW: ${userSpec.lagnaForecast.substring(0, 400)}`;
-        }
-        if (userSpec.moonSignForecast) {
-            searchInsights += `\n• ${moonSign} MOON NOW: ${userSpec.moonSignForecast.substring(0, 400)}`;
-        }
-        if (userSpec.dashaForecast) {
-            searchInsights += `\n• ${mahaDasha} PERIOD NOW: ${userSpec.dashaForecast.substring(0, 400)}`;
-        }
-        if (userSpec.majorTransitEffect) {
-            searchInsights += `\n• MAJOR TRANSIT EFFECT: ${userSpec.majorTransitEffect.substring(0, 300)}`;
-        }
-
-        // ============ REMEDIES FOR WEAK PLANETS ============
-        if (searchContext.remedies?.advice) {
-            searchInsights += `\n\n=== REMEDIES ===`;
-            searchInsights += `\n${searchContext.remedies.planet} REMEDY: ${searchContext.remedies.advice.substring(0, 300)}`;
-        }
-
-        // ============ RETROGRADE GUIDES ============
-        if (searchContext.retrogradeGuides?.length > 0) {
-            searchInsights += `\n\n=== RETROGRADE GUIDANCE ===`;
-            for (const guide of searchContext.retrogradeGuides) {
-                if (guide?.guide) {
-                    searchInsights += `\n${guide.planet} RETROGRADE: ${guide.guide.substring(0, 250)}`;
-                }
-            }
-        }
-    }
-
     // Log what we're sending to AI
     logger.info("📊 Insight Generation Data", {
         structuredData: true,
@@ -315,8 +202,6 @@ async function generateInsightWithAI(userAstroData, todayAstroData, searchContex
         todayYoga: yoga,
         todayLord,
         transitCount: Object.keys(transits).length,
-        hasSearchContext: !!searchContext,
-        searchInsightsLength: searchInsights.length,
     });
 
     const prompt = buildInsightUserPrompt({
@@ -335,18 +220,18 @@ async function generateInsightWithAI(userAstroData, todayAstroData, searchContex
         weakPlanets,
         transitList,
         upcomingEventsText,
-        searchInsights,
     });
 
-    // Call Gemini via shared AI client (handles retries, code-fence stripping, logging)
-    // Google Search grounding enabled so Gemini can enrich with current cosmic events
+    // Call Gemini — all context comes from our own computed astronomical data.
+    // No Google Search grounding needed: transits, panchang, dasha, shad bala,
+    // and upcoming events are already in the prompt from our own calculations.
     const aiResponse = await callGemini({
         systemPrompt: INSIGHT_SYSTEM_PROMPT,
         userPrompt: prompt,
         temperature: 0.92,
         maxOutputTokens: 1500,
         expectJson: true,
-        googleSearch: true,
+        googleSearch: false,
         flavorName: "daily_insight",
     });
 
@@ -609,7 +494,8 @@ async function enqueueDispatchTasks(userId, date, sections) {
     }
 
     const functions = getFunctions();
-    const dispatchQueue = functions.taskQueue("locations/asia-southeast2/functions/dispatchCardNotification");
+    // Unified taskRouter queue — see backend/functions/task_router.js
+    const dispatchQueue = functions.taskQueue("locations/asia-southeast2/functions/taskRouter");
 
     const now = DateTime.now().setZone("Asia/Kolkata");
     const todayDateStr = now.toFormat("yyyy-MM-dd");
@@ -643,6 +529,7 @@ async function enqueueDispatchTasks(userId, date, sections) {
 
         try {
             await dispatchQueue.enqueue({
+                taskType: "dispatch_card_notification", // routed by task_router.js
                 userId,
                 date,
                 cardIndex: i,
@@ -827,15 +714,10 @@ async function generateNewInsight(userId, userAstroData, insightRef, today, skip
             recentThemesCount: dashaContext.recentThemes?.length || 0,
         });
 
-        // Step 2: Get Google Search context (optional but valuable)
+        // Step 2: Generate insight with AI using computed astronomical data
         const step2Start = Date.now();
-        const searchContext = await getSearchContext(userAstroData, todayAstroData);
+        const structured = await generateInsightWithAI(userAstroData, todayAstroData);
         const step2Duration = Date.now() - step2Start;
-
-        // Step 3: Generate insight with AI using ALL data
-        const step3Start = Date.now();
-        const structured = await generateInsightWithAI(userAstroData, todayAstroData, searchContext);
-        const step3Duration = Date.now() - step3Start;
 
         // Use scheduledFor from AI response (Gemini now generates this)
         // Fallback to first slot if missing
@@ -904,19 +786,6 @@ async function generateNewInsight(userId, userAstroData, insightRef, today, skip
                     shadBala: todayAstroData.shadBala?._analysis || null,
                     muhurat: todayAstroData.muhurat,
                 },
-                // Search context summary (if available)
-                cosmicWeather: searchContext ? {
-                    retrogrades: searchContext.global?.events?.retrogrades || [],
-                    moonPhase: searchContext.global?.events?.moonPhase,
-                    eclipse: searchContext.global?.events?.eclipse,
-                    todayNews: searchContext.global?.todayNews?.summary?.substring(0, 300),
-                    weekly: searchContext.global?.weekly?.overview?.substring(0, 200),
-                } : null,
-                forecasts: searchContext?.userSpecific ? {
-                    lagna: searchContext.userSpecific.lagnaForecast?.substring(0, 200),
-                    moonSign: searchContext.userSpecific.moonSignForecast?.substring(0, 200),
-                    dasha: searchContext.userSpecific.dashaForecast?.substring(0, 200),
-                } : null,
             },
             notificationSent: false,
             // Staggered delivery tracking - per-card notification status
@@ -937,8 +806,7 @@ async function generateNewInsight(userId, userAstroData, insightRef, today, skip
             performance: {
                 totalMs: totalDuration,
                 step1_todayDataMs: step1Duration,
-                step2_searchContextMs: step2Duration,
-                step3_aiGenerationMs: step3Duration,
+                step2_aiGenerationMs: step2Duration,
             },
         });
 
@@ -983,7 +851,7 @@ async function generateNewInsight(userId, userAstroData, insightRef, today, skip
                         userId,
                         date: today,
                         cardCount: processedSections.length,
-                        scheduledTimes: [...new Set(processedSections.map(s => s.scheduledFor))],
+                        scheduledTimes: [...new Set(processedSections.map((s) => s.scheduledFor))],
                     });
                 } catch (dispatchError) {
                     logger.error("[DISPATCH-ENQUEUE] Failed to enqueue dispatch tasks", {
@@ -1013,19 +881,8 @@ async function generateNewInsight(userId, userAstroData, insightRef, today, skip
     }
 }
 
-/**
- * Callable function to generate insight for current user
- */
-export const generateInsightForCurrentUser = onCall({
-    region: "asia-southeast2",
-    secrets: [geminiApiKey, freeAstrologyApiKey],
-    timeoutSeconds: 120,
-    memory: "512MiB", // Reduced from 1GiB — single-user insight generation fits comfortably
-    invoker: "public", // Allow client apps to invoke (Firebase Auth handles actual auth)
-    // AppCheck: DISABLED until Flutter client enables FirebaseAppCheck
-    // TODO: Set to true after enabling AppCheck in lib/main.dart
-    // enforceAppCheck: true,
-}, async (request) => {
+/** Handler: Generate insight for current user. Extracted for gateway reuse. */
+export async function handleGenerateInsightForCurrentUser(request) {
     const userId = requireAuth(request, "get daily astro insights");
     const forceRegenerate = request.data?.forceRegenerate === true;
 
@@ -1128,24 +985,17 @@ export const generateInsightForCurrentUser = onCall({
         logger.error("generateInsightForCurrentUser failed", { userId, error: String(error) });
         throw new HttpsError("internal", error.message || "Failed to generate insight");
     }
-});
-
+}
 /**
  * GENERATION: Runs ONCE daily at 5 AM IST
  * Enqueues insight generation tasks to Cloud Tasks queue for steady throughput.
  * Each task processes ONE user - this prevents quota spikes.
- * 
+ *
  * OLD: Promise.all with BATCH_SIZE=50 -> quota spikes, failures
  * NEW: Cloud Tasks with rate limiting -> smooth, reliable generation
  */
-export const generateDailyAstroInsights = onSchedule({
-    schedule: "0 5 * * *", // 5 AM IST - ONCE daily
-    region: "asia-southeast2",
-    timeZone: "Asia/Kolkata",
-    memory: "512MiB", // Reduced - we're just enqueuing, not processing
-    timeoutSeconds: 300,
-    secrets: [], // No secrets needed for enqueuing
-}, async (event) => {
+/** Extracted runner for orchestrator consolidation. */
+export async function runGenerateDailyAstroInsights() {
     const today = DateTime.now().setZone("Asia/Kolkata").toFormat("yyyy-MM-dd");
 
     logger.info("🌅 Starting daily insights ENQUEUE (queue-based generation)", {
@@ -1184,8 +1034,9 @@ export const generateDailyAstroInsights = onSchedule({
 
         // Get the task queue for the insight worker
         // Use location-specific format to specify asia-southeast2 region
+        // Unified taskRouter — see backend/functions/task_router.js
         const functions = getFunctions();
-        const queue = functions.taskQueue("locations/asia-southeast2/functions/processInsightTask");
+        const queue = functions.taskQueue("locations/asia-southeast2/functions/taskRouter");
 
         // Enqueue tasks for all users
         // Spread generation over 1 hour to avoid API rate limits and load spikes
@@ -1206,6 +1057,7 @@ export const generateDailyAstroInsights = onSchedule({
                 const delaySeconds = Math.floor((i / totalUsers) * GENERATION_WINDOW_SECONDS);
 
                 await queue.enqueue({
+                    taskType: "process_insight", // routed by task_router.js
                     userId: user.userId,
                     astrologyData: user.astrologyData,
                     date: today,
@@ -1260,125 +1112,18 @@ export const generateDailyAstroInsights = onSchedule({
 
         throw error;
     }
-});
+}
+// NOTE: `generateDailyAstroInsights` was an `onSchedule` export running at
+// 5:00 AM IST. It is now invoked by `unifiedOrchestrator` (see
+// backend/functions/schedulers/unified_orchestrator.js Phase 4) via the
+// extracted `runGenerateDailyAstroInsights` runner above.
 
-/**
- * DISPATCH WORKER: Sends a single card notification
- * Called by Cloud Tasks at scheduled time (6 AM, 12 PM, 5 PM, 9 PM IST)
- */
-export const dispatchCardNotification = onTaskDispatched({
-    retryConfig: {
-        maxAttempts: 3,
-        minBackoffSeconds: 30,
-        maxBackoffSeconds: 300,
-    },
-    rateLimits: {
-        maxConcurrentDispatches: 100,
-        maxDispatchesPerSecond: 10,
-    },
-    region: "asia-southeast2",
-    memory: "256MiB",
-    timeoutSeconds: 30,
-}, async (req) => {
-    const { userId, date, cardIndex, cardType, title, content, scheduledFor } = req.data;
-
-    if (!userId || !date || cardIndex === undefined) {
-        logger.error("[DISPATCH-WORKER] Invalid task data", {
-            structuredData: true,
-            hasUserId: !!userId,
-            hasDate: !!date,
-            cardIndex,
-        });
-        return; // Don't retry invalid tasks
-    }
-
-    logger.info("[DISPATCH-WORKER] Dispatching card notification", {
-        structuredData: true,
-        userId,
-        date,
-        cardIndex,
-        scheduledFor,
-    });
-
-    try {
-        // Skip if already delivered (e.g. immediate delivery for first-time insight)
-        const insightSnap = await db.collection("users").doc(userId).collection("dailyInsights").doc(date).get();
-        if (insightSnap.exists) {
-            const data = insightSnap.data();
-            const cardNotifications = data?.cardNotifications || {};
-            const cardState = cardNotifications[String(cardIndex)] || cardNotifications[cardIndex];
-            if (cardState?.sent === true) {
-                logger.info("[DISPATCH-WORKER] Card already sent, skipping", {
-                    structuredData: true,
-                    userId,
-                    date,
-                    cardIndex,
-                });
-                return;
-            }
-        }
-
-        // Create notification document (triggers push notification via Firestore trigger)
-        const notificationRef = db
-            .collection("notifications")
-            .doc(userId)
-            .collection("notifications")
-            .doc();
-
-        await notificationRef.set({
-            type: "dailyAstroInsight",
-            cardType: "insight", // Unified type
-            cardIndex: cardIndex || 0,
-            totalCards: 4, // Standard 4 cards per day
-            title: title || "",
-            preview: stripMarkdown(content || "").substring(0, 150),
-            insightId: date,
-            date: date,
-            timestamp: FieldValue.serverTimestamp(),
-            read: false,
-        });
-
-        // Update insight document to mark card as sent
-        try {
-            const insightRef = db
-                .collection("users")
-                .doc(userId)
-                .collection("dailyInsights")
-                .doc(date);
-
-            await insightRef.update({
-                [`cardNotifications.${cardIndex}.sent`]: true,
-                [`cardNotifications.${cardIndex}.sentAt`]: FieldValue.serverTimestamp(),
-            });
-        } catch (updateError) {
-            // Don't fail if insight update fails - notification is already sent
-            logger.warn("[DISPATCH-WORKER] Failed to update insight cardNotifications", {
-                structuredData: true,
-                userId,
-                cardIndex,
-                error: String(updateError),
-            });
-        }
-
-        logger.info("[DISPATCH-WORKER] Card notification dispatched", {
-            structuredData: true,
-            userId,
-            date,
-            cardIndex,
-        });
-    } catch (error) {
-        logger.error("[DISPATCH-WORKER] Failed to dispatch card notification", {
-            structuredData: true,
-            userId,
-            date,
-            cardIndex,
-            error: String(error),
-            stack: error.stack?.substring(0, 500),
-        });
-        // Re-throw to trigger Cloud Tasks retry
-        throw error;
-    }
-});
+// NOTE: The DISPATCH WORKER (`dispatchCardNotification`) used to live here as a
+// Cloud Tasks consumer. It has been merged into the unified `taskRouter`
+// (see backend/functions/task_router.js); the handler logic now lives in
+// backend/functions/task_handlers/dispatch_card_handler.js.
+// Enqueues from this file now target the `taskRouter` queue with
+// `taskType: "dispatch_card_notification"` set on the payload.
 
 /**
  * Admin function to clear caches
@@ -1387,18 +1132,13 @@ export const dispatchCardNotification = onTaskDispatched({
  * - ai: Clear only AI insight caches
  * - old: Clear only old versioned caches (keeps current version)
  */
-export const clearAstroCaches = onCall({
-    region: "asia-southeast2",
-    memory: "256MiB",
-    timeoutSeconds: 60,
-    invoker: "public", // Allow client apps to invoke (Firebase Auth handles actual auth)
-}, async (request) => {
+/** Handler: Clear astro caches. Extracted for gateway reuse. */
+export async function handleClearAstroCaches(request) {
     const userId = request.auth?.uid;
     if (!userId) {
         throw new HttpsError("unauthenticated", "Must be logged in");
     }
 
-    // Optional: Add admin check here if you want to restrict this
     const mode = request.data?.mode || "old";
 
     logger.info("🗑️ Cache clear requested", {
@@ -1410,19 +1150,18 @@ export const clearAstroCaches = onCall({
 
     let result;
     switch (mode) {
-        case "all":
-            result = await clearAllCaches();
-            break;
-        case "ai":
-            result = await clearAIInsightCaches();
-            break;
-        case "old":
-        default:
-            result = await clearOldVersionedCaches();
-            break;
+    case "all":
+        result = await clearAllCaches();
+        break;
+    case "ai":
+        result = await clearAIInsightCaches();
+        break;
+    case "old":
+    default:
+        result = await clearOldVersionedCaches();
+        break;
     }
 
-    // Also get current cache stats
     const stats = await getCacheStats();
 
     return {
@@ -1430,20 +1169,14 @@ export const clearAstroCaches = onCall({
         cacheVersion: getCacheVersion(),
         stats,
     };
-});
-
+}
 /**
  * CLEANUP: Remove old insightDispatch entries
  * Runs daily to prevent document accumulation
  * Keeps last 7 days of dispatch data for debugging
  */
-export const cleanupOldDispatchEntries = onSchedule({
-    schedule: "0 4 * * *", // Daily at 4 AM IST
-    region: "asia-southeast2",
-    timeZone: "Asia/Kolkata",
-    timeoutSeconds: 300,
-    memory: "256MiB",
-}, async (event) => {
+/** Extracted runner for orchestrator consolidation. */
+export async function runCleanupOldDispatchEntries() {
     const now = DateTime.now().setZone("Asia/Kolkata");
     const cutoffDate = now.minus({ days: 7 }).toFormat("yyyy-MM-dd");
 
@@ -1508,19 +1241,16 @@ export const cleanupOldDispatchEntries = onSchedule({
         });
         throw error;
     }
-});
+}
+// NOTE: `cleanupOldDispatchEntries` was an `onSchedule` export at 4 AM IST.
+// Now invoked by `unifiedOrchestrator` Phase 1 (cleanup) via the runner above.
 
 /**
  * CLEANUP: Remove expired cache entries from astroCache and astroCurrent collections
  * Runs daily to prevent stale data accumulation
  */
-export const cleanupExpiredCacheEntries = onSchedule({
-    schedule: "0 5 * * *", // Daily at 5 AM IST (after dispatch cleanup)
-    region: "asia-southeast2",
-    timeZone: "Asia/Kolkata",
-    timeoutSeconds: 300,
-    memory: "256MiB",
-}, async (event) => {
+/** Extracted runner for orchestrator consolidation. */
+export async function runCleanupExpiredCacheEntries() {
     logger.info("🗑️ Starting expired cache cleanup", {
         structuredData: true,
         timestamp: DateTime.now().setZone("Asia/Kolkata").toISO(),
@@ -1543,5 +1273,7 @@ export const cleanupExpiredCacheEntries = onSchedule({
         });
         throw error;
     }
-});
+}
+// NOTE: `cleanupExpiredCacheEntries` was an `onSchedule` export at 5 AM IST.
+// Now invoked by `unifiedOrchestrator` Phase 1 (cleanup) via the runner above.
 

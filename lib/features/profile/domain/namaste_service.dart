@@ -89,8 +89,9 @@ class NamasteService {
       AppLogger.d('🙏 Sending namaste to $toUid',
           category: LogCategory.network);
 
-      final callable = _functions.httpsCallable('sendNamaste');
+      final callable = _functions.httpsCallable('socialGateway');
       final result = await callable.call({
+        'method': 'sendNamaste',
         'recipientUid': toUid,
         'sendChatMessage': dmId != null,
         'dmId': dmId,
@@ -140,8 +141,8 @@ class NamasteService {
     }
 
     try {
-      final callable = _functions.httpsCallable('getNamasteQuota');
-      final result = await callable.call();
+      final callable = _functions.httpsCallable('socialGateway');
+      final result = await callable.call({'method': 'getNamasteQuota'});
 
       final data = result.data as Map<String, dynamic>;
       final quota = NamasteQuota(

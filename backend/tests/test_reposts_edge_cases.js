@@ -11,7 +11,7 @@
  */
 
 import { db, FieldValue } from "../lib/firebase.js";
-import { createRepostHandler, deleteRepostHandler, cascadeDeleteReposts } from "../functions/reposts.js";
+import { handleCreateRepost, handleDeleteRepost, cascadeDeleteReposts } from "../functions/reposts.js";
 import { HttpsError } from "firebase-functions/v2/https";
 
 const TEST_USER_ID = process.env.TEST_USER_ID || "test_user_" + Date.now();
@@ -261,7 +261,7 @@ async function testCreateRepost_TransactionFailure() {
         });
         
         // Create repost normally
-        const result1 = await createRepostHandler(createMockRequest(TEST_USER_ID, {
+        const result1 = await handleCreateRepost(createMockRequest(TEST_USER_ID, {
             originalPostId: postRef.id,
             contextType: "profile",
             contextId: null,
@@ -271,7 +271,7 @@ async function testCreateRepost_TransactionFailure() {
         
         // Try to create duplicate (should fail with already-exists)
         try {
-            await createRepostHandler(createMockRequest(TEST_USER_ID, {
+            await handleCreateRepost(createMockRequest(TEST_USER_ID, {
                 originalPostId: postRef.id,
                 contextType: "profile",
                 contextId: null,
@@ -331,7 +331,7 @@ async function testDeleteRepost_AlreadyDeleted() {
         });
         
         // Delete repost
-        await deleteRepostHandler(createMockRequest(TEST_USER_ID, {
+        await handleDeleteRepost(createMockRequest(TEST_USER_ID, {
             repostId: repostRef.id,
         }));
         
@@ -339,7 +339,7 @@ async function testDeleteRepost_AlreadyDeleted() {
         
         // Try to delete again (should fail)
         try {
-            await deleteRepostHandler(createMockRequest(TEST_USER_ID, {
+            await handleDeleteRepost(createMockRequest(TEST_USER_ID, {
                 repostId: repostRef.id,
             }));
             logTest("Delete already-deleted repost prevented", false, "Should have thrown error");

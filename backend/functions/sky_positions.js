@@ -1,20 +1,18 @@
 /**
  * Global Sky Positions - SMART Incremental Architecture
- * 
+ *
  * KEY PRINCIPLES:
  * 1. Planetary positions are GLOBAL (same for everyone)
  * 2. Only fetch NEW days (incremental updates)
  * 3. Keep ALL historical data (no deletion)
  * 4. Calculate and store upcoming events (sign ingresses, retrogrades)
  * 5. Insight generation just READS pre-calculated data
- * 
+ *
  * Data stored in Firestore:
  * - global_astro/sky_positions: { positions: { "2026-01-16": {...}, ... }, lastFetchedDate, ... }
  * - global_astro/upcoming_events: { signIngresses: [...], retrogrades: [...], ... }
  */
 
-import { onCall } from "firebase-functions/v2/https";
-import { onSchedule } from "firebase-functions/v2/scheduler";
 import { logger } from "firebase-functions";
 import { DateTime } from "luxon";
 import { db, FieldValue } from "../lib/firebase.js";
@@ -227,7 +225,7 @@ async function fetchPanchangForDate(date) {
         };
 
         // Remove undefined/null/empty values
-        Object.keys(panchang).forEach(key => {
+        Object.keys(panchang).forEach((key) => {
             if (panchang[key] === undefined || panchang[key] === null || panchang[key] === "") {
                 delete panchang[key];
             }
@@ -355,9 +353,9 @@ function calculateRetrogrades(positions) {
                     planet,
                     type: isRetro ? "retrograde_start" : "retrograde_end",
                     date: dateKey,
-                    description: isRetro
-                        ? `${planet} goes retrograde`
-                        : `${planet} goes direct`,
+                    description: isRetro ?
+                        `${planet} goes retrograde` :
+                        `${planet} goes direct`,
                 });
             }
 
@@ -380,8 +378,8 @@ async function calculateAndStoreUpcomingEvents(positions) {
     const retrogrades = calculateRetrogrades(positions);
 
     // Filter to only future events for the main list
-    const futureIngresses = signIngresses.filter(e => e.date >= today);
-    const futureRetrogrades = retrogrades.filter(e => e.date >= today);
+    const futureIngresses = signIngresses.filter((e) => e.date >= today);
+    const futureRetrogrades = retrogrades.filter((e) => e.date >= today);
 
     // Store in Firestore
     const eventsRef = db.collection("global_astro").doc("upcoming_events");
@@ -405,8 +403,8 @@ async function calculateAndStoreUpcomingEvents(positions) {
     logger.info("📅 Calculated and stored upcoming events", {
         futureIngresses: futureIngresses.length,
         futureRetrogrades: futureRetrogrades.length,
-        sampleIngresses: futureIngresses.slice(0, 5).map(e => `${e.planet}→${e.toSign} on ${e.date}`),
-        sampleRetrogrades: futureRetrogrades.slice(0, 3).map(e => `${e.planet} ${e.type} on ${e.date}`),
+        sampleIngresses: futureIngresses.slice(0, 5).map((e) => `${e.planet}→${e.toSign} on ${e.date}`),
+        sampleRetrogrades: futureRetrogrades.slice(0, 3).map((e) => `${e.planet} ${e.type} on ${e.date}`),
     });
 
     return { signIngresses: futureIngresses, retrogrades: futureRetrogrades };
@@ -418,7 +416,7 @@ async function calculateAndStoreUpcomingEvents(positions) {
 
 /**
  * Smart incremental prefetch - only fetches missing days
- * 
+ *
  * Logic:
  * 1. Read existing positions from Firestore
  * 2. Determine target date (today + 60 days)
@@ -448,7 +446,7 @@ async function smartPrefetch() {
     }
 
     // Find missing dates
-    const missingDates = requiredDates.filter(d => !existingDates.has(d));
+    const missingDates = requiredDates.filter((d) => !existingDates.has(d));
 
     logger.info("🔍 Smart prefetch analysis", {
         existingDays: existingDates.size,
@@ -534,7 +532,7 @@ async function smartPrefetch() {
             }
 
             // Rate limiting - 150ms between calls
-            await new Promise(resolve => setTimeout(resolve, 150));
+            await new Promise((resolve) => setTimeout(resolve, 150));
         } catch (error) {
             logger.warn(`Failed to fetch ${dateKey}:`, { error: String(error) });
             errorCount++;
@@ -606,8 +604,7 @@ async function smartPrefetch() {
 
 // ---------------------------------------------------------------------------
 // Gateway-callable handlers (plain async functions)
-// These are the inner logic, reusable by both the onCall wrappers below
-// and the astroGateway router.
+// Called by the astroGateway router.
 // ---------------------------------------------------------------------------
 
 export async function handlePrefetchSkyPositions(request) {
@@ -754,66 +751,6 @@ export async function handleGetGlobalMuhurat() {
     }
 }
 
-// ---------------------------------------------------------------------------
-// onCall wrappers (backward-compatible — existing Flutter calls still work)
-// ---------------------------------------------------------------------------
-
-/**
- * Manual trigger for smart prefetch
- */
-export const prefetchSkyPositions = onCall({
-    timeoutSeconds: 300,
-    memory: "512MiB",
-    secrets: [freeAstrologyApiKey],
-    region: "asia-southeast2",
-    invoker: "public",
-    enforceAppCheck: false,
-}, async (request) => {
-    return handlePrefetchSkyPositions(request);
-});
-
-/**
- * Get cached sky positions AND global panchang
- */
-export const getSkyPositions = onCall({
-    timeoutSeconds: 30,
-    memory: "256MiB",
-    region: "asia-southeast2",
-    invoker: "public",
-}, async () => {
-    return handleGetSkyPositions();
-});
-
-/**
- * Get pre-calculated upcoming events (sign ingresses, retrogrades)
- */
-export const getUpcomingEvents = onCall({
-    timeoutSeconds: 30,
-    memory: "256MiB",
-    region: "asia-southeast2",
-    invoker: "public",
-}, async () => {
-    return handleGetUpcomingEvents();
-});
-
-/**
- * Get cached global muhurat timeline (Ujjain reference)
- * 
- * SIMPLE LOGIC:
- * - Always shows 3 days: today, tomorrow, day after
- * - Cache is valid if dateKeys[0] === today (date-based, not time-based)
- * - Fetches fresh data when date changes
- */
-export const getGlobalMuhurat = onCall({
-    timeoutSeconds: 30,
-    memory: "256MiB",
-    region: "asia-southeast2",
-    secrets: [freeAstrologyApiKey],
-    invoker: "public",
-}, async () => {
-    return handleGetGlobalMuhurat();
-});
-
 /**
  * Helper function to get upcoming sign ingresses (for internal use)
  * Reads from pre-calculated data - NO calculation, instant response
@@ -857,38 +794,30 @@ export async function getUpcomingRetrogrades() {
 /**
  * Scheduled: Smart incremental update
  * Runs daily at 2 AM UTC
- * 
+ *
  * This is now EFFICIENT:
  * - Day 1 (or if behind): Fetches all missing days
  * - Day 2+: Usually fetches only 1 new day
  */
-export const refreshSkyPositionsDaily = onSchedule({
-    schedule: "every day 02:00",
-    timeZone: "UTC",
-    timeoutSeconds: 540,
-    memory: "512MiB",
-    secrets: [freeAstrologyApiKey],
-    region: "asia-southeast2",
-}, async () => {
+
+/** Extracted runner for orchestrator consolidation. */
+export async function runRefreshSkyPositionsDaily() {
     logger.info("⏰ Scheduled smart prefetch starting");
     const result = await smartPrefetch();
     logger.info("⏰ Scheduled smart prefetch complete", result);
-});
+}
 
-export const refreshMuhuratDaily = onSchedule({
-    schedule: "every day 03:00",
-    timeZone: "UTC",
-    timeoutSeconds: 300,
-    memory: "256MiB",
-    secrets: [freeAstrologyApiKey],
-    region: "asia-southeast2",
-}, async () => {
+// NOTE: `refreshSkyPositionsDaily` was a standalone `onSchedule` export.
+// It is now invoked by `unifiedOrchestrator` Phase 2 (data refresh) via the
+// `runRefreshSkyPositionsDaily` runner above.
+
+/** Extracted runner for orchestrator consolidation. */
+export async function runRefreshMuhuratDaily() {
     logger.info("⏰ Scheduled muhurat refresh starting");
 
     try {
         // Try to get fresh data from API
-        const fakeRequest = { auth: null };
-        const result = await getGlobalMuhurat(fakeRequest);
+        const result = await handleGetGlobalMuhurat();
 
         if (result.success && result.muhurat) {
             logger.info("⏰ Scheduled muhurat refresh complete with fresh data");
@@ -901,7 +830,11 @@ export const refreshMuhuratDaily = onSchedule({
         logger.error("⏰ Scheduled muhurat refresh failed, using fallback", error);
         await ensureBasicMuhuratData();
     }
-});
+}
+
+// NOTE: `refreshMuhuratDaily` was a standalone `onSchedule` export.
+// It is now invoked by `unifiedOrchestrator` Phase 2 (data refresh) via the
+// `runRefreshMuhuratDaily` runner above.
 
 // Fallback: create minimal muhurat data if API fails
 async function ensureBasicMuhuratData() {

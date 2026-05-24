@@ -168,6 +168,18 @@ class ThemeProvider extends ChangeNotifier {
     await setThemeMode(_isDarkMode ? AppThemeMode.light : AppThemeMode.dark);
   }
 
+  /// Temporarily flip the theme without leaving automatic mode.
+  /// The auto timer keeps running and will correct back at the next
+  /// time boundary (8 AM or 4 PM).
+  void temporaryToggle() {
+    _isDarkMode = !_isDarkMode;
+    notifyListeners();
+    AppLogger.d(
+        'Theme temporarily toggled to ${_isDarkMode ? "dark" : "light"} mode',
+        category: LogCategory.ui,
+        data: {'hour': DateTime.now().hour, 'themeMode': _themeMode.name});
+  }
+
   /// Get a display string for the current theme mode
   String get themeModeLabel {
     switch (_themeMode) {

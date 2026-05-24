@@ -63,6 +63,7 @@ export const astroGateway = onCall({
     memory: "512MiB",      // max of all methods
     region: "asia-southeast2",
     invoker: "public",
+    cpu: 1,
     concurrency: 40,
     maxInstances: 2,
 }, async (request) => {

@@ -415,8 +415,9 @@ class AstrologyService {
 
     try {
       final result = await callWithFunctionsFallback(
-        functionName: 'syncAstroProfile',
+        functionName: 'astroGateway',
         data: {
+          'method': 'syncAstroProfile',
           'mode': mode,
           'forceRefresh': forceRefresh,
         },

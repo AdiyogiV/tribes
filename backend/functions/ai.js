@@ -1,5 +1,4 @@
 import { onRequest } from "firebase-functions/v2/https";
-import { onCall } from "firebase-functions/v2/https";
 import { logger } from "../lib/firebase.js";
 import { db, FieldValue } from "../lib/firebase.js";
 import { geminiApiKey } from "../lib/secrets.js";
@@ -218,6 +217,8 @@ export const aiChat = onRequest(
         timeoutSeconds: 300,
         memory: "512MiB",
         invoker: "public",
+        cpu: 1,
+        concurrency: 40,
     },
     async (req, res) => {
         if (req.method === "OPTIONS") {
@@ -804,21 +805,18 @@ async function streamFromGeminiText({ chatId, userMessage, messages, write, astr
 // GET CHAT PROMPT CONFIG (callable for Flutter - single source of truth)
 // =============================================================================
 
-export const getChatPromptConfig = onCall(
-    { region: "asia-southeast2" },
-    (request) => {
-        const { chatSource, astrologyContext, userLocation, isVoice } = request.data || {};
-        // Preserve explicit chatSource; null = unified HolyCow mode
-        const source = chatSource || null;
-        const systemPrompt = getChatSystemPrompt(
-            astrologyContext || null,
-            userLocation || null,
-            !!isVoice,
-            source,
-        );
-        return { systemPrompt };
-    },
-);
+/** Handler: Get chat prompt config. Extracted for gateway reuse. */
+export function handleGetChatPromptConfig(request) {
+    const { chatSource, astrologyContext, userLocation, isVoice } = request.data || {};
+    const source = chatSource || null;
+    const systemPrompt = getChatSystemPrompt(
+        astrologyContext || null,
+        userLocation || null,
+        !!isVoice,
+        source,
+    );
+    return { systemPrompt };
+}
 
 // =============================================================================
 // THOUGHT STEPS (for real-time UI updates)

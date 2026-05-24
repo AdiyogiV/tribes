@@ -55,7 +55,6 @@ class _CosmicDateTimeCardState extends State<CosmicDateTimeCard> {
     final c = AppTheme.primaryColor;
     final samvat = widget.samvat;
 
-    final vedicPrahar = VedicTimeUtils.getVedicPrahar(_now);
     final vedicTimeShort = VedicTimeUtils.getVedicTimeShort(_now);
     final samvatYear = VedicTimeUtils.buildSamvatYearNameOnly(samvat);
     final vedicNumericDate = VedicTimeUtils.buildVedicNumericDate(samvat);
@@ -75,12 +74,29 @@ class _CosmicDateTimeCardState extends State<CosmicDateTimeCard> {
     } else {
       tithiLine = fullVedicDate;
     }
-    final monthLine = lunarMonth != null ? '$lunarMonth Masa' : null;
+    final monthLine = lunarMonth;
 
     // Extract moon phase data
     int? tithiNumber = _extractTithiNumber(samvat);
     final pakshaRaw = _extractPaksha(samvat);
     final paksha = pakshaRaw.isNotEmpty ? pakshaRaw : 'shukla';
+
+    // Split tithiLine into separate paksha line and tithi name line
+    // e.g. "Krishna Chaturdashi" → pakshaLine="Krishna", tithiNameOnly="Chaturdashi"
+    String? pakshaLine;
+    String? tithiNameOnly;
+    if (tithiLine != null) {
+      if (pakshaRaw.isNotEmpty) {
+        final pakshaCapitalized =
+            '${pakshaRaw[0].toUpperCase()}${pakshaRaw.substring(1)}';
+        pakshaLine = pakshaCapitalized;
+        final withoutPaksha =
+            tithiLine.replaceFirst(pakshaCapitalized, '').trim();
+        tithiNameOnly = withoutPaksha.isNotEmpty ? withoutPaksha : null;
+      } else {
+        tithiNameOnly = tithiLine;
+      }
+    }
 
     // Log once per session when data arrives
     if (samvat != null && !_loggedMoonPhase) {
@@ -134,17 +150,7 @@ class _CosmicDateTimeCardState extends State<CosmicDateTimeCard> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Prahar name
-                        Text(
-                          vedicPrahar,
-                          style: TextStyle(
-                            fontSize: AppTheme.holyCowTextSize,
-                            fontWeight: FontWeight.w600,
-                            color: c,
-                            height: 1.4,
-                          ),
-                        ),
-                        // Ghati · Pala
+                        // Pr · Gh · Pa
                         Text(
                           vedicTimeShort,
                           style: TextStyle(
@@ -165,10 +171,10 @@ class _CosmicDateTimeCardState extends State<CosmicDateTimeCard> {
                               height: 1.4,
                             ),
                           ),
-                        // Tithi: Krishna Navami
-                        if (tithiLine != null)
+                        // Paksha: Krishna
+                        if (pakshaLine != null)
                           Text(
-                            tithiLine,
+                            pakshaLine,
                             style: TextStyle(
                               fontSize: AppTheme.holyCowTextSize,
                               fontWeight: FontWeight.w500,
@@ -176,10 +182,10 @@ class _CosmicDateTimeCardState extends State<CosmicDateTimeCard> {
                               height: 1.4,
                             ),
                           ),
-                        // Samvat year name
-                        if (samvatYear != null)
+                        // Tithi name: Chaturdashi
+                        if (tithiNameOnly != null)
                           Text(
-                            samvatYear,
+                            tithiNameOnly,
                             style: TextStyle(
                               fontSize: AppTheme.holyCowTextSize,
                               fontWeight: FontWeight.w500,

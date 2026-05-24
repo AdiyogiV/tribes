@@ -44,4 +44,10 @@ export { getPurnimaAmavasyaDates, getAllTriggerDates } from "./kriya/kaal_nirnay
 export { applyConfidenceToEffects, getConfidenceSummary } from "./kriya/smriti.js";
 
 // Infrastructure (Yantra)
-export { generateMundaneForecast, getMundaneForecast, refreshMundanePanchanga } from "./yantra/agni_karya.js";
+// NOTE: `refreshMundanePanchanga` (was an `onSchedule` export) is no longer
+// re-exported here — it has been replaced by `runRefreshMundanePanchanga`
+// invoked from `unifiedOrchestrator`. Import that runner directly from
+// `yantra/agni_karya.js` if you need to call it programmatically.
+export {
+    handleGenerateMundaneForecast, handleGetMundaneForecast,
+} from "./yantra/agni_karya.js";

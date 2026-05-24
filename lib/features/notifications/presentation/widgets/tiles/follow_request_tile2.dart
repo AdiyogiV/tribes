@@ -100,8 +100,8 @@ class _FollowRequestTileState extends State<FollowRequestTile> {
       // Call backend function to accept the follow request
       // Backend has Admin SDK access to update the follower's document
       final callable = FirebaseFunctions.instanceFor(region: 'asia-southeast2')
-          .httpsCallable('acceptFollowRequest');
-      await callable.call({'followerId': _fromUserId});
+          .httpsCallable('socialGateway');
+      await callable.call({'method': 'acceptFollowRequest', 'followerId': _fromUserId});
 
       // Success haptic
       HapticFeedback.mediumImpact();
@@ -140,8 +140,8 @@ class _FollowRequestTileState extends State<FollowRequestTile> {
       // Call backend function to reject the follow request
       // Backend has Admin SDK access to delete the follower's document
       final callable = FirebaseFunctions.instanceFor(region: 'asia-southeast2')
-          .httpsCallable('rejectFollowRequest');
-      await callable.call({'followerId': _fromUserId});
+          .httpsCallable('socialGateway');
+      await callable.call({'method': 'rejectFollowRequest', 'followerId': _fromUserId});
 
       if (mounted) {
         setState(() {

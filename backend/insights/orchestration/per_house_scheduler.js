@@ -1,22 +1,22 @@
 /**
- * per_house orchestration — scheduler + worker + manual callable.
+ * per_house orchestration — scheduler + manual callable.
  *
- * Three exports:
+ * Two exports remain after the taskRouter merge:
  *   1. enqueuePerHouseReadings  — daily scheduler; finds users whose cycle
- *      has expired and enqueues regeneration tasks.
- *   2. processPerHouseTask      — Cloud Tasks worker; runs the flavor for
- *      one user.
- *   3. generatePerHouseNow      — onCall callable; force regenerate for
- *      the calling user (used on first sync + manual refresh).
+ *      has expired and enqueues regeneration tasks against taskRouter.
+ *   2. handleGeneratePerHouseNow — handler for gateway; force regenerate
+ *      for the calling user (used on first sync + manual refresh).
+ *
+ * The Cloud Tasks worker (previously `processPerHouseTask`) is now part of
+ * the unified `taskRouter` (see backend/functions/task_router.js). The
+ * actual handler logic lives in
+ * backend/functions/task_handlers/process_per_house_handler.js.
  */
 
-import { onSchedule } from "firebase-functions/v2/scheduler";
-import { onTaskDispatched } from "firebase-functions/v2/tasks";
-import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { HttpsError } from "firebase-functions/v2/https";
 import { getFunctions } from "firebase-admin/functions";
 import { DateTime } from "luxon";
 import { db, logger } from "../../lib/firebase.js";
-import { geminiApiKey, freeAstrologyApiKey } from "../../lib/secrets.js";
 import { requireAuth } from "../../lib/auth_utils.js";
 import { runFlavor } from "../engine/insight_engine.js";
 import {
@@ -26,10 +26,10 @@ import {
     PER_HOUSE_CYCLE_DAYS,
 } from "../flavors/per_house.js";
 
+// Unified taskRouter — see backend/functions/task_router.js
 const QUEUE_NAME =
-    "locations/asia-southeast2/functions/processPerHouseTask";
+    "locations/asia-southeast2/functions/taskRouter";
 const ENQUEUE_WINDOW_SECONDS = 3600; // spread across 1h
-const REGION = "asia-southeast2";
 
 // Test-mode safety cap. Set PER_HOUSE_MAX_USERS=N as a function env var to limit
 // how many users get enqueued in a single scheduler run. 0 (or unset) = no cap.
@@ -47,13 +47,8 @@ const TEST_UID_ALLOWLIST = (process.env.PER_HOUSE_TEST_UIDS || "")
 // 1. Scheduler — runs daily, enqueues users whose cycle expired
 // ---------------------------------------------------------------------------
 
-export const enqueuePerHouseReadings = onSchedule({
-    schedule: "30 5 * * *", // 5:30 AM IST, after the daily insight enqueue
-    region: REGION,
-    timeZone: "Asia/Kolkata",
-    memory: "512MiB",
-    timeoutSeconds: 540,
-}, async () => {
+/** Extracted runner for orchestrator consolidation. */
+export async function runEnqueuePerHouseReadings() {
     const today = DateTime.now().setZone("Asia/Kolkata");
     logger.info("🏠 Per-house enqueue starting", {
         structuredData: true,
@@ -104,12 +99,16 @@ export const enqueuePerHouseReadings = onSchedule({
         const total = candidates.length;
         for (let i = 0; i < total; i++) {
             const uid = candidates[i];
-            const delaySeconds = total > 0
-                ? Math.floor((i / total) * ENQUEUE_WINDOW_SECONDS)
-                : 0;
+            const delaySeconds = total > 0 ?
+                Math.floor((i / total) * ENQUEUE_WINDOW_SECONDS) :
+                0;
             try {
                 await queue.enqueue(
-                    { uid, scheduledFor: today.toISO() },
+                    {
+                        taskType: "process_per_house",
+                        uid,
+                        scheduledFor: today.toISO(),
+                    },
                     { scheduleDelaySeconds: delaySeconds },
                 );
                 enqueued++;
@@ -142,74 +141,18 @@ export const enqueuePerHouseReadings = onSchedule({
         });
         throw error;
     }
-});
+}
+// NOTE: `enqueuePerHouseReadings` was a standalone `onSchedule` export at
+// 5:30 AM IST. It is now invoked by `unifiedOrchestrator` Phase 4 (user
+// insights) via the `runEnqueuePerHouseReadings` runner above.
 
 // ---------------------------------------------------------------------------
-// 2. Worker — runs the flavor for a single user
+// 2. Manual callable — used on first sync or for force-refresh from app
+//    (the Cloud Tasks worker is now part of taskRouter; see file-level comment.)
 // ---------------------------------------------------------------------------
 
-export const processPerHouseTask = onTaskDispatched({
-    retryConfig: {
-        maxAttempts: 3,
-        minBackoffSeconds: 30,
-        maxBackoffSeconds: 300,
-    },
-    rateLimits: {
-        maxConcurrentDispatches: 8,
-        maxDispatchesPerSecond: 2,
-    },
-    region: REGION,
-    memory: "512MiB",
-    timeoutSeconds: 90,
-    secrets: [geminiApiKey, freeAstrologyApiKey],
-}, async (req) => {
-    const { uid } = req.data || {};
-    if (!uid) {
-        logger.error("[per_house-worker] missing uid", { structuredData: true });
-        return; // don't retry
-    }
-
-    const window = computeCycleWindow();
-    logger.info("[per_house-worker] processing", {
-        structuredData: true,
-        uid,
-        cycleStart: window.cycleStart,
-        cycleEnd: window.cycleEnd,
-    });
-
-    try {
-        const { result, latencyMs } = await runFlavor(perHouseFlavor, {
-            uid,
-            ...window,
-        });
-        logger.info("[per_house-worker] done", {
-            structuredData: true,
-            uid,
-            latencyMs,
-            houseCount: Object.keys(result?.houses || {}).length,
-        });
-    } catch (error) {
-        logger.error("[per_house-worker] failed", {
-            structuredData: true,
-            uid,
-            error: String(error?.message || error),
-            stack: error?.stack?.substring(0, 500),
-        });
-        throw error; // trigger Cloud Tasks retry
-    }
-});
-
-// ---------------------------------------------------------------------------
-// 3. Manual callable — used on first sync or for force-refresh from app
-// ---------------------------------------------------------------------------
-
-export const generatePerHouseNow = onCall({
-    region: REGION,
-    memory: "512MiB",
-    timeoutSeconds: 90,
-    secrets: [geminiApiKey, freeAstrologyApiKey],
-    invoker: "public",
-}, async (request) => {
+/** Handler: Generate per-house readings now. Extracted for gateway reuse. */
+export async function handleGeneratePerHouseNow(request) {
     // Wrap EVERYTHING so no exception ever escapes as bare INTERNAL.
     // Each stage logs its name on entry; on failure we re-throw an HttpsError
     // whose message tells us exactly which stage and why.
@@ -299,4 +242,4 @@ export const generatePerHouseNow = onCall({
             { stage, errorName: error?.name },
         );
     }
-});
+}

@@ -52,8 +52,8 @@ class _AIRecommendationsCardState extends State<AIRecommendationsCard> {
       await user.getIdToken(true);
       
       final functions = FirebaseFunctions.instanceFor(region: 'asia-southeast2');
-      final callable = functions.httpsCallable('getAyurvedaRecommendations');
-      final result = await callable.call();
+      final callable = functions.httpsCallable('healthGateway');
+      final result = await callable.call({'method': 'getAyurvedaRecommendations'});
 
       if (result.data != null && result.data['success'] == true) {
         setState(() {

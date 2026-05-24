@@ -79,16 +79,19 @@ class VedicTimeUtils {
     return '${_praharNames[praharIndex]} Prahar ${praharIndex + 1}';
   }
 
-  /// Short Vedic time: "Ghati 52 · Pala 29"
+  /// Short Vedic time: "Pr6 . Gh42 . Pa48"
   static String getVedicTimeShort(DateTime time) {
     const sunriseHour = 6;
     var secondsFromSunrise = (time.hour - sunriseHour) * 3600 + time.minute * 60 + time.second;
     if (secondsFromSunrise < 0) secondsFromSunrise += 86400;
 
+    final minutesFromSunrise = secondsFromSunrise / 60.0;
+    final prahar = (minutesFromSunrise ~/ 180) % 8 + 1;
+
     final ghati = secondsFromSunrise ~/ 1440;
     final pala = (secondsFromSunrise - (ghati * 1440)) ~/ 24;
 
-    return 'Ghati $ghati · Pala $pala';
+    return 'Pr$prahar . Gh$ghati . Pa$pala';
   }
 
   // Hindu lunar month order (Chaitra = 1, the first month of the year)
@@ -107,10 +110,12 @@ class VedicTimeUtils {
   ///
   /// Handles common suffix variants automatically:
   /// - South Indian / Sanskrit `-m` suffix (Vaisakham → Vaisakha)
-  /// - Without needing to enumerate every spelling in the map.
+  /// - Adhika (intercalary) prefix — "Adhika Vaishakha" → same number as Vaishakha
   static int? _lunarMonthNumber(String? monthName) {
     if (monthName == null) return null;
-    final key = monthName.toLowerCase().trim();
+    var key = monthName.toLowerCase().trim();
+    // Strip 'adhika' prefix — Adhika Masa uses same base month number.
+    key = key.replaceFirst(RegExp(r'^adhika\s+'), '');
     // Direct lookup
     final direct = _lunarMonthNumbers[key];
     if (direct != null) return direct;
@@ -121,15 +126,40 @@ class VedicTimeUtils {
     return null;
   }
 
+  /// Returns true when [monthName] is an Adhika (intercalary) month,
+  /// i.e. the name starts with "Adhika ".
+  static bool _isAdhikaMasa(String? monthName) {
+    if (monthName == null) return false;
+    return monthName.toLowerCase().trimLeft().startsWith('adhika ');
+  }
+
+  /// Resolve the effective lunar month name from a samvat map.
+  ///
+  /// Handles two backend patterns:
+  ///   1. Name already includes prefix: `lunar_month_full_name: "Adhika Vaishakha"`
+  ///   2. Separate flag: `lunar_month_full_name: "Vaishakha"` + `is_adhika_masa: true`
+  ///
+  /// Returns the name with "Adhika " prepended when appropriate.
+  static String? _resolveMonthName(Map<String, dynamic> samvat) {
+    final raw = samvat['lunar_month_full_name']?.toString() ??
+        samvat['lunar_month_name']?.toString() ??
+        samvat['lunarMonthFull']?.toString() ??
+        samvat['lunarMonth']?.toString();
+    if (raw == null) return null;
+    // Already has the prefix — return as-is.
+    if (_isAdhikaMasa(raw)) return raw;
+    // Check for a separate flag field.
+    final flag = samvat['is_adhika_masa'] ?? samvat['adhika_masa'] ?? samvat['adhika'];
+    final isFlagged = flag == true || flag == 1 || flag?.toString() == 'true';
+    return isFlagged ? 'Adhika $raw' : raw;
+  }
+
   /// Build full Vedic date string — names only.
   /// Example: "Chaitra Krishna Shashthi"
   static String? buildFullVedicDate(Map<String, dynamic>? samvat) {
     if (samvat == null) return null;
 
-    final lunarMonth = samvat['lunar_month_full_name']?.toString() ??
-        samvat['lunar_month_name']?.toString() ??
-        samvat['lunarMonthFull']?.toString() ??
-        samvat['lunarMonth']?.toString();
+    final lunarMonth = _resolveMonthName(samvat);
 
     final rawTithi = samvat['name'] ??
         samvat['tithi_name'] ??
@@ -160,11 +190,18 @@ class VedicTimeUtils {
   static String? buildVedicNumericDate(Map<String, dynamic>? samvat) {
     if (samvat == null) return null;
 
-    final lunarMonth = samvat['lunar_month_full_name']?.toString() ??
-        samvat['lunar_month_name']?.toString() ??
-        samvat['lunarMonthFull']?.toString() ??
-        samvat['lunarMonth']?.toString();
-    final monthNum = _lunarMonthNumber(lunarMonth);
+    final lunarMonth = _resolveMonthName(samvat);
+
+    // Prefer the pre-computed number the backend always sends; fall back to
+    // deriving it from the month name for resilience.
+    final rawMonthNum = samvat['lunar_month_number'];
+    int? monthNum;
+    if (rawMonthNum != null) {
+      monthNum = rawMonthNum is num
+          ? rawMonthNum.toInt()
+          : int.tryParse(rawMonthNum.toString());
+    }
+    monthNum ??= _lunarMonthNumber(lunarMonth);
 
     final rawPaksha = samvat['paksha']?.toString() ??
         samvat['tithiPaksha']?.toString();
@@ -188,10 +225,46 @@ class VedicTimeUtils {
         samvat['vikramYear'] ??
         samvat['year'];
 
+    // ── Diagnostic logging ───────────────────────────────────────────────────
+    // Remove once month lookup is confirmed working.
+    AppLogger.d('VedicNumericDate: month lookup',
+        category: LogCategory.ui,
+        data: {
+          'lunar_month_number': samvat['lunar_month_number'],
+          'raw_lunar_month_full_name': samvat['lunar_month_full_name'],
+          'raw_lunar_month_name': samvat['lunar_month_name'],
+          'raw_lunarMonthFull': samvat['lunarMonthFull'],
+          'raw_lunarMonth': samvat['lunarMonth'],
+          'is_adhika_masa': samvat['is_adhika_masa'],
+          'adhika_masa': samvat['adhika_masa'],
+          'adhika': samvat['adhika'],
+          'resolved_lunarMonth': lunarMonth,
+          'monthNum': monthNum,
+          'pakshaNum': pakshaNum,
+          'tithiNum': tithiNum,
+          'samvat_keys': samvat.keys.toList(),
+        });
+    // ─────────────────────────────────────────────────────────────────────────
+
     if (monthNum == null && pakshaNum == null && tithiNum == null) return null;
 
+    // Prefix month number with 'A' for Adhika (intercalary) months,
+    // e.g. Adhika Vaishakha → "A2" instead of "2".
+    // Check both the resolved name AND the raw flag fields for resilience
+    // (handles the case where name fields are absent but the flag is set).
+    final adhikaFlag = samvat['is_adhika_masa'] ??
+        samvat['adhika_masa'] ??
+        samvat['adhika'];
+    final isFlaggedAdhika = adhikaFlag == true ||
+        adhikaFlag == 1 ||
+        adhikaFlag?.toString() == 'true';
+    final isAdhika = _isAdhikaMasa(lunarMonth) || isFlaggedAdhika;
+    final monthStr = monthNum != null
+        ? (isAdhika ? 'A$monthNum' : '$monthNum')
+        : '–';
+
     final parts = <String>[
-      monthNum?.toString() ?? '–',
+      monthStr,
       pakshaNum?.toString() ?? '–',
       tithiNum?.toString() ?? '–',
       if (yearNum != null) yearNum.toString(),

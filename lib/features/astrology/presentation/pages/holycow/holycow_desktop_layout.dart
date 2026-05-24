@@ -94,46 +94,62 @@ class HolyCowDesktopLayoutState extends State<HolyCowDesktopLayout> {
         ? Colors.white.withValues(alpha: 0.08)
         : Colors.black.withValues(alpha: 0.06);
 
-    return Row(
-      children: [
-        // Left panel — conversation history
-        SizedBox(
-          width: 340,
-          child: Container(
-            decoration: BoxDecoration(
-              color: isDark ? AppTheme.cardDarkColor : Colors.white,
-              border: Border(right: BorderSide(color: dividerColor, width: 1)),
-            ),
-            child: NestedScrollView(
-              headerSliverBuilder: (context, innerBoxIsScrolled) => [
-                AppHeaderStyle.buildWideLayoutHeaderSliver(
-                  context,
-                  title: 'HolyCow',
-                  trailing: IconButton(
-                    onPressed: showDashboard,
-                    icon: Icon(
-                      Icons.add_rounded,
-                      color: AppTheme.primaryColor,
-                      size: 22,
-                    ),
-                    tooltip: 'New Chat',
-                  ),
-                ),
-              ],
-              body: _ConversationHistoryList(
-                isDark: isDark,
-                selectedId: _selectedConversationId,
-                onSelectConversation: _selectConversation,
-              ),
-            ),
-          ),
-        ),
+    // When signed-out the conversation history is empty by design — collapse
+    // the 340px column to a 64px rail so the cosmic content gets the space.
+    // We watch the provider here so the rail expands the moment auth lands.
+    return Consumer<AiChatProvider>(
+      builder: (context, provider, _) {
+        final isAuthed = provider.isUserAuthenticated;
+        final leftWidth = isAuthed ? 340.0 : 64.0;
 
-        // Right panel — cosmic dashboard (with floating input) or inline chat
-        Expanded(
-          child: _buildRightPanel(),
-        ),
-      ],
+        return Row(
+          children: [
+            // Left panel — conversation history (slim rail when signed-out)
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 240),
+              curve: Curves.easeOutCubic,
+              width: leftWidth,
+              decoration: BoxDecoration(
+                color: isDark ? AppTheme.cardDarkColor : Colors.white,
+                border:
+                    Border(right: BorderSide(color: dividerColor, width: 1)),
+              ),
+              child: isAuthed
+                  ? NestedScrollView(
+                      headerSliverBuilder: (context, innerBoxIsScrolled) => [
+                        AppHeaderStyle.buildWideLayoutHeaderSliver(
+                          context,
+                          title: 'HolyCow',
+                          trailing: IconButton(
+                            onPressed: showDashboard,
+                            icon: Icon(
+                              Icons.add_rounded,
+                              color: AppTheme.primaryColor,
+                              size: 22,
+                            ),
+                            tooltip: 'New Chat',
+                          ),
+                        ),
+                      ],
+                      body: _ConversationHistoryList(
+                        isDark: isDark,
+                        selectedId: _selectedConversationId,
+                        onSelectConversation: _selectConversation,
+                      ),
+                    )
+                  : _CollapsedHolyCowRail(
+                      isDark: isDark,
+                      onNewChat: showDashboard,
+                    ),
+            ),
+
+            // Right panel — cosmic dashboard (with floating input) or inline chat
+            Expanded(
+              child: _buildRightPanel(),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -175,6 +191,66 @@ class HolyCowDesktopLayoutState extends State<HolyCowDesktopLayout> {
             child: widget.dashboardInputBuilder!(),
           ),
       ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Collapsed rail (signed-out state)
+//
+// Replaces the empty 340px chat panel with a 64px vertical rail
+// that still shows the HolyCow icon + a + button so the affordance
+// to start a chat is never hidden.
+// ─────────────────────────────────────────────────────────────
+
+class _CollapsedHolyCowRail extends StatelessWidget {
+  final bool isDark;
+  final VoidCallback onNewChat;
+
+  const _CollapsedHolyCowRail({
+    required this.isDark,
+    required this.onNewChat,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingLg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Tooltip(
+            message: 'HolyCow',
+            child: Container(
+              width: 36,
+              height: 36,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm),
+              ),
+              child: Icon(
+                Icons.auto_awesome_rounded,
+                size: 20,
+                color: AppTheme.primaryColor,
+              ),
+            ),
+          ),
+          const SizedBox(height: AppDimensions.spacingMd),
+          IconButton(
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              onNewChat();
+            },
+            icon: Icon(
+              Icons.add_rounded,
+              color: AppTheme.primaryColor,
+              size: 22,
+            ),
+            tooltip: 'New Chat',
+          ),
+        ],
+      ),
     );
   }
 }

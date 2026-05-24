@@ -7,22 +7,21 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		04D573EE9558C116819C4CC3 /* Pods_RunnerTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CF0ADB76C7DEF7471278EDBC /* Pods_RunnerTests.framework */; };
 		058455BE2F88E40600EDD664 /* AuroWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 058455B42F88E40400EDD664 /* AuroWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		058456882F8903C200EDD664 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 058456872F8903C200EDD664 /* WidgetKit.framework */; };
 		0584568A2F8903C200EDD664 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 058456892F8903C200EDD664 /* SwiftUI.framework */; };
 		0A9B155B96E5BD75B068428E /* WatchSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E576E09EC1A80A2B133278CD /* WatchSessionManager.swift */; };
 		113E545D9BDBF22639199822 /* NadiEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 398A433AD74F60C3AB06F207 /* NadiEngine.swift */; };
 		1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */ = {isa = PBXBuildFile; fileRef = 1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */; };
-		159072D6C7E1FADB9A278E5F /* Pods_RunnerTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2C9D6010234E81C4D097CB02 /* Pods_RunnerTests.framework */; };
-		1A95123781A6205A8E59364A /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6DF0A21DB37A12EEF84DC1C4 /* Pods_Runner.framework */; };
 		21ABD6FAF1034C69C4F1D745 /* MuhuratView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10F0E1406E34B7689995EF02 /* MuhuratView.swift */; };
-		A7B3C8D4E5F60192B8E4D302 /* SkyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7B3C8D4E5F60192B8E4D301 /* SkyView.swift */; };
 		331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331C807B294A618700263BE5 /* RunnerTests.swift */; };
 		3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */; };
 		67D3FF2347F3B3CE4E090496 /* VedicClockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 800C6C312753DAC2BBA4677E /* VedicClockView.swift */; };
 		6BAB15A8DA6045FEA1BD804B /* VedicTimeCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CA34A0F8DD3BD570756A86C /* VedicTimeCalculator.swift */; };
 		74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74858FAE1ED2DC5600515810 /* AppDelegate.swift */; };
 		7B652419EB64D2C2A9D101CB /* CosmicNowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DCEF5510812CACF03BACC57 /* CosmicNowView.swift */; };
+		83190CEEFC39C975BDA7B154 /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 988CB635266D640262D6930F /* Pods_Runner.framework */; };
 		8A05399C0348231ED7902E77 /* LocalCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCB31F9E1137016E741C3752 /* LocalCache.swift */; };
 		8FFF93114D5D44DC2C679333 /* AuroWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCA260669A555FE61EA6C8EE /* AuroWatchApp.swift */; };
 		92CFEB783A7FF77CC4F9595A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D135A5024408438A11E58CB8 /* ContentView.swift */; };
@@ -30,20 +29,19 @@
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
 		9EF8F85F514CCB82BD528388 /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47036F15F80BF9D94BD7AF58 /* NotificationsView.swift */; };
-		AE89FDCA6E49A85DE21D1F9C /* WatchSyncManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E634DE73DFC312E04A7FE8B4 /* WatchSyncManager.swift */; };
-		BB01A2C3D4E5F607182930A1 /* BackgroundHealthSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB01A2C3D4E5F607182930B1 /* BackgroundHealthSync.swift */; };
-		B431D2432C367FBF00A97FCA /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = B431D2422C367FBF00A97FCA /* GoogleService-Info.plist */; };
-		B431D2442C367FBF00A97FCA /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = B431D2422C367FBF00A97FCA /* GoogleService-Info.plist */; };
-		BABC9A7B4C906902D30EC663 /* HealthKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15BC72371629DA54F5B17C32 /* HealthKitManager.swift */; };
-		E3608B744B0B7713FDF82B42 /* AuroWatch WidgetExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 058456862F8903C200EDD664 /* AuroWatch WidgetExtension.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		E6C0B65C8496D6F9AE92FD33 /* InsightView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDCE9BA538A2956C4A0D4ACB /* InsightView.swift */; };
-		E76855332AE0C9563A850423 /* AuroTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE5210EE6CBF4D7119299FA8 /* AuroTheme.swift */; };
-		F6F357E8BAA2BF029B93064B /* NadiMonitorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AFA99A008445D7183012F2E /* NadiMonitorView.swift */; };
+		A7B3C8D4E5F60192B8E4D302 /* SkyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7B3C8D4E5F60192B8E4D301 /* SkyView.swift */; };
 		AA1B2C3D4E5F607182930A01 /* OjasEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B2C3D4E5F607182930B01 /* OjasEngine.swift */; };
 		AA1B2C3D4E5F607182930A02 /* OjasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B2C3D4E5F607182930B02 /* OjasView.swift */; };
 		AA1B2C3D4E5F607182930A03 /* DhatuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B2C3D4E5F607182930B03 /* DhatuView.swift */; };
 		AA1B2C3D4E5F607182930A04 /* DinacharyaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B2C3D4E5F607182930B04 /* DinacharyaView.swift */; };
 		AA1B2C3D4E5F607182930A05 /* RituView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B2C3D4E5F607182930B05 /* RituView.swift */; };
+		AA1B2C3D4E5F607182930A06 /* VedicTimeTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B2C3D4E5F607182930B06 /* VedicTimeTextView.swift */; };
+		AA1B2C3D4E5F607182930A07 /* AuroLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B2C3D4E5F607182930B07 /* AuroLogger.swift */; };
+		AE89FDCA6E49A85DE21D1F9C /* WatchSyncManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E634DE73DFC312E04A7FE8B4 /* WatchSyncManager.swift */; };
+		B431D2432C367FBF00A97FCA /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = B431D2422C367FBF00A97FCA /* GoogleService-Info.plist */; };
+		B431D2442C367FBF00A97FCA /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = B431D2422C367FBF00A97FCA /* GoogleService-Info.plist */; };
+		BABC9A7B4C906902D30EC663 /* HealthKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15BC72371629DA54F5B17C32 /* HealthKitManager.swift */; };
+		BB01A2C3D4E5F607182930A1 /* BackgroundHealthSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB01A2C3D4E5F607182930B1 /* BackgroundHealthSync.swift */; };
 		CC01A2C3D4E5F607182930A1 /* AbhyangaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC01A2C3D4E5F607182930B1 /* AbhyangaView.swift */; };
 		CC02A2C3D4E5F607182930A1 /* AgniView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC02A2C3D4E5F607182930B1 /* AgniView.swift */; };
 		CC03A2C3D4E5F607182930A1 /* AyurvedaHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC03A2C3D4E5F607182930B1 /* AyurvedaHubView.swift */; };
@@ -58,8 +56,10 @@
 		CC12A2C3D4E5F607182930A1 /* SensorsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC12A2C3D4E5F607182930B1 /* SensorsView.swift */; };
 		CC13A2C3D4E5F607182930A1 /* VikritiView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC13A2C3D4E5F607182930B1 /* VikritiView.swift */; };
 		CC14A2C3D4E5F607182930A1 /* VyayamaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC14A2C3D4E5F607182930B1 /* VyayamaView.swift */; };
-		AA1B2C3D4E5F607182930A06 /* VedicTimeTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B2C3D4E5F607182930B06 /* VedicTimeTextView.swift */; };
-		AA1B2C3D4E5F607182930A07 /* AuroLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B2C3D4E5F607182930B07 /* AuroLogger.swift */; };
+		E3608B744B0B7713FDF82B42 /* AuroWatch WidgetExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 058456862F8903C200EDD664 /* AuroWatch WidgetExtension.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		E6C0B65C8496D6F9AE92FD33 /* InsightView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDCE9BA538A2956C4A0D4ACB /* InsightView.swift */; };
+		E76855332AE0C9563A850423 /* AuroTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE5210EE6CBF4D7119299FA8 /* AuroTheme.swift */; };
+		F6F357E8BAA2BF029B93064B /* NadiMonitorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AFA99A008445D7183012F2E /* NadiMonitorView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -122,33 +122,30 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		0376E1B8ABF0259C7C733643 /* Pods-Runner.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.debug.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"; sourceTree = "<group>"; };
+		01B53BD9C8A1C796C69C8E99 /* Pods-Runner.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.debug.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"; sourceTree = "<group>"; };
 		058455B42F88E40400EDD664 /* AuroWatch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "AuroWatch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		058456862F8903C200EDD664 /* AuroWatch WidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "AuroWatch WidgetExtension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
 		058456872F8903C200EDD664 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		058456892F8903C200EDD664 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		0DCEF5510812CACF03BACC57 /* CosmicNowView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CosmicNowView.swift; sourceTree = "<group>"; };
 		1013531FABA1CF6BE6CBBAF3 /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		10C58F49D9BD917F7D7E00B5 /* Pods-RunnerTests.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.profile.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.profile.xcconfig"; sourceTree = "<group>"; };
 		10F0E1406E34B7689995EF02 /* MuhuratView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MuhuratView.swift; sourceTree = "<group>"; };
 		1498D2321E8E86230040F4C2 /* GeneratedPluginRegistrant.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GeneratedPluginRegistrant.h; sourceTree = "<group>"; };
 		1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GeneratedPluginRegistrant.m; sourceTree = "<group>"; };
 		15BC72371629DA54F5B17C32 /* HealthKitManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HealthKitManager.swift; sourceTree = "<group>"; };
-		2C9D6010234E81C4D097CB02 /* Pods_RunnerTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RunnerTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		331C807B294A618700263BE5 /* RunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunnerTests.swift; sourceTree = "<group>"; };
 		331C8081294A63A400263BE5 /* RunnerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunnerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		398A433AD74F60C3AB06F207 /* NadiEngine.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NadiEngine.swift; sourceTree = "<group>"; };
 		3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = AppFrameworkInfo.plist; path = Flutter/AppFrameworkInfo.plist; sourceTree = "<group>"; };
 		47036F15F80BF9D94BD7AF58 /* NotificationsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
 		4CA34A0F8DD3BD570756A86C /* VedicTimeCalculator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VedicTimeCalculator.swift; sourceTree = "<group>"; };
-		5177DC013CBB5C1C7988BF81 /* Pods-RunnerTests.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.profile.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.profile.xcconfig"; sourceTree = "<group>"; };
+		54B02B402269250207D64193 /* Pods-RunnerTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.debug.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.debug.xcconfig"; sourceTree = "<group>"; };
 		6AFA99A008445D7183012F2E /* NadiMonitorView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NadiMonitorView.swift; sourceTree = "<group>"; };
-		6DF0A21DB37A12EEF84DC1C4 /* Pods_Runner.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Runner.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Runner-Bridging-Header.h"; sourceTree = "<group>"; };
 		74858FAE1ED2DC5600515810 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		7AFA3C8E1D35360C0083082E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Flutter/Release.xcconfig; sourceTree = "<group>"; };
 		800C6C312753DAC2BBA4677E /* VedicClockView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VedicClockView.swift; sourceTree = "<group>"; };
-		8466C0D05843504C76DDD5A9 /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
-		8ABA2FE1B6944A584E8AAAE6 /* Pods-Runner.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.release.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"; sourceTree = "<group>"; };
 		9740EEB21CF90195004384FC /* Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Debug.xcconfig; path = Flutter/Debug.xcconfig; sourceTree = "<group>"; };
 		9740EEB31CF90195004384FC /* Generated.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Generated.xcconfig; path = Flutter/Generated.xcconfig; sourceTree = "<group>"; };
 		97C146EE1CF9000F007C117D /* Runner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Runner.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -156,21 +153,8 @@
 		97C146FD1CF9000F007C117D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		97C147001CF9000F007C117D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		97C147021CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		B431D2412C367A8100A97FCA /* Runner.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Runner.entitlements; sourceTree = "<group>"; };
-		B431D2422C367FBF00A97FCA /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
-		B431D2432C367A8100A97FCA /* Release.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Release.entitlements; sourceTree = "<group>"; };
-		C35C465FAC3DB6C471F43623 /* Pods-RunnerTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.release.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.release.xcconfig"; sourceTree = "<group>"; };
-		C724EB05E3B1C067B1D843F7 /* AuroWatch.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = AuroWatch.entitlements; sourceTree = "<group>"; };
-		D135A5024408438A11E58CB8 /* ContentView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		D67B8261AB322F9C8D8497EA /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		DCB31F9E1137016E741C3752 /* LocalCache.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LocalCache.swift; sourceTree = "<group>"; };
-		DD8FEFF292F6F99832191964 /* Pods-RunnerTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.debug.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.debug.xcconfig"; sourceTree = "<group>"; };
-		DE5210EE6CBF4D7119299FA8 /* AuroTheme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuroTheme.swift; sourceTree = "<group>"; };
-		E576E09EC1A80A2B133278CD /* WatchSessionManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchSessionManager.swift; sourceTree = "<group>"; };
-		E634DE73DFC312E04A7FE8B4 /* WatchSyncManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchSyncManager.swift; sourceTree = "<group>"; };
-		BB01A2C3D4E5F607182930B1 /* BackgroundHealthSync.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BackgroundHealthSync.swift; sourceTree = "<group>"; };
-		FCA260669A555FE61EA6C8EE /* AuroWatchApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuroWatchApp.swift; sourceTree = "<group>"; };
-		FDCE9BA538A2956C4A0D4ACB /* InsightView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InsightView.swift; sourceTree = "<group>"; };
+		988CB635266D640262D6930F /* Pods_Runner.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Runner.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		A525AFB70D70AB83AA05B94B /* Pods-RunnerTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.release.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.release.xcconfig"; sourceTree = "<group>"; };
 		A7B3C8D4E5F60192B8E4D301 /* SkyView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SkyView.swift; sourceTree = "<group>"; };
 		AA1B2C3D4E5F607182930B01 /* OjasEngine.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OjasEngine.swift; sourceTree = "<group>"; };
 		AA1B2C3D4E5F607182930B02 /* OjasView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OjasView.swift; sourceTree = "<group>"; };
@@ -179,6 +163,11 @@
 		AA1B2C3D4E5F607182930B05 /* RituView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RituView.swift; sourceTree = "<group>"; };
 		AA1B2C3D4E5F607182930B06 /* VedicTimeTextView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VedicTimeTextView.swift; sourceTree = "<group>"; };
 		AA1B2C3D4E5F607182930B07 /* AuroLogger.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuroLogger.swift; sourceTree = "<group>"; };
+		B431D2412C367A8100A97FCA /* Runner.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Runner.entitlements; sourceTree = "<group>"; };
+		B431D2422C367FBF00A97FCA /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		B431D2432C367A8100A97FCA /* Release.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Release.entitlements; sourceTree = "<group>"; };
+		BB01A2C3D4E5F607182930B1 /* BackgroundHealthSync.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BackgroundHealthSync.swift; sourceTree = "<group>"; };
+		C724EB05E3B1C067B1D843F7 /* AuroWatch.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = AuroWatch.entitlements; sourceTree = "<group>"; };
 		CC01A2C3D4E5F607182930B1 /* AbhyangaView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AbhyangaView.swift; sourceTree = "<group>"; };
 		CC02A2C3D4E5F607182930B1 /* AgniView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AgniView.swift; sourceTree = "<group>"; };
 		CC03A2C3D4E5F607182930B1 /* AyurvedaHubView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AyurvedaHubView.swift; sourceTree = "<group>"; };
@@ -193,6 +182,17 @@
 		CC12A2C3D4E5F607182930B1 /* SensorsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SensorsView.swift; sourceTree = "<group>"; };
 		CC13A2C3D4E5F607182930B1 /* VikritiView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VikritiView.swift; sourceTree = "<group>"; };
 		CC14A2C3D4E5F607182930B1 /* VyayamaView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VyayamaView.swift; sourceTree = "<group>"; };
+		CF0ADB76C7DEF7471278EDBC /* Pods_RunnerTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RunnerTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		D102527C63EBCBCBADD401D0 /* Pods-Runner.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.release.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"; sourceTree = "<group>"; };
+		D135A5024408438A11E58CB8 /* ContentView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		D67B8261AB322F9C8D8497EA /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		DCB31F9E1137016E741C3752 /* LocalCache.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LocalCache.swift; sourceTree = "<group>"; };
+		DE5210EE6CBF4D7119299FA8 /* AuroTheme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuroTheme.swift; sourceTree = "<group>"; };
+		E576E09EC1A80A2B133278CD /* WatchSessionManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchSessionManager.swift; sourceTree = "<group>"; };
+		E634DE73DFC312E04A7FE8B4 /* WatchSyncManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchSyncManager.swift; sourceTree = "<group>"; };
+		EDC3BA653D29A40E0B1E6066 /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
+		FCA260669A555FE61EA6C8EE /* AuroWatchApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuroWatchApp.swift; sourceTree = "<group>"; };
+		FDCE9BA538A2956C4A0D4ACB /* InsightView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InsightView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -241,7 +241,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1A95123781A6205A8E59364A /* Pods_Runner.framework in Frameworks */,
+				83190CEEFC39C975BDA7B154 /* Pods_Runner.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -249,7 +249,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				159072D6C7E1FADB9A278E5F /* Pods_RunnerTests.framework in Frameworks */,
+				04D573EE9558C116819C4CC3 /* Pods_RunnerTests.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -303,12 +303,12 @@
 		408CA79BE7120B8A0D43585D /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				0376E1B8ABF0259C7C733643 /* Pods-Runner.debug.xcconfig */,
-				8ABA2FE1B6944A584E8AAAE6 /* Pods-Runner.release.xcconfig */,
-				8466C0D05843504C76DDD5A9 /* Pods-Runner.profile.xcconfig */,
-				DD8FEFF292F6F99832191964 /* Pods-RunnerTests.debug.xcconfig */,
-				C35C465FAC3DB6C471F43623 /* Pods-RunnerTests.release.xcconfig */,
-				5177DC013CBB5C1C7988BF81 /* Pods-RunnerTests.profile.xcconfig */,
+				01B53BD9C8A1C796C69C8E99 /* Pods-Runner.debug.xcconfig */,
+				D102527C63EBCBCBADD401D0 /* Pods-Runner.release.xcconfig */,
+				EDC3BA653D29A40E0B1E6066 /* Pods-Runner.profile.xcconfig */,
+				54B02B402269250207D64193 /* Pods-RunnerTests.debug.xcconfig */,
+				A525AFB70D70AB83AA05B94B /* Pods-RunnerTests.release.xcconfig */,
+				10C58F49D9BD917F7D7E00B5 /* Pods-RunnerTests.profile.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -346,31 +346,6 @@
 				AA1B2C3D4E5F607182930B06 /* VedicTimeTextView.swift */,
 			);
 			path = VedicTime;
-			sourceTree = "<group>";
-		};
-		AA1B2C3D4E5F607182930C01 /* Ayurveda */ = {
-			isa = PBXGroup;
-			children = (
-				CC01A2C3D4E5F607182930B1 /* AbhyangaView.swift */,
-				CC02A2C3D4E5F607182930B1 /* AgniView.swift */,
-				CC03A2C3D4E5F607182930B1 /* AyurvedaHubView.swift */,
-				AA1B2C3D4E5F607182930B03 /* DhatuView.swift */,
-				AA1B2C3D4E5F607182930B04 /* DinacharyaView.swift */,
-				CC04A2C3D4E5F607182930B1 /* HridayaView.swift */,
-				CC05A2C3D4E5F607182930B1 /* MantraView.swift */,
-				CC06A2C3D4E5F607182930B1 /* NadiView.swift */,
-				CC07A2C3D4E5F607182930B1 /* NidraView.swift */,
-				AA1B2C3D4E5F607182930B02 /* OjasView.swift */,
-				CC08A2C3D4E5F607182930B1 /* PrakritiView.swift */,
-				CC09A2C3D4E5F607182930B1 /* PranaView.swift */,
-				CC10A2C3D4E5F607182930B1 /* PranayamaView.swift */,
-				CC11A2C3D4E5F607182930B1 /* RemedyView.swift */,
-				AA1B2C3D4E5F607182930B05 /* RituView.swift */,
-				CC12A2C3D4E5F607182930B1 /* SensorsView.swift */,
-				CC13A2C3D4E5F607182930B1 /* VikritiView.swift */,
-				CC14A2C3D4E5F607182930B1 /* VyayamaView.swift */,
-			);
-			path = Ayurveda;
 			sourceTree = "<group>";
 		};
 		95DBC0A86311CE34949A380E /* Features */ = {
@@ -454,10 +429,10 @@
 		A23871A20D8A3ABFD0BA463E /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				6DF0A21DB37A12EEF84DC1C4 /* Pods_Runner.framework */,
-				2C9D6010234E81C4D097CB02 /* Pods_RunnerTests.framework */,
 				058456872F8903C200EDD664 /* WidgetKit.framework */,
 				058456892F8903C200EDD664 /* SwiftUI.framework */,
+				988CB635266D640262D6930F /* Pods_Runner.framework */,
+				CF0ADB76C7DEF7471278EDBC /* Pods_RunnerTests.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -476,6 +451,31 @@
 				FDCE9BA538A2956C4A0D4ACB /* InsightView.swift */,
 			);
 			path = Insight;
+			sourceTree = "<group>";
+		};
+		AA1B2C3D4E5F607182930C01 /* Ayurveda */ = {
+			isa = PBXGroup;
+			children = (
+				CC01A2C3D4E5F607182930B1 /* AbhyangaView.swift */,
+				CC02A2C3D4E5F607182930B1 /* AgniView.swift */,
+				CC03A2C3D4E5F607182930B1 /* AyurvedaHubView.swift */,
+				AA1B2C3D4E5F607182930B03 /* DhatuView.swift */,
+				AA1B2C3D4E5F607182930B04 /* DinacharyaView.swift */,
+				CC04A2C3D4E5F607182930B1 /* HridayaView.swift */,
+				CC05A2C3D4E5F607182930B1 /* MantraView.swift */,
+				CC06A2C3D4E5F607182930B1 /* NadiView.swift */,
+				CC07A2C3D4E5F607182930B1 /* NidraView.swift */,
+				AA1B2C3D4E5F607182930B02 /* OjasView.swift */,
+				CC08A2C3D4E5F607182930B1 /* PrakritiView.swift */,
+				CC09A2C3D4E5F607182930B1 /* PranaView.swift */,
+				CC10A2C3D4E5F607182930B1 /* PranayamaView.swift */,
+				CC11A2C3D4E5F607182930B1 /* RemedyView.swift */,
+				AA1B2C3D4E5F607182930B05 /* RituView.swift */,
+				CC12A2C3D4E5F607182930B1 /* SensorsView.swift */,
+				CC13A2C3D4E5F607182930B1 /* VikritiView.swift */,
+				CC14A2C3D4E5F607182930B1 /* VyayamaView.swift */,
+			);
+			path = Ayurveda;
 			sourceTree = "<group>";
 		};
 		AC60FCEF4CAC19A30A9579EF /* Muhurat */ = {
@@ -565,7 +565,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 331C8087294A63A400263BE5 /* Build configuration list for PBXNativeTarget "RunnerTests" */;
 			buildPhases = (
-				390CA70778CD1D60D6EBF047 /* [CP] Check Pods Manifest.lock */,
+				E2FFA5EEA604F61A72810BE4 /* [CP] Check Pods Manifest.lock */,
 				331C807D294A63A400263BE5 /* Sources */,
 				331C807F294A63A400263BE5 /* Resources */,
 				DC9CEE3670D57AA4E1D5384E /* Frameworks */,
@@ -584,7 +584,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 97C147051CF9000F007C117D /* Build configuration list for PBXNativeTarget "Runner" */;
 			buildPhases = (
-				8E0F0F412A03CB8E85AD83D5 /* [CP] Check Pods Manifest.lock */,
+				694641EBD56D0D4D11CE5FD9 /* [CP] Check Pods Manifest.lock */,
 				9740EEB61CF901F6004384FC /* Run Script */,
 				97C146EA1CF9000F007C117D /* Sources */,
 				97C146EB1CF9000F007C117D /* Frameworks */,
@@ -593,8 +593,8 @@
 				9705A1C41CF9048500538489 /* Embed Frameworks */,
 				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
 				18D4188B2EDAD14A00719080 /* Upload Crashlytics dSYM */,
-				EE50B6BCD00B4EF1F79E905B /* [CP] Embed Pods Frameworks */,
-				21096392BCE90C427C5E77B4 /* [CP] Copy Pods Resources */,
+				028735763B0CEA097E6BF342 /* [CP] Embed Pods Frameworks */,
+				5D925BE1B6819B0C9479DE51 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -692,6 +692,23 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		028735763B0CEA097E6BF342 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
 		18D4188B2EDAD14A00719080 /* Upload Crashlytics dSYM */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -710,45 +727,6 @@
 			shellPath = /bin/sh;
 			shellScript = "# dSYM upload disabled to prevent archive build hanging\n# Upload dSYMs manually after distribution using:\n# ${PODS_ROOT}/FirebaseCrashlytics/upload-symbols -gsp ${PROJECT_DIR}/Runner/GoogleService-Info.plist -p ios <path-to-dsyms>\nexit 0\n";
 		};
-		21096392BCE90C427C5E77B4 /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Copy Pods Resources";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		390CA70778CD1D60D6EBF047 /* [CP] Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
-			);
-			name = "[CP] Check Pods Manifest.lock";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-RunnerTests-checkManifestLockResult.txt",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
 		3B06AD1E1E4923F5004D2608 /* Thin Binary */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
@@ -765,7 +743,24 @@
 			shellPath = /bin/sh;
 			shellScript = "/bin/sh \"$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh\" embed_and_thin";
 		};
-		8E0F0F412A03CB8E85AD83D5 /* [CP] Check Pods Manifest.lock */ = {
+		5D925BE1B6819B0C9479DE51 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		694641EBD56D0D4D11CE5FD9 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -802,21 +797,26 @@
 			shellPath = /bin/sh;
 			shellScript = "/bin/sh \"$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh\" build";
 		};
-		EE50B6BCD00B4EF1F79E905B /* [CP] Embed Pods Frameworks */ = {
+		E2FFA5EEA604F61A72810BE4 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			name = "[CP] Embed Pods Frameworks";
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
 			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-RunnerTests-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks.sh\"\n";
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -1313,7 +1313,7 @@
 		};
 		331C8088294A63A400263BE5 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = DD8FEFF292F6F99832191964 /* Pods-RunnerTests.debug.xcconfig */;
+			baseConfigurationReference = 54B02B402269250207D64193 /* Pods-RunnerTests.debug.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
@@ -1337,7 +1337,7 @@
 		};
 		331C8089294A63A400263BE5 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C35C465FAC3DB6C471F43623 /* Pods-RunnerTests.release.xcconfig */;
+			baseConfigurationReference = A525AFB70D70AB83AA05B94B /* Pods-RunnerTests.release.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
@@ -1359,7 +1359,7 @@
 		};
 		331C808A294A63A400263BE5 /* Profile */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 5177DC013CBB5C1C7988BF81 /* Pods-RunnerTests.profile.xcconfig */;
+			baseConfigurationReference = 10C58F49D9BD917F7D7E00B5 /* Pods-RunnerTests.profile.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;

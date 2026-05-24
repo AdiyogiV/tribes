@@ -135,8 +135,8 @@ mixin ProfileFollowLogic<T extends StatefulWidget> on State<T> {
 
     try {
       final callable = FirebaseFunctions.instanceFor(region: 'asia-southeast2')
-          .httpsCallable('acceptFollowRequest');
-      await callable.call({'followerId': followTargetUid});
+          .httpsCallable('socialGateway');
+      await callable.call({'method': 'acceptFollowRequest', 'followerId': followTargetUid});
 
       HapticFeedback.mediumImpact();
 
@@ -167,8 +167,8 @@ mixin ProfileFollowLogic<T extends StatefulWidget> on State<T> {
 
     try {
       final callable = FirebaseFunctions.instanceFor(region: 'asia-southeast2')
-          .httpsCallable('rejectFollowRequest');
-      await callable.call({'followerId': followTargetUid});
+          .httpsCallable('socialGateway');
+      await callable.call({'method': 'rejectFollowRequest', 'followerId': followTargetUid});
 
       if (mounted) {
         setState(() {

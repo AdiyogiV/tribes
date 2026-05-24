@@ -54,7 +54,12 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
       builder: (context, constraints) {
         final bool showSidebar =
             constraints.maxWidth >= Responsive.wideLayoutBreakpoint;
-        final bool collapseForMedium = constraints.maxWidth < 1400 &&
+        // Medium zone where we force-collapse the nav rail by default.
+        // Previously 1400 — common laptop widths (1440–1512) sit *just* above
+        // it, so they used to swing between collapsed and expanded depending
+        // on minor window resizes. Dropping to 1200 means anything past
+        // typical laptop width gets the expanded rail by default.
+        final bool collapseForMedium = constraints.maxWidth < 1200 &&
             constraints.maxWidth >= Responsive.wideLayoutBreakpoint;
 
         if (showSidebar) {

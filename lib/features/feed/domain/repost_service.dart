@@ -30,8 +30,9 @@ class RepostService {
     }
 
     try {
-      final callable = _functions.httpsCallable('createRepost');
+      final callable = _functions.httpsCallable('socialGateway');
       final result = await callable.call({
+        'method': 'createRepost',
         'originalPostId': originalPostId,
         'contextType': 'profile',
         'contextId': null,
@@ -73,8 +74,9 @@ class RepostService {
     }
 
     try {
-      final callable = _functions.httpsCallable('createRepost');
+      final callable = _functions.httpsCallable('socialGateway');
       final result = await callable.call({
+        'method': 'createRepost',
         'originalPostId': originalPostId,
         'contextType': 'space',
         'contextId': gramId,
@@ -364,8 +366,8 @@ class RepostService {
     }
 
     try {
-      final callable = _functions.httpsCallable('deleteRepost');
-      await callable.call({'repostId': repostId});
+      final callable = _functions.httpsCallable('socialGateway');
+      await callable.call({'method': 'deleteRepost', 'repostId': repostId});
 
       AppLogger.i('Removed repost', data: {
         'originalPostId': originalPostId,

@@ -6,16 +6,14 @@ export { logger } from "firebase-functions";
 
 // Global defaults for all Gen2 functions
 //
-// CRITICAL CPU/CONCURRENCY TUNING:
-// - Firebase Gen2 requires cpu >= 1 when concurrency > 1.
-//   cpu: 0.5 + concurrency: 40 fails validation at deploy time.
-// - With cpu: 1 and maxInstances: 1, worst-case deploy burst is
-//   82 functions × 1 vCPU × 1 instance = 82 vCPU theoretical, but
-//   Cloud Run only runs ~10-15 health checks in parallel during deploy,
-//   staying within the 20 vCPU regional quota.
-// - maxInstances: 1 is fine for ~100 users. Each instance handles
-//   concurrency: 40 requests simultaneously via Node.js async I/O,
-//   giving 40 concurrent requests per function — plenty of headroom.
+// Every Cloud Function = 1 Cloud Run service = 1 vCPU (fractional CPU doesn't
+// work in this project). Regional quota is 20 vCPU, so we must keep total
+// function count ≤ 20.
+//
+// Current architecture (post-consolidation):
+//   5 gateways + 1 orchestrator + ~11 merged triggers + 1 task worker
+//   + aiChat + onUserDeleted ≈ 20 functions = 20 vCPU
+//
 setGlobalOptions({
     region: "asia-southeast2",
     timeoutSeconds: 60,

@@ -401,6 +401,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.1.6"
+  dotlottie_loader:
+    dependency: "direct main"
+    description:
+      name: dotlottie_loader
+      sha256: ef0d49d6de679621956776ada1e0da09a75a73faabfb4e834f5c0a54b3fd3d63
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.6"
   drag_select_grid_view:
     dependency: "direct main"
     description:
@@ -1240,6 +1248,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.3.0"
+  lottie:
+    dependency: "direct main"
+    description:
+      name: lottie
+      sha256: "8b6359a7422167014aa73ce763fa133fb832065dcc0ac4d1dec1f603a5cef7d0"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.3.3"
   marionette_flutter:
     dependency: "direct dev"
     description:

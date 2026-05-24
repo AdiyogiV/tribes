@@ -69,11 +69,11 @@ class _DailyInsightPageState extends State<DailyInsightPage> {
     // Check notification permissions after a delay (fallback for users who skipped onboarding prompt)
     _checkNotificationPermissions();
 
-    // Aura: award daily insight view (+1 once per day) via backend (fire-and-forget)
+    // Aura: award daily insight view (+1 once per day) via socialGateway (fire-and-forget)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       FirebaseFunctions.instanceFor(region: 'asia-southeast2')
-          .httpsCallable('awardDailyInsightView')
-          .call()
+          .httpsCallable('socialGateway')
+          .call({'method': 'awardAuraAction', 'action': 'daily_insight_view'})
           .then((_) {}, onError: (_, __) {});
     });
   }
