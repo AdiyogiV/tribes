@@ -8,8 +8,7 @@
  */
 
 import { logger } from "./firebase.js";
-import { geminiApiKey } from "./secrets.js";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { getVertexAI, extractText } from "./vertex_client.js";
 import { HOUSE_SIGNIFICATIONS } from "./constants.js";
 import { AI_MODELS } from "./config.js";
 import { normalizeDasha } from "./astro_helpers.js";
@@ -289,17 +288,12 @@ function findYogasForHouse(houseNumber, signLord, rajYogas, yogasDetailed) {
  * Generate AI interpretations for all houses in a single call
  */
 async function generateAIInterpretations(houseContexts, lagnaSign, astroData) {
-    const apiKey = geminiApiKey.value();
-    if (!apiKey) {
-        throw new Error("Gemini API key missing");
-    }
-
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({
+    const vertexAI = getVertexAI();
+    const model = vertexAI.getGenerativeModel({
         model: AI_MODELS.GEMINI_FLASH,
         generationConfig: {
             temperature: 0.7,
-            maxOutputTokens: 4000,
+            maxOutputTokens: 65536,
         },
     });
 
@@ -311,12 +305,12 @@ You connect the dots others miss: house lord placements, planetary dignities, as
 Your readings make people feel truly SEEN—because you're reading THEIR specific chart, not generic descriptions.
 Speak directly, warmly, and with conviction. Every insight should feel like a gift of self-understanding.`;
 
-    const result = await model.generateContent([
-        { text: systemPrompt },
-        { text: prompt },
-    ]);
+    const result = await model.generateContent({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        systemInstruction: systemPrompt,
+    });
 
-    const response = result.response.text();
+    const response = extractText(result);
     return parseAIResponse(response, houseContexts);
 }
 

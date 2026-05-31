@@ -97,8 +97,23 @@
     var agoraLoadCallbacks = [];
     var agoraLoadAttempted = false;
 
+    // #region agent log
+    function debugLog(msg, data) {
+      try {
+        fetch('http://127.0.0.1:7242/ingest/327cfdf5-167e-4df8-b9b2-c2bd6e2cc615', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'index.html:loadAgoraSDK', message: msg, data: data || {}, timestamp: Date.now(), sessionId: 'debug-session', hypothesisId: 'A-B' }) }).catch(function () { });
+      } catch (e) { }
+    }
+    // #endregion
+
     function loadAgoraSDK(callback) {
+      // #region agent log
+      debugLog('loadAgoraSDK called', { agoraLoaded: agoraLoaded, agoraLoadAttempted: agoraLoadAttempted, hasCallback: !!callback });
+      // #endregion
+
       if (agoraLoaded) {
+        // #region agent log
+        debugLog('SDK already loaded, calling callback immediately');
+        // #endregion
         if (callback) callback();
         return;
       }
@@ -106,10 +121,18 @@
       if (callback) agoraLoadCallbacks.push(callback);
 
       // Prevent multiple load attempts
-      if (agoraLoadAttempted) return;
+      if (agoraLoadAttempted) {
+        // #region agent log
+        debugLog('Load already attempted, waiting for result');
+        // #endregion
+        return;
+      }
       agoraLoadAttempted = true;
 
       console.log('[Aurogram] Loading Agora SDK on demand...');
+      // #region agent log
+      debugLog('Starting iris-web-rtc script load (official URL)');
+      // #endregion
 
       // Load the iris-web-rtc bundle ONLY (it includes Agora Web SDK)
       // Per official docs: https://pub.dev/packages/agora_rtc_engine
@@ -118,7 +141,15 @@
       irisScript.src = 'https://download.agora.io/sdk/release/iris-web-rtc_n450_w4220_0.8.6.js';
       irisScript.onload = function () {
         console.log('[Aurogram] Agora SDK (iris-web-rtc) loaded successfully');
+        // #region agent log
+        debugLog('Iris script onload fired', { success: true });
+        // #endregion
         agoraLoaded = true;
+        // Execute all pending callbacks
+        var pendingCount = agoraLoadCallbacks.length;
+        // #region agent log
+        debugLog('Executing callbacks', { count: pendingCount });
+        // #endregion
         agoraLoadCallbacks.forEach(function (cb) {
           try { cb(); } catch (e) { console.error('Callback error:', e); }
         });
@@ -126,9 +157,15 @@
       };
       irisScript.onerror = function (e) {
         console.error('[Aurogram] Failed to load Iris bridge');
+        // #region agent log
+        debugLog('Iris script onerror fired', { error: e ? e.toString() : 'unknown' });
+        // #endregion
         agoraLoadAttempted = false; // Allow retry
       };
       document.head.appendChild(irisScript);
+      // #region agent log
+      debugLog('Script element appended to head', { src: irisScript.src });
+      // #endregion
     }
 
     // Expose to Flutter via JS interop

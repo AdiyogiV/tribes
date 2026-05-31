@@ -86,7 +86,6 @@ Write the current times reading now (180–220 words, rich markdown):`,
             options: {
                 expectJson: false,
                 temperature: 0.92,
-                maxOutputTokens: 700,
             },
         };
     },

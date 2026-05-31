@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
@@ -16,6 +18,7 @@ import 'package:aurogram/shared/models/daily_insight.dart';
 import 'package:aurogram/features/astrology/domain/astrology_service.dart';
 import 'package:aurogram/features/ayurveda/domain/ayurveda_service.dart';
 import 'package:aurogram/features/astrology/domain/sky_positions_service.dart';
+import 'package:aurogram/features/astrology/domain/astro_calendar_service.dart';
 import 'package:aurogram/shared/services/media/audio_input_service.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/cosmic_dashboard_data.dart';
 import 'package:aurogram/shared/presentation/widgets/media/glass_container.dart';
@@ -28,20 +31,50 @@ import 'package:aurogram/shared/presentation/widgets/universal/dark_mode_toggle.
 import 'package:aurogram/shared/providers/theme_provider.dart';
 
 class HolyCowPage extends StatefulWidget {
-  const HolyCowPage({super.key});
+  const HolyCowPage({
+    super.key,
+    this.onScrollHidesBottomBar,
+  });
+
+  /// When non-null, called with true when user scrolls down past threshold
+  /// (hide tab bar), false when scrolling up or near top (show tab bar).
+  final void Function(bool hide)? onScrollHidesBottomBar;
 
   @override
   HolyCowPageState createState() => HolyCowPageState();
 }
 
 class HolyCowPageState extends State<HolyCowPage>
-    with AutomaticKeepAliveClientMixin, SingleTickerProviderStateMixin {
+    with AutomaticKeepAliveClientMixin, TickerProviderStateMixin {
   @override
   bool get wantKeepAlive => true;
+
+  // Scroll-to-hide bottom bar + input — mirrors Feed's approach
+  final ScrollController _scrollController = ScrollController();
+  static const double _hideBarScrollThreshold = 50;
+  static const Duration _scrollLogicThrottle = Duration(milliseconds: 100);
+  double _lastScrollOffset = 0;
+  DateTime _lastScrollLogicTime = DateTime(2000);
+  bool _lastReportedHideBar = false;
+  final ValueNotifier<bool> _inputHiddenNotifier = ValueNotifier<bool>(false);
+
+  // Collapsible input — collapsed by default on mobile, always expanded on desktop
+  bool _isInputExpanded = false;
 
   // Dashboard input — navigates to AiChatPage on send
   final TextEditingController _inputController = TextEditingController();
   final FocusNode _inputFocusNode = FocusNode();
+
+  // Typewriter hint text — cycles through phrases
+  static const List<String> _hintPhrases = [
+    'ask holycow',
+    'ask anything',
+    'namaste',
+    "what's up today?",
+    'vata pitta kapha?',
+  ];
+  Timer? _hintTimer;
+  final ValueNotifier<int> _hintIndexNotifier = ValueNotifier<int>(0);
 
   // Voice recording animation
   late AnimationController _micAnimationController;
@@ -51,6 +84,7 @@ class HolyCowPageState extends State<HolyCowPage>
   final _astrologyService = AstrologyService();
   final _ayurvedaService = AyurvedaService();
   final _skyService = SkyPositionsService();
+  final _calendarService = AstroCalendarService();
   final _user = FirebaseAuth.instance.currentUser;
 
   // Streams cached once in initState — never recreated in build()
@@ -58,8 +92,8 @@ class HolyCowPageState extends State<HolyCowPage>
   Stream<DailyInsight?>? _insightStream;
   Stream<AyurvedaProfile?>? _ayurvedaStream;
 
-  // Sky slider state
-  static const int _sliderRangeDays = 30;
+  // Sky slider state — extended range backed by AstroCalendarService.
+  static const int _sliderRangeDays = 180;
   static const int _maxSkyLoadRetries = 2;
   static const Duration _retryBaseDelay = Duration(seconds: 5);
   static const Duration _cachePopulationDelay = Duration(seconds: 8);
@@ -99,6 +133,18 @@ class HolyCowPageState extends State<HolyCowPage>
   void initState() {
     super.initState();
 
+    // Scroll-to-hide bottom bar listener
+    _scrollController.addListener(_onScroll);
+
+    // Auto-expand input on focus, collapse on blur
+    _inputFocusNode.addListener(_onInputFocusChanged);
+
+    // Cycle hint text every 3 seconds
+    _hintTimer = Timer.periodic(const Duration(seconds: 2), (_) {
+      if (!mounted) return;
+      _hintIndexNotifier.value = (_hintIndexNotifier.value + 1) % _hintPhrases.length;
+    });
+
     _micAnimationController = AnimationController(
       duration: const Duration(milliseconds: 1000),
       vsync: this,
@@ -120,6 +166,11 @@ class HolyCowPageState extends State<HolyCowPage>
 
     // Global data — load for everyone (sky positions, events, muhurat are
     // not user-specific and make the page useful even for logged-out visitors)
+    //
+    // Load the lightweight astro calendar (365-day snapshot) in parallel.
+    // This powers the infinite wheel + extended sky chart slider.
+    _loadAstroCalendar();
+
     if (_skyService.availableDays > 0) {
       _loadingState = _loadingState.copyWith(sky: DashboardLoadState.loaded);
     } else {
@@ -139,6 +190,12 @@ class HolyCowPageState extends State<HolyCowPage>
 
   @override
   void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    _hintTimer?.cancel();
+    _hintIndexNotifier.dispose();
+    _inputHiddenNotifier.dispose();
+    _inputFocusNode.removeListener(_onInputFocusChanged);
     _nakshatraController.removeListener(_onWheelControllerChanged);
     _nakshatraController.dispose();
     _inputController.dispose();
@@ -284,6 +341,41 @@ class HolyCowPageState extends State<HolyCowPage>
     }
   }
 
+  /// Load the astro calendar (365-day lightweight snapshot).
+  /// Runs in the background — does not block the UI.  The calendar service
+  /// caches for 7 days, so this is nearly free on repeat visits.
+  Future<void> _loadAstroCalendar() async {
+    await _calendarService.fetchCalendar();
+    // No setState needed — the calendar is consumed on-demand by the wheel
+    // controller sync and sky chart position lookups.
+    if (_calendarService.isLoaded) {
+      AppLogger.i('Astro calendar ready',
+          category: LogCategory.ui,
+          data: {'days': _calendarService.availableDays});
+    }
+  }
+
+  /// Pull-to-refresh: clears caches and reloads all sky data from backend.
+  Future<void> _onRefresh() async {
+    AppLogger.i('Pull-to-refresh triggered',
+        category: LogCategory.ui, data: {'action': 'refreshAllSkyData'});
+    await Future.wait([
+      _skyService.fetchPositions(forceRefresh: true),
+      _calendarService.fetchCalendar(forceRefresh: true),
+      _skyService.fetchGlobalMuhurat(forceRefresh: true),
+      _skyService.fetchUpcomingEvents(forceRefresh: true),
+    ]);
+    if (!mounted) return;
+    setState(() => _loadingState = _loadingState.copyWith(
+      sky: _skyService.availableDays > 0
+          ? DashboardLoadState.loaded
+          : DashboardLoadState.error,
+      muhurat: _skyService.globalMuhurat != null
+          ? DashboardLoadState.loaded
+          : DashboardLoadState.error,
+    ));
+  }
+
   Future<void> _loadGlobalMuhurat() async {
     if (_loadingState.muhurat == DashboardLoadState.loading || !mounted) return;
     setState(() => _loadingState = _loadingState.copyWith(muhurat: DashboardLoadState.loading));
@@ -306,7 +398,9 @@ class HolyCowPageState extends State<HolyCowPage>
     final daysOffset = date
         .difference(DateTime(today.year, today.month, today.day))
         .inDays;
-    _sliderValueNotifier.value = (0.5 + daysOffset / 60.0).clamp(0.0, 1.0);
+    // Map days to slider range: 0.5 = today, 0.0 = −N days, 1.0 = +N days
+    _sliderValueNotifier.value =
+        (0.5 + daysOffset / (2 * _sliderRangeDays)).clamp(0.0, 1.0);
     _sliderDateNotifier.value = date;
   }
 
@@ -317,7 +411,9 @@ class HolyCowPageState extends State<HolyCowPage>
   void _onSliderChanged(double value) {
     _sliderValueNotifier.value = value;
     final daysOffset = ((value - 0.5) * 2 * _sliderRangeDays).round();
-    _sliderDateNotifier.value = DateTime.now().add(Duration(days: daysOffset));
+    final now = DateTime.now();
+    _sliderDateNotifier.value = DateTime(now.year, now.month, now.day)
+        .add(Duration(days: daysOffset));
   }
 
   void _resetSliderToToday() {
@@ -337,6 +433,65 @@ class HolyCowPageState extends State<HolyCowPage>
 
   void _onBlendValueChanged(double value) {
     setState(() => _chartBlendValue = value);
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // Scroll-to-hide bottom bar (mirrors Feed's approach)
+  // ─────────────────────────────────────────────────────────────
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final offset = _scrollController.position.pixels;
+    final previousOffset = _lastScrollOffset;
+    _lastScrollOffset = offset;
+
+    // Throttle: run hide-bar logic at most every 100ms
+    final now = DateTime.now();
+    if (now.difference(_lastScrollLogicTime) < _scrollLogicThrottle) return;
+    _lastScrollLogicTime = now;
+
+    // Hide tab bar when scrolling down past threshold
+    final isScrollingDown = offset > previousOffset;
+    final pastThreshold = offset > _hideBarScrollThreshold;
+    final shouldHideBar = isScrollingDown && pastThreshold;
+
+    if (shouldHideBar && !_lastReportedHideBar) {
+      _lastReportedHideBar = true;
+      _inputHiddenNotifier.value = true;
+      // Auto-collapse input when scrolling down
+      if (_isInputExpanded && !_inputFocusNode.hasFocus) {
+        setState(() => _isInputExpanded = false);
+      }
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        if (mounted) widget.onScrollHidesBottomBar?.call(true);
+      });
+    } else if (!shouldHideBar && _lastReportedHideBar) {
+      _lastReportedHideBar = false;
+      _inputHiddenNotifier.value = false;
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        if (mounted) widget.onScrollHidesBottomBar?.call(false);
+      });
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // Collapsible input
+  // ─────────────────────────────────────────────────────────────
+
+  void _onInputFocusChanged() {
+    if (_inputFocusNode.hasFocus && !_isInputExpanded) {
+      setState(() => _isInputExpanded = true);
+    }
+  }
+
+  void _toggleInputExpanded() {
+    HapticFeedback.lightImpact();
+    setState(() {
+      _isInputExpanded = !_isInputExpanded;
+      if (!_isInputExpanded) {
+        _inputFocusNode.unfocus();
+      }
+    });
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -367,44 +522,102 @@ class HolyCowPageState extends State<HolyCowPage>
       backgroundColor: Colors.transparent,
       body: Stack(
         children: [
-          GestureDetector(
-            onTap: () => FocusScope.of(context).unfocus(),
+          // Listener uses raw pointer events — not blocked by child GestureDetectors
+          // (e.g. the nakshatra wheel), so tapping anywhere collapses the input.
+          Listener(
+            onPointerDown: (_) {
+              if (_isInputExpanded && !_inputFocusNode.hasFocus) {
+                setState(() => _isInputExpanded = false);
+              }
+              FocusScope.of(context).unfocus();
+            },
             behavior: HitTestBehavior.translucent,
-            child: CustomScrollView(
-              physics: const BouncingScrollPhysics(
-                parent: AlwaysScrollableScrollPhysics(),
-              ),
-              slivers: [
-                _buildSliverHeader(),
-                SliverToBoxAdapter(
-                  child: Column(
-                    children: [
-                      _buildCosmicDashboardContent(),
-                      // Space for input overlay
-                      ListenableBuilder(
-                        listenable: _inputFocusNode,
-                        builder: (context, _) {
-                          return AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            height: _inputFocusNode.hasFocus ? 85.0 : 45.0,
-                          );
-                        },
-                      ),
-                    ],
-                  ),
+            child: RefreshIndicator(
+              onRefresh: _onRefresh,
+              displacement: 50,
+              edgeOffset: MediaQuery.of(context).padding.top + 5,
+              color: Theme.of(context).colorScheme.primary,
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              child: CustomScrollView(
+                controller: _scrollController,
+                physics: const BouncingScrollPhysics(
+                  parent: AlwaysScrollableScrollPhysics(),
                 ),
-              ],
+                slivers: [
+                  _buildSliverHeader(),
+                  SliverToBoxAdapter(
+                    child: Column(
+                      children: [
+                        _buildCosmicDashboardContent(),
+                        // Space for input overlay — less when collapsed
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          height: _isInputExpanded
+                              ? (_inputFocusNode.hasFocus ? 85.0 : 45.0)
+                              : 20.0,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
 
-          // Input at bottom — sends to AiChatPage
+          // Collapsible AI input — collapsed cow icon or expanded toolbar
           Positioned(
             bottom: 0,
             left: 0,
             right: 0,
-            child: SafeArea(
-              top: false,
-              child: _buildDashboardInput(),
+            child: ValueListenableBuilder<bool>(
+              valueListenable: _inputHiddenNotifier,
+              builder: (context, hidden, child) {
+                return TweenAnimationBuilder<double>(
+                  tween: Tween<double>(end: hidden ? 80.0 : 0.0),
+                  duration: const Duration(milliseconds: 600),
+                  curve: Curves.easeInOut,
+                  builder: (context, offset, child) => Transform.translate(
+                    offset: Offset(0, offset),
+                    child: child,
+                  ),
+                  child: child,
+                );
+              },
+              child: SafeArea(
+                top: false,
+                child: Stack(
+                  children: [
+                    // Expanded toolbar — slides right when collapsed
+                    AnimatedSlide(
+                      offset: Offset(_isInputExpanded ? 0 : 1.1, 0),
+                      duration: const Duration(milliseconds: 800),
+                      curve: Curves.easeInOutCubic,
+                      child: AnimatedOpacity(
+                        opacity: _isInputExpanded ? 1.0 : 0.0,
+                        duration: const Duration(milliseconds: 400),
+                        child: IgnorePointer(
+                          ignoring: !_isInputExpanded,
+                          child: _buildDashboardInput(),
+                        ),
+                      ),
+                    ),
+                    // Collapsed cow — slides left when expanded
+                    AnimatedSlide(
+                      offset: Offset(_isInputExpanded ? -5.0 : 0, 0),
+                      duration: const Duration(milliseconds: 800),
+                      curve: Curves.easeInOutCubic,
+                      child: AnimatedOpacity(
+                        opacity: _isInputExpanded ? 0.0 : 1.0,
+                        duration: const Duration(milliseconds: 400),
+                        child: IgnorePointer(
+                          ignoring: _isInputExpanded,
+                          child: _buildCollapsedCowButton(),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ],
@@ -426,7 +639,6 @@ class HolyCowPageState extends State<HolyCowPage>
         onChanged: (_) =>
             context.read<ThemeProvider>().temporaryToggle(),
       ),
-      // Default: shows aurogram app icon (icon_transparent.png) via logoWidget fallback
       showSearchField: false,
     );
   }
@@ -435,8 +647,43 @@ class HolyCowPageState extends State<HolyCowPage>
   // Dashboard input — navigates on send
   // ─────────────────────────────────────────────────────────────
 
+  /// Collapsed state: a bare cow icon aligned with the 4th (profile) tab icon.
+  /// Uses the same spaceEvenly math as TabBottomNav: 4 items × 64px, 16px padding.
+  Widget _buildCollapsedCowButton() {
+    // Match TabBottomNav: 16px padding each side, 4 items × 64px, spaceEvenly
+    final screenWidth = MediaQuery.of(context).size.width;
+    final innerWidth = screenWidth - 32; // 16px padding each side
+    final gap = (innerWidth - 4 * 64) / 5;
+    // 4th item center is (gap + 32) from the right edge of inner area, plus 16px outer padding
+    final rightOffset = 16 + gap + 32; // distance from screen right to 4th item center
+    const cowSize = 70.0;
+
+    return Align(
+      key: const ValueKey('collapsed'),
+      alignment: Alignment.bottomRight,
+      child: Padding(
+        padding: EdgeInsets.only(right: rightOffset - cowSize / 2, bottom: 10),
+        child: GestureDetector(
+          onTap: _toggleInputExpanded,
+          child: Image.asset(
+            'assets/images/cow1.png',
+            width: cowSize,
+            height: cowSize,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => Icon(
+              CupertinoIcons.chat_bubble_fill,
+              color: AppTheme.primaryColor,
+              size: 24,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildDashboardInput() {
     return Padding(
+      key: const ValueKey('expanded'),
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
       child: GestureDetector(
         onTap: () {
@@ -457,60 +704,49 @@ class HolyCowPageState extends State<HolyCowPage>
                 _micAnimationController.reset();
               }
 
-              // LayoutBuilder to calculate the same spaceEvenly gap as TabBottomNav.
-              // Tab bar: 4 items × 64px, spaceEvenly → gap = (width - 256) / 5.
-              // We match [gap] [64px cow] [Expanded input] [64px send/mic] [gap].
-              return LayoutBuilder(
-                builder: (context, constraints) {
-                  final gap = (constraints.maxWidth - 4 * 64) / 5;
-
-                  return Row(
-                    children: [
-                      // Left gap — aligns with tab bar leading space
-                      SizedBox(width: gap),
-
-                      // Past chats icon — 64×70, aligned with first tab icon
-                      SizedBox(
-                        width: 64,
-                        height: 70,
-                        child: Center(
-                          child: IconButton(
-                            onPressed: _showRecentConversations,
-                            icon: Icon(
-                              Icons.history_rounded,
-                              color: AppTheme.primaryColor.withValues(alpha: 0.7),
-                              size: 24,
-                            ),
-                            tooltip: 'Recent Conversations',
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    // Past chats icon
+                    SizedBox(
+                      width: 36,
+                      height: 44,
+                      child: Center(
+                        child: IconButton(
+                          onPressed: _showRecentConversations,
+                          icon: Icon(
+                            Icons.history_rounded,
+                            color: AppTheme.primaryColor.withValues(alpha: 0.7),
+                            size: 22,
                           ),
+                          tooltip: 'Recent Conversations',
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
                         ),
                       ),
+                    ),
+                    const SizedBox(width: 4),
 
-                      // Center: text field or recording indicator
-                      Expanded(
+                    // Center: text field or recording indicator
+                    Expanded(
+                      child: isRecording
+                          ? _buildRecordingIndicator()
+                          : _buildDashboardTextField(),
+                    ),
+
+                    // Right: send/mic or recording controls
+                    SizedBox(
+                      width: 44,
+                      height: 44,
+                      child: Center(
                         child: isRecording
-                            ? _buildRecordingIndicator()
-                            : _buildDashboardTextField(),
+                            ? _buildRecordingControls()
+                            : _buildSendOrMicButton(),
                       ),
-
-                      // Right: send/mic or recording controls — 64×70, aligned with last tab icon
-                      SizedBox(
-                        width: 64,
-                        height: 70,
-                        child: Center(
-                          child: isRecording
-                              ? _buildRecordingControls()
-                              : _buildSendOrMicButton(),
-                        ),
-                      ),
-
-                      // Right gap — aligns with tab bar trailing space
-                      SizedBox(width: gap),
-                    ],
-                  );
-                },
+                    ),
+                  ],
+                ),
               );
             },
           ),
@@ -520,47 +756,91 @@ class HolyCowPageState extends State<HolyCowPage>
   }
 
   Widget _buildDashboardTextField() {
-    return Focus(
-      onKeyEvent: (node, event) {
-        if (event is KeyDownEvent &&
-            event.logicalKey == LogicalKeyboardKey.enter &&
-            !HardwareKeyboard.instance.isShiftPressed) {
-          if (_inputController.text.trim().isNotEmpty) {
-            _openChatWithMessage();
-          }
-          return KeyEventResult.handled;
-        }
-        return KeyEventResult.ignored;
-      },
-      child: TextField(
-        controller: _inputController,
-        focusNode: _inputFocusNode,
-        decoration: InputDecoration(
-          hintText: 'namaste',
-          hintStyle: TextStyle(
-            color: AppTheme.primaryColor.withValues(alpha: 0.4),
-            fontSize: 22,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 1.2,
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        // Animated hint overlay — slides left-to-right on change
+        ListenableBuilder(
+          listenable: _inputController,
+          builder: (context, _) {
+            final hasText = _inputController.text.isNotEmpty;
+            if (hasText) return const SizedBox.shrink();
+            return IgnorePointer(
+              child: ValueListenableBuilder<int>(
+                valueListenable: _hintIndexNotifier,
+                builder: (context, hintIndex, _) {
+                  return AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 400),
+                    switchInCurve: Curves.easeOut,
+                    switchOutCurve: Curves.easeIn,
+                    transitionBuilder: (child, animation) {
+                      // Incoming slides from right, outgoing slides to left
+                      final isIncoming = child.key == ValueKey<int>(hintIndex);
+                      return SlideTransition(
+                        position: Tween<Offset>(
+                          begin: Offset(0, isIncoming ? 0.6 : -0.6),
+                          end: Offset.zero,
+                        ).animate(animation),
+                        child: FadeTransition(
+                          opacity: animation,
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: Text(
+                      _hintPhrases[hintIndex],
+                      key: ValueKey<int>(hintIndex),
+                      style: TextStyle(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            );
+          },
+        ),
+        // Actual text field — no hintText, overlay handles it
+        Focus(
+          onKeyEvent: (node, event) {
+            if (event is KeyDownEvent &&
+                event.logicalKey == LogicalKeyboardKey.enter &&
+                !HardwareKeyboard.instance.isShiftPressed) {
+              if (_inputController.text.trim().isNotEmpty) {
+                _openChatWithMessage();
+              }
+              return KeyEventResult.handled;
+            }
+            return KeyEventResult.ignored;
+          },
+          child: TextField(
+            controller: _inputController,
+            focusNode: _inputFocusNode,
+            decoration: const InputDecoration(
+              hintText: null,
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              filled: false,
+              contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+              isDense: true,
+            ),
+            style: TextStyle(
+              color: AppTheme.primaryColor.withValues(alpha: 0.85),
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            textCapitalization: TextCapitalization.sentences,
+            textInputAction: TextInputAction.send,
+            onSubmitted: (_) => _openChatWithMessage(),
           ),
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-          filled: false,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-          isDense: true,
         ),
-        style: TextStyle(
-          color: AppTheme.primaryColor.withValues(alpha: 0.85),
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-        ),
-        textAlign: TextAlign.center,
-        maxLines: 1,
-        textCapitalization: TextCapitalization.sentences,
-        textInputAction: TextInputAction.send,
-        onSubmitted: (_) => _openChatWithMessage(),
-      ),
+      ],
     );
   }
 
@@ -684,6 +964,8 @@ class HolyCowPageState extends State<HolyCowPage>
         ayurvedaProfile: null,
         loadingState: _loadingState,
         skyService: _skyService,
+        calendarService: _calendarService,
+        sliderRangeDays: _sliderRangeDays,
         sliderValueNotifier: _sliderValueNotifier,
         sliderDateNotifier: _sliderDateNotifier,
         showTransitOverlay: _showTransitOverlay,
@@ -726,6 +1008,8 @@ class HolyCowPageState extends State<HolyCowPage>
                   ayurvedaProfile: ayurvedaSnapshot.data,
                   loadingState: _loadingState,
                   skyService: _skyService,
+                  calendarService: _calendarService,
+                  sliderRangeDays: _sliderRangeDays,
                   sliderValueNotifier: _sliderValueNotifier,
                   sliderDateNotifier: _sliderDateNotifier,
                   showTransitOverlay: _showTransitOverlay,

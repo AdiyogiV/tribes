@@ -1,11 +1,10 @@
 import { onRequest } from "firebase-functions/v2/https";
 import { logger } from "../lib/firebase.js";
 import { db, FieldValue } from "../lib/firebase.js";
-import { geminiApiKey } from "../lib/secrets.js";
+import { getVertexAI, extractChunkText } from "../lib/vertex_client.js";
 import { getChatSystemPrompt } from "./prompts/chat.js";
 import { getDashaMeaning, getHouseMeaning, getTransitMeaning } from "../lib/search.js";
 import { getDailySearchContext } from "../lib/astro_context.js";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { checkRateLimit as checkPersistentRateLimit, RATE_LIMIT_PRESETS } from "../lib/rate_limiter.js";
 import { CHAT_CONFIG, AI_MODELS } from "../lib/config.js";
 import { normalizeDasha } from "../lib/astro_helpers.js";
@@ -212,7 +211,7 @@ const MAX_HISTORY_MESSAGES = CHAT_CONFIG.MAX_HISTORY_MESSAGES;
 export const aiChat = onRequest(
     {
         region: "asia-southeast2",
-        secrets: [geminiApiKey],
+        // No secrets needed — uses Vertex AI with ADC
         cors: [/^.*$/],
         timeoutSeconds: 300,
         memory: "512MiB",
@@ -577,12 +576,6 @@ async function enrichAstrologyContext(astrologyContext, userMessage, chatId) {
  * Gemini understands the audio directly (no transcription needed)
  */
 async function streamFromGemini({ chatId, audioUrl, messages, write, astrologyContext = null, userLocation = null, chatSource = "astrology", onFirstToken = null }) {
-    const apiKey = geminiApiKey.value();
-
-    if (!apiKey) {
-        throw new Error("Gemini API key missing");
-    }
-
     logger.info("Starting Gemini audio processing", {
         structuredData: true,
         chatId,
@@ -591,8 +584,8 @@ async function streamFromGemini({ chatId, audioUrl, messages, write, astrologyCo
         hasLocation: !!userLocation,
     });
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({
+    const vertexAI = getVertexAI();
+    const model = vertexAI.getGenerativeModel({
         model: AI_MODELS.GEMINI_FLASH,
         tools: [{ googleSearch: {} }],
     });
@@ -638,16 +631,14 @@ async function streamFromGemini({ chatId, audioUrl, messages, write, astrologyCo
         return `${msg.role === "assistant" ? "Assistant" : "User"}: ${msg.content}`;
     }).join("\n\n");
 
-    const parts = [
-        { text: systemPrompt },
-    ];
+    const userParts = [];
 
     if (historyText.trim()) {
-        parts.push({ text: "\n\n=== CONVERSATION HISTORY ===\n" + historyText });
+        userParts.push({ text: "\n\n=== CONVERSATION HISTORY ===\n" + historyText });
     }
 
-    parts.push({ text: "\n\n=== USER'S VOICE MESSAGE ===\nListen to and respond to this voice message:" });
-    parts.push({
+    userParts.push({ text: "\n\n=== USER'S VOICE MESSAGE ===\nListen to and respond to this voice message:" });
+    userParts.push({
         inlineData: {
             mimeType,
             data: audioBase64,
@@ -658,10 +649,13 @@ async function streamFromGemini({ chatId, audioUrl, messages, write, astrologyCo
     let firstTokenReceived = false;
 
     try {
-        const result = await model.generateContentStream(parts);
+        const result = await model.generateContentStream({
+            contents: [{ role: "user", parts: userParts }],
+            systemInstruction: systemPrompt,
+        });
 
         for await (const chunk of result.stream) {
-            const text = chunk.text();
+            const text = extractChunkText(chunk);
             if (text) {
                 if (!firstTokenReceived) {
                     firstTokenReceived = true;
@@ -714,12 +708,6 @@ async function streamFromGemini({ chatId, audioUrl, messages, write, astrologyCo
  * Uses built-in Google Search grounding
  */
 async function streamFromGeminiText({ chatId, userMessage, messages, write, astrologyContext = null, userLocation = null, chatSource = "astrology", onFirstToken = null }) {
-    const apiKey = geminiApiKey.value();
-
-    if (!apiKey) {
-        throw new Error("Gemini API key missing");
-    }
-
     logger.info("Starting Gemini text processing", {
         structuredData: true,
         chatId,
@@ -728,8 +716,8 @@ async function streamFromGeminiText({ chatId, userMessage, messages, write, astr
         messageLength: userMessage?.length || 0,
     });
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({
+    const vertexAI = getVertexAI();
+    const model = vertexAI.getGenerativeModel({
         model: AI_MODELS.GEMINI_FLASH,
         tools: [{ googleSearch: {} }],
     });
@@ -740,24 +728,25 @@ async function streamFromGeminiText({ chatId, userMessage, messages, write, astr
         return `${msg.role === "assistant" ? "Assistant" : "User"}: ${msg.content}`;
     }).join("\n\n");
 
-    const parts = [
-        { text: systemPrompt },
-    ];
+    const userParts = [];
 
     if (historyText.trim()) {
-        parts.push({ text: "\n\n=== CONVERSATION HISTORY ===\n" + historyText });
+        userParts.push({ text: "\n\n=== CONVERSATION HISTORY ===\n" + historyText });
     }
 
-    parts.push({ text: "\n\n=== USER'S MESSAGE ===\n" + userMessage });
+    userParts.push({ text: "\n\n=== USER'S MESSAGE ===\n" + userMessage });
 
     let accumulated = "";
     let firstTokenReceived = false;
 
     try {
-        const result = await model.generateContentStream(parts);
+        const result = await model.generateContentStream({
+            contents: [{ role: "user", parts: userParts }],
+            systemInstruction: systemPrompt,
+        });
 
         for await (const chunk of result.stream) {
-            const text = chunk.text();
+            const text = extractChunkText(chunk);
             if (text) {
                 if (!firstTokenReceived) {
                     firstTokenReceived = true;

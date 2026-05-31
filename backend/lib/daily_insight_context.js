@@ -11,7 +11,7 @@
  */
 
 import { db, logger } from "./firebase.js";
-import { geminiApiKey } from "./secrets.js";
+// Vertex AI — no API key needed (uses ADC)
 import { DateTime } from "luxon";
 import { runAstroFlow } from "../functions/free_astro.js";
 import { buildAstroSearchContext } from "./search.js";
@@ -248,12 +248,6 @@ export async function getTodayAstroData(userAstroData) {
  */
 export async function getSearchContext(userAstroData, todayAstroData) {
     try {
-        const apiKey = geminiApiKey.value();
-        if (!apiKey) {
-            logger.warn("⚠️ Gemini not configured, skipping search context");
-            return null;
-        }
-
         const today = DateTime.now().toFormat("yyyy-MM-dd");
         const startTime = Date.now();
 

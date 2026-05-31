@@ -16,9 +16,7 @@
  */
 
 import { HttpsError } from "firebase-functions/v2/https";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
-import { geminiApiKey } from "../lib/secrets.js";
+import { getVertexAI, extractText } from "../lib/vertex_client.js";
 import { db, logger } from "../lib/firebase.js";
 import { AI_MODELS } from "../lib/config.js";
 import { extractSignals, diffSky, getTopSignals } from "../lib/signal_engine.js";
@@ -140,7 +138,7 @@ export async function generateDailyOutput(geminiApiKeyValue, dateStr = null) {
     logger.info("Cosmic daily starting", { structuredData: true, date: dateStr });
 
     // Initialize memory with API key
-    initMemory(geminiApiKeyValue);
+    initMemory();
 
     // ── Step 1: Recall memories ─────────────────────────────────────────
     const [recentObservations, recentPredictions, relevantPatterns] = await Promise.all([
@@ -166,21 +164,21 @@ export async function generateDailyOutput(geminiApiKeyValue, dateStr = null) {
         recentObservations, recentPredictions, relevantPatterns,
     );
 
-    const genAI = new GoogleGenerativeAI(geminiApiKeyValue);
-    const model = genAI.getGenerativeModel({
+    const vertexAI = getVertexAI();
+    const model = vertexAI.getGenerativeModel({
         model: AI_MODELS?.GEMINI_FLASH || "gemini-2.5-flash",
         systemInstruction: SYSTEM_PROMPT,
-        tools: [{ googleSearch: {} }], // Gemini searches for news itself
+        tools: [{ googleSearch: {} }],
         generationConfig: {
             temperature: 0.4,
             maxOutputTokens: 8192,
-            // NOTE: responseMimeType "application/json" is incompatible with
-            // googleSearch tool — we ask for JSON in the prompt instead.
         },
     });
 
-    const result = await model.generateContent(userPrompt);
-    const responseText = result.response.text();
+    const result = await model.generateContent({
+        contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+    });
+    const responseText = extractText(result);
 
     // Parse JSON — handle markdown code fences if present
     let output;
@@ -533,25 +531,22 @@ function extractSignalTags(signals) {
 
 /** Extracted runner for orchestrator consolidation. */
 export async function runCosmicDailyScheduled() {
-    const apiKey = geminiApiKey.value();
-
-    // Quick health check — skip run entirely if Gemini is down/blocked
-    // Saves compute cost on doomed runs (e.g. during billing suspension)
+    // Quick health check — skip run entirely if Vertex AI is down
     try {
-        const healthGenAI = new GoogleGenerativeAI(apiKey);
-        const healthModel = healthGenAI.getGenerativeModel({ model: "gemini-embedding-001" });
-        await healthModel.embedContent("health check");
+        const vertexAI = getVertexAI();
+        const healthModel = vertexAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        await healthModel.generateContent("health check");
     } catch (healthErr) {
-        logger.warn("⚠️ Gemini API health check failed, skipping cosmic daily run", {
+        logger.warn("⚠️ Vertex AI health check failed, skipping cosmic daily run", {
             structuredData: true,
             error: String(healthErr),
             status: healthErr.status || "unknown",
         });
-        return; // don't waste compute on a doomed run
+        return;
     }
 
     const today = new Date().toISOString().split("T")[0];
-    await generateDailyOutput(apiKey, today);
+    await generateDailyOutput(null, today);
 }
 
 // NOTE: `cosmicDailyScheduled` was a standalone `onSchedule` export.
@@ -565,7 +560,7 @@ export async function handleCosmicDailyManual(request) {
     }
 
     const dateStr = request.data?.date || new Date().toISOString().split("T")[0];
-    const output = await generateDailyOutput(geminiApiKey.value(), dateStr);
+    const output = await generateDailyOutput(null, dateStr);
 
     return {
         success: true,

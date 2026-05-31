@@ -94,36 +94,25 @@ class VedicTimeUtils {
     return 'Pr$prahar . Gh$ghati . Pa$pala';
   }
 
-  // Hindu lunar month order (Chaitra = 1, the first month of the year)
+  // Exact month names from FreeAstrologyAPI + Sanskrit display names.
   static const _lunarMonthNumbers = <String, int>{
+    // API returns these (Telugu-style)
+    'chaitram': 1, 'vaisakham': 2, 'jyeshtam': 3, 'ashadam': 4,
+    'sravanam': 5, 'bhadrapadam': 6, 'ashweeyujam': 7, 'karthikam': 8,
+    'maargasiram': 9, 'pushyam': 10, 'maagham': 11, 'phalgunam': 12,
+    // Sanskrit (used by CalendarDay.panchangMap display names)
     'chaitra': 1, 'vaishakha': 2, 'jyeshtha': 3, 'ashadha': 4,
     'shravana': 5, 'bhadrapada': 6, 'ashvina': 7, 'kartika': 8,
     'margashirsha': 9, 'pausha': 10, 'magha': 11, 'phalguna': 12,
-    // Common alternate spellings
-    'vaisakha': 2, 'jyaistha': 3, 'jyaishtha': 3, 'asadha': 4,
-    'sravana': 5, 'bhadra': 6, 'asvina': 7, 'ashwin': 7,
-    'karttika': 8, 'kartik': 8, 'margasirsa': 9, 'pausa': 10,
-    'magh': 11, 'phalgun': 12, 'chaithram': 1, 'chaitram': 1,
   };
 
   /// Look up the month number (1–12) from a lunar month name.
-  ///
-  /// Handles common suffix variants automatically:
-  /// - South Indian / Sanskrit `-m` suffix (Vaisakham → Vaisakha)
-  /// - Adhika (intercalary) prefix — "Adhika Vaishakha" → same number as Vaishakha
+  /// Strips "Adhika"/"Nija" prefix before lookup.
   static int? _lunarMonthNumber(String? monthName) {
     if (monthName == null) return null;
     var key = monthName.toLowerCase().trim();
-    // Strip 'adhika' prefix — Adhika Masa uses same base month number.
-    key = key.replaceFirst(RegExp(r'^adhika\s+'), '');
-    // Direct lookup
-    final direct = _lunarMonthNumbers[key];
-    if (direct != null) return direct;
-    // Strip trailing '-m' suffix (Vaisakham→Vaisakha, Kartikam→Kartika, etc.)
-    if (key.length > 2 && key.endsWith('m')) {
-      return _lunarMonthNumbers[key.substring(0, key.length - 1)];
-    }
-    return null;
+    key = key.replaceFirst(RegExp(r'^(?:adhika?|nija)\s+'), '');
+    return _lunarMonthNumbers[key];
   }
 
   /// Returns true when [monthName] is an Adhika (intercalary) month,

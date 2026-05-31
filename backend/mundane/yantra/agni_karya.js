@@ -21,7 +21,7 @@
 
 import { logger } from "firebase-functions";
 import { db, FieldValue } from "../../lib/firebase.js";
-import { geminiApiKey } from "../../lib/secrets.js";
+// Vertex AI — no API key needed (uses ADC)
 import { performReading } from "../samhita.js";
 import { getPurnimaAmavasyaDates } from "../kriya/kaal_nirnaya.js";
 
@@ -39,11 +39,8 @@ export async function handleGenerateMundaneForecast(request) {
     const validate = request.data?.validate || false;
 
     try {
-        const apiKey = skipLLM ? null : geminiApiKey.value();
-
         const reading = await performReading({
             date: dateKey,
-            geminiApiKey: apiKey,
             validate,
             learn: validate,
             skipNews: false,
@@ -150,11 +147,8 @@ export async function runRefreshMundanePanchanga() {
     const startMs = Date.now();
 
     try {
-        const apiKey = geminiApiKey.value();
-
         // Full Varahamihira pipeline with validation and learning
         const reading = await performReading({
-            geminiApiKey: apiKey,
             validate: true, // Validate against news
             learn: true, // Update confidence from validation
             skipNews: false, // Always observe the world

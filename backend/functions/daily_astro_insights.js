@@ -229,7 +229,6 @@ async function generateInsightWithAI(userAstroData, todayAstroData) {
         systemPrompt: INSIGHT_SYSTEM_PROMPT,
         userPrompt: prompt,
         temperature: 0.92,
-        maxOutputTokens: 1500,
         expectJson: true,
         googleSearch: false,
         flavorName: "daily_insight",

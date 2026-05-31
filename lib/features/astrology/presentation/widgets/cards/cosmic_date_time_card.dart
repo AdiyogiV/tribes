@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:aurogram/shared/presentation/widgets/media/common_widgets.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
@@ -14,14 +15,25 @@ bool _loggedMoonPhase = false;
 /// Date and time card for Cosmic Dashboard
 /// Shows both Vedic and Western time formats
 /// Matches astrology details page card styling
+///
+/// When [selectedDate] is provided and differs from today, the card shows
+/// that date's Gregorian info and available panchang data, but hides
+/// the live Vedic clock and Prahar·Ghati·Pala (those only make sense
+/// for "right now").
 class CosmicDateTimeCard extends StatefulWidget {
   final Map<String, dynamic>? samvat;
   final Color brown;
+
+  /// When non-null and not today, the card displays this date instead of
+  /// the live clock.  The parent should also pass a date-appropriate
+  /// [samvat] map (e.g. from AstroCalendarService.panchangMap).
+  final DateTime? selectedDate;
 
   const CosmicDateTimeCard({
     super.key,
     required this.samvat,
     required this.brown,
+    this.selectedDate,
   });
 
   @override
@@ -32,12 +44,26 @@ class _CosmicDateTimeCardState extends State<CosmicDateTimeCard> {
   Timer? _timer;
   DateTime _now = DateTime.now();
 
+  /// Whether the card is showing today (live clock) vs a selected date.
+  bool get _isShowingToday {
+    if (widget.selectedDate == null) return true;
+    final today = DateTime.now();
+    return widget.selectedDate!.year == today.year &&
+        widget.selectedDate!.month == today.month &&
+        widget.selectedDate!.day == today.day;
+  }
+
+  /// The date to display — live now or the selected date.
+  DateTime get _displayDate => _isShowingToday ? _now : widget.selectedDate!;
+
   @override
   void initState() {
     super.initState();
-    // Tick every 12 seconds — half-Pala for smoother live feel
+    // Tick every 15 seconds — half-Pala for smoother live feel.
+    // Only meaningful when showing today; the timer is harmless when
+    // showing a selected date (setState is cheap, _displayDate ignores _now).
     _timer = Timer.periodic(const Duration(seconds: 15), (_) {
-      if (mounted) setState(() => _now = DateTime.now());
+      if (mounted && _isShowingToday) setState(() => _now = DateTime.now());
     });
   }
 
@@ -55,7 +81,9 @@ class _CosmicDateTimeCardState extends State<CosmicDateTimeCard> {
     final c = AppTheme.primaryColor;
     final samvat = widget.samvat;
 
-    final vedicTimeShort = VedicTimeUtils.getVedicTimeShort(_now);
+    final showingToday = _isShowingToday;
+    final displayDate = _displayDate;
+    final vedicTimeShort = showingToday ? VedicTimeUtils.getVedicTimeShort(_now) : null;
     final samvatYear = VedicTimeUtils.buildSamvatYearNameOnly(samvat);
     final vedicNumericDate = VedicTimeUtils.buildVedicNumericDate(samvat);
 
@@ -99,7 +127,7 @@ class _CosmicDateTimeCardState extends State<CosmicDateTimeCard> {
     }
 
     // Log once per session when data arrives
-    if (samvat != null && !_loggedMoonPhase) {
+    if (samvat != null && !_loggedMoonPhase && showingToday) {
       _loggedMoonPhase = true;
       AppLogger.d('CosmicDateTimeCard: today panchang',
           category: LogCategory.ui,
@@ -114,12 +142,12 @@ class _CosmicDateTimeCardState extends State<CosmicDateTimeCard> {
     // Warn if stale data somehow leaks through (birth date in today's card)
     final vikramNumber = samvat?['vikram_chaitradi_number'];
     final isValidYear = VedicTimeUtils.isValidVikramYearForToday(vikramNumber);
-    if (samvat != null && !isValidYear && vikramNumber != null) {
+    if (samvat != null && !isValidYear && vikramNumber != null && showingToday) {
       AppLogger.w('CosmicDateTimeCard: STALE birth data in today card!',
           category: LogCategory.ui,
           data: {
             'vikramYear': vikramNumber,
-            'expectedRange': '${_now.year + 55}-${_now.year + 59}',
+            'expectedRange': '${displayDate.year + 55}-${displayDate.year + 59}',
             'timestamp': samvat['timestamp'],
           });
     }
@@ -150,16 +178,17 @@ class _CosmicDateTimeCardState extends State<CosmicDateTimeCard> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Pr · Gh · Pa
-                        Text(
-                          vedicTimeShort,
-                          style: TextStyle(
-                            fontSize: AppTheme.holyCowTextSize,
-                            fontWeight: FontWeight.w500,
-                            color: c,
-                            height: 1.4,
+                        // Pr · Gh · Pa — only for live "now" view
+                        if (vedicTimeShort != null)
+                          Text(
+                            vedicTimeShort,
+                            style: TextStyle(
+                              fontSize: AppTheme.holyCowTextSize,
+                              fontWeight: FontWeight.w500,
+                              color: c,
+                              height: 1.4,
+                            ),
                           ),
-                        ),
                         // Month: Vaishakha Masa
                         if (monthLine != null)
                           Text(
@@ -208,12 +237,13 @@ class _CosmicDateTimeCardState extends State<CosmicDateTimeCard> {
                     ),
                   ),
                   const SizedBox(width: AppDimensions.spacingMdLg),
-                  // Vedic Clock — right side
-                  VedicClockWidget(
-                    time: _now,
-                    isDark: isDark,
-                    size: 120,
-                  ),
+                  // Vedic Clock — right side (only for live "now" view)
+                  if (showingToday)
+                    VedicClockWidget(
+                      time: _now,
+                      isDark: isDark,
+                      size: 70,
+                    ),
                 ],
               ),
             ),
@@ -586,4 +616,582 @@ String _extractPaksha(Map<String, dynamic>? samvat) {
   }
   
   return '';
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Split cards — VedicTimeCard (clock + Pr·Gh·Pa) and VedicDateCard
+// (month, paksha, tithi, numeric date).  Used on the HolyCow mobile
+// layout to give each section its own card.
+// ─────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────
+// Combined card — Vedic clock (left) + date info (center) + time readout
+// (right).  Replaces the separate VedicTimeCard + VedicDateCard pair on
+// mobile to save vertical space.
+// ─────────────────────────────────────────────────────────────────────────
+
+/// Single card combining clock, date, and time for the HolyCow mobile layout.
+///
+/// Combined Vedic date+time card for the HolyCow mobile layout.
+///
+/// Today layout:   [ Clock | Date | ⓘ + Time ]
+/// Other date:     [ ±N days | Date | Today ↩ ]
+class VedicCombinedCard extends StatefulWidget {
+  final Map<String, dynamic>? samvat;
+  final Color brown;
+  final DateTime? selectedDate;
+
+  /// Called when user taps "Today" to snap back.
+  final VoidCallback? onResetToToday;
+
+  const VedicCombinedCard({
+    super.key,
+    required this.samvat,
+    required this.brown,
+    this.selectedDate,
+    this.onResetToToday,
+  });
+
+  @override
+  State<VedicCombinedCard> createState() => _VedicCombinedCardState();
+}
+
+class _VedicCombinedCardState extends State<VedicCombinedCard> {
+  Timer? _timer;
+  DateTime _now = DateTime.now();
+  bool _clockMagnified = false;
+
+  bool get _isShowingToday {
+    if (widget.selectedDate == null) return true;
+    final today = DateTime.now();
+    return widget.selectedDate!.year == today.year &&
+        widget.selectedDate!.month == today.month &&
+        widget.selectedDate!.day == today.day;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 15), (_) {
+      if (mounted && _isShowingToday) setState(() => _now = DateTime.now());
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor =
+        isDark ? Theme.of(context).colorScheme.surface : Colors.white;
+    final c = AppTheme.primaryColor;
+    final samvat = widget.samvat;
+    final showingToday = _isShowingToday;
+
+    // ── Date info ──
+    final vedicNumericDate = VedicTimeUtils.buildVedicNumericDate(samvat);
+    final fullVedicDate = VedicTimeUtils.buildFullVedicDate(samvat);
+    final lunarMonth = samvat?['lunar_month_full_name']?.toString() ??
+        samvat?['lunar_month_name']?.toString() ??
+        samvat?['lunarMonthFull']?.toString() ??
+        samvat?['lunarMonth']?.toString();
+
+    String? tithiLine;
+    if (fullVedicDate != null && lunarMonth != null) {
+      tithiLine = fullVedicDate.replaceFirst(lunarMonth, '').trim();
+      if (tithiLine.isEmpty) tithiLine = null;
+    } else {
+      tithiLine = fullVedicDate;
+    }
+
+    final pakshaRaw = _extractPaksha(samvat);
+    String? pakshaLine;
+    String? tithiNameOnly;
+    if (tithiLine != null) {
+      if (pakshaRaw.isNotEmpty) {
+        final pakshaCapitalized =
+            '${pakshaRaw[0].toUpperCase()}${pakshaRaw.substring(1)}';
+        pakshaLine = pakshaCapitalized;
+        final withoutPaksha =
+            tithiLine.replaceFirst(pakshaCapitalized, '').trim();
+        tithiNameOnly = withoutPaksha.isNotEmpty ? withoutPaksha : null;
+      } else {
+        tithiNameOnly = tithiLine;
+      }
+    }
+
+    // ── Time info (only for today) ──
+    const sunriseHour = 6;
+    var secondsFromSunrise =
+        (_now.hour - sunriseHour) * 3600 + _now.minute * 60 + _now.second;
+    if (secondsFromSunrise < 0) secondsFromSunrise += 86400;
+    final prahar = (secondsFromSunrise ~/ (180 * 60)) % 8 + 1;
+    final ghati = secondsFromSunrise ~/ 1440;
+    final pala = (secondsFromSunrise - (ghati * 1440)) ~/ 24;
+
+    final textStyle = TextStyle(
+      fontSize: AppTheme.holyCowTextSize,
+      fontWeight: FontWeight.w500,
+      color: c,
+      height: 1.4,
+    );
+    final dimStyle = TextStyle(
+      fontSize: AppTheme.holyCowTextSize,
+      fontWeight: FontWeight.w500,
+      color: c.withValues(alpha: 0.5),
+      height: 1.4,
+    );
+
+    // ── 3-column Row — swaps left & right based on state ──
+    //
+    // TODAY:        [ Clock | Date | ⓘ + Time ]
+    // OTHER DATE:   [ ±N days | Date | Today ↩ ]
+    //
+    // Both states use AnimatedOpacity crossfade so the tree
+    // is always stable (no conditional add/remove).
+
+    // Days offset for the "±N days" indicator
+    final today = DateTime.now();
+    final todayDate = DateTime(today.year, today.month, today.day);
+    final selectedDate = widget.selectedDate ?? todayDate;
+    final displayDate = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
+    final daysDiff = displayDate.difference(todayDate).inDays;
+
+    return SizedBox(
+      width: double.infinity,
+      child: Material(
+        color: cardColor,
+        elevation: _clockMagnified ? 24 : 2,
+        shadowColor: Colors.black.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+        clipBehavior: Clip.none,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppDimensions.paddingMd,
+            20,
+            AppDimensions.paddingLg,
+            20,
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // ── LEFT COLUMN ──
+              // Today: clock.  Other date: days offset.
+              SizedBox(
+                width: 80,
+                height: 80,
+                child: AnimatedCrossFade(
+                  firstChild: IgnorePointer(
+                    ignoring: !showingToday,
+                    child: VedicClockWidget(
+                      time: _now,
+                      isDark: isDark,
+                      size: 80,
+                      onMagnifyChanged: (magnified) {
+                        setState(() => _clockMagnified = magnified);
+                      },
+                    ),
+                  ),
+                  secondChild: Center(
+                    child: _DaysOffsetLabel(days: daysDiff, color: c),
+                  ),
+                  crossFadeState: showingToday
+                      ? CrossFadeState.showFirst
+                      : CrossFadeState.showSecond,
+                  duration: const Duration(milliseconds: 250),
+                ),
+              ),
+
+              // ── CENTER: Date text (always visible) ──
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (lunarMonth != null)
+                      Text(lunarMonth, style: textStyle, textAlign: TextAlign.center),
+                    if (pakshaLine != null)
+                      Text(pakshaLine, style: textStyle, textAlign: TextAlign.center),
+                    if (tithiNameOnly != null)
+                      Text(tithiNameOnly, style: textStyle, textAlign: TextAlign.center),
+                    if (vedicNumericDate != null)
+                      Text(vedicNumericDate, style: dimStyle, textAlign: TextAlign.center),
+                  ],
+                ),
+              ),
+
+              // ── RIGHT COLUMN (fixed width — never shifts center) ──
+              // Today: ⓘ + time.  Other date: replay button.
+              // Both children stacked, crossfade via opacity.
+              SizedBox(
+                width: 80,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // Time text (today)
+                    AnimatedOpacity(
+                      opacity: showingToday ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 200),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: GestureDetector(
+                              onTap: () {
+                                HapticFeedback.lightImpact();
+                                AppBottomSheet.show(
+                                  context,
+                                  child: VedicTimeInfoSheet(isDark: isDark, brown: c),
+                                );
+                              },
+                              behavior: HitTestBehavior.opaque,
+                              child: Padding(
+                                padding: const EdgeInsets.only(bottom: 2),
+                                child: Icon(
+                                  Icons.info_outline_rounded,
+                                  size: 15,
+                                  color: c.withValues(alpha: 0.3),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Text('Prahar $prahar', style: dimStyle),
+                          Text('Ghati $ghati', style: dimStyle),
+                          Text('Pala $pala', style: dimStyle),
+                        ],
+                      ),
+                    ),
+                    // Replay button (not today)
+                    AnimatedOpacity(
+                      opacity: showingToday ? 0.0 : 1.0,
+                      duration: const Duration(milliseconds: 200),
+                      child: IgnorePointer(
+                        ignoring: showingToday,
+                        child: GestureDetector(
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            widget.onResetToToday?.call();
+                          },
+                          behavior: HitTestBehavior.opaque,
+                          child: Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: c.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.replay_rounded,
+                              size: 22,
+                              color: c,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Compact "±N days" label shown on the left column when not showing today.
+///
+/// Positive days = future ("In 5 days"), negative = past ("2 days ago"),
+/// zero shouldn't appear (showingToday would be true).
+class _DaysOffsetLabel extends StatelessWidget {
+  final int days;
+  final Color color;
+  const _DaysOffsetLabel({required this.days, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final abs = days.abs();
+    final isFuture = days > 0;
+    final numberStyle = TextStyle(
+      fontSize: AppTheme.holyCowTextSize + 8,
+      fontWeight: FontWeight.w700,
+      color: color,
+      height: 1.1,
+    );
+    final labelStyle = TextStyle(
+      fontSize: AppTheme.holyCowTextSize - 2,
+      fontWeight: FontWeight.w500,
+      color: color.withValues(alpha: 0.5),
+      height: 1.2,
+    );
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (isFuture)
+          Text('In', style: labelStyle),
+        Text('$abs', style: numberStyle),
+        Text(abs == 1 ? 'day' : 'days', style: labelStyle),
+        if (!isFuture)
+          Text('ago', style: labelStyle),
+      ],
+    );
+  }
+}
+
+/// Time-only card: Vedic clock + Prahar · Ghati · Pala readout.
+class VedicTimeCard extends StatefulWidget {
+  final Color brown;
+  const VedicTimeCard({super.key, required this.brown});
+
+  @override
+  State<VedicTimeCard> createState() => _VedicTimeCardState();
+}
+
+class _VedicTimeCardState extends State<VedicTimeCard> {
+  Timer? _timer;
+  DateTime _now = DateTime.now();
+  bool _clockMagnified = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 15), (_) {
+      if (mounted) setState(() => _now = DateTime.now());
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? Theme.of(context).colorScheme.surface : Colors.white;
+    final c = AppTheme.primaryColor;
+
+    // Compute Prahar, Ghati, Pala individually
+    const sunriseHour = 6;
+    var secondsFromSunrise = (_now.hour - sunriseHour) * 3600 + _now.minute * 60 + _now.second;
+    if (secondsFromSunrise < 0) secondsFromSunrise += 86400;
+    final prahar = (secondsFromSunrise ~/ (180 * 60)) % 8 + 1;
+    final ghati = secondsFromSunrise ~/ 1440;
+    final pala = (secondsFromSunrise - (ghati * 1440)) ~/ 24;
+
+    final textStyle = TextStyle(
+      fontSize: AppTheme.holyCowTextSize,
+      fontWeight: FontWeight.w500,
+      color: c,
+      height: 1.4,
+    );
+
+    // When the clock is magnified, raise the entire card above siblings
+    // so the expanded clock doesn't render behind other cards.
+    final card = SizedBox(
+      width: double.infinity,
+      child: Material(
+        color: cardColor,
+        elevation: _clockMagnified ? 24 : 2,
+        shadowColor: Colors.black.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+        clipBehavior: Clip.none,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppDimensions.paddingLg,
+                AppDimensions.paddingMd,
+                AppDimensions.paddingLg,
+                AppDimensions.paddingMd,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Vedic Clock — left side
+                  VedicClockWidget(
+                    time: _now,
+                    isDark: isDark,
+                    size: 80,
+                    onMagnifyChanged: (magnified) {
+                      setState(() => _clockMagnified = magnified);
+                    },
+                  ),
+                  const SizedBox(width: AppDimensions.spacingLg),
+                  // Vedic time text — right side, three lines
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('Prahar $prahar', style: textStyle),
+                      Text('Ghati $ghati', style: textStyle),
+                      Text('Pala $pala', style: textStyle),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            // Info button — top-right corner
+            Positioned(
+              top: 8,
+              right: 8,
+              child: GestureDetector(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  AppBottomSheet.show(
+                    context,
+                    child: VedicTimeInfoSheet(isDark: isDark, brown: c),
+                  );
+                },
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Icon(
+                    Icons.info_outline_rounded,
+                    size: 15,
+                    color: c.withValues(alpha: 0.3),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    return card;
+  }
+}
+
+/// Date-only card: lunar month, paksha, tithi name, numeric date.
+class VedicDateCard extends StatelessWidget {
+  final Map<String, dynamic>? samvat;
+  final Color brown;
+  final DateTime? selectedDate;
+
+  const VedicDateCard({
+    super.key,
+    required this.samvat,
+    required this.brown,
+    this.selectedDate,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? Theme.of(context).colorScheme.surface : Colors.white;
+    final c = AppTheme.primaryColor;
+
+    final vedicNumericDate = VedicTimeUtils.buildVedicNumericDate(samvat);
+    final fullVedicDate = VedicTimeUtils.buildFullVedicDate(samvat);
+    final lunarMonth = samvat?['lunar_month_full_name']?.toString() ??
+        samvat?['lunar_month_name']?.toString() ??
+        samvat?['lunarMonthFull']?.toString() ??
+        samvat?['lunarMonth']?.toString();
+
+    String? tithiLine;
+    if (fullVedicDate != null && lunarMonth != null) {
+      tithiLine = fullVedicDate.replaceFirst(lunarMonth, '').trim();
+      if (tithiLine.isEmpty) tithiLine = null;
+    } else {
+      tithiLine = fullVedicDate;
+    }
+    final monthLine = lunarMonth;
+
+    final pakshaRaw = _extractPaksha(samvat);
+    String? pakshaLine;
+    String? tithiNameOnly;
+    if (tithiLine != null) {
+      if (pakshaRaw.isNotEmpty) {
+        final pakshaCapitalized =
+            '${pakshaRaw[0].toUpperCase()}${pakshaRaw.substring(1)}';
+        pakshaLine = pakshaCapitalized;
+        final withoutPaksha =
+            tithiLine.replaceFirst(pakshaCapitalized, '').trim();
+        tithiNameOnly = withoutPaksha.isNotEmpty ? withoutPaksha : null;
+      } else {
+        tithiNameOnly = tithiLine;
+      }
+    }
+
+    // If there's nothing to show, collapse
+    if (monthLine == null && pakshaLine == null && tithiNameOnly == null && vedicNumericDate == null) {
+      return const SizedBox.shrink();
+    }
+
+    return SizedBox(
+      width: double.infinity,
+      child: Material(
+        color: cardColor,
+        elevation: 2,
+        shadowColor: Colors.black.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppDimensions.paddingLg,
+            AppDimensions.paddingMd,
+            AppDimensions.paddingLg,
+            AppDimensions.paddingMd,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (monthLine != null)
+                Text(
+                  monthLine,
+                  style: TextStyle(
+                    fontSize: AppTheme.holyCowTextSize,
+                    fontWeight: FontWeight.w500,
+                    color: c,
+                    height: 1.4,
+                  ),
+                ),
+              if (pakshaLine != null)
+                Text(
+                  pakshaLine,
+                  style: TextStyle(
+                    fontSize: AppTheme.holyCowTextSize,
+                    fontWeight: FontWeight.w500,
+                    color: c,
+                    height: 1.4,
+                  ),
+                ),
+              if (tithiNameOnly != null)
+                Text(
+                  tithiNameOnly,
+                  style: TextStyle(
+                    fontSize: AppTheme.holyCowTextSize,
+                    fontWeight: FontWeight.w500,
+                    color: c,
+                    height: 1.4,
+                  ),
+                ),
+              if (vedicNumericDate != null)
+                Text(
+                  vedicNumericDate,
+                  style: TextStyle(
+                    fontSize: AppTheme.holyCowTextSize,
+                    fontWeight: FontWeight.w500,
+                    color: c.withValues(alpha: 0.5),
+                    height: 1.4,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

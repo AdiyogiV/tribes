@@ -9,7 +9,7 @@
  * and NUANCE, not rules. Rules are pre-computed by Phala Ganana.
  */
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { getVertexAI, extractText } from "../../lib/vertex_client.js";
 import { logger } from "firebase-functions";
 import { normalizeDomain, getAllDomainKeys } from "../adhyaya/vishaya.js";
 
@@ -210,8 +210,8 @@ export async function synthesizeForecast(geminiApiKeyValue, analysisResult, opti
 
     const context = buildSynthesisContext(analysisResult);
 
-    const genAI = new GoogleGenerativeAI(geminiApiKeyValue);
-    const geminiModel = genAI.getGenerativeModel({
+    const vertexAI = getVertexAI();
+    const geminiModel = vertexAI.getGenerativeModel({
         model,
         systemInstruction: SYSTEM_PROMPT,
         generationConfig: {
@@ -223,8 +223,10 @@ export async function synthesizeForecast(geminiApiKeyValue, analysisResult, opti
 
     const startMs = Date.now();
 
-    const result = await geminiModel.generateContent(context);
-    const responseText = result.response.text();
+    const result = await geminiModel.generateContent({
+        contents: [{ role: "user", parts: [{ text: context }] }],
+    });
+    const responseText = extractText(result);
 
     const durationMs = Date.now() - startMs;
     logger.info("🌍 Mundane synthesis complete", { durationMs, model, responseLength: responseText.length });

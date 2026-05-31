@@ -34,6 +34,10 @@ class NakshatraWheelController extends ChangeNotifier {
   int _todayIndex  = -1;
   int _birthIndex  = -1;
 
+  /// Cumulative day offset tracked by boundary crossings.
+  /// Forward crossing = +1, backward = −1.  Unbounded (no modulo wrap).
+  int _cumulativeOffset = 0;
+
   /// Index of the nakshatra currently at 12 o'clock / top (−1 before first frame).
   int get activeIndex => _activeIndex;
 
@@ -43,20 +47,18 @@ class NakshatraWheelController extends ChangeNotifier {
   /// User's birth Moon nakshatra index (−1 when no profile).
   int get birthIndex => _birthIndex;
 
-  /// Signed day offset: active − today, clamped to −13..+13.
-  int get dateOffsetFromToday {
-    if (_todayIndex < 0 || _activeIndex < 0) return 0;
-    int raw = (_activeIndex - _todayIndex + _n) % _n;
-    if (raw > 13) raw -= _n;
-    return raw;
+  /// Signed day offset from today — unbounded (infinite scroll).
+  int get dateOffsetFromToday => _cumulativeOffset;
+
+  /// The calendar date currently shown at the top of the wheel.
+  DateTime get displayedDate {
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day)
+        .add(Duration(days: _cumulativeOffset));
   }
 
-  /// The calendar date currently shown at the bottom of the wheel.
-  DateTime get displayedDate =>
-      DateTime.now().add(Duration(days: dateOffsetFromToday));
-
   /// True when the wheel is at today's position.
-  bool get isAtToday => dateOffsetFromToday == 0;
+  bool get isAtToday => _cumulativeOffset == 0;
 
   /// Days until the user's next Janma Day (0 = today, −1 = no birth data).
   int get daysUntilJanma {
@@ -75,14 +77,22 @@ class NakshatraWheelController extends ChangeNotifier {
     required int activeIndex,
     required int todayIndex,
     required int birthIndex,
+    required int cumulativeOffset,
   }) {
     if (_activeIndex == activeIndex &&
         _todayIndex  == todayIndex  &&
-        _birthIndex  == birthIndex) return;
+        _birthIndex  == birthIndex  &&
+        _cumulativeOffset == cumulativeOffset) return;
     _activeIndex = activeIndex;
     _todayIndex  = todayIndex;
     _birthIndex  = birthIndex;
+    _cumulativeOffset = cumulativeOffset;
     notifyListeners();
+  }
+
+  /// Reset cumulative offset to zero (used by "Return to Today").
+  void _resetOffset() {
+    _cumulativeOffset = 0;
   }
 
   /// Stored by the wheel so external callers can animate the wheel.
@@ -90,6 +100,12 @@ class NakshatraWheelController extends ChangeNotifier {
 
   /// Animate the wheel to the given nakshatra index.
   void jumpToIndex(int idx) => _jumpCallback?.call(idx);
+
+  /// Jump the wheel to a specific day offset from today.
+  void Function(int)? _jumpToOffsetCallback;
+
+  /// Animate the wheel to a specific day offset from today.
+  void jumpToOffset(int dayOffset) => _jumpToOffsetCallback?.call(dayOffset);
 }
 
 // =============================================================================
@@ -168,6 +184,11 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
   double? _lastPanAngle;
   double _wheelDiameter = 0;
 
+  // ─── Long-press magnifier ─────────────────────────────────────────────────
+  Timer? _magnifyTimer;
+  bool _isMagnified = false;
+  Offset _magnifyOrigin = Offset.zero; // local position of the hold
+
   // ─── Selection (auto — always the nakshatra at 12 o'clock / top) ──────────
   int _currentBottomIndex = -1;  // field name kept for compatibility
 
@@ -208,43 +229,39 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
   bool get _isJanmaDay =>
       _birthIndex >= 0 && _todayIndex >= 0 && _birthIndex == _todayIndex;
 
-  // ─── Time / date helpers ───────────────────────────────────────────────────
+  // ─── Cumulative offset tracking ─────────────────────────────────────────────
   //
-  // The Moon spends ~24 hours in each nakshatra, so each segment of the
-  // wheel roughly corresponds to one day.  Bottom = current selection
-  // (today on first load); rotating CW = future days, CCW = past days.
+  // Instead of deriving dates from the modulo-27 nakshatra index (which wraps
+  // after one lunar cycle), we track cumulative boundary crossings.  Each
+  // forward crossing = +1 day, each backward = −1 day.  This gives infinite
+  // scrolling — the date keeps going forward/backward without wrapping.
 
-  /// Signed distance from today's nakshatra to whatever is at the bottom,
-  /// in the range −13..+13 (so the user explores ~½ month either way).
-  int get _dateOffsetFromToday {
-    if (_todayIndex < 0 || _activeIndex < 0) return 0;
-    int raw = (_activeIndex - _todayIndex + 27) % 27;
-    if (raw > 13) raw -= 27;
-    return raw;
+  /// Cumulative day offset from today.  Incremented/decremented on every
+  /// nakshatra boundary crossing.
+  int _cumulativeOffset = 0;
+
+  /// True while animating back to today — suppresses cumulative offset
+  /// tracking in [_onRotation] so intermediate boundary crossings don't
+  /// overwrite the reset.
+  bool _isReturningToToday = false;
+
+  int get _dateOffsetFromToday => _cumulativeOffset;
+
+  /// The date currently shown at the top of the wheel.
+  DateTime get _displayedDate {
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day)
+        .add(Duration(days: _cumulativeOffset));
   }
 
-  /// The date currently shown at the bottom of the wheel.
-  DateTime get _displayedDate =>
-      DateTime.now().add(Duration(days: _dateOffsetFromToday));
-
   /// True when the wheel is at today's position (default state).
-  bool get _isAtToday => _dateOffsetFromToday == 0;
+  bool get _isAtToday => _cumulativeOffset == 0;
 
   /// Days until the user's next Janma Day (Moon returning to birth star).
   /// Returns 0 today, 1 tomorrow, etc.  Returns -1 when birth data missing.
   int get _daysUntilJanma {
     if (_birthIndex < 0 || _todayIndex < 0) return -1;
     return (_birthIndex - _todayIndex + 27) % 27;
-  }
-
-  /// Short relative label: TODAY / TOMORROW / YESTERDAY / +N DAYS / −N DAYS.
-  String get _relativeLabel {
-    final o = _dateOffsetFromToday;
-    if (o == 0) return 'TODAY';
-    if (o == 1) return 'TOMORROW';
-    if (o == -1) return 'YESTERDAY';
-    if (o > 0) return 'IN $o DAYS';
-    return '${-o} DAYS AGO';
   }
 
   /// "May 17"-style short date.
@@ -256,12 +273,6 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
     return '${months[d.month - 1]} ${d.day}';
   }
 
-  /// Sentence-case a single-line label ("YESTERDAY" → "Yesterday").
-  String _titleCase(String s) {
-    if (s.isEmpty) return s;
-    return s[0].toUpperCase() + s.substring(1).toLowerCase();
-  }
-
   /// Animate the wheel back to today's position via the shortest arc.
   void _returnToToday() {
     HapticFeedback.selectionClick();
@@ -271,6 +282,11 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
     // Shortest-arc delta in (−π, π]
     final twoPi = 2 * pi;
     final delta = ((todayAngle - current) % twoPi + twoPi + pi) % twoPi - pi;
+    // Reset cumulative offset — we're going back to today.
+    // Flag suppresses _onRotation from overwriting during animation.
+    _cumulativeOffset = 0;
+    _isReturningToToday = true;
+    widget.controller?._resetOffset();
     _controller
         .animateTo(
           current + delta,
@@ -278,15 +294,58 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
           curve: Curves.easeOutCubic,
         )
         .whenComplete(() {
+          _isReturningToToday = false;
+          _cumulativeOffset = 0; // ensure clean after animation
           if (mounted) widget.onDateChanged?.call(_displayedDate);
         });
   }
 
   /// Animate the wheel so the given nakshatra index sits at the top.
+  /// Also updates the cumulative offset based on the shortest-arc jump
+  /// relative to the current position.
   void _jumpToIndex(int targetIdx) {
     if (targetIdx < 0 || targetIdx >= _count) return;
     HapticFeedback.selectionClick();
     _stopAll();
+
+    // Compute the signed segment jump (shortest arc) for cumulative offset.
+    if (_currentBottomIndex >= 0) {
+      final fwd = (targetIdx - _currentBottomIndex + _count) % _count;
+      final bwd = ((_currentBottomIndex - targetIdx + _count) % _count);
+      if (fwd <= bwd) {
+        _cumulativeOffset += fwd;
+      } else {
+        _cumulativeOffset -= bwd;
+      }
+    }
+
+    final targetAngle = -_ashwiniOffset + targetIdx * _seg;
+    final current = _controller.value;
+    final twoPi = 2 * pi;
+    final delta = ((targetAngle - current) % twoPi + twoPi + pi) % twoPi - pi;
+    _controller
+        .animateTo(
+          current + delta,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeOutCubic,
+        )
+        .whenComplete(() {
+          if (mounted) widget.onDateChanged?.call(_displayedDate);
+        });
+  }
+
+  /// Jump the wheel to a specific day offset from today.
+  /// Used by the sky chart slider to sync the wheel to an arbitrary date.
+  void _jumpToOffset(int dayOffset) {
+    // Compute the target nakshatra index for this offset.
+    final targetIdx = (_todayIndex + dayOffset % _count + _count) % _count;
+    if (targetIdx < 0 || targetIdx >= _count) return;
+    HapticFeedback.selectionClick();
+    _stopAll();
+
+    // Set cumulative offset directly — we know exactly where we're going.
+    _cumulativeOffset = dayOffset;
+
     final targetAngle = -_ashwiniOffset + targetIdx * _seg;
     final current = _controller.value;
     final twoPi = 2 * pi;
@@ -323,12 +382,14 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
     // during the build phase (which would throw a Flutter assertion).
     if (widget.controller != null) {
       widget.controller!._jumpCallback = _jumpToIndex;
+      widget.controller!._jumpToOffsetCallback = _jumpToOffset;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           widget.controller?._update(
             activeIndex: _activeIndex,
             todayIndex: _todayIndex,
             birthIndex: _birthIndex,
+            cumulativeOffset: _cumulativeOffset,
           );
         }
       });
@@ -347,12 +408,15 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
     // is swapped (rare in practice but required for correctness).
     if (old.controller != widget.controller) {
       old.controller?._jumpCallback = null;
+      old.controller?._jumpToOffsetCallback = null;
       if (widget.controller != null) {
         widget.controller!._jumpCallback = _jumpToIndex;
+        widget.controller!._jumpToOffsetCallback = _jumpToOffset;
         widget.controller!._update(
           activeIndex: _activeIndex,
           todayIndex: _todayIndex,
           birthIndex: _birthIndex,
+          cumulativeOffset: _cumulativeOffset,
         );
       }
     }
@@ -363,9 +427,11 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
     widget.wheelResetSignal?.removeListener(_onExternalResetToToday);
     _controller.removeListener(_onRotation);
     _resumeTimer?.cancel();
+    _magnifyTimer?.cancel();
     _controller.dispose();
-    // Null out the jump callback so a disposed widget is never called.
+    // Null out the jump callbacks so a disposed widget is never called.
     widget.controller?._jumpCallback = null;
+    widget.controller?._jumpToOffsetCallback = null;
     super.dispose();
   }
 
@@ -378,10 +444,31 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
   /// Fires on every animation tick — update bottom selection + haptic.
   /// Also pushes live state to the controller so listeners (sky chart,
   /// standalone mood/forecast cards) react during drag, not just on settle.
+  ///
+  /// Tracks cumulative boundary crossings for infinite date scrolling:
+  /// each forward crossing increments _cumulativeOffset, backward decrements.
   void _onRotation() {
     final seg = _nakshatraAtTop();
     if (seg != _currentBottomIndex && seg >= 0) {
       if (_isDragging) HapticFeedback.lightImpact();
+
+      // Track direction of boundary crossing for cumulative offset.
+      // Skip during return-to-today animation — offset is already reset
+      // and intermediate crossings would corrupt it.
+      if (_currentBottomIndex >= 0 && !_isReturningToToday) {
+        final prev = _currentBottomIndex;
+        // Detect forward vs backward crossing (handles the 26→0 / 0→26 wrap).
+        final forwardDelta = (seg - prev + _count) % _count;
+        final backwardDelta = (prev - seg + _count) % _count;
+        if (forwardDelta <= backwardDelta) {
+          // Forward crossing(s) — usually 1, but fling might skip segments.
+          _cumulativeOffset += forwardDelta;
+        } else {
+          // Backward crossing(s).
+          _cumulativeOffset -= backwardDelta;
+        }
+      }
+
       setState(() => _currentBottomIndex = seg);
       // Push live update to controller — fires on every nakshatra boundary
       // crossing, enabling the sky chart to move in real time during drag.
@@ -389,6 +476,7 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
         activeIndex: _activeIndex,
         todayIndex: _todayIndex,
         birthIndex: _birthIndex,
+        cumulativeOffset: _cumulativeOffset,
       );
     }
   }
@@ -413,6 +501,39 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
 
   void _scheduleResume() {
     _resumeTimer?.cancel();
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Long-press magnifier (raw pointer events — no gesture conflict)
+  // Hold still for 300 ms → zoom in; lift finger → zoom out.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  void _onPointerDown(PointerDownEvent e) {
+    _magnifyOrigin = e.localPosition;
+    _magnifyTimer?.cancel();
+    _magnifyTimer = Timer(const Duration(milliseconds: 100), () {
+      if (!mounted) return;
+      HapticFeedback.mediumImpact();
+      setState(() => _isMagnified = true);
+    });
+  }
+
+  void _onPointerMove(PointerMoveEvent e) {
+    // If the finger moved > 10 px it's a drag, cancel magnify.
+    if (!_isMagnified &&
+        (e.localPosition - _magnifyOrigin).distance > 10) {
+      _magnifyTimer?.cancel();
+    }
+  }
+
+  void _onPointerUp(PointerUpEvent e) {
+    _magnifyTimer?.cancel();
+    if (_isMagnified) setState(() => _isMagnified = false);
+  }
+
+  void _onPointerCancel(PointerCancelEvent e) {
+    _magnifyTimer?.cancel();
+    if (_isMagnified) setState(() => _isMagnified = false);
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -498,18 +619,7 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
     final cardColor =
         isDark ? Theme.of(context).colorScheme.surface : Colors.white;
 
-    // The wheel sits in a tight 5px parent padding for near-edge-to-edge
-    // display.  The Daily Vibe card needs an extra inset so it aligns with
-    // the normal 16px card padding used by all other dashboard cards (16−5=11).
-    const cardInset = EdgeInsets.symmetric(horizontal: 11);
-
-    // Two arrangements:
-    //   • wheelFirst (desktop hero):  Wheel → Daily Vibe
-    //   • default   (mobile reading): Daily Vibe → Wheel
-    final vibeCard = Padding(
-      padding: cardInset,
-      child: _buildDailyVibeCard(c, isDark, cardColor),
-    );
+    final vibeCard = _buildDailyVibeCard(c, isDark, cardColor);
     final wheel = _buildWheel(c, isDark);
     const gap = SizedBox(height: AppDimensions.spacingMd);
 
@@ -524,10 +634,10 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
     );
   }
 
-  // ─── Daily Vibe hero card ──────────────────────────────────────────────
+  // ─── Daily Vibe card ───────────────────────────────────────────────────
   //
-  // Plain-English guidance derived from today's Tara Bala — this is the
-  // main thing the user reads.  The wheel below is the visual proof.
+  // Plain-English guidance derived from today's Tara Bala.
+  // Styled to match the other dashboard cards (Material, flat, text-focused).
 
   Widget _buildDailyVibeCard(Color c, bool isDark, Color cardColor) {
     // No birth data yet → invite the user to set it up.
@@ -545,360 +655,71 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
     );
     if (vibe == null) return _buildVibeEmptyState(c, isDark, cardColor);
 
-    final accent = vibeAccent(vibe.tone, isDark: isDark);
     final tara = TaraBala.calculate(_birthIndex, activeIdx);
     final activeInfo = NakshatraData.getInfo(activeIdx);
     final isAtToday = _isAtToday;
     final isJanmaActive =
-        _birthIndex >= 0 && activeIdx == _birthIndex; // birth-star alignment
-
-    // Date/relative label — shown only when exploring, hidden on TODAY
-    // (the big emoji + label already say "today" loud enough).
-    final exploringLabel =
-        '${_titleCase(_relativeLabel)} · ${_formatDate(_displayedDate)}';
-
-    // Narrative copy. When at TODAY and we have an AI-generated insight,
-    // prefer the richer `insight.displayMessage`; on other days fall back to
-    // the static `vibe.narrative` template. We key the AnimatedSwitcher off
-    // (activeIdx, source) so the transition fires on both wheel rotation and
-    // insight load.
+        _birthIndex >= 0 && activeIdx == _birthIndex;
+    // Narrative: AI insight on today, static vibe template otherwise.
     final aiMessage = widget.insight?.displayMessage ?? '';
     final useInsight = isAtToday && aiMessage.isNotEmpty;
     final narrativeText = useInsight ? aiMessage : vibe.narrative;
-    final narrativeKey =
-        ValueKey('narr_${useInsight ? "ai" : "vibe"}_$activeIdx');
 
-    // Fixed narrative zone — 4 lines reserved so the card never jumps
-    // height when the wheel rotates or when the AI insight finishes loading.
-    final narrativeStyle = TextStyle(
-      fontSize: AppTheme.holyCowTextSize,
-      fontWeight: FontWeight.w400,
-      color: c.withValues(alpha: 0.82),
-      height: 1.5,
-    );
-    final scaler = MediaQuery.textScalerOf(context);
-    final narrativeBoxHeight =
-        scaler.scale(AppTheme.holyCowTextSize) * 1.5 * 4;
-    // Reserve enough room for two rows of chips (most vibes need 1–2 rows).
-    final chipsBoxHeight =
-        scaler.scale(AppTheme.holyCowTextSize - 3) * 1.2 * 2 + 18;
+    // Subtitle: "Mrigashira · Sampat Tara" or "Mrigashira · Janma Day"
+    final subtitle = <String>[
+      if (activeInfo != null) activeInfo.name,
+      isJanmaActive ? 'Janma Day' : tara.name,
+    ].join(' · ');
 
     return Material(
       color: cardColor,
       elevation: 2,
       shadowColor: Colors.black.withValues(alpha: 0.2),
       borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-      child: AnimatedContainer(
-        // Smooth tween between vibe accent colors when the user drags.
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeOutCubic,
+      child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.fromLTRB(
-          AppDimensions.paddingLg,
-          AppDimensions.paddingLg,
-          AppDimensions.paddingLg,
-          AppDimensions.paddingLg,
-        ),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-          border: Border.all(
-            color: accent.withValues(alpha: isJanmaActive ? 0.35 : 0.18),
-            width: isJanmaActive ? 1.2 : 1,
-          ),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              accent.withValues(alpha: isDark ? 0.10 : 0.06),
-              Colors.transparent,
-            ],
-          ),
-        ),
+        padding: const EdgeInsets.all(AppDimensions.paddingLg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // ───────────────────────────────────────────────────────────
-            // 1) Thin top strip — date label (left) + Today chip + ⓘ (right)
-            // ───────────────────────────────────────────────────────────
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 200),
-                  child: Text(
-                    isAtToday ? 'TODAY' : exploringLabel.toUpperCase(),
-                    key: ValueKey(isAtToday ? 'today' : exploringLabel),
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: c.withValues(alpha: 0.45),
-                      letterSpacing: 1.4,
-                    ),
-                  ),
-                ),
-                const Spacer(),
-                if (!isAtToday) ...[
-                  _returnToTodayChip(c, isDark),
-                  const SizedBox(width: 6),
-                ],
-                InkResponse(
-                  radius: 18,
-                  onTap: () => _showWhyThisVibeSheet(
-                    c: c,
-                    isDark: isDark,
-                    cardColor: cardColor,
-                    vibe: vibe,
-                    tara: tara,
-                    activeInfo: activeInfo,
-                    accent: accent,
-                    isAtToday: isAtToday,
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(4),
-                    child: Icon(
-                      Icons.info_outline_rounded,
-                      size: 18,
-                      color: c.withValues(alpha: 0.45),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: AppDimensions.spacingMd),
-
-            // ───────────────────────────────────────────────────────────
-            // 2) Hero row — icon badge + (label / nakshatra·tara) stack
-            // ───────────────────────────────────────────────────────────
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 280),
-                  transitionBuilder: (child, anim) => FadeTransition(
-                    opacity: anim,
-                    child: ScaleTransition(scale: anim, child: child),
-                  ),
-                  child: Container(
-                    key: ValueKey('icon_$activeIdx'),
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: accent.withValues(alpha: isDark ? 0.16 : 0.10),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      vibe.icon,
-                      size: 24,
-                      color: accent,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      AnimatedDefaultTextStyle(
-                        duration: const Duration(milliseconds: 300),
-                        style: TextStyle(
-                          fontSize: AppTheme.holyCowTextSize + 6,
-                          fontWeight: FontWeight.w700,
-                          color: accent,
-                          letterSpacing: 0.1,
-                          height: 1.15,
-                        ),
-                        child: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 200),
-                          child: Text(
-                            vibe.label,
-                            key: ValueKey('label_$activeIdx'),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 200),
-                        child: Text.rich(
-                          TextSpan(children: [
-                            if (activeInfo != null) ...[
-                              TextSpan(
-                                text: activeInfo.name,
-                                style: TextStyle(
-                                  fontSize: AppTheme.holyCowTextSize - 2,
-                                  fontWeight: FontWeight.w600,
-                                  color: c.withValues(alpha: 0.55),
-                                ),
-                              ),
-                              TextSpan(
-                                text: '  ·  ',
-                                style: TextStyle(
-                                    color: c.withValues(alpha: 0.25)),
-                              ),
-                            ],
-                            TextSpan(
-                              text: isJanmaActive ? 'Janma Day' : tara.name,
-                              style: TextStyle(
-                                fontSize: AppTheme.holyCowTextSize - 2,
-                                fontWeight: FontWeight.w600,
-                                color: isJanmaActive
-                                    ? const Color(0xFFB8860B)
-                                    : _taraColor(tara.isFavorable, isDark),
-                              ),
-                            ),
-                            if (!isJanmaActive)
-                              TextSpan(
-                                text: tara.isFavorable ? '  ✓' : '  ⚠',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: _taraAccent(tara.isFavorable),
-                                ),
-                              ),
-                          ]),
-                          key: ValueKey(
-                              '${activeInfo?.name}_${tara.name}_$isJanmaActive'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: AppDimensions.spacingMd),
-
-            // ───────────────────────────────────────────────────────────
-            // 3) Narrative — fixed 4-line height (AI insight on today,
-            //    static vibe template otherwise)
-            // ───────────────────────────────────────────────────────────
-            SizedBox(
-              height: narrativeBoxHeight,
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 250),
-                child: Text(
-                  narrativeText,
-                  key: narrativeKey,
-                  maxLines: 4,
-                  overflow: TextOverflow.ellipsis,
-                  style: narrativeStyle,
-                ),
+            // Vibe label
+            Text(
+              vibe.label,
+              style: TextStyle(
+                fontSize: AppTheme.holyCowTextSize + 4,
+                fontWeight: FontWeight.w700,
+                color: c,
               ),
             ),
+            const SizedBox(height: AppDimensions.spacingXs),
 
+            // Nakshatra · Tara subtitle
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: AppTheme.holyCowTextSize - 1,
+                fontWeight: FontWeight.w500,
+                color: c.withValues(alpha: 0.5),
+              ),
+            ),
             const SizedBox(height: AppDimensions.spacingMd),
 
-            // ───────────────────────────────────────────────────────────
-            // 4) Good-for chip row — fixed height (2 rows of chips)
-            // ───────────────────────────────────────────────────────────
-            _sectionLabel(
-              label: 'GOOD FOR',
-              icon: Icons.check_rounded,
-              iconColor: const Color(0xFF4CAF50),
-              c: c,
-            ),
-            const SizedBox(height: 6),
-            SizedBox(
-              height: chipsBoxHeight,
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                child: _vibeChipRow(
-                  key: ValueKey('goodfor_$activeIdx'),
-                  items: vibe.goodFor,
-                  accent: accent,
-                  isDark: isDark,
-                ),
+            // Narrative
+            Text(
+              narrativeText,
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: AppTheme.holyCowTextSize,
+                fontWeight: FontWeight.w400,
+                color: c.withValues(alpha: 0.75),
+                height: 1.5,
               ),
             ),
-
-            const SizedBox(height: 12),
-
-            // ───────────────────────────────────────────────────────────
-            // 5) Avoid chip row — fixed height (2 rows of chips)
-            // ───────────────────────────────────────────────────────────
-            _sectionLabel(
-              label: 'AVOID',
-              icon: Icons.remove_rounded,
-              iconColor: const Color(0xFFE57373),
-              c: c,
-            ),
-            const SizedBox(height: 6),
-            SizedBox(
-              height: chipsBoxHeight,
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                child: _vibeChipRow(
-                  key: ValueKey('avoid_$activeIdx'),
-                  items: vibe.avoid,
-                  accent: const Color(0xFFE57373),
-                  isDark: isDark,
-                ),
-              ),
-            ),
+            const SizedBox(height: AppDimensions.spacingXs),
           ],
         ),
-      ),
-    );
-  }
-
-  /// Small section label — icon + ALL-CAPS text — used above each chip row.
-  Widget _sectionLabel({
-    required String label,
-    required IconData icon,
-    required Color iconColor,
-    required Color c,
-  }) {
-    return Row(
-      children: [
-        Icon(icon, size: 14, color: iconColor),
-        const SizedBox(width: 6),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w700,
-            color: c.withValues(alpha: 0.6),
-            letterSpacing: 1.2,
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Wrap-laid row of pill-shaped chips, one per item.
-  Widget _vibeChipRow({
-    Key? key,
-    required List<String> items,
-    required Color accent,
-    required bool isDark,
-  }) {
-    return Align(
-      key: key,
-      alignment: Alignment.topLeft,
-      child: Wrap(
-        spacing: 6,
-        runSpacing: 6,
-        children: items.map((item) {
-          return Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: accent.withValues(alpha: isDark ? 0.18 : 0.10),
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(
-                color: accent.withValues(alpha: isDark ? 0.32 : 0.22),
-                width: 0.8,
-              ),
-            ),
-            child: Text(
-              item,
-              style: TextStyle(
-                fontSize: AppTheme.holyCowTextSize - 3,
-                fontWeight: FontWeight.w600,
-                color: accent.withValues(alpha: isDark ? 0.95 : 0.85),
-                height: 1.2,
-              ),
-            ),
-          );
-        }).toList(),
       ),
     );
   }
@@ -1096,7 +917,7 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
                           Text(
                             isAtToday
                                 ? 'Today\'s reading explained'
-                                : '${_titleCase(_relativeLabel)} · ${_formatDate(_displayedDate)}',
+                                : 'Reading explained',
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
@@ -1297,38 +1118,6 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
     );
   }
 
-  /// Small chip shown in the Daily Vibe card header to snap the wheel back to today.
-  Widget _returnToTodayChip(Color c, bool isDark) {
-    return InkWell(
-      onTap: _returnToToday,
-      borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: c.withValues(alpha: isDark ? 0.14 : 0.08),
-          borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
-          border: Border.all(color: c.withValues(alpha: 0.25), width: 0.8),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.restart_alt_rounded, size: 12, color: c),
-            const SizedBox(width: 3),
-            Text(
-              'Today',
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                color: c,
-                letterSpacing: 0.3,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   // ─── Wheel ─────────────────────────────────────────────────────────────────
 
   /// Maximum wheel diameter on wide layouts. The wheel is decorative — past
@@ -1344,7 +1133,20 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
         _wheelDiameter = total;
         final imgDia = total - 2 * (_selectedRingWidth + _ringGap);
 
-        return Center(child: RawGestureDetector(
+        // Magnify origin as fraction of wheel size (for alignment).
+        final magAlignX = _wheelDiameter > 0
+            ? (_magnifyOrigin.dx / _wheelDiameter) * 2 - 1
+            : 0.0;
+        final magAlignY = _wheelDiameter > 0
+            ? (_magnifyOrigin.dy / _wheelDiameter) * 2 - 1
+            : 0.0;
+
+        return Center(child: Listener(
+          onPointerDown: _onPointerDown,
+          onPointerMove: _onPointerMove,
+          onPointerUp: _onPointerUp,
+          onPointerCancel: _onPointerCancel,
+          child: RawGestureDetector(
           gestures: <Type, GestureRecognizerFactory>{
             _EagerPanGestureRecognizer:
                 GestureRecognizerFactoryWithHandlers<_EagerPanGestureRecognizer>(
@@ -1358,7 +1160,12 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
             ),
           },
           behavior: HitTestBehavior.opaque,
-          child: SizedBox(
+          child: AnimatedScale(
+            scale: _isMagnified ? 2.2 : 1.0,
+            alignment: Alignment(magAlignX.clamp(-1.0, 1.0), magAlignY.clamp(-1.0, 1.0)),
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOutCubic,
+            child: SizedBox(
             width: total,
             height: total,
             child: AnimatedBuilder(
@@ -1426,7 +1233,9 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
               ),
             ),
           ),
-        ));
+        ),
+        )),
+        );
       }),
     );
   }
@@ -1525,6 +1334,21 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
   }
 
   // ─── Small helpers ─────────────────────────────────────────────────────────
+
+  Widget _badge(String label, Color bg, Color fg) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: bg.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
+          border: Border.all(color: bg.withValues(alpha: 0.2)),
+        ),
+        child: Text(label,
+            style: TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w700,
+                color: fg,
+                letterSpacing: 0.8)),
+      );
 
   Widget _meta(String label, String value, Color c) => Expanded(
         child: Column(children: [
@@ -2277,6 +2101,63 @@ class _TaraRingPainter extends CustomPainter {
       old.primaryColor != primaryColor ||
       old.isDark != isDark ||
       old.isJanmaDay != isJanmaDay;
+}
+
+// =============================================================================
+// Pulsing icon (Moon marker) — bare icon with breathing opacity, no container
+// =============================================================================
+
+class _PulsingIcon extends StatefulWidget {
+  final double size;
+  final Color color;
+  final IconData icon;
+
+  const _PulsingIcon({
+    required this.size,
+    required this.color,
+    required this.icon,
+  });
+
+  @override
+  State<_PulsingIcon> createState() => _PulsingIconState();
+}
+
+class _PulsingIconState extends State<_PulsingIcon>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _pulse;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulse = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _pulse,
+      builder: (context, child) {
+        final t = _pulse.value;
+        return Opacity(
+          opacity: 0.7 + t * 0.3,
+          child: Icon(
+            widget.icon,
+            size: widget.size,
+            color: widget.color,
+          ),
+        );
+      },
+    );
+  }
 }
 
 // =============================================================================

@@ -4,6 +4,7 @@ import 'package:aurogram/shared/presentation/widgets/avatars/user_avatar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
+import 'package:lottie/lottie.dart';
 
 class TabBottomNav extends StatelessWidget {
   final int selectedIndex;
@@ -40,8 +41,8 @@ class TabBottomNav extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               // New Feed (HolyCow AI) - Default tab
-              _NavItemWithImage(
-                assetPath: 'assets/images/cow1.png',
+              _NavItemWithLottie(
+                assetPath: 'assets/animations/globe.json',
                 isSelected: selectedIndex == 0,
                 activeColor: activeColor,
                 inactiveColor: inactiveColor,
@@ -150,6 +151,88 @@ class _NavItem extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NavItemWithLottie extends StatefulWidget {
+  final String assetPath;
+  final bool isSelected;
+  final Color activeColor;
+  final Color inactiveColor;
+  final VoidCallback onTap;
+
+  const _NavItemWithLottie({
+    required this.assetPath,
+    required this.isSelected,
+    required this.activeColor,
+    required this.inactiveColor,
+    required this.onTap,
+  });
+
+  @override
+  State<_NavItemWithLottie> createState() => _NavItemWithLottieState();
+}
+
+class _NavItemWithLottieState extends State<_NavItemWithLottie>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this);
+  }
+
+  @override
+  void didUpdateWidget(_NavItemWithLottie oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isSelected && !oldWidget.isSelected) {
+      _controller.repeat();
+    } else if (!widget.isSelected && oldWidget.isSelected) {
+      _controller.stop();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: widget.onTap,
+      borderRadius: BorderRadius.circular(AppDimensions.radiusMdLg),
+      splashFactory: NoSplash.splashFactory,
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
+      hoverColor: Colors.transparent,
+      focusColor: Colors.transparent,
+      child: SizedBox(
+        width: 64,
+        height: 70,
+        child: Center(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            width: widget.isSelected ? 50 : 40,
+            height: widget.isSelected ? 50 : 40,
+            child: Lottie.asset(
+              widget.assetPath,
+              controller: _controller,
+              fit: BoxFit.contain,
+              onLoaded: (composition) {
+                // 3x slower than original duration
+                _controller.duration = composition.duration * 3;
+                if (widget.isSelected) {
+                  _controller.repeat();
+                }
+              },
+            ),
+          ),
         ),
       ),
     );

@@ -336,5 +336,21 @@
       ]
     }
   ],
-  "fieldOverrides": []
+  "fieldOverrides": [
+    {
+      "collectionGroup": "global_astro",
+      "fieldPath": "positions",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "global_astro",
+      "fieldPath": "panchang",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "global_astro",
+      "fieldPath": "muhurat",
+      "indexes": []
+    }
+  ]
 }

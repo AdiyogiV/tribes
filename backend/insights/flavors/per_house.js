@@ -350,7 +350,6 @@ PER-HOUSE DATA:
         options: {
             expectJson: true,
             temperature: 0.85,
-            maxOutputTokens: 16384, // gemini-2.5-flash uses thinking tokens from this budget
         },
     };
 }

@@ -14,6 +14,8 @@ import 'package:aurogram/features/onboarding/domain/onboarding_constants.dart';
 /// The host State must expose the mutable fields that polling updates via the
 /// abstract getters/setters declared here.
 mixin DataPollingMixin<T extends StatefulWidget> on State<T> {
+  bool _isPollingFirstReading = false;
+
   // ---- fields the host must provide ----
   AstrologyProfile? get pollingProfile;
   set pollingProfile(AstrologyProfile? value);
@@ -180,6 +182,8 @@ mixin DataPollingMixin<T extends StatefulWidget> on State<T> {
 
   /// Polls Firestore for the first reading content.
   void pollForFirstReading() async {
+    if (_isPollingFirstReading) return;
+    _isPollingFirstReading = true;
     AppLogger.i('Polling for first reading from Firestore...',
         category: LogCategory.general);
 
@@ -187,6 +191,7 @@ mixin DataPollingMixin<T extends StatefulWidget> on State<T> {
     if (uid == null) {
       AppLogger.w('No uid for first reading poll',
           category: LogCategory.general);
+      _isPollingFirstReading = false;
       return;
     }
 
@@ -201,6 +206,9 @@ mixin DataPollingMixin<T extends StatefulWidget> on State<T> {
       pollCount++;
       try {
         final userRepo = locator<UserRepository>();
+        // First reading is written asynchronously by backend right after sync.
+        // Bypass repository TTL cache so onboarding sees fresh Firestore writes.
+        userRepo.invalidate(uid);
         final doc = await userRepo.getUser(uid);
 
         if (doc.exists) {
@@ -220,6 +228,7 @@ mixin DataPollingMixin<T extends StatefulWidget> on State<T> {
                 pollingIsGeneratingReading = false;
               });
             }
+            _isPollingFirstReading = false;
             return;
           } else {
             if (!hasTriggeredGeneration && pollCount >= 3) {
@@ -275,6 +284,8 @@ mixin DataPollingMixin<T extends StatefulWidget> on State<T> {
         }
       });
     }
+
+    _isPollingFirstReading = false;
   }
 
   /// Check for first reading once (used as final fallback).
@@ -284,6 +295,8 @@ mixin DataPollingMixin<T extends StatefulWidget> on State<T> {
 
     try {
       final userRepo = locator<UserRepository>();
+      // Ensure final fallback check reads latest document state.
+      userRepo.invalidate(uid);
       final doc = await userRepo.getUser(uid);
       if (doc.exists) {
         final data = doc.data();

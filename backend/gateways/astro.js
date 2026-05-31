@@ -10,6 +10,7 @@
  *   - getSkyPositions         [public]   Read cached planetary positions
  *   - getUpcomingEvents       [public]   Read pre-calculated events
  *   - getGlobalMuhurat        [public]   Read/fetch muhurat timeline
+ *   - getAstroCalendar        [public]   Compact 365-day calendar (positions + panchang)
  *   - prefetchSkyPositions    [public]   Trigger manual sky prefetch
  *   - freeAstroCalculate      [auth]     Full birth chart calculation
  *   - calculateCompatibility  [auth]     Kundli matching between two users
@@ -28,6 +29,7 @@ import {
     handleGetUpcomingEvents,
     handleGetGlobalMuhurat,
     handlePrefetchSkyPositions,
+    handleGetAstroCalendar,
 } from "../functions/sky_positions.js";
 
 import {
@@ -47,6 +49,7 @@ const methods = {
     getSkyPositions:      { handler: (req, data) => handleGetSkyPositions(), auth: false },
     getUpcomingEvents:    { handler: (req, data) => handleGetUpcomingEvents(), auth: false },
     getGlobalMuhurat:     { handler: (req, data) => handleGetGlobalMuhurat(), auth: false },
+    getAstroCalendar:     { handler: (req, data) => handleGetAstroCalendar(req, data), auth: false },
     prefetchSkyPositions: { handler: (req) => handlePrefetchSkyPositions(req), auth: false },
     searchGeoLocation:    { handler: (req, data) => handleSearchGeoLocation(req, data), auth: false },
 

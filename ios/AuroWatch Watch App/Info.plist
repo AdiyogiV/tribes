@@ -2,6 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CFBundleIconName</key>
+	<string>AppIcon</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Aurogram updates your health data to log Vedic wellness insights and Nadi analysis results, helping you track your Ayurvedic health journey over time.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Aurogram reads heart rate and HRV data to provide Vedic pulse (Nadi) analysis and Ayurvedic health insights personalized to your body's rhythms.</string>
 	<key>WKApplication</key>
 	<true/>
 	<key>WKBackgroundModes</key>

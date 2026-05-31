@@ -1,12 +1,8 @@
-import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
-import 'package:http/http.dart' as http;
-import 'package:aurogram/core/config/api_endpoints.dart';
 import 'package:aurogram/shared/models/astrology_profile.dart';
 import 'package:aurogram/features/astrology/domain/astrology_service.dart';
 import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
@@ -38,8 +34,6 @@ class AstrologySetupPage extends StatefulWidget {
 
 class _AstrologySetupPageState extends State<AstrologySetupPage> {
   final _service = AstrologyService();
-  final _searchController = TextEditingController();
-  final _searchFocus = FocusNode();
   final _scrollController = ScrollController();
 
   // Date/Time
@@ -52,11 +46,6 @@ class _AstrologySetupPageState extends State<AstrologySetupPage> {
   double? _lat, _lng;
   String? _tz;
   double? _tzOffset; // Numeric timezone offset in hours
-  // Use ValueNotifiers for efficient updates to the search sheet
-  final ValueNotifier<List<Map<String, dynamic>>> _resultsNotifier =
-      ValueNotifier([]);
-  final ValueNotifier<bool> _searchingNotifier = ValueNotifier(false);
-  Timer? _debounce;
 
   // Gender (optional but helps with traditional compatibility)
   String? _gender; // "Male", "Female", "Non-binary", or null
@@ -133,7 +122,6 @@ class _AstrologySetupPageState extends State<AstrologySetupPage> {
           _tz = p.timeZone;
           _tzOffset = p.timeZoneOffset;
           _gender = p.gender;
-          if (_place != null) _searchController.text = _place!;
         }
       });
 
@@ -157,20 +145,13 @@ class _AstrologySetupPageState extends State<AstrologySetupPage> {
 
   @override
   void dispose() {
-    _debounce?.cancel();
-    _searchController.dispose();
-    _searchFocus.dispose();
     _scrollController.dispose();
-    // Dispose picker controllers
     _dayController.dispose();
     _monthController.dispose();
     _yearController.dispose();
     _hourController.dispose();
     _minuteController.dispose();
     _ampmController.dispose();
-    // Dispose search notifiers
-    _resultsNotifier.dispose();
-    _searchingNotifier.dispose();
     super.dispose();
   }
 
@@ -200,7 +181,7 @@ class _AstrologySetupPageState extends State<AstrologySetupPage> {
           child: Scaffold(
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             body: GestureDetector(
-              onTap: () => _searchFocus.unfocus(),
+              onTap: () => FocusScope.of(context).unfocus(),
               behavior: HitTestBehavior.opaque,
               child: ResponsiveBuilder(
                 builder: (context, isMobile, isTablet, isDesktop) {
@@ -350,10 +331,6 @@ class _AstrologySetupPageState extends State<AstrologySetupPage> {
                                     primaryColor: c,
                                     dark: dark,
                                     cardColor: dark ? Theme.of(context).colorScheme.surface : Colors.white,
-                                    searchController: _searchController,
-                                    resultsNotifier: _resultsNotifier,
-                                    searchingNotifier: _searchingNotifier,
-                                    onSearch: _search,
                                     onSelect: _select,
                                   ),
                                   onClear: () => setState(() {
@@ -362,7 +339,6 @@ class _AstrologySetupPageState extends State<AstrologySetupPage> {
                                     _lng = null;
                                     _tz = null;
                                     _tzOffset = null;
-                                    _searchController.clear();
                                   }),
                                 ),
                                 primaryColor: c,
@@ -550,10 +526,6 @@ class _AstrologySetupPageState extends State<AstrologySetupPage> {
                                         primaryColor: c,
                                         dark: dark,
                                         cardColor: dark ? Theme.of(context).colorScheme.surface : Colors.white,
-                                        searchController: _searchController,
-                                        resultsNotifier: _resultsNotifier,
-                                        searchingNotifier: _searchingNotifier,
-                                        onSearch: _search,
                                         onSelect: _select,
                                       ),
                                       onClear: () => setState(() {
@@ -562,7 +534,6 @@ class _AstrologySetupPageState extends State<AstrologySetupPage> {
                                         _lng = null;
                                         _tz = null;
                                         _tzOffset = null;
-                                        _searchController.clear();
                                       }),
                                     ),
                                     primaryColor: c,
@@ -676,58 +647,6 @@ class _AstrologySetupPageState extends State<AstrologySetupPage> {
     return '$h:$m ${_isAM ? 'AM' : 'PM'}';
   }
 
-  /// Fast location search using Open-Meteo Geocoding API (direct call, no Firebase)
-  void _search(String q) {
-    _debounce?.cancel();
-    if (q.length < 2) {
-      _resultsNotifier.value = [];
-      return;
-    }
-    _debounce = Timer(const Duration(milliseconds: 150), () async {
-      if (!mounted) return;
-      _searchingNotifier.value = true;
-
-      try {
-        // Direct API call - much faster than Firebase Functions
-        final uri = Uri.parse('${ApiEndpoints.geocodingSearch}'
-            '?name=${Uri.encodeComponent(q.trim())}'
-            '&count=8&language=en&format=json');
-
-        final response = await http.get(uri).timeout(
-              const Duration(seconds: 5),
-              onTimeout: () => http.Response('{}', 408),
-            );
-
-        if (!mounted) return;
-
-        if (response.statusCode == 200) {
-          final data = jsonDecode(response.body);
-          final results = data['results'] as List? ?? [];
-
-          _resultsNotifier.value = results
-              .map((item) => {
-                    'name': item['name'] ?? '',
-                    'country': item['country'] ?? '',
-                    'admin1': item['admin1'] ?? '', // State/Province
-                    'latitude': item['latitude'],
-                    'longitude': item['longitude'],
-                    'timezone': item['timezone'],
-                    'population': item['population'] ?? 0,
-                  })
-              .toList();
-          _searchingNotifier.value = false;
-        } else {
-          _resultsNotifier.value = [];
-          _searchingNotifier.value = false;
-        }
-      } catch (e) {
-        if (mounted) {
-          _resultsNotifier.value = [];
-          _searchingNotifier.value = false;
-        }
-      }
-    });
-  }
 
   void _select(Map<String, dynamic> r) {
     final admin1 = r['admin1'] as String? ?? '';
@@ -742,9 +661,6 @@ class _AstrologySetupPageState extends State<AstrologySetupPage> {
       displayName = '$cityName, $country';
     }
 
-    _searchController.text = displayName;
-    Navigator.pop(context); // Close the search overlay
-
     setState(() {
       _place = displayName;
       _lat = (r['latitude'] as num).toDouble();
@@ -752,7 +668,6 @@ class _AstrologySetupPageState extends State<AstrologySetupPage> {
       _tz = r['timezone'] as String?;
       _tzOffset = (r['timezoneOffset'] as num?)?.toDouble();
     });
-    _resultsNotifier.value = [];
     HapticFeedback.mediumImpact();
   }
 

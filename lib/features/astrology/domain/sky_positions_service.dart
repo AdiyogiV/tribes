@@ -38,6 +38,11 @@ class SkyPositionsService {
   bool _isLoadingMuhurat = false;
   Completer<bool>? _positionsLoadCompleter;
 
+  // Session-level guard: only invalidate the on-disk cache for "today panchang
+  // missing" once per app launch. Without this, every screen open would force
+  // a network round-trip if the upstream is still down.
+  bool _todayPanchangCacheBust = false;
+
   // ---------------------------------------------------------------------------
   // Public API — position lookups
   // ---------------------------------------------------------------------------
@@ -394,9 +399,18 @@ class SkyPositionsService {
       return _positionsLoadCompleter!.future;
     }
 
-    // Check cache first
+    // Check cache first — but if today's panchang is missing in memory,
+    // skip the early-return once per session so we pick up backend backfills.
     if (!forceRefresh && _positions != null) {
-      return true;
+      final todayPanchang = getTodayPanchang();
+      if (todayPanchang != null && todayPanchang.isNotEmpty) {
+        return true;
+      }
+      if (_todayPanchangCacheBust) {
+        // Already retried this session; serve what we have to avoid hammering.
+        return true;
+      }
+      _todayPanchangCacheBust = true;
     }
 
     // Try loading from local cache
@@ -676,6 +690,27 @@ class SkyPositionsService {
                 MapEntry(key, Map<String, dynamic>.from(value as Map)),
           ),
         );
+      }
+
+      // Invalidate cache if today's panchang is missing or empty.
+      // Backend may have just backfilled the gap, and we don't want to
+      // sit on a stale empty payload for the full 12h TTL.
+      // Guarded by _todayPanchangCacheBust so we only retry once per session.
+      final todayPanchang = getTodayPanchang();
+      if ((todayPanchang == null || todayPanchang.isEmpty) &&
+          !_todayPanchangCacheBust) {
+        _todayPanchangCacheBust = true;
+        AppLogger.i(
+          'Cache hit but today panchang missing — forcing refetch',
+          category: LogCategory.general,
+          data: {
+            'todayKey': _formatDateKey(DateTime.now()),
+            'panchangDays': _panchang?.length ?? 0,
+          },
+        );
+        _positions = null;
+        _panchang = null;
+        return false;
       }
 
       return true;

@@ -33,10 +33,16 @@ const DEFAULT_LNG = 75.7885;
 const DEFAULT_TZ = 5.5;
 const DEFAULT_TZ_ID = "Asia/Kolkata";
 
-// How far ahead to maintain positions (60 days)
-const DAYS_AHEAD_TARGET = 60;
-const MUHURAT_DAYS_AHEAD = 3;
+// How far ahead to maintain positions + panchang + muhurat (365 days).
+// A fresh deploy backfills ~4 daily runs (MAX_FETCH_PER_RUN per run).
+const DAYS_AHEAD_TARGET = 365;
+const MUHURAT_DAYS_AHEAD = 3; // live 3-day endpoint (handleGetGlobalMuhurat)
 const MUHURAT_CACHE_HOURS = 6;
+
+// Safety batch limit per run — avoids Cloud Function timeout (300s).
+// Each day costs up to 5 API calls (1 position + 3 panchang + 1 muhurat)
+// at 150ms throttle each.  100 days × 5 × 150ms ≈ 75s (well within 300s).
+const MAX_FETCH_PER_RUN = 100;
 
 // Important planets for tracking (9 Vedic grahas + 3 outer planets)
 const TRACKED_PLANETS = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu", "Uranus", "Neptune", "Pluto"];
@@ -45,6 +51,63 @@ const isEmptyPanchang = (value) => {
     if (!value || typeof value !== "object") return true;
     return Object.keys(value).length === 0;
 };
+
+/** Check if muhurat data for a date is missing or empty. */
+const isEmptyMuhurat = (value) => {
+    if (!value || typeof value !== "object") return true;
+    return Object.keys(value).length === 0;
+};
+
+/**
+ * Convert a muhurat time string ("HH:MM" or "HH:MM AM/PM") to minutes
+ * from midnight.  Returns null on bad input.
+ */
+function timeStrToMinutes(str) {
+    if (!str || typeof str !== "string") return null;
+    const clean = str.replace(/\s*(AM|PM)\s*/i, "").trim();
+    const parts = clean.split(":");
+    let h = Number(parts[0]) || 0;
+    const m = Number(parts[1]) || 0;
+    if (/PM/i.test(str) && h < 12) h += 12;
+    if (/AM/i.test(str) && h === 12) h = 0;
+    return h * 60 + m;
+}
+
+/**
+ * Convert a parsed muhurat day (from parseMuhuratDay) to compact [start, end]
+ * minute pairs keyed by short codes.
+ *
+ * Compact keys:
+ *   r = Rahu Kala, g = Gulika Kala, y = Yamaganda, v = Varjyam,
+ *   a = Abhijit, am = Amrit Kaal, b = Brahma Muhurat, d = Dur Muhurat
+ */
+function muhuratToCompact(muhuratDay) {
+    if (!muhuratDay) return null;
+    const compact = {};
+
+    const toMin = (timeData) => {
+        if (!timeData) return null;
+        const s = timeData.starts_at || timeData.startsAt;
+        const e = timeData.ends_at || timeData.endsAt;
+        if (!s || !e) return null;
+        const sm = timeStrToMinutes(s);
+        const em = timeStrToMinutes(e);
+        if (sm == null || em == null) return null;
+        return [sm, em];
+    };
+
+    const r = toMin(muhuratDay.rahuKala);    if (r) compact.r = r;
+    const g = toMin(muhuratDay.gulikaKala);  if (g) compact.g = g;
+    const y = toMin(muhuratDay.yamaganda);   if (y) compact.y = y;
+    const v = toMin(muhuratDay.varjyam);     if (v) compact.v = v;
+    const a = toMin(muhuratDay.abhijit);     if (a) compact.a = a;
+    const am = toMin(muhuratDay.amrit || muhuratDay.amritKaal);
+    if (am) compact.am = am;
+    const b = toMin(muhuratDay.brahmaMuhurat); if (b) compact.b = b;
+    const d = toMin(muhuratDay.durMuhurat);  if (d) compact.d = d;
+
+    return Object.keys(compact).length > 0 ? compact : null;
+}
 
 // Use canonical parseApiTimeString from lib/astro_helpers.js (previously duplicated here with a bug)
 const parseTimeString = parseApiTimeString;
@@ -127,11 +190,16 @@ async function fetchPanchangForDate(date) {
     const apiKey = freeAstrologyApiKey.value();
     if (!apiKey) return null;
 
+    // Query at 6:00 AM IST (approximate sunrise at Ujjain).
+    // In Vedic astrology the tithi at sunrise defines the day's tithi.
+    // Noon queries risk picking up the NEXT tithi when the Moon moves
+    // fast, making tithis appear "skipped" in the calendar (e.g.
+    // Tritiya → Panchami with no Chaturthi).
     const payload = {
         year: date.year,
         month: date.month,
         date: date.day,
-        hours: 12,
+        hours: 6,
         minutes: 0,
         seconds: 0,
         latitude: DEFAULT_LAT,
@@ -415,15 +483,16 @@ async function calculateAndStoreUpcomingEvents(positions) {
 // ============================================================================
 
 /**
- * Smart incremental prefetch - only fetches missing days
+ * Smart incremental prefetch — fetches positions, panchang AND muhurat
+ * for the full 365-day forward window.
  *
  * Logic:
- * 1. Read existing positions from Firestore
- * 2. Determine target date (today + 60 days)
- * 3. Find missing dates
- * 4. Fetch ONLY missing dates (usually 1 per day)
- * 5. Merge with existing data
- * 6. Recalculate upcoming events
+ * 1. Read existing positions / panchang / muhurat from Firestore
+ * 2. Determine target date (today + DAYS_AHEAD_TARGET)
+ * 3. Find missing dates for ALL three data sets
+ * 4. Fetch ONLY missing dates (usually 1 per day after initial population)
+ * 5. Respect MAX_FETCH_PER_RUN to stay within function timeout
+ * 6. Merge with existing data & recalculate upcoming events
  */
 async function smartPrefetch() {
     const docRef = db.collection("global_astro").doc("sky_positions");
@@ -432,169 +501,240 @@ async function smartPrefetch() {
     const existingData = doc.exists ? doc.data() : {};
     const existingPositions = existingData.positions || {};
     const existingPanchang = existingData.panchang || {};
+    const existingMuhurat = existingData.muhurat || {};
     const existingDates = new Set(Object.keys(existingPositions));
 
     const today = DateTime.now().setZone("UTC");
     const targetDate = today.plus({ days: DAYS_AHEAD_TARGET });
+    const todayKey = today.toFormat("yyyy-MM-dd");
+    const tomorrowKey = today.plus({ days: 1 }).toFormat("yyyy-MM-dd");
 
-    // Find all dates we should have (today to target)
+    // ─── Future window: dates we should have (today → today+365) ─────────────
     const requiredDates = [];
     let checkDate = today;
     while (checkDate <= targetDate) {
         requiredDates.push(checkDate.toFormat("yyyy-MM-dd"));
         checkDate = checkDate.plus({ days: 1 });
     }
+    const missingPositionDates = requiredDates.filter((d) => !existingDates.has(d));
 
-    // Find missing dates
-    const missingDates = requiredDates.filter((d) => !existingDates.has(d));
+    // ─── Panchang gaps: ALL required dates (not just 14-day window) ──────────
+    const missingPanchangSet = new Set();
+    for (const k of requiredDates) {
+        if (isEmptyPanchang(existingPanchang[k])) missingPanchangSet.add(k);
+    }
+    // Also heal historical gaps inside existing panchang range
+    const panchangKeys = Object.keys(existingPanchang).sort();
+    if (panchangKeys.length > 0) {
+        const first = DateTime.fromISO(panchangKeys[0]);
+        const last = DateTime.fromISO(panchangKeys[panchangKeys.length - 1]);
+        let cur = first;
+        while (cur <= last) {
+            const k = cur.toFormat("yyyy-MM-dd");
+            if (isEmptyPanchang(existingPanchang[k])) missingPanchangSet.add(k);
+            cur = cur.plus({ days: 1 });
+        }
+    }
+
+    // ─── Muhurat gaps: ALL required dates ────────────────────────────────────
+    const missingMuhuratSet = new Set();
+    for (const k of requiredDates) {
+        if (isEmptyMuhurat(existingMuhurat[k])) missingMuhuratSet.add(k);
+    }
+
+    const missingPanchangDates = Array.from(missingPanchangSet).sort();
+    const missingMuhuratDates = Array.from(missingMuhuratSet).sort();
 
     logger.info("🔍 Smart prefetch analysis", {
         existingDays: existingDates.size,
+        existingPanchangDays: panchangKeys.length,
+        existingMuhuratDays: Object.keys(existingMuhurat).length,
         requiredDays: requiredDates.length,
-        missingDays: missingDates.length,
+        missingPositionDays: missingPositionDates.length,
+        missingPanchangDays: missingPanchangDates.length,
+        missingMuhuratDays: missingMuhuratDates.length,
         targetDate: targetDate.toFormat("yyyy-MM-dd"),
     });
 
-    if (missingDates.length === 0) {
-        const todayKey = today.toFormat("yyyy-MM-dd");
-        if (!isEmptyPanchang(existingPanchang[todayKey])) {
-            logger.info("✅ All position data is up to date - no fetch needed");
-            return {
-                fetched: 0,
-                existing: existingDates.size,
-                message: "Already up to date",
-            };
-        }
-
-        logger.info("⚠️ Positions up to date, but today's panchang missing", { todayKey });
-        try {
-            const todayPanchang = await fetchPanchangForDate(today);
-            if (todayPanchang) {
-                const newPanchang = { ...existingPanchang, [todayKey]: todayPanchang };
-                const sortedDates = Object.keys(existingPositions).sort();
-
-                await docRef.set({
-                    positions: existingPositions,
-                    panchang: newPanchang,
-                    lastUpdated: FieldValue.serverTimestamp(),
-                    lastFetchedDate: sortedDates[sortedDates.length - 1] || null,
-                    dateRange: {
-                        from: sortedDates[0] || null,
-                        to: sortedDates[sortedDates.length - 1] || null,
-                    },
-                    stats: {
-                        totalDays: sortedDates.length,
-                        panchangDays: Object.keys(newPanchang).length,
-                        lastFetchCount: 0,
-                        lastFetchErrors: 0,
-                    },
-                });
-
-                logger.info("✅ Today's panchang refreshed without position fetch", { todayKey });
-            }
-        } catch (e) {
-            logger.warn("Failed to refresh today's panchang", { error: String(e) });
-        }
-
+    // ─── Nothing to do? Exit early. ──────────────────────────────────────────
+    if (missingPositionDates.length === 0 &&
+        missingPanchangDates.length === 0 &&
+        missingMuhuratDates.length === 0) {
+        logger.info("✅ All position, panchang AND muhurat data is up to date");
         return {
             fetched: 0,
             existing: existingDates.size,
-            message: "Positions up to date; panchang refreshed",
+            panchangFetched: 0,
+            panchangErrors: 0,
+            muhuratFetched: 0,
+            muhuratErrors: 0,
+            message: "Already up to date",
         };
     }
 
-    // Fetch missing dates
+    // ─── Build a unified fetch list (de-duplicated by date). ─────────────────
+    // For each date we know WHAT is missing, so we only call the APIs we need.
+    // Sorted chronologically, capped at MAX_FETCH_PER_RUN.
+    const allMissing = new Set([
+        ...missingPositionDates,
+        ...missingPanchangDates,
+        ...missingMuhuratDates,
+    ]);
+    const fetchQueue = Array.from(allMissing).sort().slice(0, MAX_FETCH_PER_RUN);
+
     const newPositions = { ...existingPositions };
     const newPanchang = { ...existingPanchang };
+    const newMuhurat = { ...existingMuhurat };
     let fetchedCount = 0;
     let errorCount = 0;
+    let panchangFetched = 0;
+    let panchangErrors = 0;
+    let muhuratFetched = 0;
+    let muhuratErrors = 0;
 
-    for (const dateKey of missingDates) {
+    for (const dateKey of fetchQueue) {
         const date = DateTime.fromISO(dateKey);
+        const needsPosition = !existingDates.has(dateKey);
+        const needsPanchang = missingPanchangSet.has(dateKey);
+        const needsMuhurat = missingMuhuratSet.has(dateKey);
 
-        try {
-            // Fetch planetary positions
-            const apiResponse = await fetchPlanetaryPositionsForDate(date);
-            const planets = extractPlanetData(apiResponse);
-
-            if (planets && Object.keys(planets).length > 0) {
-                newPositions[dateKey] = planets;
-                fetchedCount++;
-            }
-
-            // Fetch panchang for next 14 days (ensures we always have buffer)
-            const daysFromToday = date.diff(today, "days").days;
-            if (daysFromToday >= 0 && daysFromToday <= 14) {
-                const panchang = await fetchPanchangForDate(date);
-                if (panchang) {
-                    newPanchang[dateKey] = panchang;
+        // ── Positions (1 API call) ──────────────────────────────────────────
+        if (needsPosition) {
+            try {
+                const apiResponse = await fetchPlanetaryPositionsForDate(date);
+                const planets = extractPlanetData(apiResponse);
+                if (planets && Object.keys(planets).length > 0) {
+                    newPositions[dateKey] = planets;
+                    fetchedCount++;
                 }
+                await new Promise((r) => setTimeout(r, 150));
+            } catch (error) {
+                logger.warn(`Failed positions ${dateKey}:`, { error: String(error) });
+                errorCount++;
             }
+        }
 
-            // Rate limiting - 150ms between calls
-            await new Promise((resolve) => setTimeout(resolve, 150));
-        } catch (error) {
-            logger.warn(`Failed to fetch ${dateKey}:`, { error: String(error) });
-            errorCount++;
+        // ── Panchang (3 API calls) ──────────────────────────────────────────
+        if (needsPanchang) {
+            try {
+                const p = await fetchPanchangForDate(date);
+                if (p) {
+                    newPanchang[dateKey] = p;
+                    panchangFetched++;
+                } else {
+                    panchangErrors++;
+                }
+                await new Promise((r) => setTimeout(r, 150));
+            } catch (e) {
+                logger.warn(`Failed panchang ${dateKey}:`, { error: String(e) });
+                panchangErrors++;
+            }
+        }
+
+        // ── Muhurat (1 API call) ────────────────────────────────────────────
+        if (needsMuhurat) {
+            try {
+                const raw = await fetchMuhuratForDate(date);
+                const parsed = extractApiOutput(raw);
+                if (parsed) {
+                    newMuhurat[dateKey] = parseMuhuratDay(parsed);
+                    muhuratFetched++;
+                } else {
+                    muhuratErrors++;
+                }
+                await new Promise((r) => setTimeout(r, 150));
+            } catch (e) {
+                logger.warn(`Failed muhurat ${dateKey}:`, { error: String(e) });
+                muhuratErrors++;
+            }
         }
     }
 
-    // CRITICAL: Ensure today's panchang always exists
-    const todayKey = today.toFormat("yyyy-MM-dd");
-    if (isEmptyPanchang(newPanchang[todayKey])) {
-        logger.info("⚠️ Today's panchang missing, fetching explicitly");
-        try {
-            const todayPanchang = await fetchPanchangForDate(today);
-            if (todayPanchang) {
-                newPanchang[todayKey] = todayPanchang;
-                logger.info("✅ Today's panchang fetched", { todayKey });
-            }
-        } catch (e) {
-            logger.warn("Failed to fetch today's panchang", { error: String(e) });
-        }
+    // ─── Loud surfacing of today/tomorrow panchang status (UTC). ─────────────
+    const hasTodayPanchang = !isEmptyPanchang(newPanchang[todayKey]);
+    const hasTomorrowPanchang = !isEmptyPanchang(newPanchang[tomorrowKey]);
+    if (!hasTodayPanchang) {
+        logger.error("❌ Today's panchang STILL missing after prefetch", { todayKey });
+    }
+    if (!hasTomorrowPanchang) {
+        logger.warn("⚠️ Tomorrow's panchang missing (IST users may see stale data)", { tomorrowKey });
     }
 
-    // Save updated positions
+    // ─── Persist. ────────────────────────────────────────────────────────────
     const sortedDates = Object.keys(newPositions).sort();
     const panchangDays = Object.keys(newPanchang).length;
+    const muhuratDays = Object.keys(newMuhurat).length;
 
     await docRef.set({
         positions: newPositions,
         panchang: newPanchang,
+        muhurat: newMuhurat,
         lastUpdated: FieldValue.serverTimestamp(),
-        lastFetchedDate: sortedDates[sortedDates.length - 1],
+        lastFetchedDate: sortedDates[sortedDates.length - 1] || null,
         dateRange: {
-            from: sortedDates[0],
-            to: sortedDates[sortedDates.length - 1],
+            from: sortedDates[0] || null,
+            to: sortedDates[sortedDates.length - 1] || null,
         },
         stats: {
             totalDays: sortedDates.length,
-            panchangDays: panchangDays,
+            panchangDays,
+            muhuratDays,
             lastFetchCount: fetchedCount,
             lastFetchErrors: errorCount,
+            lastPanchangFetchCount: panchangFetched,
+            lastPanchangFetchErrors: panchangErrors,
+            lastMuhuratFetchCount: muhuratFetched,
+            lastMuhuratFetchErrors: muhuratErrors,
+            hasTodayPanchang,
+            hasTomorrowPanchang,
         },
     });
 
-    logger.info("📅 Panchang status", {
+    logger.info("📅 Prefetch status", {
         panchangDays,
-        hasTodayPanchang: !isEmptyPanchang(newPanchang[todayKey]),
+        muhuratDays,
+        hasTodayPanchang,
+        hasTomorrowPanchang,
         todayKey,
+        tomorrowKey,
+        panchangFetched,
+        panchangErrors,
+        muhuratFetched,
+        muhuratErrors,
+        batchSize: fetchQueue.length,
+        remainingMissing: allMissing.size - fetchQueue.length,
     });
 
     // Recalculate upcoming events with new data
-    await calculateAndStoreUpcomingEvents(newPositions);
+    if (fetchedCount > 0 || missingPositionDates.length > 0) {
+        await calculateAndStoreUpcomingEvents(newPositions);
+    }
 
     logger.info("✅ Smart prefetch complete", {
         fetched: fetchedCount,
         errors: errorCount,
+        panchangFetched,
+        panchangErrors,
+        muhuratFetched,
+        muhuratErrors,
         totalDays: sortedDates.length,
-        dateRange: `${sortedDates[0]} to ${sortedDates[sortedDates.length - 1]}`,
+        dateRange: sortedDates.length > 0
+            ? `${sortedDates[0]} to ${sortedDates[sortedDates.length - 1]}`
+            : "empty",
     });
 
     return {
         fetched: fetchedCount,
         errors: errorCount,
+        panchangFetched,
+        panchangErrors,
+        muhuratFetched,
+        muhuratErrors,
         totalDays: sortedDates.length,
+        panchangDays,
+        muhuratDays,
+        hasTodayPanchang,
+        hasTomorrowPanchang,
     };
 }
 
@@ -608,10 +748,39 @@ async function smartPrefetch() {
 // ---------------------------------------------------------------------------
 
 export async function handlePrefetchSkyPositions(request) {
+    const fillAll = request?.data?.fillAll === true;
     logger.info("📡 Manual prefetch triggered", {
         uid: request.auth?.uid || "anonymous",
+        fillAll,
     });
-    return await smartPrefetch();
+
+    if (!fillAll) {
+        return await smartPrefetch();
+    }
+
+    // fillAll mode: loop batches until everything is populated or we
+    // approach the 300s Cloud Function timeout.  Each batch handles
+    // MAX_FETCH_PER_RUN dates, so ~4 passes fills the full 365-day window.
+    const startTime = Date.now();
+    const TIMEOUT_MS = 270_000; // stop 30s before the hard 300s limit
+    let lastResult = null;
+    let passes = 0;
+
+    while (Date.now() - startTime < TIMEOUT_MS) {
+        passes++;
+        lastResult = await smartPrefetch();
+
+        const totalFetched = (lastResult.fetched || 0)
+            + (lastResult.panchangFetched || 0)
+            + (lastResult.muhuratFetched || 0);
+        if (totalFetched === 0) {
+            logger.info(`✅ Full population complete after ${passes} pass(es)`);
+            break;
+        }
+        logger.info(`🔄 Pass ${passes} done — fetched ${totalFetched} items, looping...`);
+    }
+
+    return { ...lastResult, passes };
 }
 
 export async function handleGetSkyPositions() {
@@ -835,6 +1004,228 @@ export async function runRefreshMuhuratDaily() {
 // NOTE: `refreshMuhuratDaily` was a standalone `onSchedule` export.
 // It is now invoked by `unifiedOrchestrator` Phase 2 (data refresh) via the
 // `runRefreshMuhuratDaily` runner above.
+
+// ============================================================================
+// ASTRO CALENDAR (365-day lightweight snapshot for infinite wheel scrolling)
+// ============================================================================
+
+/**
+ * getAstroCalendar — Returns a year of daily snapshots (positions + panchang).
+ *
+ * Response shape per day (compact):
+ *   { n: 4, t: 17, p: 0, y: 12, k: 7,
+ *     m: [moonLng, sunLng, marsLng, mercLng, jupLng, venLng, satLng, rahuLng, ketuLng],
+ *     r: [false, false, false, true, false, false, false, false, false] }
+ *
+ * Reads from the existing global_astro/sky_positions Firestore doc (populated
+ * by the daily smartPrefetch job).  Dates outside the prefetch window are
+ * excluded — the client falls back to sidereal-period math for those.
+ *
+ * Optional query param `fromMonth` (1-12) lets the client request a rolling
+ * 13th month when the cached year is about to expire.
+ */
+
+const NAKSHATRA_NAMES = [
+    "Ashwini", "Bharani", "Krittika", "Rohini", "Mrigashira", "Ardra",
+    "Punarvasu", "Pushya", "Ashlesha", "Magha", "Purva Phalguni",
+    "Uttara Phalguni", "Hasta", "Chitra", "Swati", "Vishakha", "Anuradha",
+    "Jyeshtha", "Mula", "Purva Ashadha", "Uttara Ashadha", "Shravana",
+    "Dhanishta", "Shatabhisha", "Purva Bhadrapada", "Uttara Bhadrapada", "Revati",
+];
+
+const YOGA_NAMES = [
+    "Vishkambha", "Priti", "Ayushman", "Saubhagya", "Shobhana", "Atiganda",
+    "Sukarma", "Dhriti", "Shula", "Ganda", "Vriddhi", "Dhruva", "Vyaghata",
+    "Harshana", "Vajra", "Siddhi", "Vyatipata", "Variyan", "Parigha", "Shiva",
+    "Siddha", "Sadhya", "Shubha", "Shukla", "Brahma", "Indra", "Vaidhriti",
+];
+
+const KARANA_NAMES = [
+    "Bava", "Balava", "Kaulava", "Taitila", "Gara", "Vanija", "Vishti",
+    "Shakuni", "Chatushpada", "Naga", "Kimstughna",
+];
+
+const PLANET_ORDER = ["Moon", "Sun", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu"];
+
+// Lunar month name → number (1 = Chaitra … 12 = Phalguna).
+// These are the EXACT spellings returned by FreeAstrologyAPI's /lunarmonthinfo endpoint.
+// The API uses Telugu-style names ending in "-am".
+// Prefixes: "Adhika " = intercalary month, "Nija " = regular month (when Adhika exists).
+const LUNAR_MONTH_NUMBERS = {
+    chaitram: 1,
+    vaisakham: 2,
+    jyeshtam: 3,
+    ashadam: 4,
+    sravanam: 5,
+    bhadrapadam: 6,
+    ashweeyujam: 7,
+    karthikam: 8,
+    maargasiram: 9,
+    pushyam: 10,
+    maagham: 11,
+    phalgunam: 12,
+};
+
+/**
+ * Resolve a lunar-month name to its 1-12 number.
+ * Strips "Adhika " or "Nija " prefix (API uses these for intercalary months).
+ */
+function lunarMonthNameToNumber(name) {
+    if (!name) return null;
+    let key = name.toLowerCase().trim();
+    // Strip Adhika/Nija prefix
+    key = key.replace(/^(?:adhika?|nija)\s+/i, "").trim();
+    const num = LUNAR_MONTH_NUMBERS[key];
+    if (num) return num;
+    // Log unrecognized name — should never happen with correct API data
+    logger.warn("⚠️ Unrecognized lunar month name", { rawName: name, normalizedKey: key });
+    return null;
+}
+
+function nakshatraNameToIndex(name) {
+    if (!name) return -1;
+    const lower = name.toLowerCase().trim();
+    return NAKSHATRA_NAMES.findIndex((n) => n.toLowerCase() === lower);
+}
+
+function yogaNameToIndex(name) {
+    if (!name) return -1;
+    const lower = name.toLowerCase().trim();
+    return YOGA_NAMES.findIndex((n) => n.toLowerCase() === lower);
+}
+
+function karanaNameToIndex(name) {
+    if (!name) return -1;
+    const lower = name.toLowerCase().trim();
+    return KARANA_NAMES.findIndex((n) => n.toLowerCase() === lower);
+}
+
+/**
+ * Build a compact calendar entry from full position + panchang + muhurat data.
+ *
+ * Compact format per day:
+ *   n  = nakshatra index (0-26)
+ *   t  = tithi number (1-30)
+ *   p  = paksha (0=shukla, 1=krishna)
+ *   y  = yoga index (0-26)
+ *   k  = karana index (0-10)
+ *   m  = planet longitudes [Mo,Su,Ma,Me,Ju,Ve,Sa,Ra,Ke]
+ *   r  = retrograde flags (only if any planet retrograde)
+ *   mu = muhurat {r:[s,e], g:[s,e], y:[s,e], a:[s,e], ...} in minutes
+ */
+function buildCalendarEntry(positionsForDay, panchangForDay, muhuratForDay) {
+    const entry = {};
+
+    // Panchang fields (indices are compact)
+    if (panchangForDay) {
+        const nIdx = nakshatraNameToIndex(panchangForDay.nakshatra);
+        if (nIdx >= 0) entry.n = nIdx;
+
+        const tNum = panchangForDay.tithi_number || panchangForDay.number;
+        if (tNum != null) entry.t = Number(tNum);
+
+        const paksha = panchangForDay.paksha;
+        if (paksha) entry.p = paksha.toLowerCase().startsWith("k") ? 1 : 0;
+
+        const yIdx = yogaNameToIndex(panchangForDay.yoga);
+        if (yIdx >= 0) entry.y = yIdx;
+
+        const kIdx = karanaNameToIndex(panchangForDay.karana);
+        if (kIdx >= 0) entry.k = kIdx;
+
+        // Lunar month — send raw string + number.
+        // ln = raw API name (e.g. "Adhika Jyeshtam") — for adhika detection
+        // lm = month number 1-12 — for numeric date display
+        const monthName = panchangForDay.lunar_month_full_name
+            || panchangForDay.lunar_month_name;
+        if (monthName) {
+            entry.ln = monthName;
+            const monthNum = lunarMonthNameToNumber(monthName);
+            if (monthNum) entry.lm = monthNum;
+        }
+    }
+
+    // Planet longitudes (compact array)
+    if (positionsForDay) {
+        const lngs = [];
+        const retros = [];
+        let hasAny = false;
+
+        for (const planet of PLANET_ORDER) {
+            const pd = positionsForDay[planet];
+            if (pd && pd.longitude != null) {
+                lngs.push(Math.round(pd.longitude * 100) / 100); // 2 decimal places
+                retros.push(pd.isRetro === true);
+                hasAny = true;
+            } else {
+                lngs.push(null);
+                retros.push(false);
+            }
+        }
+
+        if (hasAny) {
+            entry.m = lngs;
+            // Only include retro array if any planet is retrograde
+            if (retros.some(Boolean)) entry.r = retros;
+        }
+    }
+
+    // Muhurat (compact minute pairs)
+    const mu = muhuratToCompact(muhuratForDay);
+    if (mu) entry.mu = mu;
+
+    return Object.keys(entry).length > 0 ? entry : null;
+}
+
+export async function handleGetAstroCalendar(request, data) {
+    try {
+        const docRef = db.collection("global_astro").doc("sky_positions");
+        const doc = await docRef.get();
+
+        if (!doc.exists) {
+            return { success: false, error: "No sky data available", calendar: {} };
+        }
+
+        const docData = doc.data();
+        const positions = docData.positions || {};
+        const panchang = docData.panchang || {};
+        const muhurat = docData.muhurat || {};
+
+        // Build compact calendar from all available dates
+        const calendar = {};
+        const allDates = new Set([
+            ...Object.keys(positions),
+            ...Object.keys(panchang),
+            ...Object.keys(muhurat),
+        ]);
+        const sortedDates = Array.from(allDates).sort();
+
+        for (const dateKey of sortedDates) {
+            const entry = buildCalendarEntry(
+                positions[dateKey], panchang[dateKey], muhurat[dateKey],
+            );
+            if (entry) calendar[dateKey] = entry;
+        }
+
+        logger.info("📅 Astro calendar served", {
+            totalDays: Object.keys(calendar).length,
+            dateRange: sortedDates.length > 0
+                ? `${sortedDates[0]} to ${sortedDates[sortedDates.length - 1]}`
+                : "empty",
+        });
+
+        return {
+            success: true,
+            calendar,
+            dateRange: sortedDates.length > 0
+                ? { from: sortedDates[0], to: sortedDates[sortedDates.length - 1] }
+                : null,
+        };
+    } catch (error) {
+        logger.error("Error building astro calendar:", error);
+        return { success: false, error: error.message, calendar: {} };
+    }
+}
 
 // Fallback: create minimal muhurat data if API fails
 async function ensureBasicMuhuratData() {

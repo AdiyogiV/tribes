@@ -22,28 +22,29 @@
  */
 
 import { db, logger } from "./firebase.js";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleAuth } from "google-auth-library";
 
 const MEMORY_COLLECTION = "cosmic_memory";
-const EMBEDDING_MODEL = "gemini-embedding-001";
-const EMBEDDING_DIMENSION = 3072; // default output size for gemini-embedding-001
+const EMBEDDING_MODEL = "text-embedding-005";
+const EMBEDDING_DIMENSION = 768; // default for text-embedding-005 on Vertex AI
 const DEFAULT_TOP_K = 10;
 const MAX_MEMORY_AGE_DAYS = 365; // Keep memories for a year
+
+const PROJECT = "ty-dev-516d7";
+const LOCATION = "asia-southeast2";
 
 // =============================================================================
 // INITIALIZATION
 // =============================================================================
 
-let genAI = null;
-let embeddingModel = null;
+let authClient = null;
 
 /**
- * Initialize the Gemini client for embeddings.
- * Must be called with the API key at runtime (secrets aren't available at import time).
+ * Initialize the Vertex AI embedding client.
+ * No API key needed — uses ADC from the Cloud Functions service account.
  */
-export function initMemory(geminiApiKeyValue) {
-    genAI = new GoogleGenerativeAI(geminiApiKeyValue);
-    embeddingModel = genAI.getGenerativeModel({ model: EMBEDDING_MODEL });
+export function initMemory() {
+    authClient = new GoogleAuth({ scopes: "https://www.googleapis.com/auth/cloud-platform" });
 }
 
 // =============================================================================
@@ -56,12 +57,20 @@ export function initMemory(geminiApiKeyValue) {
  * @returns {number[]} embedding vector (3072 dims for gemini-embedding-001)
  */
 async function embed(text) {
-    if (!embeddingModel) {
-        throw new Error("Memory not initialized. Call initMemory(apiKey) first.");
+    if (!authClient) {
+        throw new Error("Memory not initialized. Call initMemory() first.");
     }
 
-    const result = await embeddingModel.embedContent(text);
-    return result.embedding.values;
+    const client = await authClient.getClient();
+    const url = `https://${LOCATION}-aiplatform.googleapis.com/v1/projects/${PROJECT}/locations/${LOCATION}/publishers/google/models/${EMBEDDING_MODEL}:predict`;
+    const res = await client.request({
+        url,
+        method: "POST",
+        data: {
+            instances: [{ content: text }],
+        },
+    });
+    return res.data.predictions[0].embeddings.values;
 }
 
 /**

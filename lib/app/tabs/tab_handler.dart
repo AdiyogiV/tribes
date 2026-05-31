@@ -55,7 +55,8 @@ class TabHandlerState extends State<TabHandler>
   PageController? _pageController;
 
   /// Bar visibility: ValueNotifier so we don't setState during scroll (avoids scroll jank).
-  final ValueNotifier<bool> _feedHidesBottomBarNotifier =
+  /// Used by HolyCow (tab 0) to hide the bottom bar when scrolling down.
+  final ValueNotifier<bool> _scrollHidesBottomBarNotifier =
       ValueNotifier<bool>(false);
 
   // Flag to track if we've consumed the initial tab from auth service
@@ -245,7 +246,11 @@ class TabHandlerState extends State<TabHandler>
     Widget tab;
     switch (index) {
       case 0:
-        tab = HolyCowPage(key: const PageStorageKey('holycow_auth'));
+        tab = HolyCowPage(
+          key: const PageStorageKey('holycow_auth'),
+          onScrollHidesBottomBar: (hide) =>
+              _scrollHidesBottomBarNotifier.value = hide,
+        );
         break;
       case 1:
         tab = Grams(key: const PageStorageKey('grams_auth'));
@@ -257,7 +262,11 @@ class TabHandlerState extends State<TabHandler>
         tab = UserProfilePage(uid: userId);
         break;
       default:
-        tab = HolyCowPage(key: const PageStorageKey('holycow_auth'));
+        tab = HolyCowPage(
+          key: const PageStorageKey('holycow_auth'),
+          onScrollHidesBottomBar: (hide) =>
+              _scrollHidesBottomBarNotifier.value = hide,
+        );
     }
 
     // Cache for future use
@@ -277,7 +286,11 @@ class TabHandlerState extends State<TabHandler>
     Widget tab;
     switch (index) {
       case 0:
-        tab = HolyCowPage(key: const PageStorageKey('holycow_unauth'));
+        tab = HolyCowPage(
+          key: const PageStorageKey('holycow_unauth'),
+          onScrollHidesBottomBar: (hide) =>
+              _scrollHidesBottomBarNotifier.value = hide,
+        );
         break;
       case 1:
         tab = Grams(key: const PageStorageKey('grams_unauth'));
@@ -289,7 +302,11 @@ class TabHandlerState extends State<TabHandler>
         tab = const UserSettingsPage(showBackButton: false);
         break;
       default:
-        tab = HolyCowPage(key: const PageStorageKey('holycow_unauth'));
+        tab = HolyCowPage(
+          key: const PageStorageKey('holycow_unauth'),
+          onScrollHidesBottomBar: (hide) =>
+              _scrollHidesBottomBarNotifier.value = hide,
+        );
     }
 
     // Cache for future use
@@ -316,7 +333,7 @@ class TabHandlerState extends State<TabHandler>
 
   @override
   void dispose() {
-    _feedHidesBottomBarNotifier.dispose();
+    _scrollHidesBottomBarNotifier.dispose();
     _uploadProgressSubscription?.cancel();
     _pageController?.dispose();
     WidgetsBinding.instance.removeObserver(this);
@@ -348,6 +365,10 @@ class TabHandlerState extends State<TabHandler>
   void _onItemTapped(int index, bool isAuthenticated) {
     // When logged out, last two tabs are Login and Settings (both tappable)
     if (mounted && _selectedIndex != index) {
+      // Reset bottom bar visibility when leaving HolyCow tab
+      if (_selectedIndex == 0) {
+        _scrollHidesBottomBarNotifier.value = false;
+      }
       // On web, clear cached tabs that contain OverlayPortals to prevent
       // hit test errors from unmounted overlay portals
       if (kIsWeb) {
@@ -572,7 +593,7 @@ class TabHandlerState extends State<TabHandler>
     }
 
     // Bar visibility from notifier (no setState) so scroll stays smooth during hide/show
-    final barNotifier = _feedHidesBottomBarNotifier;
+    final barNotifier = _scrollHidesBottomBarNotifier;
 
     // Build the shell with responsive layout
     final shell = ResponsiveShell(
@@ -597,12 +618,12 @@ class TabHandlerState extends State<TabHandler>
                 clipBehavior: Clip.hardEdge,
                 child: ValueListenableBuilder<bool>(
                   valueListenable: barNotifier,
-                  builder: (context, feedHidesBar, _) {
-                    final feedBarHidden = feedHidesBar && _selectedIndex == 0;
+                  builder: (context, scrollHidesBar, _) {
+                    final barHidden = scrollHidesBar && _selectedIndex == 0;
                     return AnimatedSlide(
                       duration: const Duration(milliseconds: 600),
                       curve: Curves.easeInOut,
-                      offset: feedBarHidden ? const Offset(0, 1) : Offset.zero,
+                      offset: barHidden ? const Offset(0, 1) : Offset.zero,
                       child: TabBottomNav(
                         selectedIndex: _selectedIndex,
                         isAuthenticated: isAuthenticated,

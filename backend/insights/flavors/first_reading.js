@@ -205,7 +205,6 @@ OUTPUT: Your entire response must be valid markdown (headings, bold, bullets). W
             options: {
                 expectJson: false, // Markdown output, not JSON
                 temperature: 0.95,
-                maxOutputTokens: 600,
             },
         };
     },

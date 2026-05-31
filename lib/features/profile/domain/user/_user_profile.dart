@@ -166,6 +166,30 @@ extension UserProfile on UserService {
       AppLogger.i('Initiating account deletion for user: ${user!.uid}',
           category: LogCategory.auth);
 
+      // Immediately clear the phoneNumber field from our own Firestore document.
+      //
+      // The tombstone-sweep Cloud Function runs once daily (~24h latency), meaning
+      // the user document persists with its phoneNumber for up to a day after deletion.
+      // If the same phone number tries to re-register before the sweep runs, the
+      // duplicate-phone check in registerNewUser() would block them.
+      //
+      // Clearing phoneNumber NOW (while we still have write access to our own doc)
+      // prevents that 24-hour window from blocking re-registration.
+      // The sweep will delete the full document anyway on its next run.
+      try {
+        await userCollection.doc(user!.uid).update({
+          'phoneNumber': FieldValue.delete(),
+        });
+        AppLogger.i(
+            'Cleared phoneNumber from user doc to unblock immediate re-registration',
+            category: LogCategory.auth);
+      } catch (e) {
+        // Non-blocking — the tombstone sweep will eventually clean up the full doc.
+        AppLogger.w(
+            'Could not clear phoneNumber before deletion (non-blocking): $e',
+            category: LogCategory.auth);
+      }
+
       // Delete the Firebase Auth user
       // This triggers the onUserDeleted Cloud Function which handles ALL data cleanup:
       // - User document + subcollections (dailyInsights, auraHistory, etc.)

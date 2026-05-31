@@ -7,16 +7,15 @@
  * telemetry, model upgrades) happen in ONE place.
  */
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { db, logger } from "../../lib/firebase.js";
 import { FieldValue } from "firebase-admin/firestore";
-import { geminiApiKey } from "../../lib/secrets.js";
+import { getVertexAI, extractText } from "../../lib/vertex_client.js";
 import { AI_MODELS } from "../../lib/config.js";
 
 const DEFAULTS = {
     model: AI_MODELS.GEMINI_FLASH,
     temperature: 0.85,
-    maxOutputTokens: 1500,
+    maxOutputTokens: 65536, // gemini-2.5-flash max; let the prompt control actual length
     maxRetries: 2,
     retryDelayMs: 800,
 };
@@ -141,7 +140,7 @@ function sleep(ms) {
  * @param {string} opts.userPrompt     - The user prompt with the data
  * @param {string} [opts.model]        - Override model (default: GEMINI_FLASH)
  * @param {number} [opts.temperature]  - Generation temperature (default: 0.85)
- * @param {number} [opts.maxOutputTokens] - Max output tokens (default: 1500)
+ * @param {number} [opts.maxOutputTokens] - Max output tokens (default: 65536)
  * @param {boolean} [opts.expectJson]  - If true, parse output as JSON
  * @param {boolean} [opts.googleSearch] - Enable Google Search grounding tool
  * @param {string} [opts.flavorName]   - Name of calling flavor (for logs)
@@ -161,10 +160,7 @@ export async function callGemini(opts) {
         flavorName = "unknown",
     } = opts;
 
-    const apiKey = geminiApiKey.value();
-    if (!apiKey) throw new Error("Gemini API key missing");
-
-    const genAI = new GoogleGenerativeAI(apiKey);
+    const vertexAI = getVertexAI();
     const modelConfig = {
         model,
         generationConfig: { temperature, maxOutputTokens },
@@ -172,16 +168,16 @@ export async function callGemini(opts) {
     if (googleSearch) {
         modelConfig.tools = [{ googleSearch: {} }];
     }
-    const llm = genAI.getGenerativeModel(modelConfig);
+    const llm = vertexAI.getGenerativeModel(modelConfig);
 
     let lastError;
     for (let attempt = 0; attempt <= DEFAULTS.maxRetries; attempt++) {
         const startTime = Date.now();
         try {
-            const result = await llm.generateContent([
-                { text: systemPrompt },
-                { text: userPrompt },
-            ]);
+            const result = await llm.generateContent({
+                contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+                systemInstruction: systemPrompt,
+            });
             const response = result.response;
             const candidates = response?.candidates;
             if (!candidates?.length) {
@@ -189,7 +185,7 @@ export async function callGemini(opts) {
                 throw new Error(`Gemini blocked content: ${reason}`);
             }
 
-            const text = response.text()?.trim();
+            const text = extractText(result);
             if (!text) throw new Error("Gemini returned empty response");
 
             const latencyMs = Date.now() - startTime;

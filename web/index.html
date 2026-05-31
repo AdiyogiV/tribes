@@ -200,32 +200,27 @@
     // Register Firebase Messaging SW (push notifications + PWA caching).
     // Runs async — does not block Flutter startup.
     if ('serviceWorker' in navigator) {
-      // Guard: only auto-reload ONCE per SW update to prevent infinite loops.
-      // sessionStorage persists across reload() but not across tab close.
-      var swReloadKey = 'sw_reload_guard';
+      // Track whether this is the FIRST service worker controlling this page.
+      // We only reload when an UPDATE replaces an existing SW, never on first load.
+      var isFirstSW = !navigator.serviceWorker.controller;
 
       navigator.serviceWorker.addEventListener('controllerchange', function () {
-        if (!sessionStorage.getItem(swReloadKey)) {
-          sessionStorage.setItem(swReloadKey, Date.now().toString());
-          console.log('[SW] New service worker activated — reloading for fresh content');
-          window.location.reload();
+        // Skip reload on very first SW registration (no previous controller).
+        if (isFirstSW) {
+          isFirstSW = false;
+          return;
         }
+        // Only reload once per page lifetime — no loops possible.
+        // This flag lives in memory; a reload creates a fresh page with no flag.
+        // But the NEW SW is already active, so controllerchange won't fire again.
+        console.log('[SW] New service worker activated — reloading for fresh content');
+        window.location.reload();
       });
 
-      // Clear the guard after 30s so future SW updates can still trigger reload
-      var guardTs = sessionStorage.getItem(swReloadKey);
-      if (guardTs && (Date.now() - parseInt(guardTs)) > 30000) {
-        sessionStorage.removeItem(swReloadKey);
-      }
-
       navigator.serviceWorker.register('/firebase-messaging-sw.js', {
-        // CRITICAL: bypass HTTP cache when checking for SW updates.
-        // Without this, mobile browsers (especially Safari) may serve the old
-        // SW file from HTTP cache indefinitely, preventing updates.
         updateViaCache: 'none'
       }).then(function (reg) {
-        // Proactively check for SW updates on every page load.
-        // Default browser behavior only checks every 24h.
+        // Check for SW updates on every page load (browser default is every 24h).
         reg.update();
       });
     }

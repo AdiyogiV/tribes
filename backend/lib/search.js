@@ -1,6 +1,5 @@
 import { logger } from "./firebase.js";
-import { geminiApiKey } from "./secrets.js";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { getVertexAI, extractText } from "./vertex_client.js";
 import {
     getCachedAstroKnowledge,
     cacheAstroKnowledge,
@@ -775,15 +774,6 @@ export async function buildAstroSearchContext(userAstroData, todayAstroData) {
  */
 export async function performWebSearch(query, numResults = MAX_RESULTS_PER_QUERY) {
     try {
-        const apiKey = geminiApiKey.value();
-        if (!apiKey) {
-            logger.warn("Gemini API key not configured, skipping grounded search", {
-                structuredData: true,
-                query,
-            });
-            return [];
-        }
-
         const limited = Math.max(1, Math.min(numResults, 10));
 
         logger.info("Executing Gemini grounded search", {
@@ -792,8 +782,8 @@ export async function performWebSearch(query, numResults = MAX_RESULTS_PER_QUERY
             numResults: limited,
         });
 
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({
+        const vertexAI = getVertexAI();
+        const model = vertexAI.getGenerativeModel({
             model: AI_MODELS.GEMINI_FLASH,
             tools: [{ googleSearch: {} }],
         });
@@ -812,9 +802,10 @@ export async function performWebSearch(query, numResults = MAX_RESULTS_PER_QUERY
             "- link must be a real URL from search results",
         ].join("\n");
 
-        const result = await model.generateContent([{ text: prompt }]);
-        const response = await result.response;
-        const text = response?.text?.() || "";
+        const result = await model.generateContent({
+            contents: [{ role: "user", parts: [{ text: prompt }] }],
+        });
+        const text = extractText(result) || "";
 
         const parsed = safeParseJsonArray(text);
         const results = (parsed || []).slice(0, limited).map((item) => ({

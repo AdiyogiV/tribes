@@ -12,7 +12,7 @@
  * Used to give the cosmic daily function real-world context.
  */
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { getVertexAI, extractText } from "./vertex_client.js";
 
 const GOOGLE_NEWS_RSS = "https://news.google.com/rss?hl=en&gl=US&ceid=US:en";
 
@@ -33,14 +33,9 @@ export async function fetchNewsHeadlines(options = {}) {
         return rssHeadlines;
     }
 
-    // RSS failed — fall back to Gemini with Google Search grounding
-    if (geminiApiKey) {
-        console.warn("RSS failed, falling back to Gemini Search grounding");
-        return fetchViaGeminiSearch(geminiApiKey, limit);
-    }
-
-    console.warn("RSS failed and no Gemini API key for fallback");
-    return [];
+    // RSS failed — fall back to Gemini with Google Search grounding (Vertex AI, no key needed)
+    console.warn("RSS failed, falling back to Gemini Search grounding");
+    return fetchViaGeminiSearch(limit);
 }
 
 /**
@@ -73,28 +68,29 @@ async function fetchViaRSS(limit, timeoutMs) {
  * Fetch headlines via Gemini with Google Search grounding.
  * Gemini's search is not blocked from Cloud Run (it uses Google's internal infra).
  */
-async function fetchViaGeminiSearch(apiKey, limit) {
+async function fetchViaGeminiSearch(limit) {
     try {
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({
+        const vertexAI = getVertexAI();
+        const model = vertexAI.getGenerativeModel({
             model: "gemini-2.5-flash",
             tools: [{googleSearch: {}}],
             generationConfig: {
-                temperature: 0.1, // low temp for factual headlines
-                maxOutputTokens: 2000,
-                // NOTE: responseMimeType "application/json" is incompatible with googleSearch tool
+                temperature: 0.1,
+                maxOutputTokens: 65536,
             },
         });
 
-        const result = await model.generateContent(
-            `Return today's top ${limit} world news headlines as a JSON array. ` +
+        const prompt = `Return today's top ${limit} world news headlines as a JSON array. ` +
             "Focus on major global events, India/South Asia, geopolitics, markets, and technology. " +
             "Each item: {\"title\": \"headline\", \"source\": \"publication name\"}. " +
             "Use Google Search to get real, current headlines. " +
-            "Return ONLY the JSON array, no explanation, no markdown fences.",
-        );
+            "Return ONLY the JSON array, no explanation, no markdown fences.";
 
-        const text = result.response.text().trim();
+        const result = await model.generateContent({
+            contents: [{ role: "user", parts: [{ text: prompt }] }],
+        });
+
+        const text = extractText(result);
         // Parse JSON — handle markdown code blocks if present
         const jsonStr = text.replace(/^```json?\n?/, "").replace(/\n?```$/, "");
         const headlines = JSON.parse(jsonStr);

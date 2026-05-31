@@ -218,6 +218,9 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
     if (!mounted) return;
 
     triggerDailyInsightInBackground();
+    // Pre-warm first reading as soon as astro profile is ready so it is
+    // likely available before the user reaches the birth-reading phase.
+    pollForFirstReading();
     _showSignsPhase();
   }
 
@@ -319,6 +322,10 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
     if (!mounted) return;
     final hasReading =
         _firstReadingContent != null && _firstReadingContent!.isNotEmpty;
+    if (!hasReading) {
+      // Safety net: ensure polling is active even if a phase transition path skipped it.
+      pollForFirstReading();
+    }
     AppLogger.i('Moving to reading phase. Has reading: $hasReading',
         category: LogCategory.general);
     setState(() {
@@ -350,6 +357,7 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
     await waitForAstroData();
     if (_profile != null) {
       triggerDailyInsightInBackground();
+      pollForFirstReading();
       _showSignsPhase();
     } else {
       AppLogger.w('Retry failed - navigating to profile',
@@ -509,7 +517,7 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
         return SignRevealPhase(
           profile: _profile!,
           signRevealStep: _signRevealStep,
-          onContinue: _goToAyurvedaPhase,
+          onContinue: _goToHighlightsPhase,
           onShare: () {
             final p = _profile!;
             final user = FirebaseAuth.instance.currentUser;

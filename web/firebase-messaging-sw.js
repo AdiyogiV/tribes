@@ -11,7 +11,7 @@ importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-comp
 
 // IMPORTANT: Update this version when deploying new builds to bust the cache
 // Should match the version in pubspec.yaml for consistency
-const CACHE_VERSION = '68';
+const CACHE_VERSION = '66';
 const CACHE_NAME = `aurogram-v${CACHE_VERSION}`;
 
 // Static assets to pre-cache on install
@@ -175,7 +175,10 @@ self.addEventListener('install', (event) => {
       })
       .then(() => {
         console.log('[firebase-messaging-sw.js] Service worker installed');
-        self.skipWaiting();
+        // Let the page decide when to activate via 'skipWaiting' message.
+        // Calling skipWaiting() here caused immediate activate → claim →
+        // controllerchange → reload loops on every deploy.
+        // self.skipWaiting();  // REMOVED — was causing infinite reload loops
       })
   );
 });

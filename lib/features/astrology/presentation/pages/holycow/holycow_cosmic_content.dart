@@ -20,6 +20,7 @@ import 'package:aurogram/shared/models/astrology_profile.dart';
 import 'package:aurogram/shared/models/daily_insight.dart';
 import 'package:aurogram/shared/models/ayurveda_profile.dart';
 import 'package:aurogram/features/astrology/domain/sky_positions_service.dart';
+import 'package:aurogram/features/astrology/domain/astro_calendar_service.dart';
 import 'package:aurogram/features/ayurveda/presentation/widgets/dosha_dashboard_card.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/nakshatra_ring_widget.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
@@ -50,6 +51,13 @@ class HolyCowCosmicContent extends StatelessWidget {
   /// so independent cards on the page can listen to wheel position changes.
   final NakshatraWheelController? nakshatraController;
 
+  /// Slider range in days (±N from today).  Used to compute the slider ↔
+  /// days offset mapping.  Defaults to 180 for the extended calendar range.
+  final int sliderRangeDays;
+
+  /// Optional calendar service for extended-range position lookups.
+  final AstroCalendarService? calendarService;
+
   const HolyCowCosmicContent({
     super.key,
     required this.profile,
@@ -69,6 +77,8 @@ class HolyCowCosmicContent extends StatelessWidget {
     required this.onTriggerCachePopulation,
     this.wheelResetSignal,
     this.nakshatraController,
+    this.sliderRangeDays = 180,
+    this.calendarService,
   });
 
   @override
@@ -218,20 +228,65 @@ class HolyCowCosmicContent extends StatelessWidget {
 
         // Build the canonical wheel widget once — same instance is used in
         // both layouts so wheel state (controller, animations) is preserved
-        // across tier transitions.  On desktop the wheel is the visual hero,
-        // so we render it ABOVE the Daily Vibe card; on mobile we keep the
-        // read-then-see order (vibe first, wheel below).
-        final wheelWidget = _buildWheelWidget(wheelFirst: isWide);
+        // across tier transitions.  The wheel always renders ABOVE the
+        // Daily Vibe card (wheelFirst: true) so the energy vibe card sits
+        // below the wheel on both mobile and desktop.
+        final wheelWidget = _buildWheelWidget(wheelFirst: true);
 
-        // The header — dense strip on desktop, full vertical card on mobile.
-        final headerWidget = isWide
-            ? _DesktopTodayStrip(
-                samvat: nakshatraSamvat,
+        // The header — dense strip on desktop, split cards on mobile.
+        // Desktop: single dense strip.
+        // Mobile: VedicTimeCard (clock + Pr·Gh·Pa) + VedicDateCard (month, tithi).
+        final headerWidget = ValueListenableBuilder<DateTime>(
+          valueListenable: sliderDateNotifier,
+          builder: (context, sliderDate, _) {
+            final today = DateTime.now();
+            final isToday = sliderDate.year == today.year &&
+                sliderDate.month == today.month &&
+                sliderDate.day == today.day;
+
+            // Single source of truth: calendarService normalises month
+            // names (e.g. "Jyeshtam" → "Jyeshtha") and covers all dates
+            // including today.  Fall back to the merged samvat only when
+            // calendarService hasn't loaded yet.
+            final dateSamvat =
+                calendarService?.getPanchangForDate(sliderDate) ??
+                    (isToday ? nakshatraSamvat : null);
+
+            if (isWide) {
+              return _DesktopTodayStrip(
+                samvat: dateSamvat ?? nakshatraSamvat,
                 todayPanchang: todayPanchang,
                 brown: brown,
                 todayNakshatra: todayNakshatra,
-              )
-            : CosmicDateTimeCard(samvat: nakshatraSamvat, brown: brown);
+                selectedDate: isToday ? null : sliderDate,
+                selectedDatePanchang: dateSamvat,
+              );
+            } else {
+              // On mobile the split cards handle everything.
+              return const SizedBox.shrink();
+            }
+          },
+        );
+
+        // Mobile: single combined card (clock left, date center, time right)
+        final combinedCardWidget = ValueListenableBuilder<DateTime>(
+          valueListenable: sliderDateNotifier,
+          builder: (context, sliderDate, _) {
+            final today = DateTime.now();
+            final isToday = sliderDate.year == today.year &&
+                sliderDate.month == today.month &&
+                sliderDate.day == today.day;
+            final dateSamvat =
+                calendarService?.getPanchangForDate(sliderDate) ??
+                    (isToday ? nakshatraSamvat : null);
+            return VedicCombinedCard(
+              samvat: dateSamvat,
+              brown: brown,
+              selectedDate: isToday ? null : sliderDate,
+              onResetToToday: onResetToToday,
+            );
+          },
+        );
 
         // The bag of secondary cards in their canonical order. Inlined into
         // a single Column either in the right pane (desktop) or directly
@@ -279,9 +334,9 @@ class HolyCowCosmicContent extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              headerWidget,
-              SizedBox(height: spacing),
               if (isWide) ...[
+                headerWidget,
+                SizedBox(height: spacing),
                 // Two-column dashboard
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -308,6 +363,11 @@ class HolyCowCosmicContent extends StatelessWidget {
                 SizedBox(height: 16 + bottomInset),
               ] else ...[
                 // Single-column stack (mobile + small tablet)
+                // Combined clock+date card → wheel → secondary cards
+                combinedCardWidget,
+                SizedBox(height: spacing),
+                // Falls back to combined card for non-today selected dates
+                headerWidget,
                 wheelWidget,
                 SizedBox(height: spacing),
                 ...secondaryCards,
@@ -384,13 +444,12 @@ class HolyCowCosmicContent extends StatelessWidget {
         onDateChanged: (date) {
           // Sync both notifiers so the sky-chart slider stays in
           // visual agreement with the wheel's day selection.
-          // Slider maps 0..1 → −30..+30 days (range = 60 days).
           final today = DateTime.now();
           final daysOffset = date
               .difference(DateTime(today.year, today.month, today.day))
               .inDays;
           sliderValueNotifier.value =
-              (0.5 + daysOffset / 60.0).clamp(0.0, 1.0);
+              (0.5 + daysOffset / (2 * sliderRangeDays)).clamp(0.0, 1.0);
           sliderDateNotifier.value = date;
         },
       );
@@ -421,20 +480,24 @@ class HolyCowCosmicContent extends StatelessWidget {
                     return ValueListenableBuilder<DateTime>(
                       valueListenable: sliderDateNotifier,
                       builder: (context, sliderDate, _) {
+                        // Position lookup chain:
+                        // 1. SkyPositionsService (exact, ±30 days)
+                        // 2. AstroCalendarService (compact, ±365 days)
+                        // 3. Insight transits (today only, fallback)
                         final skyPositions =
                             skyService.getPositionsForDate(sliderDate);
-                        // Only fall back to insightTransits for TODAY — using
-                        // today's planet positions for a past/future date would
-                        // show the wrong sky mislabelled as that date.
                         final today = DateTime.now();
                         final isSliderToday =
                             sliderDate.year == today.year &&
                             sliderDate.month == today.month &&
                             sliderDate.day == today.day;
-                        final positions =
-                            skyPositions != null && skyPositions.isNotEmpty
-                                ? skyPositions
-                                : (isSliderToday ? insightTransits : null);
+                        Map<String, dynamic>? positions;
+                        if (skyPositions != null && skyPositions.isNotEmpty) {
+                          positions = skyPositions;
+                        } else if (calendarService != null) {
+                          positions = calendarService!.getPositionsForDate(sliderDate);
+                        }
+                        positions ??= isSliderToday ? insightTransits : null;
 
                         if (positions == null || positions.isEmpty) {
                           return const SizedBox.shrink();
@@ -455,9 +518,17 @@ class HolyCowCosmicContent extends StatelessWidget {
                           onBlendValueChanged: onBlendValueChanged,
                           onLoadSkyPositions: onLoadSkyPositions,
                           onTriggerCachePopulation: onTriggerCachePopulation,
-                          getPositionsForDate: skyService.getPositionsForDate,
-                          getInterpolatedPositions:
-                              skyService.getInterpolatedPositions,
+                          getPositionsForDate: (date) {
+                            // Try exact sky positions first, then calendar.
+                            return skyService.getPositionsForDate(date)
+                                ?? calendarService?.getPositionsForDate(date);
+                          },
+                          getInterpolatedPositions: (date) {
+                            // Try interpolated sky positions first, then calendar.
+                            final interp = skyService.getInterpolatedPositions(date);
+                            if (interp != null && interp.isNotEmpty) return interp;
+                            return calendarService?.getPositionsForDate(date);
+                          },
                           // TODO: re-enable when Current Sky page is improved
                           onExploreSky: null,
                           onExploreBirthChart: profile != null
@@ -486,18 +557,52 @@ class HolyCowCosmicContent extends StatelessWidget {
                 SizedBox(height: spacing),
               ],
 
-              // Muhurat section (time guidance).  The placeholder is only
-              // shown to signed-in users — for signed-out users the muhurat
-              // service never resolves, so a perpetual "Loading…" card just
-              // looks broken.  Skipping it cleanly for signed-out users.
-              if (globalMuhurat != null && globalMuhurat.isNotEmpty) ...[
-                MuhuratTimelineWidget(muhurat: globalMuhurat),
-                SizedBox(height: spacing),
-              ] else if (loadingState.isMuhuratLoading &&
-                  FirebaseAuth.instance.currentUser != null) ...[
-                _HolyCowMuhuratPlaceholder(cardColor: cardColor),
-                SizedBox(height: spacing),
-              ],
+              // Muhurat section (time guidance).  Shows for ANY date:
+              // 1. Today/near-today: use live globalMuhurat (real-time, 3-day window)
+              // 2. Any other date: use AstroCalendarService compact muhurat (±365 days)
+              ValueListenableBuilder<DateTime>(
+                valueListenable: sliderDateNotifier,
+                builder: (context, sliderDate, _) {
+                  final today = DateTime.now();
+                  final daysDiff = sliderDate
+                      .difference(DateTime(today.year, today.month, today.day))
+                      .inDays
+                      .abs();
+
+                  // Prefer live globalMuhurat for today (most accurate, real-time).
+                  if (daysDiff <= 1 &&
+                      globalMuhurat != null &&
+                      globalMuhurat.isNotEmpty) {
+                    return Padding(
+                      padding: EdgeInsets.only(bottom: spacing),
+                      child: MuhuratTimelineWidget(muhurat: globalMuhurat),
+                    );
+                  }
+
+                  // For any date: try the calendar service (compact muhurat, ±365 days).
+                  if (calendarService != null) {
+                    final calMuhurat =
+                        calendarService!.getMuhuratForDate(sliderDate);
+                    if (calMuhurat != null && calMuhurat.isNotEmpty) {
+                      return Padding(
+                        padding: EdgeInsets.only(bottom: spacing),
+                        child: MuhuratTimelineWidget(muhurat: calMuhurat),
+                      );
+                    }
+                  }
+
+                  // Loading placeholder only for today window.
+                  if (loadingState.isMuhuratLoading &&
+                      daysDiff <= 1 &&
+                      FirebaseAuth.instance.currentUser != null) {
+                    return Padding(
+                      padding: EdgeInsets.only(bottom: spacing),
+                      child: _HolyCowMuhuratPlaceholder(cardColor: cardColor),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
 
               // Upcoming Planetary Events
               // The card internally filters to major planets and may
@@ -516,12 +621,33 @@ class HolyCowCosmicContent extends StatelessWidget {
                 SizedBox(height: spacing),
               ],
 
-              // Panchang (global only)
-              if (hasPanchang) ...[
-                CosmicPanchangCard(
-                    panchang: todayPanchang!, brown: brown),
-                SizedBox(height: spacing),
-              ],
+              // Panchang — reacts to selected date. For today uses the
+              // rich global panchang; for other dates falls back to the
+              // compact calendar service data.
+              ValueListenableBuilder<DateTime>(
+                valueListenable: sliderDateNotifier,
+                builder: (context, sliderDate, _) {
+                  final today = DateTime.now();
+                  final isToday = sliderDate.year == today.year &&
+                      sliderDate.month == today.month &&
+                      sliderDate.day == today.day;
+
+                  final panchang =
+                      calendarService?.getPanchangForDate(sliderDate) ??
+                          (isToday && hasPanchang ? todayPanchang : null);
+
+                  if (panchang == null || panchang.isEmpty) {
+                    return const SizedBox.shrink();
+                  }
+                  return Padding(
+                    padding: EdgeInsets.only(bottom: spacing),
+                    child: CosmicPanchangCard(
+                      panchang: panchang,
+                      brown: brown,
+                    ),
+                  );
+                },
+              ),
 
               // Current Balance (Ayurveda Vikriti) — tappable → Ayurveda Details
               if (ayurvedaProfile != null &&
@@ -562,18 +688,13 @@ class HolyCowCosmicContent extends StatelessWidget {
               // and renders its message inline. The standalone card here would
               // duplicate that content, so it's been removed.)
 
-              // ── Mood check-in + Week forecast — bottom of page ──────────────
-              // These live here, not inside NakshatraRingWidget, so they are
-              // independent cards that can be freely repositioned.
+              // ── Mood check-in — bottom of page ──────────────────────────────
+              // This lives here, not inside NakshatraRingWidget, so it is an
+              // independent card that can be freely repositioned.
               // NakshatraMoodCheckInCard collapses when the wheel is not at
-              // today; NakshatraWeekForecastCard hides when birth data is absent.
+              // today.
               if (nakshatraController != null) ...[
                 NakshatraMoodCheckInCard(controller: nakshatraController!),
-                SizedBox(height: spacing),
-                NakshatraWeekForecastCard(
-                  controller: nakshatraController!,
-                  todaySamvat: nakshatraSamvat,
-                ),
                 SizedBox(height: spacing),
               ],
 
@@ -747,11 +868,22 @@ class _DesktopTodayStrip extends StatefulWidget {
   /// for signed-out users (samvat/todayPanchang don't carry nakshatra for them).
   final String? todayNakshatra;
 
+  /// When non-null and not today, the strip adapts to show the selected
+  /// date's info.  The VEDIC clock cell is hidden (only meaningful for
+  /// "right now") and panchang cells use [selectedDatePanchang].
+  final DateTime? selectedDate;
+
+  /// Panchang data for the selected date (from AstroCalendarService).
+  /// Used for TITHI, NAKSHATRA cells when showing a non-today date.
+  final Map<String, dynamic>? selectedDatePanchang;
+
   const _DesktopTodayStrip({
     required this.samvat,
     required this.todayPanchang,
     required this.brown,
     this.todayNakshatra,
+    this.selectedDate,
+    this.selectedDatePanchang,
   });
 
   @override
@@ -783,8 +915,17 @@ class _DesktopTodayStripState extends State<_DesktopTodayStrip> {
     final cardColor = isDark ? Theme.of(context).colorScheme.surface : Colors.white;
     final c = AppTheme.primaryColor;
 
-    final samvat = widget.samvat;
-    final vedicTimeShort = VedicTimeUtils.getVedicTimeShort(_now);
+    // Determine if we're showing today or a selected date.
+    final nowDate = _now;
+    final isShowingToday = widget.selectedDate == null ||
+        (widget.selectedDate!.year == nowDate.year &&
+            widget.selectedDate!.month == nowDate.month &&
+            widget.selectedDate!.day == nowDate.day);
+    final displayDate = isShowingToday ? nowDate : widget.selectedDate!;
+
+    // For today: use full samvat.  For other dates: use calendar panchang.
+    final samvat = isShowingToday ? widget.samvat : widget.selectedDatePanchang;
+    final vedicTimeShort = isShowingToday ? VedicTimeUtils.getVedicTimeShort(_now) : null;
 
     // Tithi (e.g. "Krishna Saptami") — derived from the same data that
     // CosmicDateTimeCard parses, but assembled horizontally.
@@ -802,61 +943,73 @@ class _DesktopTodayStripState extends State<_DesktopTodayStrip> {
     }
     final monthLine = lunarMonth != null ? '$lunarMonth Masa' : null;
 
-    // Today's nakshatra — prefer the parent-resolved value (uses the
-    // insight panchang path which works for signed-out users); fall back to
-    // todayPanchang / samvat keys when running on legacy data paths.
-    String? todayNakshatra = widget.todayNakshatra;
-    if (todayNakshatra == null || todayNakshatra.isEmpty) {
-      for (final raw in [
-        widget.todayPanchang?['nakshatra'],
-        samvat?['nakshatra'],
-        samvat?['nakshatra_name'],
-        samvat?['moonNakshatra'],
-      ]) {
-        if (raw is String && raw.isNotEmpty) {
-          todayNakshatra = raw;
-          break;
-        }
-        if (raw is Map) {
-          final name = raw['name']?.toString();
-          if (name != null && name.isNotEmpty) {
-            todayNakshatra = name;
+    // Nakshatra — for today prefer the parent-resolved value (uses the
+    // insight panchang path which works for signed-out users); for other
+    // dates use the calendar panchang nakshatra.
+    String? displayNakshatra;
+    if (isShowingToday) {
+      displayNakshatra = widget.todayNakshatra;
+      if (displayNakshatra == null || displayNakshatra.isEmpty) {
+        for (final raw in [
+          widget.todayPanchang?['nakshatra'],
+          widget.samvat?['nakshatra'],
+          widget.samvat?['nakshatra_name'],
+          widget.samvat?['moonNakshatra'],
+        ]) {
+          if (raw is String && raw.isNotEmpty) {
+            displayNakshatra = raw;
             break;
+          }
+          if (raw is Map) {
+            final name = raw['name']?.toString();
+            if (name != null && name.isNotEmpty) {
+              displayNakshatra = name;
+              break;
+            }
           }
         }
       }
+    } else {
+      // Non-today: calendar panchang stores nakshatra as a plain string.
+      final raw = samvat?['nakshatra'];
+      if (raw is String && raw.isNotEmpty) {
+        displayNakshatra = raw;
+      } else if (raw is Map) {
+        displayNakshatra = raw['name']?.toString();
+      }
     }
 
-    // Today (Western)
-    final today = _now;
-    final weekdayShort = _weekdayShort(today.weekday).toUpperCase();
-    final monthShort = _monthShort(today.month).toUpperCase();
-    final dateStr = '$weekdayShort $monthShort ${today.day}';
+    // Western date display
+    final weekdayShort = _weekdayShort(displayDate.weekday).toUpperCase();
+    final monthShort = _monthShort(displayDate.month).toUpperCase();
+    final dateStr = '$weekdayShort $monthShort ${displayDate.day}';
 
     // Vedic weekday (Vaar) — derived purely from the date, so this ALWAYS
     // renders regardless of auth state.  Gives signed-out users a richer
     // strip even when panchang data is unavailable.  Each day corresponds
     // to a classical planetary lord (e.g. Saturday → Saturn → Shanivar).
-    final vaarLabel = _vedicWeekday(today.weekday);
-    final vaarPlanet = _vedicWeekdayPlanet(today.weekday);
+    final vaarLabel = _vedicWeekday(displayDate.weekday);
+    final vaarPlanet = _vedicWeekdayPlanet(displayDate.weekday);
 
     // Moon phase — astronomical approximation using a reference new moon
     // and the synodic month (29.530588 days).  Computed from the date
     // alone so it works for all users.  Lovely delight element.
-    final moonPhase = _moonPhase(today);
+    final moonPhase = _moonPhase(displayDate);
 
     // Build the cells we want to show, skipping any without data.
     final cells = <Widget>[
       _StripCell(
-        label: 'TODAY',
+        label: isShowingToday ? 'TODAY' : 'DATE',
         value: dateStr,
         c: c,
       ),
-      _StripCell(
-        label: 'VEDIC',
-        value: vedicTimeShort,
-        c: c,
-      ),
+      // VEDIC clock — only for live "now" view
+      if (vedicTimeShort != null)
+        _StripCell(
+          label: 'VEDIC',
+          value: vedicTimeShort,
+          c: c,
+        ),
       // VAAR is always present — purely date-derived.
       _StripCell(
         label: 'VAAR',
@@ -881,10 +1034,10 @@ class _DesktopTodayStripState extends State<_DesktopTodayStrip> {
           value: monthLine,
           c: c,
         ),
-      if (todayNakshatra != null && todayNakshatra.isNotEmpty)
+      if (displayNakshatra != null && displayNakshatra.isNotEmpty)
         _StripCell(
           label: 'NAKSHATRA',
-          value: '☽ $todayNakshatra',
+          value: '☽ $displayNakshatra',
           c: c,
         ),
     ];

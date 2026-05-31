@@ -101,7 +101,7 @@ post_install do |installer|
       end
     end
     
-    if target.name == 'BoringSSL-GRPC'
+    if target.name == 'BoringSSL-GRPC' && target.respond_to?(:source_build_phase) && target.source_build_phase
       target.source_build_phase.files.each do |file|
         if file.settings && file.settings['COMPILER_FLAGS']
           flags = file.settings['COMPILER_FLAGS'].split

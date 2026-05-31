@@ -270,24 +270,63 @@ extension UserRegistration on UserService {
             existingUsers.docs.where((doc) => doc.id != user?.uid).toList();
 
         if (duplicates.isNotEmpty) {
-          // Found existing account with same phone but different UID
+          // Found existing account with same phone but different UID.
+          // Before blocking, check if that account has already been deleted.
+          //
+          // Account deletion is a two-step process:
+          //   1. Auth user deleted immediately (client calls user.delete())
+          //   2. Firestore cleanup runs via daily tombstone sweep (~24h later)
+          //
+          // During that 24-hour window the old user document still exists with
+          // its phoneNumber field. If the same phone tries to re-register, we'd
+          // wrongly block them. Checking deletedUsers/{existingUid} lets us
+          // distinguish a genuine duplicate from an orphaned-but-deleted account.
           final existingUid = duplicates.first.id;
           final existingData = duplicates.first.data();
 
-          AppLogger.e('Duplicate phone number detected during registration',
-              category: LogCategory.auth,
-              data: {
-                'currentUid': user?.uid,
-                'existingUid': existingUid,
-                'phoneNumber': phoneNumber,
-                'existingNickname': existingData['nickname'],
-                'existingName': existingData['name'],
-              });
+          bool isOrphanedDeletedAccount = false;
+          try {
+            final tombstoneDoc = await firestore
+                .collection('deletedUsers')
+                .doc(existingUid)
+                .get();
+            isOrphanedDeletedAccount = tombstoneDoc.exists;
+            if (isOrphanedDeletedAccount) {
+              AppLogger.i(
+                  'Duplicate phone belongs to tombstoned account — allowing re-registration',
+                  category: LogCategory.auth,
+                  data: {
+                    'deletedUid': existingUid,
+                    'currentUid': user?.uid,
+                    'tombstoneStatus':
+                        tombstoneDoc.data()?['status'] ?? 'unknown',
+                  });
+            }
+          } catch (e) {
+            // If we cannot read the tombstone, treat as genuine duplicate to be safe.
+            AppLogger.w(
+                'Could not verify deletedUsers for orphan check — treating as duplicate',
+                category: LogCategory.auth,
+                data: {'error': e.toString()});
+          }
 
-          // Throw error to prevent duplicate registration
-          throw Exception(
-              'This phone number is already registered to another account. '
-              'If you believe this is an error, please contact support.');
+          if (!isOrphanedDeletedAccount) {
+            // Genuine active duplicate — block registration.
+            AppLogger.e('Duplicate phone number detected during registration',
+                category: LogCategory.auth,
+                data: {
+                  'currentUid': user?.uid,
+                  'existingUid': existingUid,
+                  'phoneNumber': phoneNumber,
+                  'existingNickname': existingData['nickname'],
+                  'existingName': existingData['name'],
+                });
+
+            throw Exception(
+                'This phone number is already registered to another account. '
+                'If you believe this is an error, please contact support.');
+          }
+          // else: orphaned doc from deleted account — fall through and allow registration.
         }
       }
 

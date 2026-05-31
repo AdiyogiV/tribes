@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:aurogram/features/astrology/data/utils/astrology_formatters.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/common/pulsing_dot.dart';
@@ -30,6 +29,51 @@ class TimelineVisual extends StatelessWidget {
     this.onEventTap,
   });
 
+  /// Assign non-overlapping vertical lanes to event labels so they don't
+  /// overlap when events cluster together.
+  static List<Map<String, dynamic>> _assignLanes(
+    List<Map<String, dynamic>> events,
+    int startTime,
+    double hourWidth,
+  ) {
+    final sorted = List<Map<String, dynamic>>.from(events)
+      ..sort((a, b) => (a['start'] as int).compareTo(b['start'] as int));
+
+    final laneEnds = <double>[]; // rightmost occupied x per lane
+    final result = <Map<String, dynamic>>[];
+    const labelHalfWidth = 60.0;
+    const gap = 4.0;
+
+    for (final event in sorted) {
+      final s = event['start'] as int;
+      final e = event['end'] as int;
+      final startHour = (s - startTime) / 60.0;
+      final endHour = (e - startTime) / 60.0;
+      final left = startHour * hourWidth;
+      final width = (endHour - startHour) * hourWidth;
+      final centerX = left + width / 2;
+      final labelLeft = centerX - labelHalfWidth;
+      final labelRight = centerX + labelHalfWidth;
+
+      int lane = -1;
+      for (int i = 0; i < laneEnds.length; i++) {
+        if (labelLeft >= laneEnds[i] + gap) {
+          lane = i;
+          break;
+        }
+      }
+      if (lane == -1) {
+        lane = laneEnds.length;
+        laneEnds.add(double.negativeInfinity);
+      }
+      laneEnds[lane] = labelRight;
+
+      result.add({...event, '_lane': lane, '_centerX': centerX});
+    }
+
+    return result;
+  }
+
   @override
   Widget build(BuildContext context) {
     final hoursCount = ((endTime - startTime) ~/ 60) + 1;
@@ -37,111 +81,83 @@ class TimelineVisual extends StatelessWidget {
     final brownColor = AppTheme.primaryColor;
     final brownLight = AppTheme.primaryColor.withValues(alpha: 0.35);
 
+    // Pre-compute staggered label positions
+    final inauspiciousLanes = _assignLanes(
+      events.where((e) => e['type'] == 'inauspicious').toList(),
+      startTime,
+      hourWidth,
+    );
+    final iMaxLane = inauspiciousLanes.isEmpty
+        ? 0
+        : inauspiciousLanes.fold<int>(
+            0, (m, e) => (e['_lane'] as int) > m ? (e['_lane'] as int) : m);
+
+    final auspiciousLanes = _assignLanes(
+      events.where((e) => e['type'] == 'auspicious').toList(),
+      startTime,
+      hourWidth,
+    );
+    final aMaxLane = auspiciousLanes.isEmpty
+        ? 0
+        : auspiciousLanes.fold<int>(
+            0, (m, e) => (e['_lane'] as int) > m ? (e['_lane'] as int) : m);
+
+    const laneHeight = 26.0;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Row 1: Bad times labels
+        // Row 1: Inauspicious labels (staggered lanes, no inline times)
         SizedBox(
           width: timelineWidth,
-          height: 35,
+          height: (iMaxLane + 1) * laneHeight,
           child: Stack(
             clipBehavior: Clip.none,
-            children:
-                events.where((e) => e['type'] == 'inauspicious').map((event) {
-              final startMinutes = event['start'] as int;
-              final endMinutes = event['end'] as int;
-              final startHour = (startMinutes - startTime) / 60.0;
-              final endHour = (endMinutes - startTime) / 60.0;
-              final left = startHour * hourWidth;
-              final width = (endHour - startHour) * hourWidth;
-              final centerX = left + (width / 2);
-
-              final startTimeText =
-                  AstrologyFormatters.formatTimeWithAMPM(startMinutes);
-              final endTimeText =
-                  AstrologyFormatters.formatTimeWithAMPM(endMinutes);
-
-              return Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Positioned(
-                    left: centerX - 60,
-                    top: 3,
-                    child: SizedBox(
-                      width: 120,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          GestureDetector(
-                            onTap: onEventTap == null
-                                ? null
-                                : () => onEventTap!(event),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 3),
-                              decoration: BoxDecoration(
-                                color:
-                                    (event['color'] as Color).withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(AppDimensions.radiusSmMd),
-                              ),
-                              child: Text(
-                                event['name'] as String,
-                                style: TextStyle(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w700,
-                                  color: event['color'] as Color,
-                                ),
-                                textAlign: TextAlign.center,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+            children: inauspiciousLanes.map((event) {
+              final centerX = event['_centerX'] as double;
+              final lane = event['_lane'] as int;
+              return Positioned(
+                left: centerX - 60,
+                top: lane * laneHeight,
+                child: SizedBox(
+                  width: 120,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      GestureDetector(
+                        onTap: onEventTap == null
+                            ? null
+                            : () => onEventTap!(event),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: (event['color'] as Color)
+                                .withValues(alpha: 0.15),
+                            borderRadius:
+                                BorderRadius.circular(AppDimensions.radiusSmMd),
+                          ),
+                          child: Text(
+                            event['name'] as String,
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w700,
+                              color: event['color'] as Color,
                             ),
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 1),
-                          Icon(
-                            Icons.keyboard_arrow_down,
-                            size: 12,
-                            color: event['color'] as Color,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    left: left - 40,
-                    top: 23,
-                    child: SizedBox(
-                      width: 80,
-                      child: Text(
-                        startTimeText,
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                          color: event['color'] as Color,
-                          fontFeatures: [const FontFeature.tabularFigures()],
                         ),
-                        textAlign: TextAlign.center,
                       ),
-                    ),
-                  ),
-                  Positioned(
-                    left: left + width - 40,
-                    top: 23,
-                    child: SizedBox(
-                      width: 80,
-                      child: Text(
-                        endTimeText,
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                          color: event['color'] as Color,
-                          fontFeatures: [const FontFeature.tabularFigures()],
-                        ),
-                        textAlign: TextAlign.center,
+                      Icon(
+                        Icons.keyboard_arrow_down,
+                        size: 10,
+                        color: event['color'] as Color,
                       ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               );
             }).toList(),
           ),
@@ -167,12 +183,11 @@ class TimelineVisual extends StatelessWidget {
                   ),
                 ),
               ),
-              // Hour markers (dots) - centered on hour marks
+              // Hour markers (dots)
               ...List.generate(
                 hoursCount,
                 (index) => Positioned(
-                  left: index * hourWidth -
-                      3, // Center the 6px dot on the hour mark
+                  left: index * hourWidth - 3,
                   top: 12,
                   child: Container(
                     width: 6,
@@ -215,8 +230,10 @@ class TimelineVisual extends StatelessWidget {
                           width: width > 3 ? width : 3,
                           height: barHeight,
                           decoration: BoxDecoration(
-                            color: (event['color'] as Color).withValues(alpha: 0.7),
-                            borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm),
+                            color:
+                                (event['color'] as Color).withValues(alpha: 0.7),
+                            borderRadius:
+                                BorderRadius.circular(AppDimensions.radiusMdSm),
                             border: Border.all(
                               color: event['color'] as Color,
                               width: 1.5,
@@ -225,9 +242,9 @@ class TimelineVisual extends StatelessWidget {
                         ),
                       ),
                     ),
-                    // Start marker - centered at event start position
+                    // Start marker
                     Positioned(
-                      left: left - 6, // Center 12px marker at start position
+                      left: left - 6,
                       top: markerTop,
                       child: Container(
                         width: 12,
@@ -242,11 +259,9 @@ class TimelineVisual extends StatelessWidget {
                         ),
                       ),
                     ),
-                    // End marker - centered at event end position
+                    // End marker
                     Positioned(
-                      left: left +
-                          width -
-                          6, // Center 12px marker at end position
+                      left: left + width - 6,
                       top: markerTop,
                       child: Container(
                         width: 12,
@@ -264,15 +279,14 @@ class TimelineVisual extends StatelessWidget {
                   ],
                 );
               }),
-              // Live time dot (if current day) - pulsing, centered on timeline
+              // Live time dot
               if (currentTimeMinutes != null &&
                   currentTimeMinutes! >= startTime &&
                   currentTimeMinutes! <= endTime)
                 Positioned(
                   left: ((currentTimeMinutes! - startTime) / 60.0) * hourWidth -
                       6,
-                  top:
-                      9, // Centered: line at 14 with height 2 (center=15), dot is 12px, so top=15-6=9
+                  top: 9,
                   child: const PulsingDot(
                     size: 12,
                     borderWidth: 2,
@@ -283,113 +297,62 @@ class TimelineVisual extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppDimensions.spacingXxxs),
-        // Row 3: Good times labels
+        // Row 3: Auspicious labels (staggered lanes, no inline times)
         SizedBox(
           width: timelineWidth,
-          height: 70,
+          height: (aMaxLane + 1) * laneHeight,
           child: Stack(
             clipBehavior: Clip.none,
-            children:
-                events.where((e) => e['type'] == 'auspicious').map((event) {
-              final startMinutes = event['start'] as int;
-              final endMinutes = event['end'] as int;
-              final startHour = (startMinutes - startTime) / 60.0;
-              final endHour = (endMinutes - startTime) / 60.0;
-              final left = startHour * hourWidth;
-              final width = (endHour - startHour) * hourWidth;
-              final centerX = left + (width / 2);
-
-              final startTimeText =
-                  AstrologyFormatters.formatTimeWithAMPM(startMinutes);
-              final endTimeText =
-                  AstrologyFormatters.formatTimeWithAMPM(endMinutes);
-
-              return Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Positioned(
-                    left: left - 40,
-                    top: 0,
-                    child: SizedBox(
-                      width: 80,
-                      child: Text(
-                        startTimeText,
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                          color: event['color'] as Color,
-                          fontFeatures: [const FontFeature.tabularFigures()],
-                        ),
-                        textAlign: TextAlign.center,
+            children: auspiciousLanes.map((event) {
+              final centerX = event['_centerX'] as double;
+              final lane = event['_lane'] as int;
+              return Positioned(
+                left: centerX - 60,
+                top: lane * laneHeight,
+                child: SizedBox(
+                  width: 120,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.keyboard_arrow_up,
+                        size: 10,
+                        color: event['color'] as Color,
                       ),
-                    ),
-                  ),
-                  Positioned(
-                    left: left + width - 40,
-                    top: 0,
-                    child: SizedBox(
-                      width: 80,
-                      child: Text(
-                        endTimeText,
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                          color: event['color'] as Color,
-                          fontFeatures: [const FontFeature.tabularFigures()],
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    left: centerX - 60,
-                    top: 8,
-                    child: SizedBox(
-                      width: 120,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.keyboard_arrow_up,
-                            size: 12,
-                            color: event['color'] as Color,
+                      GestureDetector(
+                        onTap: onEventTap == null
+                            ? null
+                            : () => onEventTap!(event),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: (event['color'] as Color)
+                                .withValues(alpha: 0.15),
+                            borderRadius:
+                                BorderRadius.circular(AppDimensions.radiusSmMd),
                           ),
-                          const SizedBox(height: 1),
-                          GestureDetector(
-                            onTap: onEventTap == null
-                                ? null
-                                : () => onEventTap!(event),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 3),
-                              decoration: BoxDecoration(
-                                color:
-                                    (event['color'] as Color).withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(AppDimensions.radiusSmMd),
-                              ),
-                              child: Text(
-                                event['name'] as String,
-                                style: TextStyle(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w700,
-                                  color: event['color'] as Color,
-                                ),
-                                textAlign: TextAlign.center,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                          child: Text(
+                            event['name'] as String,
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w700,
+                              color: event['color'] as Color,
                             ),
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ],
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               );
             }).toList(),
           ),
         ),
-        // Row 4: Hour labels at bottom - centered under hour marks
+        // Row 4: Hour labels
         SizedBox(
           width: timelineWidth,
           height: 16,
@@ -406,8 +369,7 @@ class TimelineVisual extends StatelessWidget {
                       : (hourOfDay > 12 ? hourOfDay - 12 : hourOfDay);
                   final ampm = hourOfDay < 12 ? 'AM' : 'PM';
                   return Positioned(
-                    left: index * hourWidth -
-                        30, // Center 60px label under hour mark
+                    left: index * hourWidth - 30,
                     top: 0,
                     child: SizedBox(
                       width: 60,

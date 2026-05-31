@@ -12,8 +12,7 @@ import { Timestamp, FieldValue } from "firebase-admin/firestore";
 import { requireAuth } from "../lib/auth_utils.js";
 import { db } from "../lib/firebase.js";
 import { withLoopGuard } from "../lib/idempotency.js";
-import { geminiApiKey } from "../lib/secrets.js";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { getVertexAI, extractText } from "../lib/vertex_client.js";
 import { AI_MODELS } from "../lib/config.js";
 import {
     calculatePrakriti,
@@ -657,25 +656,21 @@ export async function handleGetAyurvedaRecommendations(request) {
             currentSeason,
         });
 
-        // Call Gemini
-        const apiKey = geminiApiKey.value();
-        if (!apiKey) {
-            throw new HttpsError("internal", "AI service not configured");
-        }
-
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({
+        // Call Gemini via Vertex AI
+        const vertexAI = getVertexAI();
+        const model = vertexAI.getGenerativeModel({
             model: AI_MODELS.GEMINI_FLASH,
             generationConfig: {
                 temperature: 0.7,
-                maxOutputTokens: 1024,
+                maxOutputTokens: 65536,
                 responseMimeType: "application/json",
             },
         });
 
-        const result = await model.generateContent(prompt);
-        const response = result.response;
-        const text = response.text();
+        const result = await model.generateContent({
+            contents: [{ role: "user", parts: [{ text: prompt }] }],
+        });
+        const text = extractText(result);
 
         // Parse JSON response
         let recommendations;

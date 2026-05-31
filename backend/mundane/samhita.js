@@ -163,9 +163,9 @@ export async function performReading(options = {}) {
     // ── क्रिया ५: स्मृति प्रत्याहार (Recall Past Readings) ────────────────
     // A wise Jyotishi remembers what he said before.
     let memoryContext = null;
-    if (geminiApiKey) {
+    {
         try {
-            initMemory(geminiApiKey);
+            initMemory();
             const memories = await recallMemory(
                 `mundane forecast ${today} planetary positions world events`,
                 { namespace: "predictions", topK: 3 },
@@ -187,21 +187,17 @@ export async function performReading(options = {}) {
 
     // ── क्रिया ६: फल संग्रह (Synthesis) ──────────────────────────────────
     // Weave all signals + news context + memory into a coherent reading.
-    if (geminiApiKey) {
-        try {
-            // Enrich analysis with news and memory context for the LLM
-            const enrichedAnalysis = {
-                ...analysis,
-                newsContext: nimitta.newsText,
-                memoryContext,
-                nimittaHotDomains: reading.steps.nimittaAvalokan?.hotDomains,
-            };
-            reading.forecast = await synthesizeForecast(geminiApiKey, enrichedAnalysis);
-        } catch (err) {
-            logger.warn("LLM synthesis failed, using fallback", { error: String(err) });
-            reading.forecast = synthesizeFallback(analysis);
-        }
-    } else {
+    try {
+        // Enrich analysis with news and memory context for the LLM
+        const enrichedAnalysis = {
+            ...analysis,
+            newsContext: nimitta.newsText,
+            memoryContext,
+            nimittaHotDomains: reading.steps.nimittaAvalokan?.hotDomains,
+        };
+        reading.forecast = await synthesizeForecast(null, enrichedAnalysis);
+    } catch (err) {
+        logger.warn("LLM synthesis failed, using fallback", { error: String(err) });
         reading.forecast = synthesizeFallback(analysis);
     }
 
@@ -215,7 +211,7 @@ export async function performReading(options = {}) {
 
     // ── क्रिया ७: स्मृति संचय (Store & Learn) ────────────────────────────
     // Store this reading in memory for future recall.
-    if (geminiApiKey) {
+    {
         try {
             const summaryForMemory = [
                 `Mundane reading for ${today}:`,

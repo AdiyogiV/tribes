@@ -29,6 +29,9 @@ class InitUserState extends State<InitUser>
   String? _username;
   bool _isLoading = false;
 
+  /// Incremented on every call so stale async completions are ignored.
+  int _usernameCallId = 0;
+
   late AnimationController _animController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -66,23 +69,55 @@ class InitUserState extends State<InitUser>
   }
 
   void _generateUsername() async {
+    // Capture the call ID before any await so stale completions can be discarded.
+    final callId = ++_usernameCallId;
+
     final name = _nameController.text.trim();
     if (name.isEmpty) {
-      setState(() => _username = null);
+      if (mounted) setState(() => _username = null);
       return;
     }
 
     final base = name.split(' ')[0].toLowerCase();
     final random = Random();
-    final collection = FirebaseFirestore.instance.collection('nicknames');
 
-    for (int i = 0; i < 50; i++) {
-      final candidate = '$base${random.nextInt(9000) + 1000}';
-      final doc = await collection.doc('pairs').get();
-      if (!doc.exists || !(doc.data() as Map).containsKey(candidate)) {
-        if (mounted) setState(() => _username = candidate);
-        return;
+    try {
+      // Fetch the nicknames document ONCE instead of once per candidate.
+      final doc = await FirebaseFirestore.instance
+          .collection('nicknames')
+          .doc('pairs')
+          .get();
+
+      // Discard if the user has typed more since this call started.
+      if (callId != _usernameCallId || !mounted) return;
+
+      final existing = doc.exists
+          ? (doc.data() as Map<String, dynamic>? ?? {})
+          : <String, dynamic>{};
+
+      for (int i = 0; i < 50; i++) {
+        final candidate = '$base${random.nextInt(9000) + 1000}';
+        if (!existing.containsKey(candidate)) {
+          if (callId == _usernameCallId && mounted) {
+            setState(() => _username = candidate);
+          }
+          return;
+        }
       }
+
+      // All 50 random candidates collided — use a timestamp-based fallback.
+      final fallback =
+          '$base${DateTime.now().millisecondsSinceEpoch % 10000}';
+      if (callId == _usernameCallId && mounted) {
+        setState(() => _username = fallback);
+      }
+    } catch (e) {
+      // Firestore unavailable — still unblock the user with an offline fallback.
+      AppLogger.w('Username generation Firestore read failed — using offline fallback',
+          category: LogCategory.auth, data: {'error': e.toString()});
+      if (callId != _usernameCallId || !mounted) return;
+      final fallback = '$base${random.nextInt(9000) + 1000}';
+      setState(() => _username = fallback);
     }
   }
 
