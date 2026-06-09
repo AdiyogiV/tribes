@@ -196,7 +196,15 @@ mixin AiChatStreamingMixin on ChangeNotifier, AiChatContextMixin {
 
       // CRITICAL: Capture the request ID at the start of this stream
       // This allows us to detect if this request was stopped/superseded
-      final thisRequestId = currentRequestId;
+      final thisRequestId = currentRequestId!;
+
+      // Attach the Firestore listener IMMEDIATELY on the deterministic session
+      // doc path. Firestore is our real streaming transport — we must not wait
+      // for the SSE 'session' event, which can be buffered until the very end on
+      // Flutter web + Hosting/Cloud Run. Backend writes to ai_chat_sessions/{chatId}
+      // where chatId == sessionId (sent in the request context above).
+      currentFirestorePath = 'ai_chat_sessions/$sessionId';
+      _listenToFirestoreUpdates(currentFirestorePath!, sessionId, thisRequestId);
 
       await for (final event in stream) {
         // CRITICAL: Check if THIS request is still the active one
@@ -226,11 +234,13 @@ mixin AiChatStreamingMixin on ChangeNotifier, AiChatContextMixin {
         if (type == 'session') {
           final chatId = event['chatId'] as String?;
           final firestorePath = event['firestorePath'] as String?;
-          if (chatId != null && firestorePath != null) {
+          // Listener is already attached on the deterministic path above; only
+          // (re)attach from the SSE event if for some reason it isn't running.
+          if (chatId != null &&
+              firestorePath != null &&
+              firestoreSubscription == null) {
             currentFirestorePath = firestorePath;
-            // Listen for all users (including logged out) - Firestore rules allow public read
-            // This enables thought steps streaming for guest users
-            _listenToFirestoreUpdates(firestorePath, sessionId, thisRequestId!);
+            _listenToFirestoreUpdates(firestorePath, sessionId, thisRequestId);
           }
         } else if (type == 'token') {
           // SSE token events contain streaming text chunks from the backend
@@ -543,11 +553,19 @@ mixin AiChatStreamingMixin on ChangeNotifier, AiChatContextMixin {
         }
       }
 
-      // NOTE: We do NOT handle streamText from Firestore anymore.
-      // SSE 'token' events are the single source of truth for streaming text.
-      // This eliminates race conditions between SSE and Firestore.
+      // Firestore is our streaming transport (SSE is unreliable on Flutter web +
+      // Hosting/Cloud Run, which buffer the chunked response). The backend writes
+      // `response` incrementally, so render it live while still processing.
+      // responseText is the full accumulated text each tick; _handleStreamingUpdate
+      // handles the cumulative-growth case correctly.
+      if (responseText != null &&
+          responseText.isNotEmpty &&
+          status != 'completed' &&
+          !hasFinalizedCurrentStream) {
+        _handleStreamingUpdate(responseText, sessionId);
+      }
 
-      // Handle completion - Firestore 'completed' is only a backup if SSE failed
+      // Handle completion - Firestore 'completed' is the authoritative finalizer
       // SSE 'complete' event is authoritative and should have already finalized
       if (status == 'completed') {
         // Mark thoughts complete

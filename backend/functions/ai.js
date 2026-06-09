@@ -1,6 +1,7 @@
 import { onRequest } from "firebase-functions/v2/https";
 import { logger } from "../lib/firebase.js";
 import { db } from "../lib/firebase.js";
+import { FieldValue } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
 import { DateTime } from "luxon";
 import { getVertexAI, extractChunkText } from "../lib/vertex_client.js";
@@ -275,14 +276,53 @@ export const aiChat = onRequest(
                 return res.status(400).json({ error: "Last user message is empty" });
             }
 
+            // ── Streaming transport ─────────────────────────────────────────
+            // SSE is unreliable on Flutter web + Hosting/Cloud Run (proxy buffers
+            // the chunked response). So the Firestore session doc is the real
+            // streaming channel: we write `response` into it incrementally and the
+            // client listens via onSnapshot. SSE is still emitted as a fast-path
+            // bonus for clients where it happens to work.
+            const sessionRef = db.collection("ai_chat_sessions").doc(chatId);
+            await sessionRef.set({
+                chatId,
+                status: "processing",
+                response: null,
+                createdAt: FieldValue.serverTimestamp(),
+                updatedAt: FieldValue.serverTimestamp(),
+            });
+
             res.setHeader("Cache-Control", "no-cache");
             res.setHeader("Content-Type", "text/event-stream");
             res.setHeader("Connection", "keep-alive");
             res.flushHeaders();
 
-            // SSE is the single source of truth. The `session` event just lets the
-            // client correlate the stream with its chatId — no Firestore listener.
-            write({ event: "session", chatId });
+            // Tell the client which doc to listen to for streamed tokens.
+            write({ event: "session", chatId, firestorePath: `ai_chat_sessions/${chatId}` });
+
+            // Throttled incremental writer (~300ms) so we stream phrase-by-phrase
+            // without blowing past Firestore's ~1 write/sec/doc soft limit.
+            let lastDocWrite = 0;
+            let streamAccum = "";
+            const flushDoc = async (force = false) => {
+                const now = Date.now();
+                if (!force && now - lastDocWrite < 300) return;
+                lastDocWrite = now;
+                try {
+                    await sessionRef.update({
+                        response: streamAccum,
+                        updatedAt: FieldValue.serverTimestamp(),
+                    });
+                } catch (_) { /* best-effort: completion write is authoritative */ }
+            };
+
+            // Wrap `write`: every SSE token also feeds the Firestore stream.
+            const streamingWrite = (data) => {
+                write(data);
+                if (data.event === "token" && typeof data.content === "string") {
+                    streamAccum += data.content;
+                    flushDoc();
+                }
+            };
 
             // Performance tracking
             const performanceMetrics = {
@@ -318,7 +358,7 @@ export const aiChat = onRequest(
                     chatId,
                     audioUrl,
                     messages,
-                    write,
+                    write: streamingWrite,
                     astrologyContext,
                     userLocation,
                     chatSource,
@@ -341,7 +381,7 @@ export const aiChat = onRequest(
                     chatId,
                     userMessage,
                     messages,
-                    write,
+                    write: streamingWrite,
                     astrologyContext,
                     userLocation,
                     chatSource,
@@ -370,6 +410,22 @@ export const aiChat = onRequest(
                 ...metrics,
             });
 
+            // Final authoritative write: full response + completion status. The
+            // client finalizes from this (and it's the durable streaming record).
+            try {
+                await sessionRef.update({
+                    status: "completed",
+                    response: accumulated,
+                    updatedAt: FieldValue.serverTimestamp(),
+                    completedAt: FieldValue.serverTimestamp(),
+                    performanceMetrics: metrics,
+                });
+            } catch (e) {
+                logger.error("Failed to write completion to session doc", {
+                    structuredData: true, chatId, error: String(e),
+                });
+            }
+
             write({ event: "complete", content: accumulated });
             res.end();
         } catch (error) {
@@ -377,6 +433,23 @@ export const aiChat = onRequest(
                 structuredData: true,
                 error: String(error),
             });
+
+            // Record failure on the session doc so the client listener surfaces it.
+            try {
+                const body = parseBody(req);
+                const failChatId = body?.chatId ? String(body.chatId) : null;
+                if (failChatId) {
+                    await db.collection("ai_chat_sessions").doc(failChatId).set({
+                        status: "failed",
+                        error: error.message || "Unknown error",
+                        updatedAt: FieldValue.serverTimestamp(),
+                    }, { merge: true });
+                }
+            } catch (persistError) {
+                logger.error("Failed to record streaming failure", {
+                    structuredData: true, error: String(persistError),
+                });
+            }
 
             write({ event: "error", error: error.message || "Unknown error" });
             res.end();
