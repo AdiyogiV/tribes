@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/features/astrology/domain/upcoming_event.dart';
 import 'package:aurogram/features/astrology/domain/sky_positions_calculator.dart';
+import 'package:aurogram/shared/services/widget_data_service.dart';
 
 export 'package:aurogram/features/astrology/domain/upcoming_event.dart';
 export 'package:aurogram/features/astrology/domain/sky_positions_calculator.dart';
@@ -692,11 +693,18 @@ class SkyPositionsService {
         );
       }
 
+      // Push cached panchang to native home screen widgets so the
+      // widget has data even when the cache is still warm and no fresh
+      // fetch occurs this session.
+      final todayPanchang = getTodayPanchang();
+      if (todayPanchang != null && todayPanchang.isNotEmpty) {
+        WidgetDataService.instance.updateWidgetData(todayPanchang);
+      }
+
       // Invalidate cache if today's panchang is missing or empty.
       // Backend may have just backfilled the gap, and we don't want to
       // sit on a stale empty payload for the full 12h TTL.
       // Guarded by _todayPanchangCacheBust so we only retry once per session.
-      final todayPanchang = getTodayPanchang();
       if ((todayPanchang == null || todayPanchang.isEmpty) &&
           !_todayPanchangCacheBust) {
         _todayPanchangCacheBust = true;
@@ -731,9 +739,15 @@ class SkyPositionsService {
       // Also cache panchang
       if (_panchang != null) {
         await prefs.setString(_panchangCacheKey, jsonEncode(_panchang));
+
+        // Push today's panchang to native home screen widgets
+        final todayPanchang = getTodayPanchang();
+        if (todayPanchang != null) {
+          await WidgetDataService.instance.updateWidgetData(todayPanchang);
+        }
       }
     } catch (e) {
-      // Ignore cache save errors
+      AppLogger.w('Failed to save cache: $e', category: LogCategory.general);
     }
   }
 

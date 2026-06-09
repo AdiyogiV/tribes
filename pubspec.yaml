@@ -89,7 +89,6 @@ dependencies:
   flutter_contacts: ^1.1.9+2  # Contact sync
   crypto: ^3.0.6              # Phone hashing
   record: ^6.1.2
-  firebase_ai: ^3.6.0  # Firebase AI Logic for Gemini
   screenshot: ^3.0.0   # Capture widgets as images for sharing
   
   # Voice/Video Calling

@@ -57,6 +57,7 @@ class HolyCowPageState extends State<HolyCowPage>
   DateTime _lastScrollLogicTime = DateTime(2000);
   bool _lastReportedHideBar = false;
   final ValueNotifier<bool> _inputHiddenNotifier = ValueNotifier<bool>(false);
+  bool _wheelInteracting = false;
 
   // Collapsible input — collapsed by default on mobile, always expanded on desktop
   bool _isInputExpanded = false;
@@ -393,6 +394,12 @@ class HolyCowPageState extends State<HolyCowPage>
   /// Called live on every nakshatra boundary crossing during wheel drag.
   /// Updates the sky-chart slider in real time so the sky moves with the wheel.
   void _onWheelControllerChanged() {
+    // Lock page scroll while user is interacting with the wheel.
+    final interacting = _nakshatraController.isInteracting;
+    if (interacting != _wheelInteracting) {
+      setState(() => _wheelInteracting = interacting);
+    }
+
     final date = _nakshatraController.displayedDate;
     final today = DateTime.now();
     final daysOffset = date
@@ -540,15 +547,19 @@ class HolyCowPageState extends State<HolyCowPage>
               backgroundColor: Theme.of(context).colorScheme.surface,
               child: CustomScrollView(
                 controller: _scrollController,
-                physics: const BouncingScrollPhysics(
-                  parent: AlwaysScrollableScrollPhysics(),
-                ),
+                physics: _wheelInteracting
+                    ? const NeverScrollableScrollPhysics()
+                    : const BouncingScrollPhysics(
+                        parent: AlwaysScrollableScrollPhysics(),
+                      ),
                 slivers: [
                   _buildSliverHeader(),
                   SliverToBoxAdapter(
                     child: Column(
                       children: [
-                        _buildCosmicDashboardContent(),
+                        _LocalOverlayScope(
+                          child: _buildCosmicDashboardContent(),
+                        ),
                         // Space for input overlay — less when collapsed
                         AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
@@ -1030,4 +1041,46 @@ class HolyCowPageState extends State<HolyCowPage>
       },
     );
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Local overlay scope
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// Wraps content in a local Overlay so any OverlayPortal inside (e.g. the
+// NakshatraRingWidget zoom overlay) resolves to this scoped overlay rather
+// than the root navigator overlay.  That keeps the magnified wheel above
+// sibling cards without ever rising above the bottom nav bar or FAB.
+
+class _LocalOverlayScope extends StatefulWidget {
+  final Widget child;
+  const _LocalOverlayScope({required this.child});
+
+  @override
+  State<_LocalOverlayScope> createState() => _LocalOverlayScopeState();
+}
+
+class _LocalOverlayScopeState extends State<_LocalOverlayScope> {
+  late final OverlayEntry _entry;
+
+  @override
+  void initState() {
+    super.initState();
+    _entry = OverlayEntry(
+      opaque: true,
+      maintainState: true,
+      canSizeOverlay: true,
+      builder: (_) => widget.child,
+    );
+  }
+
+  @override
+  void didUpdateWidget(_LocalOverlayScope old) {
+    super.didUpdateWidget(old);
+    // Propagate parent rebuilds into the overlay entry.
+    _entry.markNeedsBuild();
+  }
+
+  @override
+  Widget build(BuildContext context) => Overlay(initialEntries: [_entry]);
 }

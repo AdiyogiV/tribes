@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:aurogram/features/ai_chat/domain/ai_chat_service.dart';
-import 'package:aurogram/features/ai_chat/domain/gemini_service.dart';
 import 'package:aurogram/shared/services/location_service.dart';
 import 'package:aurogram/shared/models/thought_process.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
@@ -17,10 +16,10 @@ import 'ai_chat_voice_mixin.dart';
 /// Uses clean state machine pattern for predictable UI updates
 ///
 /// Composed of focused mixins:
-/// - [AiChatContextMixin] - Astrology context, chat source, system prompt caching
+/// - [AiChatContextMixin] - Astrology context + chat source
 /// - [AiChatPersistenceMixin] - Firestore persistence (save/load/clear conversations)
-/// - [AiChatStreamingMixin] - SSE streaming, Firestore real-time updates
-/// - [AiChatVoiceMixin] - Voice/audio message handling via Gemini
+/// - [AiChatStreamingMixin] - SSE streaming (single source of truth)
+/// - [AiChatVoiceMixin] - Voice messages (routed through the backend SSE path)
 class AiChatProvider extends ChangeNotifier
     with
         AiChatContextMixin,
@@ -29,7 +28,6 @@ class AiChatProvider extends ChangeNotifier
         AiChatVoiceMixin {
   final AiChatService _service;
   final LocationService _locationService;
-  final GeminiService _geminiService = GeminiService();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // =========================================================================
@@ -47,23 +45,7 @@ class AiChatProvider extends ChangeNotifier
         _locationService = locationService,
         _currentSession = ChatSessionState(
           chatId: 'chat-${DateTime.now().millisecondsSinceEpoch}',
-        ) {
-    // Initialize Gemini via Firebase AI Logic (no API key needed!)
-    _initializeGemini();
-  }
-
-  /// Initialize Gemini service via Firebase AI Logic
-  Future<void> _initializeGemini() async {
-    try {
-      // Firebase AI Logic handles auth automatically via Firebase
-      await _geminiService.initialize();
-      AppLogger.i('Gemini service initialized via Vertex AI',
-          category: LogCategory.voice);
-    } catch (e) {
-      AppLogger.e('Failed to initialize Gemini',
-          category: LogCategory.voice, error: e);
-    }
-  }
+        );
 
   // =========================================================================
   // Mixin bridge — expose internal state to mixins
@@ -93,9 +75,6 @@ class AiChatProvider extends ChangeNotifier
 
   @override
   LocationService get locationService => _locationService;
-
-  @override
-  GeminiService get geminiService => _geminiService;
 
   @override
   FirebaseFirestore get firestore => _firestore;

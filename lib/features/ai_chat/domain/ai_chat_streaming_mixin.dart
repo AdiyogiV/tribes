@@ -185,7 +185,9 @@ mixin AiChatStreamingMixin on ChangeNotifier, AiChatContextMixin {
         context: {
           if (location != null) 'location': location,
           'chatId': sessionId,
-          if (astrologyContext != null) 'astrologyContext': astrologyContext,
+          // astrologyContext is now fetched server-side from Firestore
+          // using the Firebase ID token sent in the Authorization header.
+          // Kept here only as backwards-compat fallback for old/guest sessions.
           if (chatSource != null) 'chatSource': chatSource,
           if (audioUrl != null)
             'audioUrl': audioUrl, // For Gemini audio processing

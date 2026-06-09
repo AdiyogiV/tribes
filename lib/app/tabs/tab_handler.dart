@@ -7,6 +7,8 @@ import 'package:aurogram/features/auth/login.dart';
 import 'package:aurogram/features/onboarding/presentation/pages/ftue_welcome.dart';
 import 'package:aurogram/app/tabs/grams.dart';
 import 'package:aurogram/features/astrology/presentation/pages/holycow.dart';
+import 'package:aurogram/features/astrology/presentation/widgets/nakshatra_ring_widget.dart'
+    show wheelInteractingNotifier;
 import 'package:aurogram/app/tabs/messages.dart';
 import 'package:aurogram/features/profile/presentation/pages/user_profile.dart';
 import 'package:aurogram/features/settings/presentation/pages/user_settings.dart';
@@ -369,14 +371,6 @@ class TabHandlerState extends State<TabHandler>
       if (_selectedIndex == 0) {
         _scrollHidesBottomBarNotifier.value = false;
       }
-      // On web, clear cached tabs that contain OverlayPortals to prevent
-      // hit test errors from unmounted overlay portals
-      if (kIsWeb) {
-        // Clear the old tab from cache to fully dispose its OverlayPortals
-        _cachedAuthenticatedTabs.remove(_selectedIndex);
-        _cachedUnauthenticatedTabs.remove(_selectedIndex);
-      }
-
       // On mobile, animate PageView to the selected tab
       // PageView indices match tab indices directly
       if (!kIsWeb && _pageController != null && _pageController!.hasClients) {
@@ -573,22 +567,27 @@ class TabHandlerState extends State<TabHandler>
         }
       }
 
-      tabContent = PageView(
-        controller: _pageController,
-        onPageChanged: (pageIndex) {
-          // PageView indices match tab indices directly
-          if (mounted &&
-              _selectedIndex != pageIndex &&
-              pageIndex >= 0 &&
-              pageIndex <= 3) {
-            setState(() {
-              _selectedIndex = pageIndex;
-            });
-          }
-        },
-        physics:
-            const ClampingScrollPhysics(), // Enable swipe navigation, prevent going to negative indices
-        children: tabs,
+      tabContent = ValueListenableBuilder<bool>(
+        valueListenable: wheelInteractingNotifier,
+        builder: (context, wheelLocked, _) => PageView(
+          controller: _pageController,
+          onPageChanged: (pageIndex) {
+            // PageView indices match tab indices directly
+            if (mounted &&
+                _selectedIndex != pageIndex &&
+                pageIndex >= 0 &&
+                pageIndex <= 3) {
+              setState(() {
+                _selectedIndex = pageIndex;
+              });
+            }
+          },
+          // Lock tab-swipe while user is interacting with the nakshatra wheel.
+          physics: wheelLocked
+              ? const NeverScrollableScrollPhysics()
+              : const ClampingScrollPhysics(),
+          children: tabs,
+        ),
       );
     }
 

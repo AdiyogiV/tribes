@@ -8,7 +8,6 @@ import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/routing/route_names.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/timeline/muhurat_timeline_widget.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cards/cosmic_date_time_card.dart';
-import 'package:aurogram/features/astrology/presentation/widgets/cards/cosmic_panchang_card.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cards/upcoming_events_card.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cards/your_chart_mini_card.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cards/vedic_time_utils.dart';
@@ -22,6 +21,7 @@ import 'package:aurogram/shared/models/ayurveda_profile.dart';
 import 'package:aurogram/features/astrology/domain/sky_positions_service.dart';
 import 'package:aurogram/features/astrology/domain/astro_calendar_service.dart';
 import 'package:aurogram/features/ayurveda/presentation/widgets/dosha_dashboard_card.dart';
+import 'package:aurogram/shared/services/widget_data_service.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/nakshatra_ring_widget.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 
@@ -116,6 +116,12 @@ class HolyCowCosmicContent extends StatelessWidget {
     }
     final nakshatraSamvat = mergedSamvat.isNotEmpty ? mergedSamvat : null;
 
+    // Push the fully-merged samvat to native home screen widgets.
+    // This is the most complete data source (insight + panchang + samvat).
+    if (nakshatraSamvat != null) {
+      WidgetDataService.instance.updateWidgetData(nakshatraSamvat);
+    }
+
     // Resolve today's nakshatra at the parent level so the desktop strip can
     // render the NAKSHATRA cell for signed-out users.  We follow the exact
     // same precedence chain the wheel widget uses (insight panchang first,
@@ -144,6 +150,10 @@ class HolyCowCosmicContent extends StatelessWidget {
           break;
         }
       }
+    }
+    // Derive from Moon longitude — works for all users, no auth needed.
+    if (todayNakshatra == null || todayNakshatra.isEmpty) {
+      todayNakshatra = calendarService?.getDay(DateTime.now())?.nakshatraName;
     }
 
     // Check actual renderable content, not just map keys — the card
@@ -284,6 +294,7 @@ class HolyCowCosmicContent extends StatelessWidget {
               brown: brown,
               selectedDate: isToday ? null : sliderDate,
               onResetToToday: onResetToToday,
+              nakshatraName: isToday ? todayNakshatra : null,
             );
           },
         );
@@ -297,11 +308,17 @@ class HolyCowCosmicContent extends StatelessWidget {
           brown: brown,
           cardColor: cardColor,
           insightTransits: insightTransits,
-          globalMuhurat: globalMuhurat,
           todayPanchang: todayPanchang,
           hasPanchang: hasPanchang,
           spacing: spacing,
           nakshatraSamvat: nakshatraSamvat,
+        );
+
+        // Time-guidance (muhurat) card — sits directly beneath the date card.
+        final muhuratCard = _buildMuhuratCard(
+          globalMuhurat: globalMuhurat,
+          cardColor: cardColor,
+          spacing: spacing,
         );
 
         // The sign-in upsell — only visible when signed-out.
@@ -337,6 +354,8 @@ class HolyCowCosmicContent extends StatelessWidget {
               if (isWide) ...[
                 headerWidget,
                 SizedBox(height: spacing),
+                // Time guidance sits right under the date strip.
+                muhuratCard,
                 // Two-column dashboard
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -364,12 +383,18 @@ class HolyCowCosmicContent extends StatelessWidget {
               ] else ...[
                 // Single-column stack (mobile + small tablet)
                 // Combined clock+date card → wheel → secondary cards
+                //
+                // The wheel itself uses OverlayPortal internally so its
+                // magnified visual paints ABOVE both the date card and the
+                // first secondary card regardless of normal Column paint order.
                 combinedCardWidget,
-                SizedBox(height: spacing),
+                SizedBox(height: spacing + 10),
+                // Time guidance sits right under the date card.
+                muhuratCard,
                 // Falls back to combined card for non-today selected dates
                 headerWidget,
                 wheelWidget,
-                SizedBox(height: spacing),
+                SizedBox(height: spacing + 10),
                 ...secondaryCards,
                 if (mobileCtaBanner != null) ...[
                   mobileCtaBanner,
@@ -430,6 +455,12 @@ class HolyCowCosmicContent extends StatelessWidget {
           todayNakshatra = _extractNakshatraName(globalP['nakshatra']);
         }
       }
+      // Fallback: derive from Moon longitude in the astro calendar.
+      // This works for all users (no auth needed) and is the same
+      // source the date card uses via CalendarDay.effectiveNakshatraIndex.
+      if (todayNakshatra == null || todayNakshatra.isEmpty) {
+        todayNakshatra = calendarService?.getDay(DateTime.now())?.nakshatraName;
+      }
       final birthNakshatra = profile?.moonNakshatra ?? profile?.nakshatra;
       final lagnaNakshatra = profile?.lagnaNakshatra;
       return NakshatraRingWidget(
@@ -459,13 +490,65 @@ class HolyCowCosmicContent extends StatelessWidget {
   /// Build the bag of supporting cards in their canonical display order.
   /// Returned as a flat List so the caller can place them in either a
   /// single-column stack (mobile) or a right-pane Column (desktop).
+  /// Muhurat / "time guidance" card. Lives directly under the date card.
+  /// Shows for ANY date:
+  /// 1. Today/near-today: live globalMuhurat (real-time, 3-day window)
+  /// 2. Any other date: AstroCalendarService compact muhurat (±365 days)
+  Widget _buildMuhuratCard({
+    required Map<String, dynamic>? globalMuhurat,
+    required Color cardColor,
+    required double spacing,
+  }) {
+    return ValueListenableBuilder<DateTime>(
+      valueListenable: sliderDateNotifier,
+      builder: (context, sliderDate, _) {
+        final today = DateTime.now();
+        final daysDiff = sliderDate
+            .difference(DateTime(today.year, today.month, today.day))
+            .inDays
+            .abs();
+
+        // Prefer live globalMuhurat for today (most accurate, real-time).
+        if (daysDiff <= 1 &&
+            globalMuhurat != null &&
+            globalMuhurat.isNotEmpty) {
+          return Padding(
+            padding: EdgeInsets.only(bottom: spacing),
+            child: MuhuratTimelineWidget(muhurat: globalMuhurat),
+          );
+        }
+
+        // For any date: try the calendar service (compact muhurat, ±365 days).
+        if (calendarService != null) {
+          final calMuhurat = calendarService!.getMuhuratForDate(sliderDate);
+          if (calMuhurat != null && calMuhurat.isNotEmpty) {
+            return Padding(
+              padding: EdgeInsets.only(bottom: spacing),
+              child: MuhuratTimelineWidget(muhurat: calMuhurat),
+            );
+          }
+        }
+
+        // Loading placeholder only for today window.
+        if (loadingState.isMuhuratLoading &&
+            daysDiff <= 1 &&
+            FirebaseAuth.instance.currentUser != null) {
+          return Padding(
+            padding: EdgeInsets.only(bottom: spacing),
+            child: _HolyCowMuhuratPlaceholder(cardColor: cardColor),
+          );
+        }
+        return const SizedBox.shrink();
+      },
+    );
+  }
+
   List<Widget> _secondaryCards({
     required BuildContext context,
     required bool isDark,
     required Color brown,
     required Color cardColor,
     required Map<String, dynamic>? insightTransits,
-    required Map<String, dynamic>? globalMuhurat,
     required Map<String, dynamic>? todayPanchang,
     required bool hasPanchang,
     required double spacing,
@@ -557,52 +640,9 @@ class HolyCowCosmicContent extends StatelessWidget {
                 SizedBox(height: spacing),
               ],
 
-              // Muhurat section (time guidance).  Shows for ANY date:
-              // 1. Today/near-today: use live globalMuhurat (real-time, 3-day window)
-              // 2. Any other date: use AstroCalendarService compact muhurat (±365 days)
-              ValueListenableBuilder<DateTime>(
-                valueListenable: sliderDateNotifier,
-                builder: (context, sliderDate, _) {
-                  final today = DateTime.now();
-                  final daysDiff = sliderDate
-                      .difference(DateTime(today.year, today.month, today.day))
-                      .inDays
-                      .abs();
-
-                  // Prefer live globalMuhurat for today (most accurate, real-time).
-                  if (daysDiff <= 1 &&
-                      globalMuhurat != null &&
-                      globalMuhurat.isNotEmpty) {
-                    return Padding(
-                      padding: EdgeInsets.only(bottom: spacing),
-                      child: MuhuratTimelineWidget(muhurat: globalMuhurat),
-                    );
-                  }
-
-                  // For any date: try the calendar service (compact muhurat, ±365 days).
-                  if (calendarService != null) {
-                    final calMuhurat =
-                        calendarService!.getMuhuratForDate(sliderDate);
-                    if (calMuhurat != null && calMuhurat.isNotEmpty) {
-                      return Padding(
-                        padding: EdgeInsets.only(bottom: spacing),
-                        child: MuhuratTimelineWidget(muhurat: calMuhurat),
-                      );
-                    }
-                  }
-
-                  // Loading placeholder only for today window.
-                  if (loadingState.isMuhuratLoading &&
-                      daysDiff <= 1 &&
-                      FirebaseAuth.instance.currentUser != null) {
-                    return Padding(
-                      padding: EdgeInsets.only(bottom: spacing),
-                      child: _HolyCowMuhuratPlaceholder(cardColor: cardColor),
-                    );
-                  }
-                  return const SizedBox.shrink();
-                },
-              ),
+              // (Muhurat / time-guidance card moved out of the secondary list
+              //  to sit directly beneath the date card — see _buildMuhuratCard
+              //  and its placement in build().)
 
               // Upcoming Planetary Events
               // The card internally filters to major planets and may
@@ -620,34 +660,6 @@ class HolyCowCosmicContent extends StatelessWidget {
                 ),
                 SizedBox(height: spacing),
               ],
-
-              // Panchang — reacts to selected date. For today uses the
-              // rich global panchang; for other dates falls back to the
-              // compact calendar service data.
-              ValueListenableBuilder<DateTime>(
-                valueListenable: sliderDateNotifier,
-                builder: (context, sliderDate, _) {
-                  final today = DateTime.now();
-                  final isToday = sliderDate.year == today.year &&
-                      sliderDate.month == today.month &&
-                      sliderDate.day == today.day;
-
-                  final panchang =
-                      calendarService?.getPanchangForDate(sliderDate) ??
-                          (isToday && hasPanchang ? todayPanchang : null);
-
-                  if (panchang == null || panchang.isEmpty) {
-                    return const SizedBox.shrink();
-                  }
-                  return Padding(
-                    padding: EdgeInsets.only(bottom: spacing),
-                    child: CosmicPanchangCard(
-                      panchang: panchang,
-                      brown: brown,
-                    ),
-                  );
-                },
-              ),
 
               // Current Balance (Ayurveda Vikriti) — tappable → Ayurveda Details
               if (ayurvedaProfile != null &&

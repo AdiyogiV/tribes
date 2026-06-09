@@ -644,12 +644,18 @@ class VedicCombinedCard extends StatefulWidget {
   /// Called when user taps "Today" to snap back.
   final VoidCallback? onResetToToday;
 
+  /// Nakshatra name resolved by the parent (from insight/global panchang).
+  /// The samvat map from getPanchangForDate() often lacks this key, so the
+  /// parent passes it explicitly.
+  final String? nakshatraName;
+
   const VedicCombinedCard({
     super.key,
     required this.samvat,
     required this.brown,
     this.selectedDate,
     this.onResetToToday,
+    this.nakshatraName,
   });
 
   @override
@@ -659,7 +665,6 @@ class VedicCombinedCard extends StatefulWidget {
 class _VedicCombinedCardState extends State<VedicCombinedCard> {
   Timer? _timer;
   DateTime _now = DateTime.now();
-  bool _clockMagnified = false;
 
   bool get _isShowingToday {
     if (widget.selectedDate == null) return true;
@@ -685,9 +690,9 @@ class _VedicCombinedCardState extends State<VedicCombinedCard> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brightness = Theme.of(context).brightness;
     final cardColor =
-        isDark ? Theme.of(context).colorScheme.surface : Colors.white;
+        brightness == Brightness.dark ? Theme.of(context).colorScheme.surface : Colors.white;
     final c = AppTheme.primaryColor;
     final samvat = widget.samvat;
     final showingToday = _isShowingToday;
@@ -724,179 +729,153 @@ class _VedicCombinedCardState extends State<VedicCombinedCard> {
       }
     }
 
-    // ── Time info (only for today) ──
-    const sunriseHour = 6;
-    var secondsFromSunrise =
-        (_now.hour - sunriseHour) * 3600 + _now.minute * 60 + _now.second;
-    if (secondsFromSunrise < 0) secondsFromSunrise += 86400;
-    final prahar = (secondsFromSunrise ~/ (180 * 60)) % 8 + 1;
-    final ghati = secondsFromSunrise ~/ 1440;
-    final pala = (secondsFromSunrise - (ghati * 1440)) ~/ 24;
+    // ── Nakshatra (moon's position) ──
+    // Prefer the parent-supplied value (resolved from insight/global panchang).
+    // Fall back to samvat keys just in case.
+    String? nakshatraName = widget.nakshatraName;
+    if (nakshatraName == null || nakshatraName.isEmpty) {
+      for (final key in const ['nakshatra', 'nakshatra_name', 'moonNakshatra', 'nakshatraName']) {
+        final raw = samvat?[key];
+        if (raw == null) continue;
+        if (raw is String && raw.isNotEmpty) {
+          nakshatraName = raw;
+          break;
+        }
+        if (raw is Map) {
+          nakshatraName = raw['name']?.toString() ??
+              raw['nakshatra']?.toString() ??
+              raw.values.firstOrNull?.toString();
+          if (nakshatraName != null && nakshatraName.isNotEmpty) break;
+        }
+      }
+    }
 
-    final textStyle = TextStyle(
-      fontSize: AppTheme.holyCowTextSize,
-      fontWeight: FontWeight.w500,
-      color: c,
-      height: 1.4,
-    );
-    final dimStyle = TextStyle(
-      fontSize: AppTheme.holyCowTextSize,
-      fontWeight: FontWeight.w500,
-      color: c.withValues(alpha: 0.5),
-      height: 1.4,
-    );
-
-    // ── 3-column Row — swaps left & right based on state ──
-    //
-    // TODAY:        [ Clock | Date | ⓘ + Time ]
-    // OTHER DATE:   [ ±N days | Date | Today ↩ ]
-    //
-    // Both states use AnimatedOpacity crossfade so the tree
-    // is always stable (no conditional add/remove).
-
-    // Days offset for the "±N days" indicator
+    // Days offset for non-today
     final today = DateTime.now();
     final todayDate = DateTime(today.year, today.month, today.day);
     final selectedDate = widget.selectedDate ?? todayDate;
     final displayDate = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
+
+    // ── Vedic time: live for today, date-appropriate for other dates ──
+    final timeRef = showingToday ? _now : displayDate;
+    final moonEmoji = VedicTimeUtils.getMoonPhaseEmoji(timeRef);
+    final praharName = VedicTimeUtils.getPraharName(_now);
+    final ghati = VedicTimeUtils.getGhati(_now);
+    final pala = VedicTimeUtils.getPala(_now);
     final daysDiff = displayDate.difference(todayDate).inDays;
+
+    final textStyle = TextStyle(
+      fontSize: AppTheme.holyCowTextSize,
+      fontWeight: FontWeight.w600,
+      color: c,
+      height: 1.25,
+    );
+
+    // ── 3-column layout: [ Moon | Date | Time ] ──
+
+    Widget _divider() => Container(
+          width: 1,
+          height: 70,
+          margin: const EdgeInsets.symmetric(horizontal: 8),
+          decoration: BoxDecoration(
+            color: c.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(0.5),
+          ),
+        );
 
     return SizedBox(
       width: double.infinity,
+      height: 140,
       child: Material(
         color: cardColor,
-        elevation: _clockMagnified ? 24 : 2,
+        elevation: 2,
         shadowColor: Colors.black.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-        clipBehavior: Clip.none,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppDimensions.paddingMd,
-            20,
-            AppDimensions.paddingLg,
-            20,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 14),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // ── LEFT COLUMN ──
-              // Today: clock.  Other date: days offset.
-              SizedBox(
-                width: 80,
-                height: 80,
-                child: AnimatedCrossFade(
-                  firstChild: IgnorePointer(
-                    ignoring: !showingToday,
-                    child: VedicClockWidget(
-                      time: _now,
-                      isDark: isDark,
-                      size: 80,
-                      onMagnifyChanged: (magnified) {
-                        setState(() => _clockMagnified = magnified);
-                      },
-                    ),
-                  ),
-                  secondChild: Center(
-                    child: _DaysOffsetLabel(days: daysDiff, color: c),
-                  ),
-                  crossFadeState: showingToday
-                      ? CrossFadeState.showFirst
-                      : CrossFadeState.showSecond,
-                  duration: const Duration(milliseconds: 250),
-                ),
-              ),
-
-              // ── CENTER: Date text (always visible) ──
+              // ── COL 1 (flex 5): Panchang date ──
               Expanded(
+                flex: 5,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (lunarMonth != null)
-                      Text(lunarMonth, style: textStyle, textAlign: TextAlign.center),
+                      Text(lunarMonth, style: textStyle,
+                          textAlign: TextAlign.center),
                     if (pakshaLine != null)
-                      Text(pakshaLine, style: textStyle, textAlign: TextAlign.center),
+                      Text(pakshaLine, style: textStyle,
+                          textAlign: TextAlign.center),
                     if (tithiNameOnly != null)
-                      Text(tithiNameOnly, style: textStyle, textAlign: TextAlign.center),
+                      Text(tithiNameOnly, style: textStyle,
+                          textAlign: TextAlign.center),
                     if (vedicNumericDate != null)
-                      Text(vedicNumericDate, style: dimStyle, textAlign: TextAlign.center),
+                      Text(vedicNumericDate, style: textStyle,
+                          textAlign: TextAlign.center),
                   ],
                 ),
               ),
 
-              // ── RIGHT COLUMN (fixed width — never shifts center) ──
-              // Today: ⓘ + time.  Other date: replay button.
-              // Both children stacked, crossfade via opacity.
-              SizedBox(
-                width: 80,
-                child: Stack(
-                  alignment: Alignment.center,
+              _divider(),
+
+              // ── COL 2 (flex 2): Moon + Nakshatra ──
+              Expanded(
+                flex: 2,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Time text (today)
-                    AnimatedOpacity(
-                      opacity: showingToday ? 1.0 : 0.0,
-                      duration: const Duration(milliseconds: 200),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
+                    Text(moonEmoji,
+                        style: const TextStyle(fontSize: 34, height: 1.1),
+                        textAlign: TextAlign.center),
+                  ],
+                ),
+              ),
+
+              _divider(),
+
+              // ── COL 3 (flex 3): Vedic time / days offset ──
+              Expanded(
+                flex: 3,
+                child: showingToday
+                    ? Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: GestureDetector(
-                              onTap: () {
-                                HapticFeedback.lightImpact();
-                                AppBottomSheet.show(
-                                  context,
-                                  child: VedicTimeInfoSheet(isDark: isDark, brown: c),
-                                );
-                              },
-                              behavior: HitTestBehavior.opaque,
-                              child: Padding(
-                                padding: const EdgeInsets.only(bottom: 2),
-                                child: Icon(
-                                  Icons.info_outline_rounded,
-                                  size: 15,
-                                  color: c.withValues(alpha: 0.3),
-                                ),
+                          Text(
+                            '$ghati·${pala.toString().padLeft(2, '0')}',
+                            style: textStyle,
+                          ),
+                          Text(praharName, style: textStyle),
+                        ],
+                      )
+                    : Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _DaysOffsetLabel(days: daysDiff, color: c),
+                          const SizedBox(height: 6),
+                          GestureDetector(
+                            onTap: () {
+                              HapticFeedback.lightImpact();
+                              widget.onResetToToday?.call();
+                            },
+                            behavior: HitTestBehavior.opaque,
+                            child: Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: c.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.replay_rounded,
+                                size: 18,
+                                color: c,
                               ),
                             ),
                           ),
-                          Text('Prahar $prahar', style: dimStyle),
-                          Text('Ghati $ghati', style: dimStyle),
-                          Text('Pala $pala', style: dimStyle),
                         ],
                       ),
-                    ),
-                    // Replay button (not today)
-                    AnimatedOpacity(
-                      opacity: showingToday ? 0.0 : 1.0,
-                      duration: const Duration(milliseconds: 200),
-                      child: IgnorePointer(
-                        ignoring: showingToday,
-                        child: GestureDetector(
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            widget.onResetToToday?.call();
-                          },
-                          behavior: HitTestBehavior.opaque,
-                          child: Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              color: c.withValues(alpha: 0.1),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.replay_rounded,
-                              size: 22,
-                              color: c,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
               ),
             ],
           ),
@@ -919,28 +898,24 @@ class _DaysOffsetLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     final abs = days.abs();
     final isFuture = days > 0;
-    final numberStyle = TextStyle(
-      fontSize: AppTheme.holyCowTextSize + 8,
-      fontWeight: FontWeight.w700,
+    final textStyle = TextStyle(
+      fontSize: AppTheme.holyCowTextSize,
+      fontWeight: FontWeight.w600,
       color: color,
-      height: 1.1,
-    );
-    final labelStyle = TextStyle(
-      fontSize: AppTheme.holyCowTextSize - 2,
-      fontWeight: FontWeight.w500,
-      color: color.withValues(alpha: 0.5),
-      height: 1.2,
+      height: 1.25,
     );
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         if (isFuture)
-          Text('In', style: labelStyle),
-        Text('$abs', style: numberStyle),
-        Text(abs == 1 ? 'day' : 'days', style: labelStyle),
+          Text('In $abs', style: textStyle),
         if (!isFuture)
-          Text('ago', style: labelStyle),
+          Text('$abs ${abs == 1 ? 'day' : 'days'}', style: textStyle),
+        if (isFuture)
+          Text(abs == 1 ? 'day' : 'days', style: textStyle),
+        if (!isFuture)
+          Text('ago', style: textStyle),
       ],
     );
   }

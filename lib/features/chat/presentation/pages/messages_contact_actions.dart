@@ -34,13 +34,9 @@ Future<bool> showContactPermissionDialog(BuildContext context) async {
           ),
           actions: [
             CupertinoDialogAction(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text('Not Now'),
-            ),
-            CupertinoDialogAction(
               isDefaultAction: true,
               onPressed: () => Navigator.of(context).pop(true),
-              child: Text('Find Friends'),
+              child: Text('Continue'),
             ),
           ],
         ),

@@ -13,6 +13,15 @@ import 'package:aurogram/shared/models/daily_insight.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/common/pulsing_dot.dart';
 
 // =============================================================================
+// Global wheel-interaction signal.
+// =============================================================================
+//
+// True while the user's finger is down on any nakshatra wheel.  External
+// scrollables (e.g. tab PageView, page CustomScrollView) listen and lock
+// themselves so the wheel area never produces accidental scroll/tab-switch.
+final ValueNotifier<bool> wheelInteractingNotifier = ValueNotifier<bool>(false);
+
+// =============================================================================
 // NakshatraWheelController
 // =============================================================================
 //
@@ -87,6 +96,16 @@ class NakshatraWheelController extends ChangeNotifier {
     _todayIndex  = todayIndex;
     _birthIndex  = birthIndex;
     _cumulativeOffset = cumulativeOffset;
+    notifyListeners();
+  }
+
+  /// True while finger is down on the wheel.  The page uses this to lock
+  /// scroll physics so the wheel area never scrolls the page.
+  bool _isInteracting = false;
+  bool get isInteracting => _isInteracting;
+  void _setInteracting(bool v) {
+    if (_isInteracting == v) return;
+    _isInteracting = v;
     notifyListeners();
   }
 
@@ -185,9 +204,19 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
   double _wheelDiameter = 0;
 
   // ─── Long-press magnifier ─────────────────────────────────────────────────
-  Timer? _magnifyTimer;
   bool _isMagnified = false;
-  Offset _magnifyOrigin = Offset.zero; // local position of the hold
+  Offset _magnifyOrigin = Offset.zero; // local press point — scale alignment
+
+  // ─── Overlay portal (paints wheel above adjacent siblings) ────────────────
+  // The wheel's visual + gestures live inside this OverlayPortal so the
+  // magnified wheel + tara ring always render ABOVE the date card (above)
+  // and the energy/vibe card (below). The original spot reserves layout
+  // space with a transparent placeholder; the overlay child is positioned
+  // via CompositedTransformFollower → LayerLink so it tracks the layout
+  // slot exactly during scroll/resize.
+  final LayerLink _wheelLayerLink = LayerLink();
+  final OverlayPortalController _wheelPortalController =
+      OverlayPortalController();
 
   // ─── Selection (auto — always the nakshatra at 12 o'clock / top) ──────────
   int _currentBottomIndex = -1;  // field name kept for compatibility
@@ -395,6 +424,13 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
       });
     }
 
+    // Activate the overlay portal so the wheel renders above sibling cards
+    // from the very first frame.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && !_wheelPortalController.isShowing) {
+        _wheelPortalController.show();
+      }
+    });
   }
 
   @override
@@ -403,6 +439,16 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
     if (old.wheelResetSignal != widget.wheelResetSignal) {
       old.wheelResetSignal?.removeListener(_onExternalResetToToday);
       widget.wheelResetSignal?.addListener(_onExternalResetToToday);
+    }
+    // Re-center wheel when todayNakshatra arrives for the first time
+    // (e.g. calendar data loads after initState positioned using the fallback).
+    if (old.todayNakshatra != widget.todayNakshatra &&
+        widget.todayNakshatra != null &&
+        old.todayNakshatra == null) {
+      final target = -_ashwiniOffset + _todayIndex * _seg;
+      _controller.value = target;
+      _currentBottomIndex = _nakshatraAtTop();
+      _cumulativeOffset = 0;
     }
     // Keep the controller's jump callback current when the controller instance
     // is swapped (rare in practice but required for correctness).
@@ -427,7 +473,6 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
     widget.wheelResetSignal?.removeListener(_onExternalResetToToday);
     _controller.removeListener(_onRotation);
     _resumeTimer?.cancel();
-    _magnifyTimer?.cancel();
     _controller.dispose();
     // Null out the jump callbacks so a disposed widget is never called.
     widget.controller?._jumpCallback = null;
@@ -450,7 +495,7 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
   void _onRotation() {
     final seg = _nakshatraAtTop();
     if (seg != _currentBottomIndex && seg >= 0) {
-      if (_isDragging) HapticFeedback.lightImpact();
+      // Haptic on drag removed — felt like vibration during rotation.
 
       // Track direction of boundary crossing for cumulative offset.
       // Skip during return-to-today animation — offset is already reset
@@ -504,108 +549,105 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // Long-press magnifier (raw pointer events — no gesture conflict)
-  // Hold still for 300 ms → zoom in; lift finger → zoom out.
+  // Gesture handlers (driven by RawGestureDetector + Flutter's gesture arena).
+  //
+  // - HorizontalDragGestureRecognizer claims horizontal drags → wheel rotates.
+  //   Vertical drags lose to the scroll view → page scrolls.
+  // - LongPressGestureRecognizer claims 250 ms holds → magnify; subsequent
+  //   movement pans the zoomed view; release unmagnifies.
   // ═══════════════════════════════════════════════════════════════════════════
 
-  void _onPointerDown(PointerDownEvent e) {
-    _magnifyOrigin = e.localPosition;
-    _magnifyTimer?.cancel();
-    _magnifyTimer = Timer(const Duration(milliseconds: 100), () {
-      if (!mounted) return;
-      HapticFeedback.mediumImpact();
-      setState(() => _isMagnified = true);
-    });
-  }
+  // ── Rotation ───────────────────────────────────────────────────────────────
 
-  void _onPointerMove(PointerMoveEvent e) {
-    // If the finger moved > 10 px it's a drag, cancel magnify.
-    if (!_isMagnified &&
-        (e.localPosition - _magnifyOrigin).distance > 10) {
-      _magnifyTimer?.cancel();
-    }
-  }
-
-  void _onPointerUp(PointerUpEvent e) {
-    _magnifyTimer?.cancel();
-    if (_isMagnified) setState(() => _isMagnified = false);
-  }
-
-  void _onPointerCancel(PointerCancelEvent e) {
-    _magnifyTimer?.cancel();
-    if (_isMagnified) setState(() => _isMagnified = false);
-  }
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // Pan handling (drag-to-rotate with momentum)
-  // Haptic feedback is handled in _onRotation when segment changes.
-  // ═══════════════════════════════════════════════════════════════════════════
-
-  void _handlePanStart(DragStartDetails details) {
+  void _onRotateStart(DragStartDetails d) {
+    if (_wheelDiameter <= 0) return;
     _isDragging = true;
     _stopAll();
-
     final cx = _wheelDiameter / 2;
-    final dx = details.localPosition.dx - cx;
-    final dy = details.localPosition.dy - cx;
-    _lastPanAngle = atan2(dx, -dy);
+    _lastPanAngle = atan2(d.localPosition.dx - cx, -(d.localPosition.dy - cx));
   }
 
-  void _handlePanUpdate(DragUpdateDetails details) {
+  void _onRotateUpdate(DragUpdateDetails d) {
     if (_lastPanAngle == null || _wheelDiameter <= 0) return;
-
     final cx = _wheelDiameter / 2;
-    final dx = details.localPosition.dx - cx;
-    final dy = details.localPosition.dy - cx;
-    final currentAngle = atan2(dx, -dy);
-
+    final currentAngle = atan2(d.localPosition.dx - cx, -(d.localPosition.dy - cx));
     double delta = currentAngle - _lastPanAngle!;
     if (delta > pi) delta -= 2 * pi;
     if (delta < -pi) delta += 2 * pi;
     _lastPanAngle = currentAngle;
-
-    // Heavy-disc feel: ~35% drag resistance so the wheel doesn't spin too easily.
     _controller.value += delta * 0.65;
   }
 
-  void _handlePanEnd(DragEndDetails details) {
+  void _onRotateEnd(DragEndDetails d) {
     _isDragging = false;
     final touchAngle = _lastPanAngle;
     _lastPanAngle = null;
 
-    if (touchAngle == null || _wheelDiameter <= 0) {
-      _scheduleResume();
-      return;
+    if (touchAngle != null && _wheelDiameter > 0) {
+      final r = _wheelDiameter / 2;
+      final v = d.velocity.pixelsPerSecond;
+      final tangentialVel = v.dx * cos(touchAngle) + v.dy * sin(touchAngle);
+      final angularVel = tangentialVel / r;
+
+      if (angularVel.abs() > 0.7) {
+        final ms = (angularVel.abs() * 500).clamp(250.0, 1400.0);
+        final flingAngle = angularVel * ms / 1000 * 0.32;
+        _controller
+            .animateTo(
+              _controller.value + flingAngle,
+              duration: Duration(milliseconds: ms.toInt()),
+              curve: Curves.decelerate,
+            )
+            .whenComplete(() {
+              if (mounted) {
+                _scheduleResume();
+                widget.onDateChanged?.call(_displayedDate);
+              }
+            });
+        return;
+      }
     }
+    _scheduleResume();
+    widget.onDateChanged?.call(_displayedDate);
+  }
 
-    final r = _wheelDiameter / 2;
-    final v = details.velocity.pixelsPerSecond;
-    // Tangential velocity at the last touch point
-    final tangentialVel = v.dx * cos(touchAngle) + v.dy * sin(touchAngle);
-    final angularVel = tangentialVel / r;
+  void _onRotateCancel() {
+    _isDragging = false;
+    _lastPanAngle = null;
+    _scheduleResume();
+  }
 
-    // Higher threshold (0.7) and shorter throw (0.32) give a heavy-disc coast.
-    if (angularVel.abs() > 0.7) {
-      // Fling with deceleration
-      final ms = (angularVel.abs() * 500).clamp(250.0, 1400.0);
-      final flingAngle = angularVel * ms / 1000 * 0.32;
+  // ── Magnifier ──────────────────────────────────────────────────────────────
 
-      _controller
-          .animateTo(
-            _controller.value + flingAngle,
-            duration: Duration(milliseconds: ms.toInt()),
-            curve: Curves.decelerate,
-          )
-          .whenComplete(() {
-            if (mounted) {
-              _scheduleResume();
-              widget.onDateChanged?.call(_displayedDate);
-            }
-          });
-    } else {
-      _scheduleResume();
-      widget.onDateChanged?.call(_displayedDate);
+  void _onMagnifyStart(LongPressStartDetails d) {
+    _stopAll();
+    setState(() {
+      _isMagnified = true;
+      _magnifyOrigin = d.localPosition;
+    });
+    // Seed rotation angle so dragging while zoomed rotates the wheel.
+    if (_wheelDiameter > 0) {
+      final cx = _wheelDiameter / 2;
+      _lastPanAngle = atan2(d.localPosition.dx - cx, -(d.localPosition.dy - cx));
     }
+  }
+
+  void _onMagnifyMove(LongPressMoveUpdateDetails d) {
+    if (_lastPanAngle == null || _wheelDiameter <= 0) return;
+    final cx = _wheelDiameter / 2;
+    final currentAngle = atan2(d.localPosition.dx - cx, -(d.localPosition.dy - cx));
+    double delta = currentAngle - _lastPanAngle!;
+    if (delta > pi) delta -= 2 * pi;
+    if (delta < -pi) delta += 2 * pi;
+    _lastPanAngle = currentAngle;
+    _controller.value += delta * 0.65;
+  }
+
+  void _onMagnifyEnd(LongPressEndDetails d) {
+    setState(() => _isMagnified = false);
+    _lastPanAngle = null;
+    _scheduleResume();
+    widget.onDateChanged?.call(_displayedDate);
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -623,10 +665,32 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
     final wheel = _buildWheel(c, isDark);
     const gap = SizedBox(height: AppDimensions.spacingMd);
 
+    // Wrap the wheel in a Material card that matches the other dashboard
+    // cards (elevation 2, rounded corners, surface color). The wheel's
+    // OverlayPortal renders the actual wheel visual ABOVE this card so the
+    // magnified wheel still spills over the card edges and adjacent
+    // siblings — the card just frames the wheel's at-rest layout slot.
+    final wheelCard = Material(
+      color: cardColor,
+      elevation: 2,
+      shadowColor: Colors.black.withValues(alpha: 0.2),
+      borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.paddingMd,
+          vertical: AppDimensions.paddingLg,
+        ),
+        child: wheel,
+      ),
+    );
+
+    // Wheel uses OverlayPortal internally so its magnified visual always
+    // paints above the vibeCard (and external siblings) regardless of
+    // sibling paint order in this Column.
     return Column(
       children: widget.wheelFirst
-          ? [wheel, gap, vibeCard]
-          : [vibeCard, gap, wheel],
+          ? [wheelCard, gap, vibeCard]
+          : [vibeCard, gap, wheelCard],
       // Mood check-in + Week forecast have been extracted to standalone
       // NakshatraMoodCheckInCard / NakshatraWeekForecastCard widgets and
       // placed at the bottom of HolyCowCosmicContent so they are independent
@@ -1129,112 +1193,160 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
     return SizedBox(
       width: double.infinity,
       child: LayoutBuilder(builder: (context, constraints) {
-        final total = constraints.maxWidth.clamp(0.0, _maxWheelDiameter);
+        final total = (constraints.maxWidth * 0.92).clamp(0.0, _maxWheelDiameter);
         _wheelDiameter = total;
         final imgDia = total - 2 * (_selectedRingWidth + _ringGap);
 
-        // Magnify origin as fraction of wheel size (for alignment).
-        final magAlignX = _wheelDiameter > 0
-            ? (_magnifyOrigin.dx / _wheelDiameter) * 2 - 1
-            : 0.0;
-        final magAlignY = _wheelDiameter > 0
-            ? (_magnifyOrigin.dy / _wheelDiameter) * 2 - 1
-            : 0.0;
+        // Scale alignment — maps press point inside the wheel to AnimatedScale's
+        // alignment convention (−1..1).  Locked at press; doesn't change on drag.
+        final magAlignX = total > 0 ? (_magnifyOrigin.dx / total) * 2 - 1 : 0.0;
+        final magAlignY = total > 0 ? (_magnifyOrigin.dy / total) * 2 - 1 : 0.0;
 
-        return Center(child: Listener(
-          onPointerDown: _onPointerDown,
-          onPointerMove: _onPointerMove,
-          onPointerUp: _onPointerUp,
-          onPointerCancel: _onPointerCancel,
-          child: RawGestureDetector(
-          gestures: <Type, GestureRecognizerFactory>{
-            _EagerPanGestureRecognizer:
-                GestureRecognizerFactoryWithHandlers<_EagerPanGestureRecognizer>(
-              _EagerPanGestureRecognizer.new,
-              (_EagerPanGestureRecognizer instance) {
-                instance
-                  ..onStart = _handlePanStart
-                  ..onUpdate = _handlePanUpdate
-                  ..onEnd = _handlePanEnd;
-              },
-            ),
-          },
+        // The full interactive wheel — gestures + animated scale + visual.
+        // Hoisted into the OverlayPortal so the magnified wheel + tara ring
+        // ALWAYS paint above adjacent sibling cards (date card above,
+        // energy/vibe card below) regardless of normal Column paint order.
+        final Widget wheelVisual = Listener(
           behavior: HitTestBehavior.opaque,
-          child: AnimatedScale(
-            scale: _isMagnified ? 2.2 : 1.0,
-            alignment: Alignment(magAlignX.clamp(-1.0, 1.0), magAlignY.clamp(-1.0, 1.0)),
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeOutCubic,
-            child: SizedBox(
-            width: total,
-            height: total,
-            child: AnimatedBuilder(
-              animation: _controller,
-              builder: (context, child) {
-                final angle = _controller.value;
-                return Stack(
-                  clipBehavior: Clip.none,
-                  alignment: Alignment.center,
-                  children: [
-                    // Rotating layer (image + tara ring)
-                    Transform.rotate(angle: angle, child: child),
-                    // Markers — positioned in screen-space so icons stay upright
-                    ..._buildMarkers(total, c, angle, isDark),
-                    // Top indicator — fixed arrow above the ring, points down
-                    Positioned(
-                      top: -30,
-                      left: total / 2 - 16,
-                      child: Icon(
-                        Icons.arrow_drop_down_rounded,
-                        size: 32,
-                        color: c.withValues(alpha: 0.9),
-                      ),
-                    ),
-                  ],
-                );
-              },
-              child: Stack(
-                clipBehavior: Clip.none,
-                alignment: Alignment.center,
-                children: [
-                  SizedBox(
-                    width: imgDia,
-                    height: imgDia,
-                    child: ClipOval(
-                      child: Image.asset(
-                        'assets/images/nakshatra_wheel.jpeg',
-                        fit: BoxFit.cover,
+          onPointerDown: (_) {
+            widget.controller?._setInteracting(true);
+            wheelInteractingNotifier.value = true;
+          },
+          onPointerUp: (_) {
+            widget.controller?._setInteracting(false);
+            wheelInteractingNotifier.value = false;
+          },
+          onPointerCancel: (_) {
+            widget.controller?._setInteracting(false);
+            wheelInteractingNotifier.value = false;
+          },
+          child: RawGestureDetector(
+            behavior: HitTestBehavior.opaque,
+            gestures: <Type, GestureRecognizerFactory>{
+              PanGestureRecognizer:
+                  GestureRecognizerFactoryWithHandlers<PanGestureRecognizer>(
+                () => PanGestureRecognizer(),
+                (instance) {
+                  instance
+                    ..onStart = _onRotateStart
+                    ..onUpdate = _onRotateUpdate
+                    ..onEnd = _onRotateEnd
+                    ..onCancel = _onRotateCancel;
+                },
+              ),
+              LongPressGestureRecognizer:
+                  GestureRecognizerFactoryWithHandlers<LongPressGestureRecognizer>(
+                () => LongPressGestureRecognizer(
+                    duration: const Duration(milliseconds: 50)),
+                (instance) {
+                  instance
+                    ..onLongPressStart = _onMagnifyStart
+                    ..onLongPressMoveUpdate = _onMagnifyMove
+                    ..onLongPressEnd = _onMagnifyEnd;
+                },
+              ),
+            },
+            child: AnimatedScale(
+              scale: _isMagnified ? 1.25 : 1.0,
+              alignment: Alignment(
+                magAlignX.clamp(-1.0, 1.0),
+                magAlignY.clamp(-1.0, 1.0),
+              ),
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
+              child: SizedBox(
+                width: total,
+                height: total,
+                child: AnimatedBuilder(
+                  animation: _controller,
+                  builder: (context, child) {
+                    final angle = _controller.value;
+                    return Stack(
+                      clipBehavior: Clip.none,
+                      alignment: Alignment.center,
+                      children: [
+                        // Rotating layer (image + tara ring)
+                        Transform.rotate(angle: angle, child: child),
+                        // Markers — positioned in screen-space so icons stay upright
+                        ..._buildMarkers(total, c, angle, isDark),
+                      ],
+                    );
+                  },
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    alignment: Alignment.center,
+                    children: [
+                      SizedBox(
                         width: imgDia,
                         height: imgDia,
-                        gaplessPlayback: true,
-                        frameBuilder: (context, child, frame, loaded) {
-                          if (loaded) return child;
-                          return AnimatedOpacity(
-                            opacity: frame != null ? 1.0 : 0.0,
-                            duration: const Duration(milliseconds: 300),
-                            child: child,
-                          );
-                        },
+                        child: ClipOval(
+                          child: Image.asset(
+                            'assets/images/nakshatra_wheel.jpeg',
+                            fit: BoxFit.cover,
+                            width: imgDia,
+                            height: imgDia,
+                            gaplessPlayback: true,
+                            frameBuilder: (context, child, frame, loaded) {
+                              if (loaded) return child;
+                              return AnimatedOpacity(
+                                opacity: frame != null ? 1.0 : 0.0,
+                                duration: const Duration(milliseconds: 300),
+                                child: child,
+                              );
+                            },
+                          ),
+                        ),
                       ),
-                    ),
+                      CustomPaint(
+                        size: Size(total, total),
+                        painter: _TaraRingPainter(
+                          birthIndex: _birthIndex,
+                          todayIndex: _todayIndex,
+                          selectedIndex: _activeIndex,
+                          primaryColor: c,
+                          isDark: isDark,
+                          isJanmaDay: _isJanmaDay,
+                        ),
+                      ),
+                    ],
                   ),
-                  CustomPaint(
-                    size: Size(total, total),
-                    painter: _TaraRingPainter(
-                      birthIndex: _birthIndex,
-                      todayIndex: _todayIndex,
-                      selectedIndex: _activeIndex,
-                      primaryColor: c,
-                      isDark: isDark,
-                      isJanmaDay: _isJanmaDay,
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
-        ),
-        )),
+        );
+
+        // Full wheel: render the entire circle. The OverlayPortal uses the
+        // nearest scoped _LocalOverlayScope ancestor (set up in holycow.dart)
+        // so the magnified wheel paints ABOVE sibling cards — and because we
+        // do NOT clip it here, the zoomed (1.25x) wheel is free to spill out
+        // beyond the card bounds.
+        return Center(
+          child: CompositedTransformTarget(
+            link: _wheelLayerLink,
+            child: OverlayPortal(
+              controller: _wheelPortalController,
+              overlayChildBuilder: (overlayContext) {
+                return Positioned(
+                  left: 0,
+                  top: 0,
+                  width: total,
+                  height: total,
+                  child: CompositedTransformFollower(
+                    link: _wheelLayerLink,
+                    targetAnchor: Alignment.topLeft,
+                    followerAnchor: Alignment.topLeft,
+                    showWhenUnlinked: false,
+                    // No clip: the full square wheel renders, and the magnified
+                    // state overflows the card freely.
+                    child: wheelVisual,
+                  ),
+                );
+              },
+              // Placeholder reserves the full wheel height in the Column.
+              child: SizedBox(width: total, height: total),
+            ),
+          ),
         );
       }),
     );
@@ -2160,15 +2272,3 @@ class _PulsingIconState extends State<_PulsingIcon>
   }
 }
 
-// =============================================================================
-// Eager pan recognizer — wins the gesture arena immediately so that
-// the parent ScrollView cannot steal the drag.
-// =============================================================================
-
-class _EagerPanGestureRecognizer extends PanGestureRecognizer {
-  @override
-  void addAllowedPointer(PointerDownEvent event) {
-    super.addAllowedPointer(event);
-    resolve(GestureDisposition.accepted);
-  }
-}

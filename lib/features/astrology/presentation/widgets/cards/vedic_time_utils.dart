@@ -79,6 +79,52 @@ class VedicTimeUtils {
     return '${_praharNames[praharIndex]} Prahar ${praharIndex + 1}';
   }
 
+  /// Just the Prahar name (e.g., "Aparanha") without number suffix.
+  static String getPraharName(DateTime time) {
+    const sunriseHour = 6;
+    var secondsFromSunrise = (time.hour - sunriseHour) * 3600 + time.minute * 60 + time.second;
+    if (secondsFromSunrise < 0) secondsFromSunrise += 86400;
+    final praharIndex = ((secondsFromSunrise / 60.0) ~/ 180) % 8;
+    return _praharNames[praharIndex];
+  }
+
+  /// Ghati value (0–59) for the current Vedic time.
+  static int getGhati(DateTime time) {
+    const sunriseHour = 6;
+    var s = (time.hour - sunriseHour) * 3600 + time.minute * 60 + time.second;
+    if (s < 0) s += 86400;
+    return s ~/ 1440;
+  }
+
+  /// Pala value (0–59) for the current Vedic time.
+  static int getPala(DateTime time) {
+    const sunriseHour = 6;
+    var s = (time.hour - sunriseHour) * 3600 + time.minute * 60 + time.second;
+    if (s < 0) s += 86400;
+    return (s - (s ~/ 1440) * 1440) ~/ 24;
+  }
+
+  /// Approximate moon phase emoji for a given date.
+  /// Same algorithm as Kotlin VedicTimeCalculator.moonPhase().
+  static String getMoonPhaseEmoji(DateTime time) {
+    final ref = DateTime.utc(2000, 1, 6, 18, 14, 0);
+    final diffMs = time.toUtc().millisecondsSinceEpoch - ref.millisecondsSinceEpoch;
+    final days = diffMs / (86400.0 * 1000.0);
+    const synodic = 29.530588;
+    var phase = (days / synodic) % 1.0;
+    if (phase < 0) phase += 1.0;
+
+    if (phase < 0.0625) return '🌑';
+    if (phase < 0.1875) return '🌒';
+    if (phase < 0.3125) return '🌓';
+    if (phase < 0.4375) return '🌔';
+    if (phase < 0.5625) return '🌕';
+    if (phase < 0.6875) return '🌖';
+    if (phase < 0.8125) return '🌗';
+    if (phase < 0.9375) return '🌘';
+    return '🌑';
+  }
+
   /// Short Vedic time: "Pr6 . Gh42 . Pa48"
   static String getVedicTimeShort(DateTime time) {
     const sunriseHour = 6;

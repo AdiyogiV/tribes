@@ -98,11 +98,25 @@ class CalendarDay {
     return map;
   }
 
+  /// Effective nakshatra index — uses the backend value when available,
+  /// otherwise derives it from the Moon's sidereal longitude (index 0 in
+  /// [longitudes]).  Each nakshatra spans 360/27 = 13°20′.
+  int? get effectiveNakshatraIndex {
+    if (nakshatraIndex != null) return nakshatraIndex;
+    final moonLng = (longitudes != null && longitudes!.isNotEmpty)
+        ? longitudes![0]
+        : null;
+    if (moonLng == null) return null;
+    return (moonLng / (360.0 / 27.0)).floor() % 27;
+  }
+
   /// Get nakshatra name from index.
-  String? get nakshatraName =>
-      nakshatraIndex != null && nakshatraIndex! >= 0 && nakshatraIndex! < 27
-          ? NakshatraData.all[nakshatraIndex!].name
-          : null;
+  String? get nakshatraName {
+    final idx = effectiveNakshatraIndex;
+    return idx != null && idx >= 0 && idx < 27
+        ? NakshatraData.all[idx].name
+        : null;
+  }
 
   /// Build a positions map compatible with CosmicSkyChartCard.
   /// Keys are planet names, values have { longitude, sign, signDegree, isRetro }.
@@ -279,7 +293,13 @@ class CalendarDay {
       final pair = entry.value;
       if (pair.length < 2) continue;
 
-      final startStr = _minutesToTimeStr(pair[0]);
+      final start = pair[0];
+      // Handle windows that wrap past midnight (e.g. Varjyam 23:00—01:30):
+      // push the end into the next day so the bar/bounds stay sensible
+      // instead of producing a negative-width bar that crushes the timeline.
+      final end = pair[1] >= start ? pair[1] : pair[1] + 1440;
+
+      final startStr = _minutesToTimeStr(start);
       final endStr = _minutesToTimeStr(pair[1]);
 
       final key = codeToKey[code] ?? code;
@@ -287,8 +307,8 @@ class CalendarDay {
 
       events.add({
         'name': _muhuratNames[code] ?? code,
-        'start': pair[0],
-        'end': pair[1],
+        'start': start,
+        'end': end,
         'type': _muhuratTypes[code] ?? 'inauspicious',
         'dateKey': dateKey,
       });
@@ -374,7 +394,7 @@ class AstroCalendarService {
   /// [todayIndex] is used as the anchor for the fallback calculation.
   int getNakshatraIndex(DateTime date, {required int todayIndex}) {
     final day = getDay(date);
-    if (day?.nakshatraIndex != null) return day!.nakshatraIndex!;
+    if (day?.effectiveNakshatraIndex != null) return day!.effectiveNakshatraIndex!;
 
     // Fallback: sidereal-period approximation.
     // Moon completes 27 nakshatras in ~27.3217 days.

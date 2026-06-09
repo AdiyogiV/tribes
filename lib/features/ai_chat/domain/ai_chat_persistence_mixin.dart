@@ -29,6 +29,13 @@ mixin AiChatPersistenceMixin on ChangeNotifier {
   /// Check if user is authenticated
   bool get isUserAuthenticated => FirebaseAuth.instance.currentUser != null;
 
+  // Tracks which message ids have already been written to Firestore for the
+  // *current* conversation, so each save only persists genuinely new messages.
+  // Keyed implicitly by [_persistedConversationId]; reset automatically when
+  // the conversation changes (new chat / loaded chat / cleared history).
+  String? _persistedConversationId;
+  final Set<String> _persistedMessageIds = {};
+
   /// Clear conversation ID (called when starting new session)
   void clearConversationId() {
     currentSessionDirect =
@@ -100,13 +107,22 @@ mixin AiChatPersistenceMixin on ChangeNotifier {
         return;
       }
 
-      // Only save messages without Firestore IDs (new messages)
-      // Messages with IDs like 'ai_chat_*' or 'dm_*' are already saved
+      // Reset the persisted-id tracker whenever we switch conversations so a
+      // freshly loaded/created conversation starts from a clean slate.
+      if (_persistedConversationId != conversationId) {
+        _persistedConversationId = conversationId;
+        _persistedMessageIds.clear();
+      }
+
+      // Only persist messages we haven't already written. Combined with the
+      // deterministic doc id below (keyed on the stable message id), this makes
+      // saves fully idempotent — re-saving never creates duplicate docs.
       final messagesToSave = currentSession.messages
           .where((m) =>
-              !m.id.startsWith('ai_chat_') &&
-              !m.id.startsWith('dm_') &&
-              m.content.isNotEmpty)
+              !m.pending &&
+              m.content.isNotEmpty &&
+              m.id.isNotEmpty &&
+              !_persistedMessageIds.contains(m.id))
           .toList();
 
       if (messagesToSave.isEmpty) {
@@ -119,11 +135,14 @@ mixin AiChatPersistenceMixin on ChangeNotifier {
       final batch = firestore.batch();
 
       for (final message in messagesToSave) {
+        // Deterministic doc id keyed on the stable message id makes the write
+        // idempotent: a repeat save overwrites the same doc instead of minting
+        // a new random one (the root cause of the historical 6x duplication).
         final messageRef = firestore
             .collection('dmConversations')
             .doc(conversationId)
             .collection('messages')
-            .doc();
+            .doc(message.id);
 
         final messageData = {
           'content': message.content,
@@ -180,6 +199,10 @@ mixin AiChatPersistenceMixin on ChangeNotifier {
       }
 
       await batch.commit();
+      // Remember what we just wrote so subsequent turns skip these messages.
+      for (final message in messagesToSave) {
+        _persistedMessageIds.add(message.id);
+      }
       AppLogger.i('AI conversation saved as DM conversation: $conversationId');
     } catch (e) {
       AppLogger.e('Error saving AI conversation as DM: $e');
