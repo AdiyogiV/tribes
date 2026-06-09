@@ -1,0 +1,3566 @@
+{
+  "uid": "pbCP7MtVb9MDIFgHRxvY9cRmXXj2",
+  "auth": {
+    "phone": "+919770691551",
+    "created": "Mon, 09 Feb 2026 05:25:04 GMT",
+    "lastSignIn": "Mon, 09 Feb 2026 05:25:04 GMT",
+    "providers": [
+      "phone"
+    ]
+  },
+  "firestore": {
+    "displayPicture": "",
+    "phoneNumber": "+919770691551",
+    "name": "Mishthi",
+    "nickname": "mishthi5619",
+    "auraScore": 0,
+    "followerCount": 0,
+    "followingCount": 0,
+    "timestamp": {
+      "_seconds": 1770614713,
+      "_nanoseconds": 39240000
+    },
+    "fcmToken": "erWtAhdqfEKwozIiWvEuzW:APA91bHQPz61gmqgfTzY6HibGAfMq0baK05F2ZPOiiBoiHbNKakTIeUDz2zJt0q1Oq06zFk7NR-nyvCxk0i2w5TDURh01VdBm0dDXv2a3PNOmFhx1HGKZVI",
+    "fcmTokens": [
+      "erWtAhdqfEKwozIiWvEuzW:APA91bHQPz61gmqgfTzY6HibGAfMq0baK05F2ZPOiiBoiHbNKakTIeUDz2zJt0q1Oq06zFk7NR-nyvCxk0i2w5TDURh01VdBm0dDXv2a3PNOmFhx1HGKZVI"
+    ],
+    "ayurvedaData": {
+      "agni": {
+        "name": "Sama Agni",
+        "english": "Balanced Digestion",
+        "description": "Regular appetite, efficient digestion, no discomfort",
+        "dominantDosha": null
+      },
+      "manasPrakriti": {
+        "guna": {
+          "sattva": 48,
+          "rajas": 24,
+          "tamas": 28
+        },
+        "dominant": "sattva"
+      },
+      "healthVulnerabilities": [
+        {
+          "type": "6thHouseSign",
+          "sign": "Libra",
+          "dosha": "vata",
+          "description": "Vata-related health challenges"
+        }
+      ],
+      "calculatedAt": {
+        "_seconds": 1777264885,
+        "_nanoseconds": 960000000
+      },
+      "version": "v1",
+      "vikriti": {
+        "factors": [
+          {
+            "description": "Pitta stage of life",
+            "dosha": "pitta",
+            "source": "lifeStage",
+            "strength": 15
+          },
+          {
+            "description": "Spring (vasanta)",
+            "dosha": "kapha",
+            "guidance": "Detox and lightness recommended",
+            "source": "season",
+            "strength": 15
+          },
+          {
+            "description": "Rahu transit (House 10)",
+            "dosha": "vata",
+            "source": "transit",
+            "strength": 5
+          },
+          {
+            "description": "Ketu transit (House 4)",
+            "dosha": "pitta",
+            "source": "transit",
+            "strength": 5
+          },
+          {
+            "description": "Mars conjunction natal Rahu",
+            "dosha": "pitta",
+            "source": "transitAspect",
+            "strength": 10
+          },
+          {
+            "description": "Mercury conjunction natal Rahu",
+            "dosha": "vata",
+            "source": "transitAspect",
+            "strength": 10
+          }
+        ],
+        "imbalances": [],
+        "isBalanced": true,
+        "kapha": 36,
+        "pitta": 34,
+        "vata": 30,
+        "calculatedAt": {
+          "_seconds": 1777265375,
+          "_nanoseconds": 346000000
+        }
+      },
+      "prakriti": {
+        "dominant": "vata",
+        "kapha": 14,
+        "pitta": 35,
+        "secondary": "pitta",
+        "type": "Vata",
+        "vata": 51
+      },
+      "agniType": "vishama",
+      "questionsAnswered": 5,
+      "prakritiRefined": true,
+      "refinedAt": {
+        "_seconds": 1777320273,
+        "_nanoseconds": 861000000
+      },
+      "questionnaireAnswers": {
+        "0": "vata",
+        "1": "vata",
+        "2": "pitta",
+        "3": "pitta",
+        "4": "vata"
+      }
+    },
+    "lastTokenUpdate": {
+      "_seconds": 1777839070,
+      "_nanoseconds": 723000000
+    },
+    "lastUpdated": {
+      "_seconds": 1778371301,
+      "_nanoseconds": 438976000
+    },
+    "isPrivateProfile": true,
+    "astrologyData": {
+      "birthDay": 1,
+      "gender": "Female",
+      "visibility": "public",
+      "birthLongitude": 74.86241,
+      "timeZone": "Asia/Kolkata",
+      "birthDate": {
+        "_seconds": 1128105000,
+        "_nanoseconds": 0
+      },
+      "birthPlace": "Neemuch, Rajasthan, India",
+      "createdAt": {
+        "_seconds": 1770614764,
+        "_nanoseconds": 536029000
+      },
+      "birthMonth": 10,
+      "birthYear": 2005,
+      "isEnabled": true,
+      "birthLatitude": 24.47639,
+      "timeZoneOffset": 5.5,
+      "d10Chart": null,
+      "shadBala": null,
+      "currentTimesReading": {
+        "content": "### Right Now\n\nMishthi, you're in a phase where your inner world is taking center stage. Emotions might feel heightened, and you're likely craving a deeper connection to your intuition and your sense of home – both the physical space and the feeling of belonging. Prioritizing self-care is crucial during this time.\n\n### What's Coming\n\nIn the next few months, expect a spotlight on your relationships and partnerships. The key theme is *unpredictability*. **There's a strong chance of unexpected opportunities or significant shifts in how you relate to others, especially in your closest connections.** This could manifest as exciting new partnerships, a surprising change in an existing relationship, or a clearer understanding of what you truly need from those around you.\n\n*   Be open to new connections.\n*   Expect the unexpected in existing relationships.\n*   Trust your gut when making decisions about partnerships.\n\nBy mid-year, you'll likely have a much clearer picture of where you stand with key people in your life.\n\n### How to Navigate\n\n*   **Embrace Flexibility:** Resist the urge to control every outcome. The more you can adapt, the smoother this period will be.\n*   **Listen to Your Intuition:** Your gut feelings are especially strong now. Don't dismiss them, even if they seem illogical.\n*   **Communicate Clearly:** Misunderstandings are possible, so be extra mindful of how you express yourself.",
+        "generatedAt": {
+          "_seconds": 1770614774,
+          "_nanoseconds": 351000000
+        }
+      },
+      "timeZoneId": "Asia/Kolkata",
+      "birthTime": "20:57",
+      "sunSign": "Virgo",
+      "panchang": {
+        "tithi": "Krishna Chaturdashi",
+        "tithiNumber": 29,
+        "tithiPaksha": "krishna",
+        "tithiCompletesAt": "2005-10-02 14:32:58",
+        "nakshatra": "Poorva Phalguni(Pubba)",
+        "nakshatraNumber": 11,
+        "yoga": "Sukla",
+        "yogaNumber": 24,
+        "vedicWeekday": "Saturday",
+        "weekday": "Saturday",
+        "lunar_month_full_name": "Bhadrapadam",
+        "lunar_month_name": "Bhadrapadam",
+        "vikram_chaitradi_number": 2062,
+        "vikram_chaitradi_year_name": "Vikaari",
+        "saka_salivahana_number": 1927
+      },
+      "doshas": {
+        "mangal_dosha": true,
+        "mangal_dosha_house": 12,
+        "mangal_dosha_mitigated": true,
+        "mangal_dosha_mitigation": "Mars in own sign Aries",
+        "mangal_dosha_severity": "Mild",
+        "pitra_dosha": true,
+        "pitra_dosha_severity": "Moderate",
+        "pitra_dosha_type": "Sun-Ketu conjunction",
+        "combustion": {
+          "Mercury": {
+            "isCombust": true,
+            "orb": 10.249401715506991,
+            "severity": "moderate"
+          }
+        },
+        "has_combustion": true,
+        "combust_planets": [
+          "Mercury"
+        ]
+      },
+      "processedPlanets": [
+        {
+          "name": "Lagna",
+          "sign": "Taurus",
+          "nakshatra": "Krittika",
+          "houseNumber": 1,
+          "degrees": 4,
+          "minutes": 50,
+          "seconds": 55.523184133073755,
+          "fullDegree": 34.848756440036965,
+          "isRetrograde": false
+        },
+        {
+          "name": "Sun",
+          "sign": "Virgo",
+          "nakshatra": "Hasta",
+          "houseNumber": 5,
+          "degrees": 14,
+          "minutes": 37,
+          "seconds": 3.4525434259126087,
+          "fullDegree": 164.6176257065072,
+          "isRetrograde": false,
+          "dignity": "neutral",
+          "dignityScore": 50
+        },
+        {
+          "name": "Moon",
+          "sign": "Leo",
+          "nakshatra": "Poorva Phalguni(Pubba)",
+          "houseNumber": 4,
+          "degrees": 24,
+          "minutes": 24,
+          "seconds": 56.02684888205886,
+          "fullDegree": 144.41556301357835,
+          "isRetrograde": false,
+          "dignity": "friendly",
+          "dignityScore": 60
+        },
+        {
+          "name": "Mars",
+          "sign": "Aries",
+          "nakshatra": "Krittika",
+          "houseNumber": 12,
+          "degrees": 29,
+          "minutes": 28,
+          "seconds": 25.574406562456602,
+          "fullDegree": 29.47377066848957,
+          "isRetrograde": false,
+          "dignity": "own_sign",
+          "dignityScore": 75,
+          "isOwnSign": true
+        },
+        {
+          "name": "Mercury",
+          "sign": "Virgo",
+          "nakshatra": "Chitta",
+          "houseNumber": 5,
+          "degrees": 24,
+          "minutes": 52,
+          "seconds": 1.298719251080911,
+          "fullDegree": 174.8670274220142,
+          "isRetrograde": false,
+          "dignity": "exalted",
+          "dignityScore": 85.19945886697872,
+          "isExalted": true
+        },
+        {
+          "name": "Jupiter",
+          "sign": "Libra",
+          "nakshatra": "Chitta",
+          "houseNumber": 6,
+          "degrees": null,
+          "minutes": 47,
+          "seconds": 19.854752073017607,
+          "fullDegree": 180.7888485422425,
+          "isRetrograde": false,
+          "dignity": "enemy",
+          "dignityScore": 35
+        },
+        {
+          "name": "Venus",
+          "sign": "Libra",
+          "nakshatra": "Visakha",
+          "houseNumber": 6,
+          "degrees": 28,
+          "minutes": 54,
+          "seconds": 39.833362134843355,
+          "fullDegree": 208.91106482281523,
+          "isRetrograde": false,
+          "dignity": "own_sign",
+          "dignityScore": 75,
+          "isOwnSign": true
+        },
+        {
+          "name": "Saturn",
+          "sign": "Cancer",
+          "nakshatra": "Pushyami",
+          "houseNumber": 3,
+          "degrees": 15,
+          "minutes": 2,
+          "seconds": 17.825869395487643,
+          "fullDegree": 105.03828496372097,
+          "isRetrograde": false,
+          "dignity": "enemy",
+          "dignityScore": 35
+        },
+        {
+          "name": "Rahu",
+          "sign": "Pisces",
+          "nakshatra": "Revati",
+          "houseNumber": 11,
+          "degrees": 19,
+          "minutes": 54,
+          "seconds": 2.5794360650570525,
+          "fullDegree": 349.90071651001807,
+          "isRetrograde": true,
+          "dignity": "neutral",
+          "dignityScore": 50
+        },
+        {
+          "name": "Ketu",
+          "sign": "Virgo",
+          "nakshatra": "Hasta",
+          "houseNumber": 5,
+          "degrees": 19,
+          "minutes": 54,
+          "seconds": 2.5794360650570525,
+          "fullDegree": 169.90071651001807,
+          "isRetrograde": true,
+          "dignity": "neutral",
+          "dignityScore": 50
+        }
+      ],
+      "ascendant": "Taurus",
+      "birthChartData": {
+        "statusCode": 200,
+        "output": {
+          "Ascendant": {
+            "current_sign": 2,
+            "fullDegree": 34.848756440036965,
+            "normDegree": 4.848756440036965,
+            "isRetro": "false",
+            "degrees": 4,
+            "minutes": 50,
+            "seconds": 55.523184133073755,
+            "house_number": 1,
+            "localized_name": "Ascendant",
+            "zodiac_sign_name": "Taurus",
+            "zodiac_sign_lord": "Venus",
+            "nakshatra_number": 3,
+            "nakshatra_name": "Krittika",
+            "nakshatra_pada": 3,
+            "nakshatra_vimsottari_lord": "Sun"
+          },
+          "Sun": {
+            "current_sign": 6,
+            "house_number": 5,
+            "fullDegree": 164.6176257065072,
+            "normDegree": 14.617625706507198,
+            "isRetro": "false",
+            "degrees": 14,
+            "minutes": 37,
+            "seconds": 3.4525434259126087,
+            "localized_name": "Sun",
+            "zodiac_sign_name": "Virgo",
+            "zodiac_sign_lord": "Mercury",
+            "nakshatra_number": 13,
+            "nakshatra_name": "Hasta",
+            "nakshatra_pada": 2,
+            "nakshatra_vimsottari_lord": "Moon"
+          },
+          "Moon": {
+            "current_sign": 5,
+            "house_number": 4,
+            "fullDegree": 144.41556301357835,
+            "normDegree": 24.41556301357835,
+            "isRetro": "false",
+            "degrees": 24,
+            "minutes": 24,
+            "seconds": 56.02684888205886,
+            "localized_name": "Moon",
+            "zodiac_sign_name": "Leo",
+            "zodiac_sign_lord": "Sun",
+            "nakshatra_number": 11,
+            "nakshatra_name": "Poorva Phalguni(Pubba)",
+            "nakshatra_pada": 4,
+            "nakshatra_vimsottari_lord": "Venus"
+          },
+          "Mars": {
+            "current_sign": 1,
+            "house_number": 12,
+            "fullDegree": 29.47377066848957,
+            "normDegree": 29.47377066848957,
+            "isRetro": "false",
+            "degrees": 29,
+            "minutes": 28,
+            "seconds": 25.574406562456602,
+            "localized_name": "Mars",
+            "zodiac_sign_name": "Aries",
+            "zodiac_sign_lord": "Mars",
+            "nakshatra_number": 3,
+            "nakshatra_name": "Krittika",
+            "nakshatra_pada": 1,
+            "nakshatra_vimsottari_lord": "Sun"
+          },
+          "Mercury": {
+            "current_sign": 6,
+            "house_number": 5,
+            "fullDegree": 174.8670274220142,
+            "normDegree": 24.86702742201419,
+            "isRetro": "false",
+            "degrees": 24,
+            "minutes": 52,
+            "seconds": 1.298719251080911,
+            "localized_name": "Mercury",
+            "zodiac_sign_name": "Virgo",
+            "zodiac_sign_lord": "Mercury",
+            "nakshatra_number": 14,
+            "nakshatra_name": "Chitta",
+            "nakshatra_pada": 1,
+            "nakshatra_vimsottari_lord": "Mars"
+          },
+          "Jupiter": {
+            "current_sign": 7,
+            "house_number": 6,
+            "fullDegree": 180.7888485422425,
+            "normDegree": 0.7888485422425049,
+            "isRetro": "false",
+            "degrees": 0,
+            "minutes": 47,
+            "seconds": 19.854752073017607,
+            "localized_name": "Jupiter",
+            "zodiac_sign_name": "Libra",
+            "zodiac_sign_lord": "Venus",
+            "nakshatra_number": 14,
+            "nakshatra_name": "Chitta",
+            "nakshatra_pada": 3,
+            "nakshatra_vimsottari_lord": "Mars"
+          },
+          "Venus": {
+            "current_sign": 7,
+            "house_number": 6,
+            "fullDegree": 208.91106482281523,
+            "normDegree": 28.911064822815234,
+            "isRetro": "false",
+            "degrees": 28,
+            "minutes": 54,
+            "seconds": 39.833362134843355,
+            "localized_name": "Venus",
+            "zodiac_sign_name": "Libra",
+            "zodiac_sign_lord": "Venus",
+            "nakshatra_number": 16,
+            "nakshatra_name": "Visakha",
+            "nakshatra_pada": 3,
+            "nakshatra_vimsottari_lord": "Jupiter"
+          },
+          "Saturn": {
+            "current_sign": 4,
+            "house_number": 3,
+            "fullDegree": 105.03828496372097,
+            "normDegree": 15.038284963720969,
+            "isRetro": "false",
+            "degrees": 15,
+            "minutes": 2,
+            "seconds": 17.825869395487643,
+            "localized_name": "Saturn",
+            "zodiac_sign_name": "Cancer",
+            "zodiac_sign_lord": "Moon",
+            "nakshatra_number": 8,
+            "nakshatra_name": "Pushyami",
+            "nakshatra_pada": 4,
+            "nakshatra_vimsottari_lord": "Saturn"
+          },
+          "Rahu": {
+            "current_sign": 12,
+            "house_number": 11,
+            "fullDegree": 349.90071651001807,
+            "normDegree": 19.90071651001807,
+            "isRetro": "true",
+            "degrees": 19,
+            "minutes": 54,
+            "seconds": 2.5794360650570525,
+            "localized_name": "Rahu",
+            "zodiac_sign_name": "Pisces",
+            "zodiac_sign_lord": "Jupiter",
+            "nakshatra_number": 27,
+            "nakshatra_name": "Revati",
+            "nakshatra_pada": 1,
+            "nakshatra_vimsottari_lord": "Mercury"
+          },
+          "Ketu": {
+            "current_sign": 6,
+            "house_number": 5,
+            "fullDegree": 169.90071651001807,
+            "normDegree": 19.90071651001807,
+            "isRetro": "true",
+            "degrees": 19,
+            "minutes": 54,
+            "seconds": 2.5794360650570525,
+            "localized_name": "Ketu",
+            "zodiac_sign_name": "Virgo",
+            "zodiac_sign_lord": "Mercury",
+            "nakshatra_number": 13,
+            "nakshatra_name": "Hasta",
+            "nakshatra_pada": 3,
+            "nakshatra_vimsottari_lord": "Moon"
+          },
+          "Uranus": {
+            "current_sign": 11,
+            "house_number": 10,
+            "fullDegree": 313.70875456964257,
+            "normDegree": 13.708754569642565,
+            "isRetro": "true",
+            "degrees": 13,
+            "minutes": 42,
+            "seconds": 31.516450713234008,
+            "localized_name": "Uranus",
+            "zodiac_sign_name": "Aquarius",
+            "zodiac_sign_lord": "Saturn",
+            "nakshatra_number": 24,
+            "nakshatra_name": "Satabisha",
+            "nakshatra_pada": 3,
+            "nakshatra_vimsottari_lord": "Rahu"
+          },
+          "Neptune": {
+            "current_sign": 10,
+            "house_number": 9,
+            "fullDegree": 291.06712777420125,
+            "normDegree": 21.067127774201253,
+            "isRetro": "true",
+            "degrees": 21,
+            "minutes": 4,
+            "seconds": 1.6599871245125541,
+            "localized_name": "Neptune",
+            "zodiac_sign_name": "Capricorn",
+            "zodiac_sign_lord": "Saturn",
+            "nakshatra_number": 22,
+            "nakshatra_name": "Sravanam",
+            "nakshatra_pada": 4,
+            "nakshatra_vimsottari_lord": "Moon"
+          },
+          "Pluto": {
+            "current_sign": 8,
+            "house_number": 7,
+            "fullDegree": 238.12446462484561,
+            "normDegree": 28.124464624845615,
+            "isRetro": "false",
+            "degrees": 28,
+            "minutes": 7,
+            "seconds": 28.072649444213766,
+            "localized_name": "Pluto",
+            "zodiac_sign_name": "Scorpio",
+            "zodiac_sign_lord": "Mars",
+            "nakshatra_number": 18,
+            "nakshatra_name": "Jyeshta",
+            "nakshatra_pada": 4,
+            "nakshatra_vimsottari_lord": "Mercury"
+          }
+        }
+      },
+      "moonSign": "Leo",
+      "muhurat": null,
+      "samvatInfo": {
+        "status": "success",
+        "timestamp": "2005-04-09 02:02:45",
+        "saka_salivahana_number": 1927,
+        "saka_salivahana_name_number": 19,
+        "saka_salivahana_year_name": "Paarthiva",
+        "vikram_chaitradi_number": 2062,
+        "vikram_chaitradi_name_number": 33,
+        "vikram_chaitradi_year_name": "Vikaari",
+        "lunar_month_number": 6,
+        "lunar_month_name": "Bhadrapadam",
+        "lunar_month_full_name": "Bhadrapadam",
+        "adhika": 0,
+        "nija": 0,
+        "kshaya": 0,
+        "number": 29,
+        "name": "Chaturdashi",
+        "paksha": "krishna",
+        "completes_at": "2005-10-02 14:32:58",
+        "left_precentage": 68.28
+      },
+      "lastUpdated": {
+        "_seconds": 1777264885,
+        "_nanoseconds": 752000000
+      },
+      "nakshatra": "Poorva Phalguni(Pubba)",
+      "rajYogas": [
+        {
+          "name": "Viparita Raja Yoga",
+          "type": "Raj Yoga (Viparita)",
+          "description": "Venus (lord of house 6) in dusthana house 6 - success through overcoming obstacles",
+          "strength": "Moderate",
+          "planets": [
+            "Venus"
+          ]
+        },
+        {
+          "name": "Dhan Yoga",
+          "type": "Dhana Yoga",
+          "description": "Mercury (2nd lord) conjunct Jupiter (11th lord) - wealth accumulation",
+          "strength": "Strong",
+          "planets": [
+            "Mercury",
+            "Jupiter"
+          ]
+        },
+        {
+          "name": "Parashari Raj Yoga",
+          "type": "Raj Yoga",
+          "description": "Sun (4th lord) conjunct Mercury (5th lord) - power, authority, success",
+          "strength": "Moderate",
+          "planets": [
+            "Sun",
+            "Mercury"
+          ]
+        },
+        {
+          "name": "Veshi Yoga",
+          "type": "Raj Yoga",
+          "description": "Venus in 2nd from Sun - wealth and authority",
+          "strength": "Moderate",
+          "planets": [
+            "Venus",
+            "Sun"
+          ]
+        },
+        {
+          "name": "Sunapha Yoga",
+          "type": "Raj Yoga",
+          "description": "Mercury, Jupiter in 2nd from Moon - self-made success",
+          "strength": "Moderate",
+          "planets": [
+            "Mercury",
+            "Jupiter",
+            "Moon"
+          ]
+        },
+        {
+          "name": "Anapha Yoga",
+          "type": "Raj Yoga",
+          "description": "Saturn in 12th from Moon - good health and fame",
+          "strength": "Moderate",
+          "planets": [
+            "Saturn",
+            "Moon"
+          ]
+        },
+        {
+          "name": "Durudhara Yoga",
+          "type": "Raj Yoga",
+          "description": "Saturn and Mercury flanking Moon - wealth and comforts",
+          "strength": "Strong",
+          "planets": [
+            "Saturn",
+            "Moon",
+            "Mercury"
+          ]
+        },
+        {
+          "name": "Raja Yoga",
+          "type": "Raj Yoga",
+          "description": "Sun (4th lord) in 5th house (Trikona) - authority and success",
+          "strength": "Moderate",
+          "planets": [
+            "Sun"
+          ]
+        }
+      ],
+      "chartSvgUrl": null,
+      "syncMode": "standard",
+      "yogasDetailed": {
+        "1": {
+          "number": 24,
+          "name": "Sukla",
+          "completion": "2005-10-02 16:56:56",
+          "yoga_left_percentage": 82.17731459025472
+        },
+        "2": {
+          "number": 25,
+          "name": "Brahma",
+          "completion": "2005-10-03 16:59:31"
+        }
+      },
+      "moonNakshatra": "Poorva Phalguni(Pubba)",
+      "navamsa": {
+        "0": {
+          "name": "Ascendant",
+          "isRetro": "false",
+          "current_sign": 11,
+          "house_number": 1
+        },
+        "1": {
+          "name": "Sun",
+          "isRetro": "false",
+          "current_sign": 2,
+          "house_number": 4
+        },
+        "2": {
+          "name": "Moon",
+          "isRetro": "false",
+          "current_sign": 8,
+          "house_number": 10
+        },
+        "3": {
+          "name": "Mars",
+          "isRetro": "false",
+          "current_sign": 9,
+          "house_number": 11
+        },
+        "4": {
+          "name": "Mercury",
+          "isRetro": "false",
+          "current_sign": 5,
+          "house_number": 7
+        },
+        "5": {
+          "name": "Jupiter",
+          "isRetro": "false",
+          "current_sign": 7,
+          "house_number": 9
+        },
+        "6": {
+          "name": "Venus",
+          "isRetro": "false",
+          "current_sign": 3,
+          "house_number": 5
+        },
+        "7": {
+          "name": "Saturn",
+          "isRetro": "false",
+          "current_sign": 8,
+          "house_number": 10
+        },
+        "8": {
+          "name": "Rahu",
+          "isRetro": "true",
+          "current_sign": 9,
+          "house_number": 11
+        },
+        "9": {
+          "name": "Ketu",
+          "isRetro": "true",
+          "current_sign": 3,
+          "house_number": 5
+        },
+        "10": {
+          "name": "Uranus",
+          "isRetro": "true",
+          "current_sign": 11,
+          "house_number": 1
+        },
+        "11": {
+          "name": "Neptune",
+          "isRetro": "true",
+          "current_sign": 4,
+          "house_number": 6
+        },
+        "12": {
+          "name": "Pluto",
+          "isRetro": "false",
+          "current_sign": 12,
+          "house_number": 2
+        }
+      },
+      "lagnaNakshatra": "Krittika",
+      "yogas": null,
+      "currentDasha": {
+        "mahadasha": "Mars",
+        "antardasha": "Rahu",
+        "mahaStartDate": "2025-02-15T22:05:23.885Z",
+        "mahaEndDate": "2032-02-16T17:09:32.832Z",
+        "antarStartDate": "2025-07-15T01:36:08.407Z",
+        "antarEndDate": "2026-08-02T14:03:45.749Z",
+        "allMahaDashas": [
+          {
+            "lord": "Venus",
+            "startDate": "1989-02-15T16:35:29.000Z",
+            "endDate": "2009-02-15T19:38:42.000Z",
+            "antarDashas": [
+              {
+                "lord": "Venus",
+                "startDate": "1989-02-15T16:35:29.000Z",
+                "endDate": "1992-06-17T05:06:01.000Z"
+              },
+              {
+                "lord": "Sun",
+                "startDate": "1992-06-17T05:06:01.000Z",
+                "endDate": "1993-06-17T11:15:10.000Z"
+              },
+              {
+                "lord": "Moon",
+                "startDate": "1993-06-17T11:15:10.000Z",
+                "endDate": "1995-02-16T05:30:25.000Z"
+              },
+              {
+                "lord": "Mars",
+                "startDate": "1995-02-16T05:30:25.000Z",
+                "endDate": "1996-04-17T08:41:06.000Z"
+              },
+              {
+                "lord": "Rahu",
+                "startDate": "1996-04-17T08:41:06.000Z",
+                "endDate": "1999-04-18T03:08:36.000Z"
+              },
+              {
+                "lord": "Jupiter",
+                "startDate": "1999-04-18T03:08:36.000Z",
+                "endDate": "2001-12-17T03:33:02.000Z"
+              },
+              {
+                "lord": "Saturn",
+                "startDate": "2001-12-17T03:33:02.000Z",
+                "endDate": "2005-02-15T19:02:03.000Z"
+              },
+              {
+                "lord": "Mercury",
+                "startDate": "2005-02-15T19:02:03.000Z",
+                "endDate": "2007-12-17T16:28:01.000Z"
+              },
+              {
+                "lord": "Ketu",
+                "startDate": "2007-12-17T16:28:01.000Z",
+                "endDate": "2009-02-15T19:38:42.000Z"
+              }
+            ]
+          },
+          {
+            "lord": "Sun",
+            "startDate": "2009-02-15T19:38:42.000Z",
+            "endDate": "2015-02-16T08:33:41.000Z",
+            "antarDashas": [
+              {
+                "lord": "Sun",
+                "startDate": "2009-02-15T19:38:42.000Z",
+                "endDate": "2009-06-05T09:29:27.000Z"
+              },
+              {
+                "lord": "Moon",
+                "startDate": "2009-06-05T09:29:27.000Z",
+                "endDate": "2009-12-05T00:34:02.000Z"
+              },
+              {
+                "lord": "Mars",
+                "startDate": "2009-12-05T00:34:02.000Z",
+                "endDate": "2010-04-11T20:43:15.000Z"
+              },
+              {
+                "lord": "Rahu",
+                "startDate": "2010-04-11T20:43:15.000Z",
+                "endDate": "2011-03-06T14:15:30.000Z"
+              },
+              {
+                "lord": "Jupiter",
+                "startDate": "2011-03-06T14:15:30.000Z",
+                "endDate": "2011-12-23T19:10:49.000Z"
+              },
+              {
+                "lord": "Saturn",
+                "startDate": "2011-12-23T19:10:49.000Z",
+                "endDate": "2012-12-04T19:01:32.000Z"
+              },
+              {
+                "lord": "Mercury",
+                "startDate": "2012-12-04T19:01:32.000Z",
+                "endDate": "2013-10-11T06:15:19.000Z"
+              },
+              {
+                "lord": "Ketu",
+                "startDate": "2013-10-11T06:15:19.000Z",
+                "endDate": "2014-02-16T02:24:32.000Z"
+              },
+              {
+                "lord": "Venus",
+                "startDate": "2014-02-16T02:24:32.000Z",
+                "endDate": "2015-02-16T08:33:41.000Z"
+              }
+            ]
+          },
+          {
+            "lord": "Moon",
+            "startDate": "2015-02-16T08:33:41.000Z",
+            "endDate": "2025-02-15T21:57:27.000Z",
+            "antarDashas": [
+              {
+                "lord": "Moon",
+                "startDate": "2015-02-16T08:33:41.000Z",
+                "endDate": "2015-12-17T17:41:09.000Z"
+              },
+              {
+                "lord": "Mars",
+                "startDate": "2015-12-17T17:41:09.000Z",
+                "endDate": "2016-07-17T19:14:45.000Z"
+              },
+              {
+                "lord": "Rahu",
+                "startDate": "2016-07-17T19:14:45.000Z",
+                "endDate": "2018-01-16T16:28:30.000Z"
+              },
+              {
+                "lord": "Jupiter",
+                "startDate": "2018-01-16T16:28:30.000Z",
+                "endDate": "2019-05-18T16:40:32.000Z"
+              },
+              {
+                "lord": "Saturn",
+                "startDate": "2019-05-18T16:40:32.000Z",
+                "endDate": "2020-12-17T00:23:18.000Z"
+              },
+              {
+                "lord": "Mercury",
+                "startDate": "2020-12-17T00:23:18.000Z",
+                "endDate": "2022-05-18T11:05:55.000Z"
+              },
+              {
+                "lord": "Ketu",
+                "startDate": "2022-05-18T11:05:55.000Z",
+                "endDate": "2022-12-17T12:41:06.000Z"
+              },
+              {
+                "lord": "Venus",
+                "startDate": "2022-12-17T12:41:06.000Z",
+                "endDate": "2024-08-17T06:52:52.000Z"
+              },
+              {
+                "lord": "Sun",
+                "startDate": "2024-08-17T06:52:52.000Z",
+                "endDate": "2025-02-15T21:57:27.000Z"
+              }
+            ]
+          },
+          {
+            "lord": "Mars",
+            "startDate": "2025-02-15T21:57:27.000Z",
+            "endDate": "2032-02-16T17:01:01.000Z",
+            "antarDashas": [
+              {
+                "lord": "Mars",
+                "startDate": "2025-02-15T21:57:27.000Z",
+                "endDate": "2025-07-15T01:28:01.000Z"
+              },
+              {
+                "lord": "Rahu",
+                "startDate": "2025-07-15T01:28:01.000Z",
+                "endDate": "2026-08-02T13:55:38.000Z"
+              },
+              {
+                "lord": "Jupiter",
+                "startDate": "2026-08-02T13:55:38.000Z",
+                "endDate": "2027-07-09T11:40:10.000Z"
+              },
+              {
+                "lord": "Saturn",
+                "startDate": "2027-07-09T11:40:10.000Z",
+                "endDate": "2028-08-17T07:29:19.000Z"
+              },
+              {
+                "lord": "Mercury",
+                "startDate": "2028-08-17T07:29:19.000Z",
+                "endDate": "2029-08-14T12:35:24.000Z"
+              },
+              {
+                "lord": "Ketu",
+                "startDate": "2029-08-14T12:35:24.000Z",
+                "endDate": "2030-01-10T16:06:09.000Z"
+              },
+              {
+                "lord": "Venus",
+                "startDate": "2030-01-10T16:06:09.000Z",
+                "endDate": "2031-03-12T19:16:29.000Z"
+              },
+              {
+                "lord": "Sun",
+                "startDate": "2031-03-12T19:16:29.000Z",
+                "endDate": "2031-07-18T15:25:42.000Z"
+              },
+              {
+                "lord": "Moon",
+                "startDate": "2031-07-18T15:25:42.000Z",
+                "endDate": "2032-02-16T17:01:01.000Z"
+              }
+            ]
+          },
+          {
+            "lord": "Rahu",
+            "startDate": "2032-02-16T17:01:01.000Z",
+            "endDate": "2050-02-16T07:45:59.000Z",
+            "antarDashas": [
+              {
+                "lord": "Rahu",
+                "startDate": "2032-02-16T17:01:01.000Z",
+                "endDate": "2034-10-29T21:37:46.000Z"
+              },
+              {
+                "lord": "Jupiter",
+                "startDate": "2034-10-29T21:37:46.000Z",
+                "endDate": "2037-03-24T12:23:46.000Z"
+              },
+              {
+                "lord": "Saturn",
+                "startDate": "2037-03-24T12:23:46.000Z",
+                "endDate": "2040-01-29T11:55:53.000Z"
+              },
+              {
+                "lord": "Mercury",
+                "startDate": "2040-01-29T11:55:53.000Z",
+                "endDate": "2042-08-17T21:37:15.000Z"
+              },
+              {
+                "lord": "Ketu",
+                "startDate": "2042-08-17T21:37:15.000Z",
+                "endDate": "2043-09-05T10:04:52.000Z"
+              },
+              {
+                "lord": "Venus",
+                "startDate": "2043-09-05T10:04:52.000Z",
+                "endDate": "2046-09-05T04:32:22.000Z"
+              },
+              {
+                "lord": "Sun",
+                "startDate": "2046-09-05T04:32:22.000Z",
+                "endDate": "2047-07-30T22:04:37.000Z"
+              },
+              {
+                "lord": "Moon",
+                "startDate": "2047-07-30T22:04:37.000Z",
+                "endDate": "2049-01-28T19:18:21.000Z"
+              },
+              {
+                "lord": "Mars",
+                "startDate": "2049-01-28T19:18:21.000Z",
+                "endDate": "2050-02-16T07:45:59.000Z"
+              }
+            ]
+          },
+          {
+            "lord": "Jupiter",
+            "startDate": "2050-02-16T07:45:59.000Z",
+            "endDate": "2066-02-16T10:10:37.000Z",
+            "antarDashas": [
+              {
+                "lord": "Jupiter",
+                "startDate": "2050-02-16T07:45:59.000Z",
+                "endDate": "2052-04-05T12:53:31.000Z"
+              },
+              {
+                "lord": "Saturn",
+                "startDate": "2052-04-05T12:53:31.000Z",
+                "endDate": "2054-10-17T20:26:58.000Z"
+              },
+              {
+                "lord": "Mercury",
+                "startDate": "2054-10-17T20:26:58.000Z",
+                "endDate": "2057-01-22T18:23:45.000Z"
+              },
+              {
+                "lord": "Ketu",
+                "startDate": "2057-01-22T18:23:45.000Z",
+                "endDate": "2057-12-29T16:08:18.000Z"
+              },
+              {
+                "lord": "Venus",
+                "startDate": "2057-12-29T16:08:18.000Z",
+                "endDate": "2060-08-29T16:32:42.000Z"
+              },
+              {
+                "lord": "Sun",
+                "startDate": "2060-08-29T16:32:42.000Z",
+                "endDate": "2061-06-17T21:28:02.000Z"
+              },
+              {
+                "lord": "Moon",
+                "startDate": "2061-06-17T21:28:02.000Z",
+                "endDate": "2062-10-17T21:40:15.000Z"
+              },
+              {
+                "lord": "Mars",
+                "startDate": "2062-10-17T21:40:15.000Z",
+                "endDate": "2063-09-23T19:24:38.000Z"
+              },
+              {
+                "lord": "Rahu",
+                "startDate": "2063-09-23T19:24:38.000Z",
+                "endDate": "2066-02-16T10:10:37.000Z"
+              }
+            ]
+          },
+          {
+            "lord": "Saturn",
+            "startDate": "2066-02-16T10:10:37.000Z",
+            "endDate": "2085-02-16T07:02:57.000Z",
+            "antarDashas": [
+              {
+                "lord": "Saturn",
+                "startDate": "2066-02-16T10:10:37.000Z",
+                "endDate": "2069-02-19T05:39:26.000Z"
+              },
+              {
+                "lord": "Mercury",
+                "startDate": "2069-02-19T05:39:26.000Z",
+                "endDate": "2071-10-30T09:13:06.000Z"
+              },
+              {
+                "lord": "Ketu",
+                "startDate": "2071-10-30T09:13:06.000Z",
+                "endDate": "2072-12-08T05:02:14.000Z"
+              },
+              {
+                "lord": "Venus",
+                "startDate": "2072-12-08T05:02:14.000Z",
+                "endDate": "2076-02-07T20:31:15.000Z"
+              },
+              {
+                "lord": "Sun",
+                "startDate": "2076-02-07T20:31:15.000Z",
+                "endDate": "2077-01-19T20:21:58.000Z"
+              },
+              {
+                "lord": "Moon",
+                "startDate": "2077-01-19T20:21:58.000Z",
+                "endDate": "2078-08-21T04:06:28.000Z"
+              },
+              {
+                "lord": "Mars",
+                "startDate": "2078-08-21T04:06:28.000Z",
+                "endDate": "2079-09-29T23:55:37.000Z"
+              },
+              {
+                "lord": "Rahu",
+                "startDate": "2079-09-29T23:55:37.000Z",
+                "endDate": "2082-08-05T23:27:44.000Z"
+              },
+              {
+                "lord": "Jupiter",
+                "startDate": "2082-08-05T23:27:44.000Z",
+                "endDate": "2085-02-16T07:02:57.000Z"
+              }
+            ]
+          },
+          {
+            "lord": "Mercury",
+            "startDate": "2085-02-16T07:02:57.000Z",
+            "endDate": "2102-02-17T15:38:30.000Z",
+            "antarDashas": [
+              {
+                "lord": "Mercury",
+                "startDate": "2085-02-16T07:02:57.000Z",
+                "endDate": "2087-07-15T22:51:50.000Z"
+              },
+              {
+                "lord": "Ketu",
+                "startDate": "2087-07-15T22:51:50.000Z",
+                "endDate": "2088-07-12T03:57:55.000Z"
+              },
+              {
+                "lord": "Venus",
+                "startDate": "2088-07-12T03:57:55.000Z",
+                "endDate": "2091-05-13T01:23:52.000Z"
+              },
+              {
+                "lord": "Sun",
+                "startDate": "2091-05-13T01:23:52.000Z",
+                "endDate": "2092-03-18T12:37:40.000Z"
+              },
+              {
+                "lord": "Moon",
+                "startDate": "2092-03-18T12:37:40.000Z",
+                "endDate": "2093-08-17T23:20:38.000Z"
+              },
+              {
+                "lord": "Mars",
+                "startDate": "2093-08-17T23:20:38.000Z",
+                "endDate": "2094-08-15T04:26:42.000Z"
+              },
+              {
+                "lord": "Rahu",
+                "startDate": "2094-08-15T04:26:42.000Z",
+                "endDate": "2097-03-03T14:08:04.000Z"
+              },
+              {
+                "lord": "Jupiter",
+                "startDate": "2097-03-03T14:08:04.000Z",
+                "endDate": "2099-06-09T12:04:50.000Z"
+              },
+              {
+                "lord": "Saturn",
+                "startDate": "2099-06-09T12:04:50.000Z",
+                "endDate": "2102-02-17T15:38:30.000Z"
+              }
+            ]
+          },
+          {
+            "lord": "Ketu",
+            "startDate": "2102-02-17T15:38:30.000Z",
+            "endDate": "2109-02-17T10:40:51.000Z",
+            "antarDashas": [
+              {
+                "lord": "Ketu",
+                "startDate": "2102-02-17T15:38:30.000Z",
+                "endDate": "2102-07-16T19:09:13.000Z"
+              },
+              {
+                "lord": "Venus",
+                "startDate": "2102-07-16T19:09:13.000Z",
+                "endDate": "2103-09-15T22:19:55.000Z"
+              },
+              {
+                "lord": "Sun",
+                "startDate": "2103-09-15T22:19:55.000Z",
+                "endDate": "2104-01-21T18:29:07.000Z"
+              },
+              {
+                "lord": "Moon",
+                "startDate": "2104-01-21T18:29:07.000Z",
+                "endDate": "2104-08-21T20:04:28.000Z"
+              },
+              {
+                "lord": "Mars",
+                "startDate": "2104-08-21T20:04:28.000Z",
+                "endDate": "2105-01-17T23:35:11.000Z"
+              },
+              {
+                "lord": "Rahu",
+                "startDate": "2105-01-17T23:35:11.000Z",
+                "endDate": "2106-02-05T12:02:49.000Z"
+              },
+              {
+                "lord": "Jupiter",
+                "startDate": "2106-02-05T12:02:49.000Z",
+                "endDate": "2107-01-12T09:45:37.000Z"
+              },
+              {
+                "lord": "Saturn",
+                "startDate": "2107-01-12T09:45:37.000Z",
+                "endDate": "2108-02-21T05:34:46.000Z"
+              },
+              {
+                "lord": "Mercury",
+                "startDate": "2108-02-21T05:34:46.000Z",
+                "endDate": "2109-02-17T10:40:51.000Z"
+              }
+            ]
+          }
+        ],
+        "tree": [
+          {
+            "level": "maha",
+            "lord": "Venus",
+            "startDate": "1989-02-15T16:35:29.000Z",
+            "endDate": "2009-02-15T19:38:42.000Z",
+            "children": [
+              {
+                "level": "antar",
+                "lord": "Venus",
+                "startDate": "1989-02-15T16:35:29.000Z",
+                "endDate": "1992-06-17T05:06:01.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Sun",
+                "startDate": "1992-06-17T05:06:01.000Z",
+                "endDate": "1993-06-17T11:15:10.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Moon",
+                "startDate": "1993-06-17T11:15:10.000Z",
+                "endDate": "1995-02-16T05:30:25.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Mars",
+                "startDate": "1995-02-16T05:30:25.000Z",
+                "endDate": "1996-04-17T08:41:06.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Rahu",
+                "startDate": "1996-04-17T08:41:06.000Z",
+                "endDate": "1999-04-18T03:08:36.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Jupiter",
+                "startDate": "1999-04-18T03:08:36.000Z",
+                "endDate": "2001-12-17T03:33:02.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Saturn",
+                "startDate": "2001-12-17T03:33:02.000Z",
+                "endDate": "2005-02-15T19:02:03.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Mercury",
+                "startDate": "2005-02-15T19:02:03.000Z",
+                "endDate": "2007-12-17T16:28:01.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Ketu",
+                "startDate": "2007-12-17T16:28:01.000Z",
+                "endDate": "2009-02-15T19:38:42.000Z"
+              }
+            ]
+          },
+          {
+            "level": "maha",
+            "lord": "Sun",
+            "startDate": "2009-02-15T19:38:42.000Z",
+            "endDate": "2015-02-16T08:33:41.000Z",
+            "children": [
+              {
+                "level": "antar",
+                "lord": "Sun",
+                "startDate": "2009-02-15T19:38:42.000Z",
+                "endDate": "2009-06-05T09:29:27.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Moon",
+                "startDate": "2009-06-05T09:29:27.000Z",
+                "endDate": "2009-12-05T00:34:02.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Mars",
+                "startDate": "2009-12-05T00:34:02.000Z",
+                "endDate": "2010-04-11T20:43:15.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Rahu",
+                "startDate": "2010-04-11T20:43:15.000Z",
+                "endDate": "2011-03-06T14:15:30.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Jupiter",
+                "startDate": "2011-03-06T14:15:30.000Z",
+                "endDate": "2011-12-23T19:10:49.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Saturn",
+                "startDate": "2011-12-23T19:10:49.000Z",
+                "endDate": "2012-12-04T19:01:32.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Mercury",
+                "startDate": "2012-12-04T19:01:32.000Z",
+                "endDate": "2013-10-11T06:15:19.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Ketu",
+                "startDate": "2013-10-11T06:15:19.000Z",
+                "endDate": "2014-02-16T02:24:32.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Venus",
+                "startDate": "2014-02-16T02:24:32.000Z",
+                "endDate": "2015-02-16T08:33:41.000Z"
+              }
+            ]
+          },
+          {
+            "level": "maha",
+            "lord": "Moon",
+            "startDate": "2015-02-16T08:33:41.000Z",
+            "endDate": "2025-02-15T21:57:27.000Z",
+            "children": [
+              {
+                "level": "antar",
+                "lord": "Moon",
+                "startDate": "2015-02-16T08:33:41.000Z",
+                "endDate": "2015-12-17T17:41:09.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Mars",
+                "startDate": "2015-12-17T17:41:09.000Z",
+                "endDate": "2016-07-17T19:14:45.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Rahu",
+                "startDate": "2016-07-17T19:14:45.000Z",
+                "endDate": "2018-01-16T16:28:30.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Jupiter",
+                "startDate": "2018-01-16T16:28:30.000Z",
+                "endDate": "2019-05-18T16:40:32.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Saturn",
+                "startDate": "2019-05-18T16:40:32.000Z",
+                "endDate": "2020-12-17T00:23:18.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Mercury",
+                "startDate": "2020-12-17T00:23:18.000Z",
+                "endDate": "2022-05-18T11:05:55.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Ketu",
+                "startDate": "2022-05-18T11:05:55.000Z",
+                "endDate": "2022-12-17T12:41:06.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Venus",
+                "startDate": "2022-12-17T12:41:06.000Z",
+                "endDate": "2024-08-17T06:52:52.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Sun",
+                "startDate": "2024-08-17T06:52:52.000Z",
+                "endDate": "2025-02-15T21:57:27.000Z"
+              }
+            ]
+          },
+          {
+            "level": "maha",
+            "lord": "Mars",
+            "startDate": "2025-02-15T21:57:27.000Z",
+            "endDate": "2032-02-16T17:01:01.000Z",
+            "children": [
+              {
+                "level": "antar",
+                "lord": "Mars",
+                "startDate": "2025-02-15T21:57:27.000Z",
+                "endDate": "2025-07-15T01:28:01.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Rahu",
+                "startDate": "2025-07-15T01:28:01.000Z",
+                "endDate": "2026-08-02T13:55:38.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Jupiter",
+                "startDate": "2026-08-02T13:55:38.000Z",
+                "endDate": "2027-07-09T11:40:10.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Saturn",
+                "startDate": "2027-07-09T11:40:10.000Z",
+                "endDate": "2028-08-17T07:29:19.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Mercury",
+                "startDate": "2028-08-17T07:29:19.000Z",
+                "endDate": "2029-08-14T12:35:24.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Ketu",
+                "startDate": "2029-08-14T12:35:24.000Z",
+                "endDate": "2030-01-10T16:06:09.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Venus",
+                "startDate": "2030-01-10T16:06:09.000Z",
+                "endDate": "2031-03-12T19:16:29.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Sun",
+                "startDate": "2031-03-12T19:16:29.000Z",
+                "endDate": "2031-07-18T15:25:42.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Moon",
+                "startDate": "2031-07-18T15:25:42.000Z",
+                "endDate": "2032-02-16T17:01:01.000Z"
+              }
+            ]
+          },
+          {
+            "level": "maha",
+            "lord": "Rahu",
+            "startDate": "2032-02-16T17:01:01.000Z",
+            "endDate": "2050-02-16T07:45:59.000Z",
+            "children": [
+              {
+                "level": "antar",
+                "lord": "Rahu",
+                "startDate": "2032-02-16T17:01:01.000Z",
+                "endDate": "2034-10-29T21:37:46.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Jupiter",
+                "startDate": "2034-10-29T21:37:46.000Z",
+                "endDate": "2037-03-24T12:23:46.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Saturn",
+                "startDate": "2037-03-24T12:23:46.000Z",
+                "endDate": "2040-01-29T11:55:53.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Mercury",
+                "startDate": "2040-01-29T11:55:53.000Z",
+                "endDate": "2042-08-17T21:37:15.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Ketu",
+                "startDate": "2042-08-17T21:37:15.000Z",
+                "endDate": "2043-09-05T10:04:52.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Venus",
+                "startDate": "2043-09-05T10:04:52.000Z",
+                "endDate": "2046-09-05T04:32:22.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Sun",
+                "startDate": "2046-09-05T04:32:22.000Z",
+                "endDate": "2047-07-30T22:04:37.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Moon",
+                "startDate": "2047-07-30T22:04:37.000Z",
+                "endDate": "2049-01-28T19:18:21.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Mars",
+                "startDate": "2049-01-28T19:18:21.000Z",
+                "endDate": "2050-02-16T07:45:59.000Z"
+              }
+            ]
+          },
+          {
+            "level": "maha",
+            "lord": "Jupiter",
+            "startDate": "2050-02-16T07:45:59.000Z",
+            "endDate": "2066-02-16T10:10:37.000Z",
+            "children": [
+              {
+                "level": "antar",
+                "lord": "Jupiter",
+                "startDate": "2050-02-16T07:45:59.000Z",
+                "endDate": "2052-04-05T12:53:31.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Saturn",
+                "startDate": "2052-04-05T12:53:31.000Z",
+                "endDate": "2054-10-17T20:26:58.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Mercury",
+                "startDate": "2054-10-17T20:26:58.000Z",
+                "endDate": "2057-01-22T18:23:45.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Ketu",
+                "startDate": "2057-01-22T18:23:45.000Z",
+                "endDate": "2057-12-29T16:08:18.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Venus",
+                "startDate": "2057-12-29T16:08:18.000Z",
+                "endDate": "2060-08-29T16:32:42.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Sun",
+                "startDate": "2060-08-29T16:32:42.000Z",
+                "endDate": "2061-06-17T21:28:02.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Moon",
+                "startDate": "2061-06-17T21:28:02.000Z",
+                "endDate": "2062-10-17T21:40:15.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Mars",
+                "startDate": "2062-10-17T21:40:15.000Z",
+                "endDate": "2063-09-23T19:24:38.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Rahu",
+                "startDate": "2063-09-23T19:24:38.000Z",
+                "endDate": "2066-02-16T10:10:37.000Z"
+              }
+            ]
+          },
+          {
+            "level": "maha",
+            "lord": "Saturn",
+            "startDate": "2066-02-16T10:10:37.000Z",
+            "endDate": "2085-02-16T07:02:57.000Z",
+            "children": [
+              {
+                "level": "antar",
+                "lord": "Saturn",
+                "startDate": "2066-02-16T10:10:37.000Z",
+                "endDate": "2069-02-19T05:39:26.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Mercury",
+                "startDate": "2069-02-19T05:39:26.000Z",
+                "endDate": "2071-10-30T09:13:06.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Ketu",
+                "startDate": "2071-10-30T09:13:06.000Z",
+                "endDate": "2072-12-08T05:02:14.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Venus",
+                "startDate": "2072-12-08T05:02:14.000Z",
+                "endDate": "2076-02-07T20:31:15.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Sun",
+                "startDate": "2076-02-07T20:31:15.000Z",
+                "endDate": "2077-01-19T20:21:58.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Moon",
+                "startDate": "2077-01-19T20:21:58.000Z",
+                "endDate": "2078-08-21T04:06:28.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Mars",
+                "startDate": "2078-08-21T04:06:28.000Z",
+                "endDate": "2079-09-29T23:55:37.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Rahu",
+                "startDate": "2079-09-29T23:55:37.000Z",
+                "endDate": "2082-08-05T23:27:44.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Jupiter",
+                "startDate": "2082-08-05T23:27:44.000Z",
+                "endDate": "2085-02-16T07:02:57.000Z"
+              }
+            ]
+          },
+          {
+            "level": "maha",
+            "lord": "Mercury",
+            "startDate": "2085-02-16T07:02:57.000Z",
+            "endDate": "2102-02-17T15:38:30.000Z",
+            "children": [
+              {
+                "level": "antar",
+                "lord": "Mercury",
+                "startDate": "2085-02-16T07:02:57.000Z",
+                "endDate": "2087-07-15T22:51:50.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Ketu",
+                "startDate": "2087-07-15T22:51:50.000Z",
+                "endDate": "2088-07-12T03:57:55.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Venus",
+                "startDate": "2088-07-12T03:57:55.000Z",
+                "endDate": "2091-05-13T01:23:52.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Sun",
+                "startDate": "2091-05-13T01:23:52.000Z",
+                "endDate": "2092-03-18T12:37:40.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Moon",
+                "startDate": "2092-03-18T12:37:40.000Z",
+                "endDate": "2093-08-17T23:20:38.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Mars",
+                "startDate": "2093-08-17T23:20:38.000Z",
+                "endDate": "2094-08-15T04:26:42.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Rahu",
+                "startDate": "2094-08-15T04:26:42.000Z",
+                "endDate": "2097-03-03T14:08:04.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Jupiter",
+                "startDate": "2097-03-03T14:08:04.000Z",
+                "endDate": "2099-06-09T12:04:50.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Saturn",
+                "startDate": "2099-06-09T12:04:50.000Z",
+                "endDate": "2102-02-17T15:38:30.000Z"
+              }
+            ]
+          },
+          {
+            "level": "maha",
+            "lord": "Ketu",
+            "startDate": "2102-02-17T15:38:30.000Z",
+            "endDate": "2109-02-17T10:40:51.000Z",
+            "children": [
+              {
+                "level": "antar",
+                "lord": "Ketu",
+                "startDate": "2102-02-17T15:38:30.000Z",
+                "endDate": "2102-07-16T19:09:13.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Venus",
+                "startDate": "2102-07-16T19:09:13.000Z",
+                "endDate": "2103-09-15T22:19:55.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Sun",
+                "startDate": "2103-09-15T22:19:55.000Z",
+                "endDate": "2104-01-21T18:29:07.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Moon",
+                "startDate": "2104-01-21T18:29:07.000Z",
+                "endDate": "2104-08-21T20:04:28.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Mars",
+                "startDate": "2104-08-21T20:04:28.000Z",
+                "endDate": "2105-01-17T23:35:11.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Rahu",
+                "startDate": "2105-01-17T23:35:11.000Z",
+                "endDate": "2106-02-05T12:02:49.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Jupiter",
+                "startDate": "2106-02-05T12:02:49.000Z",
+                "endDate": "2107-01-12T09:45:37.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Saturn",
+                "startDate": "2107-01-12T09:45:37.000Z",
+                "endDate": "2108-02-21T05:34:46.000Z"
+              },
+              {
+                "level": "antar",
+                "lord": "Mercury",
+                "startDate": "2108-02-21T05:34:46.000Z",
+                "endDate": "2109-02-17T10:40:51.000Z"
+              }
+            ]
+          }
+        ],
+        "levels": {
+          "maha": {
+            "lord": "Mars",
+            "startDate": "2025-02-15T21:57:27.000Z",
+            "endDate": "2032-02-16T17:01:01.000Z"
+          },
+          "antar": {
+            "lord": "Rahu",
+            "startDate": "2025-07-15T01:28:01.000Z",
+            "endDate": "2026-08-02T13:55:38.000Z"
+          },
+          "pratyantar": {
+            "lord": "Venus",
+            "startDate": "2026-03-18T03:47:51.868Z",
+            "endDate": "2026-05-21T01:52:28.092Z",
+            "level": "pratyantar"
+          },
+          "sookshma": {
+            "lord": "Jupiter",
+            "startDate": "2026-04-19T15:37:12.282Z",
+            "endDate": "2026-04-28T04:09:49.112Z",
+            "level": "sookshma"
+          },
+          "praana": {
+            "lord": "Rahu",
+            "startDate": "2026-04-26T21:28:55.587Z",
+            "endDate": "2026-04-28T04:09:49.112Z",
+            "level": "praana"
+          },
+          "deha": {
+            "lord": "Jupiter",
+            "startDate": "2026-04-27T02:05:03.616Z",
+            "endDate": "2026-04-27T06:10:30.752Z",
+            "level": "deha"
+          }
+        },
+        "processedLevels": {
+          "maha": {
+            "lord": "Mars",
+            "startDate": "2025-02-15T21:57:27.000Z",
+            "endDate": "2032-02-16T17:01:01.000Z",
+            "progress": 0.1702448123761249,
+            "dateRange": "15/02/2025 → 16/02/2032"
+          },
+          "antar": {
+            "lord": "Rahu",
+            "startDate": "2025-07-15T01:28:01.000Z",
+            "endDate": "2026-08-02T13:55:38.000Z",
+            "progress": 0.7460766726711027,
+            "dateRange": "15/07/2025 → 02/08/2026"
+          }
+        },
+        "detailed": {
+          "maha_dasa": {
+            "Lord": "Mars",
+            "start_time": "2025-02-16 03:35:23.885555",
+            "end_time": "2032-02-16 22:39:32.832755"
+          },
+          "antar_dasa": {
+            "Lord": "Rahu",
+            "start_time": "2025-07-15 07:06:08.407475",
+            "end_time": "2026-08-02 19:33:45.749555"
+          },
+          "pratyantar_dasa": {
+            "Lord": "Venus",
+            "start_time": "2026-03-18 09:17:51.868643",
+            "end_time": "2026-05-21 07:22:28.092323"
+          },
+          "sookshma_antar_dasa": {
+            "Lord": "Jupiter",
+            "start_time": "2026-04-19 21:07:12.282347",
+            "end_time": "2026-04-28 09:39:49.112171"
+          },
+          "praana_antar_dasa": {
+            "Lord": "Rahu",
+            "start_time": "2026-04-27 02:58:55.587696",
+            "end_time": "2026-04-28 09:39:49.112170"
+          },
+          "deha_antar_dasa": {
+            "Lord": "Jupiter",
+            "start_time": "2026-04-27 07:35:03.616367",
+            "end_time": "2026-04-27 11:40:30.752963"
+          }
+        }
+      },
+      "dashaLastUpdated": {
+        "_seconds": 1777264885,
+        "_nanoseconds": 714000000
+      },
+      "syncStatus": "standard_complete",
+      "firstReading": {
+        "content": "**Mishthi, you are someone who cultivates extraordinary beauty from the seeds of thoughtful observation.**\n\n### Your Inner Architecture\n\n- You possess a brilliant mind, constantly analyzing and refining the world around you to create systems of perfect order. **This isn't just about being organized; it’s about seeing the potential for improvement in everything you touch.**\n- Your heart, though, craves warmth, drama, and the spotlight, yearning to be celebrated and admired for the unique radiance you hold within. *This inner fire fuels your meticulous nature, urging you to create masterpieces worthy of that recognition.*\n\n### How You Move Through the World\n\nYou project an aura of calm stability and grounded sensuality, drawing people in with your quiet strength and unwavering presence. Others perceive you as dependable, trustworthy, and someone who appreciates the finer things in life. **Your inherent grace makes people feel safe and nurtured in your presence.**\n\n### A Hidden Strength\n\nYou possess a resilience that is almost paradoxical; where others crumble under pressure, you find yourself thriving. *The challenges you’ve faced have unknowingly forged within you a remarkable power to dismantle obstacles and emerge even stronger than before.* You are capable of turning adversity into your greatest advantage; embrace this strength, and you will astound yourself.",
+        "highlights": [
+          {
+            "type": "yoga",
+            "icon": "stars",
+            "title": "Viparita Raja Yoga",
+            "subtitle": "Special Blessing",
+            "description": "Venus (lord of house 6) in dusthana house 6 - success through overcoming obstacles",
+            "color": "#F59E0B"
+          },
+          {
+            "type": "dasha",
+            "icon": "planet",
+            "title": "Mars Mahadasha",
+            "subtitle": "Rahu Antardasha active",
+            "description": "An era of action, courage, and determination",
+            "color": "#8B5CF6"
+          },
+          {
+            "type": "nakshatra",
+            "icon": "moon",
+            "title": "Poorva Phalguni(Pubba)",
+            "subtitle": "Moon Nakshatra",
+            "description": "Your lunar mansion shapes your inner nature",
+            "color": "#10B981"
+          }
+        ],
+        "sunSign": "Virgo",
+        "moonSign": "Leo",
+        "ascendant": "Taurus",
+        "generatedAt": {
+          "_seconds": 1777264888,
+          "_nanoseconds": 701000000
+        }
+      },
+      "lastSyncAt": {
+        "_seconds": 1777264937,
+        "_nanoseconds": 755000000
+      },
+      "houseInterpretationsGeneratedAt": {
+        "_seconds": 1777264953,
+        "_nanoseconds": 558000000
+      },
+      "houseInterpretations": {
+        "1": {
+          "interpretation": "You possess a natural grace and groundedness that draws others in, a tangible beauty that is recognized and appreciated; however, you might find yourself constantly analyzing and judging your own self-worth, leading to a critical inner voice that you’re always trying to overcome. The ongoing Mars dasha amplifies your desire to achieve and be recognized, but remember to be kind to yourself amidst the pressures you put on yourself.",
+          "sign": "Taurus",
+          "signLord": "Venus",
+          "lordPlacement": 6,
+          "planetsInHouse": [],
+          "aspectsFrom": [
+            "Jupiter",
+            "Venus",
+            "Saturn"
+          ],
+          "isActiveDasha": false
+        },
+        "2": {
+          "interpretation": "Your wealth and family lineage are tied to your creative pursuits and intelligence, suggesting that your financial security comes from expressing your unique talents and sharing your knowledge with the world; however, be mindful of impulsive spending or speculative ventures that could jeopardize your resources, and cultivate clear, grounded communication to avoid misunderstandings within your family.",
+          "sign": "Gemini",
+          "signLord": "Mercury",
+          "lordPlacement": 5,
+          "planetsInHouse": [],
+          "aspectsFrom": [
+            "Ketu",
+            "Pluto"
+          ],
+          "isActiveDasha": false
+        },
+        "3": {
+          "interpretation": "While you may face some initial challenges or delays in communication or with siblings, your courage and determination will ultimately help you overcome these obstacles and forge strong bonds; particularly, your natural empathy and nurturing nature, stemming from the Moon's influence, will be a source of strength in navigating relationships with those closest to you.",
+          "sign": "Cancer",
+          "signLord": "Moon",
+          "lordPlacement": 4,
+          "planetsInHouse": [
+            "Saturn"
+          ],
+          "aspectsFrom": [
+            "Jupiter"
+          ],
+          "isActiveDasha": false
+        },
+        "4": {
+          "interpretation": "Your heart and home are deeply connected to your creative expression and children, suggesting a nurturing environment filled with joy and playful energy; however, there may be some emotional intensity or unexpected disruptions in your domestic life, requiring you to cultivate a sense of inner stability and grounding to navigate these challenges with grace.",
+          "sign": "Leo",
+          "signLord": "Sun",
+          "lordPlacement": 5,
+          "planetsInHouse": [
+            "Moon"
+          ],
+          "aspectsFrom": [
+            "Mars",
+            "Rahu",
+            "Neptune"
+          ],
+          "isActiveDasha": false
+        },
+        "5": {
+          "interpretation": "Your creativity, intelligence, and connection to children are powerful forces in your life, driving you towards endeavors that are both intellectually stimulating and emotionally fulfilling; however, you may struggle with self-doubt or overthinking, hindering your ability to fully express your unique talents, so trust your intuition and embrace the joy of learning and self-discovery.",
+          "sign": "Virgo",
+          "signLord": "Mercury",
+          "lordPlacement": 5,
+          "planetsInHouse": [
+            "Sun",
+            "Mercury",
+            "Ketu"
+          ],
+          "aspectsFrom": [
+            "Uranus"
+          ],
+          "isActiveDasha": false
+        },
+        "6": {
+          "interpretation": "Your path to well-being and service is intertwined with beauty, diplomacy, and a desire for harmony, suggesting that you thrive in environments where you can use your artistic talents to help others and create a sense of balance; however, you may also be prone to over-analyzing your health or getting caught up in conflicts, so cultivate self-compassion and learn to set healthy boundaries to protect your energy.",
+          "sign": "Libra",
+          "signLord": "Venus",
+          "lordPlacement": 6,
+          "planetsInHouse": [
+            "Jupiter",
+            "Venus"
+          ],
+          "aspectsFrom": [
+            "Saturn",
+            "Rahu"
+          ],
+          "isActiveDasha": false
+        },
+        "7": {
+          "interpretation": "This Mars dasha is a powerful time for you to define and experience partnerships, although it can also be a time of intense transformation and change, as the placement of your 7th lord, Mars, in the 12th house suggests that your relationships may involve a spiritual element or a need for personal space and solitude, requiring you to delve deep into your own desires and boundaries to create fulfilling connections.",
+          "sign": "Scorpio",
+          "signLord": "Mars",
+          "lordPlacement": 12,
+          "planetsInHouse": [
+            "Pluto"
+          ],
+          "aspectsFrom": [
+            "Mars"
+          ],
+          "isActiveDasha": true
+        },
+        "8": {
+          "interpretation": "Your journey of transformation and deeper understanding is influenced by your desire for harmony and balance, suggesting that you seek to find beauty and meaning even in the face of challenges; however, you may be prone to escapism or avoiding difficult emotions, so cultivate self-awareness and learn to embrace the transformative power of vulnerability.",
+          "sign": "Sagittarius",
+          "signLord": "Jupiter",
+          "lordPlacement": 6,
+          "planetsInHouse": [],
+          "aspectsFrom": [
+            "Mars",
+            "Rahu"
+          ],
+          "isActiveDasha": false
+        },
+        "9": {
+          "interpretation": "Your spiritual path and relationship with your father are deeply connected to your courage and communication skills, suggesting that you find wisdom and guidance through your interactions with others and your ability to express your beliefs with conviction; however, you may also experience some challenges in connecting with traditional authority figures or institutions, leading you to forge your own unique spiritual path.",
+          "sign": "Capricorn",
+          "signLord": "Saturn",
+          "lordPlacement": 3,
+          "planetsInHouse": [
+            "Neptune"
+          ],
+          "aspectsFrom": [],
+          "isActiveDasha": false
+        },
+        "10": {
+          "interpretation": "Your career path is intertwined with your courage, communication, and ability to take initiative, suggesting that you thrive in roles where you can use your voice and leadership skills to make a difference; however, you may also experience some challenges in maintaining a consistent direction or dealing with authority figures, requiring you to cultivate patience, perseverance, and a strong sense of self-belief.",
+          "sign": "Aquarius",
+          "signLord": "Saturn",
+          "lordPlacement": 3,
+          "planetsInHouse": [
+            "Uranus"
+          ],
+          "aspectsFrom": [
+            "Saturn",
+            "Ketu"
+          ],
+          "isActiveDasha": false
+        },
+        "11": {
+          "interpretation": "Your gains, income, and friendships are influenced by your desire for harmony and your ability to serve others, suggesting that you attract abundance through your kindness, compassion, and willingness to help those in need; however, you may also be prone to over-extending yourself or getting caught up in other people's problems, so cultivate healthy boundaries and prioritize your own well-being.",
+          "sign": "Pisces",
+          "signLord": "Jupiter",
+          "lordPlacement": 6,
+          "planetsInHouse": [
+            "Rahu"
+          ],
+          "aspectsFrom": [
+            "Moon",
+            "Jupiter"
+          ],
+          "isActiveDasha": false
+        },
+        "12": {
+          "interpretation": "This Mars dasha, as the lord of your 12th house, can be a powerful time for spiritual growth, letting go of the past, and exploring foreign lands, but it also asks you to confront any hidden fears or self-destructive tendencies; by embracing solitude, cultivating compassion, and surrendering to the unknown, you can unlock profound healing and liberation.",
+          "sign": "Aries",
+          "signLord": "Mars",
+          "lordPlacement": 12,
+          "planetsInHouse": [
+            "Mars"
+          ],
+          "aspectsFrom": [
+            "Sun",
+            "Mercury",
+            "Ketu"
+          ],
+          "isActiveDasha": true
+        }
+      },
+      "skyHouseReadings": {
+        "houses": {
+          "1": {
+            "watch": "Avoid over-promising or being overly self-critical.",
+            "headline": "Redefining Your Self-Image and Purpose",
+            "focus": "Use this time for introspection and to confidently showcase your unique qualities.",
+            "reading": "Over these two weeks, your personal identity and how you present yourself to the world are very much in focus. The supportive energy from the Sun helps you feel strong and confident in your public dealings, and Mercury, while retrograding in your first house, brings a favorable chance to reflect deeply on your self-worth and communication style, allowing you to revisit any past doubts about your abilities. However, be mindful that Jupiter's presence here, while generally expansive, might bring some internal tension or over-optimism that doesn't quite align with your practical experience."
+          },
+          "2": {
+            "focus": "Actively pursue opportunities to grow your resources and connect warmly with family.",
+            "reading": "With Mars, your current life period ruler, transiting favorably through your house of finances, family, and communication, this is a potent time for you to proactively pursue financial stability and strengthen family bonds. The added positive influence of Venus brings an extra layer of charm and harmony, making it easier to negotiate, articulate your needs, and enjoy pleasurable moments with your loved ones. Your creative pursuits and intellectual talents can particularly shine now, opening doors to increased income or recognition.",
+            "watch": "Be mindful of the natal caution against impulsive spending, even with favorable energies.",
+            "headline": "Financial Growth and Harmonious Connections"
+          },
+          "3": {
+            "watch": "",
+            "headline": "Cultivating Inner Strength and Empathy",
+            "focus": "Lean into your innate empathy and determination in your daily interactions.",
+            "reading": "Although there are no direct planetary transits activating this area right now, your natural courage and empathetic nature, deeply rooted in your chart, continue to be your guiding lights. This period offers a steady backdrop for you to quietly develop your inner strength and nurture your relationships with siblings or close connections, allowing you to steadily overcome any communication hurdles you've faced. Your capacity for understanding others remains a powerful asset."
+          },
+          "4": {
+            "watch": "",
+            "headline": "Nurturing Your Sanctuary and Emotional Core",
+            "focus": "Create a peaceful and stable environment in your home and within yourself.",
+            "reading": "Your domestic life and inner peace remain a significant focus, naturally imbued with your creative spirit and a desire for a joyful home environment, especially given your Moon resides here. While no major transits are stirring things up directly during these two weeks, this is a quiet period for you to reinforce that sense of stability and address any underlying emotional intensities. Continue cultivating your inner sanctuary and cherishing the playful energy within your home."
+          },
+          "5": {
+            "watch": "Be mindful of allowing self-doubt to overshadow your inherent brilliance and connection to joy.",
+            "headline": "Releasing Creative Blocks and Doubts",
+            "focus": "Reflect on what you need to release to fully embrace your creative potential.",
+            "reading": "With Ketu transiting unfavorably through your house of creativity, children, and romance, you might find yourself wrestling with self-doubt or a sense of detachment in these areas over the next two weeks. This transit often encourages a process of letting go – perhaps of old expectations around your creative output, or even past romantic notions. While it can feel a bit unsettling, it's an opportunity to release what no longer serves your true self-expression, allowing for a more authentic connection to your intelligence and passions after some internal purging."
+          },
+          "6": {
+            "watch": "",
+            "headline": "Harmonious Approaches to Daily Life",
+            "focus": "Maintain a balanced and diplomatic approach in your work and health routines.",
+            "reading": "Your day-to-day work, health practices, and service to others continue to be guided by your innate desire for harmony and your diplomatic nature. Without direct planetary transits significantly influencing this house, these two weeks allow you to maintain a steady and balanced approach to your routines. It's a good time to quietly integrate your artistic talents into your service-oriented activities, reinforcing your well-being through beauty and calm."
+          },
+          "7": {
+            "watch": "",
+            "headline": "Deeper Reflection on Partnership Dynamics",
+            "focus": "Reflect on the spiritual and transformative aspects within your closest relationships.",
+            "reading": "The ongoing Mars life period continues to highlight your relationships, bringing a dynamic energy to how you define and experience partnerships. While there are no direct transits in this house during this specific window, this is a time for quiet internal processing. The natal indication of your relationship ruler, Mars, in your twelfth house suggests that your partnerships may involve a spiritual quest or a need for personal space and profound transformation, which continues to unfold beneath the surface of your daily interactions."
+          },
+          "8": {
+            "focus": "Engage in self-reflection to understand deeper truths and cultivate emotional resilience.",
+            "reading": "Your profound journey of transformation and delving into deeper understandings remains a core theme, guided by your desire to find balance and beauty even amidst life's challenges. As no transiting planets directly activate this house during this period, these two weeks encourage a quieter, more internal engagement with these themes. It's an opportune time to cultivate self-awareness and gently confront any tendencies towards escapism, allowing you to seek meaning with greater clarity and inner harmony.",
+            "watch": "",
+            "headline": "Embracing Deeper Meanings and Inner Harmony"
+          },
+          "9": {
+            "watch": "",
+            "headline": "Steadfast in Beliefs and Wisdom",
+            "focus": "Continue to express your beliefs and seek wisdom through meaningful communication.",
+            "reading": "Your spiritual path, higher learning, and relationship with your father continue to be shaped by your inherent courage and clear communication. With no direct transits influencing this house right now, this period offers a stable environment for you to continue finding wisdom through your interactions and to express your beliefs with conviction. Any past challenges in these areas are not being actively stirred, allowing for a steady consolidation of your understanding and principles."
+          },
+          "10": {
+            "focus": "Stay consistent and utilize your communication and leadership skills in your career.",
+            "reading": "Your professional life and public standing are consistently influenced by your courage and leadership abilities, allowing you to make a tangible difference through your voice. As there are no immediate transits directly affecting this house in the coming two weeks, this period supports a steady and focused approach to your career. You can maintain a consistent direction, leveraging your communication skills to reinforce your reputation and achieve your goals without new external pressures.",
+            "watch": "",
+            "headline": "Consistent Direction in Public Sphere"
+          },
+          "11": {
+            "focus": "Discern carefully in your social interactions and financial dealings, prioritizing authenticity.",
+            "reading": "With Rahu, your current sub-period ruler, transiting unfavorably through your house of gains, networks, and fulfilled wishes, you might encounter some unconventional situations or feel a sense of unease within your friendships and income streams over the next two weeks. While Rahu can sometimes bring unexpected gains, its unfavorable placement from your Moon suggests that these might come with a hidden cost or a feeling of dissatisfaction. Be cautious about getting entangled in situations that don't align with your true desire for harmony and service, and consider whether you're over-extending yourself for others.",
+            "watch": "Be wary of deceptive influences or over-extending yourself in social or financial pursuits.",
+            "headline": "Navigating Unconventional Gains and Social Circles"
+          },
+          "12": {
+            "focus": "Use this time for introspection to release old patterns and deepen your spiritual practice.",
+            "reading": "The influence of Saturn transiting unfavorably in your house of solitude, hidden matters, and spiritual growth suggests a period where you might be prompted to confront deep-seated fears or self-destructive patterns. This transit can feel heavy, bringing a sense of isolation or increased expenses, but it also provides a profound opportunity for spiritual cleansing and letting go. It reinforces the ongoing theme of your Mars life period, which encourages embracing solitude and cultivating compassion to navigate this transformative journey.",
+            "watch": "Be mindful of increased expenses or a tendency towards isolation, and actively seek healthy spiritual outlets.",
+            "headline": "Confronting Hidden Fears and Spiritual Growth"
+          }
+        },
+        "cycleStartDate": "2026-05-28",
+        "cycleEndDate": "2026-06-11",
+        "generatedAt": {
+          "_seconds": 1780011976,
+          "_nanoseconds": 304000000
+        }
+      }
+    }
+  },
+  "aiConversations": 23,
+  "humanConversations": 0,
+  "questions": [
+    {
+      "t": "2026-02-09T05:57:00.623Z",
+      "voice": false,
+      "q": "What should beny career options going forward"
+    },
+    {
+      "t": "2026-02-09T05:57:00.623Z",
+      "voice": false,
+      "q": "What should beny career options going forward"
+    },
+    {
+      "t": "2026-02-09T05:57:00.623Z",
+      "voice": false,
+      "q": "What should beny career options going forward"
+    },
+    {
+      "t": "2026-02-09T05:57:00.623Z",
+      "voice": false,
+      "q": "What should beny career options going forward"
+    },
+    {
+      "t": "2026-02-09T05:58:00.815Z",
+      "voice": false,
+      "q": "Okay and money wise stability?"
+    },
+    {
+      "t": "2026-02-09T05:58:00.815Z",
+      "voice": false,
+      "q": "Okay and money wise stability?"
+    },
+    {
+      "t": "2026-02-09T05:58:00.815Z",
+      "voice": false,
+      "q": "Okay and money wise stability?"
+    },
+    {
+      "t": "2026-02-09T05:58:57.603Z",
+      "voice": false,
+      "q": "As my chart shows the hazy career and money coming in later, which is fine."
+    },
+    {
+      "t": "2026-02-09T05:58:57.603Z",
+      "voice": false,
+      "q": "As my chart shows the hazy career and money coming in later, which is fine."
+    },
+    {
+      "t": "2026-02-09T05:59:14.285Z",
+      "voice": false,
+      "q": "So what exactly should be industries"
+    },
+    {
+      "t": "2026-02-17T06:34:36.040Z",
+      "voice": false,
+      "q": "So what should I actually do today"
+    },
+    {
+      "t": "2026-02-17T06:34:36.040Z",
+      "voice": false,
+      "q": "So what should I actually do today"
+    },
+    {
+      "t": "2026-02-17T06:37:15.668Z",
+      "voice": false,
+      "q": "Okay"
+    },
+    {
+      "t": "2026-02-17T06:37:51.336Z",
+      "voice": false,
+      "q": "And what is here about wealth?"
+    },
+    {
+      "t": "2026-02-20T07:01:34.740Z",
+      "voice": false,
+      "q": "But I don’t feel anything anger or needing something from my family"
+    },
+    {
+      "t": "2026-02-20T07:01:34.740Z",
+      "voice": false,
+      "q": "But I don’t feel anything anger or needing something from my family"
+    },
+    {
+      "t": "2026-02-20T07:01:34.740Z",
+      "voice": false,
+      "q": "But I don’t feel anything anger or needing something from my family"
+    },
+    {
+      "t": "2026-02-20T07:01:34.740Z",
+      "voice": false,
+      "q": "But I don’t feel anything anger or needing something from my family"
+    },
+    {
+      "t": "2026-02-20T07:01:34.740Z",
+      "voice": false,
+      "q": "But I don’t feel anything anger or needing something from my family"
+    },
+    {
+      "t": "2026-02-20T07:01:34.740Z",
+      "voice": false,
+      "q": "But I don’t feel anything anger or needing something from my family"
+    },
+    {
+      "t": "2026-02-20T07:01:34.740Z",
+      "voice": false,
+      "q": "But I don’t feel anything anger or needing something from my family"
+    },
+    {
+      "t": "2026-02-20T07:01:34.740Z",
+      "voice": false,
+      "q": "But I don’t feel anything anger or needing something from my family"
+    },
+    {
+      "t": "2026-02-20T07:01:34.740Z",
+      "voice": false,
+      "q": "But I don’t feel anything anger or needing something from my family"
+    },
+    {
+      "t": "2026-02-20T07:01:34.740Z",
+      "voice": false,
+      "q": "But I don’t feel anything anger or needing something from my family"
+    },
+    {
+      "t": "2026-02-20T07:01:34.740Z",
+      "voice": false,
+      "q": "But I don’t feel anything anger or needing something from my family"
+    },
+    {
+      "t": "2026-02-20T07:01:34.740Z",
+      "voice": false,
+      "q": "But I don’t feel anything anger or needing something from my family"
+    },
+    {
+      "t": "2026-02-20T07:02:39.800Z",
+      "voice": false,
+      "q": "Tell me even after doing so much like working at 19 earning so good, now in goa, doing everything i could."
+    },
+    {
+      "t": "2026-02-20T07:02:39.800Z",
+      "voice": false,
+      "q": "Tell me even after doing so much like working at 19 earning so good, now in goa, doing everything i could."
+    },
+    {
+      "t": "2026-02-20T07:02:39.800Z",
+      "voice": false,
+      "q": "Tell me even after doing so much like working at 19 earning so good, now in goa, doing everything i could."
+    },
+    {
+      "t": "2026-02-20T07:02:39.800Z",
+      "voice": false,
+      "q": "Tell me even after doing so much like working at 19 earning so good, now in goa, doing everything i could."
+    },
+    {
+      "t": "2026-02-20T07:02:39.800Z",
+      "voice": false,
+      "q": "Tell me even after doing so much like working at 19 earning so good, now in goa, doing everything i could."
+    },
+    {
+      "t": "2026-02-20T07:02:39.800Z",
+      "voice": false,
+      "q": "Tell me even after doing so much like working at 19 earning so good, now in goa, doing everything i could."
+    },
+    {
+      "t": "2026-02-20T07:02:39.800Z",
+      "voice": false,
+      "q": "Tell me even after doing so much like working at 19 earning so good, now in goa, doing everything i could."
+    },
+    {
+      "t": "2026-02-20T07:02:39.800Z",
+      "voice": false,
+      "q": "Tell me even after doing so much like working at 19 earning so good, now in goa, doing everything i could."
+    },
+    {
+      "t": "2026-02-20T07:02:39.800Z",
+      "voice": false,
+      "q": "Tell me even after doing so much like working at 19 earning so good, now in goa, doing everything i could."
+    },
+    {
+      "t": "2026-02-20T07:02:39.800Z",
+      "voice": false,
+      "q": "Tell me even after doing so much like working at 19 earning so good, now in goa, doing everything i could."
+    },
+    {
+      "t": "2026-02-20T07:02:39.800Z",
+      "voice": false,
+      "q": "Tell me even after doing so much like working at 19 earning so good, now in goa, doing everything i could."
+    },
+    {
+      "t": "2026-02-20T07:03:16.451Z",
+      "voice": false,
+      "q": "But why don’t I feel fullfilled"
+    },
+    {
+      "t": "2026-02-20T07:03:16.451Z",
+      "voice": false,
+      "q": "But why don’t I feel fullfilled"
+    },
+    {
+      "t": "2026-02-20T07:03:16.451Z",
+      "voice": false,
+      "q": "But why don’t I feel fullfilled"
+    },
+    {
+      "t": "2026-02-20T07:03:16.451Z",
+      "voice": false,
+      "q": "But why don’t I feel fullfilled"
+    },
+    {
+      "t": "2026-02-20T07:03:16.451Z",
+      "voice": false,
+      "q": "But why don’t I feel fullfilled"
+    },
+    {
+      "t": "2026-02-20T07:03:16.451Z",
+      "voice": false,
+      "q": "But why don’t I feel fullfilled"
+    },
+    {
+      "t": "2026-02-20T07:03:16.451Z",
+      "voice": false,
+      "q": "But why don’t I feel fullfilled"
+    },
+    {
+      "t": "2026-02-20T07:03:16.451Z",
+      "voice": false,
+      "q": "But why don’t I feel fullfilled"
+    },
+    {
+      "t": "2026-02-20T07:03:16.451Z",
+      "voice": false,
+      "q": "But why don’t I feel fullfilled"
+    },
+    {
+      "t": "2026-02-20T07:03:16.451Z",
+      "voice": false,
+      "q": "But why don’t I feel fullfilled"
+    },
+    {
+      "t": "2026-02-20T07:04:35.193Z",
+      "voice": false,
+      "q": "So should I shift out of goa in march like I was planning to or how should I see it. Cuz I don’t feel like Im growing life I mean I am but I cant recognise it properly"
+    },
+    {
+      "t": "2026-02-20T07:04:35.193Z",
+      "voice": false,
+      "q": "So should I shift out of goa in march like I was planning to or how should I see it. Cuz I don’t feel like Im growing life I mean I am but I cant recognise it properly"
+    },
+    {
+      "t": "2026-02-20T07:04:35.193Z",
+      "voice": false,
+      "q": "So should I shift out of goa in march like I was planning to or how should I see it. Cuz I don’t feel like Im growing life I mean I am but I cant recognise it properly"
+    },
+    {
+      "t": "2026-02-20T07:04:35.193Z",
+      "voice": false,
+      "q": "So should I shift out of goa in march like I was planning to or how should I see it. Cuz I don’t feel like Im growing life I mean I am but I cant recognise it properly"
+    },
+    {
+      "t": "2026-02-20T07:04:35.193Z",
+      "voice": false,
+      "q": "So should I shift out of goa in march like I was planning to or how should I see it. Cuz I don’t feel like Im growing life I mean I am but I cant recognise it properly"
+    },
+    {
+      "t": "2026-02-20T07:04:35.193Z",
+      "voice": false,
+      "q": "So should I shift out of goa in march like I was planning to or how should I see it. Cuz I don’t feel like Im growing life I mean I am but I cant recognise it properly"
+    },
+    {
+      "t": "2026-02-20T07:04:35.193Z",
+      "voice": false,
+      "q": "So should I shift out of goa in march like I was planning to or how should I see it. Cuz I don’t feel like Im growing life I mean I am but I cant recognise it properly"
+    },
+    {
+      "t": "2026-02-20T07:04:35.193Z",
+      "voice": false,
+      "q": "So should I shift out of goa in march like I was planning to or how should I see it. Cuz I don’t feel like Im growing life I mean I am but I cant recognise it properly"
+    },
+    {
+      "t": "2026-02-20T07:04:35.193Z",
+      "voice": false,
+      "q": "So should I shift out of goa in march like I was planning to or how should I see it. Cuz I don’t feel like Im growing life I mean I am but I cant recognise it properly"
+    },
+    {
+      "t": "2026-02-20T07:05:13.211Z",
+      "voice": false,
+      "q": "I can’t till may since Im here on my own money and I don’t want to spend it all"
+    },
+    {
+      "t": "2026-02-20T07:05:13.211Z",
+      "voice": false,
+      "q": "I can’t till may since Im here on my own money and I don’t want to spend it all"
+    },
+    {
+      "t": "2026-02-20T07:05:13.211Z",
+      "voice": false,
+      "q": "I can’t till may since Im here on my own money and I don’t want to spend it all"
+    },
+    {
+      "t": "2026-02-20T07:05:13.211Z",
+      "voice": false,
+      "q": "I can’t till may since Im here on my own money and I don’t want to spend it all"
+    },
+    {
+      "t": "2026-02-20T07:05:13.211Z",
+      "voice": false,
+      "q": "I can’t till may since Im here on my own money and I don’t want to spend it all"
+    },
+    {
+      "t": "2026-02-20T07:05:13.211Z",
+      "voice": false,
+      "q": "I can’t till may since Im here on my own money and I don’t want to spend it all"
+    },
+    {
+      "t": "2026-02-20T07:05:13.211Z",
+      "voice": false,
+      "q": "I can’t till may since Im here on my own money and I don’t want to spend it all"
+    },
+    {
+      "t": "2026-02-20T07:05:13.211Z",
+      "voice": false,
+      "q": "I can’t till may since Im here on my own money and I don’t want to spend it all"
+    },
+    {
+      "t": "2026-02-20T07:05:40.542Z",
+      "voice": false,
+      "q": "So I should not leave?"
+    },
+    {
+      "t": "2026-02-20T07:05:40.542Z",
+      "voice": false,
+      "q": "So I should not leave?"
+    },
+    {
+      "t": "2026-02-20T07:05:40.542Z",
+      "voice": false,
+      "q": "So I should not leave?"
+    },
+    {
+      "t": "2026-02-20T07:05:40.542Z",
+      "voice": false,
+      "q": "So I should not leave?"
+    },
+    {
+      "t": "2026-02-20T07:05:40.542Z",
+      "voice": false,
+      "q": "So I should not leave?"
+    },
+    {
+      "t": "2026-02-20T07:05:40.542Z",
+      "voice": false,
+      "q": "So I should not leave?"
+    },
+    {
+      "t": "2026-02-20T07:05:40.542Z",
+      "voice": false,
+      "q": "So I should not leave?"
+    },
+    {
+      "t": "2026-02-20T07:06:16.593Z",
+      "voice": false,
+      "q": "And what about the fullfillment"
+    },
+    {
+      "t": "2026-02-20T07:06:16.593Z",
+      "voice": false,
+      "q": "And what about the fullfillment"
+    },
+    {
+      "t": "2026-02-20T07:06:16.593Z",
+      "voice": false,
+      "q": "And what about the fullfillment"
+    },
+    {
+      "t": "2026-02-20T07:06:16.593Z",
+      "voice": false,
+      "q": "And what about the fullfillment"
+    },
+    {
+      "t": "2026-02-20T07:06:16.593Z",
+      "voice": false,
+      "q": "And what about the fullfillment"
+    },
+    {
+      "t": "2026-02-20T07:06:16.593Z",
+      "voice": false,
+      "q": "And what about the fullfillment"
+    },
+    {
+      "t": "2026-02-20T07:07:38.256Z",
+      "voice": false,
+      "q": "How"
+    },
+    {
+      "t": "2026-02-20T07:07:38.256Z",
+      "voice": false,
+      "q": "How"
+    },
+    {
+      "t": "2026-02-20T07:07:38.256Z",
+      "voice": false,
+      "q": "How"
+    },
+    {
+      "t": "2026-02-20T07:07:38.256Z",
+      "voice": false,
+      "q": "How"
+    },
+    {
+      "t": "2026-02-20T07:07:38.256Z",
+      "voice": false,
+      "q": "How"
+    },
+    {
+      "t": "2026-02-20T07:08:24.316Z",
+      "voice": false,
+      "q": "Okay but I love lots of things how do I just focus on my particular hobbies"
+    },
+    {
+      "t": "2026-02-20T07:08:24.316Z",
+      "voice": false,
+      "q": "Okay but I love lots of things how do I just focus on my particular hobbies"
+    },
+    {
+      "t": "2026-02-20T07:08:24.316Z",
+      "voice": false,
+      "q": "Okay but I love lots of things how do I just focus on my particular hobbies"
+    },
+    {
+      "t": "2026-02-20T07:08:24.316Z",
+      "voice": false,
+      "q": "Okay but I love lots of things how do I just focus on my particular hobbies"
+    },
+    {
+      "t": "2026-02-20T07:09:16.111Z",
+      "voice": false,
+      "q": "And since I can’t work on myself right now and only doing my work, enjoying, so how do I bakance that"
+    },
+    {
+      "t": "2026-02-20T07:09:16.111Z",
+      "voice": false,
+      "q": "And since I can’t work on myself right now and only doing my work, enjoying, so how do I bakance that"
+    },
+    {
+      "t": "2026-02-20T07:09:16.111Z",
+      "voice": false,
+      "q": "And since I can’t work on myself right now and only doing my work, enjoying, so how do I bakance that"
+    },
+    {
+      "t": "2026-02-20T07:09:49.630Z",
+      "voice": false,
+      "q": "But I work in a hostel, I barely get peace"
+    },
+    {
+      "t": "2026-02-20T07:09:49.630Z",
+      "voice": false,
+      "q": "But I work in a hostel, I barely get peace"
+    },
+    {
+      "t": "2026-02-20T07:10:19.480Z",
+      "voice": false,
+      "q": "Okay what exactly should I work on"
+    },
+    {
+      "t": "2026-02-21T02:11:11.149Z",
+      "voice": false,
+      "q": "Does clarifying will make my bond worse"
+    },
+    {
+      "t": "2026-02-25T06:42:33.509Z",
+      "voice": false,
+      "q": "I don’t think about any creative projects that has been coming around or something like that. What do you mean when you know you saying that think about your creative side or this will happen that will happen because this is very surface level."
+    },
+    {
+      "t": "2026-02-25T06:42:33.509Z",
+      "voice": false,
+      "q": "I don’t think about any creative projects that has been coming around or something like that. What do you mean when you know you saying that think about your creative side or this will happen that will happen because this is very surface level."
+    },
+    {
+      "t": "2026-02-25T06:42:33.509Z",
+      "voice": false,
+      "q": "I don’t think about any creative projects that has been coming around or something like that. What do you mean when you know you saying that think about your creative side or this will happen that will happen because this is very surface level."
+    },
+    {
+      "t": "2026-02-25T06:42:33.509Z",
+      "voice": false,
+      "q": "I don’t think about any creative projects that has been coming around or something like that. What do you mean when you know you saying that think about your creative side or this will happen that will happen because this is very surface level."
+    },
+    {
+      "t": "2026-02-25T06:42:33.509Z",
+      "voice": false,
+      "q": "I don’t think about any creative projects that has been coming around or something like that. What do you mean when you know you saying that think about your creative side or this will happen that will happen because this is very surface level."
+    },
+    {
+      "t": "2026-02-25T06:42:33.509Z",
+      "voice": false,
+      "q": "I don’t think about any creative projects that has been coming around or something like that. What do you mean when you know you saying that think about your creative side or this will happen that will happen because this is very surface level."
+    },
+    {
+      "t": "2026-02-25T06:42:33.509Z",
+      "voice": false,
+      "q": "I don’t think about any creative projects that has been coming around or something like that. What do you mean when you know you saying that think about your creative side or this will happen that will happen because this is very surface level."
+    },
+    {
+      "t": "2026-02-25T06:42:33.509Z",
+      "voice": false,
+      "q": "I don’t think about any creative projects that has been coming around or something like that. What do you mean when you know you saying that think about your creative side or this will happen that will happen because this is very surface level."
+    },
+    {
+      "t": "2026-02-25T06:44:09.729Z",
+      "voice": true,
+      "q": "🎤 Voice message"
+    },
+    {
+      "t": "2026-02-25T06:44:09.729Z",
+      "voice": true,
+      "q": "🎤 Voice message"
+    },
+    {
+      "t": "2026-02-25T06:44:09.729Z",
+      "voice": true,
+      "q": "🎤 Voice message"
+    },
+    {
+      "t": "2026-02-25T06:44:09.729Z",
+      "voice": true,
+      "q": "🎤 Voice message"
+    },
+    {
+      "t": "2026-02-25T06:44:09.729Z",
+      "voice": true,
+      "q": "🎤 Voice message"
+    },
+    {
+      "t": "2026-02-25T06:44:09.729Z",
+      "voice": true,
+      "q": "🎤 Voice message"
+    },
+    {
+      "t": "2026-02-25T06:44:09.729Z",
+      "voice": true,
+      "q": "🎤 Voice message"
+    },
+    {
+      "t": "2026-02-25T06:45:07.928Z",
+      "voice": true,
+      "q": "🎤 Voice message"
+    },
+    {
+      "t": "2026-02-25T06:45:07.928Z",
+      "voice": true,
+      "q": "🎤 Voice message"
+    },
+    {
+      "t": "2026-02-25T06:45:07.928Z",
+      "voice": true,
+      "q": "🎤 Voice message"
+    },
+    {
+      "t": "2026-02-25T06:45:07.928Z",
+      "voice": true,
+      "q": "🎤 Voice message"
+    },
+    {
+      "t": "2026-02-25T06:45:07.928Z",
+      "voice": true,
+      "q": "🎤 Voice message"
+    },
+    {
+      "t": "2026-02-25T06:45:07.928Z",
+      "voice": true,
+      "q": "🎤 Voice message"
+    },
+    {
+      "t": "2026-02-25T06:46:05.079Z",
+      "voice": true,
+      "q": "🎤 Voice message"
+    },
+    {
+      "t": "2026-02-25T06:46:05.079Z",
+      "voice": true,
+      "q": "🎤 Voice message"
+    },
+    {
+      "t": "2026-02-25T06:46:05.079Z",
+      "voice": true,
+      "q": "🎤 Voice message"
+    },
+    {
+      "t": "2026-02-25T06:46:05.079Z",
+      "voice": true,
+      "q": "🎤 Voice message"
+    },
+    {
+      "t": "2026-02-25T06:46:05.079Z",
+      "voice": true,
+      "q": "🎤 Voice message"
+    },
+    {
+      "t": "2026-02-25T06:47:03.131Z",
+      "voice": true,
+      "q": "🎤 Voice message"
+    },
+    {
+      "t": "2026-02-25T06:47:03.131Z",
+      "voice": true,
+      "q": "🎤 Voice message"
+    },
+    {
+      "t": "2026-02-25T06:47:03.131Z",
+      "voice": true,
+      "q": "🎤 Voice message"
+    },
+    {
+      "t": "2026-02-25T06:47:03.131Z",
+      "voice": true,
+      "q": "🎤 Voice message"
+    },
+    {
+      "t": "2026-02-25T06:47:35.484Z",
+      "voice": true,
+      "q": "🎤 Voice message"
+    },
+    {
+      "t": "2026-02-25T06:47:35.484Z",
+      "voice": true,
+      "q": "🎤 Voice message"
+    },
+    {
+      "t": "2026-02-25T06:47:35.484Z",
+      "voice": true,
+      "q": "🎤 Voice message"
+    },
+    {
+      "t": "2026-02-25T06:48:59.949Z",
+      "voice": true,
+      "q": "🎤 Voice message"
+    },
+    {
+      "t": "2026-02-25T06:48:59.949Z",
+      "voice": true,
+      "q": "🎤 Voice message"
+    },
+    {
+      "t": "2026-02-25T06:49:50.771Z",
+      "voice": false,
+      "q": "So you think that I should date him"
+    },
+    {
+      "t": "2026-02-26T06:09:38.541Z",
+      "voice": false,
+      "q": "How should I do all this"
+    },
+    {
+      "t": "2026-02-26T06:09:38.541Z",
+      "voice": false,
+      "q": "How should I do all this"
+    },
+    {
+      "t": "2026-02-26T06:10:26.916Z",
+      "voice": false,
+      "q": "I’m feeling breakthrough at work recently, like I don’t feel like going and everything has been pushed on me and nothing is also somewhere in my houses or I should really really leave it or is this a bad time to leave?"
+    },
+    {
+      "t": "2026-03-04T18:29:42.073Z",
+      "voice": false,
+      "q": "Should I go to a party today, also I couldn’t massage"
+    },
+    {
+      "t": "2026-03-04T18:29:42.073Z",
+      "voice": false,
+      "q": "Should I go to a party today, also I couldn’t massage"
+    },
+    {
+      "t": "2026-03-04T18:31:03.883Z",
+      "voice": false,
+      "q": "Tell me, even if im so tired but im thinking about it"
+    },
+    {
+      "t": "2026-03-04T18:31:03.883Z",
+      "voice": false,
+      "q": "Tell me, even if im so tired but im thinking about it"
+    },
+    {
+      "t": "2026-03-04T18:32:20.889Z",
+      "voice": false,
+      "q": "But i am very dead and also want to sleep"
+    },
+    {
+      "t": "2026-03-07T11:31:21.680Z",
+      "voice": false,
+      "q": "I had a serious conversation at work today because of my frustation and I plan to leave cause there is no ROI in this thing. What do you think?"
+    },
+    {
+      "t": "2026-03-07T11:31:21.680Z",
+      "voice": false,
+      "q": "I had a serious conversation at work today because of my frustation and I plan to leave cause there is no ROI in this thing. What do you think?"
+    },
+    {
+      "t": "2026-03-07T11:31:21.680Z",
+      "voice": false,
+      "q": "I had a serious conversation at work today because of my frustation and I plan to leave cause there is no ROI in this thing. What do you think?"
+    },
+    {
+      "t": "2026-03-07T11:31:21.680Z",
+      "voice": false,
+      "q": "I had a serious conversation at work today because of my frustation and I plan to leave cause there is no ROI in this thing. What do you think?"
+    },
+    {
+      "t": "2026-03-07T11:31:21.680Z",
+      "voice": false,
+      "q": "I had a serious conversation at work today because of my frustation and I plan to leave cause there is no ROI in this thing. What do you think?"
+    },
+    {
+      "t": "2026-03-07T11:32:34.072Z",
+      "voice": false,
+      "q": "But I don’t want to stay, Im burning my money, my energy and nothing is coming back. There is no balance, I have to do everything and the weather is making my health worse"
+    },
+    {
+      "t": "2026-03-07T11:32:34.072Z",
+      "voice": false,
+      "q": "But I don’t want to stay, Im burning my money, my energy and nothing is coming back. There is no balance, I have to do everything and the weather is making my health worse"
+    },
+    {
+      "t": "2026-03-07T11:32:34.072Z",
+      "voice": false,
+      "q": "But I don’t want to stay, Im burning my money, my energy and nothing is coming back. There is no balance, I have to do everything and the weather is making my health worse"
+    },
+    {
+      "t": "2026-03-07T11:32:34.072Z",
+      "voice": false,
+      "q": "But I don’t want to stay, Im burning my money, my energy and nothing is coming back. There is no balance, I have to do everything and the weather is making my health worse"
+    },
+    {
+      "t": "2026-03-07T11:33:24.423Z",
+      "voice": false,
+      "q": "Thats what I don’t feel anything bad or guilty even while leaving this job"
+    },
+    {
+      "t": "2026-03-07T11:33:24.423Z",
+      "voice": false,
+      "q": "Thats what I don’t feel anything bad or guilty even while leaving this job"
+    },
+    {
+      "t": "2026-03-07T11:33:24.423Z",
+      "voice": false,
+      "q": "Thats what I don’t feel anything bad or guilty even while leaving this job"
+    },
+    {
+      "t": "2026-03-07T11:34:23.314Z",
+      "voice": false,
+      "q": "Exactly and secondly I feel that I should put brakes and go back to normal thing because like this I can’t balance, im partying too much and I have no energy half the time"
+    },
+    {
+      "t": "2026-03-07T11:34:23.314Z",
+      "voice": false,
+      "q": "Exactly and secondly I feel that I should put brakes and go back to normal thing because like this I can’t balance, im partying too much and I have no energy half the time"
+    },
+    {
+      "t": "2026-03-07T11:36:01.233Z",
+      "voice": false,
+      "q": "Exactly I got cards of affirmations also like that, so should I leave"
+    },
+    {
+      "t": "2026-03-08T00:31:22.682Z",
+      "voice": false,
+      "q": "Is this the current relationship"
+    },
+    {
+      "t": "2026-03-13T15:39:52.699Z",
+      "voice": false,
+      "q": "I want to know about my love life and physical, why my actions are becoming so uncertain"
+    },
+    {
+      "t": "2026-03-13T15:39:52.699Z",
+      "voice": false,
+      "q": "I want to know about my love life and physical, why my actions are becoming so uncertain"
+    },
+    {
+      "t": "2026-03-13T15:39:52.699Z",
+      "voice": false,
+      "q": "I want to know about my love life and physical, why my actions are becoming so uncertain"
+    },
+    {
+      "t": "2026-03-13T15:40:40.392Z",
+      "voice": false,
+      "q": "I just made out w my ex while seeing another person, so what do u think that is"
+    },
+    {
+      "t": "2026-03-13T15:40:40.392Z",
+      "voice": false,
+      "q": "I just made out w my ex while seeing another person, so what do u think that is"
+    },
+    {
+      "t": "2026-03-13T15:41:14.501Z",
+      "voice": false,
+      "q": "I don’t know what I want"
+    },
+    {
+      "t": "2026-03-17T02:01:10.310Z",
+      "voice": false,
+      "q": "What passion exactly"
+    },
+    {
+      "t": "2026-03-17T02:01:10.310Z",
+      "voice": false,
+      "q": "What passion exactly"
+    },
+    {
+      "t": "2026-03-17T02:02:01.995Z",
+      "voice": false,
+      "q": "What exactly careers and fields"
+    },
+    {
+      "t": "2026-03-17T10:17:20.233Z",
+      "voice": false,
+      "q": "Tell me more specific in general and not day wise"
+    },
+    {
+      "t": "2026-03-23T15:32:54.445Z",
+      "voice": false,
+      "q": "Tell me about career"
+    },
+    {
+      "t": "2026-03-23T15:32:54.445Z",
+      "voice": false,
+      "q": "Tell me about career"
+    },
+    {
+      "t": "2026-03-23T15:32:54.445Z",
+      "voice": false,
+      "q": "Tell me about career"
+    },
+    {
+      "t": "2026-03-23T15:32:54.445Z",
+      "voice": false,
+      "q": "Tell me about career"
+    },
+    {
+      "t": "2026-03-23T15:33:32.344Z",
+      "voice": false,
+      "q": "I have invested some family’s money, will that gain profita"
+    },
+    {
+      "t": "2026-03-23T15:33:32.344Z",
+      "voice": false,
+      "q": "I have invested some family’s money, will that gain profita"
+    },
+    {
+      "t": "2026-03-23T15:33:32.344Z",
+      "voice": false,
+      "q": "I have invested some family’s money, will that gain profita"
+    },
+    {
+      "t": "2026-03-23T15:33:55.356Z",
+      "voice": false,
+      "q": "Stock market"
+    },
+    {
+      "t": "2026-03-23T15:33:55.356Z",
+      "voice": false,
+      "q": "Stock market"
+    },
+    {
+      "t": "2026-03-23T15:34:17.501Z",
+      "voice": false,
+      "q": "But I have already invested it"
+    },
+    {
+      "t": "2026-03-29T09:45:21.131Z",
+      "voice": false,
+      "q": "But I was having everything that was before in foods to favor"
+    },
+    {
+      "t": "2026-03-29T09:45:21.131Z",
+      "voice": false,
+      "q": "But I was having everything that was before in foods to favor"
+    },
+    {
+      "t": "2026-03-29T09:45:58.336Z",
+      "voice": false,
+      "q": "What exactly"
+    },
+    {
+      "t": "2026-03-31T11:14:19.080Z",
+      "voice": false,
+      "q": "I don’t understand when you mean you’re capabilities are unable today because in your life, I don’t even know where to start and what to start and what do you even look for when I’m starting so I don’t really understand what my capabilities can do if I don’t even know. Initial point to start with neither. I am getting the motivation to know a direction so what do you think I should actually do to actually feel about my capabilities like you are saying"
+    },
+    {
+      "t": "2026-03-31T11:14:19.080Z",
+      "voice": false,
+      "q": "I don’t understand when you mean you’re capabilities are unable today because in your life, I don’t even know where to start and what to start and what do you even look for when I’m starting so I don’t really understand what my capabilities can do if I don’t even know. Initial point to start with neither. I am getting the motivation to know a direction so what do you think I should actually do to actually feel about my capabilities like you are saying"
+    },
+    {
+      "t": "2026-03-31T11:14:19.080Z",
+      "voice": false,
+      "q": "I don’t understand when you mean you’re capabilities are unable today because in your life, I don’t even know where to start and what to start and what do you even look for when I’m starting so I don’t really understand what my capabilities can do if I don’t even know. Initial point to start with neither. I am getting the motivation to know a direction so what do you think I should actually do to actually feel about my capabilities like you are saying"
+    },
+    {
+      "t": "2026-03-31T11:14:19.080Z",
+      "voice": false,
+      "q": "I don’t understand when you mean you’re capabilities are unable today because in your life, I don’t even know where to start and what to start and what do you even look for when I’m starting so I don’t really understand what my capabilities can do if I don’t even know. Initial point to start with neither. I am getting the motivation to know a direction so what do you think I should actually do to actually feel about my capabilities like you are saying"
+    },
+    {
+      "t": "2026-03-31T11:14:19.080Z",
+      "voice": false,
+      "q": "I don’t understand when you mean you’re capabilities are unable today because in your life, I don’t even know where to start and what to start and what do you even look for when I’m starting so I don’t really understand what my capabilities can do if I don’t even know. Initial point to start with neither. I am getting the motivation to know a direction so what do you think I should actually do to actually feel about my capabilities like you are saying"
+    },
+    {
+      "t": "2026-03-31T11:14:19.080Z",
+      "voice": false,
+      "q": "I don’t understand when you mean you’re capabilities are unable today because in your life, I don’t even know where to start and what to start and what do you even look for when I’m starting so I don’t really understand what my capabilities can do if I don’t even know. Initial point to start with neither. I am getting the motivation to know a direction so what do you think I should actually do to actually feel about my capabilities like you are saying"
+    },
+    {
+      "t": "2026-03-31T11:14:19.080Z",
+      "voice": false,
+      "q": "I don’t understand when you mean you’re capabilities are unable today because in your life, I don’t even know where to start and what to start and what do you even look for when I’m starting so I don’t really understand what my capabilities can do if I don’t even know. Initial point to start with neither. I am getting the motivation to know a direction so what do you think I should actually do to actually feel about my capabilities like you are saying"
+    },
+    {
+      "t": "2026-03-31T11:14:19.080Z",
+      "voice": false,
+      "q": "I don’t understand when you mean you’re capabilities are unable today because in your life, I don’t even know where to start and what to start and what do you even look for when I’m starting so I don’t really understand what my capabilities can do if I don’t even know. Initial point to start with neither. I am getting the motivation to know a direction so what do you think I should actually do to actually feel about my capabilities like you are saying"
+    },
+    {
+      "t": "2026-03-31T11:14:19.080Z",
+      "voice": false,
+      "q": "I don’t understand when you mean you’re capabilities are unable today because in your life, I don’t even know where to start and what to start and what do you even look for when I’m starting so I don’t really understand what my capabilities can do if I don’t even know. Initial point to start with neither. I am getting the motivation to know a direction so what do you think I should actually do to actually feel about my capabilities like you are saying"
+    },
+    {
+      "t": "2026-03-31T11:15:00.465Z",
+      "voice": false,
+      "q": "Be more concise, like mastering practical skills, and what details in what where?"
+    },
+    {
+      "t": "2026-03-31T11:15:00.465Z",
+      "voice": false,
+      "q": "Be more concise, like mastering practical skills, and what details in what where?"
+    },
+    {
+      "t": "2026-03-31T11:15:00.465Z",
+      "voice": false,
+      "q": "Be more concise, like mastering practical skills, and what details in what where?"
+    },
+    {
+      "t": "2026-03-31T11:15:00.465Z",
+      "voice": false,
+      "q": "Be more concise, like mastering practical skills, and what details in what where?"
+    },
+    {
+      "t": "2026-03-31T11:15:00.465Z",
+      "voice": false,
+      "q": "Be more concise, like mastering practical skills, and what details in what where?"
+    },
+    {
+      "t": "2026-03-31T11:15:00.465Z",
+      "voice": false,
+      "q": "Be more concise, like mastering practical skills, and what details in what where?"
+    },
+    {
+      "t": "2026-03-31T11:15:00.465Z",
+      "voice": false,
+      "q": "Be more concise, like mastering practical skills, and what details in what where?"
+    },
+    {
+      "t": "2026-03-31T11:15:00.465Z",
+      "voice": false,
+      "q": "Be more concise, like mastering practical skills, and what details in what where?"
+    },
+    {
+      "t": "2026-03-31T11:15:50.439Z",
+      "voice": false,
+      "q": "Tangible skills and career like maybe sales or account management also works or something else you are trying to say"
+    },
+    {
+      "t": "2026-03-31T11:15:50.439Z",
+      "voice": false,
+      "q": "Tangible skills and career like maybe sales or account management also works or something else you are trying to say"
+    },
+    {
+      "t": "2026-03-31T11:15:50.439Z",
+      "voice": false,
+      "q": "Tangible skills and career like maybe sales or account management also works or something else you are trying to say"
+    },
+    {
+      "t": "2026-03-31T11:15:50.439Z",
+      "voice": false,
+      "q": "Tangible skills and career like maybe sales or account management also works or something else you are trying to say"
+    },
+    {
+      "t": "2026-03-31T11:15:50.439Z",
+      "voice": false,
+      "q": "Tangible skills and career like maybe sales or account management also works or something else you are trying to say"
+    },
+    {
+      "t": "2026-03-31T11:15:50.439Z",
+      "voice": false,
+      "q": "Tangible skills and career like maybe sales or account management also works or something else you are trying to say"
+    },
+    {
+      "t": "2026-03-31T11:15:50.439Z",
+      "voice": false,
+      "q": "Tangible skills and career like maybe sales or account management also works or something else you are trying to say"
+    },
+    {
+      "t": "2026-03-31T11:17:13.069Z",
+      "voice": false,
+      "q": "Also, I have currently like 23 guys in my life in the romantic side, but then II don’t feel anything for anyone of them because I don’t know like if I think about anyone of them. I just remember the moments, but no love for them kind of a thing, maybe I’m just putting too much pressure. What do you think about that?"
+    },
+    {
+      "t": "2026-03-31T11:17:13.069Z",
+      "voice": false,
+      "q": "Also, I have currently like 23 guys in my life in the romantic side, but then II don’t feel anything for anyone of them because I don’t know like if I think about anyone of them. I just remember the moments, but no love for them kind of a thing, maybe I’m just putting too much pressure. What do you think about that?"
+    },
+    {
+      "t": "2026-03-31T11:17:13.069Z",
+      "voice": false,
+      "q": "Also, I have currently like 23 guys in my life in the romantic side, but then II don’t feel anything for anyone of them because I don’t know like if I think about anyone of them. I just remember the moments, but no love for them kind of a thing, maybe I’m just putting too much pressure. What do you think about that?"
+    },
+    {
+      "t": "2026-03-31T11:17:13.069Z",
+      "voice": false,
+      "q": "Also, I have currently like 23 guys in my life in the romantic side, but then II don’t feel anything for anyone of them because I don’t know like if I think about anyone of them. I just remember the moments, but no love for them kind of a thing, maybe I’m just putting too much pressure. What do you think about that?"
+    },
+    {
+      "t": "2026-03-31T11:17:13.069Z",
+      "voice": false,
+      "q": "Also, I have currently like 23 guys in my life in the romantic side, but then II don’t feel anything for anyone of them because I don’t know like if I think about anyone of them. I just remember the moments, but no love for them kind of a thing, maybe I’m just putting too much pressure. What do you think about that?"
+    },
+    {
+      "t": "2026-03-31T11:17:13.069Z",
+      "voice": false,
+      "q": "Also, I have currently like 23 guys in my life in the romantic side, but then II don’t feel anything for anyone of them because I don’t know like if I think about anyone of them. I just remember the moments, but no love for them kind of a thing, maybe I’m just putting too much pressure. What do you think about that?"
+    },
+    {
+      "t": "2026-03-31T11:17:19.942Z",
+      "voice": false,
+      "q": "3*"
+    },
+    {
+      "t": "2026-03-31T11:17:19.942Z",
+      "voice": false,
+      "q": "3*"
+    },
+    {
+      "t": "2026-03-31T11:17:19.942Z",
+      "voice": false,
+      "q": "3*"
+    },
+    {
+      "t": "2026-03-31T11:17:19.942Z",
+      "voice": false,
+      "q": "3*"
+    },
+    {
+      "t": "2026-03-31T11:17:19.942Z",
+      "voice": false,
+      "q": "3*"
+    },
+    {
+      "t": "2026-03-31T11:18:34.004Z",
+      "voice": false,
+      "q": "But like what should I do about these three because one I have which we’re trying to get into a relationship when I have as my ex, that’s something there, not love but something so there’s just two main guys where I am just to know hoping from 1 to 1, but I don’t know like I can’t decide which one to stay with to both of the guys doesn’t feel right to me"
+    },
+    {
+      "t": "2026-03-31T11:18:34.004Z",
+      "voice": false,
+      "q": "But like what should I do about these three because one I have which we’re trying to get into a relationship when I have as my ex, that’s something there, not love but something so there’s just two main guys where I am just to know hoping from 1 to 1, but I don’t know like I can’t decide which one to stay with to both of the guys doesn’t feel right to me"
+    },
+    {
+      "t": "2026-03-31T11:18:34.004Z",
+      "voice": false,
+      "q": "But like what should I do about these three because one I have which we’re trying to get into a relationship when I have as my ex, that’s something there, not love but something so there’s just two main guys where I am just to know hoping from 1 to 1, but I don’t know like I can’t decide which one to stay with to both of the guys doesn’t feel right to me"
+    },
+    {
+      "t": "2026-03-31T11:18:34.004Z",
+      "voice": false,
+      "q": "But like what should I do about these three because one I have which we’re trying to get into a relationship when I have as my ex, that’s something there, not love but something so there’s just two main guys where I am just to know hoping from 1 to 1, but I don’t know like I can’t decide which one to stay with to both of the guys doesn’t feel right to me"
+    },
+    {
+      "t": "2026-03-31T11:19:25.830Z",
+      "voice": false,
+      "q": "But how do I talk about walking away like one guy there is no expectations of getting into something that is missing, but the second guy I have. He’s looking forward for a relationship. So how do I say that? It’s not working out for me and thought that there is no only two."
+    },
+    {
+      "t": "2026-03-31T11:19:25.830Z",
+      "voice": false,
+      "q": "But how do I talk about walking away like one guy there is no expectations of getting into something that is missing, but the second guy I have. He’s looking forward for a relationship. So how do I say that? It’s not working out for me and thought that there is no only two."
+    },
+    {
+      "t": "2026-03-31T11:19:25.830Z",
+      "voice": false,
+      "q": "But how do I talk about walking away like one guy there is no expectations of getting into something that is missing, but the second guy I have. He’s looking forward for a relationship. So how do I say that? It’s not working out for me and thought that there is no only two."
+    },
+    {
+      "t": "2026-03-31T11:22:01.276Z",
+      "voice": false,
+      "q": "So to conclude the both things that I should tell the guys that I’m not feeling like home and I would like to walk away to wasting that time and I should just focus about something which is more technical and something complex making tangible skills so that I have a long enough karaoke to go ahead, is there anything else I should do because now, I’m home in my home and I should start being productive."
+    },
+    {
+      "t": "2026-03-31T11:22:01.276Z",
+      "voice": false,
+      "q": "So to conclude the both things that I should tell the guys that I’m not feeling like home and I would like to walk away to wasting that time and I should just focus about something which is more technical and something complex making tangible skills so that I have a long enough karaoke to go ahead, is there anything else I should do because now, I’m home in my home and I should start being productive."
+    },
+    {
+      "t": "2026-03-31T11:22:46.405Z",
+      "voice": false,
+      "q": "How do I declutter physically and mentally?"
+    },
+    {
+      "t": "2026-04-04T07:43:04.469Z",
+      "voice": false,
+      "q": "Tell me more and also romantic wise"
+    },
+    {
+      "t": "2026-04-04T07:43:04.469Z",
+      "voice": false,
+      "q": "Tell me more and also romantic wise"
+    },
+    {
+      "t": "2026-04-04T07:43:04.469Z",
+      "voice": false,
+      "q": "Tell me more and also romantic wise"
+    },
+    {
+      "t": "2026-04-04T07:43:04.469Z",
+      "voice": false,
+      "q": "Tell me more and also romantic wise"
+    },
+    {
+      "t": "2026-04-04T07:43:04.469Z",
+      "voice": false,
+      "q": "Tell me more and also romantic wise"
+    },
+    {
+      "t": "2026-04-04T07:44:13.096Z",
+      "voice": false,
+      "q": "But I stopped talking to the guy I was romantically involved with and my ex"
+    },
+    {
+      "t": "2026-04-04T07:44:13.096Z",
+      "voice": false,
+      "q": "But I stopped talking to the guy I was romantically involved with and my ex"
+    },
+    {
+      "t": "2026-04-04T07:44:13.096Z",
+      "voice": false,
+      "q": "But I stopped talking to the guy I was romantically involved with and my ex"
+    },
+    {
+      "t": "2026-04-04T07:44:13.096Z",
+      "voice": false,
+      "q": "But I stopped talking to the guy I was romantically involved with and my ex"
+    },
+    {
+      "t": "2026-04-04T07:44:57.939Z",
+      "voice": false,
+      "q": "Okay and career"
+    },
+    {
+      "t": "2026-04-04T07:44:57.939Z",
+      "voice": false,
+      "q": "Okay and career"
+    },
+    {
+      "t": "2026-04-04T07:44:57.939Z",
+      "voice": false,
+      "q": "Okay and career"
+    },
+    {
+      "t": "2026-04-04T07:46:16.908Z",
+      "voice": false,
+      "q": "What career exactly cause I still don’t have a clue about where to start"
+    },
+    {
+      "t": "2026-04-04T07:46:16.908Z",
+      "voice": false,
+      "q": "What career exactly cause I still don’t have a clue about where to start"
+    },
+    {
+      "t": "2026-04-04T07:46:53.381Z",
+      "voice": false,
+      "q": "I don’t understand"
+    },
+    {
+      "t": "2026-04-05T14:27:23.171Z",
+      "voice": false,
+      "q": "Does taking drugs affect my natural attractive energy"
+    },
+    {
+      "t": "2026-04-05T14:27:23.171Z",
+      "voice": false,
+      "q": "Does taking drugs affect my natural attractive energy"
+    },
+    {
+      "t": "2026-04-05T14:28:03.572Z",
+      "voice": false,
+      "q": "So 2-3 times are also not fine?"
+    },
+    {
+      "t": "2026-04-05T18:41:33.662Z",
+      "voice": false,
+      "q": "In drugs u nean"
+    },
+    {
+      "t": "2026-04-05T18:41:33.662Z",
+      "voice": false,
+      "q": "In drugs u nean"
+    },
+    {
+      "t": "2026-04-05T18:41:33.662Z",
+      "voice": false,
+      "q": "In drugs u nean"
+    },
+    {
+      "t": "2026-04-05T18:41:33.662Z",
+      "voice": false,
+      "q": "In drugs u nean"
+    },
+    {
+      "t": "2026-04-05T18:41:33.662Z",
+      "voice": false,
+      "q": "In drugs u nean"
+    },
+    {
+      "t": "2026-04-05T18:41:33.662Z",
+      "voice": false,
+      "q": "In drugs u nean"
+    },
+    {
+      "t": "2026-04-05T18:42:00.933Z",
+      "voice": false,
+      "q": "What drugs will affect ny energy? Even weed?"
+    },
+    {
+      "t": "2026-04-05T18:42:00.933Z",
+      "voice": false,
+      "q": "What drugs will affect ny energy? Even weed?"
+    },
+    {
+      "t": "2026-04-05T18:42:00.933Z",
+      "voice": false,
+      "q": "What drugs will affect ny energy? Even weed?"
+    },
+    {
+      "t": "2026-04-05T18:42:00.933Z",
+      "voice": false,
+      "q": "What drugs will affect ny energy? Even weed?"
+    },
+    {
+      "t": "2026-04-05T18:42:00.933Z",
+      "voice": false,
+      "q": "What drugs will affect ny energy? Even weed?"
+    },
+    {
+      "t": "2026-04-05T18:42:34.667Z",
+      "voice": false,
+      "q": "And what will this eventually cayse"
+    },
+    {
+      "t": "2026-04-05T18:42:34.667Z",
+      "voice": false,
+      "q": "And what will this eventually cayse"
+    },
+    {
+      "t": "2026-04-05T18:42:34.667Z",
+      "voice": false,
+      "q": "And what will this eventually cayse"
+    },
+    {
+      "t": "2026-04-05T18:42:34.667Z",
+      "voice": false,
+      "q": "And what will this eventually cayse"
+    },
+    {
+      "t": "2026-04-05T18:43:37.584Z",
+      "voice": false,
+      "q": "I already feel that and I also feel that i can’t find fullfilmeebt"
+    },
+    {
+      "t": "2026-04-05T18:43:37.584Z",
+      "voice": false,
+      "q": "I already feel that and I also feel that i can’t find fullfilmeebt"
+    },
+    {
+      "t": "2026-04-05T18:43:37.584Z",
+      "voice": false,
+      "q": "I already feel that and I also feel that i can’t find fullfilmeebt"
+    },
+    {
+      "t": "2026-04-05T18:44:04.210Z",
+      "voice": false,
+      "q": "Anf the"
+    },
+    {
+      "t": "2026-04-05T18:44:04.210Z",
+      "voice": false,
+      "q": "Anf the"
+    },
+    {
+      "t": "2026-04-05T18:44:23.284Z",
+      "voice": false,
+      "q": "And then"
+    },
+    {
+      "t": "2026-04-08T01:30:09.826Z",
+      "voice": false,
+      "q": "There’s opening at swiggy for business development executive role, should I also see that as my career"
+    },
+    {
+      "t": "2026-04-19T05:50:41.625Z",
+      "voice": false,
+      "q": "But then why do I don’t have the motivation to start anything"
+    },
+    {
+      "t": "2026-04-19T05:50:41.625Z",
+      "voice": false,
+      "q": "But then why do I don’t have the motivation to start anything"
+    },
+    {
+      "t": "2026-04-19T05:50:41.625Z",
+      "voice": false,
+      "q": "But then why do I don’t have the motivation to start anything"
+    },
+    {
+      "t": "2026-04-19T05:50:41.625Z",
+      "voice": false,
+      "q": "But then why do I don’t have the motivation to start anything"
+    },
+    {
+      "t": "2026-04-19T05:51:39.288Z",
+      "voice": false,
+      "q": "And where should I start with"
+    },
+    {
+      "t": "2026-04-19T05:51:39.288Z",
+      "voice": false,
+      "q": "And where should I start with"
+    },
+    {
+      "t": "2026-04-19T05:51:39.288Z",
+      "voice": false,
+      "q": "And where should I start with"
+    },
+    {
+      "t": "2026-04-19T05:52:04.024Z",
+      "voice": false,
+      "q": "Should i start learning stocks"
+    },
+    {
+      "t": "2026-04-19T05:52:04.024Z",
+      "voice": false,
+      "q": "Should i start learning stocks"
+    },
+    {
+      "t": "2026-04-19T05:52:51.748Z",
+      "voice": false,
+      "q": "Will I have a job by oct 2026 🤣"
+    },
+    {
+      "t": "2026-04-19T05:53:51.090Z",
+      "voice": false,
+      "q": "How to know about the limiting belief thats been holding me back, I don’t know"
+    },
+    {
+      "t": "2026-04-19T05:55:24.385Z",
+      "voice": false,
+      "q": "Who might be the potential partners for financial moves"
+    }
+  ],
+  "posts": 0,
+  "callsMade": 0,
+  "callsReceived": 0
+}

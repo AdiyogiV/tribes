@@ -10,9 +10,10 @@
 import { VertexAI } from "@google-cloud/vertexai";
 
 const PROJECT = process.env.GOOGLE_CLOUD_PROJECT || "ty-dev-516d7";
-// Gemini publisher models are broadly available in us-central1.
-// Keep this configurable for future region migration.
-const LOCATION = process.env.VERTEX_LOCATION || "us-central1";
+// Use Vertex's global endpoint so Gemini requests route to the nearest
+// datacenter (lower TTFT for our India-based users) instead of pinning a
+// single far-away region. Override via VERTEX_LOCATION if ever needed.
+const LOCATION = process.env.VERTEX_LOCATION || "global";
 
 let _vertexAI;
 

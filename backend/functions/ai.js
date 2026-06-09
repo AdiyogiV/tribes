@@ -1,201 +1,13 @@
 import { onRequest } from "firebase-functions/v2/https";
 import { logger } from "../lib/firebase.js";
-import { db, FieldValue } from "../lib/firebase.js";
+import { db } from "../lib/firebase.js";
+import { getAuth } from "firebase-admin/auth";
+import { DateTime } from "luxon";
 import { getVertexAI, extractChunkText } from "../lib/vertex_client.js";
 import { getChatSystemPrompt } from "./prompts/chat.js";
-import { getDashaMeaning, getHouseMeaning, getTransitMeaning } from "../lib/search.js";
-import { getDailySearchContext } from "../lib/astro_context.js";
+import { getUserMemory } from "./user_memory.js";
 import { checkRateLimit as checkPersistentRateLimit, RATE_LIMIT_PRESETS } from "../lib/rate_limiter.js";
 import { CHAT_CONFIG, AI_MODELS } from "../lib/config.js";
-import { normalizeDasha } from "../lib/astro_helpers.js";
-
-// =============================================================================
-// TOPIC-AWARE ASTROLOGY SEARCH SYSTEM
-// Detects question topic and fetches relevant cached knowledge
-// =============================================================================
-
-/**
- * Detect the life area/topic from user's astrology question
- * @param {string} message - User's message
- * @returns {string} Topic: "career" | "relationships" | "health" | "children" | "wealth" | "spirituality" | "general"
- */
-function detectAstroQuestionTopic(message) {
-    const msg = message.toLowerCase();
-
-    // Career & Work
-    const careerPattern = /\b(job|career|work|business|profession|promotion|boss|office|company)\b/;
-    const careerPattern2 = /\b(interview|resign|fired|salary|employment|entrepreneur|startup|venture)\b/;
-    if (careerPattern.test(msg) || careerPattern2.test(msg)) {
-        return "career";
-    }
-
-    // Relationships & Marriage
-    const relPattern = /\b(marriage|married|marry|love|relationship|partner|spouse|wife|husband)\b/;
-    const relPattern2 = /\b(dating|boyfriend|girlfriend|divorce|engagement|romance|soulmate|wedding)\b/;
-    if (relPattern.test(msg) || relPattern2.test(msg)) {
-        return "relationships";
-    }
-
-    // Health & Wellness
-    const healthPattern = /\b(health|sick|disease|illness|body|energy|tired|fatigue|medical)\b/;
-    const healthPattern2 = /\b(doctor|hospital|surgery|medicine|recovery|wellness|mental|anxiety|depression|stress)\b/;
-    if (healthPattern.test(msg) || healthPattern2.test(msg)) {
-        return "health";
-    }
-
-    // Children & Family
-    const childPattern = /\b(child|children|baby|babies|pregnant|pregnancy|son|daughter)\b/;
-    const childPattern2 = /\b(kids|fertility|conception|mother|father|parent|family)\b/;
-    if (childPattern.test(msg) || childPattern2.test(msg)) {
-        return "children";
-    }
-
-    // Wealth & Finance
-    const wealthPattern = /\b(money|wealth|finance|income|rich|property|investment|savings)\b/;
-    const wealthPattern2 = /\b(debt|loan|profit|loss|business|stock|crypto|inheritance|prosperity)\b/;
-    if (wealthPattern.test(msg) || wealthPattern2.test(msg)) {
-        return "wealth";
-    }
-
-    // Spirituality & Growth
-    const spiritPattern = /\b(spiritual|spirituality|meditation|moksha|enlightenment|guru)\b/;
-    const spiritPattern2 = /\b(temple|worship|mantra|karma|dharma|path|purpose|meaning|soul)\b/;
-    if (spiritPattern.test(msg) || spiritPattern2.test(msg)) {
-        return "spirituality";
-    }
-
-    // Education & Learning
-    const eduPattern = /\b(education|study|exam|degree|college|university|school|learn|course|competitive|entrance|abroad)\b/;
-    if (eduPattern.test(msg)) {
-        return "education";
-    }
-
-    // Travel & Relocation
-    const travelPattern = /\b(travel|abroad|foreign|move|relocate|immigration|visa|settle|country|city)\b/;
-    if (travelPattern.test(msg)) {
-        return "travel";
-    }
-
-    return "general";
-}
-
-/**
- * Get relevant houses for a given life topic (Vedic astrology)
- * @param {string} topic - Life area topic
- * @returns {number[]} Array of relevant house numbers
- */
-function getRelevantHousesForTopic(topic) {
-    const TOPIC_HOUSES = {
-        career: [10, 6, 2, 11],
-        relationships: [7, 5, 2, 8],
-        health: [1, 6, 8, 12],
-        children: [5, 9, 2, 7],
-        wealth: [2, 11, 5, 9],
-        spirituality: [9, 12, 5, 8],
-        education: [4, 5, 9, 2],
-        travel: [9, 12, 3, 7],
-        general: [1, 10, 7, 4],
-    };
-    return TOPIC_HOUSES[topic] || TOPIC_HOUSES.general;
-}
-
-/**
- * Fetch topic-specific knowledge using EXISTING cached search functions
- * This is highly efficient - results are cached forever after first search
- * @param {Object} params - Parameters
- * @returns {Object} Topic-specific knowledge from cached searches
- */
-async function fetchTopicSpecificKnowledge({ topic, mahaDasha, antarDasha, relevantHouses, currentTransits }) {
-    const knowledge = { topic };
-
-    const searchPromises = [];
-
-    // 1. Topic-specific dasha interpretation (cached forever)
-    if (mahaDasha && antarDasha) {
-        const dashaArea = topic === "general" ? "general" : topic;
-        searchPromises.push(
-            getDashaMeaning(mahaDasha, antarDasha, dashaArea)
-                .then((result) => {
-                    knowledge.dashaForTopic = result;
-                })
-                .catch(() => { }),
-        );
-    }
-
-    // 2. Primary house meaning for this topic (cached forever)
-    const primaryHouse = relevantHouses[0];
-    if (primaryHouse) {
-        searchPromises.push(
-            getHouseMeaning(primaryHouse)
-                .then((result) => {
-                    knowledge.primaryHouseMeaning = result;
-                })
-                .catch(() => { }),
-        );
-    }
-
-    // 3. If we have current transits, get transit-to-relevant-house meanings
-    if (currentTransits && relevantHouses.length > 0) {
-        // Find which planets are transiting the relevant houses
-        const relevantTransits = [];
-        for (const [planet, data] of Object.entries(currentTransits)) {
-            if (data?.house && relevantHouses.includes(data.house)) {
-                relevantTransits.push({ planet, house: data.house });
-            }
-        }
-
-        // Fetch transit meanings for up to 2 most relevant transits
-        for (const transit of relevantTransits.slice(0, 2)) {
-            searchPromises.push(
-                getTransitMeaning(transit.planet, transit.house)
-                    .then((result) => {
-                        if (!knowledge.relevantTransitMeanings) knowledge.relevantTransitMeanings = [];
-                        knowledge.relevantTransitMeanings.push(result);
-                    })
-                    .catch(() => { }),
-            );
-        }
-    }
-
-    // Execute all searches in parallel
-    await Promise.all(searchPromises);
-
-    return knowledge;
-}
-
-// House lords based on Lagna (Vedic astrology - whole sign houses)
-const ZODIAC_SIGNS = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
-    "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
-const SIGN_RULERS = {
-    "Aries": "Mars", "Taurus": "Venus", "Gemini": "Mercury", "Cancer": "Moon",
-    "Leo": "Sun", "Virgo": "Mercury", "Libra": "Venus", "Scorpio": "Mars",
-    "Sagittarius": "Jupiter", "Capricorn": "Saturn", "Aquarius": "Saturn", "Pisces": "Jupiter",
-};
-
-/**
- * Calculate house lords based on Lagna (deterministic - no API call needed)
- * @param {string} lagna - Ascendant sign
- * @returns {Object|null} House lords object
- */
-function calculateHouseLords(lagna) {
-    if (!lagna) return null;
-
-    const lagnaIndex = ZODIAC_SIGNS.findIndex((sign) =>
-        sign.toLowerCase() === lagna.toLowerCase(),
-    );
-    if (lagnaIndex === -1) return null;
-
-    const houseLords = {};
-    for (let h = 1; h <= 12; h++) {
-        const signIndex = (lagnaIndex + h - 1) % 12;
-        const sign = ZODIAC_SIGNS[signIndex];
-        houseLords[h] = {
-            sign,
-            lord: SIGN_RULERS[sign],
-        };
-    }
-    return houseLords;
-}
 
 // =============================================================================
 // CONFIGURATION
@@ -203,6 +15,122 @@ function calculateHouseLords(lagna) {
 
 // Using centralized config from lib/config.js
 const MAX_HISTORY_MESSAGES = CHAT_CONFIG.MAX_HISTORY_MESSAGES;
+
+// =============================================================================
+// SERVER-SIDE USER CONTEXT FETCH
+// Fetches astrology + ayurveda data from Firestore using the user's uid.
+// Called when the request carries a valid Firebase ID token.
+// =============================================================================
+
+/**
+ * Build the ayurveda sub-object that buildWellnessContextString() expects.
+ * Mirrors the structure produced by AstrologyContextBuilder in Flutter.
+ * @param {Object} ayurvedaData - Raw ayurvedaData from Firestore
+ * @returns {Object}
+ */
+function buildAyurvedaContext(ayurvedaData) {
+    const ctx = {};
+
+    if (ayurvedaData.prakriti) {
+        ctx.prakriti = {
+            type: ayurvedaData.prakriti.type,
+            dominant: ayurvedaData.prakriti.dominant,
+            vata: ayurvedaData.prakriti.vata,
+            pitta: ayurvedaData.prakriti.pitta,
+            kapha: ayurvedaData.prakriti.kapha,
+        };
+    }
+
+    if (ayurvedaData.agniType) ctx.agniType = ayurvedaData.agniType;
+
+    if (ayurvedaData.manasPrakriti) {
+        ctx.manasPrakriti = {
+            dominant: ayurvedaData.manasPrakriti.dominant,
+            sattva: ayurvedaData.manasPrakriti.sattva,
+            rajas: ayurvedaData.manasPrakriti.rajas,
+            tamas: ayurvedaData.manasPrakriti.tamas,
+        };
+    }
+
+    if (Array.isArray(ayurvedaData.healthVulnerabilities) && ayurvedaData.healthVulnerabilities.length) {
+        // Firestore stores objects with a description field; flatten to string array
+        ctx.healthVulnerabilities = ayurvedaData.healthVulnerabilities
+            .map((v) => (typeof v === "string" ? v : v.description))
+            .filter(Boolean);
+    }
+
+    if (ayurvedaData.vikriti) {
+        ctx.vikriti = ayurvedaData.vikriti; // { vata, pitta, kapha, isBalanced, imbalances, factors }
+    }
+
+    return ctx;
+}
+
+/**
+ * Fetch full user context (astrology + ayurveda + today's insight) from Firestore.
+ * Mirrors AstrologyContextBuilder.buildContext() in Flutter.
+ * @param {string} uid - Firebase user ID
+ * @returns {Promise<Object|null>} Context map, or null if no astrology data
+ */
+async function fetchUserContext(uid) {
+    const today = DateTime.now().setZone("Asia/Kolkata").toFormat("yyyy-MM-dd");
+
+    const [userSnap, insightSnap] = await Promise.all([
+        db.doc(`users/${uid}`).get(),
+        db.doc(`users/${uid}/dailyInsights/${today}`).get(),
+    ]);
+
+    if (!userSnap.exists) return null;
+
+    const userData = userSnap.data();
+    const astroData = userData.astrologyData || null;
+    const ayurvedaData = userData.ayurvedaData || null;
+
+    // No astrology data means no personalized context available
+    if (!astroData) return null;
+
+    // Start with all astrologyData fields (sunSign, moonSign, ascendant, nakshatra,
+    // birthChartData, processedPlanets, currentDasha, doshas, yogas, etc.)
+    const context = { ...astroData };
+
+    // Add daily insight data
+    if (insightSnap.exists) {
+        const insight = insightSnap.data();
+
+        // Cosmic weather and forecasts from the pre-generated insight context
+        if (insight.astroContext?.cosmicWeather) {
+            context.cosmicWeather = insight.astroContext.cosmicWeather;
+        }
+        if (insight.astroContext?.forecasts) {
+            context.forecasts = insight.astroContext.forecasts;
+        }
+
+        // Today's transits, panchang, shad bala for real-time context
+        if (insight.astrologicalData) {
+            context.todayTransits = insight.astrologicalData.transits || null;
+            context.todayPanchang = insight.astrologicalData.panchang || null;
+            context.todayShadBala = insight.astrologicalData.shadBala || null;
+        }
+
+        // Display content (insight message and sections)
+        if (insight.displayMessage) context.dailyInsight = insight.displayMessage;
+        if (insight.displayTheme) context.insightTheme = insight.displayTheme;
+        if (Array.isArray(insight.sections)) context.insightSections = insight.sections;
+    }
+
+    // Attach ayurveda context
+    if (ayurvedaData?.prakriti) {
+        context.ayurveda = buildAyurvedaContext(ayurvedaData);
+    }
+
+    // Attach durable memory (cross-session life threads) when present. This is
+    // what lets HolyCow open with continuity instead of amnesia. Best-effort —
+    // a missing/failed memory never blocks the chat.
+    const memory = await getUserMemory(uid);
+    if (memory) context.memory = memory;
+
+    return context;
+}
 
 // =============================================================================
 // MAIN AI CHAT ENDPOINT
@@ -277,17 +205,49 @@ export const aiChat = onRequest(
 
             const chatId = body.chatId ? String(body.chatId) : `chat-${Date.now()}`;
             const userMessage = messages[messages.length - 1]?.content;
-            const astrologyContext = body.astrologyContext || null;
             const userLocation = body.location || null;
             const audioUrl = body.audioUrl || null;
             // Preserve explicit chatSource from dedicated pages (astrology/wellness).
             // null = unified HolyCow mode (main chat with auto-loaded context).
             const chatSource = body.chatSource || null;
 
+            // ── Context resolution ──────────────────────────────────────────
+            // Prefer server-fetched context (from Firestore) when a valid Firebase
+            // ID token is present — avoids sending large payloads over the wire and
+            // always includes the freshest daily insight data.
+            // Falls back to body.astrologyContext for old clients / guest sessions.
+            let astrologyContext = null;
+            let contextSource = "none";
+
+            const authHeader = req.headers["authorization"] || "";
+            const idToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
+
+            if (idToken) {
+                try {
+                    const decoded = await getAuth().verifyIdToken(idToken);
+                    astrologyContext = await fetchUserContext(decoded.uid);
+                    contextSource = astrologyContext ? "server" : "server_no_data";
+                } catch (authErr) {
+                    // Invalid/expired token — treat as guest, don't 401
+                    logger.warn("ID token verification failed — falling back to guest mode", {
+                        structuredData: true,
+                        chatId,
+                        error: authErr.message,
+                    });
+                }
+            }
+
+            // Backwards compat: old clients / guest users may send context in body
+            if (!astrologyContext && body.astrologyContext) {
+                astrologyContext = body.astrologyContext;
+                contextSource = "client";
+            }
+
             logger.info("AI chat context", {
                 structuredData: true,
                 chatId,
                 chatSource,
+                contextSource,
                 hasLocation: !!userLocation,
                 location: userLocation,
                 hasAstrology: !!astrologyContext,
@@ -295,15 +255,18 @@ export const aiChat = onRequest(
             });
 
             if (astrologyContext) {
-                logger.info("Received astrology context", {
+                logger.info("Resolved astrology context", {
                     structuredData: true,
                     chatId,
+                    contextSource,
                     hasAscendant: !!astrologyContext.ascendant,
                     hasMoonSign: !!astrologyContext.moonSign,
                     hasSunSign: !!astrologyContext.sunSign,
                     hasNakshatra: !!astrologyContext.nakshatra,
                     hasDasha: !!astrologyContext.currentDasha,
                     hasDailyInsight: !!astrologyContext.dailyInsight,
+                    hasAyurveda: !!astrologyContext.ayurveda,
+                    hasTodayTransits: !!astrologyContext.todayTransits,
                 });
             }
 
@@ -312,14 +275,14 @@ export const aiChat = onRequest(
                 return res.status(400).json({ error: "Last user message is empty" });
             }
 
-            await initialiseSession(chatId);
-
             res.setHeader("Cache-Control", "no-cache");
             res.setHeader("Content-Type", "text/event-stream");
             res.setHeader("Connection", "keep-alive");
             res.flushHeaders();
 
-            write({ event: "session", chatId, firestorePath: `ai_chat_sessions/${chatId}` });
+            // SSE is the single source of truth. The `session` event just lets the
+            // client correlate the stream with its chatId — no Firestore listener.
+            write({ event: "session", chatId });
 
             // Performance tracking
             const performanceMetrics = {
@@ -330,10 +293,13 @@ export const aiChat = onRequest(
                 totalTime: null,
             };
 
-            // Enrich astrology context only for astrology chat (not wellness)
-            if (astrologyContext && chatSource !== "wellness") {
-                await enrichAstrologyContext(astrologyContext, userMessage, chatId);
-            }
+            // Context is fully pre-loaded from Firestore (fetchUserContext):
+            //   - birth chart, dasha, planets, yogas, doshas
+            //   - today's transits, panchang, shadBala
+            //   - cosmicWeather + forecasts (already in dailyInsights.astroContext)
+            // No enrichment needed — Gemini interprets all Vedic data natively.
+            // The old enrichAstrologyContext() was redundant (cosmic weather already
+            // in daily insight) and expensive (extra Gemini+search calls per message).
 
             // Route to appropriate handler based on input type
             let accumulated = "";
@@ -404,14 +370,6 @@ export const aiChat = onRequest(
                 ...metrics,
             });
 
-            await db.collection("ai_chat_sessions").doc(chatId).update({
-                status: "completed",
-                response: accumulated,
-                updatedAt: FieldValue.serverTimestamp(),
-                completedAt: FieldValue.serverTimestamp(),
-                performanceMetrics: metrics,
-            });
-
             write({ event: "complete", content: accumulated });
             res.end();
         } catch (error) {
@@ -419,18 +377,6 @@ export const aiChat = onRequest(
                 structuredData: true,
                 error: String(error),
             });
-
-            try {
-                const chatId = req.body?.chatId;
-                if (chatId) {
-                    await saveFailure(chatId, error.message || "Unknown error");
-                }
-            } catch (persistError) {
-                logger.error("Failed to record streaming failure", {
-                    structuredData: true,
-                    error: String(persistError),
-                });
-            }
 
             write({ event: "error", error: error.message || "Unknown error" });
             res.end();
@@ -471,102 +417,6 @@ function normaliseMessages(rawMessages) {
         .filter((message) => message.content.length > 0);
 }
 
-async function initialiseSession(chatId) {
-    // Reset sequence counter for this chat
-    stepSequenceCounters.set(chatId, 0);
-
-    // Reset session for new request
-    await db.collection("ai_chat_sessions").doc(chatId).set({
-        chatId,
-        status: "processing",
-        thoughtSteps: [],
-        response: null,
-        error: null,
-        searchResults: null,
-        createdAt: FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
-    }, { merge: false });
-}
-
-async function saveFailure(chatId, error) {
-    await db.collection("ai_chat_sessions").doc(chatId).update({
-        status: "failed",
-        error,
-        updatedAt: FieldValue.serverTimestamp(),
-    });
-}
-
-/**
- * Enrich astrology context with cached cosmic data and topic-specific knowledge
- */
-async function enrichAstrologyContext(astrologyContext, userMessage, chatId) {
-    logger.info("Enriching astrology context", {
-        structuredData: true,
-        chatId,
-        hasAscendant: !!astrologyContext.ascendant,
-        hasMoonSign: !!astrologyContext.moonSign,
-    });
-
-    // Load cached GLOBAL cosmic data (retrogrades, moon phase, etc.)
-    try {
-        const cachedSearchContext = await getDailySearchContext();
-        if (cachedSearchContext) {
-            if (!astrologyContext.cosmicWeather) {
-                astrologyContext.cosmicWeather = {};
-            }
-            astrologyContext.cosmicWeather = {
-                ...astrologyContext.cosmicWeather,
-                retrogrades: astrologyContext.cosmicWeather.retrogrades || cachedSearchContext.global?.events?.retrogrades || [],
-                moonPhase: astrologyContext.cosmicWeather.moonPhase || cachedSearchContext.global?.events?.moonPhase,
-                eclipse: astrologyContext.cosmicWeather.eclipse || cachedSearchContext.global?.events?.eclipse,
-                todayNews: astrologyContext.cosmicWeather.todayNews || cachedSearchContext.global?.todayNews?.summary?.substring(0, 400),
-                weekly: astrologyContext.cosmicWeather.weekly || cachedSearchContext.global?.weekly?.overview?.substring(0, 300),
-            };
-
-            if (!astrologyContext.retrogradeGuides && cachedSearchContext.retrogradeGuides) {
-                astrologyContext.retrogradeGuides = cachedSearchContext.retrogradeGuides;
-            }
-        }
-    } catch (error) {
-        logger.warn("Failed to load cached cosmic intelligence", { error: String(error) });
-    }
-
-    // Topic-aware knowledge loading
-    try {
-        const questionTopic = detectAstroQuestionTopic(userMessage);
-        const relevantHouses = getRelevantHousesForTopic(questionTopic);
-
-        const { mahaDasha, antarDasha } = normalizeDasha(astrologyContext.currentDasha);
-
-        const topicKnowledge = await fetchTopicSpecificKnowledge({
-            topic: questionTopic,
-            mahaDasha,
-            antarDasha,
-            relevantHouses,
-            currentTransits: astrologyContext.todayTransits,
-        });
-
-        astrologyContext.topicKnowledge = topicKnowledge;
-        astrologyContext.questionTopic = questionTopic;
-        astrologyContext.relevantHouses = relevantHouses;
-
-        if (astrologyContext.ascendant) {
-            astrologyContext.houseLords = calculateHouseLords(astrologyContext.ascendant);
-        }
-
-        logger.info("Astrology context enriched", {
-            structuredData: true,
-            chatId,
-            topic: questionTopic,
-            hasCosmicWeather: !!astrologyContext.cosmicWeather,
-            hasTopicKnowledge: !!topicKnowledge,
-            hasHouseLords: !!astrologyContext.houseLords,
-        });
-    } catch (topicError) {
-        logger.warn("Topic enrichment failed, continuing", { error: String(topicError) });
-    }
-}
-
 // =============================================================================
 // GEMINI STREAMING - AUDIO
 // =============================================================================
@@ -585,6 +435,8 @@ async function streamFromGemini({ chatId, audioUrl, messages, write, astrologyCo
     });
 
     const vertexAI = getVertexAI();
+    // Always include the search tool — system prompt instructs model to only invoke it
+    // for genuinely live/current data needs. Rich context covers everything else.
     const model = vertexAI.getGenerativeModel({
         model: AI_MODELS.GEMINI_FLASH,
         tools: [{ googleSearch: {} }],
@@ -627,22 +479,23 @@ async function streamFromGemini({ chatId, audioUrl, messages, write, astrologyCo
 
     const systemPrompt = getChatSystemPrompt(astrologyContext, userLocation, true, chatSource);
 
-    const historyText = messages.slice(-MAX_HISTORY_MESSAGES).map((msg) => {
-        return `${msg.role === "assistant" ? "Assistant" : "User"}: ${msg.content}`;
-    }).join("\n\n");
+    // Build proper multi-turn conversation format for Gemini API
+    let contents = buildGeminiContents(messages.slice(0, -1)); // all but last (current user message)
 
-    const userParts = [];
-
-    if (historyText.trim()) {
-        userParts.push({ text: "\n\n=== CONVERSATION HISTORY ===\n" + historyText });
-    }
-
-    userParts.push({ text: "\n\n=== USER'S VOICE MESSAGE ===\nListen to and respond to this voice message:" });
-    userParts.push({
-        inlineData: {
-            mimeType,
-            data: audioBase64,
+    // Add current user message with audio
+    const userParts = [
+        { text: "Listen to and respond to this voice message:" },
+        {
+            inlineData: {
+                mimeType,
+                data: audioBase64,
+            },
         },
+    ];
+
+    contents.push({
+        role: "user",
+        parts: userParts,
     });
 
     let accumulated = "";
@@ -650,7 +503,7 @@ async function streamFromGemini({ chatId, audioUrl, messages, write, astrologyCo
 
     try {
         const result = await model.generateContentStream({
-            contents: [{ role: "user", parts: userParts }],
+            contents,
             systemInstruction: systemPrompt,
         });
 
@@ -700,6 +553,29 @@ async function streamFromGemini({ chatId, audioUrl, messages, write, astrologyCo
 }
 
 // =============================================================================
+// HELPER: Build proper Gemini multi-turn conversation format
+// =============================================================================
+function buildGeminiContents(messages, maxHistoryMessages = MAX_HISTORY_MESSAGES) {
+    if (!messages || messages.length === 0) {
+        return [];
+    }
+
+    const contents = [];
+    const recentMessages = messages.slice(-maxHistoryMessages);
+
+    for (const msg of recentMessages) {
+        // Gemini API requires "model" role instead of "assistant"
+        const role = msg.role === "assistant" ? "model" : "user";
+        contents.push({
+            role,
+            parts: [{ text: msg.content }],
+        });
+    }
+
+    return contents;
+}
+
+// =============================================================================
 // GEMINI STREAMING - TEXT
 // =============================================================================
 
@@ -717,6 +593,8 @@ async function streamFromGeminiText({ chatId, userMessage, messages, write, astr
     });
 
     const vertexAI = getVertexAI();
+    // Always include the search tool — system prompt instructs model to only invoke it
+    // for genuinely live/current data needs. Rich context covers everything else.
     const model = vertexAI.getGenerativeModel({
         model: AI_MODELS.GEMINI_FLASH,
         tools: [{ googleSearch: {} }],
@@ -724,24 +602,21 @@ async function streamFromGeminiText({ chatId, userMessage, messages, write, astr
 
     const systemPrompt = getChatSystemPrompt(astrologyContext, userLocation, false, chatSource);
 
-    const historyText = messages.slice(-MAX_HISTORY_MESSAGES).map((msg) => {
-        return `${msg.role === "assistant" ? "Assistant" : "User"}: ${msg.content}`;
-    }).join("\n\n");
+    // Build proper multi-turn conversation format for Gemini API
+    let contents = buildGeminiContents(messages.slice(0, -1)); // all but last (current user message)
 
-    const userParts = [];
-
-    if (historyText.trim()) {
-        userParts.push({ text: "\n\n=== CONVERSATION HISTORY ===\n" + historyText });
-    }
-
-    userParts.push({ text: "\n\n=== USER'S MESSAGE ===\n" + userMessage });
+    // Add current user message
+    contents.push({
+        role: "user",
+        parts: [{ text: userMessage }],
+    });
 
     let accumulated = "";
     let firstTokenReceived = false;
 
     try {
         const result = await model.generateContentStream({
-            contents: [{ role: "user", parts: userParts }],
+            contents,
             systemInstruction: systemPrompt,
         });
 
@@ -790,62 +665,4 @@ async function streamFromGeminiText({ chatId, userMessage, messages, write, astr
     return accumulated;
 }
 
-// =============================================================================
-// GET CHAT PROMPT CONFIG (callable for Flutter - single source of truth)
-// =============================================================================
 
-/** Handler: Get chat prompt config. Extracted for gateway reuse. */
-export function handleGetChatPromptConfig(request) {
-    const { chatSource, astrologyContext, userLocation, isVoice } = request.data || {};
-    const source = chatSource || null;
-    const systemPrompt = getChatSystemPrompt(
-        astrologyContext || null,
-        userLocation || null,
-        !!isVoice,
-        source,
-    );
-    return { systemPrompt };
-}
-
-// =============================================================================
-// THOUGHT STEPS (for real-time UI updates)
-// =============================================================================
-
-// Global sequence counter per chat to ensure step ordering
-const stepSequenceCounters = new Map();
-
-// REMOVED: getNextSequence — was exported "for use by search.js" but never imported anywhere.
-
-function addThoughtStep(chatId, stepData) { // eslint-disable-line no-unused-vars
-    const currentSeq = stepSequenceCounters.get(chatId) || 0;
-    const newSeq = currentSeq + 1;
-    stepSequenceCounters.set(chatId, newSeq);
-
-    const step = {
-        id: `step-${Date.now()}-${newSeq}-${Math.random().toString(36).slice(2, 7)}`,
-        type: stepData.type || "thinking",
-        message: stepData.message || "",
-        query: stepData.query || null,
-        timestamp: new Date().toISOString(),
-        sequence: newSeq,
-        metadata: stepData.metadata || {},
-        ...(stepData.firestorePath && { firestorePath: stepData.firestorePath }),
-        ...(stepData.results && Array.isArray(stepData.results) && stepData.results.length > 0 && {
-            results: stepData.results,
-        }),
-    };
-
-    const docRef = db.collection("ai_chat_sessions").doc(chatId);
-
-    return docRef.update({
-        thoughtSteps: FieldValue.arrayUnion(step),
-        updatedAt: FieldValue.serverTimestamp(),
-    }).catch((error) => {
-        logger.error("Failed to add thought step", {
-            structuredData: true,
-            chatId,
-            stepType: stepData.type,
-            error: String(error),
-        });
-    });
-}

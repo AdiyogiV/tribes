@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aurogram — PMF Data Snapshot</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>body{font-family:ui-sans-serif,system-ui,-apple-system,sans-serif}</style>
+</head>
+<body class="bg-gray-50 text-gray-900">
+<div class="max-w-6xl mx-auto px-4 py-8">
+
+  <header class="mb-8">
+    <h1 class="text-3xl font-bold">🐄 Aurogram — PMF Data Snapshot</h1>
+    <p class="text-gray-500 mt-1">Internal research · generated 2026-06-09 21:18 · 231 real users (test users excluded)</p>
+  </header>
+
+  <!-- EXEC SUMMARY TOP -->
+  <section class="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-8">
+    <h2 class="text-lg font-bold text-blue-900 mb-3">Executive Insights</h2>
+    <ul class="space-y-2 text-sm text-blue-950">
+      <li>🐄 <b>HolyCow IS the product.</b> 69 of 231 real users (29.9%) used the AI; AI conversations outnumber human DMs ~11:1.</li>
+      <li>📉 <b>Retention is the crisis.</b> 87.0% are one-and-done (never returned after signup day). D7 = 9.2%, D30 = 6.8%.</li>
+      <li>👑 <b>Extreme power-law.</b> Top 10% of AI users (6 people) generate 74.0% of all questions. One user alone sent 1523.</li>
+      <li>🎤 <b>We're blind to 37% of demand.</b> 1449 of 4118 messages are voice — and the spoken text is <b>not transcribed/stored</b>. We literally cannot read what 4 in 10 questions ask.</li>
+      <li>🚪 <b>Activation leaks early.</b> Only 22.5% finish FTUE; 57.1% have astro data. The funnel loses most people before the magic.</li>
+      <li>🔮 <b>What they want from us (the astrologers):</b> Timing/prediction, Career & money, and Love/marriage dominate the readable questions.</li>
+    </ul>
+  </section>
+
+  <!-- KPIs -->
+  <section class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    
+  <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+    <div class="text-3xl font-bold text-blue-700">231</div>
+    <div class="text-sm font-medium text-gray-700 mt-1">Real users</div>
+    <div class="text-xs text-gray-500 mt-1">20 test excluded</div>
+  </div>
+    
+  <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+    <div class="text-3xl font-bold text-blue-700">69</div>
+    <div class="text-sm font-medium text-gray-700 mt-1">Used HolyCow AI</div>
+    <div class="text-xs text-gray-500 mt-1">29.9% of users</div>
+  </div>
+    
+  <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+    <div class="text-3xl font-bold text-blue-700">788</div>
+    <div class="text-sm font-medium text-gray-700 mt-1">AI conversations</div>
+    <div class="text-xs text-gray-500 mt-1">3509 user messages</div>
+  </div>
+    
+  <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+    <div class="text-3xl font-bold text-red-700">1449</div>
+    <div class="text-sm font-medium text-gray-700 mt-1">Voice messages</div>
+    <div class="text-xs text-gray-500 mt-1">35.2% of all msgs</div>
+  </div>
+    
+  <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+    <div class="text-3xl font-bold text-green-700">50.9</div>
+    <div class="text-sm font-medium text-gray-700 mt-1">Avg msgs / active user</div>
+    <div class="text-xs text-gray-500 mt-1">engagement depth</div>
+  </div>
+    
+  <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+    <div class="text-3xl font-bold text-red-700">87.0%</div>
+    <div class="text-sm font-medium text-gray-700 mt-1">One-and-done</div>
+    <div class="text-xs text-gray-500 mt-1">never returned</div>
+  </div>
+    
+  <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+    <div class="text-3xl font-bold text-red-700">22.5%</div>
+    <div class="text-sm font-medium text-gray-700 mt-1">FTUE completed</div>
+    <div class="text-xs text-gray-500 mt-1">52 users</div>
+  </div>
+    
+  <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+    <div class="text-3xl font-bold text-blue-700">57.1%</div>
+    <div class="text-sm font-medium text-gray-700 mt-1">Astro setup done</div>
+    <div class="text-xs text-gray-500 mt-1">132 users</div>
+  </div>
+  </section>
+
+  <!-- charts grid -->
+  <section class="grid md:grid-cols-2 gap-6 mb-8">
+    <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+      <h3 class="font-semibold mb-3">Question themes (readable text only)</h3>
+      <div style="height:300px"><canvas id="themes"></canvas></div>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+      <h3 class="font-semibold mb-3">Feature reach (real users)</h3>
+      <div style="height:300px"><canvas id="reach"></canvas></div>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+      <h3 class="font-semibold mb-3">Conversation depth (user msgs per convo)</h3>
+      <div style="height:300px"><canvas id="depth"></canvas></div>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+      <h3 class="font-semibold mb-3">Retention curve (lifespan-based)</h3>
+      <div style="height:300px"><canvas id="ret"></canvas></div>
+    </div>
+  </section>
+
+  <section class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm mb-8">
+    <h3 class="font-semibold mb-3">Daily HolyCow activity</h3>
+    <div style="height:320px"><canvas id="daily"></canvas></div>
+  </section>
+
+  <!-- monthly table -->
+  <section class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm mb-8">
+    <h3 class="font-semibold mb-3">Monthly breakdown</h3>
+    <table class="w-full text-sm">
+      <thead><tr class="text-left text-gray-500 border-b">
+        <th class="py-2">Month</th><th>User messages</th><th>Active days</th><th>Msgs/active day</th></tr></thead>
+      <tbody>
+      <tr class="border-b border-gray-100">
+        <td class="py-2 font-medium">2025-11</td><td>14</td><td>4</td>
+        <td>4</td></tr><tr class="border-b border-gray-100">
+        <td class="py-2 font-medium">2025-12</td><td>583</td><td>16</td>
+        <td>36</td></tr><tr class="border-b border-gray-100">
+        <td class="py-2 font-medium">2026-01</td><td>810</td><td>21</td>
+        <td>39</td></tr><tr class="border-b border-gray-100">
+        <td class="py-2 font-medium">2026-02</td><td>693</td><td>19</td>
+        <td>36</td></tr><tr class="border-b border-gray-100">
+        <td class="py-2 font-medium">2026-03</td><td>544</td><td>26</td>
+        <td>21</td></tr><tr class="border-b border-gray-100">
+        <td class="py-2 font-medium">2026-04</td><td>830</td><td>21</td>
+        <td>40</td></tr><tr class="border-b border-gray-100">
+        <td class="py-2 font-medium">2026-05</td><td>399</td><td>17</td>
+        <td>23</td></tr><tr class="border-b border-gray-100">
+        <td class="py-2 font-medium">2026-06</td><td>220</td><td>9</td>
+        <td>24</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- power users -->
+  <section class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm mb-8">
+    <h3 class="font-semibold mb-3">Top 10 power users (by AI questions)</h3>
+    <table class="w-full text-sm">
+      <thead><tr class="text-left text-gray-500 border-b">
+        <th class="py-2">User</th><th>AI msgs</th><th>Convos</th><th>Voice</th><th>Posts</th><th>Astro</th><th>Lifespan (d)</th></tr></thead>
+      <tbody>
+      <tr class="border-b border-gray-100">
+        <td class="py-2 font-medium">59029414</td>
+        <td>1523</td><td>96</td>
+        <td>1182</td><td>0</td>
+        <td>✅</td><td>81</td></tr><tr class="border-b border-gray-100">
+        <td class="py-2 font-medium">Mishthi</td>
+        <td>273</td><td>23</td>
+        <td>27</td><td>0</td>
+        <td>✅</td><td>0</td></tr><tr class="border-b border-gray-100">
+        <td class="py-2 font-medium">Abhinav</td>
+        <td>252</td><td>62</td>
+        <td>72</td><td>9</td>
+        <td>✅</td><td>182</td></tr><tr class="border-b border-gray-100">
+        <td class="py-2 font-medium">Anna</td>
+        <td>243</td><td>38</td>
+        <td>17</td><td>0</td>
+        <td>✅</td><td>0</td></tr><tr class="border-b border-gray-100">
+        <td class="py-2 font-medium">S</td>
+        <td>158</td><td>32</td>
+        <td>0</td><td>0</td>
+        <td>✅</td><td>0</td></tr><tr class="border-b border-gray-100">
+        <td class="py-2 font-medium">Raghavi</td>
+        <td>146</td><td>11</td>
+        <td>0</td><td>0</td>
+        <td>✅</td><td>1</td></tr><tr class="border-b border-gray-100">
+        <td class="py-2 font-medium">Aravind</td>
+        <td>146</td><td>22</td>
+        <td>0</td><td>0</td>
+        <td>✅</td><td>10</td></tr><tr class="border-b border-gray-100">
+        <td class="py-2 font-medium">Khyati</td>
+        <td>98</td><td>22</td>
+        <td>0</td><td>0</td>
+        <td>✅</td><td>0</td></tr><tr class="border-b border-gray-100">
+        <td class="py-2 font-medium">Ajay</td>
+        <td>65</td><td>7</td>
+        <td>63</td><td>4</td>
+        <td>✅</td><td>464</td></tr><tr class="border-b border-gray-100">
+        <td class="py-2 font-medium">Ujitha</td>
+        <td>61</td><td>7</td>
+        <td>34</td><td>0</td>
+        <td>✅</td><td>0</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- EXEC SUMMARY BOTTOM: recommendations -->
+  <section class="bg-amber-50 border border-amber-200 rounded-xl p-6 mb-8">
+    <h2 class="text-lg font-bold text-amber-900 mb-3">So what? — Recommended next moves</h2>
+    <ol class="list-decimal ml-5 space-y-2 text-sm text-amber-950">
+      <li><b>Fix the voice blind spot first.</b> Transcribe & store voice queries. 37% of demand is invisible to us — this is the single highest-leverage data fix.</li>
+      <li><b>Treat D1 retention as THE metric.</b> 87% one-and-done means the loop never forms. Instrument & A/B the first-session experience before building new features (YAGNI on everything else).</li>
+      <li><b>Mine the power users.</b> 6 people drive 74.0% of usage — interview them, find the "aha", replicate it for the other 90%.</li>
+      <li><b>Double down on Timing, Career, Love.</b> That's what people actually ask. Make HolyCow exceptional at these three before breadth.</li>
+      <li><b>Repair the activation funnel.</b> &lt;22.5% FTUE completion. Most never reach the astro setup that powers good answers.</li>
+      <li><b>THEN wire lean analytics</b> (the dead AnalyticsService) to track these specific funnels going forward — instrument what the data proved matters, not everything.</li>
+    </ol>
+  </section>
+
+  <footer class="text-xs text-gray-400 text-center py-4">
+    Aurogram internal PMF snapshot · data from Firestore (project ty-dev-516d7) · raw CSVs in backend/analysis/
+  </footer>
+</div>
+
+<script>
+const C = { blue:"#0053e2", spark:"#ffc220", red:"#ea1100", green:"#2a8703", gray:"#94a3b8" };
+new Chart(themes, { type:"bar", data:{ labels:["Timing / Prediction","Career / Work / Money","Love / Marriage","Travel / Relocation","Health","Self / Personality","Children / Family","Spiritual / Remedy","Education"],
+  datasets:[{ data:[348,221,180,48,39,39,34,21,19], backgroundColor:C.blue }]},
+  options:{ indexAxis:"y", responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}} }});
+new Chart(reach, { type:"bar", data:{ labels:["HolyCow AI","Astro setup","Daily insights","Ayurveda","FTUE done","Posted","Has followers","Human DMs"],
+  datasets:[{ data:[69,132,132,85,52,38,38,30], backgroundColor:C.spark }]},
+  options:{ indexAxis:"y", responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}} }});
+new Chart(depth, { type:"bar", data:{ labels:["1 msg","2-3","4-9","10-24","25+"],
+  datasets:[{ data:[365,220,134,40,29], backgroundColor:C.green }]},
+  options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}} }});
+new Chart(ret, { type:"line", data:{ labels:["D0","D1","D7","D14","D30"],
+  datasets:[{ data:[207, 27, 19, 17, 14],
+  borderColor:C.red, backgroundColor:"rgba(234,17,0,.1)", fill:true, tension:.3 }]},
+  options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}} }});
+new Chart(daily, { type:"line", data:{ labels:["2025-11-12","2025-11-20","2025-11-27","2025-11-29","2025-12-01","2025-12-02","2025-12-03","2025-12-04","2025-12-05","2025-12-09","2025-12-10","2025-12-11","2025-12-14","2025-12-17","2025-12-18","2025-12-21","2025-12-22","2025-12-24","2025-12-25","2025-12-27","2026-01-06","2026-01-07","2026-01-08","2026-01-09","2026-01-10","2026-01-11","2026-01-12","2026-01-13","2026-01-14","2026-01-15","2026-01-16","2026-01-19","2026-01-20","2026-01-21","2026-01-22","2026-01-23","2026-01-24","2026-01-25","2026-01-26","2026-01-27","2026-01-31","2026-02-01","2026-02-02","2026-02-03","2026-02-04","2026-02-05","2026-02-06","2026-02-07","2026-02-09","2026-02-12","2026-02-14","2026-02-17","2026-02-18","2026-02-19","2026-02-20","2026-02-21","2026-02-22","2026-02-25","2026-02-26","2026-02-27","2026-03-01","2026-03-02","2026-03-03","2026-03-04","2026-03-05","2026-03-06","2026-03-07","2026-03-08","2026-03-09","2026-03-11","2026-03-12","2026-03-13","2026-03-14","2026-03-17","2026-03-18","2026-03-19","2026-03-20","2026-03-22","2026-03-23","2026-03-24","2026-03-25","2026-03-26","2026-03-27","2026-03-29","2026-03-30","2026-03-31","2026-04-02","2026-04-03","2026-04-04","2026-04-05","2026-04-07","2026-04-08","2026-04-10","2026-04-11","2026-04-12","2026-04-15","2026-04-16","2026-04-17","2026-04-19","2026-04-20","2026-04-22","2026-04-23","2026-04-24","2026-04-25","2026-04-26","2026-04-28","2026-04-30","2026-05-01","2026-05-03","2026-05-04","2026-05-11","2026-05-13","2026-05-14","2026-05-15","2026-05-16","2026-05-18","2026-05-19","2026-05-22","2026-05-26","2026-05-27","2026-05-28","2026-05-29","2026-05-30","2026-05-31","2026-06-01","2026-06-02","2026-06-03","2026-06-04","2026-06-05","2026-06-06","2026-06-07","2026-06-08","2026-06-09"],
+  datasets:[
+    { label:"User messages", data:[1,1,1,11,12,15,282,206,1,13,31,2,1,1,1,6,1,2,6,3,59,154,7,13,3,71,100,19,6,31,44,3,6,38,64,88,17,41,3,21,22,51,11,43,150,6,10,1,14,1,3,11,5,23,78,1,45,36,4,200,67,44,3,5,25,1,25,34,76,9,3,6,8,4,24,24,82,15,16,4,1,10,3,6,3,46,6,1,15,25,1,5,1,6,1,3,4,55,14,22,11,14,1,7,81,541,16,1,1,1,23,9,1,41,3,14,1,7,4,63,157,57,14,2,10,3,57,28,14,10,37,22,39], borderColor:C.blue, tension:.2, pointRadius:0 },
+    { label:"Active users", data:[1,1,1,1,1,2,1,2,1,2,2,1,1,1,1,3,1,1,1,1,6,7,2,3,2,5,4,3,1,1,1,1,1,3,2,8,2,1,2,1,2,2,2,3,4,1,1,1,3,1,1,3,3,2,1,1,1,1,2,1,3,2,1,1,2,1,2,2,2,1,1,1,2,1,1,1,1,1,2,2,1,1,1,2,1,2,1,1,1,2,1,2,1,1,1,1,2,1,3,2,3,2,1,1,2,1,1,1,1,1,2,2,1,2,1,2,1,2,2,1,4,3,5,2,2,3,2,1,3,3,2,2,2], borderColor:C.spark, tension:.2, pointRadius:0 }
+  ]}, options:{ responsive:true, maintainAspectRatio:false } });
+</script>
+</body></html>

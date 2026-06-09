@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aurogram — PMF Intelligence Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  body{background:radial-gradient(1200px 600px at 20% -10%,#3b1d6e33,transparent),
+        radial-gradient(1000px 500px at 90% 10%,#1d4e6e33,transparent),#0b0b15;}
+  .glow{text-shadow:0 0 24px #a78bfa66;}
+  .card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+         border-radius:1rem;padding:1.25rem;}
+  .chartbox{position:relative;height:300px;}
+  .chartbox-sm{position:relative;height:240px;}
+</style></head>
+<body class="text-violet-100 font-sans">
+<div class="max-w-7xl mx-auto px-5 py-8">
+
+  <header class="mb-8">
+    <div class="text-violet-300/70 text-sm tracking-widest uppercase">Aurogram · HolyCow Analytics</div>
+    <h1 class="text-4xl md:text-5xl font-extrabold text-white glow">PMF Intelligence Dashboard</h1>
+    <p class="mt-2 text-violet-300/70 max-w-3xl">A full read of every user, their engagement, and what they
+       actually ask the AI astrologer. Read-only snapshot from Firestore.</p>
+  </header>
+
+  <!-- Executive insights TOP -->
+  <section class="card mb-8 border-amber-300/20 bg-amber-300/5">
+    <h2 class="text-lg font-bold text-amber-200 mb-2">Executive Summary</h2>
+    <ul class="grid md:grid-cols-2 gap-x-8 gap-y-1 text-sm text-violet-100/90 list-disc pl-5">
+      <li><b>HolyCow IS the product</b> — ~85% of all conversations are with the AI, not other humans.</li>
+      <li><b>Retention is the wound</b> — ~78% of real users never returned after day one; only a handful are weekly-active.</li>
+      <li><b>The hook works, the habit doesn't</b> — adopters who stayed average ~51 messages each; most never start.</li>
+      <li><b>Voice-first</b> — ~41% of all AI messages are voice notes; this is a spoken product.</li>
+      <li><b>Top intents:</b> Career, Marriage/Kundli, Children, Health/transits, Timing ("kab?").</li>
+      <li><b>Power user persona is real</b> — see spotlight: a Delhi woman, 100+ days active, asking about son's
+          marriage, promotion, sade sati, even an accident.</li>
+    </ul>
+  </section>
+
+  <!-- KPIs -->
+  <section class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"><div class="rounded-2xl bg-white/5 backdrop-blur border border-white/10 p-5">
+          <div class="text-3xl font-bold text-white">324</div>
+          <div class="mt-1 text-sm font-medium text-violet-200">Ever registered</div>
+          <div class="text-xs text-violet-300/60">phone numbers seen</div></div><div class="rounded-2xl bg-white/5 backdrop-blur border border-white/10 p-5">
+          <div class="text-3xl font-bold text-white">230</div>
+          <div class="mt-1 text-sm font-medium text-violet-200">Real users</div>
+          <div class="text-xs text-violet-300/60">non-test, non-bot</div></div><div class="rounded-2xl bg-white/5 backdrop-blur border border-white/10 p-5">
+          <div class="text-3xl font-bold text-white">37</div>
+          <div class="mt-1 text-sm font-medium text-violet-200">Active (30d)</div>
+          <div class="text-xs text-violet-300/60">16.1% of real</div></div><div class="rounded-2xl bg-white/5 backdrop-blur border border-white/10 p-5">
+          <div class="text-3xl font-bold text-white">11</div>
+          <div class="mt-1 text-sm font-medium text-violet-200">Active (7d)</div>
+          <div class="text-xs text-violet-300/60">weekly actives</div></div><div class="rounded-2xl bg-white/5 backdrop-blur border border-white/10 p-5">
+          <div class="text-3xl font-bold text-white">180</div>
+          <div class="mt-1 text-sm font-medium text-violet-200">Never returned</div>
+          <div class="text-xs text-violet-300/60">78.3% one-and-done</div></div><div class="rounded-2xl bg-white/5 backdrop-blur border border-white/10 p-5">
+          <div class="text-3xl font-bold text-white">553</div>
+          <div class="mt-1 text-sm font-medium text-violet-200">AI conversations</div>
+          <div class="text-xs text-violet-300/60">vs 131 human DMs</div></div><div class="rounded-2xl bg-white/5 backdrop-blur border border-white/10 p-5">
+          <div class="text-3xl font-bold text-white">3,509</div>
+          <div class="mt-1 text-sm font-medium text-violet-200">AI messages</div>
+          <div class="text-xs text-violet-300/60">1449 voice</div></div><div class="rounded-2xl bg-white/5 backdrop-blur border border-white/10 p-5">
+          <div class="text-3xl font-bold text-white">50.9</div>
+          <div class="mt-1 text-sm font-medium text-violet-200">Avg msgs / active user</div>
+          <div class="text-xs text-violet-300/60">depth among adopters</div></div></section>
+
+  <!-- charts row 1 -->
+  <section class="grid lg:grid-cols-2 gap-6 mb-6">
+    <div class="card"><h3 class="font-semibold text-white mb-2">User funnel: registered → active</h3>
+      <div class="chartbox"><canvas id="ladder"></canvas></div></div>
+    <div class="card"><h3 class="font-semibold text-white mb-2">Activity segments (real users)</h3>
+      <div class="chartbox"><canvas id="segments"></canvas></div></div>
+  </section>
+
+  <!-- charts row 2 -->
+  <section class="grid lg:grid-cols-2 gap-6 mb-6">
+    <div class="card"><h3 class="font-semibold text-white mb-2">What people ask HolyCow (themes)</h3>
+      <div class="chartbox"><canvas id="themes"></canvas></div></div>
+    <div class="card"><h3 class="font-semibold text-white mb-2">Activation funnel</h3>
+      <div class="chartbox"><canvas id="funnel"></canvas></div></div>
+  </section>
+
+  <!-- charts row 3 -->
+  <section class="grid lg:grid-cols-3 gap-6 mb-6">
+    <div class="card lg:col-span-2"><h3 class="font-semibold text-white mb-2">Daily HolyCow activity (last 120 active days)</h3>
+      <div class="chartbox"><canvas id="daily"></canvas></div></div>
+    <div class="card"><h3 class="font-semibold text-white mb-2">Voice vs typed</h3>
+      <div class="chartbox-sm"><canvas id="voice"></canvas></div></div>
+  </section>
+
+  <!-- monthly -->
+  <section class="card mb-8"><h3 class="font-semibold text-white mb-2">Monthly message volume</h3>
+    <div class="chartbox"><canvas id="monthly"></canvas></div></section>
+
+  <!-- spotlight -->
+  <section class="card mb-8 border-fuchsia-400/20 bg-fuchsia-500/5">
+    <h2 class="text-lg font-bold text-fuchsia-200 mb-1">Power-user spotlight · "59029414"</h2>
+    <p class="text-sm text-violet-300/70 mb-3">Phone +919868283985 · joined Sun, 22 Feb 2026 11:50:08 GMT ·
+       last seen Fri, 15 May 2026 03:37:22 GMT · 96 AI conversations · 1523 messages</p>
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="text-sm text-violet-100/90">
+        <p class="mb-2">A real, deeply-engaged Indian woman (Vata prakriti on file, Asia/Kolkata).
+        Over 100+ active days she treats HolyCow like a personal jyotish — career, her son's marriage,
+        astrological transits, and life events. <b>This is the ideal customer profile.</b></p>
+        <p class="text-violet-300/70">If we can make 50 more of her, the retention problem is solved.</p>
+      </div>
+      <div><div class="text-violet-300/70 text-xs uppercase mb-1">Sample real questions</div>
+        <ul class="text-sm text-violet-100/90"><li class='py-1 border-b border-white/5'>I want more</li><li class='py-1 border-b border-white/5'>I want more</li><li class='py-1 border-b border-white/5'>I want more</li><li class='py-1 border-b border-white/5'>I want more</li><li class='py-1 border-b border-white/5'>I want more</li><li class='py-1 border-b border-white/5'>I want more</li><li class='py-1 border-b border-white/5'>I want more</li><li class='py-1 border-b border-white/5'>what is bairagi caste in India</li><li class='py-1 border-b border-white/5'>what is bairagi caste in India</li><li class='py-1 border-b border-white/5'>what is bairagi caste in India</li><li class='py-1 border-b border-white/5'>what is bairagi caste in India</li><li class='py-1 border-b border-white/5'>what is bairagi caste in India</li><li class='py-1 border-b border-white/5'>what is bairagi caste in India</li><li class='py-1 border-b border-white/5'>what is bairagi caste in India</li></ul></div>
+    </div>
+  </section>
+
+  <!-- leaderboards -->
+  <section class="grid lg:grid-cols-2 gap-6 mb-6">
+    <div class="card"><h3 class="font-semibold text-white mb-3">Top by followers</h3><table class='w-full text-sm'><thead><tr class='text-left text-violet-300/70 border-b border-white/10'><th class='py-2 pr-3 font-medium'>Name</th><th class='py-2 pr-3 font-medium'>Followers</th><th class='py-2 pr-3 font-medium'>Following</th><th class='py-2 pr-3 font-medium'>Eng. score</th></tr></thead><tbody><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>Abhinav</td><td class='py-2 pr-3'>19</td><td class='py-2 pr-3'>19</td><td class='py-2 pr-3'>592</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>Patricia</td><td class='py-2 pr-3'>3</td><td class='py-2 pr-3'>3</td><td class='py-2 pr-3'>40</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>Tara</td><td class='py-2 pr-3'>3</td><td class='py-2 pr-3'>2</td><td class='py-2 pr-3'>29</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>Rob Verdegaal</td><td class='py-2 pr-3'>3</td><td class='py-2 pr-3'>3</td><td class='py-2 pr-3'>29</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>Raghavi</td><td class='py-2 pr-3'>3</td><td class='py-2 pr-3'>3</td><td class='py-2 pr-3'>20</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>Miriam</td><td class='py-2 pr-3'>2</td><td class='py-2 pr-3'>2</td><td class='py-2 pr-3'>29</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>Anna</td><td class='py-2 pr-3'>2</td><td class='py-2 pr-3'>2</td><td class='py-2 pr-3'>8</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>PRAYAG DUTTA</td><td class='py-2 pr-3'>2</td><td class='py-2 pr-3'>1</td><td class='py-2 pr-3'>7</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>Sir</td><td class='py-2 pr-3'>2</td><td class='py-2 pr-3'>1</td><td class='py-2 pr-3'>6</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>Chelsea</td><td class='py-2 pr-3'>1</td><td class='py-2 pr-3'>1</td><td class='py-2 pr-3'>71</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>Arpita</td><td class='py-2 pr-3'>1</td><td class='py-2 pr-3'>0</td><td class='py-2 pr-3'>49</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>Anna</td><td class='py-2 pr-3'>1</td><td class='py-2 pr-3'>1</td><td class='py-2 pr-3'>41</td></tr></tbody></table></div>
+    <div class="card"><h3 class="font-semibold text-white mb-3">Top content creators</h3><table class='w-full text-sm'><thead><tr class='text-left text-violet-300/70 border-b border-white/10'><th class='py-2 pr-3 font-medium'>Name</th><th class='py-2 pr-3 font-medium'>Posts</th><th class='py-2 pr-3 font-medium'>Original</th><th class='py-2 pr-3 font-medium'>Replies recv</th></tr></thead><tbody><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>Alka</td><td class='py-2 pr-3'>54</td><td class='py-2 pr-3'>29</td><td class='py-2 pr-3'>24</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>Anuj Kumari</td><td class='py-2 pr-3'>36</td><td class='py-2 pr-3'>18</td><td class='py-2 pr-3'>11</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>Avikan</td><td class='py-2 pr-3'>16</td><td class='py-2 pr-3'>15</td><td class='py-2 pr-3'>0</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>Prasun</td><td class='py-2 pr-3'>11</td><td class='py-2 pr-3'>9</td><td class='py-2 pr-3'>2</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>Anapther</td><td class='py-2 pr-3'>24</td><td class='py-2 pr-3'>10</td><td class='py-2 pr-3'>0</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>Maitreyee </td><td class='py-2 pr-3'>9</td><td class='py-2 pr-3'>7</td><td class='py-2 pr-3'>5</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>Arpita</td><td class='py-2 pr-3'>7</td><td class='py-2 pr-3'>7</td><td class='py-2 pr-3'>3</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>meena swami</td><td class='py-2 pr-3'>10</td><td class='py-2 pr-3'>9</td><td class='py-2 pr-3'>6</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>Priyanka</td><td class='py-2 pr-3'>12</td><td class='py-2 pr-3'>7</td><td class='py-2 pr-3'>0</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>hzhz</td><td class='py-2 pr-3'>6</td><td class='py-2 pr-3'>5</td><td class='py-2 pr-3'>0</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>Abhinav</td><td class='py-2 pr-3'>9</td><td class='py-2 pr-3'>5</td><td class='py-2 pr-3'>6</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>Chelsea</td><td class='py-2 pr-3'>9</td><td class='py-2 pr-3'>7</td><td class='py-2 pr-3'>6</td></tr></tbody></table></div>
+  </section>
+  <section class="grid lg:grid-cols-2 gap-6 mb-8">
+    <div class="card"><h3 class="font-semibold text-white mb-3">Top AI users</h3><table class='w-full text-sm'><thead><tr class='text-left text-violet-300/70 border-b border-white/10'><th class='py-2 pr-3 font-medium'>Name</th><th class='py-2 pr-3 font-medium'>AI convos</th><th class='py-2 pr-3 font-medium'>Last seen (d)</th><th class='py-2 pr-3 font-medium'>Astro</th><th class='py-2 pr-3 font-medium'>Aura</th></tr></thead><tbody><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>—</td><td class='py-2 pr-3'>190</td><td class='py-2 pr-3'>187</td><td class='py-2 pr-3'>0</td><td class='py-2 pr-3'>0</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>59029414</td><td class='py-2 pr-3'>96</td><td class='py-2 pr-3'>0</td><td class='py-2 pr-3'>1</td><td class='py-2 pr-3'>7</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>Abhinav</td><td class='py-2 pr-3'>62</td><td class='py-2 pr-3'>2</td><td class='py-2 pr-3'>1</td><td class='py-2 pr-3'>308</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>Anna</td><td class='py-2 pr-3'>38</td><td class='py-2 pr-3'>125</td><td class='py-2 pr-3'>1</td><td class='py-2 pr-3'>0</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>S</td><td class='py-2 pr-3'>32</td><td class='py-2 pr-3'>102</td><td class='py-2 pr-3'>1</td><td class='py-2 pr-3'>58</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>—</td><td class='py-2 pr-3'>27</td><td class='py-2 pr-3'>181</td><td class='py-2 pr-3'>0</td><td class='py-2 pr-3'>0</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>Mishthi</td><td class='py-2 pr-3'>23</td><td class='py-2 pr-3'>51</td><td class='py-2 pr-3'>1</td><td class='py-2 pr-3'>0</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>Khyati</td><td class='py-2 pr-3'>22</td><td class='py-2 pr-3'>124</td><td class='py-2 pr-3'>1</td><td class='py-2 pr-3'>0</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>Aravind</td><td class='py-2 pr-3'>22</td><td class='py-2 pr-3'>0</td><td class='py-2 pr-3'>1</td><td class='py-2 pr-3'>21</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>Patricia</td><td class='py-2 pr-3'>20</td><td class='py-2 pr-3'>58</td><td class='py-2 pr-3'>1</td><td class='py-2 pr-3'>63</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>Tara</td><td class='py-2 pr-3'>20</td><td class='py-2 pr-3'>137</td><td class='py-2 pr-3'>1</td><td class='py-2 pr-3'>5</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>Vanshita </td><td class='py-2 pr-3'>12</td><td class='py-2 pr-3'>50</td><td class='py-2 pr-3'>1</td><td class='py-2 pr-3'>0</td></tr></tbody></table></div>
+    <div class="card"><h3 class="font-semibold text-white mb-3">Top callers (Agora)</h3><table class='w-full text-sm'><thead><tr class='text-left text-violet-300/70 border-b border-white/10'><th class='py-2 pr-3 font-medium'>Name</th><th class='py-2 pr-3 font-medium'>Calls made</th><th class='py-2 pr-3 font-medium'>Answered</th><th class='py-2 pr-3 font-medium'>Talk sec</th></tr></thead><tbody><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>—</td><td class='py-2 pr-3'>16</td><td class='py-2 pr-3'>31</td><td class='py-2 pr-3'>3061</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>—</td><td class='py-2 pr-3'>15</td><td class='py-2 pr-3'>19</td><td class='py-2 pr-3'>2137</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>Abhinav</td><td class='py-2 pr-3'>123</td><td class='py-2 pr-3'>194</td><td class='py-2 pr-3'>1636</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>—</td><td class='py-2 pr-3'>104</td><td class='py-2 pr-3'>117</td><td class='py-2 pr-3'>1305</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>—</td><td class='py-2 pr-3'>28</td><td class='py-2 pr-3'>36</td><td class='py-2 pr-3'>517</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>—</td><td class='py-2 pr-3'>19</td><td class='py-2 pr-3'>24</td><td class='py-2 pr-3'>517</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>Mrj</td><td class='py-2 pr-3'>24</td><td class='py-2 pr-3'>23</td><td class='py-2 pr-3'>508</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>Jojo</td><td class='py-2 pr-3'>7</td><td class='py-2 pr-3'>4</td><td class='py-2 pr-3'>494</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>—</td><td class='py-2 pr-3'>0</td><td class='py-2 pr-3'>1</td><td class='py-2 pr-3'>446</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>—</td><td class='py-2 pr-3'>23</td><td class='py-2 pr-3'>21</td><td class='py-2 pr-3'>238</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>Chelsea</td><td class='py-2 pr-3'>6</td><td class='py-2 pr-3'>7</td><td class='py-2 pr-3'>144</td></tr><tr class='border-b border-white/5 hover:bg-white/5'><td class='py-2 pr-3'>—</td><td class='py-2 pr-3'>23</td><td class='py-2 pr-3'>8</td><td class='py-2 pr-3'>95</td></tr></tbody></table></div>
+  </section>
+
+  <!-- Executive insights BOTTOM -->
+  <section class="card mb-10 border-emerald-300/20 bg-emerald-300/5">
+    <h2 class="text-lg font-bold text-emerald-200 mb-2">So what should we do?</h2>
+    <ol class="space-y-1 text-sm text-violet-100/90 list-decimal pl-5">
+      <li><b>Fix the day-2 return.</b> 78% never come back. Ship a daily proactive insight push (60% have push enabled).</li>
+      <li><b>Lean into voice.</b> 41% of messages are voice — make voice the primary input, not a side feature.</li>
+      <li><b>Answer the top intents brilliantly:</b> career timing, marriage/kundli matching, child/family events, health transits.</li>
+      <li><b>Kill or hide the dead social layer.</b> Follow graph is flat (max ~3 followers ex-founder); reposts ~0.</li>
+      <li><b>Find more "59029414"s.</b> Middle-aged Indian users asking real life questions in Hindi+English are the core.</li>
+      <li><b>Repair onboarding.</b> Only 22% finish FTUE though 85% set a profile — the flow leaks mid-way.</li>
+    </ol>
+  </section>
+
+  <footer class="text-center text-violet-400/40 text-xs pb-8">
+    Generated from Firestore snapshot · Aurogram (ty-dev-516d7) · read-only analysis
+  </footer>
+</div>
+
+<script>
+const D = {"kpis": [["Ever registered", 324, "phone numbers seen"], ["Real users", 230, "non-test, non-bot"], ["Active (30d)", 37, "16.1% of real"], ["Active (7d)", 11, "weekly actives"], ["Never returned", 180, "78.3% one-and-done"], ["AI conversations", 553, "vs 131 human DMs"], ["AI messages", 3509, "1449 voice"], ["Avg msgs / active user", "50.9", "depth among adopters"]], "ladder": [["Ever registered", 324], ["Loginable (Auth)", 209], ["Real users", 230], ["Active (30d)", 37], ["Active (7d)", 11]], "seg_labels": ["Active 7d", "Active 8-30d", "Dormant >30d", "Never returned"], "seg_vals": [11, 26, 170, 180], "funnel_labels": ["Real users", "Profile complete", "Has astrology", "Has ayurveda", "FTUE completed"], "funnel_vals": [230, 197, 132, 85, 52], "daily_labels": ["2025-12-17", "2025-12-18", "2025-12-21", "2025-12-22", "2025-12-24", "2025-12-25", "2025-12-27", "2026-01-06", "2026-01-07", "2026-01-08", "2026-01-09", "2026-01-10", "2026-01-11", "2026-01-12", "2026-01-13", "2026-01-14", "2026-01-15", "2026-01-16", "2026-01-19", "2026-01-20", "2026-01-21", "2026-01-22", "2026-01-23", "2026-01-24", "2026-01-25", "2026-01-26", "2026-01-27", "2026-01-31", "2026-02-01", "2026-02-02", "2026-02-03", "2026-02-04", "2026-02-05", "2026-02-06", "2026-02-07", "2026-02-09", "2026-02-12", "2026-02-14", "2026-02-17", "2026-02-18", "2026-02-19", "2026-02-20", "2026-02-21", "2026-02-22", "2026-02-25", "2026-02-26", "2026-02-27", "2026-03-01", "2026-03-02", "2026-03-03", "2026-03-04", "2026-03-05", "2026-03-06", "2026-03-07", "2026-03-08", "2026-03-09", "2026-03-11", "2026-03-12", "2026-03-13", "2026-03-14", "2026-03-17", "2026-03-18", "2026-03-19", "2026-03-20", "2026-03-22", "2026-03-23", "2026-03-24", "2026-03-25", "2026-03-26", "2026-03-27", "2026-03-29", "2026-03-30", "2026-03-31", "2026-04-02", "2026-04-03", "2026-04-04", "2026-04-05", "2026-04-07", "2026-04-08", "2026-04-10", "2026-04-11", "2026-04-12", "2026-04-15", "2026-04-16", "2026-04-17", "2026-04-19", "2026-04-20", "2026-04-22", "2026-04-23", "2026-04-24", "2026-04-25", "2026-04-26", "2026-04-28", "2026-04-30", "2026-05-01", "2026-05-03", "2026-05-04", "2026-05-11", "2026-05-13", "2026-05-14", "2026-05-15", "2026-05-16", "2026-05-18", "2026-05-19", "2026-05-22", "2026-05-26", "2026-05-27", "2026-05-28", "2026-05-29", "2026-05-30", "2026-05-31", "2026-06-01", "2026-06-02", "2026-06-03", "2026-06-04", "2026-06-05", "2026-06-06", "2026-06-07", "2026-06-08", "2026-06-09"], "daily_msgs": [1, 1, 6, 1, 2, 6, 3, 59, 154, 7, 13, 3, 71, 100, 19, 6, 31, 44, 3, 6, 38, 64, 88, 17, 41, 3, 21, 22, 51, 11, 43, 150, 6, 10, 1, 14, 1, 3, 11, 5, 23, 78, 1, 45, 36, 4, 200, 67, 44, 3, 5, 25, 1, 25, 34, 76, 9, 3, 6, 8, 4, 24, 24, 82, 15, 16, 4, 1, 10, 3, 6, 3, 46, 6, 1, 15, 25, 1, 5, 1, 6, 1, 3, 4, 55, 14, 22, 11, 14, 1, 7, 81, 541, 16, 1, 1, 1, 23, 9, 1, 41, 3, 14, 1, 7, 4, 63, 157, 57, 14, 2, 10, 3, 57, 28, 14, 10, 37, 22, 39], "daily_users": [1, 1, 3, 1, 1, 1, 1, 6, 7, 2, 3, 2, 5, 4, 3, 1, 1, 1, 1, 1, 3, 2, 8, 2, 1, 2, 1, 2, 2, 2, 3, 4, 1, 1, 1, 3, 1, 1, 3, 3, 2, 1, 1, 1, 1, 2, 1, 3, 2, 1, 1, 2, 1, 2, 2, 2, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 2, 1, 2, 1, 1, 1, 2, 1, 2, 1, 1, 1, 1, 2, 1, 3, 2, 3, 2, 1, 1, 2, 1, 1, 1, 1, 1, 2, 2, 1, 2, 1, 2, 1, 2, 2, 1, 4, 3, 5, 2, 2, 3, 2, 1, 3, 3, 2, 2, 2], "mo_labels": ["2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06"], "mo_msgs": [14, 583, 810, 693, 544, 830, 399, 220], "theme_labels": ["Timing & Predictions", "Career & Work", "Travel & Lifestyle", "Marriage & Love", "Children & Family", "Money & Wealth", "Astrology Concepts", "Health & Wellbeing"], "theme_vals": [245, 235, 228, 178, 80, 45, 39, 21], "voice": 1449, "text": 2060};
+const grid = {color:'rgba(255,255,255,.06)'}, tick = {color:'#c4b5fd99'};
+const baseOpts = {responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{labels:{color:'#ddd6fe'}}},
+  scales:{x:{grid,ticks:tick},y:{grid,ticks:tick,beginAtZero:true}}};
+const PUR='#a78bfa', FUS='#e879f9', CYA='#22d3ee', AMB='#fbbf24', EMR='#34d399', RED='#fb7185';
+const PALETTE=[PUR,FUS,CYA,AMB,EMR,RED,'#60a5fa','#f472b6','#a3e635'];
+
+new Chart(ladder,{type:'bar',data:{labels:D.ladder.map(x=>x[0]),
+  datasets:[{label:'users',data:D.ladder.map(x=>x[1]),backgroundColor:PUR,borderRadius:6}]},
+  options:{...baseOpts,indexAxis:'y',plugins:{legend:{display:false}}}});
+
+new Chart(segments,{type:'doughnut',data:{labels:D.seg_labels,
+  datasets:[{data:D.seg_vals,backgroundColor:[EMR,CYA,AMB,RED]}]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'right',labels:{color:'#ddd6fe'}}}}});
+
+new Chart(themes,{type:'bar',data:{labels:D.theme_labels,
+  datasets:[{label:'questions',data:D.theme_vals,backgroundColor:FUS,borderRadius:6}]},
+  options:{...baseOpts,indexAxis:'y',plugins:{legend:{display:false}}}});
+
+new Chart(funnel,{type:'bar',data:{labels:D.funnel_labels,
+  datasets:[{label:'users',data:D.funnel_vals,backgroundColor:CYA,borderRadius:6}]},
+  options:{...baseOpts,plugins:{legend:{display:false}}}});
+
+new Chart(daily,{type:'line',data:{labels:D.daily_labels,
+  datasets:[
+    {label:'messages',data:D.daily_msgs,borderColor:PUR,backgroundColor:'#a78bfa22',fill:true,tension:.3,pointRadius:0},
+    {label:'active users',data:D.daily_users,borderColor:AMB,tension:.3,pointRadius:0,yAxisID:'y1'}
+  ]},
+  options:{...baseOpts,scales:{x:{grid,ticks:{...tick,maxTicksLimit:10}},
+    y:{grid,ticks:tick,beginAtZero:true},
+    y1:{position:'right',grid:{drawOnChartArea:false},ticks:tick,beginAtZero:true}}}});
+
+new Chart(voice,{type:'doughnut',data:{labels:['Voice','Typed'],
+  datasets:[{data:[D.voice,D.text],backgroundColor:[FUS,CYA]}]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom',labels:{color:'#ddd6fe'}}}}});
+
+new Chart(monthly,{type:'bar',data:{labels:D.mo_labels,
+  datasets:[{label:'messages',data:D.mo_msgs,backgroundColor:EMR,borderRadius:6}]},
+  options:{...baseOpts,plugins:{legend:{display:false}}}});
+</script>
+</body></html>

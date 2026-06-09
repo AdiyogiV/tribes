@@ -7,7 +7,6 @@
  *
  * Methods:
  *   - getLinkPreview        [public]   Fetch URL metadata for link previews
- *   - getChatPromptConfig   [public]   Get AI chat system prompt config
  *   - generateAgoraToken    [auth]     Generate Agora RTC token for calls
  */
 
@@ -17,14 +16,12 @@ import { agoraAppCertificate } from "../lib/secrets.js";
 
 // Import handlers
 import { handleGetLinkPreview } from "../functions/link_preview.js";
-import { handleGetChatPromptConfig } from "../functions/ai.js";
 import { handleGenerateAgoraToken } from "../functions/agora_token.js";
 
 // Method registry — maps method name to handler + auth requirement
 const methods = {
     // Public methods (no auth required)
     getLinkPreview: { handler: (req) => handleGetLinkPreview(req), auth: false },
-    getChatPromptConfig: { handler: (req) => handleGetChatPromptConfig(req), auth: false },
 
     // Auth-required methods
     generateAgoraToken: { handler: (req) => handleGenerateAgoraToken(req), auth: true },

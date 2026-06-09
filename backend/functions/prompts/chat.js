@@ -1,9 +1,31 @@
 /**
  * Centralized chat system prompts for Gemini (astrology, wellness, general).
- * Used by ai.js and by getChatPromptConfig callable.
+ * Used by ai.js.
  */
 
 import { normalizeDasha } from "../../lib/astro_helpers.js";
+
+/**
+ * Hardened Google Search policy. The search tool is ALWAYS attached to every
+ * request, so the only thing keeping latency down and answers grounded in the
+ * user's own data is this rule. Default posture: DO NOT SEARCH.
+ */
+const SEARCH_RULE = [
+    "═══ GOOGLE SEARCH \u2014 USE ALMOST NEVER ═══",
+    "The search tool is available but your DEFAULT is to NOT use it. Your own",
+    "knowledge plus the user's birth chart, Ayurvedic profile, and memory already",
+    "answer ~99% of questions. Searching adds seconds of latency and breaks the",
+    "intimate, in-the-moment feel \u2014 it is a cost, not a feature.",
+    "Search ONLY when the answer literally cannot exist without live external data",
+    "that changes day-to-day AND the user is clearly asking for it \u2014 e.g. breaking",
+    "news, today's live market/crypto price, today's weather or sports score, a",
+    "specific real-world event happening now.",
+    "NEVER search for: astrology, Ayurveda, spirituality, life advice, predictions,",
+    "relationships, career guidance, general knowledge, definitions, or anything",
+    "answerable from training data or the user's profile.",
+    "When in doubt, DO NOT SEARCH \u2014 answer from what you know.",
+].join("\n");
+
 
 /**
  * Build wellness (Ayurveda) context string for Gemini prompt. No chart data.
@@ -124,27 +146,6 @@ function buildAstrologyContextString(astrologyContext) {
         if (doshaInfo.length > 0) lines.push(`⚠️ Doshas: ${doshaInfo.join(", ")}`);
     }
 
-    if (astrologyContext.topicKnowledge) {
-        const tk = astrologyContext.topicKnowledge;
-        const topic = tk.topic || astrologyContext.questionTopic;
-
-        if (topic && topic !== "general") {
-            lines.push(`\n═══ TOPIC: ${topic.toUpperCase()} ═══`);
-
-            if (astrologyContext.relevantHouses) {
-                lines.push(`Key houses: ${astrologyContext.relevantHouses.join(", ")}`);
-            }
-
-            if (tk.dashaForTopic?.interpretation) {
-                lines.push(`Dasha for ${topic}: ${tk.dashaForTopic.interpretation.substring(0, 300)}`);
-            }
-
-            if (tk.primaryHouseMeaning?.significations) {
-                lines.push(`House ${tk.primaryHouseMeaning.house}: ${tk.primaryHouseMeaning.significations.substring(0, 200)}`);
-            }
-        }
-    }
-
     if (astrologyContext.cosmicWeather) {
         const cw = astrologyContext.cosmicWeather;
         if (cw.retrogrades && cw.retrogrades.length > 0) {
@@ -156,6 +157,37 @@ function buildAstrologyContextString(astrologyContext) {
         }
     }
 
+    return lines.join("\n");
+}
+
+/**
+ * Build a compact memory block from the user's durable profile so HolyCow opens
+ * with continuity. Kept short on purpose — it's context to weave in naturally,
+ * not a script to recite.
+ * @param {Object} memory - { rollingSummary, threads:[{topic,note,status}] }
+ * @returns {string}
+ */
+function buildMemoryContextString(memory) {
+    if (!memory || (!memory.rollingSummary && !(memory.threads || []).length)) return "";
+
+    const lines = [
+        "\n\n═══ WHAT YOU ALREADY KNOW ABOUT THIS USER ═══",
+        "This is your memory of them from past conversations. Greet and respond with",
+        "continuity — reference what's relevant naturally, follow up on open threads.",
+        "Do NOT recite this list back to them or announce that you remember.",
+    ];
+    if (memory.rollingSummary) lines.push(`\nAbout them: ${memory.rollingSummary}`);
+
+    const open = (memory.threads || []).filter((t) => t.status !== "resolved");
+    const resolved = (memory.threads || []).filter((t) => t.status === "resolved");
+    if (open.length) {
+        lines.push("\nOpen threads (worth following up on):");
+        open.forEach((t) => lines.push(`• [${t.topic}] ${t.note}`));
+    }
+    if (resolved.length) {
+        lines.push("\nResolved (for context, don't re-litigate):");
+        resolved.forEach((t) => lines.push(`• [${t.topic}] ${t.note}`));
+    }
     return lines.join("\n");
 }
 
@@ -199,6 +231,7 @@ function getChatSystemPrompt(astrologyContext = null, userLocation = null, isVoi
             "• Never say 'Would you like me to analyze further?' or hedge with 'several possibilities'—pick a clear, committed answer.",
             "• Never give generic, non-Ayurvedic advice that could come from any wellness site. Tie suggestions to their dosha, agni, or current imbalance.",
             "• Only mention astrology or chart/planets if the user explicitly asks.",
+            SEARCH_RULE,
         ].filter(Boolean).join("\n");
 
         prompt += buildWellnessContextString(astrologyContext?.ayurveda);
@@ -244,9 +277,11 @@ function getChatSystemPrompt(astrologyContext = null, userLocation = null, isVoi
             "• Never list 'several possibilities' - pick one and commit",
             "• Never sound like a generic horoscope",
             "• Never use emojis",
+            SEARCH_RULE,
         ].filter(Boolean).join("\n");
 
         prompt += buildAstrologyContextString(astrologyContext);
+        prompt += buildMemoryContextString(astrologyContext.memory);
     } else if (astrologyContext) {
         // Unified HolyCow — main chat with auto-loaded user context.
         // The AI has full astro + ayurveda data but only uses it when relevant.
@@ -283,6 +318,7 @@ function getChatSystemPrompt(astrologyContext = null, userLocation = null, isVoi
             "• Never list 'several possibilities' — pick one and commit",
             "• Never force astrology/ayurveda into unrelated questions",
             "• Never sound like a generic horoscope or wellness bot",
+            SEARCH_RULE,
         ].filter(Boolean).join("\n");
 
         // Attach both astrology and ayurveda context
@@ -290,6 +326,7 @@ function getChatSystemPrompt(astrologyContext = null, userLocation = null, isVoi
         if (astrologyContext?.ayurveda) {
             prompt += buildWellnessContextString(astrologyContext.ayurveda);
         }
+        prompt += buildMemoryContextString(astrologyContext?.memory);
     } else {
         prompt = [
             "You are a helpful, friendly assistant for the Tribes app.",
@@ -301,7 +338,7 @@ function getChatSystemPrompt(astrologyContext = null, userLocation = null, isVoi
             "• Be direct and helpful",
             "• Vary your response length based on the question",
             "• Use **bold** for key points when helpful",
-            "• Use Google Search for current info",
+            SEARCH_RULE,
             "• Be conversational, not robotic",
             isVoice ? "• Keep responses concise (60-100 words)" : "",
         ].filter(Boolean).join("\n");

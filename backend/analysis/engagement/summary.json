@@ -1,0 +1,61 @@
+{
+  "generatedAt": "2026-06-09T21:09:30.170Z",
+  "population": {
+    "real": 284,
+    "test": 20,
+    "system": 1,
+    "totalAccounts": 305
+  },
+  "socialGraph": {
+    "usersWithFollowers": 38,
+    "totalFollowerEdges": 68,
+    "usersFollowingSomeone": 35,
+    "maxFollowers": 19
+  },
+  "content": {
+    "usersWhoPosted": 38,
+    "totalPosts": 279,
+    "originalPosts": 178,
+    "replyPosts": 101,
+    "videoPosts": 245,
+    "totalRepliesReceived": 90,
+    "feedPosts": 56,
+    "spacesCreated": 94,
+    "reposts": 3
+  },
+  "calls": {
+    "usersWhoCalled": 19,
+    "usersWhoReceivedCalls": 27,
+    "totalCallsAnswered": 528,
+    "totalCallsMissed": 26,
+    "totalCallsRejected": 70,
+    "totalTalkTimeMin": 189,
+    "videoCalls": 259,
+    "voiceCalls": 167
+  },
+  "messaging": {
+    "usersWithAiConvos": 77,
+    "totalAiConvos": 787,
+    "usersWithHumanDMs": 63,
+    "totalHumanConvos": 129
+  },
+  "activation": {
+    "ftueCompleted": 52,
+    "hasAstro": 132,
+    "hasAyurveda": 85,
+    "hasPushEnabled": 170,
+    "hasAnonLink": 44,
+    "postedStory": 2,
+    "hasFarm": 12
+  },
+  "files": [
+    "user_engagement_full.csv",
+    "real_users_engagement.csv",
+    "leaderboard_followers.csv",
+    "leaderboard_engagement.csv",
+    "leaderboard_creators.csv",
+    "leaderboard_callers.csv",
+    "leaderboard_ai_users.csv",
+    "summary.json"
+  ]
+}

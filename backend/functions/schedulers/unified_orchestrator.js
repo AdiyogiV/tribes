@@ -16,7 +16,7 @@
  *
  * Phase 1: Cleanup (parallel — all independent)
  *   - cleanupTypingIndicators
- *   - cleanupAiChatSessions
+ *   - cleanupTypingIndicators
  *   - cleanupOldDispatchEntries
  *   - cleanupExpiredCacheEntries
  *   - processPendingDeletions    (sweeps `deletedUsers` tombstones — replaces
@@ -45,10 +45,10 @@ import { logger } from "firebase-functions/v2";
 
 // Phase 1: Cleanup runners
 import { runCleanupTypingIndicators } from "../cleanup_typing.js";
-import { runCleanupAiChatSessions } from "../cleanup_ai_sessions.js";
 import { runCleanupOldDispatchEntries, runCleanupExpiredCacheEntries } from "../daily_astro_insights.js";
 import { runCleanupOrphanedFeedEntries } from "../feeds.js";
 import { runProcessPendingDeletions } from "../user_deletion.js";
+import { runRefreshUserMemories } from "../user_memory.js";
 
 // Phase 2: Data refresh runners
 import { runRefreshSkyPositionsDaily, runRefreshMuhuratDaily } from "../sky_positions.js";
@@ -112,7 +112,6 @@ export const unifiedOrchestrator = onSchedule({
     logger.info("Phase 1: Cleanup");
     const cleanupTasks = [
         runTask("cleanupTypingIndicators", runCleanupTypingIndicators),
-        runTask("cleanupAiChatSessions", runCleanupAiChatSessions),
         runTask("cleanupOldDispatchEntries", runCleanupOldDispatchEntries),
         runTask("cleanupExpiredCacheEntries", runCleanupExpiredCacheEntries),
         runTask("processPendingDeletions", runProcessPendingDeletions),
@@ -126,6 +125,12 @@ export const unifiedOrchestrator = onSchedule({
     }
 
     results.push(...await Promise.all(cleanupTasks));
+
+    // ── Phase 1b: User memory refresh (independent — reads dmConversations) ─
+    // Refreshes durable per-user memory for anyone who chatted since the last
+    // run, so tomorrow's sessions open with continuity instead of amnesia.
+    logger.info("Phase 1b: User memory refresh");
+    results.push(await runTask("refreshUserMemories", runRefreshUserMemories));
 
     // ── Phase 2: Data Refresh (sequential — Phase 3 needs this) ────────
     logger.info("Phase 2: Data Refresh");

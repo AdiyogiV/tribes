@@ -1,0 +1,36 @@
+{
+  "generatedAt": "2026-06-09T21:13:06.066Z",
+  "population": {
+    "authUsers": 209,
+    "firestoreUsers": 242,
+    "realUsers": 231,
+    "testUsers": 20,
+    "withAstroData": 132,
+    "withAyurvedaData": 85,
+    "ftueCompleted": 52,
+    "ftueCompletionPct": "22.5"
+  },
+  "holycow": {
+    "aiConversations": 553,
+    "aiUserMessages": 3509,
+    "voiceMessages": 1449,
+    "usersWhoUsedAi": 69,
+    "aiAdoptionPct": "29.9",
+    "avgMsgsPerActiveUser": "50.9",
+    "avgMsgsPerConvo": "6.35"
+  },
+  "social": {
+    "humanConvos": 131336,
+    "humanMsgs": 51,
+    "totalPosts": 337,
+    "usersWhoPosted": 38
+  },
+  "files": [
+    "users.csv",
+    "holycow_messages.csv",
+    "holycow_conversations.csv",
+    "retention_cohorts.csv",
+    "holycow_daily.csv",
+    "summary.json"
+  ]
+}

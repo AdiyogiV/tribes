@@ -59,11 +59,31 @@ const isEmptyMuhurat = (value) => {
 };
 
 /**
- * Convert a muhurat time string ("HH:MM" or "HH:MM AM/PM") to minutes
- * from midnight.  Returns null on bad input.
+ * Convert a muhurat time string to minutes from midnight.  Handles:
+ *   - Full ISO datetimes: "2026-06-10 06:24:00" or "2026-06-10T06:24:00"
+ *     (this is what parseMuhuratDay actually stores — see processUnifiedTimeline's
+ *      timeToAbsoluteMinutes, which parses the same field via DateTime.fromISO)
+ *   - Clock strings: "HH:MM" or "HH:MM AM/PM"
+ * Returns null on bad input.
  */
 function timeStrToMinutes(str) {
     if (!str || typeof str !== "string") return null;
+
+    // ISO datetime (has a yyyy-mm-dd date part): grab the first HH:MM that
+    // follows the date (after a 'T' or whitespace separator). Parsing this as
+    // "HH:MM" directly would yield garbage (h = NaN → 0), collapsing every
+    // event to ~midnight — the "crumbled to one spot" bug.
+    if (/\d{4}-\d{2}-\d{2}/.test(str)) {
+        const m = str.match(/(?:T|\s)(\d{1,2}):(\d{2})/);
+        if (m) {
+            const h = Number(m[1]);
+            const min = Number(m[2]);
+            if (!Number.isNaN(h) && !Number.isNaN(min)) return h * 60 + min;
+        }
+        return null;
+    }
+
+    // Clock string: "HH:MM" or "HH:MM AM/PM".
     const clean = str.replace(/\s*(AM|PM)\s*/i, "").trim();
     const parts = clean.split(":");
     let h = Number(parts[0]) || 0;

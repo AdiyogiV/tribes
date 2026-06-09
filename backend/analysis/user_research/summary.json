@@ -1,0 +1,50 @@
+{
+  "generatedAt": "2026-06-09T21:01:45.860Z",
+  "reconciliation": {
+    "authUsers": 209,
+    "firestoreUserDocs": 242,
+    "deletedUsers": 144,
+    "phoneIndexEntries": 324,
+    "complete_authAndFirestore": 200,
+    "authOnly_incompleteSignup": 9,
+    "firestoreOnly_orphanedDocs": 42
+  },
+  "classification": {
+    "realUsers": 230,
+    "testUsers": 20,
+    "systemOrAiAccounts": 1
+  },
+  "realUserActivity": {
+    "total": 230,
+    "active_last_7d": 11,
+    "active_last_30d": 37,
+    "dormant_over_30d": 170,
+    "one_and_done_neverReturned": 180,
+    "pct_active_30d": "16.1",
+    "pct_one_and_done": "78.3"
+  },
+  "realUserActivation": {
+    "profileComplete": 197,
+    "profileCompletePct": "85.7",
+    "ftueCompleted": 52,
+    "ftueCompletedPct": "22.6",
+    "hasAstrologyData": 132,
+    "astroPct": "57.4",
+    "hasAyurvedaData": 85,
+    "ayurvedaPct": "37.0",
+    "hasFollowers": 38
+  },
+  "populationStory": {
+    "everRegistered_phoneIndex": 324,
+    "currentlyLoginable_auth": 209,
+    "churnedOut": 115,
+    "realActiveHumans_30d": 37
+  },
+  "files": [
+    "all_accounts.csv",
+    "real_users.csv",
+    "top_users_by_aura.csv",
+    "signup_cohorts_by_month.csv",
+    "summary.json"
+  ]
+}
