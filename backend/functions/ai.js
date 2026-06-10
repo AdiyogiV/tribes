@@ -188,7 +188,6 @@ export const aiChat = onRequest(
 
         // Hoisted so the catch block can mark the streamed doc as failed.
         let failureRef = null;
-        let failureField = "response";
 
         try {
             const body = parseBody(req);
@@ -300,9 +299,9 @@ export const aiChat = onRequest(
 
             const durable = !!(authedUid && conversationId && assistantMessageId);
 
-            let targetRef;       // doc we stream into
-            let streamField;     // field name the client reads
-            let firestorePath;   // path the client listens on
+            let targetRef; // doc we stream into
+            let streamField; // field name the client reads
+            let firestorePath; // path the client listens on
             let convoRef = null;
 
             if (durable) {
@@ -314,9 +313,9 @@ export const aiChat = onRequest(
                     participants: [authedUid, HOLYCOW_USER_ID],
                     isAiConversation: true,
                     lastActivity: FieldValue.serverTimestamp(),
-                    ...(convoSnap.exists
-                        ? {}
-                        : {
+                    ...(convoSnap.exists ?
+                        {} :
+                        {
                             createdAt: FieldValue.serverTimestamp(),
                             ...(userMessage ? { firstUserMessage: userMessage } : {}),
                         }),
@@ -369,7 +368,6 @@ export const aiChat = onRequest(
 
             // Expose target to the catch block for failure marking.
             failureRef = targetRef;
-            failureField = streamField;
 
             // Tell the client which doc to listen to for streamed tokens.
             write({ event: "session", chatId, firestorePath });
@@ -387,7 +385,7 @@ export const aiChat = onRequest(
                         [streamField]: streamAccum,
                         updatedAt: FieldValue.serverTimestamp(),
                     });
-                } catch (_) { /* best-effort: completion write is authoritative */ }
+                } catch (_) {/* best-effort: completion write is authoritative */}
             };
 
             // Wrap `write`: every SSE token also feeds the Firestore stream.
@@ -650,7 +648,7 @@ async function streamFromGemini({ chatId, audioUrl, messages, write, astrologyCo
     const systemPrompt = getChatSystemPrompt(astrologyContext, userLocation, true, chatSource);
 
     // Build proper multi-turn conversation format for Gemini API
-    let contents = buildGeminiContents(messages.slice(0, -1)); // all but last (current user message)
+    const contents = buildGeminiContents(messages.slice(0, -1)); // all but last (current user message)
 
     // Add current user message with audio
     const userParts = [
@@ -699,7 +697,6 @@ async function streamFromGemini({ chatId, audioUrl, messages, write, astrologyCo
                 hasSearchResults: true,
             });
         }
-
     } catch (e) {
         logger.error("Gemini streaming failed", {
             structuredData: true,
@@ -773,7 +770,7 @@ async function streamFromGeminiText({ chatId, userMessage, messages, write, astr
     const systemPrompt = getChatSystemPrompt(astrologyContext, userLocation, false, chatSource);
 
     // Build proper multi-turn conversation format for Gemini API
-    let contents = buildGeminiContents(messages.slice(0, -1)); // all but last (current user message)
+    const contents = buildGeminiContents(messages.slice(0, -1)); // all but last (current user message)
 
     // Add current user message
     contents.push({
@@ -812,7 +809,6 @@ async function streamFromGeminiText({ chatId, userMessage, messages, write, astr
                 hasSearchResults: true,
             });
         }
-
     } catch (e) {
         logger.error("Gemini text streaming failed", {
             structuredData: true,
