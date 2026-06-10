@@ -267,7 +267,8 @@ class AiChatProvider extends ChangeNotifier
 
     if (hasContent || hasThoughts) {
       final partialMessage = AiMessage(
-        id: 'ai-${DateTime.now().millisecondsSinceEpoch}',
+        id: currentAssistantMessageId ??
+            'ai-${DateTime.now().millisecondsSinceEpoch}',
         role: 'assistant',
         content: hasContent ? currentContent : '', // Keep empty if no text yet
         createdAt: DateTime.now(),
@@ -280,6 +281,7 @@ class AiChatProvider extends ChangeNotifier
     // Clear streaming state
     streamingBuffer = null;
     streamingMessageId = null;
+    currentAssistantMessageId = null;
     currentRequestId = null;
     currentFirestorePath = null;
     hasFinalizedCurrentStream = true;
@@ -292,10 +294,8 @@ class AiChatProvider extends ChangeNotifier
       isThinking: false,
     ));
 
-    // Save conversation if we have any content or thoughts
-    if (hasContent || hasThoughts) {
-      saveConversationAsDM();
-    }
+    // No client-side save: the backend keeps generating after a client stop and
+    // is the sole writer of the durable dmConversations record.
 
     AppLogger.i('Stopped at current point - chat ready to continue');
   }

@@ -24,13 +24,16 @@ mixin AiChatStreamingMixin on ChangeNotifier, AiChatContextMixin {
   AiChatService get service;
   LocationService get locationService;
   FirebaseFirestore get firestore;
-  Future<void> saveConversationAsDM();
+  // Provided by AiChatPersistenceMixin (the host class mixes both).
+  bool get isUserAuthenticated;
+  Future<String?> ensureConversation();
 
   // =========================================================================
   // Streaming state
   // =========================================================================
   StringBuffer? streamingBuffer;
   String? streamingMessageId;
+  String? currentAssistantMessageId;
   bool hasFinalizedCurrentStream = false;
   String? currentRequestId;
   String? currentFirestorePath;
@@ -180,6 +183,18 @@ mixin AiChatStreamingMixin on ChangeNotifier, AiChatContextMixin {
 
       AppLogger.i('Sending ${deduplicatedMessages.length} messages to AI');
 
+      // Resolve the durable conversation + deterministic message IDs BEFORE we
+      // send, so the backend can stream straight into the durable message doc
+      // (stream == store). Guests have no conversationId and fall back to the
+      // ephemeral ai_chat_sessions doc.
+      final userMessageId = conversationMessages.last.id;
+      final assistantMessageId =
+          'ai-${DateTime.now().millisecondsSinceEpoch}';
+      currentAssistantMessageId = assistantMessageId;
+      final conversationId =
+          isUserAuthenticated ? await ensureConversation() : null;
+      final durable = conversationId != null && conversationId.isNotEmpty;
+
       final stream = service.streamChat(
         messages: deduplicatedMessages,
         context: {
@@ -191,6 +206,10 @@ mixin AiChatStreamingMixin on ChangeNotifier, AiChatContextMixin {
           if (chatSource != null) 'chatSource': chatSource,
           if (audioUrl != null)
             'audioUrl': audioUrl, // For Gemini audio processing
+          // Deterministic IDs: backend is the sole writer of the durable record.
+          if (durable) 'conversationId': conversationId,
+          'userMessageId': userMessageId,
+          'assistantMessageId': assistantMessageId,
         },
       );
 
@@ -198,12 +217,13 @@ mixin AiChatStreamingMixin on ChangeNotifier, AiChatContextMixin {
       // This allows us to detect if this request was stopped/superseded
       final thisRequestId = currentRequestId!;
 
-      // Attach the Firestore listener IMMEDIATELY on the deterministic session
-      // doc path. Firestore is our real streaming transport — we must not wait
-      // for the SSE 'session' event, which can be buffered until the very end on
-      // Flutter web + Hosting/Cloud Run. Backend writes to ai_chat_sessions/{chatId}
-      // where chatId == sessionId (sent in the request context above).
-      currentFirestorePath = 'ai_chat_sessions/$sessionId';
+      // Attach the Firestore listener IMMEDIATELY on the deterministic doc path.
+      // Firestore is our real streaming transport — we must not wait for the SSE
+      // 'session' event, which can be buffered until the very end on Flutter web.
+      // Authed: the durable message doc. Guest: the ephemeral session doc.
+      currentFirestorePath = durable
+          ? 'dmConversations/$conversationId/messages/$assistantMessageId'
+          : 'ai_chat_sessions/$sessionId';
       _listenToFirestoreUpdates(currentFirestorePath!, sessionId, thisRequestId);
 
       await for (final event in stream) {
@@ -431,7 +451,8 @@ mixin AiChatStreamingMixin on ChangeNotifier, AiChatContextMixin {
     try {
       final status = data['status'] as String?;
       final thoughtStepsData = data['thoughtSteps'] as List<dynamic>?;
-      final responseText = data['response'] as String?;
+            final responseText =
+          (data['content'] ?? data['response']) as String?;
       final searchResultsData = data['searchResults'] as Map<String, dynamic>?;
 
       // Find the streaming message
@@ -719,10 +740,13 @@ mixin AiChatStreamingMixin on ChangeNotifier, AiChatContextMixin {
     final messages = List<AiMessage>.from(currentSession.messages)
       ..removeWhere((m) => m.id.startsWith('streaming-') || m.pending);
 
-    // Add final message - only if there's actual visible content
+    // Add final message - only if there's actual visible content.
+    // Reuse the assistant message id we sent to the backend so the in-memory
+    // message matches the durable Firestore doc (no duplicate on reload).
     if (content.trim().isNotEmpty) {
       final aiMessage = AiMessage(
-        id: 'ai-${DateTime.now().millisecondsSinceEpoch}',
+        id: currentAssistantMessageId ??
+            'ai-${DateTime.now().millisecondsSinceEpoch}',
         role: 'assistant',
         content: content,
         createdAt: DateTime.now(),
@@ -744,6 +768,7 @@ mixin AiChatStreamingMixin on ChangeNotifier, AiChatContextMixin {
     // Clear streaming state
     streamingBuffer = null;
     streamingMessageId = null;
+    currentAssistantMessageId = null;
     currentRequestId = null;
     currentFirestorePath = null;
 
@@ -753,9 +778,8 @@ mixin AiChatStreamingMixin on ChangeNotifier, AiChatContextMixin {
       isThinking: false,
     ));
 
-    if (content.isNotEmpty) {
-      saveConversationAsDM();
-    }
+    // No client-side save: the backend is the sole writer and has already
+    // streamed this exact message into the durable dmConversations doc.
 
     firestoreSubscription?.cancel();
     firestoreSubscription = null;

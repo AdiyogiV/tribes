@@ -186,6 +186,10 @@ export const aiChat = onRequest(
             res.write(`data: ${JSON.stringify(data)}\n\n`);
         };
 
+        // Hoisted so the catch block can mark the streamed doc as failed.
+        let failureRef = null;
+        let failureField = "response";
+
         try {
             const body = parseBody(req);
             const messages = normaliseMessages(body.messages);
@@ -219,6 +223,7 @@ export const aiChat = onRequest(
             // Falls back to body.astrologyContext for old clients / guest sessions.
             let astrologyContext = null;
             let contextSource = "none";
+            let authedUid = null;
 
             const authHeader = req.headers["authorization"] || "";
             const idToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
@@ -226,6 +231,7 @@ export const aiChat = onRequest(
             if (idToken) {
                 try {
                     const decoded = await getAuth().verifyIdToken(idToken);
+                    authedUid = decoded.uid;
                     astrologyContext = await fetchUserContext(decoded.uid);
                     contextSource = astrologyContext ? "server" : "server_no_data";
                 } catch (authErr) {
@@ -276,28 +282,97 @@ export const aiChat = onRequest(
                 return res.status(400).json({ error: "Last user message is empty" });
             }
 
-            // ── Streaming transport ─────────────────────────────────────────
+            // ── Streaming transport = durable store (the ideal) ─────────────
             // SSE is unreliable on Flutter web + Hosting/Cloud Run (proxy buffers
-            // the chunked response). So the Firestore session doc is the real
-            // streaming channel: we write `response` into it incrementally and the
-            // client listens via onSnapshot. SSE is still emitted as a fast-path
-            // bonus for clients where it happens to work.
-            const sessionRef = db.collection("ai_chat_sessions").doc(chatId);
-            await sessionRef.set({
-                chatId,
-                status: "processing",
-                response: null,
-                createdAt: FieldValue.serverTimestamp(),
-                updatedAt: FieldValue.serverTimestamp(),
-            });
+            // chunked responses). So Firestore is the streaming channel AND the
+            // permanent record — ONE doc, written only by the backend.
+            //
+            // Authed users: we stream straight into the durable assistant message
+            // doc inside dmConversations. The stream IS the persistence — no
+            // separate client-side save, no duplicate write, no dup-bug class.
+            //
+            // Guests (no token / no conversationId): fall back to an ephemeral
+            // ai_chat_sessions doc (they can't write to dmConversations anyway).
+            const HOLYCOW_USER_ID = "holycow_system_user";
+            const conversationId = body.conversationId ? String(body.conversationId) : null;
+            const userMessageId = body.userMessageId ? String(body.userMessageId) : null;
+            const assistantMessageId = body.assistantMessageId ? String(body.assistantMessageId) : null;
+
+            const durable = !!(authedUid && conversationId && assistantMessageId);
+
+            let targetRef;       // doc we stream into
+            let streamField;     // field name the client reads
+            let firestorePath;   // path the client listens on
+            let convoRef = null;
+
+            if (durable) {
+                convoRef = db.collection("dmConversations").doc(conversationId);
+                // Ensure the conversation shell exists (idempotent). Set
+                // firstUserMessage only on first creation so it stays the title.
+                const convoSnap = await convoRef.get();
+                await convoRef.set({
+                    participants: [authedUid, HOLYCOW_USER_ID],
+                    isAiConversation: true,
+                    lastActivity: FieldValue.serverTimestamp(),
+                    ...(convoSnap.exists
+                        ? {}
+                        : {
+                            createdAt: FieldValue.serverTimestamp(),
+                            ...(userMessage ? { firstUserMessage: userMessage } : {}),
+                        }),
+                }, { merge: true });
+
+                // Persist the user's message (backend is sole writer).
+                const baseTs = Date.now();
+                if (userMessageId && userMessage) {
+                    await convoRef.collection("messages").doc(userMessageId).set({
+                        content: userMessage,
+                        senderId: authedUid,
+                        senderName: "You",
+                        timestamp: new Date(baseTs),
+                        type: "text",
+                        ...(audioUrl ? { isVoiceMessage: true, audioUrl } : {}),
+                    }, { merge: true });
+                }
+
+                // Create the assistant message doc we'll stream into.
+                targetRef = convoRef.collection("messages").doc(assistantMessageId);
+                await targetRef.set({
+                    content: "",
+                    senderId: HOLYCOW_USER_ID,
+                    senderName: "holycow.ai",
+                    timestamp: new Date(baseTs + 1),
+                    type: "text",
+                    status: "processing",
+                    updatedAt: FieldValue.serverTimestamp(),
+                }, { merge: true });
+
+                streamField = "content";
+                firestorePath = `dmConversations/${conversationId}/messages/${assistantMessageId}`;
+            } else {
+                targetRef = db.collection("ai_chat_sessions").doc(chatId);
+                await targetRef.set({
+                    chatId,
+                    status: "processing",
+                    response: null,
+                    createdAt: FieldValue.serverTimestamp(),
+                    updatedAt: FieldValue.serverTimestamp(),
+                });
+                streamField = "response";
+                firestorePath = `ai_chat_sessions/${chatId}`;
+            }
 
             res.setHeader("Cache-Control", "no-cache");
             res.setHeader("Content-Type", "text/event-stream");
             res.setHeader("Connection", "keep-alive");
             res.flushHeaders();
 
+            // Expose target to the catch block for failure marking.
+            failureRef = targetRef;
+            failureField = streamField;
+
             // Tell the client which doc to listen to for streamed tokens.
-            write({ event: "session", chatId, firestorePath: `ai_chat_sessions/${chatId}` });
+            write({ event: "session", chatId, firestorePath });
 
             // Throttled incremental writer (~300ms) so we stream phrase-by-phrase
             // without blowing past Firestore's ~1 write/sec/doc soft limit.
@@ -308,8 +383,8 @@ export const aiChat = onRequest(
                 if (!force && now - lastDocWrite < 300) return;
                 lastDocWrite = now;
                 try {
-                    await sessionRef.update({
-                        response: streamAccum,
+                    await targetRef.update({
+                        [streamField]: streamAccum,
                         updatedAt: FieldValue.serverTimestamp(),
                     });
                 } catch (_) { /* best-effort: completion write is authoritative */ }
@@ -410,18 +485,31 @@ export const aiChat = onRequest(
                 ...metrics,
             });
 
-            // Final authoritative write: full response + completion status. The
-            // client finalizes from this (and it's the durable streaming record).
+            // Final authoritative write: full text + completion status. The client
+            // finalizes from this; for authed users this IS the durable record.
             try {
-                await sessionRef.update({
+                await flushDoc(true);
+                await targetRef.update({
                     status: "completed",
-                    response: accumulated,
+                    [streamField]: accumulated,
                     updatedAt: FieldValue.serverTimestamp(),
                     completedAt: FieldValue.serverTimestamp(),
                     performanceMetrics: metrics,
                 });
+                // Update the conversation summary so recent-chats list is correct.
+                if (durable && convoRef) {
+                    await convoRef.set({
+                        lastActivity: FieldValue.serverTimestamp(),
+                        lastMessage: {
+                            content: accumulated,
+                            senderId: HOLYCOW_USER_ID,
+                            senderName: "HolyCow",
+                            timestamp: FieldValue.serverTimestamp(),
+                        },
+                    }, { merge: true });
+                }
             } catch (e) {
-                logger.error("Failed to write completion to session doc", {
+                logger.error("Failed to write completion to target doc", {
                     structuredData: true, chatId, error: String(e),
                 });
             }
@@ -434,16 +522,25 @@ export const aiChat = onRequest(
                 error: String(error),
             });
 
-            // Record failure on the session doc so the client listener surfaces it.
+            // Mark the streamed doc as failed so the client listener surfaces it.
             try {
-                const body = parseBody(req);
-                const failChatId = body?.chatId ? String(body.chatId) : null;
-                if (failChatId) {
-                    await db.collection("ai_chat_sessions").doc(failChatId).set({
+                if (failureRef) {
+                    await failureRef.set({
                         status: "failed",
                         error: error.message || "Unknown error",
                         updatedAt: FieldValue.serverTimestamp(),
                     }, { merge: true });
+                } else {
+                    // Stream never got far enough to pick a target (guest fallback).
+                    const body = parseBody(req);
+                    const failChatId = body?.chatId ? String(body.chatId) : null;
+                    if (failChatId) {
+                        await db.collection("ai_chat_sessions").doc(failChatId).set({
+                            status: "failed",
+                            error: error.message || "Unknown error",
+                            updatedAt: FieldValue.serverTimestamp(),
+                        }, { merge: true });
+                    }
                 }
             } catch (persistError) {
                 logger.error("Failed to record streaming failure", {

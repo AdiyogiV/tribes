@@ -29,13 +29,6 @@ mixin AiChatPersistenceMixin on ChangeNotifier {
   /// Check if user is authenticated
   bool get isUserAuthenticated => FirebaseAuth.instance.currentUser != null;
 
-  // Tracks which message ids have already been written to Firestore for the
-  // *current* conversation, so each save only persists genuinely new messages.
-  // Keyed implicitly by [_persistedConversationId]; reset automatically when
-  // the conversation changes (new chat / loaded chat / cleared history).
-  String? _persistedConversationId;
-  final Set<String> _persistedMessageIds = {};
-
   /// Clear conversation ID (called when starting new session)
   void clearConversationId() {
     currentSessionDirect =
@@ -66,146 +59,20 @@ mixin AiChatPersistenceMixin on ChangeNotifier {
     }
 
     try {
-      // Create a new conversation
+      // Generate a deterministic conversation id and cache it. We do NOT write
+      // the doc here — the backend is the sole writer and creates the
+      // conversation shell (idempotently) when it streams the first message.
       final sessionTimestamp = DateTime.now().millisecondsSinceEpoch;
       final conversationId = 'ai_chat_${currentUser.uid}_$sessionTimestamp';
 
-      await firestore.collection('dmConversations').doc(conversationId).set({
-        'participants': [currentUser.uid, HOLYCOW_USER_ID],
-        'createdAt': FieldValue.serverTimestamp(),
-        'lastActivity': FieldValue.serverTimestamp(),
-        'isAiConversation': true,
-      });
-
-      // Store in state for reuse
+      // Store in state for reuse across turns in this session.
       transition(currentSession.copyWith(conversationId: conversationId));
 
-      AppLogger.i('Created new AI conversation: $conversationId');
+      AppLogger.i('Allocated AI conversation id: $conversationId');
       return conversationId;
     } catch (e) {
-      AppLogger.e('Error creating conversation: $e');
+      AppLogger.e('Error allocating conversation id: $e');
       return null;
-    }
-  }
-
-  /// Save current AI conversation as DM messages
-  /// Only saves NEW messages (those without Firestore IDs)
-  Future<void> saveConversationAsDM() async {
-    if (currentSession.messages.length < 2) {
-      return; // Need at least user + AI message
-    }
-
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) {
-      return; // Skip for unauthenticated users
-    }
-
-    try {
-      // Ensure we have a conversation ID
-      final conversationId = await ensureConversation();
-      if (conversationId == null) {
-        return;
-      }
-
-      // Reset the persisted-id tracker whenever we switch conversations so a
-      // freshly loaded/created conversation starts from a clean slate.
-      if (_persistedConversationId != conversationId) {
-        _persistedConversationId = conversationId;
-        _persistedMessageIds.clear();
-      }
-
-      // Only persist messages we haven't already written. Combined with the
-      // deterministic doc id below (keyed on the stable message id), this makes
-      // saves fully idempotent — re-saving never creates duplicate docs.
-      final messagesToSave = currentSession.messages
-          .where((m) =>
-              !m.pending &&
-              m.content.isNotEmpty &&
-              m.id.isNotEmpty &&
-              !_persistedMessageIds.contains(m.id))
-          .toList();
-
-      if (messagesToSave.isEmpty) {
-        return; // Nothing new to save
-      }
-
-      AppLogger.i(
-          'Saving ${messagesToSave.length} messages to $conversationId');
-
-      final batch = firestore.batch();
-
-      for (final message in messagesToSave) {
-        // Deterministic doc id keyed on the stable message id makes the write
-        // idempotent: a repeat save overwrites the same doc instead of minting
-        // a new random one (the root cause of the historical 6x duplication).
-        final messageRef = firestore
-            .collection('dmConversations')
-            .doc(conversationId)
-            .collection('messages')
-            .doc(message.id);
-
-        final messageData = {
-          'content': message.content,
-          'senderId':
-              message.role == 'user' ? currentUser.uid : HOLYCOW_USER_ID,
-          'senderName': message.role == 'user' ? 'You' : 'holycow.ai',
-          'timestamp': Timestamp.fromDate(message.createdAt),
-          'type': 'text',
-          // Save thought process and search results for AI messages
-          if (message.thoughtProcess != null)
-            'thoughtProcess': message.thoughtProcess!.toJson(),
-          if (message.searchResults != null)
-            'searchResults':
-                message.searchResults!.map((r) => r.toJson()).toList(),
-          // Save voice message fields
-          'isVoiceMessage': message.isVoiceMessage,
-          if (message.audioUrl != null) 'audioUrl': message.audioUrl,
-          if (message.audioDuration != null)
-            'audioDuration': message.audioDuration,
-        };
-
-        batch.set(messageRef, messageData);
-      }
-
-      // Update conversation last message only if we have messages to save
-      if (messagesToSave.isNotEmpty) {
-        final lastMessage = currentSession.messages.last;
-        final conversationRef =
-            firestore.collection('dmConversations').doc(conversationId);
-
-        // Find the first user message for conversation title
-        final firstUserMessage = currentSession.messages
-            .where((m) => m.role == 'user')
-            .firstOrNull
-            ?.content;
-
-        final updateData = <String, dynamic>{
-          'lastActivity': FieldValue.serverTimestamp(),
-          'lastMessage': {
-            'content': lastMessage.content,
-            'senderId':
-                lastMessage.role == 'user' ? currentUser.uid : HOLYCOW_USER_ID,
-            'senderName': lastMessage.role == 'user' ? 'You' : 'HolyCow',
-            'timestamp': Timestamp.fromDate(lastMessage.createdAt),
-          }
-        };
-
-        // Only set firstUserMessage if we found one (don't overwrite existing)
-        if (firstUserMessage != null) {
-          updateData['firstUserMessage'] = firstUserMessage;
-        }
-
-        batch.update(conversationRef, updateData);
-      }
-
-      await batch.commit();
-      // Remember what we just wrote so subsequent turns skip these messages.
-      for (final message in messagesToSave) {
-        _persistedMessageIds.add(message.id);
-      }
-      AppLogger.i('AI conversation saved as DM conversation: $conversationId');
-    } catch (e) {
-      AppLogger.e('Error saving AI conversation as DM: $e');
     }
   }
 
