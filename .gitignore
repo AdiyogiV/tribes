@@ -183,3 +183,6 @@ local.properties
 android/.kotlin/.git-backup/
 .cursor/
 *.csv
+
+# Throwaway PMF analysis artifacts (audio dumps, generated reports)
+backend/analysis/

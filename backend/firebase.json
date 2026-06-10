@@ -8,7 +8,11 @@
                 ".git",
                 "firebase-debug.log",
                 "firebase-debug.*.log",
-                "public"
+                "public",
+                "analysis",
+                "tests",
+                "serviceAccountKey.json",
+                "*serviceAccountKey*.json"
             ]
         }
     ],
