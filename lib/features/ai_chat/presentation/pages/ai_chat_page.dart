@@ -87,6 +87,12 @@ class AiChatPageState extends State<AiChatPage> with WidgetsBindingObserver {
     final provider = _provider;
     if (provider == null) return;
 
+    // Resolve the audio service BEFORE any await (context can't cross the async
+    // gap below). Only needed for the initial-voice path.
+    final audioService = widget.initialVoiceResult != null
+        ? Provider.of<AudioInputService>(context, listen: false)
+        : null;
+
     // Auto-load user's astrology + ayurveda context so the AI can give
     // personalized responses when the question warrants it.
     await _loadUserContext();
@@ -100,9 +106,16 @@ class AiChatPageState extends State<AiChatPage> with WidgetsBindingObserver {
       provider.startNewSession();
       provider.sendMessage(widget.initialMessage!);
     } else if (widget.initialVoiceResult != null) {
-      // Start new session and send the voice result (recorded on dashboard)
+      // Start new session and send the voice result (recorded on dashboard).
       provider.startNewSession();
       final result = widget.initialVoiceResult!;
+
+      // Wire the background-upload callbacks to THIS provider so a voice whose
+      // audio is still uploading resumes/cancels correctly here — don't rely on
+      // whoever navigated us having set them (keeps the path self-contained).
+      audioService?.setOnAudioUrlUploaded(provider.updateLastVoiceMessageUrl);
+      audioService?.setOnAudioUploadSkipped(provider.markLastVoiceMessageAsLocalOnly);
+
       provider.sendVoiceMessage(
         transcript: result.transcript,
         localAudioPath: result.localAudioPath,
