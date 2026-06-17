@@ -14,31 +14,6 @@ import { extractGrounding, extractUsage } from "./ai_telemetry.js";
 
 const MAX_HISTORY_MESSAGES = CHAT_CONFIG.MAX_HISTORY_MESSAGES;
 
-// Only these clearly-live-data intents justify attaching the Google Search tool
-// (which costs ~$35/1k + seconds of TTFT). Astrology, wellness, predictions and
-// general chat are answerable from training data + the user's chart, so they get
-// NO tool. Deliberately conservative: a missed search is cheap, a false search
-// is expensive. Astrology words like "forecast/prediction" are intentionally
-// excluded — those are chart-based, not web-based.
-const LIVE_DATA_RE = new RegExp([
-    "\\bnews\\b", "headline", "breaking",
-    "\\bprice\\b", "stock", "share price", "crypto", "bitcoin", "\\bnifty\\b", "sensex", "exchange rate",
-    "weather", "temperature today", "forecast today",
-    "\\bscore\\b", "who won", "match result", "election result",
-    "who is the (current|new)", "latest .*(release|version|update|launch)",
-].join("|"), "i");
-
-/**
- * Should we attach the Google Search tool for this message? Only for genuine
- * live/current external-data questions. Returns false for empty/short inputs.
- * @param {string|null} userMessage
- * @returns {boolean}
- */
-function messageNeedsLiveData(userMessage) {
-    if (!userMessage || userMessage.length < 4) return false;
-    return LIVE_DATA_RE.test(userMessage);
-}
-
 
 // =============================================================================
 // HELPER: Build proper Gemini multi-turn conversation format
@@ -113,11 +88,6 @@ async function streamFromGemini({
     onFirstToken = null,
 }) {
     const isAudio = !!audioUrl;
-    // Decide whether to even ATTACH the search tool. Prompt instructions alone
-    // don't work: with the tool attached, 2.5-flash grounded ~100% of requests
-    // (logs: usedSearch true on every call), adding ~$35/1k cost AND seconds of
-    // TTFT. So we gate the TOOL itself — only live/current-data questions get it.
-    const wantsSearch = !isAudio && messageNeedsLiveData(userMessage);
     logger.info("Starting Gemini processing", {
         structuredData: true,
         chatId,
@@ -125,16 +95,14 @@ async function streamFromGemini({
         hasAstrology: !!astrologyContext,
         hasLocation: !!userLocation,
         messageLength: userMessage?.length || 0,
-        searchToolAttached: wantsSearch,
     });
 
     const vertexAI = getVertexAI();
-    // Attach the search tool ONLY when the question needs live external data.
-    // Default (astrology/wellness/general) = no tool = no grounding cost, no
-    // grounding latency. This is the single biggest cost+latency lever.
+    // Always include the search tool — the system prompt instructs the model to
+    // only invoke it for genuinely live/current data needs.
     const model = vertexAI.getGenerativeModel({
         model: AI_MODELS.GEMINI_FLASH,
-        ...(wantsSearch ? { tools: [{ googleSearch: {} }] } : {}),
+        tools: [{ googleSearch: {} }],
         generationConfig: {
             temperature: CHAT_CONFIG.TEMPERATURE,
             maxOutputTokens: CHAT_CONFIG.MAX_OUTPUT_TOKENS,
@@ -144,7 +112,7 @@ async function streamFromGemini({
         },
     });
 
-    const systemPrompt = getChatSystemPrompt(astrologyContext, userLocation, isAudio, wantsSearch);
+    const systemPrompt = getChatSystemPrompt(astrologyContext, userLocation, isAudio);
 
     // History = everything but the current (last) user message.
     const contents = buildGeminiContents(messages.slice(0, -1));

@@ -40,14 +40,25 @@ function buildDateDirective() {
 }
 
 /**
- * Search instruction. The tool is now attached CONDITIONALLY (only for live-data
- * questions — see ai_gemini.messageNeedsLiveData), so we no longer need the big
- * "almost never" block on every request. When the tool is attached we add this
- * tiny nudge; otherwise nothing about search is in the prompt at all.
+ * Hardened Google Search policy. The search tool is ALWAYS attached to every
+ * request, so the only thing keeping latency down and answers grounded in the
+ * user's own data is this rule. Default posture: DO NOT SEARCH.
  */
-const SEARCH_HINT =
-    "A web search tool is attached because this question needs live/current " +
-    "data. Use it once to fetch exactly what's needed, then answer concisely.";
+const SEARCH_RULE = [
+    "═══ GOOGLE SEARCH \u2014 USE ALMOST NEVER ═══",
+    "The search tool is available but your DEFAULT is to NOT use it. Your own",
+    "knowledge plus the user's birth chart, Ayurvedic profile, and memory already",
+    "answer ~99% of questions. Searching adds seconds of latency and breaks the",
+    "intimate, in-the-moment feel \u2014 it is a cost, not a feature.",
+    "Search ONLY when the answer literally cannot exist without live external data",
+    "that changes day-to-day AND the user is clearly asking for it \u2014 e.g. breaking",
+    "news, today's live market/crypto price, today's weather or sports score, a",
+    "specific real-world event happening now.",
+    "NEVER search for: astrology, Ayurveda, spirituality, life advice, predictions,",
+    "relationships, career guidance, general knowledge, definitions, or anything",
+    "answerable from training data or the user's profile.",
+    "When in doubt, DO NOT SEARCH \u2014 answer from what you know.",
+].join("\n");
 
 
 /**
@@ -366,7 +377,7 @@ function buildStyleRules(isVoice = false) {
     ].filter(Boolean).join("\n");
 }
 
-function getChatSystemPrompt(astrologyContext = null, userLocation = null, isVoice = false, allowSearch = false) {
+function getChatSystemPrompt(astrologyContext = null, userLocation = null, isVoice = false) {
     // One linear flow, zero branches. Context builders return "" when there's
     // no data (logged-out / onboarding), so the same prompt serves everyone.
     return [
@@ -377,7 +388,7 @@ function getChatSystemPrompt(astrologyContext = null, userLocation = null, isVoi
         ROUTING,
         "",
         buildStyleRules(isVoice),
-        allowSearch ? SEARCH_HINT : "",
+        SEARCH_RULE,
         buildAstrologyContextString(astrologyContext),
         astrologyContext?.ayurveda ? buildWellnessContextString(astrologyContext.ayurveda) : "",
         buildMemoryContextString(astrologyContext?.memory),

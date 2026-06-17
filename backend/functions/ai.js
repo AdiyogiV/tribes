@@ -519,6 +519,7 @@ export const aiChat = onRequest(
                 chunkCount: result.chunkCount,
                 // Search / grounding
                 usedSearch: result.grounding.usedSearch,
+                groundingAttached: result.grounding.groundingAttached,
                 searchQueries: result.grounding.searchQueries,
                 sourceCount: result.grounding.sourceCount,
                 sources: result.grounding.sources,

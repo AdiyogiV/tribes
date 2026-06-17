@@ -18,16 +18,23 @@ import { CHAT_CONFIG } from "../lib/config.js";
 
 /**
  * Extract Google Search grounding info from a Gemini response.
+ *
+ * IMPORTANT: `usedSearch` is the BILLABLE truth — it is true ONLY when an actual
+ * web query ran (`webSearchQueries`). Earlier this also OR'd in `groundingChunks`
+ * and the mandatory `searchEntryPoint` suggestion chip, which Vertex can attach
+ * whenever the tool is present even if no query fired — that over-counted the
+ * search rate. We now report those weaker signals SEPARATELY so the metric is
+ * trustworthy and we can tell "real search" apart from "grounding metadata present".
  * @param {Object} response - the resolved generateContentStream().response
- * @returns {{usedSearch: boolean, searchQueries: string[], sourceCount: number, sources: string[]}}
+ * @returns {{usedSearch: boolean, searchQueries: string[], sourceCount: number, sources: string[], groundingAttached: boolean}}
  */
 export function extractGrounding(response) {
     const gm = response?.candidates?.[0]?.groundingMetadata;
     if (!gm) {
-        return { usedSearch: false, searchQueries: [], sourceCount: 0, sources: [] };
+        return { usedSearch: false, searchQueries: [], sourceCount: 0, sources: [], groundingAttached: false };
     }
 
-    // webSearchQueries is the authoritative "search actually ran" signal.
+    // webSearchQueries is the authoritative "a billable search actually ran" signal.
     const searchQueries = Array.isArray(gm.webSearchQueries) ? gm.webSearchQueries : [];
 
     // groundingChunks carry the cited web sources.
@@ -36,15 +43,17 @@ export function extractGrounding(response) {
         .map((c) => c?.web?.domain || c?.web?.title || c?.web?.uri || null)
         .filter(Boolean);
 
-    const usedSearch = searchQueries.length > 0 ||
-        sources.length > 0 ||
-        !!gm.searchEntryPoint?.renderedContent;
-
     return {
-        usedSearch,
+        // Billable truth: a query actually ran.
+        usedSearch: searchQueries.length > 0,
         searchQueries,
         sourceCount: sources.length,
         sources: sources.slice(0, 10), // cap stored payload
+        // Weaker signal: grounding metadata / suggestion chip was attached even
+        // if no query ran. Lets us diagnose over-counting vs real search.
+        groundingAttached: searchQueries.length > 0 ||
+            sources.length > 0 ||
+            !!gm.searchEntryPoint?.renderedContent,
     };
 }
 
