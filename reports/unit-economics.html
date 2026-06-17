@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Aurogram · Unit Economics Calculator</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  body { background:#080C14; color:#E8EAED; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; }
+  .gold { color:#D4AF37; }
+  .card { background:#0F1623; border:1px solid #1d2738; border-radius:14px; }
+  .accent { background:linear-gradient(90deg,#D4AF37,#4E9A6F); }
+  input[type=number]{ background:#0a111d; border:1px solid #28344a; color:#E8EAED; border-radius:8px; padding:5px 8px; width:100%; }
+  input[type=number]:focus{ outline:none; border-color:#D4AF37; }
+  .kpi { font-variant-numeric: tabular-nums; }
+  label.fld { display:flex; flex-direction:column; gap:3px; font-size:11px; color:#9aa6b8; }
+  table { border-collapse: collapse; width:100%; }
+  th,td { padding:8px 10px; text-align:right; font-variant-numeric: tabular-nums; }
+  th:first-child, td:first-child { text-align:left; }
+  thead th { color:#9aa6b8; font-weight:600; border-bottom:1px solid #28344a; font-size:12px; }
+  tbody tr { border-bottom:1px solid #14202f; }
+  .pos { color:#4E9A6F; } .neg { color:#e06b6b; } .warn { color:#D4AF37; }
+  .chart-box { position:relative; height:300px; }
+  details summary { cursor:pointer; }
+  .pill { font-size:10px; padding:2px 8px; border-radius:999px; background:#1a2436; color:#9aa6b8; }
+</style>
+</head>
+<body class="min-h-screen">
+<div class="max-w-7xl mx-auto px-5 py-8">
+
+  <header class="mb-6">
+    <div class="h-1 w-full accent rounded-full mb-5"></div>
+    <h1 class="text-3xl font-bold"> Aurogram — Unit Economics & Finance Model</h1>
+    <p class="text-sm text-slate-400 mt-2 max-w-3xl">
+      Interactive fundraising model. Every assumption below is editable — tweak and everything recomputes live.
+      Cost parameters are grounded in your actual codebase (Gemini <span class="gold">2.5-flash</span>, 2048-token output cap,
+      thinking budget 0, nightly <em>per-user</em> insight cron, Agora calls, Firestore). All figures in <span class="gold">₹ (INR)</span> — provider list prices (quoted in US$) are converted at the editable <b>₹ per US$</b> rate at the bottom of the inputs (default ₹83). Override any cell with your negotiated rates.
+    </p>
+  </header>
+
+  <!-- EXEC SUMMARY -->
+  <section class="card p-5 mb-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-semibold gold">Executive Summary</h2>
+      <span class="pill" id="scenarioPill">Freemium · 100k MAU</span>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4" id="kpiRow"></div>
+    <p id="execNote" class="text-xs text-slate-400 mt-4"></p>
+  </section>
+
+  <div class="grid lg:grid-cols-3 gap-6">
+
+    <!-- INPUTS -->
+    <section class="card p-5 lg:col-span-1 space-y-5">
+      <h2 class="text-lg font-semibold gold">Assumptions</h2>
+
+      <div>
+        <h3 class="text-xs uppercase tracking-wide text-slate-500 mb-2">Engagement (per active user / month)</h3>
+        <div class="grid grid-cols-2 gap-3" id="engBox"></div>
+      </div>
+
+      <div>
+        <h3 class="text-xs uppercase tracking-wide text-slate-500 mb-2">AI cost — Gemini 2.5-flash</h3>
+        <div class="grid grid-cols-2 gap-3" id="aiBox"></div>
+      </div>
+
+      <div>
+        <h3 class="text-xs uppercase tracking-wide text-slate-500 mb-2">Infra cost (Agora / Firestore / Functions)</h3>
+        <div class="grid grid-cols-2 gap-3" id="infraBox"></div>
+      </div>
+
+      <div>
+        <h3 class="text-xs uppercase tracking-wide text-slate-500 mb-2">Revenue models</h3>
+        <div class="grid grid-cols-2 gap-3" id="revBox"></div>
+      </div>
+
+      <div>
+        <h3 class="text-xs uppercase tracking-wide text-slate-500 mb-2">Growth & LTV</h3>
+        <div class="grid grid-cols-2 gap-3" id="growthBox"></div>
+      </div>
+
+      <button id="resetBtn" class="w-full mt-2 text-xs text-slate-400 border border-slate-700 rounded-lg py-2 hover:border-slate-500">↺ Reset to defaults</button>
+    </section>
+
+    <!-- OUTPUTS -->
+    <section class="lg:col-span-2 space-y-6">
+
+      <div class="card p-5">
+        <h2 class="text-lg font-semibold gold mb-1">Blended cost-to-serve per active user / month</h2>
+        <p class="text-xs text-slate-400 mb-4"> Daily insights run on a cron for <em>every</em> user nightly — that cost exists even for users who never open the app.</p>
+        <div class="chart-box"><canvas id="costChart"></canvas></div>
+      </div>
+
+      <div class="card p-5 overflow-x-auto">
+        <h2 class="text-lg font-semibold gold mb-4">Unit economics by revenue model × scale</h2>
+        <table id="ueTable"></table>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="card p-5">
+          <h2 class="text-base font-semibold gold mb-3">Monthly contribution (Revenue − Cost) by scale</h2>
+          <div class="chart-box"><canvas id="contribChart"></canvas></div>
+        </div>
+        <div class="card p-5">
+          <h2 class="text-base font-semibold gold mb-3">LTV : CAC by revenue model</h2>
+          <div class="chart-box"><canvas id="ltvChart"></canvas></div>
+        </div>
+      </div>
+
+    </section>
+  </div>
+
+  <!-- PRICING STRATEGY -->
+  <section class="card p-5 mt-6">
+    <div class="flex items-center justify-between mb-1">
+      <h2 class="text-lg font-semibold gold">Pricing strategy &amp; the freemium trap</h2>
+      <span class="pill">free-tier cost decides profit</span>
+    </div>
+    <p class="text-xs text-slate-400 mb-4">In freemium only a few % pay, but you serve <b>everyone</b>. So your floor isn't cost-per-user — it's <b>cost ÷ conversion</b>. Gate the free tier (cap chat, no nightly insight cron) to keep free-user cost low.</p>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5" id="priceKpis"></div>
+
+    <div class="grid lg:grid-cols-2 gap-6">
+      <div>
+        <h3 class="text-sm font-semibold mb-2">Contribution / MAU by price × conversion <span class="text-slate-500 text-xs">(green = profit)</span></h3>
+        <div class="overflow-x-auto"><table id="gridTable"></table></div>
+      </div>
+      <div>
+        <h3 class="text-sm font-semibold mb-2">Minimum break-even price by conversion</h3>
+        <div class="overflow-x-auto"><table id="beTable"></table></div>
+        <div id="recoCard" class="mt-4 p-4 rounded-lg" style="background:#10261b;border:1px solid #1f5138"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- INSIGHTS -->
+  <section class="card p-5 mt-6">
+    <h2 class="text-lg font-semibold gold mb-3">Investor-grade insights</h2>
+    <div id="insights" class="text-sm text-slate-300 space-y-2"></div>
+  </section>
+
+  <footer class="text-center text-xs text-slate-600 mt-8">
+    Built by Jo  · Cost params from codebase, prices are editable list defaults · Live <code>aiChatMetrics</code> not readable from sandbox — see README to plug in real averages.
+  </footer>
+</div>
+
+<script>
+// ---------- DEFAULTS (grounded in code + list pricing) ----------
+// Real provider list prices are quoted in US$. We convert to ₹ at FX so the
+// whole model is rupee-native. Editing the ₹/$ field rescales these.
+const USD_PRICES = { pIn:0.30, pOut:2.50, pSearch:35, pVideo:3.99, pAudio:0.99,
+  pRead:0.06, pWrite:0.18, pStorage:0.18, fnCost:0.010 };
+const FX = 83; // ₹ per US$ (editable in the UI)
+
+const DEFAULTS = {
+  fx: FX,              // ₹ per US$
+  // engagement / active user / month
+  msgs: 30,            // chat messages per MAU/mo
+  inTok: 1500,         // input tokens per message (big: system prompt + astro ctx + history)
+  outTok: 600,         // output tokens per message (cap 2048)
+  searchRate: 0,       // % of messages that trigger Google Search grounding (0 = grounding OFF)
+  insightInTok: 1200,  // nightly insight input tokens / user / day
+  insightOutTok: 500,  // nightly insight output tokens / user / day
+  insightDays: 30,     // insight runs per month (cron = daily)
+  callMin: 8,          // Agora minutes per MAU/mo
+  videoShare: 50,      // % of call minutes that are video (rest audio)
+  fsReads: 5000,       // Firestore reads / MAU/mo
+  fsWrites: 800,       // Firestore writes / MAU/mo
+  storageGB: 0.05,     // storage GB / MAU
+  fnCost: USD_PRICES.fnCost*FX,  // misc Cloud Functions cost / user / mo (₹)
+
+  // AI prices (₹ per 1M tokens) — Gemini 2.5-flash list, converted at FX
+  pIn: USD_PRICES.pIn*FX,
+  pOut: USD_PRICES.pOut*FX,
+  pSearch: USD_PRICES.pSearch*FX,   // ₹ per 1000 grounding requests
+
+  // infra prices (₹), converted at FX
+  pVideo: USD_PRICES.pVideo*FX,     // ₹ / 1000 video min
+  pAudio: USD_PRICES.pAudio*FX,     // ₹ / 1000 audio min
+  pRead: USD_PRICES.pRead*FX,       // ₹ / 100k reads
+  pWrite: USD_PRICES.pWrite*FX,     // ₹ / 100k writes
+  pStorage: USD_PRICES.pStorage*FX, // ₹ / GB-month
+
+  // revenue (₹, India pricing)
+  subConv: 3,          // % freemium -> paid
+  subPrice: 299,       // ₹/mo subscription
+  credBuyers: 8,       // % buyers
+  credArppu: 99,       // ₹ / buyer / mo
+  hybSubConv: 3, hybSubPrice: 299, hybCredBuyers: 5, hybCredArppu: 75,
+
+  // growth / LTV
+  cac: 60,             // ₹ blended customer acquisition cost
+  lifetime: 12,        // avg active months
+  freeCostPct: 16,     // gated free-user cost as % of full-access cost (₹2/₹12.46)
+};
+
+const FIELDS = {
+  engBox: [
+    ['msgs','AI msgs / user / mo'],['inTok','Input tokens / msg'],
+    ['outTok','Output tokens / msg'],['searchRate','Search rate %'],
+    ['insightInTok','Insight in-tok / day'],['insightOutTok','Insight out-tok / day'],
+    ['insightDays','Insight runs / mo'],['callMin','Call min / user / mo'],
+    ['videoShare','% call min video'],['fsReads','Firestore reads / mo'],
+    ['fsWrites','Firestore writes / mo'],['storageGB','Storage GB / user'],
+  ],
+  aiBox: [['pIn','₹/1M input tok'],['pOut','₹/1M output tok'],['pSearch','₹/1k search req']],
+  infraBox: [['pVideo','₹/1k video min'],['pAudio','₹/1k audio min'],['pRead','₹/100k reads'],
+    ['pWrite','₹/100k writes'],['pStorage','₹/GB-mo'],['fnCost','Fns ₹ / user / mo']],
+  revBox: [['subConv','Sub conv %'],['subPrice','Sub ₹/mo'],['credBuyers','Credit buyers %'],
+    ['credArppu','Credit ₹/buyer'],['hybSubConv','Hyb sub %'],['hybSubPrice','Hyb sub ₹'],
+    ['hybCredBuyers','Hyb cred %'],['hybCredArppu','Hyb cred ₹']],
+  growthBox: [['cac','CAC ₹'],['lifetime','Avg lifetime (mo)'],['fx','₹ per US$'],['freeCostPct','Free-user cost % of full']],
+};
+
+const TIERS = [['Seed',10000],['Growth',100000],['Scale',1000000]];
+let S = {...DEFAULTS};
+
+// ---------- COMPUTE ----------
+function costPerUser(s){
+  const M = 1e6, K100 = 1e5, K = 1000;
+  const chatIn  = s.msgs * s.inTok / M * s.pIn;
+  const chatOut = s.msgs * s.outTok / M * s.pOut;
+  const search  = s.msgs * (s.searchRate/100) / K * s.pSearch;
+  const insight = s.insightDays * (s.insightInTok/M*s.pIn + s.insightOutTok/M*s.pOut);
+  const videoMin = s.callMin * (s.videoShare/100);
+  const audioMin = s.callMin * (1 - s.videoShare/100);
+  const agora   = videoMin/K*s.pVideo + audioMin/K*s.pAudio;
+  const firestore = s.fsReads/K100*s.pRead + s.fsWrites/K100*s.pWrite + s.storageGB*s.pStorage;
+  const fns = s.fnCost;
+  const breakdown = { 'Gemini chat': chatIn+chatOut, 'Search grounding': search,
+    'Daily insights (cron)': insight, 'Agora calls': agora, 'Firestore': firestore, 'Functions/misc': fns };
+  const total = Object.values(breakdown).reduce((a,b)=>a+b,0);
+  return { breakdown, total };
+}
+
+function arpu(s, model){
+  if(model==='Freemium')  return (s.subConv/100)*s.subPrice;
+  if(model==='Credits')   return (s.credBuyers/100)*s.credArppu;
+  // Hybrid
+  return (s.hybSubConv/100)*s.hybSubPrice + (s.hybCredBuyers/100)*s.hybCredArppu;
+}
+
+// Fraction of MAU that pays, per model (Hybrid = union of sub + credit buyers).
+function payFraction(s, model){
+  if(model==='Freemium') return s.subConv/100;
+  if(model==='Credits')  return s.credBuyers/100;
+  const a=s.hybSubConv/100, b=s.hybCredBuyers/100; return a+b-a*b;
+}
+
+// Blended cost-to-serve: paying users get FULL access, free users get a gated
+// (cheaper) tier costing freeCostPct of full. THIS is the freemium reality.
+function blendedCost(s, model){
+  const full = costPerUser(s).total;
+  const free = full * (s.freeCostPct/100);
+  const pf = payFraction(s, model);
+  return pf*full + (1-pf)*free;
+}
+
+// Minimum subscription price to break even at a given conversion % (Freemium).
+function breakEvenPrice(s, convPct){
+  const cc = convPct/100; if(cc<=0) return Infinity;
+  const full = costPerUser(s).total;
+  const free = full * (s.freeCostPct/100);
+  return (cc*full + (1-cc)*free) / cc;
+}
+
+function unitEcon(s, model){
+  const cost = blendedCost(s, model);   // blended across free + paid
+  const rev = arpu(s, model);
+  const contrib = rev - cost;
+  const grossMargin = rev>0 ? contrib/rev : -Infinity;
+  const ltv = Math.max(0, contrib) * s.lifetime; // contribution-based LTV
+  const ltvCac = s.cac>0 ? ltv/s.cac : 0;
+  const payback = contrib>0 ? s.cac/contrib : Infinity;
+  return { cost, rev, contrib, grossMargin, ltv, ltvCac, payback };
+}
+
+// ---------- RENDER ----------
+const $ = id => document.getElementById(id);
+// All internal math is already in INR. Format plainly (Indian grouping).
+const money = (n,d=2) => (n<0?'-₹':'₹')+Math.abs(n).toLocaleString('en-IN',{minimumFractionDigits:d,maximumFractionDigits:d});
+// Indian short-scale (lakh / crore) for large rupee amounts.
+function big(n){ const a=Math.abs(n); const s=n<0?'-':'';
+  if(a>=1e7) return s+'₹'+(a/1e7).toFixed(2)+' Cr';
+  if(a>=1e5) return s+'₹'+(a/1e5).toFixed(2)+' L';
+  if(a>=1e3) return s+'₹'+(a/1e3).toFixed(1)+'k';
+  return s+'₹'+a.toFixed(0); }
+// Plain count formatter for user numbers (no currency symbol).
+const count = n => n>=1e6?(n/1e6)+'M':n>=1e3?(n/1e3)+'k':''+n;
+
+function buildInputs(){
+  for(const [box, fields] of Object.entries(FIELDS)){
+    $(box).innerHTML = fields.map(([k,lab])=>
+      `<label class="fld">${lab}<input type="number" step="any" data-k="${k}" value="${+(+S[k]).toFixed(4)}"></label>`).join('');
+  }
+  document.querySelectorAll('input[data-k]').forEach(inp=>{
+    inp.addEventListener('input', e=>{
+      const k = e.target.dataset.k; const v = parseFloat(e.target.value);
+      S[k] = isNaN(v) ? 0 : v;
+      if(k==='fx'){ // rescale provider list prices from their real USD source
+        for(const pk in USD_PRICES) S[pk] = USD_PRICES[pk]*S.fx;
+        buildInputs(); // refresh the price fields to show new ₹ values
+      }
+      render();
+    });
+  });
+}
+
+let costChart, contribChart, ltvChart;
+const MODELS = ['Freemium','Credits','Hybrid'];
+const PALETTE = ['#D4AF37','#4E9A6F','#5b8def','#c77dff','#e06b6b','#7a8699'];
+
+function render(){
+  const cpu = costPerUser(S);
+
+  // KPIs (headline: Freemium @ Growth 100k)
+  const head = unitEcon(S,'Freemium');
+  $('scenarioPill').textContent = 'Freemium · 100k MAU';
+  const kpis = [
+    ['Blended cost / user / mo', money(head.cost,3), 'warn'],
+    ['ARPU (Freemium)', money(head.rev,3), ''],
+    ['Contribution / user', money(head.contrib,3), head.contrib>=0?'pos':'neg'],
+    ['Gross margin', isFinite(head.grossMargin)?(head.grossMargin*100).toFixed(0)+'%':'—', head.contrib>=0?'pos':'neg'],
+    ['LTV : CAC', head.ltvCac.toFixed(1)+'×', head.ltvCac>=3?'pos':'neg'],
+    ['Payback', isFinite(head.payback)?head.payback.toFixed(1)+' mo':'never', head.payback<=12?'pos':'neg'],
+  ];
+  $('kpiRow').innerHTML = kpis.map(([l,v,c])=>
+    `<div><div class="text-[11px] text-slate-500">${l}</div><div class="text-2xl font-bold kpi ${c}">${v}</div></div>`).join('');
+
+  $('execNote').innerHTML = `At <b>100k MAU</b> on the Freemium model (${S.subConv}% pay ₹${S.subPrice}, free tier gated to ${S.freeCostPct}% of full cost):
+    blended cost-to-serve ≈ <b>${money(head.cost*100000,0)}</b>,
+    revenue ≈ <b>${money(head.rev*100000,0)}</b>, monthly contribution ≈ <b class="${head.contrib>=0?'pos':'neg'}">${money(head.contrib*100000,0)}</b>,
+    ARR ≈ <b>${money(head.rev*100000*12,0)}</b>. Full-access cost driver: <b>${Object.entries(cpu.breakdown).sort((a,b)=>b[1]-a[1])[0][0]}</b>.`;
+
+  // Cost breakdown chart
+  const cb = cpu.breakdown;
+  const cData = { labels:Object.keys(cb), datasets:[{ data:Object.values(cb).map(v=>+v.toFixed(4)), backgroundColor:PALETTE }] };
+  if(costChart) costChart.destroy();
+  costChart = new Chart($('costChart'), { type:'bar', data:cData, options:{
+    responsive:true, maintainAspectRatio:false, indexAxis:'y',
+    plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>money(c.raw,4)+' / user / mo'}} },
+    scales:{ x:{ ticks:{color:'#9aa6b8',callback:v=>'₹'+v}, grid:{color:'#1a2436'} }, y:{ ticks:{color:'#cdd5e0'}, grid:{display:false} } }
+  }});
+
+  // UE table: model x tier
+  let rows = '';
+  for(const model of MODELS){
+    const ue = unitEcon(S, model);
+    rows += `<tr><td class="font-semibold gold">${model}</td>
+      <td>${money(ue.rev,3)}</td><td class="warn">${money(ue.cost,3)}</td>
+      <td class="${ue.contrib>=0?'pos':'neg'}">${money(ue.contrib,3)}</td>
+      <td class="${ue.contrib>=0?'pos':'neg'}">${isFinite(ue.grossMargin)?(ue.grossMargin*100).toFixed(0)+'%':'—'}</td>
+      <td class="${ue.ltvCac>=3?'pos':'neg'}">${ue.ltvCac.toFixed(1)}×</td>
+      <td class="${ue.payback<=12?'pos':'neg'}">${isFinite(ue.payback)?ue.payback.toFixed(1)+' mo':'never'}</td>`;
+    for(const [,mau] of TIERS){
+      rows += `<td class="${ue.contrib>=0?'pos':'neg'}">${money(ue.contrib*mau,0)}</td>`;
+    }
+    rows += `</tr>`;
+  }
+  $('ueTable').innerHTML = `<thead><tr>
+    <th>Model</th><th>ARPU</th><th>Cost</th><th>Contrib/user</th><th>Margin</th><th>LTV:CAC</th><th>Payback</th>
+    ${TIERS.map(([n,m])=>`<th>Mo. contrib<br><span class="text-[10px]">${n} ${count(m)}</span></th>`).join('')}
+    </tr></thead><tbody>${rows}</tbody>`;
+
+  // Contribution by scale (grouped bar, model series)
+  const contribData = {
+    labels: TIERS.map(([n,m])=>`${n} (${count(m)})`),
+    datasets: MODELS.map((model,i)=>({
+      label: model, backgroundColor: PALETTE[i],
+      data: TIERS.map(([,mau])=> +(unitEcon(S,model).contrib*mau).toFixed(0))
+    }))
+  };
+  if(contribChart) contribChart.destroy();
+  contribChart = new Chart($('contribChart'), { type:'bar', data:contribData, options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{labels:{color:'#cdd5e0'}}, tooltip:{callbacks:{label:c=>c.dataset.label+': '+money(c.raw,0)+'/mo'}} },
+    scales:{ x:{ ticks:{color:'#cdd5e0'}, grid:{display:false} }, y:{ ticks:{color:'#9aa6b8',callback:v=>big(v)}, grid:{color:'#1a2436'} } }
+  }});
+
+  // LTV:CAC bar
+  const ltvData = { labels:MODELS, datasets:[
+    { label:'LTV', backgroundColor:'#4E9A6F', data:MODELS.map(m=>+unitEcon(S,m).ltv.toFixed(2)) },
+    { label:'CAC', backgroundColor:'#e06b6b', data:MODELS.map(()=>+S.cac.toFixed(2)) },
+  ]};
+  if(ltvChart) ltvChart.destroy();
+  ltvChart = new Chart($('ltvChart'), { type:'bar', data:ltvData, options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{labels:{color:'#cdd5e0'}}, tooltip:{callbacks:{label:c=>c.dataset.label+': '+money(c.raw,2)}} },
+    scales:{ x:{ ticks:{color:'#cdd5e0'}, grid:{display:false} }, y:{ ticks:{color:'#9aa6b8',callback:v=>'₹'+v}, grid:{color:'#1a2436'} } }
+  }});
+
+  renderInsights(cpu);
+  renderPricing(cpu);
+}
+
+function renderPricing(cpu){
+  const full = cpu.total;
+  const free = full * (S.freeCostPct/100);
+  const blended = blendedCost(S,'Freemium');
+  const be = breakEvenPrice(S, S.subConv);
+  const head = unitEcon(S,'Freemium');
+  const perPaying = S.subPrice - full;            // margin per paying subscriber
+  const freeRiders = S.subConv>0 ? Math.round((100-S.subConv)/S.subConv) : 0;
+
+  // KPIs
+  const k = [
+    ['Full-access user cost', money(full,2), 'warn'],
+    ['Gated free-user cost', money(free,2), ''],
+    [`Break-even price @ ${S.subConv}% conv`, money(be,0), be<=S.subPrice?'pos':'neg'],
+    ['Margin / paying sub', money(perPaying,0), perPaying>0?'pos':'neg'],
+  ];
+  $('priceKpis').innerHTML = k.map(([l,v,c])=>
+    `<div class="card p-3"><div class="text-[11px] text-slate-500">${l}</div><div class="text-xl font-bold kpi ${c}">${v}</div></div>`).join('');
+
+  // price x conversion grid -> contribution per MAU
+  const prices=[99,199,299,499,799], convs=[1,2,3,5,8];
+  const cell=(c,p)=>{ const pf=c/100; const cost=pf*full+(1-pf)*free; const v=pf*p-cost;
+    return `<td class="${v>=0?'pos':'neg'}">${money(v,2)}</td>`; };
+  $('gridTable').innerHTML = `<thead><tr><th>conv \\ price</th>${prices.map(p=>`<th>${money(p,0)}</th>`).join('')}</tr></thead>`+
+    `<tbody>${convs.map(c=>`<tr><td>${c}%</td>${prices.map(p=>cell(c,p)).join('')}</tr>`).join('')}</tbody>`;
+
+  // break-even price by conversion
+  $('beTable').innerHTML = `<thead><tr><th>Conversion</th><th>Min price to break even</th></tr></thead>`+
+    `<tbody>${[1,2,3,5,10,100].map(c=>{const v=breakEvenPrice(S,c);
+      return `<tr><td>${c===100?'100% (paywall)':c+'%'}</td><td class="warn">${money(v,0)}/mo</td></tr>`;}).join('')}</tbody>`;
+
+  // recommended plan card
+  const ltvPay = Math.max(0,perPaying)*S.lifetime;
+  const ratio = S.cac>0 ? ltvPay/S.cac : 0;
+  $('recoCard').innerHTML = `
+    <div class="text-sm font-semibold gold mb-2">Recommended: ₹${S.subPrice}/mo · ${S.subConv}% conv · gated free</div>
+    <ul class="text-xs text-slate-300 space-y-1">
+      <li>• Each paying sub earns <b class="pos">${money(perPaying,0)}/mo</b> (${full>0?((perPaying/S.subPrice)*100).toFixed(0):0}% gross margin) and carries ~<b>${freeRiders}</b> free riders.</li>
+      <li>• Blended contribution: <b class="${head.contrib>=0?'pos':'neg'}">${money(head.contrib,2)}/MAU/mo</b> · LTV:CAC <b>${ratio.toFixed(1)}×</b>.</li>
+      <li>• Profit @ scale: ${TIERS.map(([n,m])=>`${n} <b>${big(head.contrib*m)}/mo</b>`).join(' · ')}.</li>
+      <li>• Floor: never price below <b>${money(breakEvenPrice(S,S.subConv),0)}</b> at your ${S.subConv}% conversion.</li>
+    </ul>`;
+}
+
+function renderInsights(cpu){
+  const best = MODELS.map(m=>[m, unitEcon(S,m)]).sort((a,b)=>b[1].contrib-a[1].contrib)[0];
+  const cronShare = (cpu.breakdown['Daily insights (cron)']/cpu.total*100);
+  const full = cpu.total, free = full*(S.freeCostPct/100);
+  const be = breakEvenPrice(S, S.subConv);
+  const items = [];
+  items.push(` <b>Full-access cost is ${money(full,2)}/user/mo; a gated free user costs ${money(free,2)}.</b> The gap between them is what makes freemium work — keep free users cheap (cap chat, no nightly insight cron).`);
+  items.push(` <b>The freemium trap:</b> at ${S.subConv}% conversion you must price ≥ <b>${money(be,0)}/mo</b> to break even — NOT the ${money(full,0)} cost-per-user. The few payers subsidise every free rider, so the rule is <b>price = cost ÷ conversion</b>.`);
+  items.push(` <b>The nightly per-user insight cron is ${cronShare.toFixed(0)}% of full-access cost</b> and bills for <em>every</em> user. Gating it to paying users alone is your single biggest margin lever.`);
+  items.push(` <b>Best contribution model: ${best[0]}</b> at ${money(best[1].contrib,3)}/MAU/mo (${best[1].ltvCac.toFixed(1)}× LTV:CAC). ${best[1].ltvCac>=3?'Above the 3× VC benchmark — fundable.':'Below the 3× VC benchmark — raise price, lift conversion, or cut cost.'}`);
+  items.push(` <b>Margin math:</b> a 1pt move in conversion (${S.subConv}%→${S.subConv+1}%) adds <b>${money(0.01*S.subPrice,3)}/MAU/mo</b>. Conversion is your strongest revenue lever.`);
+  $('insights').innerHTML = items.map(t=>`<p>• ${t}</p>`).join('');
+}
+
+$('resetBtn').addEventListener('click', ()=>{ S={...DEFAULTS}; buildInputs(); render(); });
+
+buildInputs();
+render();
+</script>
+</body>
+</html>

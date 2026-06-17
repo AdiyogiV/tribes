@@ -124,25 +124,24 @@ class AppBootstrap {
     // app with zero offline cache and a 10s wait on every cold read.
     _configureFirestoreSettings();
 
-    // App Check – activate with appropriate provider per build mode.
+    // App Check.
     //
-    // DEBUG MODE: Native AppDelegate.swift installs AppCheckDebugProviderFactory
-    // which prints a debug token to console on first launch. Add that token in
-    // Firebase Console > App Check > [iOS app] > Manage debug tokens to make
-    // App Check pass for this dev install. We do NOT also call
-    // FirebaseAppCheck.activate() from Dart in debug — the native factory
-    // already covers it and a second activation triggers a redundant token
-    // exchange.
+    // DEBUG: handled NATIVELY in ios/Runner/AppDelegate.swift
+    //   (AppCheckDebugProviderFactory installed before FirebaseApp.configure()).
+    //   We must NOT also activate from Dart in debug — Dart runs after
+    //   configure(), so it would double-activate and lose the startup race.
+    // RELEASE: activate here with App Attest (iOS 14+) + DeviceCheck fallback
+    //   / Play Integrity (Android).
     //
-    // App Check: only activate in release mode on mobile.
-    // Debug builds skip App Check entirely — the iOS app isn't registered
-    // in Firebase Console, so both DeviceCheck and DebugProvider fail with
-    // 400 "App not registered" and spam the console.
+    // PREREQ either way: the app MUST be registered under App Check in the
+    // Firebase Console with a provider configured, otherwise every token
+    // exchange returns 400 "App not registered" and starves Firestore
+    // listeners (→ dailyInsightStream timed out).
     if (!kIsWeb && !kDebugMode) {
       try {
         await FirebaseAppCheck.instance.activate(
           providerAndroid: const AndroidPlayIntegrityProvider(),
-          providerApple: const AppleDeviceCheckProvider(),
+          providerApple: const AppleAppAttestWithDeviceCheckFallbackProvider(),
         );
         unawaited(FirebaseAppCheck.instance.getToken(true).then((token) {
           AppLogger.i('App Check activated',
@@ -158,7 +157,7 @@ class AppBootstrap {
             category: LogCategory.general);
       }
     } else {
-      AppLogger.i('App Check: disabled (debug or web)',
+      AppLogger.i('App Check: Dart activation skipped (debug handled natively, or web)',
           category: LogCategory.general);
     }
 

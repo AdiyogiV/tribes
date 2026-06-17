@@ -176,10 +176,9 @@ class _RecentConversationsPageState extends State<RecentConversationsPage> {
               },
               onSelectConversation: (conversation) {
                 provider.loadConversation(conversation.id);
-                if (widget.onConversationSelected != null) {
-                  widget.onConversationSelected!(conversation.id);
-                }
-                Navigator.pop(context);
+                // Don't pop this page — push the chat on top so back from the
+                // chat returns here, to the list of past conversations.
+                widget.onConversationSelected?.call(conversation.id);
               },
               onShowOptions: (conversation) {
                 _showConversationOptions(conversation, provider);
@@ -198,12 +197,11 @@ class _RecentConversationsPageState extends State<RecentConversationsPage> {
         actions: [
           CupertinoActionSheetAction(
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.pop(context); // close the action sheet only
               provider.loadConversation(conversation.id);
-              if (widget.onConversationSelected != null) {
-                widget.onConversationSelected!(conversation.id);
-              }
-              Navigator.pop(this.context);
+              // Keep the list in the stack; push chat on top so back returns
+              // here.
+              widget.onConversationSelected?.call(conversation.id);
             },
             child: const Text('Continue Conversation'),
           ),

@@ -119,6 +119,19 @@ case "${1:-all}" in
     "storage")
         deploy_storage
         ;;
+    "standalone")
+        # Backward-compatible alias for the SSE HTTP function.
+        deploy_function "aiChat"
+        ;;
+    "gateways"|"workers"|"triggers-content"|"triggers-engagement"|"triggers-unique")
+        # Delegate consolidated-batch deploys to the newer script.
+        if [ -x "./scripts/deploy.sh" ]; then
+            ./scripts/deploy.sh "$1"
+        else
+            echo -e "${RED}❌ Missing scripts/deploy.sh${NC}"
+            exit 1
+        fi
+        ;;
     *)
         deploy_function "$1"
         ;;

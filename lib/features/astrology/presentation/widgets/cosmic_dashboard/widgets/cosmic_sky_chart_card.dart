@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import 'package:kundali_chart/kundali_chart.dart';
 import 'package:aurogram/features/astrology/data/utils/chart_utils.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
-import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/widgets/chart_blend_slider.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/widgets/timeline_slider.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/kundali_house_hit_test.dart';
@@ -12,7 +11,11 @@ import 'package:aurogram/core/theme/app_dimensions.dart';
 
 /// Card widget displaying the current sky chart with optional birth chart overlay
 class CosmicSkyChartCard extends StatelessWidget {
-  final Map<String, dynamic> todayPositions;
+  /// The slider's midpoint value, which represents "today".
+  static const double _todaySliderValue = 0.5;
+
+  /// Resolved planetary positions for the current slider date.
+  final Map<String, dynamic> currentPositions;
   final Map<String, dynamic>? birthChartData;
   final bool isDark;
   final double sliderValue;
@@ -29,8 +32,6 @@ class CosmicSkyChartCard extends StatelessWidget {
   final VoidCallback? onTriggerCachePopulation;
   final Map<String, dynamic>? Function(DateTime) getPositionsForDate;
   final Map<String, dynamic>? Function(DateTime) getInterpolatedPositions;
-  /// Optional callback to navigate to the full Current Sky page.
-  final VoidCallback? onExploreSky;
   /// Optional callback to navigate to the Astrology Details (birth chart) page.
   final VoidCallback? onExploreBirthChart;
   /// Optional callback fired when the user taps a house in the sky chart.
@@ -41,7 +42,7 @@ class CosmicSkyChartCard extends StatelessWidget {
 
   const CosmicSkyChartCard({
     super.key,
-    required this.todayPositions,
+    required this.currentPositions,
     this.birthChartData,
     required this.isDark,
     required this.sliderValue,
@@ -58,10 +59,13 @@ class CosmicSkyChartCard extends StatelessWidget {
     this.onTriggerCachePopulation,
     required this.getPositionsForDate,
     required this.getInterpolatedPositions,
-    this.onExploreSky,
     this.onExploreBirthChart,
     this.onHouseTap,
   });
+
+  /// Whether the time slider is parked at "today" (its midpoint).
+  bool get isSliderOnToday =>
+      (sliderValue - _todaySliderValue).abs() < 0.01;
 
   @override
   Widget build(BuildContext context) {
@@ -71,27 +75,7 @@ class CosmicSkyChartCard extends StatelessWidget {
     // Calculate positions based on slider
     final positions = _calculatePositions();
 
-    AppLogger.d(
-      'CosmicSkyChartCard: build - final positions check',
-      category: LogCategory.ui,
-      data: {
-        'positionsEmpty': positions.isEmpty,
-        'positionsCount': positions.length,
-        'positionsPlanets': positions.keys.toList(),
-        'willShowChart': positions.isNotEmpty,
-      },
-    );
-
     if (positions.isEmpty) {
-      AppLogger.w(
-        'CosmicSkyChartCard: Hiding chart - positions empty',
-        category: LogCategory.ui,
-        data: {
-          'skyDataLoaded': skyDataLoaded,
-          'sliderValue': sliderValue,
-          'sliderDate': sliderDate.toIso8601String(),
-        },
-      );
       return const SizedBox.shrink();
     }
 
@@ -112,8 +96,6 @@ class CosmicSkyChartCard extends StatelessWidget {
         : null;
     final hasBirthChart = birthHouses != null && birthLabels != null;
 
-    final isSliderOnToday = (sliderValue - 0.5).abs() < 0.01;
-
     return Material(
       color: cardColor,
       elevation: 2,
@@ -127,6 +109,7 @@ class CosmicSkyChartCard extends StatelessWidget {
           // Chart with overlay
           _buildChart(
             context,
+            positions,
             skyHouses,
             skyLabels,
             birthHouses,
@@ -193,57 +176,23 @@ class CosmicSkyChartCard extends StatelessWidget {
   }
 
   Map<String, dynamic> _calculatePositions() {
-    final isSliderOnToday = (sliderValue - 0.5).abs() < 0.01;
-
     if (skyDataLoaded && !isSliderOnToday) {
       // Use cached/interpolated positions for slider date
       final sliderPositions = getInterpolatedPositions(sliderDate);
-      // Merge with today's positions to fill any gaps
+      // Merge with current positions to fill any gaps
       if (sliderPositions != null && sliderPositions.isNotEmpty) {
-        final merged =
-            ChartUtils.mergePositions(sliderPositions, todayPositions);
-        AppLogger.d(
-          'CosmicSkyChartCard: _calculatePositions - slider date',
-          category: LogCategory.ui,
-          data: {
-            'sliderDate': sliderDate.toIso8601String(),
-            'sliderPositionsPlanets': sliderPositions.keys.toList(),
-            'todayPositionsPlanets': todayPositions.keys.toList(),
-            'mergedPlanets': merged.keys.toList(),
-          },
-        );
-        return merged;
+        return ChartUtils.mergePositions(sliderPositions, currentPositions);
       }
     } else if (skyDataLoaded && isSliderOnToday) {
       // Even for today, prefer the cached data for consistency
       final cachedToday = getPositionsForDate(DateTime.now());
-      // Merge with today's positions to ensure no planets are missing
+      // Merge with current positions to ensure no planets are missing
       if (cachedToday != null && cachedToday.isNotEmpty) {
-        final merged = ChartUtils.mergePositions(cachedToday, todayPositions);
-        AppLogger.d(
-          'CosmicSkyChartCard: _calculatePositions - today with cache',
-          category: LogCategory.ui,
-          data: {
-            'cachedTodayPlanets': cachedToday.keys.toList(),
-            'todayPositionsPlanets': todayPositions.keys.toList(),
-            'mergedPlanets': merged.keys.toList(),
-          },
-        );
-        return merged;
+        return ChartUtils.mergePositions(cachedToday, currentPositions);
       }
     }
 
-    AppLogger.d(
-      'CosmicSkyChartCard: _calculatePositions - fallback to todayPositions',
-      category: LogCategory.ui,
-      data: {
-        'isSliderOnToday': isSliderOnToday,
-        'skyDataLoaded': skyDataLoaded,
-        'todayPositionsPlanets': todayPositions.keys.toList(),
-        'todayPositionsCount': todayPositions.length,
-      },
-    );
-    return todayPositions;
+    return currentPositions;
   }
 
   Widget _buildHeader(
@@ -257,35 +206,14 @@ class CosmicSkyChartCard extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Date/Title — tappable to explore full Current Sky page
+          // Date/Title
           Expanded(
-            child: GestureDetector(
-              onTap: onExploreSky != null
-                  ? () {
-                      HapticFeedback.lightImpact();
-                      onExploreSky!();
-                    }
-                  : null,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    isSliderOnToday ? 'Current Sky' : dateStr,
-                    style: TextStyle(
-                      fontSize: AppTheme.holyCowTextSize,
-                      fontWeight: FontWeight.w700,
-                      color: c,
-                    ),
-                  ),
-                  if (onExploreSky != null) ...[
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      size: 11,
-                      color: c.withValues(alpha: 0.4),
-                    ),
-                  ],
-                ],
+            child: Text(
+              isSliderOnToday ? 'Current Sky' : dateStr,
+              style: TextStyle(
+                fontSize: AppTheme.holyCowTextSize,
+                fontWeight: FontWeight.w700,
+                color: c,
               ),
             ),
           ),
@@ -351,6 +279,7 @@ class CosmicSkyChartCard extends StatelessWidget {
 
   Widget _buildChart(
     BuildContext context,
+    Map<String, dynamic> positions,
     List<List<String>> skyHouses,
     List<String> skyLabels,
     List<List<String>>? birthHouses,
@@ -387,7 +316,7 @@ class CosmicSkyChartCard extends StatelessWidget {
                         scaleY: baseScale,
                       );
                       if (houseNumber != null) {
-                        onHouseTap!(houseNumber, _calculatePositions());
+                        onHouseTap!(houseNumber, positions);
                       }
                     },
               child: Container(

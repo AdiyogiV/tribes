@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Aurogram</string>
+
+    <!-- Widget picker labels -->
+    <string name="widget_vedic_date_label"> </string>
+    <string name="widget_vedic_date_description">Full Vedic date card with clock, tithi, paksha, and lunar month.</string>
+    <string name="widget_vedic_date_small_label"> </string>
+    <string name="widget_vedic_date_small_description">Compact Vedic date with tithi and time.</string>
+</resources>

@@ -17,8 +17,8 @@ import { logger } from "firebase-functions";
 import { DateTime } from "luxon";
 import { db, FieldValue } from "../lib/firebase.js";
 import { freeAstrologyApiKey } from "../lib/secrets.js";
-import { extractApiOutput, parseApiTimeString } from "../lib/astro_helpers.js";
-import { parseMuhuratDay, processUnifiedTimeline } from "../lib/muhurat_helpers.js";
+import { extractApiOutput } from "../lib/astro_helpers.js";
+import { parseMuhuratDay } from "../lib/muhurat_helpers.js";
 
 const API_BASE = "https://json.freeastrologyapi.com";
 const PLANETS_ENDPOINT = "/planets";
@@ -31,13 +31,15 @@ const MUHURAT_ENDPOINT = "/good-bad-times";
 const DEFAULT_LAT = 23.1765;
 const DEFAULT_LNG = 75.7885;
 const DEFAULT_TZ = 5.5;
-const DEFAULT_TZ_ID = "Asia/Kolkata";
 
 // How far ahead to maintain positions + panchang + muhurat (365 days).
 // A fresh deploy backfills ~4 daily runs (MAX_FETCH_PER_RUN per run).
 const DAYS_AHEAD_TARGET = 365;
-const MUHURAT_DAYS_AHEAD = 3; // live 3-day endpoint (handleGetGlobalMuhurat)
-const MUHURAT_CACHE_HOURS = 6;
+// Maintain a rolling window of past days too, so scrolling the wheel BACKWARD
+// has data. Matches the client wheel reach (_sliderRangeDays = 180). Days older
+// than this are pruned on each run, which also caps the single-doc size (the
+// doc has a hard 1 MiB Firestore ceiling) instead of growing forever.
+const DAYS_BEHIND_TARGET = 180;
 
 // Safety batch limit per run — avoids Cloud Function timeout (300s).
 // Each day costs up to 5 API calls (1 position + 3 panchang + 1 muhurat)
@@ -130,7 +132,6 @@ function muhuratToCompact(muhuratDay) {
 }
 
 // Use canonical parseApiTimeString from lib/astro_helpers.js (previously duplicated here with a bug)
-const parseTimeString = parseApiTimeString;
 
 /**
  * Fetch planetary positions from FreeAstrologyAPI for a specific date
@@ -529,9 +530,9 @@ async function smartPrefetch() {
     const todayKey = today.toFormat("yyyy-MM-dd");
     const tomorrowKey = today.plus({ days: 1 }).toFormat("yyyy-MM-dd");
 
-    // ─── Future window: dates we should have (today → today+365) ─────────────
+    // ─── Future window: dates we should have (today-180 → today+365) ─────────
     const requiredDates = [];
-    let checkDate = today;
+    let checkDate = today.minus({ days: DAYS_BEHIND_TARGET });
     while (checkDate <= targetDate) {
         requiredDates.push(checkDate.toFormat("yyyy-MM-dd"));
         checkDate = checkDate.plus({ days: 1 });
@@ -678,6 +679,21 @@ async function smartPrefetch() {
     }
     if (!hasTomorrowPanchang) {
         logger.warn("⚠️ Tomorrow's panchang missing (IST users may see stale data)", { tomorrowKey });
+    }
+
+    // ─── Prune days older than the rolling window (caps doc size). ──────────
+    const pruneBefore = today.minus({ days: DAYS_BEHIND_TARGET }).toFormat("yyyy-MM-dd");
+    let prunedCount = 0;
+    for (const bag of [newPositions, newPanchang, newMuhurat]) {
+        for (const k of Object.keys(bag)) {
+            if (k < pruneBefore) {
+                delete bag[k];
+                prunedCount++;
+            }
+        }
+    }
+    if (prunedCount > 0) {
+        logger.info(" Pruned stale astro days outside rolling window", { pruneBefore, prunedCount });
     }
 
     // ─── Persist. ────────────────────────────────────────────────────────────
@@ -868,78 +884,6 @@ export async function handleGetUpcomingEvents() {
     }
 }
 
-export async function handleGetGlobalMuhurat() {
-    try {
-        const today = DateTime.now().setZone(DEFAULT_TZ_ID).startOf("day");
-        const todayKey = today.toFormat("yyyy-MM-dd");
-        const docRef = db.collection("global_astro").doc("muhurat");
-        const doc = await docRef.get();
-
-        if (doc.exists) {
-            const data = doc.data();
-            const cachedDateKeys = data.dateKeys || [];
-            const cacheIsForToday = cachedDateKeys[0] === todayKey;
-
-            if (cacheIsForToday && data.muhurat) {
-                logger.info("Returning cached muhurat for today", { todayKey });
-                return {
-                    success: true,
-                    muhurat: data.muhurat,
-                    cached: true,
-                };
-            }
-        }
-
-        logger.info("Fetching fresh muhurat data", { todayKey });
-        const dateKeys = [];
-        const dayPromises = [];
-
-        for (let i = 0; i < MUHURAT_DAYS_AHEAD; i += 1) {
-            const day = today.plus({ days: i });
-            const dateKey = day.toFormat("yyyy-MM-dd");
-            dateKeys.push(dateKey);
-            dayPromises.push(fetchMuhuratForDate(day));
-        }
-
-        const results = await Promise.allSettled(dayPromises);
-        const daysData = {};
-
-        results.forEach((result, index) => {
-            if (result.status !== "fulfilled") return;
-            const parsed = extractApiOutput(result.value);
-            if (!parsed) return;
-            daysData[dateKeys[index]] = parseMuhuratDay(parsed);
-        });
-
-        if (Object.keys(daysData).length === 0) {
-            logger.warn("No muhurat data from API");
-            return { success: false, error: "No muhurat data available", muhurat: {} };
-        }
-
-        const unifiedTimeline = processUnifiedTimeline(daysData, DEFAULT_TZ_ID);
-
-        const muhuratData = {
-            days: daysData,
-            unifiedTimeline,
-            dateKeys,
-            fetchedAt: DateTime.now().toISO(),
-            timeZoneId: DEFAULT_TZ_ID,
-        };
-
-        await docRef.set({
-            muhurat: muhuratData,
-            dateKeys,
-            lastUpdated: FieldValue.serverTimestamp(),
-        }, { merge: true });
-
-        logger.info("Muhurat data cached", { dateKeys });
-        return { success: true, muhurat: muhuratData, cached: false };
-    } catch (error) {
-        logger.error("Error fetching global muhurat:", error);
-        return { success: false, error: error.message, muhurat: {} };
-    }
-}
-
 /**
  * Helper function to get upcoming sign ingresses (for internal use)
  * Reads from pre-calculated data - NO calculation, instant response
@@ -1000,49 +944,18 @@ export async function runRefreshSkyPositionsDaily() {
 // It is now invoked by `unifiedOrchestrator` Phase 2 (data refresh) via the
 // `runRefreshSkyPositionsDaily` runner above.
 
-/** Extracted runner for orchestrator consolidation. */
-export async function runRefreshMuhuratDaily() {
-    logger.info("⏰ Scheduled muhurat refresh starting");
-
-    try {
-        // Try to get fresh data from API
-        const result = await handleGetGlobalMuhurat();
-
-        if (result.success && result.muhurat) {
-            logger.info("⏰ Scheduled muhurat refresh complete with fresh data");
-        } else {
-            logger.warn("⏰ API failed, falling back to basic data");
-            // If API fails, ensure we have at least basic data
-            await ensureBasicMuhuratData();
-        }
-    } catch (error) {
-        logger.error("⏰ Scheduled muhurat refresh failed, using fallback", error);
-        await ensureBasicMuhuratData();
-    }
-}
-
-// NOTE: `refreshMuhuratDaily` was a standalone `onSchedule` export.
-// It is now invoked by `unifiedOrchestrator` Phase 2 (data refresh) via the
-// `runRefreshMuhuratDaily` runner above.
-
 // ============================================================================
-// ASTRO CALENDAR (365-day lightweight snapshot for infinite wheel scrolling)
+// ASTRO CALENDAR (rolling window snapshot for infinite wheel scrolling)
 // ============================================================================
 
 /**
- * getAstroCalendar — Returns a year of daily snapshots (positions + panchang).
+ * getAstroCalendar — Returns daily snapshots (positions + panchang + muhurat)
+ * across the rolling window (today-180 → today+365). This is the SINGLE source
+ * of truth for the wheel: positions, panchang AND muhurat all live here.
  *
- * Response shape per day (compact):
- *   { n: 4, t: 17, p: 0, y: 12, k: 7,
- *     m: [moonLng, sunLng, marsLng, mercLng, jupLng, venLng, satLng, rahuLng, ketuLng],
- *     r: [false, false, false, true, false, false, false, false, false] }
- *
- * Reads from the existing global_astro/sky_positions Firestore doc (populated
- * by the daily smartPrefetch job).  Dates outside the prefetch window are
- * excluded — the client falls back to sidereal-period math for those.
- *
- * Optional query param `fromMonth` (1-12) lets the client request a rolling
- * 13th month when the cached year is about to expire.
+ * Reads from the global_astro/sky_positions Firestore doc (populated by the
+ * daily smartPrefetch job). Dates outside the prefetch window are excluded —
+ * the client falls back to sidereal-period math for those.
  */
 
 const NAKSHATRA_NAMES = [
@@ -1247,40 +1160,3 @@ export async function handleGetAstroCalendar(request, data) {
     }
 }
 
-// Fallback: create minimal muhurat data if API fails
-async function ensureBasicMuhuratData() {
-    try {
-        const today = DateTime.now().setZone(DEFAULT_TZ_ID).startOf("day");
-        const todayKey = today.toFormat("yyyy-MM-dd");
-        const docRef = db.collection("global_astro").doc("muhurat");
-
-        logger.info("⏰ Creating fallback muhurat data", { todayKey });
-
-        // Simple fallback with typical times
-        const fallbackDay = {
-            rahuKala: { starts_at: "12:00", ends_at: "13:30" },
-            gulikaKala: { starts_at: "15:00", ends_at: "16:30" },
-            yamaganda: { starts_at: "09:00", ends_at: "10:30" },
-            abhijit: { starts_at: "11:45", ends_at: "12:30" },
-        };
-
-        const muhuratData = {
-            days: { [todayKey]: fallbackDay },
-            unifiedTimeline: { events: [], startTime: 0, endTime: 1440, dateKeys: [todayKey] },
-            dateKeys: [todayKey],
-            fetchedAt: DateTime.now().toISO(),
-            timeZoneId: DEFAULT_TZ_ID,
-            isFallback: true,
-        };
-
-        await docRef.set({
-            muhurat: muhuratData,
-            dateKeys: [todayKey],
-            lastUpdated: FieldValue.serverTimestamp(),
-        }, { merge: true });
-
-        logger.info("⏰ Fallback muhurat data saved");
-    } catch (error) {
-        logger.error("⏰ Failed to set fallback muhurat data", error);
-    }
-}

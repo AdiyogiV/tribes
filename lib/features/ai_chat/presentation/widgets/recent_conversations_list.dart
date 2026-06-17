@@ -114,10 +114,14 @@ class _ConversationTile extends StatelessWidget {
     final cardColor = isDark
         ? Theme.of(context).colorScheme.surface
         : Colors.white;
-    // Prefer firstUserMessage (user's question) over lastMessageContent (AI response)
-    final content = conversation.firstUserMessage ?? conversation.lastMessageContent ?? 'Conversation';
-    final truncatedContent =
-        content.length > 100 ? '${content.substring(0, 100)}...' : content;
+    // Title = the user's question; subtitle = the AI's latest reply.
+    final title = conversation.firstUserMessage ??
+        conversation.lastMessageContent ??
+        'Conversation';
+    final reply = conversation.lastMessageContent;
+    final hasSubtitle = reply != null &&
+        reply.trim().isNotEmpty &&
+        reply != conversation.firstUserMessage;
 
     return Padding(
       padding: EdgeInsets.fromLTRB(
@@ -142,76 +146,55 @@ class _ConversationTile extends StatelessWidget {
             onLongPress();
           },
           child: Container(
-            height: AppHeaderStyle.cardCompactHeight,
-            padding: const EdgeInsets.only(left: 16, right: 12),
+            constraints: BoxConstraints(
+              minHeight: AppHeaderStyle.cardCompactHeight,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Material(
-                  elevation: 3,
-                  shadowColor: AppTheme.primaryColor.withValues(alpha: 0.3),
-                  shape: const CircleBorder(),
-                  clipBehavior: Clip.antiAlias,
-                  child: Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          AppTheme.primaryColor.withValues(alpha: 0.15),
-                          AppTheme.primaryColor.withValues(alpha: 0.08),
-                        ],
-                      ),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.auto_awesome_rounded,
-                      color: AppTheme.primaryColor,
-                      size: 22,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: AppDimensions.spacingMdLg),
                 Expanded(
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        truncatedContent,
+                        title,
                         style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: AppTheme.primaryColor.withValues(alpha: 0.85),
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.primaryColor.withValues(alpha: 0.9),
                           height: 1.3,
                         ),
-                        maxLines: 2,
+                        maxLines: hasSubtitle ? 1 : 2,
                         overflow: TextOverflow.ellipsis,
                       ),
+                      if (hasSubtitle) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          reply,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w400,
+                            color:
+                                AppTheme.primaryColor.withValues(alpha: 0.5),
+                            height: 1.3,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ],
                   ),
                 ),
-                const SizedBox(width: AppDimensions.spacingMd),
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      _formatTime(conversation.lastActivity),
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                        color: AppTheme.primaryColor.withValues(alpha: 0.45),
-                      ),
-                    ),
-                    const SizedBox(height: AppDimensions.spacingXs),
-                    Icon(
-                      Icons.chevron_right_rounded,
-                      color: AppTheme.primaryColor.withValues(alpha: 0.3),
-                      size: 20,
-                    ),
-                  ],
+                const SizedBox(width: AppDimensions.spacingMdLg),
+                Text(
+                  _formatTime(conversation.lastActivity),
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                  ),
                 ),
               ],
             ),

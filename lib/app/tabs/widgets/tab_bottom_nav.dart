@@ -20,6 +20,30 @@ class TabBottomNav extends StatelessWidget {
     this.userId,
   });
 
+  // ── Layout constants (single source of truth) ──
+  // Also consumed by HolyCow's collapsed cow button so it can align itself
+  // with the profile (rightmost) tab. Keep these in sync with the build()
+  // below: Padding(horizontal: horizontalPadding) → Row(spaceEvenly) of
+  // [itemCount] items, each SizedBox(width: itemWidth).
+  static const double itemWidth = 64;
+  static const double horizontalPadding = 16;
+  static const int itemCount = 4;
+
+  /// Horizontal distance from the screen's right edge to the *center* of the
+  /// nav item at [indexFromRight] (0 = rightmost / profile tab).
+  ///
+  /// Mirrors the `Row(spaceEvenly)` layout exactly: N items produce N+1 equal
+  /// gaps. Deriving the cow's position from this instead of re-hardcoding the
+  /// numbers means the cow can never silently drift if the nav layout changes.
+  static double itemCenterFromRight(double screenWidth, int indexFromRight) {
+    final innerWidth = screenWidth - 2 * horizontalPadding;
+    final gap = (innerWidth - itemCount * itemWidth) / (itemCount + 1);
+    return horizontalPadding +
+        gap +
+        itemWidth / 2 +
+indexFromRight * (gap + itemWidth);
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
@@ -233,62 +257,6 @@ class _NavItemWithLottieState extends State<_NavItemWithLottie>
               },
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _NavItemWithImage extends StatelessWidget {
-  final String assetPath;
-  final bool isSelected;
-  final Color activeColor;
-  final Color inactiveColor;
-  final VoidCallback onTap;
-
-  const _NavItemWithImage({
-    required this.assetPath,
-    required this.isSelected,
-    required this.activeColor,
-    required this.inactiveColor,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppDimensions.radiusMdLg),
-      splashFactory: NoSplash.splashFactory,
-      splashColor: Colors.transparent,
-      highlightColor: Colors.transparent,
-      hoverColor: Colors.transparent,
-      focusColor: Colors.transparent,
-      child: SizedBox(
-        width: 64,
-        height: 70,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            AnimatedOpacity(
-              opacity: isSelected ? 1.0 : 0.9,
-              duration: const Duration(milliseconds: 180),
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 180),
-                switchInCurve: Curves.easeOut,
-                switchOutCurve: Curves.easeIn,
-                transitionBuilder: (child, animation) =>
-                    ScaleTransition(scale: animation, child: child),
-                child: Image.asset(
-                  assetPath,
-                  key: ValueKey<bool>(isSelected),
-                  width: isSelected ? 44 : 36,
-                  height: isSelected ? 44 : 36,
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-          ],
         ),
       ),
     );

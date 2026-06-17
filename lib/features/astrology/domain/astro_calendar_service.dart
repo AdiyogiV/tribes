@@ -361,9 +361,15 @@ class AstroCalendarService {
   factory AstroCalendarService() => _instance;
   AstroCalendarService._internal();
 
-  static const String _cacheKey = 'astro_calendar_cache';
-  static const String _cacheTimestampKey = 'astro_calendar_timestamp';
-  static const Duration _cacheValidity = Duration(days: 7);
+  // NOTE: cache key bumped to v3 to invalidate stale calendars that were
+  // built BEFORE the full 365-day forward window (positions/panchang/muhurat)
+  // was populated in Firestore — those short calendars made forward cards
+  // vanish. Old 'astro_calendar_cache(_v2)' entries are ignored after this bump.
+  static const String _cacheKey = 'astro_calendar_cache_v3';
+  static const String _cacheTimestampKey = 'astro_calendar_timestamp_v3';
+  // Shorter TTL so a partially-filled calendar self-corrects within a day
+  // instead of being pinned for a week.
+  static const Duration _cacheValidity = Duration(days: 1);
 
   /// In-memory calendar: date key → compact day.
   Map<String, CalendarDay>? _calendar;

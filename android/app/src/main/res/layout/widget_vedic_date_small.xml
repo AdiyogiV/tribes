@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Small (2×2) Vedic Date widget — compact card.
+     Stacked: header (moon + month), paksha, tithi, numeric, time. -->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_small_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_background"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:paddingStart="12dp"
+    android:paddingEnd="12dp"
+    android:paddingTop="10dp"
+    android:paddingBottom="10dp">
+
+    <!-- Header: Moon emoji + Lunar month -->
+    <TextView
+        android:id="@+id/widget_small_header"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="\uD83C\uDF13 Jyeshtha"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:textColor="@color/widget_text_color"
+        android:fontFamily="sans-serif-medium"
+        android:gravity="center"
+        android:maxLines="1" />
+
+    <!-- Paksha -->
+    <TextView
+        android:id="@+id/widget_small_paksha"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Krishna"
+        android:textSize="13sp"
+        android:textColor="@color/widget_text_color"
+        android:gravity="center"
+        android:paddingTop="2dp" />
+
+    <!-- Tithi name -->
+    <TextView
+        android:id="@+id/widget_small_tithi"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Navami"
+        android:textSize="13sp"
+        android:textColor="@color/widget_text_color"
+        android:gravity="center" />
+
+    <!-- Numeric vedic date -->
+    <TextView
+        android:id="@+id/widget_small_numeric"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="3/2/9/2083"
+        android:textSize="10sp"
+        android:textColor="@color/widget_text_dim"
+        android:gravity="center"
+        android:paddingTop="4dp" />
+
+    <!-- Ghati · Pala -->
+    <TextView
+        android:id="@+id/widget_small_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="G42 · P15"
+        android:textSize="10sp"
+        android:textColor="@color/widget_text_dim"
+        android:gravity="center"
+        android:paddingTop="2dp" />
+
+</LinearLayout>

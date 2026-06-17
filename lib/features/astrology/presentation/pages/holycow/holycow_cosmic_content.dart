@@ -91,7 +91,6 @@ class HolyCowCosmicContent extends StatelessWidget {
     final insightTransits =
         insight?.astrologicalData?['transits'] as Map<String, dynamic>?;
 
-    final globalMuhurat = skyService.globalMuhurat;
     final todayPanchang = skyService.getTodayPanchang();
 
     // Merged samvat/panchang for the nakshatra ring's tithi strip.
@@ -238,10 +237,10 @@ class HolyCowCosmicContent extends StatelessWidget {
 
         // Build the canonical wheel widget once — same instance is used in
         // both layouts so wheel state (controller, animations) is preserved
-        // across tier transitions.  The wheel always renders ABOVE the
-        // Daily Vibe card (wheelFirst: true) so the energy vibe card sits
-        // below the wheel on both mobile and desktop.
-        final wheelWidget = _buildWheelWidget(wheelFirst: true);
+        // across tier transitions.  The text insight (Daily Vibe card)
+        // renders ABOVE the wheel (wheelFirst: false) so the guidance text
+        // sits on top and the wheel below it on both mobile and desktop.
+        final wheelWidget = _buildWheelWidget(wheelFirst: false);
 
         // The header — dense strip on desktop, split cards on mobile.
         // Desktop: single dense strip.
@@ -302,6 +301,10 @@ class HolyCowCosmicContent extends StatelessWidget {
         // The bag of secondary cards in their canonical order. Inlined into
         // a single Column either in the right pane (desktop) or directly
         // under the wheel (mobile).
+        //
+        // On mobile the wheel + text-insight combo is injected directly
+        // BELOW the Current Sky card. On desktop the wheel lives in its own
+        // left column, so we don't inject it into the secondary list.
         final secondaryCards = _secondaryCards(
           context: context,
           isDark: isDark,
@@ -312,11 +315,11 @@ class HolyCowCosmicContent extends StatelessWidget {
           hasPanchang: hasPanchang,
           spacing: spacing,
           nakshatraSamvat: nakshatraSamvat,
+          insertAfterSkyCard: isWide ? null : wheelWidget,
         );
 
         // Time-guidance (muhurat) card — sits directly beneath the date card.
         final muhuratCard = _buildMuhuratCard(
-          globalMuhurat: globalMuhurat,
           cardColor: cardColor,
           spacing: spacing,
         );
@@ -382,19 +385,18 @@ class HolyCowCosmicContent extends StatelessWidget {
                 SizedBox(height: 16 + bottomInset),
               ] else ...[
                 // Single-column stack (mobile + small tablet)
-                // Combined clock+date card → wheel → secondary cards
+                // Combined clock+date card → muhurat → sky card → wheel+insight
                 //
                 // The wheel itself uses OverlayPortal internally so its
-                // magnified visual paints ABOVE both the date card and the
-                // first secondary card regardless of normal Column paint order.
+                // magnified visual paints ABOVE adjacent cards regardless of
+                // normal Column paint order. It now sits directly below the
+                // Current Sky card (injected into secondaryCards).
                 combinedCardWidget,
                 SizedBox(height: spacing + 10),
-                // Time guidance sits right under the date card.
-                muhuratCard,
                 // Falls back to combined card for non-today selected dates
                 headerWidget,
-                wheelWidget,
-                SizedBox(height: spacing + 10),
+                // Time guidance sits right under the date card.
+                muhuratCard,
                 ...secondaryCards,
                 if (mobileCtaBanner != null) ...[
                   mobileCtaBanner,
@@ -491,11 +493,9 @@ class HolyCowCosmicContent extends StatelessWidget {
   /// Returned as a flat List so the caller can place them in either a
   /// single-column stack (mobile) or a right-pane Column (desktop).
   /// Muhurat / "time guidance" card. Lives directly under the date card.
-  /// Shows for ANY date:
-  /// 1. Today/near-today: live globalMuhurat (real-time, 3-day window)
-  /// 2. Any other date: AstroCalendarService compact muhurat (±365 days)
+  /// Single source of truth: AstroCalendarService muhurat for the selected
+  /// date (the calendar carries muhurat for every day in range).
   Widget _buildMuhuratCard({
-    required Map<String, dynamic>? globalMuhurat,
     required Color cardColor,
     required double spacing,
   }) {
@@ -508,25 +508,14 @@ class HolyCowCosmicContent extends StatelessWidget {
             .inDays
             .abs();
 
-        // Prefer live globalMuhurat for today (most accurate, real-time).
-        if (daysDiff <= 1 &&
-            globalMuhurat != null &&
-            globalMuhurat.isNotEmpty) {
+        // One source of truth: the astro calendar carries muhurat for every
+        // day in range, so it serves today and every other date alike.
+        final calMuhurat = calendarService?.getMuhuratForDate(sliderDate);
+        if (calMuhurat != null && calMuhurat.isNotEmpty) {
           return Padding(
             padding: EdgeInsets.only(bottom: spacing),
-            child: MuhuratTimelineWidget(muhurat: globalMuhurat),
+            child: MuhuratTimelineWidget(muhurat: calMuhurat),
           );
-        }
-
-        // For any date: try the calendar service (compact muhurat, ±365 days).
-        if (calendarService != null) {
-          final calMuhurat = calendarService!.getMuhuratForDate(sliderDate);
-          if (calMuhurat != null && calMuhurat.isNotEmpty) {
-            return Padding(
-              padding: EdgeInsets.only(bottom: spacing),
-              child: MuhuratTimelineWidget(muhurat: calMuhurat),
-            );
-          }
         }
 
         // Loading placeholder only for today window.
@@ -553,6 +542,7 @@ class HolyCowCosmicContent extends StatelessWidget {
     required bool hasPanchang,
     required double spacing,
     required Map<String, dynamic>? nakshatraSamvat,
+    Widget? insertAfterSkyCard,
   }) {
     return [
               // Current Sky with optional Birth Chart overlay
@@ -586,7 +576,7 @@ class HolyCowCosmicContent extends StatelessWidget {
                           return const SizedBox.shrink();
                         }
                         return CosmicSkyChartCard(
-                          todayPositions: positions,
+                          currentPositions: positions,
                           birthChartData: profile?.birthChartData,
                           isDark: isDark,
                           sliderValue: sliderValue,
@@ -612,8 +602,6 @@ class HolyCowCosmicContent extends StatelessWidget {
                             if (interp != null && interp.isNotEmpty) return interp;
                             return calendarService?.getPositionsForDate(date);
                           },
-                          // TODO: re-enable when Current Sky page is improved
-                          onExploreSky: null,
                           onExploreBirthChart: profile != null
                               ? () {
                                   final uid =
@@ -637,6 +625,14 @@ class HolyCowCosmicContent extends StatelessWidget {
                     );
                   },
                 ),
+                SizedBox(height: spacing),
+              ],
+
+              // Wheel + text-insight combo — injected directly BELOW the
+              // Current Sky card on mobile. When sky data hasn't loaded the
+              // sky block is skipped and this slots in at the top instead.
+              if (insertAfterSkyCard != null) ...[
+                insertAfterSkyCard,
                 SizedBox(height: spacing),
               ],
 

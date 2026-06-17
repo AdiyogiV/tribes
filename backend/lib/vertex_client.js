@@ -10,10 +10,19 @@
 import { VertexAI } from "@google-cloud/vertexai";
 
 const PROJECT = process.env.GOOGLE_CLOUD_PROJECT || "ty-dev-516d7";
-// Use Vertex's global endpoint so Gemini requests route to the nearest
-// datacenter (lower TTFT for our India-based users) instead of pinning a
-// single far-away region. Override via VERTEX_LOCATION if ever needed.
-const LOCATION = process.env.VERTEX_LOCATION || "global";
+// IMPORTANT: must be a real Vertex region, NOT "global".
+// The @google-cloud/vertexai SDK builds its endpoint as
+//   https://${location}-aiplatform.googleapis.com
+// so location="global" produces the non-existent host
+// "global-aiplatform.googleapis.com" -> HTML 404 -> the SDK's JSON.parse
+// throws "Unexpected token <, <!DOCTYPE ...", which broke AI chat. This SDK
+// has no special-casing for the global endpoint (only @google/genai does).
+//
+// asia-south1 (Mumbai) chosen deliberately: it is in India (lowest latency for
+// our users) and VERIFIED to serve gemini-2.5-flash (HTTP 200). Note asia-south2
+// (Delhi) returns 501 and asia-southeast2 (Jakarta, our function region) returns
+// 400 — neither serves Gemini. Override via VERTEX_LOCATION if needed.
+const LOCATION = process.env.VERTEX_LOCATION || "asia-south1";
 
 let _vertexAI;
 
@@ -37,7 +46,7 @@ export function extractText(result) {
     if (!candidates?.length) return null;
     const parts = candidates[0]?.content?.parts;
     if (!parts?.length) return null;
-    return parts.map(p => p.text || "").join("").trim() || null;
+    return parts.map((p) => p.text || "").join("").trim() || null;
 }
 
 /**
@@ -47,5 +56,5 @@ export function extractText(result) {
 export function extractChunkText(chunk) {
     const parts = chunk?.candidates?.[0]?.content?.parts;
     if (!parts?.length) return "";
-    return parts.map(p => p.text || "").join("");
+    return parts.map((p) => p.text || "").join("");
 }

@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Medium (4×2) Vedic Date widget — three columns: [Date | Moon | Time] -->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_background"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingStart="14dp"
+    android:paddingEnd="14dp"
+    android:paddingTop="10dp"
+    android:paddingBottom="10dp">
+
+    <!-- LEFT: Vedic Date -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="5"
+        android:orientation="vertical"
+        android:gravity="center">
+
+        <TextView
+            android:id="@+id/widget_lunar_month"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Adhika Jyeshtam"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/widget_text_color"
+            android:fontFamily="sans-serif-medium"
+            android:gravity="center" />
+
+        <TextView
+            android:id="@+id/widget_paksha"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Krishna"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/widget_text_color"
+            android:fontFamily="sans-serif-medium"
+            android:gravity="center" />
+
+        <TextView
+            android:id="@+id/widget_tithi"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Dwitiya"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/widget_text_color"
+            android:fontFamily="sans-serif-medium"
+            android:gravity="center" />
+
+        <TextView
+            android:id="@+id/widget_numeric_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="A3/2/2/2083"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/widget_text_color"
+            android:fontFamily="sans-serif-medium"
+            android:gravity="center" />
+    </LinearLayout>
+
+    <!-- DIVIDER 1 -->
+    <ImageView
+        android:layout_width="1dp"
+        android:layout_height="70dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:src="@drawable/widget_divider"
+        android:scaleType="fitXY"
+        android:importantForAccessibility="no" />
+
+    <!-- CENTER: Moon Phase -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="2"
+        android:orientation="vertical"
+        android:gravity="center">
+
+        <TextView
+            android:id="@+id/widget_moon_emoji"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="\uD83C\uDF13"
+            android:textSize="34sp"
+            android:gravity="center" />
+    </LinearLayout>
+
+    <!-- DIVIDER 2 -->
+    <ImageView
+        android:layout_width="1dp"
+        android:layout_height="70dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:src="@drawable/widget_divider"
+        android:scaleType="fitXY"
+        android:importantForAccessibility="no" />
+
+    <!-- RIGHT: Vedic Time -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="3"
+        android:orientation="vertical"
+        android:gravity="center">
+
+        <TextView
+            android:id="@+id/widget_ghati_pala"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="42·15"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/widget_text_color"
+            android:fontFamily="sans-serif-medium"
+            android:gravity="center" />
+
+        <TextView
+            android:id="@+id/widget_prahar_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Aparanha"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/widget_text_color"
+            android:fontFamily="sans-serif-medium"
+            android:gravity="center" />
+    </LinearLayout>
+
+</LinearLayout>

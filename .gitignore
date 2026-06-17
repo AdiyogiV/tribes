@@ -186,3 +186,6 @@ android/.kotlin/.git-backup/
 
 # Throwaway PMF analysis artifacts (audio dumps, generated reports)
 backend/analysis/
+
+# Gradle local build cache
+.gradle-local/

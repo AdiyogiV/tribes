@@ -5,13 +5,12 @@ import FirebaseAppCheck
 import FirebaseMessaging
 import UserNotifications
 import WatchConnectivity
+import WidgetKit
 
-/// A no-op App Check factory that prevents the Firebase SDK from
-/// auto-activating DeviceCheck (which fails with 400 "App not registered"
-/// when the app isn't registered in Firebase Console > App Check).
-private class NoOpAppCheckProviderFactory: NSObject, AppCheckProviderFactory {
-  func createProvider(with app: FirebaseApp) -> AppCheckProvider? { nil }
-}
+/// App Group identifier used to share UserDefaults between the Flutter app
+/// and the AurogramWidget extension. Must match `kAppGroup` in the widget
+/// target and the App Group capability in both entitlements files.
+private let kWidgetAppGroup = "group.com.canay.dhaara.widget"
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
@@ -24,12 +23,20 @@ private class NoOpAppCheckProviderFactory: NSObject, AppCheckProviderFactory {
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-    // App Check: Install a no-op factory in debug to stop the SDK from
-    // auto-activating DeviceCheck. Without this, every Firestore/FCM/Storage
-    // request triggers a failing exchangeDeviceCheckToken call.
-    // Release builds get real App Check via app_bootstrap.dart.
+    // App Check provider MUST be installed BEFORE FirebaseApp.configure(),
+    // otherwise the SDK's default DeviceCheck provider wins the startup race
+    // (FCM/Firestore request a token before Dart's bootstrap runs).
+    //
+    // DEBUG: use the Debug provider. On first launch it prints
+    //   "Firebase App Check Debug Token: <UUID>" to the Xcode console.
+    //   Register that token in Firebase Console > App Check > [iOS app] >
+    //   Manage debug tokens. (The iOS app must also be registered under
+    //   App Check with a provider, else every exchange returns 400
+    //   "App not registered".)
+    // RELEASE: App Check is activated from Dart (app_bootstrap.dart) with
+    //   App Attest + DeviceCheck fallback.
     #if DEBUG
-    AppCheck.setAppCheckProviderFactory(NoOpAppCheckProviderFactory())
+    AppCheck.setAppCheckProviderFactory(AppCheckDebugProviderFactory())
     #endif
 
     // Configure Firebase
@@ -62,6 +69,7 @@ private class NoOpAppCheckProviderFactory: NSObject, AppCheckProviderFactory {
     // Activate WatchConnectivity for watch companion app
     WatchSessionManager.shared.activate()
     setupWatchPlatformChannel()
+    setupWidgetPlatformChannel()
 
     GeneratedPluginRegistrant.register(with: self)
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
@@ -150,7 +158,53 @@ private class NoOpAppCheckProviderFactory: NSObject, AppCheckProviderFactory {
       }
     }
   }
-  
+
+  // MARK: - Home Screen Widget Platform Channel
+
+  /// Bridges Flutter `WidgetDataService` writes to the App Group UserDefaults
+  /// that the AurogramWidget extension reads from.
+  ///
+  /// Why a platform channel: the `shared_preferences` plugin writes to
+  /// `NSUserDefaults.standard`, which is sandboxed per-process. Widget
+  /// extensions live in a separate process and only see App Group defaults.
+  private func setupWidgetPlatformChannel() {
+    guard let controller = window?.rootViewController as? FlutterViewController else { return }
+
+    let channel = FlutterMethodChannel(name: "com.canay.dhaara/widget",
+                                       binaryMessenger: controller.binaryMessenger)
+
+    channel.setMethodCallHandler { (call, result) in
+      switch call.method {
+      case "updateWidgetData":
+        guard let args = call.arguments as? [String: Any?] else {
+          result(FlutterError(code: "INVALID_ARGS", message: "Expected map", details: nil))
+          return
+        }
+        guard let defaults = UserDefaults(suiteName: kWidgetAppGroup) else {
+          result(FlutterError(code: "APP_GROUP_MISSING",
+                              message: "App Group \(kWidgetAppGroup) not configured",
+                              details: nil))
+          return
+        }
+        for (key, value) in args {
+          if let str = value as? String, !str.isEmpty {
+            defaults.set(str, forKey: key)
+          } else if value == nil {
+            defaults.removeObject(forKey: key)
+          }
+        }
+        // Force widgets to reload now instead of waiting for the next timeline.
+        if #available(iOS 14.0, *) {
+          WidgetCenter.shared.reloadAllTimelines()
+        }
+        result(true)
+
+      default:
+        result(FlutterMethodNotImplemented)
+      }
+    }
+  }
+
   // MARK: - APNs Token Registration
   
   override func application(_ application: UIApplication,

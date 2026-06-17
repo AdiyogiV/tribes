@@ -646,7 +646,7 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
                             return const SizedBox.shrink();
                           }
                           return CosmicSkyChartCard(
-                            todayPositions: positions,
+                            currentPositions: positions,
                             birthChartData: profile?.birthChartData,
                             isDark: isDark,
                             sliderValue: sliderValue,

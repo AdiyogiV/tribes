@@ -2,13 +2,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
-import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/core/theme/header_style.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/shared/presentation/responsive/responsive.dart';
@@ -21,12 +19,12 @@ import 'package:aurogram/features/astrology/domain/sky_positions_service.dart';
 import 'package:aurogram/features/astrology/domain/astro_calendar_service.dart';
 import 'package:aurogram/shared/services/media/audio_input_service.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/cosmic_dashboard_data.dart';
-import 'package:aurogram/shared/presentation/widgets/media/glass_container.dart';
 import 'package:aurogram/features/astrology/presentation/pages/holycow/holycow_desktop_layout.dart';
 import 'package:aurogram/features/astrology/presentation/pages/holycow/holycow_empty_states.dart';
 import 'package:aurogram/features/astrology/presentation/pages/holycow/holycow_cosmic_content.dart';
+import 'package:aurogram/features/astrology/presentation/pages/holycow/holycow_input_bar_controller.dart';
+import 'package:aurogram/features/astrology/presentation/pages/holycow/holycow_input_bar.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/nakshatra_ring_widget.dart';
-import 'package:aurogram/features/ai_chat/domain/ai_chat_provider.dart';
 import 'package:aurogram/shared/presentation/widgets/universal/dark_mode_toggle.dart';
 import 'package:aurogram/shared/providers/theme_provider.dart';
 
@@ -56,30 +54,25 @@ class HolyCowPageState extends State<HolyCowPage>
   double _lastScrollOffset = 0;
   DateTime _lastScrollLogicTime = DateTime(2000);
   bool _lastReportedHideBar = false;
-  final ValueNotifier<bool> _inputHiddenNotifier = ValueNotifier<bool>(false);
   bool _wheelInteracting = false;
 
-  // Collapsible input — collapsed by default on mobile, always expanded on desktop
-  bool _isInputExpanded = false;
+  // Collapsible AI input — expanded on first load so the bar greets the user,
+  // then auto-collapses as soon as they scroll/tap around. All of its state
+  // (expanded flag + text + focus) lives in this controller so toggling the
+  // bar rebuilds ONLY the bar + spacer, never the whole dashboard.
+  final HolyCowInputBarController _inputBar =
+      HolyCowInputBarController(expanded: true);
 
-  // Dashboard input — navigates to AiChatPage on send
-  final TextEditingController _inputController = TextEditingController();
-  final FocusNode _inputFocusNode = FocusNode();
-
-  // Typewriter hint text — cycles through phrases
-  static const List<String> _hintPhrases = [
-    'ask holycow',
-    'ask anything',
-    'namaste',
-    "what's up today?",
-    'vata pitta kapha?',
-  ];
-  Timer? _hintTimer;
-  final ValueNotifier<int> _hintIndexNotifier = ValueNotifier<int>(0);
-
-  // Voice recording animation
-  late AnimationController _micAnimationController;
-  late Animation<double> _micPulseAnimation;
+  // ── Input-bar layout + motion constants (single source of truth) ──
+  // Tail spacer reserved at the bottom of the scroll content so the floating
+  // bar never covers the last card. NOTE: these intentionally do NOT include a
+  // "collapsed" variant — see the spacer in build() for why.
+  static const double _spacerExpandedFocused = 85.0;
+  static const double _spacerExpanded = 45.0;
+  // One coordinated duration/curve for every part of the collapse/expand
+  // transition (slide + fade + spacer) so the motion reads as a single gesture.
+  static const Duration _inputMotion = Duration(milliseconds: 260);
+  static const Curve _inputCurve = Curves.easeOutCubic;
 
   // Cosmic Dashboard services (singletons with caching)
   final _astrologyService = AstrologyService();
@@ -121,12 +114,18 @@ class HolyCowPageState extends State<HolyCowPage>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (!_didPrecache) {
+if (!_didPrecache) {
       _didPrecache = true;
       precacheImage(
         const AssetImage('assets/images/nakshatra_wheel.jpeg'),
         context,
       );
+      // Decode the collapsed-cow asset NOW, while the page is idle. Otherwise
+      // its first paint happens on the first scroll (the bar is expanded by
+      // default, so the cow starts at opacity 0 and is never painted until the
+      // collapse) — and that cold decode lands right on the first scroll frame,
+      // causing a one-time hitch. Precaching moves the cost off the gesture.
+      precacheImage(const AssetImage('assets/images/cow1.png'), context);
     }
   }
 
@@ -136,23 +135,6 @@ class HolyCowPageState extends State<HolyCowPage>
 
     // Scroll-to-hide bottom bar listener
     _scrollController.addListener(_onScroll);
-
-    // Auto-expand input on focus, collapse on blur
-    _inputFocusNode.addListener(_onInputFocusChanged);
-
-    // Cycle hint text every 3 seconds
-    _hintTimer = Timer.periodic(const Duration(seconds: 2), (_) {
-      if (!mounted) return;
-      _hintIndexNotifier.value = (_hintIndexNotifier.value + 1) % _hintPhrases.length;
-    });
-
-    _micAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 1000),
-      vsync: this,
-    );
-    _micPulseAnimation = Tween<double>(begin: 0.9, end: 1.1).animate(
-      CurvedAnimation(parent: _micAnimationController, curve: Curves.easeInOut),
-    );
 
     // Live wheel → sky chart bridge: whenever the wheel crosses a nakshatra
     // boundary during drag the controller notifies and we update the sky slider.
@@ -193,33 +175,21 @@ class HolyCowPageState extends State<HolyCowPage>
   void dispose() {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
-    _hintTimer?.cancel();
-    _hintIndexNotifier.dispose();
-    _inputHiddenNotifier.dispose();
-    _inputFocusNode.removeListener(_onInputFocusChanged);
     _nakshatraController.removeListener(_onWheelControllerChanged);
     _nakshatraController.dispose();
-    _inputController.dispose();
-    _inputFocusNode.dispose();
+    _inputBar.dispose();
     _sliderValueNotifier.dispose();
     _sliderDateNotifier.dispose();
     _wheelResetNotifier.dispose();
-    _micAnimationController.dispose();
     super.dispose();
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // Navigation
-  // ─────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────
+  // Input bar → chat navigation (callbacks for HolyCowInputBar).
+  // Desktop shows chat inline; mobile pushes the chat route.
+  // ─────────────────────────────────────────────────
 
-  void _openChatWithMessage() {
-    final text = _inputController.text.trim();
-    if (text.isEmpty) return;
-    _inputController.clear();
-    _inputFocusNode.unfocus();
-    HapticFeedback.lightImpact();
-
-    // On wide layout, show chat inline instead of navigating
+  void _handleSendText(String text) {
     if (Responsive.isWideLayout(context)) {
       _desktopLayoutKey.currentState?.startChatWithMessage(text);
       return;
@@ -227,59 +197,12 @@ class HolyCowPageState extends State<HolyCowPage>
     context.push('/ai/chat', extra: {'initialMessage': text});
   }
 
-  // _openNewChat removed — on desktop, "+" calls showDashboard() directly;
-  // on mobile, the floating input handles new chat initiation.
-
-  // ─────────────────────────────────────────────────────────────
-  // Voice recording on dashboard — record here, navigate after
-  // ─────────────────────────────────────────────────────────────
-
-  Future<void> _startDashboardRecording() async {
-    final audioService = Provider.of<AudioInputService>(context, listen: false);
-    final provider = Provider.of<AiChatProvider>(context, listen: false);
-    if (audioService.isRecording || audioService.isProcessing) return;
-
-    if (audioService.hasError) await audioService.resetService();
-    audioService.clearState();
-
-    // Register upload callbacks so the provider gets notified when
-    // background upload completes (stops the upload spinner on messages).
-    audioService.setOnAudioUrlUploaded((audioUrl) {
-      provider.updateLastVoiceMessageUrl(audioUrl);
-    });
-    audioService.setOnAudioUploadSkipped(() {
-      provider.markLastVoiceMessageAsLocalOnly();
-    });
-
-    await audioService.startRecording(
-      onResult: (AudioInputResult result) {
-        // Recording finished — show chat with voice result
-        if (!mounted) return;
-        // On wide layout, show chat inline instead of navigating
-        if (Responsive.isWideLayout(context)) {
-          _desktopLayoutKey.currentState?.startChatWithVoice(result);
-          return;
-        }
-        context.push('/ai/chat', extra: {'initialVoiceResult': result});
-      },
-      onTranscriptUpdate: (String transcript) {
-        AppLogger.d('Dashboard transcript: "$transcript"',
-            category: LogCategory.voice);
-      },
-    );
-    HapticFeedback.lightImpact();
-  }
-
-  void _stopDashboardRecording() {
-    final audioService = Provider.of<AudioInputService>(context, listen: false);
-    audioService.stopRecording();
-    HapticFeedback.mediumImpact();
-  }
-
-  void _cancelDashboardRecording() {
-    final audioService = Provider.of<AudioInputService>(context, listen: false);
-    audioService.cancelRecording();
-    HapticFeedback.lightImpact();
+  void _handleVoiceResult(AudioInputResult result) {
+    if (Responsive.isWideLayout(context)) {
+      _desktopLayoutKey.currentState?.startChatWithVoice(result);
+      return;
+    }
+    context.push('/ai/chat', extra: {'initialVoiceResult': result});
   }
 
   void _showRecentConversations() {
@@ -464,41 +387,28 @@ class HolyCowPageState extends State<HolyCowPage>
 
     if (shouldHideBar && !_lastReportedHideBar) {
       _lastReportedHideBar = true;
-      _inputHiddenNotifier.value = true;
-      // Auto-collapse input when scrolling down
-      if (_isInputExpanded && !_inputFocusNode.hasFocus) {
-        setState(() => _isInputExpanded = false);
-      }
+      // Slide the bar off-screen + collapse it (both local rebuilds only).
+      _inputBar.setHidden(true);
+      _inputBar.collapseIfUnfocused();
       SchedulerBinding.instance.addPostFrameCallback((_) {
         if (mounted) widget.onScrollHidesBottomBar?.call(true);
       });
     } else if (!shouldHideBar && _lastReportedHideBar) {
       _lastReportedHideBar = false;
-      _inputHiddenNotifier.value = false;
+      _inputBar.setHidden(false);
       SchedulerBinding.instance.addPostFrameCallback((_) {
         if (mounted) widget.onScrollHidesBottomBar?.call(false);
       });
     }
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // Collapsible input
-  // ─────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────
+  // Collapsible input — all state lives in _inputBar; these just add haptics.
+  // ─────────────────────────────────────────────────
 
-  void _onInputFocusChanged() {
-    if (_inputFocusNode.hasFocus && !_isInputExpanded) {
-      setState(() => _isInputExpanded = true);
-    }
-  }
-
-  void _toggleInputExpanded() {
+  void _toggleInputBar() {
     HapticFeedback.lightImpact();
-    setState(() {
-      _isInputExpanded = !_isInputExpanded;
-      if (!_isInputExpanded) {
-        _inputFocusNode.unfocus();
-      }
-    });
+    _inputBar.toggle();
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -518,7 +428,7 @@ class HolyCowPageState extends State<HolyCowPage>
         body: HolyCowDesktopLayout(
           key: _desktopLayoutKey,
           cosmicDashboardBuilder: _buildCosmicDashboardContent,
-          dashboardInputBuilder: _buildDashboardInput,
+dashboardInputBuilder: _buildInputBar,
         ),
       );
     }
@@ -533,9 +443,7 @@ class HolyCowPageState extends State<HolyCowPage>
           // (e.g. the nakshatra wheel), so tapping anywhere collapses the input.
           Listener(
             onPointerDown: (_) {
-              if (_isInputExpanded && !_inputFocusNode.hasFocus) {
-                setState(() => _isInputExpanded = false);
-              }
+              _inputBar.collapseIfUnfocused();
               FocusScope.of(context).unfocus();
             },
             behavior: HitTestBehavior.translucent,
@@ -560,12 +468,23 @@ class HolyCowPageState extends State<HolyCowPage>
                         _LocalOverlayScope(
                           child: _buildCosmicDashboardContent(),
                         ),
-                        // Space for input overlay — less when collapsed
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          height: _isInputExpanded
-                              ? (_inputFocusNode.hasFocus ? 85.0 : 45.0)
-                              : 20.0,
+                        // Fixed tail so the floating bar never covers the last
+                        // card. CRITICAL: height must NOT depend on
+                        // expanded/collapsed. The bar floats in a Positioned
+                        // overlay (sibling of this scroll view), so resizing
+                        // this mid-scroll would relayout the scrollable and
+                        // fight the gesture — that was the "collapse first,
+                        // then scroll" hitch. It only grows for the keyboard,
+                        // which never appears during a scroll.
+                        ListenableBuilder(
+                          listenable: _inputBar,
+                          builder: (context, _) => AnimatedContainer(
+                            duration: _inputMotion,
+                            curve: _inputCurve,
+                            height: _inputBar.hasFocus
+                                ? _spacerExpandedFocused
+                                : _spacerExpanded,
+                          ),
                         ),
                       ],
                     ),
@@ -575,58 +494,32 @@ class HolyCowPageState extends State<HolyCowPage>
             ),
           ),
 
-          // Collapsible AI input — collapsed cow icon or expanded toolbar
+          // Floating AI input. We show EITHER the expanded glass bar OR the
+          // collapsed cow — never both stacked. The glass surface is
+          // translucent, so painting the cow behind it would ghost through;
+          // swapping instead means there is literally nothing behind the glass.
+          // Hide-on-scroll is the outer 80px slide (timed with the tab bar),
+          // which also masks the bar→cow swap while you're scrolling.
+          // No opacity anywhere → no offscreen saveLayer → no first-scroll hitch.
           Positioned(
             bottom: 0,
             left: 0,
             right: 0,
-            child: ValueListenableBuilder<bool>(
-              valueListenable: _inputHiddenNotifier,
-              builder: (context, hidden, child) {
-                return TweenAnimationBuilder<double>(
-                  tween: Tween<double>(end: hidden ? 80.0 : 0.0),
+            child: SafeArea(
+              top: false,
+              child: ListenableBuilder(
+                listenable: _inputBar,
+                builder: (context, _) => TweenAnimationBuilder<double>(
+                  tween: Tween<double>(end: _inputBar.hidden ? 80.0 : 0.0),
                   duration: const Duration(milliseconds: 600),
                   curve: Curves.easeInOut,
-                  builder: (context, offset, child) => Transform.translate(
-                    offset: Offset(0, offset),
+                  builder: (context, dy, child) => Transform.translate(
+                    offset: Offset(0, dy),
                     child: child,
                   ),
-                  child: child,
-                );
-              },
-              child: SafeArea(
-                top: false,
-                child: Stack(
-                  children: [
-                    // Expanded toolbar — slides right when collapsed
-                    AnimatedSlide(
-                      offset: Offset(_isInputExpanded ? 0 : 1.1, 0),
-                      duration: const Duration(milliseconds: 800),
-                      curve: Curves.easeInOutCubic,
-                      child: AnimatedOpacity(
-                        opacity: _isInputExpanded ? 1.0 : 0.0,
-                        duration: const Duration(milliseconds: 400),
-                        child: IgnorePointer(
-                          ignoring: !_isInputExpanded,
-                          child: _buildDashboardInput(),
-                        ),
-                      ),
-                    ),
-                    // Collapsed cow — slides left when expanded
-                    AnimatedSlide(
-                      offset: Offset(_isInputExpanded ? -5.0 : 0, 0),
-                      duration: const Duration(milliseconds: 800),
-                      curve: Curves.easeInOutCubic,
-                      child: AnimatedOpacity(
-                        opacity: _isInputExpanded ? 0.0 : 1.0,
-                        duration: const Duration(milliseconds: 400),
-                        child: IgnorePointer(
-                          ignoring: _isInputExpanded,
-                          child: _buildCollapsedCowButton(),
-                        ),
-                      ),
-                    ),
-                  ],
+                  child: _inputBar.expanded
+                      ? _buildInputBar()
+                      : HolyCowCollapsedCow(onTap: _toggleInputBar),
                 ),
               ),
             ),
@@ -655,308 +548,17 @@ class HolyCowPageState extends State<HolyCowPage>
   }
 
   // ─────────────────────────────────────────────────────────────
-  // Dashboard input — navigates on send
+  // Dashboard input — the bar's UI lives in HolyCowInputBar; the page just
+  // wires its controller + navigation callbacks. Shared by mobile (overlay)
+  // and desktop (floating) layouts.
   // ─────────────────────────────────────────────────────────────
 
-  /// Collapsed state: a bare cow icon aligned with the 4th (profile) tab icon.
-  /// Uses the same spaceEvenly math as TabBottomNav: 4 items × 64px, 16px padding.
-  Widget _buildCollapsedCowButton() {
-    // Match TabBottomNav: 16px padding each side, 4 items × 64px, spaceEvenly
-    final screenWidth = MediaQuery.of(context).size.width;
-    final innerWidth = screenWidth - 32; // 16px padding each side
-    final gap = (innerWidth - 4 * 64) / 5;
-    // 4th item center is (gap + 32) from the right edge of inner area, plus 16px outer padding
-    final rightOffset = 16 + gap + 32; // distance from screen right to 4th item center
-    const cowSize = 70.0;
-
-    return Align(
-      key: const ValueKey('collapsed'),
-      alignment: Alignment.bottomRight,
-      child: Padding(
-        padding: EdgeInsets.only(right: rightOffset - cowSize / 2, bottom: 10),
-        child: GestureDetector(
-          onTap: _toggleInputExpanded,
-          child: Image.asset(
-            'assets/images/cow1.png',
-            width: cowSize,
-            height: cowSize,
-            fit: BoxFit.contain,
-            errorBuilder: (_, __, ___) => Icon(
-              CupertinoIcons.chat_bubble_fill,
-              color: AppTheme.primaryColor,
-              size: 24,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDashboardInput() {
-    return Padding(
-      key: const ValueKey('expanded'),
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-      child: GestureDetector(
-        onTap: () {
-          if (!_inputFocusNode.hasFocus) _inputFocusNode.requestFocus();
-        },
-        child: GlassContainer(
-          height: 70,
-          padding: EdgeInsets.zero,
-          child: Consumer<AudioInputService>(
-            builder: (context, audioService, _) {
-              final isRecording = audioService.isRecording;
-
-              // Animate mic pulse during recording
-              if (isRecording && !_micAnimationController.isAnimating) {
-                _micAnimationController.repeat(reverse: true);
-              } else if (!isRecording) {
-                _micAnimationController.stop();
-                _micAnimationController.reset();
-              }
-
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: [
-                    // Past chats icon
-                    SizedBox(
-                      width: 36,
-                      height: 44,
-                      child: Center(
-                        child: IconButton(
-                          onPressed: _showRecentConversations,
-                          icon: Icon(
-                            Icons.history_rounded,
-                            color: AppTheme.primaryColor.withValues(alpha: 0.7),
-                            size: 22,
-                          ),
-                          tooltip: 'Recent Conversations',
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-
-                    // Center: text field or recording indicator
-                    Expanded(
-                      child: isRecording
-                          ? _buildRecordingIndicator()
-                          : _buildDashboardTextField(),
-                    ),
-
-                    // Right: send/mic or recording controls
-                    SizedBox(
-                      width: 44,
-                      height: 44,
-                      child: Center(
-                        child: isRecording
-                            ? _buildRecordingControls()
-                            : _buildSendOrMicButton(),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDashboardTextField() {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        // Animated hint overlay — slides left-to-right on change
-        ListenableBuilder(
-          listenable: _inputController,
-          builder: (context, _) {
-            final hasText = _inputController.text.isNotEmpty;
-            if (hasText) return const SizedBox.shrink();
-            return IgnorePointer(
-              child: ValueListenableBuilder<int>(
-                valueListenable: _hintIndexNotifier,
-                builder: (context, hintIndex, _) {
-                  return AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 400),
-                    switchInCurve: Curves.easeOut,
-                    switchOutCurve: Curves.easeIn,
-                    transitionBuilder: (child, animation) {
-                      // Incoming slides from right, outgoing slides to left
-                      final isIncoming = child.key == ValueKey<int>(hintIndex);
-                      return SlideTransition(
-                        position: Tween<Offset>(
-                          begin: Offset(0, isIncoming ? 0.6 : -0.6),
-                          end: Offset.zero,
-                        ).animate(animation),
-                        child: FadeTransition(
-                          opacity: animation,
-                          child: child,
-                        ),
-                      );
-                    },
-                    child: Text(
-                      _hintPhrases[hintIndex],
-                      key: ValueKey<int>(hintIndex),
-                      style: TextStyle(
-                        color: AppTheme.primaryColor.withValues(alpha: 0.4),
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                  );
-                },
-              ),
-            );
-          },
-        ),
-        // Actual text field — no hintText, overlay handles it
-        Focus(
-          onKeyEvent: (node, event) {
-            if (event is KeyDownEvent &&
-                event.logicalKey == LogicalKeyboardKey.enter &&
-                !HardwareKeyboard.instance.isShiftPressed) {
-              if (_inputController.text.trim().isNotEmpty) {
-                _openChatWithMessage();
-              }
-              return KeyEventResult.handled;
-            }
-            return KeyEventResult.ignored;
-          },
-          child: TextField(
-            controller: _inputController,
-            focusNode: _inputFocusNode,
-            decoration: const InputDecoration(
-              hintText: null,
-              border: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: InputBorder.none,
-              filled: false,
-              contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-              isDense: true,
-            ),
-            style: TextStyle(
-              color: AppTheme.primaryColor.withValues(alpha: 0.85),
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            textCapitalization: TextCapitalization.sentences,
-            textInputAction: TextInputAction.send,
-            onSubmitted: (_) => _openChatWithMessage(),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSendOrMicButton() {
-    return ListenableBuilder(
-      listenable: _inputController,
-      builder: (context, _) {
-        final hasText = _inputController.text.trim().isNotEmpty;
-        return hasText
-            ? IconButton(
-                onPressed: _openChatWithMessage,
-                icon: Icon(
-                  CupertinoIcons.paperplane_fill,
-                  color: AppTheme.primaryColor,
-                  size: 22,
-                ),
-              )
-            : IconButton(
-                onPressed: _startDashboardRecording,
-                icon: Icon(
-                  CupertinoIcons.mic_fill,
-                  color: AppTheme.primaryColor.withValues(alpha: 0.6),
-                  size: 22,
-                ),
-              );
-      },
-    );
-  }
-
-  // ─────────────────────────────────────────────────────────────
-  // Recording UI on dashboard — same style as AiChatInput
-  // ─────────────────────────────────────────────────────────────
-
-  Widget _buildRecordingIndicator() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _buildRecordingWaveAnimation(),
-        const SizedBox(width: AppDimensions.spacingMd),
-        Text(
-          'Recording...',
-          style: TextStyle(
-            color: Colors.red[400],
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            letterSpacing: 0.5,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildRecordingWaveAnimation() {
-    return AnimatedBuilder(
-      animation: _micPulseAnimation,
-      builder: (context, child) {
-        final progress = _micPulseAnimation.value;
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: List.generate(3, (index) {
-            final delay = index * 0.2;
-            final animValue = ((progress - 0.9) / 0.2 + delay) % 1.0;
-            final height = 8 + (animValue * 8);
-            return Container(
-              margin: const EdgeInsets.symmetric(horizontal: 2),
-              width: 3,
-              height: height,
-              decoration: BoxDecoration(
-                color: Colors.red[400],
-                borderRadius: BorderRadius.circular(2),
-              ),
-            );
-          }),
-        );
-      },
-    );
-  }
-
-  Widget _buildRecordingControls() {
-    // During recording, show cancel + send in a compact layout within 64px
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Cancel — small X
-        GestureDetector(
-          onTap: _cancelDashboardRecording,
-          child: Icon(Icons.close, size: 18,
-            color: AppTheme.primaryColor.withValues(alpha: 0.6)),
-        ),
-        const SizedBox(width: 6),
-        // Send — filled send icon
-        GestureDetector(
-          onTap: _stopDashboardRecording,
-          child: Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: AppTheme.primaryColor,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(CupertinoIcons.paperplane_fill,
-                size: 16, color: Colors.white),
-          ),
-        ),
-      ],
+  Widget _buildInputBar() {
+    return HolyCowInputBar(
+      controller: _inputBar,
+      onSendText: _handleSendText,
+      onVoiceResult: _handleVoiceResult,
+      onShowRecent: _showRecentConversations,
     );
   }
 

@@ -97,7 +97,7 @@ class RecentConversationsEmpty extends StatelessWidget {
       child: Column(
         children: [
           Icon(
-            Icons.auto_awesome_rounded,
+            Icons.forum_outlined,
             size: 52,
             color: AppTheme.primaryColor.withValues(alpha: 0.3),
           ),

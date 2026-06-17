@@ -185,6 +185,60 @@ export function normalizeDasha(currentDasha) {
 }
 
 /**
+ * Resolve which dasha period is active RIGHT NOW from the stored timeline.
+ *
+ * Vimshottari dasha is fixed math from birth — the full timeline (`tree`) is
+ * computed once and never changes. But the "current period" pointer
+ * (mahadasha/antardasha + their dates) is only a SNAPSHOT taken at signup, and
+ * nothing ever advances it. So a few months later the stored pointer names an
+ * antardasha that has already ended → past-dated predictions.
+ *
+ * This walks the (static) timeline and returns the same dasha object with the
+ * pointer fields refreshed to whatever period contains `now`. It's a handful of
+ * date comparisons — no API call, no recompute. If there's no timeline to walk,
+ * the original object is returned untouched (safe fallback).
+ *
+ * @param {Object} currentDasha - Stored dasha object (must contain `tree`)
+ * @param {Date} [now] - Reference instant (defaults to current time)
+ * @returns {Object} currentDasha with active maha/antar pointer fields
+ */
+export function resolveActiveDasha(currentDasha, now = new Date()) {
+    const tree = currentDasha?.tree;
+    if (!Array.isArray(tree) || tree.length === 0) return currentDasha;
+
+    const within = (node) => {
+        const start = new Date(node.startDate);
+        const end = new Date(node.endDate);
+        return !isNaN(start) && !isNaN(end) && start <= now && now < end;
+    };
+
+    const activeMaha = tree.find(within);
+    if (!activeMaha) return currentDasha; // outside the computed range — leave as-is
+    const activeAntar = (activeMaha.children || []).find(within) || null;
+
+    return {
+        ...currentDasha,
+        mahadasha: activeMaha.lord,
+        mahaStartDate: activeMaha.startDate,
+        mahaEndDate: activeMaha.endDate,
+        endDate: activeMaha.endDate,
+        antardasha: activeAntar?.lord || null,
+        antarStartDate: activeAntar?.startDate || null,
+        antarEndDate: activeAntar?.endDate || null,
+        levels: {
+            ...(currentDasha.levels || {}),
+            maha: { lord: activeMaha.lord, start: activeMaha.startDate, end: activeMaha.endDate },
+            antar: activeAntar ?
+                { lord: activeAntar.lord, start: activeAntar.startDate, end: activeAntar.endDate } :
+                null,
+            // Pratyantar isn't in the stored timeline, so the snapshot value is
+            // unreliable once maha/antar have advanced — drop it rather than lie.
+            pratyantar: null,
+        },
+    };
+}
+
+/**
  * Normalize core chart field names to consistent accessors.
  *
  * Handles the `ascendant/lagna`, `nakshatra/moonNakshatra`, and planet

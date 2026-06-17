@@ -13,6 +13,11 @@
  */
 
 import { execSync } from "child_process";
+// Use the CANONICAL time parser (same one the backend smartPrefetch uses).
+// The previous local copy split on a char-class /[-–—to]+/ that also matched the
+// letters 't' and 'o', shredding JSON strings like {"start...} into garbage
+// ('{"s' / 'ar'), which collapsed muhurat windows to midnight (left edge).
+import { parseApiTimeString } from "./lib/astro_helpers.js";
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 const API_BASE = "https://json.freeastrologyapi.com";
@@ -21,6 +26,7 @@ const PROJECT_ID = "ty-dev-516d7";
 const FIRESTORE_BASE = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents`;
 const DOC_PATH = "global_astro/sky_positions";
 const DAYS_AHEAD = 365;
+const DAYS_BEHIND = 180; // rolling past window (matches client wheel reach)
 
 // Ujjain reference (same as sky_positions.js)
 const DEFAULT_LAT = 23.1765;
@@ -203,19 +209,6 @@ async function fetchPositions(date) {
     return Object.keys(planets).length > 0 ? planets : null;
 }
 
-function parseApiTimeString(raw) {
-    if (!raw) return null;
-    if (typeof raw === "object") {
-        return { starts_at: raw.start || raw.starts_at || raw.startsAt || null, ends_at: raw.end || raw.ends_at || raw.endsAt || null };
-    }
-    if (typeof raw === "string") {
-        const parts = raw.split(/\s*[-–—to]+\s*/i);
-        if (parts.length >= 2) return { starts_at: parts[0].trim(), ends_at: parts[1].trim() };
-        return { starts_at: raw.trim(), ends_at: null };
-    }
-    return null;
-}
-
 async function fetchPanchang(date) {
     const payload = makePayload(date);
     const [samvatRes, lunarRes, tithiRes] = await Promise.all([
@@ -318,11 +311,11 @@ async function main() {
         `${Object.keys(existingPanchang).length} panchang, ` +
         `${Object.keys(existingMuhurat).length} muhurat\n`);
 
-    // 2. Build required date range (today → today+365)
+    // 2. Build required date range (today-180 -> today+365)
     const today = new Date();
     today.setUTCHours(0, 0, 0, 0);
     const requiredDates = [];
-    for (let i = 0; i <= DAYS_AHEAD; i++) requiredDates.push(addDays(today, i));
+    for (let i = -DAYS_BEHIND; i <= DAYS_AHEAD; i++) requiredDates.push(addDays(today, i));
 
     // 3. Find gaps
     const fetchList = [];

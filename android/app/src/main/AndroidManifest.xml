@@ -137,6 +137,34 @@
             android:exported="false"
             android:theme="@android:style/Theme.Translucent.NoTitleBar"
             tools:replace="android:exported" />
+
+        <!-- ── Vedic Date Home Screen Widgets ────────────────────────── -->
+
+        <!-- Medium (4×2) — full date card with clock + panchang + time -->
+        <receiver
+            android:name=".widget.VedicDateWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_vedic_date_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/vedic_date_widget_info" />
+        </receiver>
+
+        <!-- Small (2×2) — compact date card -->
+        <receiver
+            android:name=".widget.VedicDateWidgetSmallProvider"
+            android:exported="true"
+            android:label="@string/widget_vedic_date_small_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/vedic_date_widget_small_info" />
+        </receiver>
     </application>
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>

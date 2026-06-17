@@ -24,8 +24,7 @@
  *   - Sunday only: cleanupOrphanedFeedEntries
  *
  * Phase 2: Data Refresh (sequential — Phase 3 needs this)
- *   - refreshSkyPositionsDaily
- *   - refreshMuhuratDaily
+ *   - refreshSkyPositionsDaily (positions + panchang + muhurat, single source)
  *
  * Phase 3: Content Generation (parallel — both use fresh sky data)
  *   - cosmicDailyScheduled
@@ -51,7 +50,7 @@ import { runProcessPendingDeletions } from "../user_deletion.js";
 import { runRefreshUserMemories } from "../user_memory.js";
 
 // Phase 2: Data refresh runners
-import { runRefreshSkyPositionsDaily, runRefreshMuhuratDaily } from "../sky_positions.js";
+import { runRefreshSkyPositionsDaily } from "../sky_positions.js";
 
 // Phase 3: Content generation runners
 import { runCosmicDailyScheduled } from "../cosmic_daily.js";
@@ -135,7 +134,8 @@ export const unifiedOrchestrator = onSchedule({
     // ── Phase 2: Data Refresh (sequential — Phase 3 needs this) ────────
     logger.info("Phase 2: Data Refresh");
     results.push(await runTask("refreshSkyPositionsDaily", runRefreshSkyPositionsDaily));
-    results.push(await runTask("refreshMuhuratDaily", runRefreshMuhuratDaily));
+
+    // (muhurat is now part of the sky_positions smartPrefetch — single source)
 
     // ── Phase 3: Content Generation (parallel — both use fresh sky data)
     logger.info("Phase 3: Content Generation");

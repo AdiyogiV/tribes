@@ -2,6 +2,12 @@
 <resources>
     <!-- Notification accent color - green to match app theme -->
     <color name="notification_color">#4CAF50</color>
+
+    <!-- Widget text color — warm brown matching AppTheme.primaryColor -->
+    <color name="widget_text_color">#FF70543D</color>
+    <color name="widget_divider_color">#1A70543D</color>
+    <!-- Dimmed variant (50% alpha) for secondary text -->
+    <color name="widget_text_dim">#8070543D</color>
 </resources>
 
 

@@ -22,6 +22,17 @@ import { callGemini } from "../insights/engine/ai_client.js";
 import { buildDashaContext, getTodayAstroData } from "../lib/daily_insight_context.js";
 
 /**
+ * Single source of truth for the daily-insight document id.
+ *
+ * Cloud Run runs in UTC, but Aurogram is India-first and the nightly cron
+ * keys insights by IST (Asia/Kolkata). Every write/read of a dailyInsights
+ * doc id MUST go through here so the cron path and the on-demand generate
+ * path always agree — otherwise, between 00:00–05:29 IST the two paths
+ * produce different doc ids (UTC "yesterday" vs IST "today").
+ */
+export const todayId = () => DateTime.now().setZone("Asia/Kolkata").toFormat("yyyy-MM-dd");
+
+/**
  * Generate personalized daily astrology insight using AI
  * Uses ALL available data: API + Google Search
  */
@@ -274,7 +285,7 @@ async function generateInsightWithAI(userAstroData, todayAstroData) {
  * @exported for use by astro_sync.js to generate insights for new users
  */
 export async function generateInsightForUserForce(userId, userAstroData, forceRegenerate = false) {
-    const today = DateTime.now().toFormat("yyyy-MM-dd");
+    const today = todayId();
     const insightRef = db
         .collection("users")
         .doc(userId)
@@ -917,7 +928,7 @@ export async function handleGenerateInsightForCurrentUser(request) {
         // RATE LIMIT CHECK: Prevent rapid successive calls from triggering notification spam
         // If force regenerate was called within the last 2 minutes, return existing insight
         if (forceRegenerate) {
-            const today = DateTime.now().toFormat("yyyy-MM-dd");
+            const today = todayId();
             const existingInsight = await db
                 .collection("users")
                 .doc(userId)
@@ -995,7 +1006,7 @@ export async function handleGenerateInsightForCurrentUser(request) {
  */
 /** Extracted runner for orchestrator consolidation. */
 export async function runGenerateDailyAstroInsights() {
-    const today = DateTime.now().setZone("Asia/Kolkata").toFormat("yyyy-MM-dd");
+    const today = todayId();
 
     logger.info("🌅 Starting daily insights ENQUEUE (queue-based generation)", {
         structuredData: true,

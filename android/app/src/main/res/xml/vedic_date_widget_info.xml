@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget metadata for medium (4×2) Vedic Date card.
+     updatePeriodMillis=1800000 → refresh every 30 minutes.
+     previewLayout shows the actual layout in the widget picker (API 31+). -->
+<appwidget-provider
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="250dp"
+    android:minHeight="110dp"
+    android:targetCellWidth="4"
+    android:targetCellHeight="2"
+    android:updatePeriodMillis="1800000"
+    android:initialLayout="@layout/widget_vedic_date"
+    android:previewLayout="@layout/widget_vedic_date"
+    android:resizeMode="horizontal|vertical"
+    android:widgetCategory="home_screen"
+    android:description="@string/widget_vedic_date_description" />

@@ -1,9 +1,9 @@
 import 'dart:async';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:aurogram/features/astrology/domain/astro_calendar_service.dart';
 import 'package:aurogram/features/astrology/domain/upcoming_event.dart';
 import 'package:aurogram/features/astrology/domain/sky_positions_calculator.dart';
 import 'package:aurogram/shared/services/widget_data_service.dart';
@@ -308,85 +308,41 @@ class SkyPositionsService {
     }
   }
 
-  /// Fetch global muhurat with date-based cache validation
-  /// Always shows 3 days from today - refetches when date changes
+  /// Today's muhurat, derived from the SINGLE SOURCE OF TRUTH: the astro
+  /// calendar (global_astro/sky_positions), which already carries muhurat for
+  /// every day. No separate `global_astro/muhurat` doc and no `getGlobalMuhurat`
+  /// Cloud Function call — those were redundant and have been removed.
   Future<bool> fetchGlobalMuhurat({bool forceRefresh = false}) async {
     if (_isLoadingMuhurat) return false;
 
     final todayKey = _formatDateKey(DateTime.now());
 
-    // Check if cached muhurat is still for today (date-based validation)
+    // Date-based cache validation — already have today's muhurat?
     if (!forceRefresh && hasMuhurat && _muhuratDateKey == todayKey) {
-      AppLogger.d('Muhurat cache valid for today',
-          category: LogCategory.general);
       return true;
     }
 
     _isLoadingMuhurat = true;
-
     try {
-      // Try Firestore first (fast path)
-      bool firestoreSucceeded = false;
-      try {
-        final doc = await FirebaseFirestore.instance
-            .collection('global_astro')
-            .doc('muhurat')
-            .get();
-
-        if (doc.exists && doc.data() != null) {
-          final data = doc.data()!;
-          final dateKeys =
-              (data['dateKeys'] as List<dynamic>?)?.cast<String>() ?? [];
-          final isForToday = dateKeys.isNotEmpty && dateKeys[0] == todayKey;
-
-          if (isForToday &&
-              data['muhurat'] is Map &&
-              (data['muhurat'] as Map).isNotEmpty) {
-            _muhurat = Map<String, dynamic>.from(data['muhurat'] as Map);
-            _muhuratDateKey = todayKey;
-            AppLogger.d('Muhurat loaded from Firestore (valid for today)',
-                category: LogCategory.general);
-            return true;
-          }
-        }
-        firestoreSucceeded = true; // Read worked but data was stale/empty
-      } catch (e) {
-        // Firestore may fail (e.g. permission-denied for unauthenticated users)
-        // Fall through to Cloud Function
-        AppLogger.d('Firestore muhurat read failed, trying Cloud Function',
-            category: LogCategory.general, data: {'error': e.toString()});
+      final calendar = AstroCalendarService();
+      if (!calendar.isLoaded || forceRefresh) {
+        await calendar.fetchCalendar(forceRefresh: forceRefresh);
       }
 
-      // Firestore stale, empty, or failed - call Cloud Function to get fresh data
-      AppLogger.d(
-          firestoreSucceeded
-              ? 'Muhurat cache stale, fetching fresh data'
-              : 'Fetching muhurat via Cloud Function (Firestore unavailable)',
-          category: LogCategory.general);
-
-      final functions =
-          FirebaseFunctions.instanceFor(region: 'asia-southeast2');
-      final callable = functions.httpsCallable(
-        'astroGateway',
-        options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),
-      );
-
-      final result = await callable.call<Map<String, dynamic>>({'method': 'getGlobalMuhurat'});
-      final data = result.data;
-
-      if (data['success'] == true && data['muhurat'] is Map) {
-        _muhurat = Map<String, dynamic>.from(data['muhurat'] as Map);
+      final todayMuhurat = calendar.getMuhuratForDate(DateTime.now());
+      if (todayMuhurat != null && todayMuhurat.isNotEmpty) {
+        _muhurat = todayMuhurat;
         _muhuratDateKey = todayKey;
-        AppLogger.i('Muhurat loaded via Cloud Function',
+        AppLogger.d('Muhurat derived from astro calendar (single source)',
             category: LogCategory.general);
         return true;
       }
 
-      AppLogger.w('Cloud Function returned no muhurat data',
+      AppLogger.w('No muhurat for today in astro calendar',
           category: LogCategory.general);
       return false;
     } catch (e) {
-      AppLogger.e('Error fetching muhurat',
+      AppLogger.e('Error deriving muhurat from calendar',
           category: LogCategory.general, error: e);
       return false;
     } finally {
