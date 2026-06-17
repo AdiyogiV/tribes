@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:aurogram/shared/services/location_service.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
@@ -28,6 +30,17 @@ mixin AiChatVoiceMixin on ChangeNotifier, AiChatContextMixin, AiChatStreamingMix
   String? lastFailedMessageContent;
   bool lastFailedWasVoice = false;
   String? lastFailedAudioPath;
+
+  // =========================================================================
+  // Deferred-send state (audio-only voice, upload still in flight)
+  // =========================================================================
+  // When a voice message has no on-device transcript, the backend needs the
+  // Storage URL to "hear" the audio. That URL arrives a few seconds AFTER the
+  // recording finishes (background upload). We park the request here and fire
+  // it from updateLastVoiceMessageUrl once the URL is ready.
+  bool _pendingVoiceSend = false;
+  String? _pendingVoiceSessionId;
+  String _pendingVoiceTranscript = '';
 
   // =========================================================================
   // Voice message API
@@ -105,13 +118,17 @@ mixin AiChatVoiceMixin on ChangeNotifier, AiChatContextMixin, AiChatStreamingMix
             category: LogCategory.voice);
         await processAiResponse(transcript.trim(), sessionId);
       } else {
-        AppLogger.w('Voice message has no transcript and no audio URL',
+        // No on-device transcript and the audio URL isn't ready yet. A
+        // background upload is in flight (every voice entry point wires
+        // onAudioUrlUploaded / onAudioUploadSkipped). Defer the AI request:
+        //   - URL arrives          -> updateLastVoiceMessageUrl resumes it
+        //   - upload skipped/failed -> markLastVoiceMessageAsLocalOnly cancels
+        AppLogger.i('Voice -> deferring send until audio upload resolves',
             category: LogCategory.voice);
-        updateSession(currentSession.copyWith(
-          error: 'Could not capture your voice message. Please try again.',
-          isStreaming: false,
-          isThinking: false,
-        ));
+        _pendingVoiceSend = true;
+        _pendingVoiceSessionId = sessionId;
+        _pendingVoiceTranscript = transcript.trim();
+        updateSession(currentSession.copyWith(isThinking: true));
       }
     } catch (e) {
       AppLogger.e('Error sending voice message: $e');
@@ -141,6 +158,20 @@ mixin AiChatVoiceMixin on ChangeNotifier, AiChatContextMixin, AiChatStreamingMix
         break;
       }
     }
+
+    // Resume a deferred audio-only send now that the backend has a URL to hear.
+    if (_pendingVoiceSend) {
+      _pendingVoiceSend = false;
+      final sessionId = _pendingVoiceSessionId ?? currentSession.chatId;
+      final transcript = _pendingVoiceTranscript;
+      _pendingVoiceSessionId = null;
+      _pendingVoiceTranscript = '';
+      AppLogger.i('Resuming deferred voice send with uploaded URL',
+          category: LogCategory.voice, data: {'audioUrl': audioUrl});
+      unawaited(processAiResponse(
+          transcript.isNotEmpty ? transcript : 'Voice message', sessionId,
+          audioUrl: audioUrl));
+    }
   }
 
   /// Mark the most recent voice message as "local only" (no upload).
@@ -160,6 +191,22 @@ mixin AiChatVoiceMixin on ChangeNotifier, AiChatContextMixin, AiChatStreamingMix
             category: LogCategory.voice, data: {'messageId': msg.id});
         break;
       }
+    }
+
+    // A deferred send was waiting on this upload, but it won't arrive
+    // (skipped for logged-out users, or failed). Surface it instead of
+    // leaving the UI stuck on "thinking".
+    if (_pendingVoiceSend) {
+      _pendingVoiceSend = false;
+      _pendingVoiceSessionId = null;
+      _pendingVoiceTranscript = '';
+      AppLogger.w('Deferred voice send cancelled: audio upload unavailable',
+          category: LogCategory.voice);
+      updateSession(currentSession.copyWith(
+        error: 'Could not upload your voice message. Please try again.',
+        isStreaming: false,
+        isThinking: false,
+      ));
     }
   }
 }

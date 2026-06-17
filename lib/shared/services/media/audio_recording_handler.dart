@@ -273,8 +273,14 @@ class AudioRecordingHandler {
       final file = File(audioPath);
       if (!await file.exists()) return;
 
+      // Keep the real codec extension (mobile records .m4a/AAC). The backend
+      // infers the Gemini MIME type from this URL's extension, so a hardcoded
+      // '.wav' would mislabel AAC bytes as WAV and break audio understanding.
+      final ext = audioPath.contains('.')
+          ? audioPath.substring(audioPath.lastIndexOf('.') + 1)
+          : 'm4a';
       final fileName =
-          'voice_chat_${DateTime.now().millisecondsSinceEpoch}.wav';
+          'voice_chat_${DateTime.now().millisecondsSinceEpoch}.$ext';
       final storagePath = 'chat_audio/$fileName';
 
       final audioUrl =

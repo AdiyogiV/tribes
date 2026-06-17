@@ -283,6 +283,7 @@ export async function handleSyncAstroProfile(request) {
         muhurat: astroResult.muhurat ?? astroData.muhurat ?? null,
         navamsa: astroResult.navamsa ?? astroData.navamsa ?? null,
         shadBala: astroResult.shadBala ?? astroData.shadBala ?? null,
+        ashtakavarga: astroResult.ashtakavarga ?? astroData.ashtakavarga ?? null,
         d10Chart: astroResult.d10Chart ?? astroData.d10Chart ?? null,
         // Process yogas list if available
         yogas: astroResult.yogas && Array.isArray(astroResult.yogas.yogas) ?

@@ -8,6 +8,7 @@ import {
     calculatePlanetDignity,
     checkKemadrumaYoga,
     calculateHouseFromDegree,
+    calculateAshtakavarga,
 } from "../lib/vedic_analysis.js";
 import { freeAstrologyApiKey } from "../lib/secrets.js";
 import { requireAuth } from "../lib/auth_utils.js";
@@ -1133,6 +1134,18 @@ export const runAstroFlow = async ({
         });
 
         result.processedPlanets = processedPlanets;
+
+        // Ashtakavarga (BAV per planet + SAV per sign) — pure math from the natal
+        // chart, no API call. Persisted so the chat can weigh transit potency
+        // (a transit over a high-bindu sign matters far more than a low one).
+        try {
+            const av = calculateAshtakavarga(processedPlanets, result.ascendant);
+            if (av) result.ashtakavarga = av;
+        } catch (avErr) {
+            logger.warn("Ashtakavarga calculation error", {
+                structuredData: true, error: avErr?.message,
+            });
+        }
 
         // Calculate Raj Yogas from planetary positions
         try {

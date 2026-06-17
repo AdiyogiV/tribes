@@ -191,7 +191,15 @@ class _DailyInsightPageState extends State<DailyInsightPage> {
       if (!mounted) return;
 
       if (result != null && result['success'] == true) {
-        showCustomSnackBar(context, message: 'Wisdom received', backgroundColor: Colors.green.shade600);
+        // Server short-circuited (already generated today / quota hit). Don't
+        // pretend new wisdom arrived — that's what makes users re-tap a no-op.
+        if (result['rateLimited'] == true) {
+          showCustomSnackBar(context,
+              message: "Today's reading is already in — check back tomorrow",
+              backgroundColor: Colors.amber.shade700);
+        } else {
+          showCustomSnackBar(context, message: 'Wisdom received', backgroundColor: Colors.green.shade600);
+        }
       } else {
         throw Exception(result?['error'] ?? 'Unknown error');
       }

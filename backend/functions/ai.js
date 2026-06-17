@@ -4,18 +4,17 @@ import { db } from "../lib/firebase.js";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
 import { DateTime } from "luxon";
-import { getVertexAI, extractChunkText } from "../lib/vertex_client.js";
-import { getChatSystemPrompt } from "./prompts/chat.js";
 import { getUserMemory } from "./user_memory.js";
 import { checkRateLimit as checkPersistentRateLimit, RATE_LIMIT_PRESETS } from "../lib/rate_limiter.js";
-import { CHAT_CONFIG, AI_MODELS } from "../lib/config.js";
+import { AI_MODELS } from "../lib/config.js";
+import { resolveActiveDasha } from "../lib/astro_helpers.js";
+import { calculateAshtakavarga } from "../lib/vedic_analysis.js";
+import { persistMetrics } from "./ai_telemetry.js";
+import { streamFromGemini } from "./ai_gemini.js";
 
 // =============================================================================
 // CONFIGURATION
 // =============================================================================
-
-// Using centralized config from lib/config.js
-const MAX_HISTORY_MESSAGES = CHAT_CONFIG.MAX_HISTORY_MESSAGES;
 
 // =============================================================================
 // SERVER-SIDE USER CONTEXT FETCH
@@ -73,8 +72,39 @@ function buildAyurvedaContext(ayurvedaData) {
  * @param {string} uid - Firebase user ID
  * @returns {Promise<Object|null>} Context map, or null if no astrology data
  */
+// ── Warm-instance context cache ────────────────────────────────────────────
+// fetchUserContext does 3 Firestore reads, but within a conversation the chart
+// is immutable, today's insight changes once/day, and memory refreshes nightly.
+// Cache per-uid on the warm instance so rapid follow-up messages skip the reads
+// (concurrency:40 share one Map). TTL kept short so a same-day insight regen or
+// nightly memory refresh still shows up quickly.
+const CONTEXT_CACHE_TTL_MS = 3 * 60 * 1000; // 3 min
+const CONTEXT_CACHE_MAX = 500;              // bound memory on busy instances
+const _contextCache = new Map();           // uid -> { ctx, expires }
+
+async function getUserContextCached(uid) {
+    const hit = _contextCache.get(uid);
+    if (hit && hit.expires > Date.now()) return hit.ctx;
+
+    const ctx = await fetchUserContext(uid);
+    // Only cache real context. A null (no profile yet) stays uncached so a
+    // freshly onboarded user isn't locked out for the whole TTL.
+    if (ctx) {
+        if (_contextCache.size >= CONTEXT_CACHE_MAX) {
+            _contextCache.delete(_contextCache.keys().next().value); // evict oldest
+        }
+        _contextCache.set(uid, { ctx, expires: Date.now() + CONTEXT_CACHE_TTL_MS });
+    }
+    return ctx;
+}
+
 async function fetchUserContext(uid) {
     const today = DateTime.now().setZone("Asia/Kolkata").toFormat("yyyy-MM-dd");
+
+    // Kick off durable-memory fetch concurrently with the profile reads — it
+    // only needs `uid`, so there's no reason to wait for it serially. .catch()
+    // keeps it a non-throwing best-effort lookup (memory never blocks chat).
+    const memoryPromise = getUserMemory(uid).catch(() => null);
 
     const [userSnap, insightSnap] = await Promise.all([
         db.doc(`users/${uid}`).get(),
@@ -93,6 +123,24 @@ async function fetchUserContext(uid) {
     // Start with all astrologyData fields (sunSign, moonSign, ascendant, nakshatra,
     // birthChartData, processedPlanets, currentDasha, doshas, yogas, etc.)
     const context = { ...astroData };
+
+    // The stored currentDasha pointer is a snapshot frozen at signup and never
+    // advances — so its antardasha can already be in the past, which made the
+    // chat give past-dated predictions. Re-point it to the period active TODAY
+    // by looking it up in the (static, never-changing) dasha timeline. Pure
+    // date math, no API call, no recompute.
+    if (context.currentDasha) {
+        context.currentDasha = resolveActiveDasha(context.currentDasha);
+    }
+
+    // Lazy backfill: charts created before Ashtakavarga was persisted won't have
+    // it. It's pure math from data we already store (no API), so compute it here
+    // in-memory for the reading. The persisted copy fills in on the next sync.
+    if (!context.ashtakavarga && context.processedPlanets && context.ascendant) {
+        try {
+            context.ashtakavarga = calculateAshtakavarga(context.processedPlanets, context.ascendant) || null;
+        } catch (_) { /* best-effort: chat works fine without it */ }
+    }
 
     // Add daily insight data
     if (insightSnap.exists) {
@@ -127,7 +175,8 @@ async function fetchUserContext(uid) {
     // Attach durable memory (cross-session life threads) when present. This is
     // what lets HolyCow open with continuity instead of amnesia. Best-effort —
     // a missing/failed memory never blocks the chat.
-    const memory = await getUserMemory(uid);
+    // Await the memory lookup we kicked off at the top (overlapped with reads).
+    const memory = await memoryPromise;
     if (memory) context.memory = memory;
 
     return context;
@@ -231,7 +280,7 @@ export const aiChat = onRequest(
                 try {
                     const decoded = await getAuth().verifyIdToken(idToken);
                     authedUid = decoded.uid;
-                    astrologyContext = await fetchUserContext(decoded.uid);
+                    astrologyContext = await getUserContextCached(decoded.uid);
                     contextSource = astrologyContext ? "server" : "server_no_data";
                 } catch (authErr) {
                     // Invalid/expired token — treat as guest, don't 401
@@ -299,15 +348,39 @@ export const aiChat = onRequest(
 
             const durable = !!(authedUid && conversationId && assistantMessageId);
 
-            let targetRef; // doc we stream into
-            let streamField; // field name the client reads
-            let firestorePath; // path the client listens on
+            // Resolve the doc we stream into SYNCHRONOUSLY — no reads, no writes.
+            // The assistant doc is created LAZILY by the first token flush
+            // (set+merge), so nothing here blocks the model call.
+            let targetRef;
+            let streamField;
+            let firestorePath;
             let convoRef = null;
+            const baseTs = Date.now();
+            let firstFlushMeta;
 
             if (durable) {
                 convoRef = db.collection("dmConversations").doc(conversationId);
-                // Ensure the conversation shell exists (idempotent). Set
-                // firstUserMessage only on first creation so it stays the title.
+                targetRef = convoRef.collection("messages").doc(assistantMessageId);
+                streamField = "content";
+                firestorePath = `dmConversations/${conversationId}/messages/${assistantMessageId}`;
+                firstFlushMeta = {
+                    senderId: HOLYCOW_USER_ID,
+                    senderName: "holycow.ai",
+                    timestamp: new Date(baseTs + 1),
+                    type: "text",
+                };
+            } else {
+                targetRef = db.collection("ai_chat_sessions").doc(chatId);
+                streamField = "response";
+                firestorePath = `ai_chat_sessions/${chatId}`;
+                firstFlushMeta = { chatId, createdAt: FieldValue.serverTimestamp() };
+            }
+
+            // Conversation shell + the user's own message are INDEPENDENT docs —
+            // they don't gate the first token, so write them in the BACKGROUND.
+            // Awaited later (before the completion write) so the turn is durable.
+            const setupPromise = (async () => {
+                if (!durable) return;
                 const convoSnap = await convoRef.get();
                 await convoRef.set({
                     participants: [authedUid, HOLYCOW_USER_ID],
@@ -320,9 +393,6 @@ export const aiChat = onRequest(
                             ...(userMessage ? { firstUserMessage: userMessage } : {}),
                         }),
                 }, { merge: true });
-
-                // Persist the user's message (backend is sole writer).
-                const baseTs = Date.now();
                 if (userMessageId && userMessage) {
                     await convoRef.collection("messages").doc(userMessageId).set({
                         content: userMessage,
@@ -333,33 +403,9 @@ export const aiChat = onRequest(
                         ...(audioUrl ? { isVoiceMessage: true, audioUrl } : {}),
                     }, { merge: true });
                 }
-
-                // Create the assistant message doc we'll stream into.
-                targetRef = convoRef.collection("messages").doc(assistantMessageId);
-                await targetRef.set({
-                    content: "",
-                    senderId: HOLYCOW_USER_ID,
-                    senderName: "holycow.ai",
-                    timestamp: new Date(baseTs + 1),
-                    type: "text",
-                    status: "processing",
-                    updatedAt: FieldValue.serverTimestamp(),
-                }, { merge: true });
-
-                streamField = "content";
-                firestorePath = `dmConversations/${conversationId}/messages/${assistantMessageId}`;
-            } else {
-                targetRef = db.collection("ai_chat_sessions").doc(chatId);
-                await targetRef.set({
-                    chatId,
-                    status: "processing",
-                    response: null,
-                    createdAt: FieldValue.serverTimestamp(),
-                    updatedAt: FieldValue.serverTimestamp(),
-                });
-                streamField = "response";
-                firestorePath = `ai_chat_sessions/${chatId}`;
-            }
+            })().catch((e) => logger.warn("Chat setup writes failed (non-fatal)", {
+                structuredData: true, chatId, error: String(e),
+            }));
 
             res.setHeader("Cache-Control", "no-cache");
             res.setHeader("Content-Type", "text/event-stream");
@@ -372,28 +418,44 @@ export const aiChat = onRequest(
             // Tell the client which doc to listen to for streamed tokens.
             write({ event: "session", chatId, firestorePath });
 
-            // Throttled incremental writer (~300ms) so we stream phrase-by-phrase
-            // without blowing past Firestore's ~1 write/sec/doc soft limit.
+            // Throttled writer. The assistant doc is CREATED here lazily on the
+            // first flush (set+merge) — no separate pre-init write. The first
+            // token flushes IMMEDIATELY so the user sees life instantly; the rest
+            // are throttled to ~300ms (Firestore ~1 write/sec/doc soft limit).
             let lastDocWrite = 0;
             let streamAccum = "";
+            let docInitialized = false;
             const flushDoc = async (force = false) => {
                 const now = Date.now();
                 if (!force && now - lastDocWrite < 300) return;
                 lastDocWrite = now;
+                const payload = {
+                    [streamField]: streamAccum,
+                    status: "processing",
+                    updatedAt: FieldValue.serverTimestamp(),
+                };
+                if (!docInitialized) {
+                    Object.assign(payload, firstFlushMeta);
+                    docInitialized = true;
+                }
                 try {
-                    await targetRef.update({
-                        [streamField]: streamAccum,
-                        updatedAt: FieldValue.serverTimestamp(),
-                    });
+                    await targetRef.set(payload, { merge: true });
                 } catch (_) {/* best-effort: completion write is authoritative */}
             };
 
             // Wrap `write`: every SSE token also feeds the Firestore stream.
+            // First token flushes instantly; the rest are throttled.
+            let firstChunkFlushed = false;
             const streamingWrite = (data) => {
                 write(data);
                 if (data.event === "token" && typeof data.content === "string") {
                     streamAccum += data.content;
-                    flushDoc();
+                    if (!firstChunkFlushed) {
+                        firstChunkFlushed = true;
+                        void flushDoc(true);
+                    } else {
+                        flushDoc();
+                    }
                 }
             };
 
@@ -414,57 +476,31 @@ export const aiChat = onRequest(
             // The old enrichAstrologyContext() was redundant (cosmic weather already
             // in daily insight) and expensive (extra Gemini+search calls per message).
 
-            // Route to appropriate handler based on input type
-            let accumulated = "";
+            // Route to Gemini (one unified path for text + audio).
             performanceMetrics.synthesisStart = Date.now();
+            logger.info("Routing to Gemini", {
+                structuredData: true,
+                chatId,
+                modality: audioUrl ? "audio" : "text",
+                hasAstrology: !!astrologyContext,
+                hasLocation: !!userLocation,
+            });
 
-            if (audioUrl) {
-                // Audio message - use Gemini audio processing
-                logger.info("Routing to Gemini for audio processing", {
-                    structuredData: true,
-                    chatId,
-                    audioUrl,
-                    hasAstrology: !!astrologyContext,
-                });
-
-                accumulated = await streamFromGemini({
-                    chatId,
-                    audioUrl,
-                    messages,
-                    write: streamingWrite,
-                    astrologyContext,
-                    userLocation,
-                    chatSource,
-                    onFirstToken: () => {
-                        if (!performanceMetrics.firstTokenTime) {
-                            performanceMetrics.firstTokenTime = Date.now();
-                        }
-                    },
-                });
-            } else {
-                // Text message - use Gemini text processing
-                logger.info("Routing to Gemini for text processing", {
-                    structuredData: true,
-                    chatId,
-                    hasAstrology: !!astrologyContext,
-                    hasLocation: !!userLocation,
-                });
-
-                accumulated = await streamFromGeminiText({
-                    chatId,
-                    userMessage,
-                    messages,
-                    write: streamingWrite,
-                    astrologyContext,
-                    userLocation,
-                    chatSource,
-                    onFirstToken: () => {
-                        if (!performanceMetrics.firstTokenTime) {
-                            performanceMetrics.firstTokenTime = Date.now();
-                        }
-                    },
-                });
-            }
+            const result = await streamFromGemini({
+                chatId,
+                messages,
+                write: streamingWrite,
+                userMessage,
+                audioUrl,
+                astrologyContext,
+                userLocation,
+                onFirstToken: () => {
+                    if (!performanceMetrics.firstTokenTime) {
+                        performanceMetrics.firstTokenTime = Date.now();
+                    }
+                },
+            });
+            const accumulated = result.text;
 
             performanceMetrics.synthesisEnd = Date.now();
             performanceMetrics.totalTime = Date.now() - performanceMetrics.startTime;
@@ -472,9 +508,25 @@ export const aiChat = onRequest(
             const metrics = {
                 synthesis_ms: performanceMetrics.synthesisEnd - performanceMetrics.synthesisStart,
                 ttft_ms: performanceMetrics.firstTokenTime ? performanceMetrics.firstTokenTime - performanceMetrics.synthesisStart : null,
+                // prep_ms = auth + context fetch + durable doc setup (everything
+                // before the model call). Lets us see if Firestore prep, not the
+                // model, is the latency culprit.
+                prep_ms: performanceMetrics.synthesisStart - performanceMetrics.startTime,
+                audio_fetch_ms: result.audioFetchMs || 0,
                 total_ms: performanceMetrics.totalTime,
                 queryType: audioUrl ? "gemini_audio" : "gemini_text",
                 responseLength: accumulated.length,
+                chunkCount: result.chunkCount,
+                // Search / grounding
+                usedSearch: result.grounding.usedSearch,
+                searchQueries: result.grounding.searchQueries,
+                sourceCount: result.grounding.sourceCount,
+                sources: result.grounding.sources,
+                // Token accounting (thoughtsTokens = hidden "thinking" spend)
+                promptTokens: result.usage.promptTokens,
+                candidatesTokens: result.usage.candidatesTokens,
+                thoughtsTokens: result.usage.thoughtsTokens,
+                totalTokens: result.usage.totalTokens,
             };
 
             logger.info("Performance: Complete request metrics", {
@@ -483,17 +535,32 @@ export const aiChat = onRequest(
                 ...metrics,
             });
 
+            // Persist one flat analytics doc per request (best-effort).
+            void persistMetrics(db, {
+                chatId,
+                authed: !!authedUid,
+                contextSource,
+                chatSource,
+                model: AI_MODELS.GEMINI_FLASH,
+                ...metrics,
+                status: "completed",
+            });
+
             // Final authoritative write: full text + completion status. The client
             // finalizes from this; for authed users this IS the durable record.
             try {
                 await flushDoc(true);
-                await targetRef.update({
+                // Make sure the background setup writes landed before we finalize
+                // (preserves firstUserMessage-on-create + ensures convo exists).
+                await setupPromise;
+                await targetRef.set({
                     status: "completed",
                     [streamField]: accumulated,
+                    ...firstFlushMeta,
                     updatedAt: FieldValue.serverTimestamp(),
                     completedAt: FieldValue.serverTimestamp(),
                     performanceMetrics: metrics,
-                });
+                }, { merge: true });
                 // Update the conversation summary so recent-chats list is correct.
                 if (durable && convoRef) {
                     await convoRef.set({
@@ -546,6 +613,21 @@ export const aiChat = onRequest(
                 });
             }
 
+            // Persist a failed analytics record so error rate + error types are
+            // queryable alongside successes (best-effort).
+            const msg = error.message || "Unknown error";
+            // Classify the notorious dead-host bug so it's trivially countable.
+            const errorType = /<!DOCTYPE|is not valid JSON/.test(msg) ? "vertex_html_response" :
+                /empty response/i.test(msg) ? "empty_response" :
+                    /audio/i.test(msg) ? "audio_fetch" : "other";
+            void persistMetrics(db, {
+                chatId: parseBody(req)?.chatId ? String(parseBody(req).chatId) : null,
+                model: AI_MODELS.GEMINI_FLASH,
+                status: "failed",
+                error: msg,
+                errorType,
+            });
+
             write({ event: "error", error: error.message || "Unknown error" });
             res.end();
         }
@@ -584,251 +666,3 @@ function normaliseMessages(rawMessages) {
         }))
         .filter((message) => message.content.length > 0);
 }
-
-// =============================================================================
-// GEMINI STREAMING - AUDIO
-// =============================================================================
-
-/**
- * Stream response from Gemini for audio messages
- * Gemini understands the audio directly (no transcription needed)
- */
-async function streamFromGemini({ chatId, audioUrl, messages, write, astrologyContext = null, userLocation = null, chatSource = "astrology", onFirstToken = null }) {
-    logger.info("Starting Gemini audio processing", {
-        structuredData: true,
-        chatId,
-        hasAudio: !!audioUrl,
-        hasAstrology: !!astrologyContext,
-        hasLocation: !!userLocation,
-    });
-
-    const vertexAI = getVertexAI();
-    // Always include the search tool — system prompt instructs model to only invoke it
-    // for genuinely live/current data needs. Rich context covers everything else.
-    const model = vertexAI.getGenerativeModel({
-        model: AI_MODELS.GEMINI_FLASH,
-        tools: [{ googleSearch: {} }],
-    });
-
-    // Download audio from Firebase Storage URL
-    let audioBase64;
-    let mimeType = "audio/wav";
-
-    try {
-        const audioResponse = await fetch(audioUrl);
-        if (!audioResponse.ok) {
-            throw new Error(`Failed to fetch audio: ${audioResponse.status}`);
-        }
-
-        const audioBuffer = await audioResponse.arrayBuffer();
-        audioBase64 = Buffer.from(audioBuffer).toString("base64");
-
-        // Detect mime type from URL
-        if (audioUrl.includes(".mp3")) mimeType = "audio/mp3";
-        else if (audioUrl.includes(".m4a")) mimeType = "audio/mp4";
-        else if (audioUrl.includes(".ogg")) mimeType = "audio/ogg";
-        else if (audioUrl.includes(".webm")) mimeType = "audio/webm";
-
-        logger.info("Audio downloaded successfully", {
-            structuredData: true,
-            chatId,
-            audioSize: audioBuffer.byteLength,
-            mimeType,
-        });
-    } catch (e) {
-        logger.error("Failed to download audio", {
-            structuredData: true,
-            chatId,
-            error: String(e),
-            audioUrl,
-        });
-        throw new Error(`Failed to download audio: ${e.message}`);
-    }
-
-    const systemPrompt = getChatSystemPrompt(astrologyContext, userLocation, true, chatSource);
-
-    // Build proper multi-turn conversation format for Gemini API
-    const contents = buildGeminiContents(messages.slice(0, -1)); // all but last (current user message)
-
-    // Add current user message with audio
-    const userParts = [
-        { text: "Listen to and respond to this voice message:" },
-        {
-            inlineData: {
-                mimeType,
-                data: audioBase64,
-            },
-        },
-    ];
-
-    contents.push({
-        role: "user",
-        parts: userParts,
-    });
-
-    let accumulated = "";
-    let firstTokenReceived = false;
-
-    try {
-        const result = await model.generateContentStream({
-            contents,
-            systemInstruction: systemPrompt,
-        });
-
-        for await (const chunk of result.stream) {
-            const text = extractChunkText(chunk);
-            if (text) {
-                if (!firstTokenReceived) {
-                    firstTokenReceived = true;
-                    if (onFirstToken) onFirstToken();
-                }
-                accumulated += text;
-                write({ event: "token", content: text });
-            }
-        }
-
-        // Check for grounding metadata
-        const response = await result.response;
-        const groundingMetadata = response.candidates?.[0]?.groundingMetadata;
-        if (groundingMetadata?.searchEntryPoint?.renderedContent) {
-            logger.info("Gemini used Google Search grounding", {
-                structuredData: true,
-                chatId,
-                hasSearchResults: true,
-            });
-        }
-    } catch (e) {
-        logger.error("Gemini streaming failed", {
-            structuredData: true,
-            chatId,
-            error: String(e),
-        });
-        throw e;
-    }
-
-    if (!accumulated.trim()) {
-        throw new Error("Gemini returned empty response");
-    }
-
-    logger.info("Gemini response complete", {
-        structuredData: true,
-        chatId,
-        responseLength: accumulated.length,
-    });
-
-    return accumulated;
-}
-
-// =============================================================================
-// HELPER: Build proper Gemini multi-turn conversation format
-// =============================================================================
-function buildGeminiContents(messages, maxHistoryMessages = MAX_HISTORY_MESSAGES) {
-    if (!messages || messages.length === 0) {
-        return [];
-    }
-
-    const contents = [];
-    const recentMessages = messages.slice(-maxHistoryMessages);
-
-    for (const msg of recentMessages) {
-        // Gemini API requires "model" role instead of "assistant"
-        const role = msg.role === "assistant" ? "model" : "user";
-        contents.push({
-            role,
-            parts: [{ text: msg.content }],
-        });
-    }
-
-    return contents;
-}
-
-// =============================================================================
-// GEMINI STREAMING - TEXT
-// =============================================================================
-
-/**
- * Stream response from Gemini for text messages
- * Uses built-in Google Search grounding
- */
-async function streamFromGeminiText({ chatId, userMessage, messages, write, astrologyContext = null, userLocation = null, chatSource = "astrology", onFirstToken = null }) {
-    logger.info("Starting Gemini text processing", {
-        structuredData: true,
-        chatId,
-        hasAstrology: !!astrologyContext,
-        hasLocation: !!userLocation,
-        messageLength: userMessage?.length || 0,
-    });
-
-    const vertexAI = getVertexAI();
-    // Always include the search tool — system prompt instructs model to only invoke it
-    // for genuinely live/current data needs. Rich context covers everything else.
-    const model = vertexAI.getGenerativeModel({
-        model: AI_MODELS.GEMINI_FLASH,
-        tools: [{ googleSearch: {} }],
-    });
-
-    const systemPrompt = getChatSystemPrompt(astrologyContext, userLocation, false, chatSource);
-
-    // Build proper multi-turn conversation format for Gemini API
-    const contents = buildGeminiContents(messages.slice(0, -1)); // all but last (current user message)
-
-    // Add current user message
-    contents.push({
-        role: "user",
-        parts: [{ text: userMessage }],
-    });
-
-    let accumulated = "";
-    let firstTokenReceived = false;
-
-    try {
-        const result = await model.generateContentStream({
-            contents,
-            systemInstruction: systemPrompt,
-        });
-
-        for await (const chunk of result.stream) {
-            const text = extractChunkText(chunk);
-            if (text) {
-                if (!firstTokenReceived) {
-                    firstTokenReceived = true;
-                    if (onFirstToken) onFirstToken();
-                }
-                accumulated += text;
-                write({ event: "token", content: text });
-            }
-        }
-
-        // Check for grounding metadata
-        const response = await result.response;
-        const groundingMetadata = response.candidates?.[0]?.groundingMetadata;
-        if (groundingMetadata?.searchEntryPoint?.renderedContent) {
-            logger.info("Gemini used Google Search grounding for text", {
-                structuredData: true,
-                chatId,
-                hasSearchResults: true,
-            });
-        }
-    } catch (e) {
-        logger.error("Gemini text streaming failed", {
-            structuredData: true,
-            chatId,
-            error: String(e),
-        });
-        throw e;
-    }
-
-    if (!accumulated.trim()) {
-        throw new Error("Gemini returned empty response");
-    }
-
-    logger.info("Gemini text response complete", {
-        structuredData: true,
-        chatId,
-        responseLength: accumulated.length,
-    });
-
-    return accumulated;
-}
-
-

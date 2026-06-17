@@ -138,16 +138,32 @@ async function gatherRecentMessages(uid) {
  * Safe to call repeatedly — it merges into the existing memory.
  * @returns {Promise<{uid:string, updated:boolean, reason?:string}>}
  */
-export async function updateUserMemory(uid) {
+export async function updateUserMemory(uid, sinceActivityMs = 0) {
     try {
+        // Read the (cheap) memory doc FIRST so we can pre-gate before paying for
+        // the message gather (1 query + up to 4 subcollection reads).
+        const priorSnap = await db.doc(MEMORY_DOC_PATH(uid)).get();
+        const prior = priorSnap.exists ? priorSnap.data() : null;
+
+        // Pre-gate: if memory was last refreshed at/after the newest known
+        // conversation activity, nothing new happened — skip gather AND Gemini.
+        const priorUpdatedMs = prior?.lastUpdated?.toMillis ? prior.lastUpdated.toMillis() : 0;
+        if (sinceActivityMs && priorUpdatedMs && priorUpdatedMs >= sinceActivityMs) {
+            return { uid, updated: false, reason: "no_new_activity" };
+        }
+
         const messages = await gatherRecentMessages(uid);
         const userTurns = messages.filter((m) => m.role === "user").length;
         if (userTurns < 2) {
             return { uid, updated: false, reason: "too_few_user_messages" };
         }
 
-        const priorSnap = await db.doc(MEMORY_DOC_PATH(uid)).get();
-        const prior = priorSnap.exists ? priorSnap.data() : null;
+        // Backstop gate: even if activity timestamps slipped through, skip the
+        // Gemini call when no new MESSAGE arrived since the last refresh.
+        const newestTs = messages.reduce((mx, m) => Math.max(mx, m.ts || 0), 0);
+        if (prior?.lastSourceMessageTs && newestTs <= prior.lastSourceMessageTs) {
+            return { uid, updated: false, reason: "no_new_messages" };
+        }
 
         const { json } = await callGemini({
             systemPrompt: MEMORY_SYSTEM_PROMPT,
@@ -177,6 +193,7 @@ export async function updateUserMemory(uid) {
             rollingSummary: json.rollingSummary.trim(),
             threads,
             lastUpdated: FieldValue.serverTimestamp(),
+            lastSourceMessageTs: newestTs,
             version: (prior?.version || 0) + 1,
             sourceMessageCount: messages.length,
         }, { merge: true });
@@ -209,23 +226,28 @@ export async function runRefreshUserMemories() {
         .limit(1000)
         .get();
 
-    // Collect unique human uids from recently-active AI conversations.
-    const uids = new Set();
+    // Collect unique human uids + their newest AI-conversation activity, so
+    // updateUserMemory can pre-gate (skip users whose memory already covers
+    // their latest activity) without paying for the message gather.
+    const activityByUid = new Map();
     snap.docs.forEach((d) => {
         const c = d.data();
         const isAi = c.isAiConversation === true ||
             (Array.isArray(c.participants) && c.participants.includes(HOLYCOW_USER_ID));
         if (!isAi) return;
+        const actMs = c.lastActivity?.toMillis ? c.lastActivity.toMillis() : 0;
         (c.participants || []).forEach((p) => {
-            if (p && p !== HOLYCOW_USER_ID) uids.add(p);
+            if (p && p !== HOLYCOW_USER_ID) {
+                activityByUid.set(p, Math.max(activityByUid.get(p) || 0, actMs));
+            }
         });
     });
 
-    const targets = [...uids].slice(0, MAX_USERS_PER_RUN);
+    const targets = [...activityByUid.keys()].slice(0, MAX_USERS_PER_RUN);
     logger.info("runRefreshUserMemories: starting", {
         structuredData: true,
         recentAiConversations: snap.size,
-        uniqueUsers: uids.size,
+        uniqueUsers: activityByUid.size,
         processing: targets.length,
     });
 
@@ -234,7 +256,7 @@ export async function runRefreshUserMemories() {
     async function worker() {
         while (idx < targets.length) {
             const uid = targets[idx++];
-            const r = await updateUserMemory(uid);
+            const r = await updateUserMemory(uid, activityByUid.get(uid) || 0);
             if (r.updated) updated++; else skipped++;
         }
     }

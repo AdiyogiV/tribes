@@ -1,21 +1,21 @@
 /**
  * Runtime Configuration
- * 
+ *
  * Centralized configuration for values that may vary by environment
  * or need to be easily adjustable without code changes.
- * 
+ *
  * ORGANIZATION:
  * - config.js (this file): Runtime/environment-specific configuration
  *   - AI models, function timeouts, memory settings
  *   - Default locations, notification channels
  *   - Values that might change between environments
- * 
+ *
  * - constants.js: Static domain constants
  *   - Astrology data (nakshatras, zodiac signs, etc.)
  *   - Firestore collection names
  *   - API endpoints, notification types
  *   - Rate limits, batch sizes, cache TTLs
- * 
+ *
  * - secrets.js: Sensitive credentials and environment params
  *   - API keys (via defineSecret)
  *   - Environment-specific identifiers (via defineString)
@@ -123,10 +123,28 @@ export const NOTIFICATION_CONFIG = {
 // =============================================================================
 
 export const CHAT_CONFIG = {
-    // Maximum history messages to include in AI context
-    MAX_HISTORY_MESSAGES: 20,
+    // Maximum history messages to include in AI context.
+    // History rides in `contents` (variable per turn) so it is NOT covered by
+    // Gemini implicit prefix caching the way the system prompt is — every extra
+    // turn here is full-price input tokens, re-sent on every message. 10 keeps
+    // ample continuity while ~halving multi-turn input cost vs 20.
+    MAX_HISTORY_MESSAGES: 10,
     // Typing indicator timeout
     TYPING_TIMEOUT_MS: 10000,
+
+    // ── Gemini generation tuning ────────────────────────────────────────
+    // gemini-2.5-flash enables "thinking" by default, which adds multiple
+    // seconds of latency BEFORE the first visible token (thoughts aren't
+    // streamed as text). For an interactive chat we trade that hidden
+    // reasoning for snappiness: budget 0 = thinking off. Bump to e.g. 512
+    // if answer quality on complex chart interpretation regresses.
+    THINKING_BUDGET: 0,
+    // Sampling temperature — astrology guidance wants warmth but not chaos.
+    TEMPERATURE: 0.7,
+    // Hard cap on output size (keeps tail latency + cost bounded).
+    MAX_OUTPUT_TOKENS: 2048,
+    // Collection that stores one flat, queryable analytics doc per request.
+    METRICS_COLLECTION: "aiChatMetrics",
 };
 
 // =============================================================================

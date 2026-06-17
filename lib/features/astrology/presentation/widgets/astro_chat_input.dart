@@ -137,12 +137,16 @@ class _AstroChatInputState extends State<AstroChatInput> {
         // Animated dots
         _AnimatedRecordingDots(),
         const SizedBox(width: AppDimensions.spacingMd),
-        Text(
-          'Recording...',
-          style: TextStyle(
-            color: Colors.red[400],
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
+        // Flexible so a tight width ellipsizes instead of overflowing the row.
+        Flexible(
+          child: Text(
+            'Recording...',
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: Colors.red[400],
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
       ],
