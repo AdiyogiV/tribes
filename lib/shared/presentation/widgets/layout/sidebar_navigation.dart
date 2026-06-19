@@ -119,7 +119,7 @@ class _SidebarNavigationState extends State<SidebarNavigation>
                     index: 0,
                     icon: Icons.chat_bubble_outline,
                     selectedIcon: Icons.chat_bubble,
-                    label: 'HolyCow',
+                    label: 'Aryabhatt',
                     isDark: isDark,
                     useCustomIcon: true,
                   ),

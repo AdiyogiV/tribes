@@ -1,4 +1,4 @@
-import 'package:aurogram/shared/models/thought_process.dart';
+import 'package:aurogram/shared/models/search_result.dart';
 
 /// Represents a single AI chat message
 class AiMessage {
@@ -8,7 +8,6 @@ class AiMessage {
   final DateTime createdAt;
   final bool pending;
   final List<SearchResult>? searchResults;
-  final ThoughtProcess? thoughtProcess;
   final String? audioUrl; // For voice messages
   final int? audioDuration; // Duration in seconds
   final bool isVoiceMessage; // Flag to identify voice messages
@@ -20,7 +19,6 @@ class AiMessage {
     required this.createdAt,
     this.pending = false,
     this.searchResults,
-    this.thoughtProcess,
     this.audioUrl,
     this.audioDuration,
     this.isVoiceMessage = false,
@@ -33,7 +31,6 @@ class AiMessage {
     DateTime? createdAt,
     bool? pending,
     List<SearchResult>? searchResults,
-    ThoughtProcess? thoughtProcess,
     String? audioUrl,
     int? audioDuration,
     bool? isVoiceMessage,
@@ -45,7 +42,6 @@ class AiMessage {
       createdAt: createdAt ?? this.createdAt,
       pending: pending ?? this.pending,
       searchResults: searchResults ?? this.searchResults,
-      thoughtProcess: thoughtProcess ?? this.thoughtProcess,
       audioUrl: audioUrl ?? this.audioUrl,
       audioDuration: audioDuration ?? this.audioDuration,
       isVoiceMessage: isVoiceMessage ?? this.isVoiceMessage,

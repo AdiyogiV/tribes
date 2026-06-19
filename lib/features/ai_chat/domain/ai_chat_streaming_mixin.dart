@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:aurogram/shared/models/thought_process.dart';
+import 'package:aurogram/shared/models/search_result.dart';
 import 'package:aurogram/features/ai_chat/domain/ai_chat_service.dart';
 import 'package:aurogram/shared/services/location_service.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
@@ -38,7 +38,6 @@ mixin AiChatStreamingMixin on ChangeNotifier, AiChatContextMixin {
   String? currentRequestId;
   String? currentFirestorePath;
   StreamSubscription<DocumentSnapshot>? firestoreSubscription;
-  int lastProcessedStepCount = 0;
 
   // =========================================================================
   // Streaming API
@@ -64,11 +63,9 @@ mixin AiChatStreamingMixin on ChangeNotifier, AiChatContextMixin {
       streamingBuffer = null;
       streamingMessageId = null;
       hasFinalizedCurrentStream = false;
-      lastProcessedStepCount = 0;
       currentRequestId = 'req-${DateTime.now().millisecondsSinceEpoch}';
 
-      // Create placeholder streaming message WITH thought process attached
-      // SINGLE SOURCE OF TRUTH: thoughts live on the message, not session
+      // Create placeholder streaming message
       final strmMsgId =
           'streaming-${DateTime.now().millisecondsSinceEpoch}';
       final placeholderMessage = AiMessage(
@@ -77,13 +74,6 @@ mixin AiChatStreamingMixin on ChangeNotifier, AiChatContextMixin {
         content: '',
         createdAt: DateTime.now(),
         pending: true,
-        thoughtProcess: ThoughtProcess(
-          id: 'thought-$sessionId',
-          steps: [],
-          isComplete: false,
-          isExpanded: false,
-          startedAt: DateTime.now(),
-        ),
       );
 
       updateSession(currentSession.copyWith(
@@ -134,7 +124,6 @@ mixin AiChatStreamingMixin on ChangeNotifier, AiChatContextMixin {
         return;
       }
 
-      lastProcessedStepCount = 0;
       updateSession(currentSession.copyWith(isStreaming: true));
 
       // Build messages for API
@@ -331,7 +320,6 @@ mixin AiChatStreamingMixin on ChangeNotifier, AiChatContextMixin {
       String firestorePath, String sessionId, String requestId) {
     // Cancel any existing subscription
     firestoreSubscription?.cancel();
-    lastProcessedStepCount = 0;
 
     // CRITICAL: Skip the initial snapshot if it's from a previous request
     // Firestore snapshots() fires immediately with current state, which might be
@@ -372,10 +360,8 @@ mixin AiChatStreamingMixin on ChangeNotifier, AiChatContextMixin {
           final status = data['status'] as String?;
 
           // If status is "processing", this is a new request - process it immediately
-          // Reset step counter since backend resets thoughtSteps array
           if (status == 'processing') {
-            lastProcessedStepCount = 0;
-            // Process the update (will handle thought steps on the message)
+            // Process the update
             _handleFirestoreUpdate(data, sessionId, firestorePath);
             return;
           }
@@ -442,7 +428,7 @@ mixin AiChatStreamingMixin on ChangeNotifier, AiChatContextMixin {
   }
 
   /// Handle real-time Firestore updates
-  /// SIMPLIFIED: Updates the streaming message's thoughtProcess directly
+  /// SIMPLIFIED: Updates the streaming message's content and search results
   void _handleFirestoreUpdate(
       Map<String, dynamic> data, String sessionId, String firestorePath) {
     if (currentSession.chatId != sessionId) return;
@@ -450,8 +436,7 @@ mixin AiChatStreamingMixin on ChangeNotifier, AiChatContextMixin {
 
     try {
       final status = data['status'] as String?;
-      final thoughtStepsData = data['thoughtSteps'] as List<dynamic>?;
-            final responseText =
+      final responseText =
           (data['content'] ?? data['response']) as String?;
       final searchResultsData = data['searchResults'] as Map<String, dynamic>?;
 
@@ -460,99 +445,6 @@ mixin AiChatStreamingMixin on ChangeNotifier, AiChatContextMixin {
           .indexWhere((m) => m.id == streamingMessageId);
 
       if (streamingIndex == -1) return;
-
-      final streamingMessage = currentSession.messages[streamingIndex];
-
-      // CRITICAL: Detect backend reset (step count decreased = new request started)
-      // This happens when Firestore has stale data from previous request
-      if (thoughtStepsData != null &&
-          thoughtStepsData.length < lastProcessedStepCount) {
-        lastProcessedStepCount = 0;
-
-        // Clear stale thoughts from the message
-        final clearedMessage = streamingMessage.copyWith(
-          thoughtProcess: ThoughtProcess(
-            id: 'thought-$sessionId',
-            steps: [],
-            isComplete: false,
-            isExpanded: false,
-            startedAt: DateTime.now(),
-          ),
-        );
-        final clearedMessages = List<AiMessage>.from(currentSession.messages);
-        clearedMessages[streamingIndex] = clearedMessage;
-        updateSession(currentSession.copyWith(messages: clearedMessages));
-      }
-
-      // Process new thought steps - update the MESSAGE's thoughtProcess
-      // Re-fetch streaming message in case it was just cleared above
-      final currentStreamingMessage = currentSession.messages[streamingIndex];
-      if (thoughtStepsData != null &&
-          thoughtStepsData.length > lastProcessedStepCount) {
-        final newStepsData = thoughtStepsData.sublist(lastProcessedStepCount);
-        final newSteps = <ThoughtStep>[];
-
-        for (final stepData in newStepsData) {
-          if (stepData is Map<String, dynamic>) {
-            try {
-              List<SearchResult>? stepResults;
-              if (stepData['results'] != null && stepData['results'] is List) {
-                stepResults = (stepData['results'] as List)
-                    .map((r) =>
-                        SearchResult.fromJson(Map<String, dynamic>.from(r)))
-                    .toList();
-              }
-
-              newSteps.add(ThoughtStep(
-                id: stepData['id'] ??
-                    'step-${DateTime.now().millisecondsSinceEpoch}',
-                type: stepData['type'] ?? 'thinking',
-                message: stepData['message'] ?? '',
-                query: stepData['query'],
-                results: stepResults,
-                timestamp: DateTime.now(),
-                sequence: stepData['sequence'] ?? 0,
-                metadata: stepData,
-              ));
-            } catch (e) {
-              AppLogger.w('Failed to parse thought step: $e');
-            }
-          }
-        }
-
-        if (newSteps.isNotEmpty) {
-          final existingSteps =
-              currentStreamingMessage.thoughtProcess?.steps ?? [];
-          // Combine and sort by sequence to ensure correct order
-          final allSteps = [...existingSteps, ...newSteps];
-          allSteps.sort((a, b) => a.sequence.compareTo(b.sequence));
-
-          final updatedThought = ThoughtProcess(
-            id: currentStreamingMessage.thoughtProcess?.id ??
-                'thought-$sessionId',
-            steps: allSteps,
-            isComplete: status == 'completed',
-            isExpanded:
-                currentStreamingMessage.thoughtProcess?.isExpanded ?? false,
-            startedAt: currentStreamingMessage.thoughtProcess?.startedAt ??
-                DateTime.now(),
-          );
-
-          // Update the message with new thoughts
-          final updatedMessage =
-              currentStreamingMessage.copyWith(thoughtProcess: updatedThought);
-          final updatedMessages =
-              List<AiMessage>.from(currentSession.messages);
-          updatedMessages[streamingIndex] = updatedMessage;
-
-          updateSession(currentSession.copyWith(
-            messages: updatedMessages,
-            isThinking: status != 'completed',
-          ));
-
-          lastProcessedStepCount = thoughtStepsData.length;
-        }
-      }
 
       // Handle search results
       if (searchResultsData != null) {
@@ -589,9 +481,6 @@ mixin AiChatStreamingMixin on ChangeNotifier, AiChatContextMixin {
       // Handle completion - Firestore 'completed' is the authoritative finalizer
       // SSE 'complete' event is authoritative and should have already finalized
       if (status == 'completed') {
-        // Mark thoughts complete
-        _markThoughtsComplete(sessionId);
-
         // Only finalize from Firestore if SSE didn't provide content
         // This handles edge cases where SSE connection dropped
         if (!hasFinalizedCurrentStream &&
@@ -615,32 +504,6 @@ mixin AiChatStreamingMixin on ChangeNotifier, AiChatContextMixin {
     } catch (e) {
       AppLogger.e('Error handling Firestore update: $e');
     }
-  }
-
-  /// Mark thought process as complete on the streaming message
-  void _markThoughtsComplete(String sessionId) {
-    if (currentSession.chatId != sessionId) return;
-    if (streamingMessageId == null) return;
-
-    final streamingIndex =
-        currentSession.messages.indexWhere((m) => m.id == streamingMessageId);
-    if (streamingIndex == -1) return;
-
-    final streamingMessage = currentSession.messages[streamingIndex];
-    if (streamingMessage.thoughtProcess == null) return;
-
-    final completedThoughts = streamingMessage.thoughtProcess!.complete();
-    final updatedMessage = streamingMessage.copyWith(
-      thoughtProcess: completedThoughts,
-    );
-
-    final updatedMessages = List<AiMessage>.from(currentSession.messages);
-    updatedMessages[streamingIndex] = updatedMessage;
-
-    updateSession(currentSession.copyWith(
-      messages: updatedMessages,
-      isThinking: false,
-    ));
   }
 
   /// Handle response errors with structured error types
@@ -691,7 +554,7 @@ mixin AiChatStreamingMixin on ChangeNotifier, AiChatContextMixin {
 
     if (streamingIndex == -1) return;
 
-    // PRESERVE the existing thoughtProcess when updating content
+    // Update the streaming message's content (and any search results)
     final existingMessage = existingMessages[streamingIndex];
     final updatedMessage = existingMessage.copyWith(
       content: updatedContent,
@@ -731,11 +594,6 @@ mixin AiChatStreamingMixin on ChangeNotifier, AiChatContextMixin {
     AppLogger.i('Finalizing response - length: ${content.length}, '
         'preview: "${content.length > 50 ? content.substring(0, 50) : content}..."');
 
-    // Find the streaming message to get its thoughtProcess
-    final streamingMessage = currentSession.messages
-        .where((m) => m.id == streamingMessageId)
-        .firstOrNull;
-
     // Build final messages list - remove streaming/pending messages
     final messages = List<AiMessage>.from(currentSession.messages)
       ..removeWhere((m) => m.id.startsWith('streaming-') || m.pending);
@@ -754,13 +612,10 @@ mixin AiChatStreamingMixin on ChangeNotifier, AiChatContextMixin {
         searchResults: currentSession.searchResults.isNotEmpty
             ? currentSession.searchResults
             : null,
-        thoughtProcess: streamingMessage?.thoughtProcess?.complete(),
       );
       messages.add(aiMessage);
 
-      AppLogger.i(
-          'Finalized response with ${aiMessage.thoughtProcess?.steps.length ?? 0} thought steps, '
-          'content length: ${content.length}');
+      AppLogger.i('Finalized response, content length: ${content.length}');
     } else {
       AppLogger.w('Skipping empty AI response');
     }

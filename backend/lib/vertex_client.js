@@ -18,11 +18,20 @@ const PROJECT = process.env.GOOGLE_CLOUD_PROJECT || "ty-dev-516d7";
 // throws "Unexpected token <, <!DOCTYPE ...", which broke AI chat. This SDK
 // has no special-casing for the global endpoint (only @google/genai does).
 //
-// asia-south1 (Mumbai) chosen deliberately: it is in India (lowest latency for
-// our users) and VERIFIED to serve gemini-2.5-flash (HTTP 200). Note asia-south2
-// (Delhi) returns 501 and asia-southeast2 (Jakarta, our function region) returns
-// 400 — neither serves Gemini. Override via VERTEX_LOCATION if needed.
-const LOCATION = process.env.VERTEX_LOCATION || "asia-south1";
+// asia-southeast1 (Singapore) chosen deliberately. Reasoning:
+//   1) Lowest function→Vertex latency: our Cloud Function runs in
+//      asia-southeast2 (Jakarta), and Singapore is the adjacent region
+//      (~30ms hop) — closer than Mumbai (~70ms) from the function.
+//   2) Reliable capacity: asia-south1 (Mumbai) frequently 429s on
+//      gemini-2.5-flash because Vertex's Dynamic Shared Quota pool there
+//      saturates under aggregate global demand. Singapore's DSQ pool is
+//      far less contended and consistently returns 200 in our probes.
+//   3) Verified to serve gemini-2.5-flash (HTTP 200, ~1.7s end-to-end).
+// Notes on neighboring regions: asia-south2 (Delhi) returns 501 and
+// asia-southeast2 (Jakarta, our function region) returns 400 — neither
+// serves Gemini. Override via VERTEX_LOCATION if needed (e.g. fall back
+// to us-central1 for redundancy).
+const LOCATION = process.env.VERTEX_LOCATION || "asia-southeast1";
 
 let _vertexAI;
 

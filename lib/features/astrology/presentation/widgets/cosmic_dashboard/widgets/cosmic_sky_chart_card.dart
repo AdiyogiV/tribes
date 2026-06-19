@@ -34,6 +34,9 @@ class CosmicSkyChartCard extends StatelessWidget {
   final Map<String, dynamic>? Function(DateTime) getInterpolatedPositions;
   /// Optional callback to navigate to the Astrology Details (birth chart) page.
   final VoidCallback? onExploreBirthChart;
+  /// Optional daily insight main text. When non-empty, a small insight
+  /// block is rendered at the bottom of the card.
+  final String? insightText;
   /// Optional callback fired when the user taps a house in the sky chart.
   /// Receives the house number (1..12). Used by the parent to show a
   /// per-house current-state popup (HouseDetailsDialog).
@@ -61,6 +64,7 @@ class CosmicSkyChartCard extends StatelessWidget {
     required this.getInterpolatedPositions,
     this.onExploreBirthChart,
     this.onHouseTap,
+    this.insightText,
   });
 
   /// Whether the time slider is parked at "today" (its midpoint).
@@ -167,6 +171,22 @@ class CosmicSkyChartCard extends StatelessWidget {
                       color: c.withValues(alpha: 0.4),
                     ),
                   ],
+                ),
+              ),
+            ),
+
+          // Daily insight main text
+          if (insightText != null && insightText!.trim().isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Text(
+                insightText!,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: AppTheme.holyCowTextSize,
+                  fontWeight: FontWeight.w500,
+                  height: 1.5,
+                  color: c.withValues(alpha: 0.85),
                 ),
               ),
             ),

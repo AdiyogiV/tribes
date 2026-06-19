@@ -3,90 +3,22 @@ import 'package:aurogram/shared/presentation/widgets/media/common_widgets.dart';
 import 'package:aurogram/features/ai_chat/domain/ai_chat_models.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/features/chat/presentation/widgets/voice_message_widget.dart';
-import 'package:aurogram/features/ai_chat/presentation/widgets/thoughts_widget.dart';
 import 'package:aurogram/features/ai_chat/presentation/widgets/ai_message_builder.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/features/ai_chat/domain/ai_chat_provider.dart';
 
 // Re-export extracted widgets so existing imports don't break
-export 'package:aurogram/features/ai_chat/presentation/widgets/thoughts_widget.dart';
 export 'package:aurogram/features/ai_chat/presentation/widgets/typing_indicator.dart';
 export 'package:aurogram/features/ai_chat/presentation/widgets/ai_message_builder.dart';
 
-// NOTE: Removed complex _ThoughtsCache - was causing sync issues
-// Thoughts now flow from single source: provider.currentThoughtProcess OR message.thoughtProcess
-
 class ChatMessageWidgets {
-  /// Build thoughts box below user message
-  ///
-  /// SINGLE SOURCE OF TRUTH: Thoughts always come from message.thoughtProcess
-  /// No session-level thought process, no caching - just the message.
-  static Widget buildThoughtsBoxBelowUserMessage(
-    AiChatProvider provider,
-    BuildContext context, {
-    required String userMessageId,
-    Map<String, bool>? thoughtExpansionState,
-    Function(String, bool)? onThoughtExpansionChanged,
-  }) {
-    final userMessageIndex =
-        provider.messages.indexWhere((m) => m.id == userMessageId);
-
-    if (userMessageIndex == -1) {
-      return const SizedBox.shrink();
-    }
-
-    // Find the associated assistant message (next message after user)
-    AiMessage? assistantMessage;
-    for (int i = userMessageIndex + 1; i < provider.messages.length; i++) {
-      final msg = provider.messages[i];
-      if (msg.role == 'user') break;
-      if (msg.role == 'assistant') {
-        assistantMessage = msg;
-        break;
-      }
-    }
-
-    // No assistant message = no thoughts to show
-    if (assistantMessage == null) {
-      return const SizedBox.shrink();
-    }
-
-    // SINGLE SOURCE: thoughts always from message.thoughtProcess
-    final thoughtProcess = assistantMessage.thoughtProcess;
-    final hasThoughts =
-        thoughtProcess != null && thoughtProcess.steps.isNotEmpty;
-
-    // ONLY show thoughts box when we actually have thoughts
-    // Don't show empty box just because streaming is happening
-    if (!hasThoughts) {
-      return const SizedBox.shrink();
-    }
-
-    final thoughtsKey = 'thoughts_$userMessageId';
-    final isExpanded = thoughtExpansionState?[thoughtsKey] ?? false;
-    final isStreaming = assistantMessage.pending;
-
-    return ThoughtsOnlyWidget(
-      key: ValueKey(thoughtsKey),
-      userMessageId: userMessageId,
-      thoughtProcess: thoughtProcess,
-      isStreaming: isStreaming,
-      isExpanded: isExpanded,
-      onToggleExpansion: () {
-        onThoughtExpansionChanged?.call(thoughtsKey, !isExpanded);
-      },
-    );
-  }
-
   static Widget buildMessage(
     AiMessage message,
     AiChatProvider provider,
     Map<String, bool> searchResultsExpansionState,
     Function(String, bool) onExpansionChanged,
-    BuildContext context, {
-    Map<String, bool>? thoughtExpansionState,
-    Function(String, bool)? onThoughtExpansionChanged,
-  }) {
+    BuildContext context,
+  ) {
     final isUser = message.role == 'user';
     final content = message.content;
     final isLastMessage =

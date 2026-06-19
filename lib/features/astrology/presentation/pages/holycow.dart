@@ -539,7 +539,7 @@ dashboardInputBuilder: _buildInputBar,
       title: "aurogram",
       actionButton: DarkModeToggle(
         isDark: Theme.of(context).brightness == Brightness.dark,
-        size: 100,
+        size: 110,
         onChanged: (_) =>
             context.read<ThemeProvider>().temporaryToggle(),
       ),

@@ -439,7 +439,7 @@ class AiChatPageState extends State<AiChatPage> with WidgetsBindingObserver {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'HolyCow',
+                            'Aryabhatt',
                             style: TextStyle(
                               color: AppTheme.primaryColor,
                               fontSize: 18,
@@ -519,7 +519,7 @@ class AiChatPageState extends State<AiChatPage> with WidgetsBindingObserver {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'HolyCow',
+                        'Aryabhatt',
                         style: TextStyle(
                           color: AppTheme.primaryColor,
                           fontSize: 18,

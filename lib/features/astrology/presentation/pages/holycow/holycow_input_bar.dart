@@ -43,7 +43,7 @@ class HolyCowInputBar extends StatefulWidget {
 
   // Typewriter hint text — cycles through phrases every 2s.
   static const List<String> _hintPhrases = [
-    'ask holycow',
+    'ask aryabhatt',
     'ask anything',
     'namaste',
     "what's up today?",
@@ -411,7 +411,7 @@ class HolyCowCollapsedCow extends StatelessWidget {
 
   final VoidCallback onTap;
 
-  static const double _cowSize = 70.0;
+  static const double _cowSize = 100.0;
 
   @override
   Widget build(BuildContext context) {

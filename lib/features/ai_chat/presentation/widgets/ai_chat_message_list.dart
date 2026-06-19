@@ -18,7 +18,6 @@ class AiChatMessageList extends StatefulWidget {
 
 class _AiChatMessageListState extends State<AiChatMessageList> {
   final Map<String, bool> _searchResultsExpansionState = {};
-  final Map<String, bool> _thoughtExpansionState = {};
 
   @override
   Widget build(BuildContext context) {
@@ -40,10 +39,6 @@ class _AiChatMessageListState extends State<AiChatMessageList> {
             itemBuilder: (context, index) {
               final message = provider.messages[index];
               final isUserMessage = message.role == 'user';
-
-              final hasFollowingAssistant = isUserMessage &&
-                  index + 1 < provider.messages.length &&
-                  provider.messages[index + 1].role == 'assistant';
 
               final isNewTurn = isUserMessage &&
                   index > 0 &&
@@ -81,27 +76,7 @@ class _AiChatMessageListState extends State<AiChatMessageList> {
                       });
                     },
                     context,
-                    thoughtExpansionState: _thoughtExpansionState,
-                    onThoughtExpansionChanged: (messageId, isExpanded) {
-                      setState(() {
-                        _thoughtExpansionState[messageId] = isExpanded;
-                      });
-                    },
                   ),
-
-                  // Thoughts box below user message if assistant follows
-                  if (hasFollowingAssistant)
-                    ChatMessageWidgets.buildThoughtsBoxBelowUserMessage(
-                      provider,
-                      context,
-                      userMessageId: message.id,
-                      thoughtExpansionState: _thoughtExpansionState,
-                      onThoughtExpansionChanged: (messageId, isExpanded) {
-                        setState(() {
-                          _thoughtExpansionState[messageId] = isExpanded;
-                        });
-                      },
-                    ),
                 ],
               );
             },

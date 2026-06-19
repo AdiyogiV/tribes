@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:aurogram/shared/models/dm_conversation.dart';
-import 'package:aurogram/shared/models/thought_process.dart';
+import 'package:aurogram/shared/models/search_result.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 
 import 'ai_chat_models.dart';
@@ -121,8 +121,8 @@ mixin AiChatPersistenceMixin on ChangeNotifier {
           lastMessageContent: data['lastMessage']?['content'],
           lastMessageSenderId: data['lastMessage']?['senderId'],
           lastMessageSenderName:
-              data['lastMessage']?['senderName'] ?? 'holycow.ai',
-          spaceName: 'holycow.ai',
+              data['lastMessage']?['senderName'] ?? 'aryabhatt.ai',
+          spaceName: 'aryabhatt.ai',
           firstUserMessage: data['firstUserMessage'] as String?,
         );
       }).toList();
@@ -159,19 +159,8 @@ mixin AiChatPersistenceMixin on ChangeNotifier {
         final senderId = data['senderId'] as String;
         final isUser = senderId != HOLYCOW_USER_ID;
 
-        // Load thought process and search results if they exist
-        ThoughtProcess? thoughtProcess;
+        // Load search results if they exist
         List<SearchResult>? searchResults;
-
-        if (data['thoughtProcess'] != null) {
-          try {
-            thoughtProcess = ThoughtProcess.fromJson(
-                Map<String, dynamic>.from(data['thoughtProcess']));
-          } catch (e) {
-            AppLogger.w(
-                'Failed to parse thought process for message ${messageDoc.id}: $e');
-          }
-        }
 
         if (data['searchResults'] != null) {
           try {
@@ -191,7 +180,6 @@ mixin AiChatPersistenceMixin on ChangeNotifier {
           createdAt:
               (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
           pending: false,
-          thoughtProcess: thoughtProcess,
           searchResults: searchResults,
           // Load voice message fields from Firestore
           isVoiceMessage: data['isVoiceMessage'] as bool? ?? false,

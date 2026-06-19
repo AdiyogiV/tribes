@@ -569,7 +569,7 @@ export const aiChat = onRequest(
                         lastMessage: {
                             content: accumulated,
                             senderId: HOLYCOW_USER_ID,
-                            senderName: "HolyCow",
+                            senderName: "Aryabhatt",
                             timestamp: FieldValue.serverTimestamp(),
                         },
                     }, { merge: true });

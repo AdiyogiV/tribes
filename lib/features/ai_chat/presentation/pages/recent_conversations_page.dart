@@ -111,7 +111,7 @@ class _RecentConversationsPageState extends State<RecentConversationsPage> {
   Widget _buildAppBar() {
     return AppHeaderStyle.buildStandardHeader(
       context: context,
-      title: 'holycow chats',
+      title: 'aryabhatt chats',
       leadingWidget: AppHeaderStyle.buildCompactIconButton(
         icon: Icons.arrow_back_ios_new_rounded,
         onPressed: () => Navigator.of(context).pop(),

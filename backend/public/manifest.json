@@ -53,7 +53,7 @@
         {
             "name": "AI Chat",
             "short_name": "AI",
-            "description": "Chat with HolyCow AI",
+            "description": "Chat with Aryabhatt",
             "url": "/?tab=2",
             "icons": [
                 {

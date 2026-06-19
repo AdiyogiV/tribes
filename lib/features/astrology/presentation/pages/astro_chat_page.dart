@@ -54,8 +54,7 @@ class _AstroChatPageState extends State<AstroChatPage> {
   final FocusNode _focusNode = FocusNode();
   final ScrollController _scrollController = ScrollController();
 
-  // Track expansion states for thoughts and search results
-  final Map<String, bool> _thoughtExpansionState = {};
+  // Track expansion state for search results
   final Map<String, bool> _searchResultsExpansionState = {};
 
   // Track message count to only scroll when new messages arrive
@@ -354,31 +353,6 @@ class _AstroChatPageState extends State<AstroChatPage> {
           itemCount: provider.messages.length,
           itemBuilder: (context, index) {
             final message = provider.messages[index];
-            final isLastMessage = index == provider.messages.length - 1;
-            final isUserMessage = message.role == 'user';
-
-            // Check if we should show thoughts box below this user message
-            // Show if: this is a user message AND (we're thinking OR next message is assistant with thoughts)
-            // CRITICAL: Also show when next message is pending (streaming) to prevent thoughts from disappearing
-            final shouldShowThoughtsBelow = isUserMessage &&
-                (
-                    // Case 1: Currently thinking - show if isThinking is true (even without thoughtProcess)
-                    (provider.isThinking &&
-                            (isLastMessage || // Last message means we're waiting for response
-                                (index + 1 < provider.messages.length &&
-                                    provider.messages[index + 1].role ==
-                                        'assistant' &&
-                                    provider.messages[index + 1].pending))) ||
-                        // Case 2: Next message is a pending (streaming) assistant message
-                        (index + 1 < provider.messages.length &&
-                            provider.messages[index + 1].role == 'assistant' &&
-                            provider.messages[index + 1].pending) ||
-                        // Case 3: Next message is completed assistant message with thoughts
-                        (index + 1 < provider.messages.length &&
-                            provider.messages[index + 1].role == 'assistant' &&
-                            !provider.messages[index + 1].pending &&
-                            provider.messages[index + 1].thoughtProcess !=
-                                null));
 
             return Column(
               mainAxisSize: MainAxisSize.min,
@@ -394,34 +368,6 @@ class _AstroChatPageState extends State<AstroChatPage> {
                     });
                   },
                   context,
-                  thoughtExpansionState: _thoughtExpansionState,
-                  onThoughtExpansionChanged: (messageId, isExpanded) {
-                    setState(() {
-                      _thoughtExpansionState[messageId] = isExpanded;
-                    });
-                  },
-                ),
-                // AnimatedSwitcher provides smooth show/hide animation
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 200),
-                  transitionBuilder: (child, animation) => SizeTransition(
-                    sizeFactor: animation,
-                    axisAlignment: -1.0,
-                    child: FadeTransition(opacity: animation, child: child),
-                  ),
-                  child: shouldShowThoughtsBelow
-                      ? ChatMessageWidgets.buildThoughtsBoxBelowUserMessage(
-                          provider,
-                          context,
-                          userMessageId: message.id,
-                          thoughtExpansionState: _thoughtExpansionState,
-                          onThoughtExpansionChanged: (messageId, isExpanded) {
-                            setState(() {
-                              _thoughtExpansionState[messageId] = isExpanded;
-                            });
-                          },
-                        )
-                      : const SizedBox.shrink(key: ValueKey('empty')),
                 ),
               ],
             );

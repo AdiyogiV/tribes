@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:aurogram/features/ai_chat/domain/ai_chat_service.dart';
 import 'package:aurogram/shared/services/location_service.dart';
-import 'package:aurogram/shared/models/thought_process.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -114,7 +113,6 @@ class AiChatProvider extends ChangeNotifier
   void startNewSession() {
     AppLogger.i('Starting new chat session');
     cleanupCurrentSession();
-    lastProcessedStepCount = 0;
     invalidatePromptCache();
 
     // Clear the conversation ID so a new one is created for the new session
@@ -218,62 +216,19 @@ class AiChatProvider extends ChangeNotifier
     // Get the exact content we have right now
     final currentContent = streamingBuffer?.toString() ?? '';
 
-    // Find the streaming message to preserve its thought process
-    final streamingMessage = _currentSession.messages
-        .where((m) => m.id == streamingMessageId)
-        .firstOrNull;
-
-    // Preserve thought process - deep copy all steps we have so far
-    ThoughtProcess? preservedThoughts;
-    if (streamingMessage?.thoughtProcess != null) {
-      final tp = streamingMessage!.thoughtProcess!;
-      // Create a deep copy of steps to prevent any reference issues
-      final copiedSteps = tp.steps
-          .map((step) => ThoughtStep(
-                id: step.id,
-                type: step.type,
-                message: step.message,
-                query: step.query,
-                results: step.results != null ? List.from(step.results!) : null,
-                metadata:
-                    step.metadata != null ? Map.from(step.metadata!) : null,
-                timestamp: step.timestamp,
-                sequence: step.sequence,
-                isComplete: true, // Mark each step as complete
-              ))
-          .toList();
-
-      // Mark as complete so it renders properly (not as "thinking...")
-      preservedThoughts = ThoughtProcess(
-        id: tp.id,
-        steps: copiedSteps,
-        isComplete: true, // Mark complete so UI shows it properly
-        isExpanded: tp.isExpanded,
-        startedAt: tp.startedAt,
-        completedAt: DateTime.now(),
-      );
-      AppLogger.i('Preserving ${copiedSteps.length} thought steps');
-    }
-
     // Build messages list - remove streaming/pending messages
     final msgs = List<AiMessage>.from(_currentSession.messages)
       ..removeWhere((m) => m.id.startsWith('streaming-') || m.pending);
 
-    // Always create a message to preserve thoughts, even if no text content
-    // This ensures thought steps are visible even if stopped early
-    final hasContent = currentContent.isNotEmpty;
-    final hasThoughts =
-        preservedThoughts != null && preservedThoughts.steps.isNotEmpty;
-
-    if (hasContent || hasThoughts) {
+    // Keep whatever text we streamed so far as a finalized message.
+    if (currentContent.isNotEmpty) {
       final partialMessage = AiMessage(
         id: currentAssistantMessageId ??
             'ai-${DateTime.now().millisecondsSinceEpoch}',
         role: 'assistant',
-        content: hasContent ? currentContent : '', // Keep empty if no text yet
+        content: currentContent,
         createdAt: DateTime.now(),
         pending: false,
-        thoughtProcess: preservedThoughts,
       );
       msgs.add(partialMessage);
     }
@@ -285,7 +240,6 @@ class AiChatProvider extends ChangeNotifier
     currentRequestId = null;
     currentFirestorePath = null;
     hasFinalizedCurrentStream = true;
-    lastProcessedStepCount = 0;
 
     // Update session - ready for user to continue chatting
     updateSession(_currentSession.copyWith(

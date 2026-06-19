@@ -90,7 +90,7 @@ class PathChoicePhase extends StatelessWidget {
                       PathButton(
                         icon: Icons.smart_toy_rounded,
                         color: OnboardingColors.warmAmber,
-                        title: 'Chat with HolyCow',
+                        title: 'Chat with Aryabhatt',
                         subtitle: 'Ask questions about anything',
                         onTap: onChat,
                       ),
@@ -163,7 +163,7 @@ class SkipPhase extends StatelessWidget {
             PathButton(
               icon: Icons.smart_toy_rounded,
               color: OnboardingColors.warmAmber,
-              title: 'Meet HolyCow',
+              title: 'Meet Aryabhatt',
               subtitle: 'Your AI companion',
               onTap: onChat,
             ),

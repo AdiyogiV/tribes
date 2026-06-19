@@ -620,6 +620,7 @@ class HolyCowCosmicContent extends StatelessWidget {
                               isDark,
                             );
                           },
+                          insightText: insight?.displayMessage,
                         );
                       },
                     );

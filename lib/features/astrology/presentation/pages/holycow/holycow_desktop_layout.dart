@@ -119,7 +119,7 @@ class HolyCowDesktopLayoutState extends State<HolyCowDesktopLayout> {
                       headerSliverBuilder: (context, innerBoxIsScrolled) => [
                         AppHeaderStyle.buildWideLayoutHeaderSliver(
                           context,
-                          title: 'HolyCow',
+                          title: 'Aryabhatt',
                           trailing: IconButton(
                             onPressed: showDashboard,
                             icon: Icon(
@@ -220,7 +220,7 @@ class _CollapsedHolyCowRail extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Tooltip(
-            message: 'HolyCow',
+            message: 'Aryabhatt',
             child: Container(
               width: 36,
               height: 36,

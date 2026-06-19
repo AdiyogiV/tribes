@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:aurogram/core/config/api_endpoints.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
-import 'package:aurogram/shared/models/thought_process.dart';
+import 'package:aurogram/shared/models/search_result.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/features/ai_chat/domain/ai_chat_provider.dart';
 

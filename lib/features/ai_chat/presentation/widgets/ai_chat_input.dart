@@ -152,7 +152,7 @@ class AiChatInputState extends State<AiChatInput>
         controller: widget.messageController,
         focusNode: widget.focusNode,
         decoration: InputDecoration(
-          hintText: kIsWeb ? 'Ask HolyCow... (Shift+Enter for new line)' : 'Ask HolyCow...',
+          hintText: kIsWeb ? 'Ask Aryabhatt... (Shift+Enter for new line)' : 'Ask Aryabhatt...',
           hintStyle: TextStyle(
             color: AppTheme.primaryColor.withValues(alpha: 0.6),
             fontSize: 16,
