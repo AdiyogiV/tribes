@@ -16,9 +16,9 @@ import { MultilingualVoiceSession } from "./voice_pipeline.js";
 
 // Pick the engine: multilingual pipeline (STT v2 + our TTS) or the original
 // single-language CX streaming. Toggle with MULTILINGUAL=false.
-const makeSession = (sessionId, uid) =>
+const makeSession = (sessionId, uid, idToken) =>
     CONFIG.multilingual
-        ? new MultilingualVoiceSession(sessionId, uid)
+        ? new MultilingualVoiceSession(sessionId, uid, idToken)
         : new CxVoiceSession(sessionId);
 
 // Firebase Admin verifies caller ID tokens. Uses ADC (the Cloud Run runtime
@@ -64,8 +64,8 @@ wss.on("connection", (ws) => {
         if (ws.readyState === ws.OPEN) ws.send(JSON.stringify(obj));
     };
 
-    const openSession = (sessionId, uid) => {
-        session = makeSession(sessionId || randomUUID(), uid);
+    const openSession = (sessionId, uid, idToken) => {
+        session = makeSession(sessionId || randomUUID(), uid, idToken);
 
         session.on("transcript", (t) => sendJson({ type: "transcript", ...t }));
         session.on("reply", (r) => sendJson({ type: "reply", text: r.text }));
@@ -109,9 +109,9 @@ wss.on("connection", (ws) => {
                     try { ws.close(4401, "unauthorized"); } catch { /* closing */ }
                     return;
                 }
-                // Bind the CX session to the user for per-user context, and
-                // pass the uid so the brain can load their chart from Firestore.
-                openSession(msg.sessionId || uid, uid);
+                // Bind the session to the user and forward their ID token so
+                // the brain (aiChat) can load their full chart from Firestore.
+                openSession(msg.sessionId || uid, uid, msg.token);
             });
         } else if (msg.type === "stop") {
             session?.end();

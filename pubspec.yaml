@@ -44,7 +44,6 @@ dependencies:
   permission_handler:
   speech_to_text: ^7.0.0
   flutter_sound: ^9.2.13
-  flutter_tts: ^4.2.0
   just_audio: ^0.10.5
   audio_session: ^0.2.2
   image_picker:
@@ -141,6 +140,7 @@ flutter:
     - assets/images/
     - assets/icons/
     - assets/animations/
+    - assets/audio/
 
   # Deferred components for faster initial load (disabled due to Android build issues)
   # deferred-components:

@@ -6,7 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_sound/flutter_sound.dart';
-import 'package:flutter_tts/flutter_tts.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:logger/logger.dart' show Level;
 import 'package:record/record.dart';
 import 'package:uuid/uuid.dart';
@@ -27,14 +27,17 @@ enum VoiceCallState {
 }
 
 /// Drives one live voice session end-to-end:
-///   mic (PCM16 16k) -> WebSocket relay -> Dialogflow CX -> TTS (PCM16 24k) -> speaker.
+///   mic (PCM16 16k) -> WebSocket relay -> Gemini brain -> TTS (PCM16 24k) -> speaker.
 ///
-/// Transport-thin and UI-agnostic: the page just listens and renders. Mic stays
-/// open during playback so the user can barge in (CX handles interruption).
+/// Transport-thin and UI-agnostic: the page just listens and renders. A short
+/// filler clip plays on tap to cover the ~1-2s connect; the mic opens the
+/// instant the relay is ready.
 class VoiceSessionController extends ChangeNotifier {
   final AudioRecorder _recorder = AudioRecorder();
   final FlutterSoundPlayer _player = FlutterSoundPlayer(logLevel: Level.off);
-  final FlutterTts _tts = FlutterTts();
+  // A tiny "Namaste! Ek pal rukiye." clip (Aryabhatt's voice) that plays while
+  // we connect, so the user hears life instantly instead of dead air.
+  final AudioPlayer _filler = AudioPlayer();
 
   WebSocketChannel? _channel;
   StreamSubscription? _socketSub;
@@ -44,15 +47,9 @@ class VoiceSessionController extends ChangeNotifier {
   bool _playerOpen = false;
   bool _disposed = false;
 
-  // The opening greeting plays on-device (flutter_tts) the instant the user
-  // taps, while the relay connects in the background. We only open the mic once
-  // BOTH are done: the greeting has finished speaking AND the relay said
-  // 'ready'. That way the user never talks into a void, and the greeting is
-  // long enough to comfortably cover the ~2s connect.
-  bool _greetingDone = false;
-  bool _relayReady = false;
+  // The mic opens exactly once, the moment the relay says 'ready'. The filler
+  // clip covers the connect gap until then.
   bool _micStarted = false;
-  String? _greetingName;
 
   // TTS playback is fed to flutter_sound ONE buffer at a time, awaited, so the
   // native player can apply backpressure. The relay bursts a whole reply at
@@ -93,15 +90,11 @@ class VoiceSessionController extends ChangeNotifier {
   // Lifecycle
   // ───────────────────────────────────────────────────────────────
 
-  /// Open audio devices, greet the user, connect to the relay, and (once both
-  /// the greeting and the relay are ready) start streaming the mic.
-  ///
-  /// [greetingName] is the user's first name, spoken in the opening line. The
-  /// app already knows it, so no relay round-trip is needed to personalise it.
-  Future<void> start({String? greetingName}) async {
+  /// Open audio devices, play a short filler clip to cover the connect, hook up
+  /// the relay, then open the mic the moment the relay is ready.
+  Future<void> start() async {
     if (_state != VoiceCallState.idle && _state != VoiceCallState.ended) return;
-    _greetingName = greetingName;
-    _greetingDone = _relayReady = _micStarted = false;
+    _micStarted = false;
     _setState(VoiceCallState.connecting);
     _ttsChunks = _ttsBytes = _micChunks = _micBytes = 0;
     AppLogger.i('Voice call starting',
@@ -121,9 +114,9 @@ class VoiceSessionController extends ChangeNotifier {
 
       await _configureAudioSession();
       await _openPlayer();
-      // Greet immediately AND connect in parallel. Each path flips its own flag
-      // and calls _maybeStartListening(); the mic opens when both are ready.
-      unawaited(_playGreeting());
+      // Play filler instantly (best-effort) AND connect in parallel. The mic
+      // opens on the relay's 'ready' (see _onControl), where the filler stops.
+      unawaited(_playFiller());
       await _connect();
     } catch (e) {
       AppLogger.e('Voice session start failed',
@@ -132,52 +125,23 @@ class VoiceSessionController extends ChangeNotifier {
     }
   }
 
-  /// Speak the opening line on-device, instantly, while the relay connects.
-  /// Flips [_greetingDone] when finished (even on error) so the mic is never
-  /// blocked by a TTS hiccup.
-  Future<void> _playGreeting() async {
-    _setState(VoiceCallState.speaking);
+  /// Play the short "one moment" clip on a loop while we connect. Best-effort:
+  /// a failure here must never block the call.
+  Future<void> _playFiller() async {
     try {
-      // Keep flutter_tts on the same play-and-record route as our pipeline so
-      // it doesn't stomp the session and break the mic that follows.
-      try {
-        await _tts.setIosAudioCategory(
-          IosTextToSpeechAudioCategory.playAndRecord,
-          [
-            IosTextToSpeechAudioCategoryOptions.defaultToSpeaker,
-            IosTextToSpeechAudioCategoryOptions.allowBluetooth,
-            IosTextToSpeechAudioCategoryOptions.mixWithOthers,
-          ],
-          IosTextToSpeechAudioMode.voiceChat,
-        );
-      } catch (_) {/* Android / unsupported: ignore */}
-      await _tts.setLanguage('hi-IN');
-      await _tts.setSpeechRate(0.48);
-      await _tts.setPitch(1.0);
-      await _tts.awaitSpeakCompletion(true);
-
-      final name = (_greetingName ?? '').trim();
-      final hello = name.isEmpty ? 'Namaste!' : 'Namaste $name!';
-      await _tts.speak(
-        '$hello Main Aryabhatt. Aapka din kaisa ja raha hai? '
-        'Boliye, main aapki kya sahayata kar sakta hoon?',
-      );
+      await _filler.setAsset('assets/audio/connecting.mp3');
+      await _filler.setLoopMode(LoopMode.one);
+      unawaited(_filler.play());
     } catch (e) {
-      AppLogger.w('Voice greeting failed',
+      AppLogger.w('Voice filler failed',
           category: LogCategory.voice, data: {'error': e.toString()});
-    } finally {
-      _greetingDone = true;
-      _maybeStartListening();
     }
   }
 
-  /// Open the mic only once the greeting has finished AND the relay is ready.
-  void _maybeStartListening() {
-    if (_disposed || _micStarted) return;
-    if (!_greetingDone || !_relayReady) return;
-    if (_state == VoiceCallState.error || _state == VoiceCallState.ended) return;
-    _micStarted = true;
-    unawaited(_startMic());
+  Future<void> _stopFiller() async {
+    try {
+      await _filler.stop();
+    } catch (_) {/* already stopped */}
   }
 
   Future<void> _configureAudioSession() async {
@@ -305,10 +269,12 @@ class VoiceSessionController extends ChangeNotifier {
         });
     switch (type) {
       case 'ready':
-        // Relay's CX session is live. Don't grab the mic yet — wait for the
-        // greeting to finish too (see _maybeStartListening).
-        _relayReady = true;
-        _maybeStartListening();
+        // Relay is live. Stop the filler clip and open the mic — once.
+        if (!_micStarted) {
+          _micStarted = true;
+          unawaited(_stopFiller());
+          unawaited(_startMic());
+        }
         break;
       case 'transcript':
         _userTranscript = (msg['text'] as String?) ?? '';
@@ -441,10 +407,8 @@ class VoiceSessionController extends ChangeNotifier {
   Future<void> _cleanupOnce() async {
     _ttsQueue.clear();
     _turnEndPending = false;
-    _greetingDone = _relayReady = _micStarted = false;
-    try {
-      await _tts.stop();
-    } catch (_) {/* ignore */}
+    _micStarted = false;
+    await _stopFiller();
     await _micSub?.cancel();
     _micSub = null;
     try {
@@ -476,6 +440,7 @@ class VoiceSessionController extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    unawaited(_filler.dispose());
     unawaited(_cleanup().whenComplete(_recorder.dispose));
     super.dispose();
   }

@@ -24,6 +24,7 @@ import 'package:aurogram/features/astrology/presentation/pages/holycow/holycow_e
 import 'package:aurogram/features/astrology/presentation/pages/holycow/holycow_cosmic_content.dart';
 import 'package:aurogram/features/astrology/presentation/pages/holycow/holycow_input_bar_controller.dart';
 import 'package:aurogram/features/astrology/presentation/pages/holycow/holycow_input_bar.dart';
+import 'package:aurogram/features/ai_chat/voice/holycow_voice_cow.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/nakshatra_ring_widget.dart';
 import 'package:aurogram/shared/presentation/widgets/universal/dark_mode_toggle.dart';
 import 'package:aurogram/shared/providers/theme_provider.dart';
@@ -519,7 +520,7 @@ dashboardInputBuilder: _buildInputBar,
                   ),
                   child: _inputBar.expanded
                       ? _buildInputBar()
-                      : HolyCowCollapsedCow(onTap: _toggleInputBar),
+                      : HolyCowVoiceCow(onShowKeyboard: _toggleInputBar),
                 ),
               ),
             ),

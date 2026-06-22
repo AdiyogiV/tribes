@@ -260,6 +260,9 @@ export const aiChat = onRequest(
             const userMessage = messages[messages.length - 1]?.content;
             const userLocation = body.location || null;
             const audioUrl = body.audioUrl || null;
+            // Voice relay turns arrive as already-transcribed TEXT (not audio),
+            // but still want the spoken-length style. This flag forces it.
+            const voiceStyle = body.voice === true;
             // Preserve explicit chatSource from dedicated pages (astrology/wellness).
             // null = unified HolyCow mode (main chat with auto-loaded context).
             const chatSource = body.chatSource || null;
@@ -494,6 +497,7 @@ export const aiChat = onRequest(
                 audioUrl,
                 astrologyContext,
                 userLocation,
+                voiceStyle,
                 onFirstToken: () => {
                     if (!performanceMetrics.firstTokenTime) {
                         performanceMetrics.firstTokenTime = Date.now();

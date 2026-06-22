@@ -8,7 +8,6 @@ import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/shared/presentation/widgets/media/glass_container.dart';
 import 'package:aurogram/shared/services/media/audio_input_service.dart';
 import 'package:aurogram/features/ai_chat/domain/ai_chat_provider.dart';
-import 'package:aurogram/app/tabs/widgets/tab_bottom_nav.dart';
 import 'package:aurogram/features/astrology/presentation/pages/holycow/holycow_input_bar_controller.dart';
 
 /// The expanded HolyCow AI input toolbar: history button, center text field
@@ -398,48 +397,6 @@ class _HolyCowInputBarState extends State<HolyCowInputBar>
           ),
         ),
       ],
-    );
-  }
-}
-
-/// The collapsed state of the AI input: a bare cow icon parked directly above
-/// the profile (rightmost) tab. It derives its horizontal position from
-/// [TabBottomNav.itemCenterFromRight] so it stays glued to that tab no matter
-/// how the nav layout changes.
-class HolyCowCollapsedCow extends StatelessWidget {
-  const HolyCowCollapsedCow({super.key, required this.onTap});
-
-  final VoidCallback onTap;
-
-  static const double _cowSize = 100.0;
-
-  @override
-  Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final tabCenterFromRight = TabBottomNav.itemCenterFromRight(screenWidth, 0);
-
-    return Align(
-      alignment: Alignment.bottomRight,
-      child: Padding(
-        padding: EdgeInsets.only(
-          right: tabCenterFromRight - _cowSize / 2,
-          bottom: 10,
-        ),
-        child: GestureDetector(
-          onTap: onTap,
-          child: Image.asset(
-            'assets/images/cow1.png',
-            width: _cowSize,
-            height: _cowSize,
-            fit: BoxFit.contain,
-            errorBuilder: (_, __, ___) => Icon(
-              CupertinoIcons.chat_bubble_fill,
-              color: AppTheme.primaryColor,
-              size: 24,
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

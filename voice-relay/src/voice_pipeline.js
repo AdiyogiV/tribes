@@ -5,7 +5,8 @@
  * Aryabhatt can understand AND answer in ANY language with a male voice:
  *
  *   mic PCM ─► Speech-to-Text v2 (Chirp_2, AUTO language detect)
- *           ─► Dialogflow CX playbook (the brain — replies in the user's lang)
+ *           ─► aiChat (the SAME Gemini brain text chat uses — one persona,
+ *              full chart/ayurveda/memory context via the caller's ID token)
  *           ─► Text-to-Speech (MALE voice for the detected language)  ─► PCM
  *
  * Emits the SAME events as CxVoiceSession so server.js never changes:
@@ -16,18 +17,13 @@
 import { EventEmitter } from "node:events";
 import speech from "@google-cloud/speech";
 import textToSpeech from "@google-cloud/text-to-speech";
-import { SessionsClient } from "@google-cloud/dialogflow-cx";
-import { CONFIG, cxApiEndpoint } from "./config.js";
-import { buildUserContext } from "./user_context.js";
+import { CONFIG } from "./config.js";
 
 // Reuse clients across sessions (channels pool internally).
 const sttClient = new speech.v2.SpeechClient({
     apiEndpoint: `${CONFIG.sttLocation}-speech.googleapis.com`,
 });
 const ttsClient = new textToSpeech.TextToSpeechClient();
-const cxClient = new SessionsClient({
-    apiEndpoint: cxApiEndpoint(CONFIG.location),
-});
 
 /** Normalize an STT language tag ("hi-in") to BCP-47 ("hi-IN") for TTS. */
 function normalizeLang(code) {
@@ -38,35 +34,27 @@ function normalizeLang(code) {
 
 export class MultilingualVoiceSession extends EventEmitter {
     /**
-     * @param {string} sessionId stable id per call for CX context
-     * @param {string} [uid] verified Firebase uid, for loading their chart
+     * @param {string} sessionId stable id per call (kept for logging parity)
+     * @param {string} [uid] verified Firebase uid
+     * @param {string} [idToken] caller's Firebase ID token, forwarded to the
+     *   brain so it loads THIS user's full context server-side
      */
-    constructor(sessionId, uid) {
+    constructor(sessionId, uid, idToken) {
         super();
         this.sessionId = sessionId;
         this.uid = uid || null;
-        this.userContext = null; // lazily loaded chart briefing (string)
-        this._contextLoaded = false;
+        this.idToken = idToken || null;
+        // Multi-turn memory for this call. Sent to the brain every turn; the
+        // backend trims to its own history cap. Fresh per call (no carryover).
+        this.history = [];
         this.sttStream = null;
         this.ended = false;
-        this.busy = false; // processing a turn (CX + TTS in flight)
+        this.busy = false; // processing a turn (brain + TTS in flight)
         this.speaking = false; // TTS audio is playing — ignore mic echo
         this.lastLang = CONFIG.cxTextLanguage;
         this._speakTimer = null;
         this._reopenTimer = null; // debounces STT reopen
         this._reopenAttempts = 0; // backoff counter, reset on healthy data
-    }
-
-    _sessionPath() {
-        const { project, location, agentId, environment } = CONFIG;
-        if (environment && environment !== "draft") {
-            return cxClient.projectLocationAgentEnvironmentSessionPath(
-                project, location, agentId, environment, this.sessionId,
-            );
-        }
-        return cxClient.projectLocationAgentSessionPath(
-            project, location, agentId, this.sessionId,
-        );
     }
 
     start() {
@@ -198,42 +186,54 @@ export class MultilingualVoiceSession extends EventEmitter {
     }
 
     /**
-     * Load the user's chart briefing once per call. Best-effort and cached:
-     * a failed/empty lookup just means Aryabhatt answers without personal data.
+     * Ask the brain: the SAME aiChat Gemini endpoint the app's text chat uses.
+     * We forward the caller's ID token so the backend loads THIS user's full
+     * context (chart + ayurveda + memory) server-side — identical to text chat.
+     * `voice: true` makes it use the spoken-length style. The reply streams
+     * back as SSE token events, which we accumulate into one string.
      */
-    async _ensureContext() {
-        if (this._contextLoaded) return;
-        this._contextLoaded = true;
-        try {
-            this.userContext = await buildUserContext(this.uid);
-        } catch {
-            this.userContext = null;
-        }
-    }
-
-    /** Ask the Aryabhatt CX playbook (text in, text out). */
     async _askBrain(text) {
-        await this._ensureContext();
-        // Bundle the chart briefing with the question so CX has no separate
-        // "system" channel to miss. The guard keeps him from reciting the data
-        // verbatim — he should use it to think, then answer naturally aloud.
-        const queryText = this.userContext
-            ? `(Background for you only, do not read this aloud: ${this.userContext}) `
-              + `The person said: ${text}`
-            : text;
-        const [response] = await cxClient.detectIntent({
-            session: this._sessionPath(),
-            queryInput: {
-                text: { text: queryText },
-                languageCode: CONFIG.cxTextLanguage,
+        this.history.push({ role: "user", content: text });
+        const res = await fetch(CONFIG.aiChatUrl, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                ...(this.idToken
+                    ? { Authorization: `Bearer ${this.idToken}` }
+                    : {}),
             },
+            body: JSON.stringify({ messages: this.history, voice: true }),
         });
-        const messages = response.queryResult?.responseMessages || [];
-        return messages
-            .map((m) => m.text?.text?.join(" ").trim())
-            .filter(Boolean)
-            .join(" ")
-            .trim();
+        if (!res.ok || !res.body) {
+            throw new Error(`aiChat HTTP ${res.status}`);
+        }
+
+        let reply = "";
+        let buffer = "";
+        const decoder = new TextDecoder();
+        const consume = (line) => {
+            const t = line.trim();
+            if (!t.startsWith("data:")) return;
+            const payload = t.slice(5).trim();
+            if (!payload) return;
+            try {
+                const data = JSON.parse(payload);
+                if (data.event === "token" && typeof data.content === "string") {
+                    reply += data.content;
+                }
+            } catch { /* partial / non-token frame: ignore */ }
+        };
+        for await (const chunk of res.body) {
+            buffer += decoder.decode(chunk, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() ?? "";
+            for (const line of lines) consume(line);
+        }
+        if (buffer) consume(buffer); // flush any trailing line
+
+        reply = reply.trim();
+        if (reply) this.history.push({ role: "assistant", content: reply });
+        return reply;
     }
 
     /** Synthesize a MALE voice in the detected language and stream it out. */

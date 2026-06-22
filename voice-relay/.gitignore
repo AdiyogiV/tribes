@@ -1,0 +1,11 @@
+node_modules
+npm-debug.log
+.env
+.DS_Store
+sa-key.json
+*-key.json
+out.wav
+q.wav
+q.aiff
+relay.log
+probe*.mjs

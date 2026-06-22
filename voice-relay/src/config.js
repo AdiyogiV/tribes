@@ -45,6 +45,13 @@ export const CONFIG = {
     // Audio formats on the wire. Keep in sync with the Flutter client + README.
     inputSampleRateHertz: parseInt(process.env.IN_SAMPLE_RATE || "16000", 10),
     outputSampleRateHertz: parseInt(process.env.OUT_SAMPLE_RATE || "24000", 10),
+
+    // The text brain. Voice now reuses the SAME Gemini chat endpoint the app
+    // uses, so persona + full chart/ayurveda/memory context are identical to
+    // text chat (no more drifted CX playbook). Server-fetched via the caller's
+    // ID token, so we just forward it.
+    aiChatUrl: process.env.AI_CHAT_URL
+        || "https://aichat-7p5vte54jq-et.a.run.app",
 };
 
 /**

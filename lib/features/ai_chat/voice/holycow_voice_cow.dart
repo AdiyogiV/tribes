@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/app/tabs/widgets/tab_bottom_nav.dart';
@@ -28,10 +26,6 @@ class _HolyCowVoiceCowState extends State<HolyCowVoiceCow>
   final VoiceSessionController _voice = VoiceSessionController();
   late final AnimationController _pulse;
 
-  /// User's first name, fetched once and cached so the spoken greeting can say
-  /// it the instant the cow is tapped (no Firestore read on the tap path).
-  String? _greetingName;
-
   /// Last error surfaced via SnackBar, so we don't spam the same one.
   String? _shownError;
 
@@ -46,29 +40,6 @@ class _HolyCowVoiceCowState extends State<HolyCowVoiceCow>
       vsync: this,
       duration: const Duration(milliseconds: 1300),
     )..repeat(reverse: true);
-    _loadGreetingName();
-  }
-
-  /// Resolve the user's first name once, cheapest source first: the Firebase
-  /// Auth display name, falling back to the Firestore user doc. Cached so the
-  /// greeting is truly instant on tap.
-  Future<void> _loadGreetingName() async {
-    String? full = FirebaseAuth.instance.currentUser?.displayName;
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if ((full == null || full.trim().isEmpty) && uid != null) {
-      try {
-        final doc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .get();
-        final data = doc.data();
-        full = (data?['name'] ?? data?['nickname']) as String?;
-      } catch (_) {/* offline / denied: greet generically */}
-    }
-    final first = full?.trim().split(RegExp(r'\s+')).first;
-    if (mounted && first != null && first.isNotEmpty) {
-      setState(() => _greetingName = first);
-    }
   }
 
   @override
@@ -116,7 +87,7 @@ class _HolyCowVoiceCowState extends State<HolyCowVoiceCow>
     if (_inCall) {
       await _voice.hangUp(); // tap again -> end the call
     } else {
-      await _voice.start(greetingName: _greetingName);
+      await _voice.start();
     }
   }
 
