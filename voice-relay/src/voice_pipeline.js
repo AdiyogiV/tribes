@@ -18,6 +18,7 @@ import speech from "@google-cloud/speech";
 import textToSpeech from "@google-cloud/text-to-speech";
 import { SessionsClient } from "@google-cloud/dialogflow-cx";
 import { CONFIG, cxApiEndpoint } from "./config.js";
+import { buildUserContext } from "./user_context.js";
 
 // Reuse clients across sessions (channels pool internally).
 const sttClient = new speech.v2.SpeechClient({
@@ -36,10 +37,16 @@ function normalizeLang(code) {
 }
 
 export class MultilingualVoiceSession extends EventEmitter {
-    /** @param {string} sessionId stable id per call for CX context */
-    constructor(sessionId) {
+    /**
+     * @param {string} sessionId stable id per call for CX context
+     * @param {string} [uid] verified Firebase uid, for loading their chart
+     */
+    constructor(sessionId, uid) {
         super();
         this.sessionId = sessionId;
+        this.uid = uid || null;
+        this.userContext = null; // lazily loaded chart briefing (string)
+        this._contextLoaded = false;
         this.sttStream = null;
         this.ended = false;
         this.busy = false; // processing a turn (CX + TTS in flight)
@@ -151,12 +158,34 @@ export class MultilingualVoiceSession extends EventEmitter {
         }
     }
 
+    /**
+     * Load the user's chart briefing once per call. Best-effort and cached:
+     * a failed/empty lookup just means Aryabhatt answers without personal data.
+     */
+    async _ensureContext() {
+        if (this._contextLoaded) return;
+        this._contextLoaded = true;
+        try {
+            this.userContext = await buildUserContext(this.uid);
+        } catch {
+            this.userContext = null;
+        }
+    }
+
     /** Ask the Aryabhatt CX playbook (text in, text out). */
     async _askBrain(text) {
+        await this._ensureContext();
+        // Bundle the chart briefing with the question so CX has no separate
+        // "system" channel to miss. The guard keeps him from reciting the data
+        // verbatim — he should use it to think, then answer naturally aloud.
+        const queryText = this.userContext
+            ? `(Background for you only, do not read this aloud: ${this.userContext}) `
+              + `The person said: ${text}`
+            : text;
         const [response] = await cxClient.detectIntent({
             session: this._sessionPath(),
             queryInput: {
-                text: { text },
+                text: { text: queryText },
                 languageCode: CONFIG.cxTextLanguage,
             },
         });
