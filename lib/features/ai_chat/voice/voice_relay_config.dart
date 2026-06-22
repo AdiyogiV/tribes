@@ -8,7 +8,7 @@ class VoiceRelayConfig {
   /// WebSocket endpoint of the deployed `voice-relay` Cloud Run service.
   /// Defaults to the deployed Cloud Run service so plain `flutter run` works
   /// on a real device. For local relay dev, override via --dart-define:
-  ///   --dart-define=VOICE_RELAY_URL=ws://<your-mac-LAN-ip>:8080/voice
+  ///   --dart-define=VOICE_RELAY_URL=ws://YOUR-MAC-LAN-IP:8080/voice
   static const String relayUrl = String.fromEnvironment(
     'VOICE_RELAY_URL',
     defaultValue:
