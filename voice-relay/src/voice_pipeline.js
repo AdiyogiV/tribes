@@ -62,33 +62,6 @@ export class MultilingualVoiceSession extends EventEmitter {
         this._openStt();
     }
 
-    /**
-     * Speak an opening greeting through the SAME TTS path as every reply, so it
-     * sounds identical (loud, smooth) instead of a separate client-side clip.
-     * Picked at random for variety; recorded in history so the brain knows it
-     * already greeted. Mic is dropped while speaking (anti-echo), same as a
-     * normal turn.
-     */
-    async greet() {
-        if (this.ended) return;
-        const line =
-            CONFIG.greetings[Math.floor(Math.random() * CONFIG.greetings.length)];
-        try {
-            this.busy = true;
-            this.emit("reply", { text: line });
-            this.history.push({ role: "assistant", content: line });
-            await this._speak(line, "hi-IN");
-            this.emit("turn_end");
-        } catch (err) {
-            // A greeting hiccup must never sink the call — just go straight to
-            // listening.
-            console.warn(`[greet] failed, skipping: ${err?.message || err}`);
-            this.emit("turn_end");
-        } finally {
-            this.busy = false;
-        }
-    }
-
     /** Open (or reopen) the long-lived STT v2 stream. */
     _openStt() {
         if (this.ended) return;
