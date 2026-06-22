@@ -40,6 +40,12 @@ class VoiceSessionController extends ChangeNotifier {
   bool _playerOpen = false;
   bool _disposed = false;
 
+  // Flow counters so the logs tell the whole story of a call.
+  int _ttsChunks = 0; // TTS audio frames received from the relay
+  int _ttsBytes = 0;
+  int _micChunks = 0; // mic frames sent to the relay
+  int _micBytes = 0;
+
   VoiceCallState _state = VoiceCallState.idle;
   String _userTranscript = '';
   String _aryabhattReply = '';
@@ -52,7 +58,11 @@ class VoiceSessionController extends ChangeNotifier {
 
   void _setState(VoiceCallState s) {
     if (_disposed || _state == s) return;
+    final from = _state;
     _state = s;
+    AppLogger.i('Voice state',
+        category: LogCategory.voice,
+        data: {'from': from.name, 'to': s.name});
     notifyListeners();
   }
 
@@ -64,6 +74,10 @@ class VoiceSessionController extends ChangeNotifier {
   Future<void> start() async {
     if (_state != VoiceCallState.idle && _state != VoiceCallState.ended) return;
     _setState(VoiceCallState.connecting);
+    _ttsChunks = _ttsBytes = _micChunks = _micBytes = 0;
+    AppLogger.i('Voice call starting',
+        category: LogCategory.voice,
+        data: {'relay': VoiceRelayConfig.relayUrl});
 
     try {
       if (!await _recorder.hasPermission()) {
@@ -117,6 +131,9 @@ class VoiceSessionController extends ChangeNotifier {
 
     _channel = WebSocketChannel.connect(Uri.parse(VoiceRelayConfig.relayUrl));
     await _channel!.ready;
+    AppLogger.i('Voice socket connected',
+        category: LogCategory.voice,
+        data: {'uid': user.uid});
 
     _socketSub = _channel!.stream.listen(
       _onSocketMessage,
@@ -134,6 +151,7 @@ class VoiceSessionController extends ChangeNotifier {
       'token': token,
       'sessionId': user.uid,
     }));
+    AppLogger.i('Voice start frame sent', category: LogCategory.voice);
   }
 
   Future<void> _startMic() async {
@@ -148,6 +166,13 @@ class VoiceSessionController extends ChangeNotifier {
     );
     _micSub = stream.listen((chunk) {
       // Forward raw PCM straight to the relay as a binary frame.
+      _micChunks++;
+      _micBytes += chunk.length;
+      if (_micChunks == 1 || _micChunks % 50 == 0) {
+        AppLogger.i('Mic -> relay',
+            category: LogCategory.voice,
+            data: {'chunks': _micChunks, 'bytes': _micBytes});
+      }
       _channel?.sink.add(chunk);
     });
     _setState(VoiceCallState.listening);
@@ -165,6 +190,13 @@ class VoiceSessionController extends ChangeNotifier {
       final bytes = message is Uint8List
           ? message
           : Uint8List.fromList(List<int>.from(message as List));
+      _ttsChunks++;
+      _ttsBytes += bytes.length;
+      if (_ttsChunks == 1 || _ttsChunks % 25 == 0) {
+        AppLogger.i('Relay -> TTS audio',
+            category: LogCategory.voice,
+            data: {'chunks': _ttsChunks, 'bytes': _ttsBytes});
+      }
       _playAudio(bytes);
     }
   }
@@ -174,9 +206,22 @@ class VoiceSessionController extends ChangeNotifier {
     try {
       msg = jsonDecode(raw) as Map<String, dynamic>;
     } catch (_) {
+      AppLogger.w('Voice: unparseable control frame',
+          category: LogCategory.voice, data: {'raw': raw});
       return;
     }
-    switch (msg['type']) {
+    final type = msg['type'];
+    AppLogger.i('Relay control',
+        category: LogCategory.voice,
+        data: {
+          'type': type,
+          if (msg['final'] != null) 'final': msg['final'],
+          if (msg['text'] != null)
+            'text': (msg['text'] as String?)?.substring(
+                0,
+                ((msg['text'] as String).length).clamp(0, 60)),
+        });
+    switch (type) {
       case 'ready':
         _setState(VoiceCallState.listening);
         break;
@@ -193,6 +238,9 @@ class VoiceSessionController extends ChangeNotifier {
         break;
       case 'speaking_done':
         // Turn complete — reopen the floor to the user.
+        AppLogger.i('Turn done',
+            category: LogCategory.voice,
+            data: {'ttsChunks': _ttsChunks, 'ttsBytes': _ttsBytes});
         _userTranscript = '';
         _setState(VoiceCallState.listening);
         break;
@@ -209,7 +257,12 @@ class VoiceSessionController extends ChangeNotifier {
   }
 
   void _playAudio(Uint8List bytes) {
-    if (!_playerOpen || bytes.isEmpty) return;
+    if (!_playerOpen || bytes.isEmpty) {
+      AppLogger.w('Voice: dropped TTS chunk',
+          category: LogCategory.voice,
+          data: {'playerOpen': _playerOpen, 'bytes': bytes.length});
+      return;
+    }
     // PCM16 mono => each sample is 2 bytes; feed only whole samples so the
     // interleaved feeder never rejects a misaligned buffer.
     final aligned =
