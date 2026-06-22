@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_sound/flutter_sound.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:logger/logger.dart' show Level;
 import 'package:record/record.dart';
 import 'package:uuid/uuid.dart';
@@ -32,6 +34,7 @@ enum VoiceCallState {
 class VoiceSessionController extends ChangeNotifier {
   final AudioRecorder _recorder = AudioRecorder();
   final FlutterSoundPlayer _player = FlutterSoundPlayer(logLevel: Level.off);
+  final FlutterTts _tts = FlutterTts();
 
   WebSocketChannel? _channel;
   StreamSubscription? _socketSub;
@@ -40,6 +43,25 @@ class VoiceSessionController extends ChangeNotifier {
 
   bool _playerOpen = false;
   bool _disposed = false;
+
+  // The opening greeting plays on-device (flutter_tts) the instant the user
+  // taps, while the relay connects in the background. We only open the mic once
+  // BOTH are done: the greeting has finished speaking AND the relay said
+  // 'ready'. That way the user never talks into a void, and the greeting is
+  // long enough to comfortably cover the ~2s connect.
+  bool _greetingDone = false;
+  bool _relayReady = false;
+  bool _micStarted = false;
+  String? _greetingName;
+
+  // TTS playback is fed to flutter_sound ONE buffer at a time, awaited, so the
+  // native player can apply backpressure. The relay bursts a whole reply at
+  // once; without this queue the overlapping un-awaited feeds overflow the
+  // player buffer and most of Aryabhatt's audio is silently dropped (he'd
+  // "speak only a few words"). flutter_sound forbids two simultaneous feeds.
+  final Queue<Uint8List> _ttsQueue = Queue<Uint8List>();
+  bool _draining = false;
+  bool _turnEndPending = false;
 
   // Flow counters so the logs tell the whole story of a call.
   int _ttsChunks = 0; // TTS audio frames received from the relay
@@ -71,9 +93,15 @@ class VoiceSessionController extends ChangeNotifier {
   // Lifecycle
   // ───────────────────────────────────────────────────────────────
 
-  /// Open audio devices, connect to the relay, and start streaming the mic.
-  Future<void> start() async {
+  /// Open audio devices, greet the user, connect to the relay, and (once both
+  /// the greeting and the relay are ready) start streaming the mic.
+  ///
+  /// [greetingName] is the user's first name, spoken in the opening line. The
+  /// app already knows it, so no relay round-trip is needed to personalise it.
+  Future<void> start({String? greetingName}) async {
     if (_state != VoiceCallState.idle && _state != VoiceCallState.ended) return;
+    _greetingName = greetingName;
+    _greetingDone = _relayReady = _micStarted = false;
     _setState(VoiceCallState.connecting);
     _ttsChunks = _ttsBytes = _micChunks = _micBytes = 0;
     AppLogger.i('Voice call starting',
@@ -93,13 +121,63 @@ class VoiceSessionController extends ChangeNotifier {
 
       await _configureAudioSession();
       await _openPlayer();
+      // Greet immediately AND connect in parallel. Each path flips its own flag
+      // and calls _maybeStartListening(); the mic opens when both are ready.
+      unawaited(_playGreeting());
       await _connect();
-      await _startMic();
     } catch (e) {
       AppLogger.e('Voice session start failed',
           category: LogCategory.voice, error: e);
       _fail('Could not start the call');
     }
+  }
+
+  /// Speak the opening line on-device, instantly, while the relay connects.
+  /// Flips [_greetingDone] when finished (even on error) so the mic is never
+  /// blocked by a TTS hiccup.
+  Future<void> _playGreeting() async {
+    _setState(VoiceCallState.speaking);
+    try {
+      // Keep flutter_tts on the same play-and-record route as our pipeline so
+      // it doesn't stomp the session and break the mic that follows.
+      try {
+        await _tts.setIosAudioCategory(
+          IosTextToSpeechAudioCategory.playAndRecord,
+          [
+            IosTextToSpeechAudioCategoryOptions.defaultToSpeaker,
+            IosTextToSpeechAudioCategoryOptions.allowBluetooth,
+            IosTextToSpeechAudioCategoryOptions.mixWithOthers,
+          ],
+          IosTextToSpeechAudioMode.voiceChat,
+        );
+      } catch (_) {/* Android / unsupported: ignore */}
+      await _tts.setLanguage('hi-IN');
+      await _tts.setSpeechRate(0.48);
+      await _tts.setPitch(1.0);
+      await _tts.awaitSpeakCompletion(true);
+
+      final name = (_greetingName ?? '').trim();
+      final hello = name.isEmpty ? 'Namaste!' : 'Namaste $name!';
+      await _tts.speak(
+        '$hello Main Aryabhatt. Aapka din kaisa ja raha hai? '
+        'Boliye, main aapki kya sahayata kar sakta hoon?',
+      );
+    } catch (e) {
+      AppLogger.w('Voice greeting failed',
+          category: LogCategory.voice, data: {'error': e.toString()});
+    } finally {
+      _greetingDone = true;
+      _maybeStartListening();
+    }
+  }
+
+  /// Open the mic only once the greeting has finished AND the relay is ready.
+  void _maybeStartListening() {
+    if (_disposed || _micStarted) return;
+    if (!_greetingDone || !_relayReady) return;
+    if (_state == VoiceCallState.error || _state == VoiceCallState.ended) return;
+    _micStarted = true;
+    unawaited(_startMic());
   }
 
   Future<void> _configureAudioSession() async {
@@ -227,7 +305,10 @@ class VoiceSessionController extends ChangeNotifier {
         });
     switch (type) {
       case 'ready':
-        _setState(VoiceCallState.listening);
+        // Relay's CX session is live. Don't grab the mic yet — wait for the
+        // greeting to finish too (see _maybeStartListening).
+        _relayReady = true;
+        _maybeStartListening();
         break;
       case 'transcript':
         _userTranscript = (msg['text'] as String?) ?? '';
@@ -238,15 +319,26 @@ class VoiceSessionController extends ChangeNotifier {
         break;
       case 'reply':
         _aryabhattReply = (msg['text'] as String?) ?? '';
+        _turnEndPending = false;
         _setState(VoiceCallState.speaking);
         break;
       case 'speaking_done':
-        // Turn complete — reopen the floor to the user.
+        // Turn complete on the relay — but locally we may still be draining the
+        // TTS queue. Only reopen the mic once the audio has actually finished
+        // playing, otherwise we'd cut Aryabhatt off mid-sentence.
         AppLogger.i('Turn done',
             category: LogCategory.voice,
-            data: {'ttsChunks': _ttsChunks, 'ttsBytes': _ttsBytes});
-        _userTranscript = '';
-        _setState(VoiceCallState.listening);
+            data: {
+              'ttsChunks': _ttsChunks,
+              'ttsBytes': _ttsBytes,
+              'queued': _ttsQueue.length,
+              'draining': _draining,
+            });
+        if (_ttsQueue.isEmpty && !_draining) {
+          _finishTurn();
+        } else {
+          _turnEndPending = true;
+        }
         break;
       case 'error':
         final m = (msg['message'] as String?) ?? 'Something went wrong';
@@ -271,9 +363,47 @@ class VoiceSessionController extends ChangeNotifier {
     // interleaved feeder never rejects a misaligned buffer.
     final aligned =
         bytes.length.isEven ? bytes : bytes.sublist(0, bytes.length - 1);
+    if (aligned.isEmpty) return;
     _setState(VoiceCallState.speaking);
-    // flutter_sound 9.x interleaved feed (replaces the old foodSink/FoodData).
-    _player.feedUint8FromStream(aligned);
+    // Enqueue and drain sequentially with backpressure (see _ttsQueue docs).
+    _ttsQueue.add(aligned);
+    unawaited(_drainTts());
+  }
+
+  /// Feed queued TTS buffers to the player one at a time, awaiting each so the
+  /// native side applies backpressure. Never run two feeds concurrently.
+  Future<void> _drainTts() async {
+    if (_draining) return;
+    _draining = true;
+    try {
+      while (_ttsQueue.isNotEmpty && _playerOpen && !_disposed) {
+        final chunk = _ttsQueue.removeFirst();
+        try {
+          await _player.feedUint8FromStream(chunk);
+        } catch (e) {
+          AppLogger.w('Voice: TTS feed failed',
+              category: LogCategory.voice, data: {'error': e.toString()});
+          break;
+        }
+      }
+    } finally {
+      _draining = false;
+    }
+    // If the server already signalled end-of-turn while we were still playing,
+    // reopen the mic now that the queue is empty.
+    if (_turnEndPending && _ttsQueue.isEmpty) {
+      _finishTurn();
+    }
+  }
+
+  /// Reopen the floor to the user after Aryabhatt finishes speaking.
+  void _finishTurn() {
+    _turnEndPending = false;
+    _userTranscript = '';
+    if (_state == VoiceCallState.speaking ||
+        _state == VoiceCallState.thinking) {
+      _setState(VoiceCallState.listening);
+    }
   }
 
   // ───────────────────────────────────────────────────────────────
@@ -309,6 +439,12 @@ class VoiceSessionController extends ChangeNotifier {
   }
 
   Future<void> _cleanupOnce() async {
+    _ttsQueue.clear();
+    _turnEndPending = false;
+    _greetingDone = _relayReady = _micStarted = false;
+    try {
+      await _tts.stop();
+    } catch (_) {/* ignore */}
     await _micSub?.cancel();
     _micSub = null;
     try {
