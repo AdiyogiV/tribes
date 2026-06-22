@@ -168,7 +168,23 @@ class VoiceSessionController extends ChangeNotifier {
 
   Future<void> _configureAudioSession() async {
     final session = await AudioSession.instance;
-    await session.configure(const AudioSessionConfiguration.speech());
+    // Speakerphone, not earpiece. The default .speech() preset uses voiceChat
+    // mode with no defaultToSpeaker, so iOS routes Aryabhatt to the tiny
+    // receiver at low volume. videoChat mode + defaultToSpeaker plays through
+    // the loud bottom speaker while keeping echo cancellation for the mic.
+    await session.configure(AudioSessionConfiguration(
+      avAudioSessionCategory: AVAudioSessionCategory.playAndRecord,
+      avAudioSessionCategoryOptions:
+          AVAudioSessionCategoryOptions.defaultToSpeaker |
+              AVAudioSessionCategoryOptions.allowBluetooth |
+              AVAudioSessionCategoryOptions.allowBluetoothA2dp,
+      avAudioSessionMode: AVAudioSessionMode.videoChat,
+      androidAudioAttributes: const AndroidAudioAttributes(
+        contentType: AndroidAudioContentType.speech,
+        usage: AndroidAudioUsage.voiceCommunication,
+      ),
+      androidAudioFocusGainType: AndroidAudioFocusGainType.gain,
+    ));
     await session.setActive(true);
   }
 
@@ -182,6 +198,7 @@ class VoiceSessionController extends ChangeNotifier {
       interleaved: true,
       bufferSize: 1024,
     );
+    await _player.setVolume(1.0); // play replies at full volume
     _playerOpen = true;
   }
 
