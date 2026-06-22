@@ -1,0 +1,13 @@
+node_modules
+npm-debug.log
+.env
+.DS_Store
+
+# Never ship secrets or local test artifacts to the build context
+sa-key.json
+*.json.key
+relay.log
+tools
+probe*.mjs
+*.wav
+*.aiff
