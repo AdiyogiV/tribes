@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:logger/logger.dart' show Level;
 import 'package:record/record.dart';
+import 'package:uuid/uuid.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'package:aurogram/core/logging/app_logger.dart';
@@ -145,13 +146,16 @@ class VoiceSessionController extends ChangeNotifier {
       onDone: () => _setState(VoiceCallState.ended),
     );
 
-    // Open the CX session on the relay (uid => stable per-user context).
+    // Open the CX session on the relay. Fresh session id per call => each tap
+    // starts a brand-new conversation (no carryover). Auth is the token.
+    final sessionId = const Uuid().v4();
     _channel!.sink.add(jsonEncode({
       'type': 'start',
       'token': token,
-      'sessionId': user.uid,
+      'sessionId': sessionId,
     }));
-    AppLogger.i('Voice start frame sent', category: LogCategory.voice);
+    AppLogger.i('Voice start frame sent',
+        category: LogCategory.voice, data: {'sessionId': sessionId});
   }
 
   Future<void> _startMic() async {
