@@ -12,6 +12,14 @@ import { WebSocketServer } from "ws";
 import admin from "firebase-admin";
 import { CONFIG } from "./config.js";
 import { CxVoiceSession } from "./cx_stream.js";
+import { MultilingualVoiceSession } from "./voice_pipeline.js";
+
+// Pick the engine: multilingual pipeline (STT v2 + our TTS) or the original
+// single-language CX streaming. Toggle with MULTILINGUAL=false.
+const makeSession = (sessionId) =>
+    CONFIG.multilingual
+        ? new MultilingualVoiceSession(sessionId)
+        : new CxVoiceSession(sessionId);
 
 // Firebase Admin verifies caller ID tokens. Uses ADC (the Cloud Run runtime
 // service account) — no key file needed. Set REQUIRE_AUTH=false for local dev.
@@ -57,7 +65,7 @@ wss.on("connection", (ws) => {
     };
 
     const openSession = (sessionId) => {
-        session = new CxVoiceSession(sessionId || randomUUID());
+        session = makeSession(sessionId || randomUUID());
 
         session.on("transcript", (t) => sendJson({ type: "transcript", ...t }));
         session.on("reply", (r) => sendJson({ type: "reply", text: r.text }));
@@ -116,6 +124,10 @@ server.listen(CONFIG.port, () => {
     // eslint-disable-next-line no-console
     console.log(
         `voice-relay listening on :${CONFIG.port} -> CX agent ${CONFIG.agentId} `
-        + `(${CONFIG.location}/${CONFIG.environment}, lang ${CONFIG.languageCode})`,
+        + `(${CONFIG.location}/${CONFIG.environment}) `
+        + (CONFIG.multilingual
+            ? `[multilingual: STT ${CONFIG.sttModel}@${CONFIG.sttLocation} `
+              + `auto-detect, TTS ${CONFIG.ttsGender}]`
+            : `[single-language ${CONFIG.languageCode}]`),
     );
 });
