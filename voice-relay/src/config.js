@@ -39,6 +39,8 @@ export const CONFIG = {
         .split(",").map((s) => s.trim()).filter(Boolean),
     // TTS voice gender (Aryabhatt is male). Per-language voice is auto-picked.
     ttsGender: process.env.TTS_GENDER || "MALE",
+    // Playback speed for Aryabhatt's replies. >1 = faster, snappier dictation.
+    ttsSpeakingRate: parseFloat(process.env.TTS_SPEAKING_RATE || "1.15"),
     // Language CX is asked to detect intent in (its only supported language).
     cxTextLanguage: process.env.CX_TEXT_LANGUAGE || "en-IN",
 

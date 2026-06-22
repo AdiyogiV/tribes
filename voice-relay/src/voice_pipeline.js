@@ -261,6 +261,7 @@ export class MultilingualVoiceSession extends EventEmitter {
         const audioConfig = {
             audioEncoding: "LINEAR16",
             sampleRateHertz: CONFIG.outputSampleRateHertz,
+            speakingRate: CONFIG.ttsSpeakingRate,
         };
         const tryLang = async (languageCode) => {
             const [res] = await ttsClient.synthesizeSpeech({
