@@ -74,6 +74,10 @@ wss.on("connection", (ws) => {
         });
         session.on("turn_end", () => sendJson({ type: "speaking_done" }));
         session.on("error", (err) => {
+            // Log server-side so failures show up in Cloud Run logs, not just
+            // as an opaque {type:"error"} on the client.
+            // eslint-disable-next-line no-console
+            console.error(`[session ${sessionId}] error:`, err?.stack || err);
             sendJson({ type: "error", message: String(err?.message || err) });
         });
         session.on("close", () => sendJson({ type: "session_closed" }));

@@ -53,6 +53,8 @@ export class MultilingualVoiceSession extends EventEmitter {
         this.speaking = false; // TTS audio is playing — ignore mic echo
         this.lastLang = CONFIG.cxTextLanguage;
         this._speakTimer = null;
+        this._reopenTimer = null; // debounces STT reopen
+        this._reopenAttempts = 0; // backoff counter, reset on healthy data
     }
 
     _sessionPath() {
@@ -75,29 +77,26 @@ export class MultilingualVoiceSession extends EventEmitter {
     /** Open (or reopen) the long-lived STT v2 stream. */
     _openStt() {
         if (this.ended) return;
+        this._teardownStt(); // drop any previous stream + its listeners
         const recognizer =
             `projects/${CONFIG.project}/locations/${CONFIG.sttLocation}`
             + "/recognizers/_";
 
-        this.sttStream = sttClient._streamingRecognize();
-        this.sttStream.on("data", (res) => this._onStt(res));
-        this.sttStream.on("error", (err) => {
-            if (this.ended) return;
-            // v2 streams die after ~5 min / inactivity — just reopen quietly.
-            if (String(err?.code) === "11" || /OUT_OF_RANGE|deadline/i
-                .test(String(err?.message))) {
-                this._openStt();
-            } else {
-                this.emit("error", err);
-            }
+        const stream = sttClient._streamingRecognize();
+        this.sttStream = stream;
+        stream.on("data", (res) => {
+            this._reopenAttempts = 0; // stream is healthy again
+            this._onStt(res);
         });
-        this.sttStream.on("end", () => {
-            if (!this.ended) this._openStt();
-            else this.emit("close");
-        });
+        // A torn-down STT stream is NEVER fatal: v2 streams are routinely closed
+        // by Google (max duration, the inactivity gap while Aryabhatt speaks,
+        // transient network). Both 'error' and 'end' just mean "open a fresh
+        // one" — killing the call here was the bug that dropped conversations.
+        stream.on("error", (err) => this._reopenStt(stream, err));
+        stream.on("end", () => this._reopenStt(stream, null));
 
         // First message = config; audio frames follow.
-        this.sttStream.write({
+        stream.write({
             recognizer,
             streamingConfig: {
                 config: {
@@ -113,6 +112,40 @@ export class MultilingualVoiceSession extends EventEmitter {
                 streamingFeatures: { interimResults: true },
             },
         });
+    }
+
+    /** Tear down the current STT stream and detach its listeners. */
+    _teardownStt() {
+        const s = this.sttStream;
+        this.sttStream = null;
+        if (!s) return;
+        try { s.removeAllListeners(); } catch { /* already gone */ }
+        try { s.end(); } catch { /* already closed */ }
+        try { s.destroy?.(); } catch { /* already destroyed */ }
+    }
+
+    /**
+     * Reopen the STT stream after it closed/errored. Debounced (one pending
+     * reopen at a time) with a small backoff so a persistent failure can't spin
+     * the CPU. Stale callbacks from an old stream are ignored.
+     */
+    _reopenStt(fromStream, err) {
+        if (fromStream !== this.sttStream && this.sttStream !== null) return;
+        if (this.ended) {
+            this.emit("close");
+            return;
+        }
+        if (err) {
+            // eslint-disable-next-line no-console
+            console.warn(`[stt] stream closed, reopening: ${err.message || err}`);
+        }
+        if (this._reopenTimer) return; // a reopen is already scheduled
+        const delay = Math.min(150 * (this._reopenAttempts + 1), 2000);
+        this._reopenAttempts += 1;
+        this._reopenTimer = setTimeout(() => {
+            this._reopenTimer = null;
+            this._openStt();
+        }, delay);
     }
 
     sendAudio(chunk) {
@@ -152,7 +185,13 @@ export class MultilingualVoiceSession extends EventEmitter {
             }
             this.emit("turn_end");
         } catch (err) {
-            if (!this.ended) this.emit("error", err);
+            // One turn failing (transient CX/TTS hiccup) shouldn't end the call.
+            // Log it, then hand control back so the user can just try again.
+            if (!this.ended) {
+                // eslint-disable-next-line no-console
+                console.warn(`[turn] failed, staying live: ${err?.message || err}`);
+                this.emit("turn_end");
+            }
         } finally {
             this.busy = false;
         }
@@ -242,12 +281,9 @@ export class MultilingualVoiceSession extends EventEmitter {
     end() {
         this.ended = true;
         clearTimeout(this._speakTimer);
-        try {
-            this.sttStream?.end();
-        } catch {
-            // already closed
-        }
-        this.sttStream = null;
+        clearTimeout(this._reopenTimer);
+        this._reopenTimer = null;
+        this._teardownStt();
     }
 }
 
