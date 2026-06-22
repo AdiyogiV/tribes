@@ -41,6 +41,14 @@ export const CONFIG = {
     ttsGender: process.env.TTS_GENDER || "MALE",
     // Playback speed for Aryabhatt's replies. >1 = faster, snappier dictation.
     ttsSpeakingRate: parseFloat(process.env.TTS_SPEAKING_RATE || "1.15"),
+    // Opening lines, picked at random. Spoken through the same TTS path as
+    // replies so they sound identical. Each invites the user to talk.
+    greetings: [
+        "नमस्ते! जय श्री कृष्ण। आपका दिन कैसा चल रहा है?",
+        "नमस्ते! जय श्री राम। बोलिए, आज क्या जानना चाहते हैं?",
+        "राधे राधे! आज आपके मन में क्या चल रहा है?",
+        "नमस्ते! आज आकाश में कुछ ख़ास है। बोलिए, क्या पूछना चाहेंगे?",
+    ],
     // Language CX is asked to detect intent in (its only supported language).
     cxTextLanguage: process.env.CX_TEXT_LANGUAGE || "en-IN",
 

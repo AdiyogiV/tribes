@@ -84,6 +84,9 @@ wss.on("connection", (ws) => {
 
         session.start();
         sendJson({ type: "ready" });
+        // Speak the opening greeting through the real TTS path (multilingual
+        // session only; the legacy CX session greets itself).
+        session.greet?.();
     };
 
     ws.on("message", (data, isBinary) => {
