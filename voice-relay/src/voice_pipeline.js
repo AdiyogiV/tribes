@@ -51,7 +51,13 @@ export class MultilingualVoiceSession extends EventEmitter {
         this.ended = false;
         this.busy = false; // processing a turn (brain + TTS in flight)
         this.speaking = false; // TTS audio is playing — ignore mic echo
+        // Monotonic turn counter. Every new utterance claims a generation; an
+        // interrupt (barge-in) bumps it so any in-flight brain/TTS reply from
+        // the cut-off turn is discarded instead of resurrecting after the user
+        // already took the floor back.
+        this.turnId = 0;
         this.lastLang = CONFIG.cxTextLanguage;
+        this._speakStartedAt = 0; // ms timestamp when current playback began
         this._speakTimer = null;
         this._reopenTimer = null; // debounces STT reopen
         this._reopenAttempts = 0; // backoff counter, reset on healthy data
@@ -137,13 +143,32 @@ export class MultilingualVoiceSession extends EventEmitter {
     }
 
     sendAudio(chunk) {
-        // Drop mic while Aryabhatt is speaking or we're mid-turn (anti-echo).
-        if (!this.sttStream || this.speaking || this.busy) return;
+        if (!this.sttStream) return;
+        // Half-duplex (barge-in OFF): drop the mic while Aryabhatt is speaking
+        // or mid-turn so his own voice can't echo back into STT. With barge-in
+        // ON we KEEP feeding the mic during playback so the user can cut in;
+        // echo rejection then rides on the client's acoustic echo canceller.
+        if (!CONFIG.bargeIn && (this.speaking || this.busy)) return;
         try {
             this.sttStream.write({ audio: chunk });
         } catch {
             // stream reopening; next chunk will land
         }
+    }
+
+    /**
+     * Barge-in: the user started talking while Aryabhatt was speaking. Stop him
+     * immediately, abandon the current turn, and hand the floor back. We do NOT
+     * treat the triggering partial as the user's utterance — STT keeps running,
+     * so their own final transcript is what gets answered next.
+     */
+    _interrupt() {
+        if (!this.speaking) return;
+        this.speaking = false;
+        clearTimeout(this._speakTimer);
+        this.busy = false; // free the floor for the user's incoming utterance
+        this.turnId += 1; // invalidate the cut-off turn's in-flight reply/TTS
+        this.emit("interrupt"); // tell the client to flush playback NOW
     }
 
     /** Handle one STT response: interim captions + end-of-utterance trigger. */
@@ -155,6 +180,21 @@ export class MultilingualVoiceSession extends EventEmitter {
         if (!text) return;
 
         if (result.languageCode) this.lastLang = normalizeLang(result.languageCode);
+
+        // Barge-in check BEFORE anything else: only cut him off on STRONG
+        // evidence of real speech, so his own echo / room noise can't trigger
+        // it. Require, during playback and past the start-of-speech grace
+        // window: enough characters AND enough words.
+        if (CONFIG.bargeIn && this.speaking) {
+            const sinceSpeak = Date.now() - this._speakStartedAt;
+            const words = text.split(/\s+/).filter(Boolean).length;
+            if (sinceSpeak >= CONFIG.bargeInGraceMs
+                && text.length >= CONFIG.bargeInMinChars
+                && words >= CONFIG.bargeInMinWords) {
+                this._interrupt();
+            }
+        }
+
         this.emit("transcript", { text, final: !!result.isFinal });
 
         if (result.isFinal && !this.busy) {
@@ -164,24 +204,31 @@ export class MultilingualVoiceSession extends EventEmitter {
 
     /** Brain + voice for one finished user utterance. */
     async _handleUtterance(text, lang) {
+        const myTurn = ++this.turnId; // claim this generation
         this.busy = true;
         try {
             const reply = await this._askBrain(text);
+            // Interrupted (or call ended) while the brain was thinking? Drop the
+            // stale answer on the floor.
+            if (this.ended || this.turnId !== myTurn) return;
             if (reply) {
                 this.emit("reply", { text: reply });
-                await this._speak(reply, lang);
+                await this._speak(reply, lang, myTurn);
             }
+            if (this.turnId !== myTurn) return;
             this.emit("turn_end");
         } catch (err) {
             // One turn failing (transient CX/TTS hiccup) shouldn't end the call.
             // Log it, then hand control back so the user can just try again.
-            if (!this.ended) {
+            if (!this.ended && this.turnId === myTurn) {
                 // eslint-disable-next-line no-console
                 console.warn(`[turn] failed, staying live: ${err?.message || err}`);
                 this.emit("turn_end");
             }
         } finally {
-            this.busy = false;
+            // Only clear busy if WE still own the floor — an interrupt may have
+            // already started (or cleared the way for) a newer turn.
+            if (this.turnId === myTurn) this.busy = false;
         }
     }
 
@@ -237,22 +284,33 @@ export class MultilingualVoiceSession extends EventEmitter {
     }
 
     /** Synthesize a MALE voice in the detected language and stream it out. */
-    async _speak(text, lang) {
+    async _speak(text, lang, myTurn) {
         const pcm = await this._synthesize(text, lang);
         if (!pcm || !pcm.length) return;
+        // Interrupted while we were synthesizing? Don't start playing a reply
+        // the user already talked over.
+        if (this.ended || (myTurn !== undefined && this.turnId !== myTurn)) return;
 
         this.speaking = true;
+        this._speakStartedAt = Date.now();
         // Emit in ~8KB chunks so the client can start playing immediately.
         const CHUNK = 8192;
         for (let i = 0; i < pcm.length && !this.ended; i += CHUNK) {
+            // Stop mid-stream the instant a barge-in bumps the generation.
+            if (myTurn !== undefined && this.turnId !== myTurn) break;
             this.emit("audio", pcm.subarray(i, i + CHUNK));
         }
+        if (myTurn !== undefined && this.turnId !== myTurn) return;
 
         // Keep the mic muted for the playback duration (+ tail) to stop echo.
+        // (No-op for echo when barge-in is on, but still the natural point to
+        // flip speaking=false so the next turn starts clean.)
         const seconds = pcm.length / (2 * CONFIG.outputSampleRateHertz);
         clearTimeout(this._speakTimer);
         this._speakTimer = setTimeout(() => {
-            this.speaking = false;
+            if (myTurn === undefined || this.turnId === myTurn) {
+                this.speaking = false;
+            }
         }, Math.ceil(seconds * 1000) + 300);
     }
 

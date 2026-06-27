@@ -1,10 +1,8 @@
 import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
-import 'dart:math';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:audio_session/audio_session.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_sound/flutter_sound.dart';
@@ -15,6 +13,8 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/features/ai_chat/voice/voice_relay_config.dart';
+import 'package:aurogram/features/ai_chat/voice/voice_engine_pref.dart';
+import 'package:aurogram/features/ai_chat/voice/voice_mic_mode_pref.dart';
 
 /// High-level state of a live voice conversation with Aryabhatt.
 enum VoiceCallState {
@@ -45,16 +45,26 @@ class VoiceSessionController extends ChangeNotifier {
   bool _playerOpen = false;
   bool _disposed = false;
 
-  // The mic opens once, after the greeting finishes AND the relay is ready, so
-  // the greeting's question is never cut off and the user never talks into a
-  // void. The greeting is a local PCM clip played instantly on tap (to mask
-  // the connect latency), through the SAME flutter_sound player as replies so
-  // it's loud and smooth — not a second audio engine.
+  // The mic opens once, as soon as the relay is ready. No greeting any more:
+  // the user simply starts talking and Aryabhatt (Gemini Live API) replies.
   bool _micStarted = false;
-  bool _greetingDone = false;
   bool _relayReady = false;
-  final Random _random = Random();
-  static const int _greetingCount = 10;
+
+  // How the mic behaves this call (read once at start, see [VoiceMicModePref]).
+  // waitTurn (default): only forward mic audio while it's the user's turn
+  // (listening) so Aryabhatt's voice / room noise can't leak in. openMic:
+  // stream the whole call so the user can talk over him (barge-in, Live only).
+  VoiceMicMode _micMode = VoiceMicMode.waitTurn;
+
+  // Native player ring-buffer size = ~1s of 24kHz PCM16 (48000 B/s). The Live
+  // API streams Aryabhatt's voice in fast BURSTS (often a whole sentence at
+  // once), so a small buffer underruns the moment the event loop is busy with
+  // the mic stream / websocket / logging => audible stutter. ~1s of headroom
+  // rides those bursts smoothly. It's also the per-feed coalesce cap: barge-in
+  // is now server-side (the relay emits an explicit `interrupt`), so we no
+  // longer need a tiny cap to stay interruptible — on interrupt we clear the
+  // queue and only this ~1s already in the native buffer fades out.
+  static const int _playerBufferBytes = 49152;
 
   // TTS playback is fed to flutter_sound ONE buffer at a time, awaited, so the
   // native player can apply backpressure. The relay bursts a whole reply at
@@ -64,6 +74,10 @@ class VoiceSessionController extends ChangeNotifier {
   final Queue<Uint8List> _ttsQueue = Queue<Uint8List>();
   bool _draining = false;
   bool _turnEndPending = false;
+  // Set the instant a barge-in (interrupt) arrives. While true, any TTS audio
+  // still in flight from the cut-off turn is dropped so it can't sneak into the
+  // player after we've flushed it. Cleared when the next reply begins.
+  bool _suppressAudio = false;
 
   // Flow counters so the logs tell the whole story of a call.
   int _ttsChunks = 0; // TTS audio frames received from the relay
@@ -95,11 +109,17 @@ class VoiceSessionController extends ChangeNotifier {
   // Lifecycle
   // ───────────────────────────────────────────────────────────────
 
-  /// Open audio devices, play a short filler clip to cover the connect, hook up
-  /// the relay, then open the mic the moment the relay is ready.
+  /// Open audio devices, hook up the relay, then open the mic the moment the
+  /// relay is ready.
   Future<void> start() async {
     if (_state != VoiceCallState.idle && _state != VoiceCallState.ended) return;
-    _micStarted = _greetingDone = _relayReady = false;
+    _micStarted = _relayReady = false;
+    _micMode = await VoiceMicModePref.read();
+    // Clear last call's transcript + reply so a fresh tap never flashes stale
+    // text in the caption before the first reply.
+    _userTranscript = '';
+    _aryabhattReply = '';
+    _suppressAudio = false;
     _setState(VoiceCallState.connecting);
     _ttsChunks = _ttsBytes = _micChunks = _micBytes = 0;
     AppLogger.i('Voice call starting',
@@ -119,10 +139,8 @@ class VoiceSessionController extends ChangeNotifier {
 
       await _configureAudioSession();
       await _openPlayer();
-      // Play the greeting INSTANTLY to mask the connect latency, AND connect in
-      // parallel. Each flips its own flag; the mic opens once both are ready
-      // (greeting finished AND relay ready) — see [_maybeStartMic].
-      unawaited(_playGreeting());
+      // Connect to the relay; the mic opens the moment it's ready (see
+      // [_maybeStartMic]). No greeting — the user speaks first.
       await _connect();
     } catch (e) {
       AppLogger.e('Voice session start failed',
@@ -131,39 +149,10 @@ class VoiceSessionController extends ChangeNotifier {
     }
   }
 
-  /// Play a random local greeting clip INSTANTLY on tap, through the same
-  /// flutter_sound player as replies (so it's loud + smooth, no second engine).
-  /// The clips are raw PCM16 @ 24kHz mono — the exact format the TTS stream
-  /// uses — so we just feed the bytes through the normal playback queue. It
-  /// asks a question, so we open the mic only after it finishes playing.
-  Future<void> _playGreeting() async {
-    try {
-      final idx = _random.nextInt(_greetingCount);
-      final data = await rootBundle.load('assets/audio/greeting_$idx.pcm');
-      final bytes = data.buffer.asUint8List();
-      const chunk = 8192;
-      for (var i = 0; i < bytes.length; i += chunk) {
-        final end = (i + chunk < bytes.length) ? i + chunk : bytes.length;
-        _playAudio(Uint8List.sublistView(bytes, i, end));
-      }
-      // Mark done after the clip's real playback duration (2 bytes/sample).
-      final seconds = bytes.length / (2 * VoiceRelayConfig.ttsSampleRate);
-      await Future<void>.delayed(
-          Duration(milliseconds: (seconds * 1000).ceil() + 200));
-    } catch (e) {
-      AppLogger.w('Voice greeting failed',
-          category: LogCategory.voice, data: {'error': e.toString()});
-    } finally {
-      _greetingDone = true;
-      _maybeStartMic();
-    }
-  }
-
-  /// Open the mic exactly once, after the greeting has finished AND the relay
-  /// is ready — so we never cut the greeting off or talk into a void.
+  /// Open the mic exactly once, as soon as the relay is ready.
   void _maybeStartMic() {
     if (_disposed || _micStarted) return;
-    if (!_greetingDone || !_relayReady) return;
+    if (!_relayReady) return;
     if (_state == VoiceCallState.error || _state == VoiceCallState.ended) return;
     _micStarted = true;
     unawaited(_startMic());
@@ -171,19 +160,22 @@ class VoiceSessionController extends ChangeNotifier {
 
   Future<void> _configureAudioSession() async {
     final session = await AudioSession.instance;
-    // Speakerphone + LOUD. We must record the mic while playing replies, so
-    // category is playAndRecord with defaultToSpeaker (routes to the loud
-    // bottom speaker, not the earpiece). Crucially we use defaultMode, NOT
-    // voiceChat/videoChat: those engage iOS voice-processing AGC which ducks
-    // the output volume. Echo isn't an issue — the relay mutes the mic while
-    // Aryabhatt is speaking.
+    // Speakerphone + echo cancellation. category playAndRecord (we record the
+    // mic while playing replies) with defaultToSpeaker (loud bottom speaker,
+    // not the earpiece) and allowBluetooth so headphones/AirPods just work.
+    //
+    // mode = videoChat: this engages iOS hardware echo cancellation, which
+    // ERASES Aryabhatt's own voice from the mic. That's what lets talk-to-
+    // interrupt (barge-in) work WITHOUT the speaker echo false-triggering it.
+    // videoChat (not voiceChat) keeps the loud speakerphone route. There's a
+    // mild volume dip vs defaultMode — the trade for echo-free full-duplex.
     await session.configure(AudioSessionConfiguration(
       avAudioSessionCategory: AVAudioSessionCategory.playAndRecord,
       avAudioSessionCategoryOptions:
           AVAudioSessionCategoryOptions.defaultToSpeaker |
               AVAudioSessionCategoryOptions.allowBluetooth |
               AVAudioSessionCategoryOptions.allowBluetoothA2dp,
-      avAudioSessionMode: AVAudioSessionMode.defaultMode,
+      avAudioSessionMode: AVAudioSessionMode.videoChat,
       androidAudioAttributes: const AndroidAudioAttributes(
         contentType: AndroidAudioContentType.speech,
         usage: AndroidAudioUsage.voiceCommunication,
@@ -196,15 +188,35 @@ class VoiceSessionController extends ChangeNotifier {
   Future<void> _openPlayer() async {
     if (_playerOpen) return;
     await _player.openPlayer();
+    await _startPlayerStream();
+    _playerOpen = true;
+  }
+
+  /// Start the PCM16 streaming player. The stream stays up for the whole call
+  /// — even barge-in no longer restarts it (see [_flushPlayback]).
+  Future<void> _startPlayerStream() async {
     await _player.startPlayerFromStream(
       codec: Codec.pcm16,
       numChannels: 1,
-      sampleRate: VoiceRelayConfig.ttsSampleRate,
+sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
       interleaved: true,
-      bufferSize: 1024,
+      // ~340ms of 24kHz PCM16 audio. Generous enough to ride bursts (and the
+      // event-loop jank from the parallel connect) without underrunning.
+      bufferSize: _playerBufferBytes,
     );
     await _player.setVolume(1.0); // play replies at full volume
-    _playerOpen = true;
+  }
+
+  /// Barge-in: the user cut in while Aryabhatt was speaking. We DON'T stop the
+  /// native player (stopPlayer() tears down the iOS audio unit and drops the
+  /// route, which spawned a whole chain of bugs). Instead we just drop
+  /// everything not yet played — clear the queue, and [_suppressAudio] (set by
+  /// the caller) discards any chunks still in flight from the cut-off turn.
+  /// The ~340ms already in the native buffer drains on its own = a quick, clean
+  /// fade instead of a hard cut with a click. The stream keeps running, so the
+  /// next reply just feeds straight into it.
+  void _flushPlayback() {
+    _ttsQueue.clear();
   }
 
   Future<void> _connect() async {
@@ -234,14 +246,23 @@ class VoiceSessionController extends ChangeNotifier {
 
     // Open the CX session on the relay. Fresh session id per call => each tap
     // starts a brand-new conversation (no carryover). Auth is the token.
+    // `engine` lets the user pick Live (premium) vs CX (credit-funded) — the
+    // relay falls back to its own default if we send nothing.
     final sessionId = const Uuid().v4();
+    final engine = await VoiceEnginePref.read();
     _channel!.sink.add(jsonEncode({
       'type': 'start',
       'token': token,
       'sessionId': sessionId,
+      'engine': VoiceEnginePref.wireValue(engine),
     }));
     AppLogger.i('Voice start frame sent',
-        category: LogCategory.voice, data: {'sessionId': sessionId});
+        category: LogCategory.voice,
+        data: {
+          'sessionId': sessionId,
+          'engine': engine.name,
+          'micMode': _micMode.name,
+        });
   }
 
   Future<void> _startMic() async {
@@ -255,6 +276,13 @@ class VoiceSessionController extends ChangeNotifier {
       ),
     );
     _micSub = stream.listen((chunk) {
+      // Half-duplex (waitTurn): hold the mic shut unless it's the user's turn,
+      // so Aryabhatt's own voice / room noise never reaches the relay. The mic
+      // stream itself stays open (no start/stop churn) — we just don't forward.
+      if (_micMode == VoiceMicMode.waitTurn &&
+          _state != VoiceCallState.listening) {
+        return;
+      }
       // Forward raw PCM straight to the relay as a binary frame.
       _micChunks++;
       _micBytes += chunk.length;
@@ -313,8 +341,7 @@ class VoiceSessionController extends ChangeNotifier {
         });
     switch (type) {
       case 'ready':
-        // Relay is live. Don't grab the mic yet — wait for the greeting to
-        // finish too (see _maybeStartMic).
+        // Relay is live — open the mic right away so the user can talk.
         _relayReady = true;
         _maybeStartMic();
         break;
@@ -328,7 +355,24 @@ class VoiceSessionController extends ChangeNotifier {
       case 'reply':
         _aryabhattReply = (msg['text'] as String?) ?? '';
         _turnEndPending = false;
+        // A fresh reply is starting — stop dropping audio (any barge-in flush
+        // is done; from here the incoming chunks belong to THIS turn).
+        _suppressAudio = false;
         _setState(VoiceCallState.speaking);
+        break;
+      case 'interrupt':
+        // Barge-in: user started talking over Aryabhatt. Kill playback now and
+        // give them the floor. STT keeps running on the relay, so their actual
+        // utterance will come back as the next transcript/reply.
+        AppLogger.i('Barge-in: user interrupted',
+            category: LogCategory.voice,
+            data: {'queued': _ttsQueue.length, 'draining': _draining});
+        _suppressAudio = true;
+        _turnEndPending = false;
+        _flushPlayback();
+        if (_state == VoiceCallState.speaking) {
+          _setState(VoiceCallState.listening);
+        }
         break;
       case 'speaking_done':
         // Turn complete on the relay — but locally we may still be draining the
@@ -367,6 +411,9 @@ class VoiceSessionController extends ChangeNotifier {
           data: {'playerOpen': _playerOpen, 'bytes': bytes.length});
       return;
     }
+    // Barge-in in progress: discard audio left over from the cut-off turn so it
+    // can't slip into the player after the flush.
+    if (_suppressAudio) return;
     // PCM16 mono => each sample is 2 bytes; feed only whole samples so the
     // interleaved feeder never rejects a misaligned buffer.
     final aligned =
@@ -378,16 +425,39 @@ class VoiceSessionController extends ChangeNotifier {
     unawaited(_drainTts());
   }
 
-  /// Feed queued TTS buffers to the player one at a time, awaiting each so the
-  /// native side applies backpressure. Never run two feeds concurrently.
+  /// Feed queued TTS buffers to the player, awaiting each so the native side
+  /// applies backpressure. We coalesce queued chunks into one buffer per feed
+  /// (flutter_sound stutters when fed many tiny chunks back-to-back) capped at
+  /// [_playerBufferBytes] (~1s). The cap keeps each feed bounded so the loop
+  /// can re-check [_suppressAudio] between feeds and bail promptly on a
+  /// server-driven barge-in. Never run two feeds concurrently.
   Future<void> _drainTts() async {
     if (_draining) return;
     _draining = true;
     try {
       while (_ttsQueue.isNotEmpty && _playerOpen && !_disposed) {
-        final chunk = _ttsQueue.removeFirst();
+        // Barge-in landed: drop the rest of the cut-off turn. Only what's
+        // already in the native buffer plays out (a short, clean fade).
+        if (_suppressAudio) {
+          _ttsQueue.clear();
+          break;
+        }
+        // Coalesce up to one buffer's worth, no more (see cap rationale above).
+        var total = 0;
+        final parts = <Uint8List>[];
+        while (_ttsQueue.isNotEmpty && total < _playerBufferBytes) {
+          final c = _ttsQueue.removeFirst();
+          parts.add(c);
+          total += c.length;
+        }
+        final merged = Uint8List(total);
+        var offset = 0;
+        for (final p in parts) {
+          merged.setAll(offset, p);
+          offset += p.length;
+        }
         try {
-          await _player.feedUint8FromStream(chunk);
+          await _player.feedUint8FromStream(merged);
         } catch (e) {
           AppLogger.w('Voice: TTS feed failed',
               category: LogCategory.voice, data: {'error': e.toString()});
@@ -449,7 +519,7 @@ class VoiceSessionController extends ChangeNotifier {
   Future<void> _cleanupOnce() async {
     _ttsQueue.clear();
     _turnEndPending = false;
-    _micStarted = _greetingDone = _relayReady = false;
+    _micStarted = _relayReady = false;
     await _micSub?.cancel();
     _micSub = null;
     try {

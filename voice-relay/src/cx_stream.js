@@ -99,7 +99,10 @@ export class CxVoiceSession extends EventEmitter {
             if (!this.ended) this.emit("error", err);
         });
         this.stream.on("end", () => {
-            // Turn finished. Reopen for the next utterance unless we're done.
+            // Safety net: if CX closes the stream on its own (rare), reopen for
+            // the next utterance unless we're shutting down. Normal turns are
+            // cycled proactively in _onData (CX does NOT auto-close the stream
+            // after returning its single detectIntentResponse).
             if (!this.ended) this._openTurn();
             else this.emit("close");
         });
@@ -107,6 +110,30 @@ export class CxVoiceSession extends EventEmitter {
         // First write = the config turn. Audio chunks follow.
         this.stream.write(this._configRequest());
         this.configSent = true;
+    }
+
+    /**
+     * Retire a spent stream WITHOUT triggering the auto-reopen path. CX leaves
+     * the bidi stream open and idle after it returns a turn's response, so we
+     * tear it down ourselves and immediately open a fresh one for the next
+     * utterance. Strip listeners first so the old stream's eventual end/error
+     * can't double-open or surface a spurious error.
+     */
+    _cycleTurn() {
+        if (this.ended) return;
+        const spent = this.stream;
+        this.stream = null;
+        this.configSent = false; // stop forwarding audio to the dying stream
+        if (spent) {
+            spent.removeAllListeners();
+            spent.on("error", () => {}); // swallow post-close cancels
+            try {
+                spent.end();
+            } catch {
+                // already closed; nothing to do
+            }
+        }
+        this._openTurn();
     }
 
     /** Forward a raw PCM16 chunk from the client into CX. */
@@ -139,6 +166,8 @@ export class CxVoiceSession extends EventEmitter {
                 this.emit("audio", Buffer.from(dir.outputAudio));
             }
             this.emit("turn_end");
+            // CX won't end the stream itself, so re-arm for the next utterance.
+            this._cycleTurn();
         }
     }
 
