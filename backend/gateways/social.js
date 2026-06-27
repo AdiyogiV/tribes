@@ -16,6 +16,7 @@
  *   - createRepost             [auth]     Create a repost of a post
  *   - deleteRepost             [auth]     Delete a repost
  *   - awardAuraAction          [auth]     Award aura for a profile/engagement action
+ *   - clearAiMemory            [auth]     Wipe the user's durable Aryabhatt memory
  */
 
 import { onCall, HttpsError } from "firebase-functions/v2/https";
@@ -53,6 +54,10 @@ import {
     handleAwardAuraAction,
 } from "../functions/aura.js";
 
+import {
+    handleClearUserMemory,
+} from "../functions/user_memory.js";
+
 // Method registry — maps method name to handler + auth requirement
 const methods = {
     // Auth-required methods
@@ -65,6 +70,7 @@ const methods = {
     createRepost: { handler: (req) => handleCreateRepost(req), auth: true },
     deleteRepost: { handler: (req) => handleDeleteRepost(req), auth: true },
     awardAuraAction: { handler: (req) => handleAwardAuraAction(req), auth: true },
+    clearAiMemory: { handler: (req) => handleClearUserMemory(req), auth: true },
 
     // Public methods (no auth required)
     submitAnonymousMessage: { handler: (req) => handleSubmitAnonymousMessage(req), auth: false },

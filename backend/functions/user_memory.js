@@ -28,6 +28,7 @@ const MEMORY_DOC_PATH = (uid) => `users/${uid}/memory/profile`;
 const MAX_CONVERSATIONS_PER_USER = 4;   // most-recent AI conversations to read
 const MAX_MESSAGES_PER_USER = 60;       // cap messages fed to the model
 const MAX_THREADS = 8;                   // memory stays bounded forever
+const THREAD_TTL_DAYS = 60;              // decay: drop threads untouched this long
 const REFRESH_LOOKBACK_HOURS = 26;       // catch everything since last nightly run
 const MAX_USERS_PER_RUN = 250;           // safety ceiling per nightly run
 const REFRESH_CONCURRENCY = 4;           // gentle on Gemini rate limits
@@ -41,6 +42,11 @@ const MEMORY_SYSTEM_PROMPT = [
     "astrology + wellness companion app. Given the PRIOR MEMORY and the user's",
     "RECENT MESSAGES, return an UPDATED memory profile as strict JSON.",
     "",
+    "The RECENT MESSAGES are the USER'S OWN words only (Aryabhatt's replies are",
+    "deliberately excluded). Treat every line as something the USER said about",
+    "themselves. NEVER record astrological claims, predictions, or advice as facts",
+    "about the user — only what they actually told you about their own life.",
+    "",
     "WHAT TO CAPTURE (durable life facts only):",
     "- Who they are: age, location, work/study, life stage when stated.",
     "- Their ongoing concerns as 'threads': career, relationships, money, health,",
@@ -50,6 +56,7 @@ const MEMORY_SYSTEM_PROMPT = [
     "",
     "RULES:",
     "- MERGE new facts into the prior memory. Don't lose still-true context.",
+    "- Only record what the USER stated. Never infer facts from advice given to them.",
     "- status is 'open' while unresolved, 'resolved' once the user settles it.",
     "- Keep at most " + MAX_THREADS + " threads; merge or drop the least relevant",
     "  (prefer dropping old 'resolved' ones).",
@@ -67,15 +74,20 @@ function buildMemoryUserPrompt(priorMemory, messages) {
         ? JSON.stringify({ rollingSummary: priorMemory.rollingSummary || "", threads: priorMemory.threads || [] }, null, 2)
         : "(none yet — this is the first memory for this user)";
 
+    // Provenance: feed the USER'S OWN messages only. Including Aryabhatt's
+    // replies here let his astrological speculation leak in as "user facts" —
+    // the root of the "misunderstands context" bug. The model can't absorb
+    // what it never sees.
     const transcript = messages
-        .map((m) => `${m.role === "user" ? "U" : "H"}: ${m.content}`)
+        .filter((m) => m.role === "user")
+        .map((m) => `U: ${m.content}`)
         .join("\n");
 
     return [
         "PRIOR MEMORY:",
         prior,
         "",
-        "RECENT MESSAGES (oldest first; U = user, H = HolyCow):",
+        "RECENT MESSAGES (oldest first; the USER'S own words only):",
         transcript,
     ].join("\n");
 }
@@ -178,16 +190,21 @@ export async function updateUserMemory(uid, sinceActivityMs = 0) {
             return { uid, updated: false, reason: "unparseable_memory" };
         }
 
-        const threads = Array.isArray(json.threads)
+        const rawThreads = Array.isArray(json.threads)
             ? json.threads
                 .filter((t) => t && t.topic && t.note)
-                .slice(0, MAX_THREADS)
                 .map((t) => ({
                     topic: String(t.topic),
                     note: String(t.note),
                     status: t.status === "resolved" ? "resolved" : "open",
                 }))
             : [];
+
+        // Light decay: carry forward each thread's updatedAt when it's unchanged,
+        // otherwise stamp it now. Then drop anything untouched past the TTL and
+        // keep only the most-recently-touched MAX_THREADS. This stops stale
+        // concerns from lingering forever and conflating with current life.
+        const threads = applyThreadDecay(rawThreads, prior?.threads || []);
 
         await db.doc(MEMORY_DOC_PATH(uid)).set({
             rollingSummary: json.rollingSummary.trim(),
@@ -205,6 +222,47 @@ export async function updateUserMemory(uid, sinceActivityMs = 0) {
         });
         return { uid, updated: false, reason: "error" };
     }
+}
+
+/**
+ * Merge freshly-extracted threads with their prior timestamps, expire stale
+ * ones, and cap to MAX_THREADS by recency. Pure function — easy to reason about.
+ * @param {Array<{topic,note,status}>} rawThreads - this run's extraction
+ * @param {Array<{topic,note,status,updatedAt?}>} priorThreads - stored memory
+ * @returns {Array<{topic,note,status,updatedAt}>}
+ */
+function applyThreadDecay(rawThreads, priorThreads) {
+    const now = Date.now();
+    const ttlMs = THREAD_TTL_DAYS * 24 * 60 * 60 * 1000;
+    const priorByTopic = new Map(
+        priorThreads.map((t) => [String(t.topic).toLowerCase(), t]),
+    );
+
+    return rawThreads
+        .map((t) => {
+            const p = priorByTopic.get(t.topic.toLowerCase());
+            const unchanged = p && p.note === t.note && p.status === t.status;
+            return {
+                ...t,
+                updatedAt: unchanged && p.updatedAt ? p.updatedAt : now,
+            };
+        })
+        .filter((t) => now - (t.updatedAt || now) <= ttlMs)
+        .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
+        .slice(0, MAX_THREADS);
+}
+
+/**
+ * Clear a user's durable memory entirely (the "forget me" button). Deletes the
+ * single memory/profile doc so the next chat opens with a blank slate. Routed
+ * through socialGateway as method 'clearAiMemory' (auth required).
+ * @returns {Promise<{cleared:boolean}>}
+ */
+export async function handleClearUserMemory(request) {
+    const uid = request.auth?.uid;
+    await db.doc(MEMORY_DOC_PATH(uid)).delete();
+    logger.info("clearAiMemory", { structuredData: true, uid });
+    return { cleared: true };
 }
 
 // =============================================================================

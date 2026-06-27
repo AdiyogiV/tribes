@@ -172,6 +172,7 @@ export async function generateDailyOutput(geminiApiKeyValue, dateStr = null) {
         generationConfig: {
             temperature: 0.4,
             maxOutputTokens: 8192,
+            thinkingConfig: { thinkingBudget: 0 }, // thinking off = no wasted output-rate tokens
         },
     });
 

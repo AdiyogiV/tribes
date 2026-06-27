@@ -144,14 +144,14 @@ export const CHAT_CONFIG = {
     // creative-rambling and respects the LENGTH rules. 0.9 was producing essays
     // (53% of replies >500 chars; some 1800+); 0.75 lands in the 200-400 char
     // band the prompt actually targets. Push to 0.8 if it starts feeling flat.
-    TEMPERATURE: 0.75,
+    TEMPERATURE: 0.85,
     // Hard physical cap on output size. THIS IS THE LEVER that enforces "snappy".
     // Prompt-level "60 to 80 words, never more" is a soft request the model
     // overrides on deep-feeling questions. With MAX_OUTPUT_TOKENS = 2048 it had
     // ~1500 words of physical room to ramble. 220 ≈ 165 words: enough for an
     // 80-word reply with reasoning headroom, hard ceiling on essays. Bump only
     // if you genuinely need longer (e.g. structured reports).
-    MAX_OUTPUT_TOKENS: 220,
+    MAX_OUTPUT_TOKENS: 320,
     // Collection that stores one flat, queryable analytics doc per request.
     METRICS_COLLECTION: "aiChatMetrics",
 };

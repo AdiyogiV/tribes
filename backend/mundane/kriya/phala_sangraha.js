@@ -218,6 +218,7 @@ export async function synthesizeForecast(geminiApiKeyValue, analysisResult, opti
             temperature,
             maxOutputTokens: 4096,
             responseMimeType: "application/json",
+            thinkingConfig: { thinkingBudget: 0 }, // thinking off = cheaper nightly run
         },
     });
 

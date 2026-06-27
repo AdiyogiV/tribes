@@ -4,7 +4,7 @@
 // All work is invoked via the extracted `run*` runner functions below.
 import { HttpsError } from "firebase-functions/v2/https";
 import { db, FieldValue, logger } from "../lib/firebase.js";
-import { requireAuth } from "../lib/auth_utils.js";
+import { requireAuth, getRecentlyActiveUids } from "../lib/auth_utils.js";
 import { DateTime } from "luxon";
 import {
     getCacheStats,
@@ -1028,16 +1028,43 @@ export async function runGenerateDailyAstroInsights() {
             astrologyData: doc.data().astrologyData,
         }));
 
-        logger.info(`Enqueuing ${users.length} insight generation tasks`, {
+        // Activity gate: only generate for users who actually opened the app
+        // recently. We used to generate for EVERY user who ever finished their
+        // chart (dormant accounts included), so the nightly Vertex bill scaled
+        // with total registrations instead of real usage. Firebase Auth's
+        // lastRefreshTime bumps on token refresh (= app open), so it's a clean
+        // server-side activity signal with no client change. INSIGHT_ACTIVE_DAYS=0
+        // disables the gate.
+        const activeDays = parseInt(process.env.INSIGHT_ACTIVE_DAYS || "7", 10);
+        let gatedUsers = users;
+        if (activeDays > 0) {
+            const activeUids = await getRecentlyActiveUids(activeDays);
+            const before = gatedUsers.length;
+            gatedUsers = gatedUsers.filter((u) => activeUids.has(u.userId));
+            logger.info("Daily insights activity gate applied", {
+                structuredData: true,
+                activeDays,
+                withChart: before,
+                activeWithChart: gatedUsers.length,
+                skippedDormant: before - gatedUsers.length,
+            });
+        }
+
+        if (gatedUsers.length === 0) {
+            logger.info("No recently-active users with charts to enqueue");
+            return { success: true, enqueued: 0 };
+        }
+
+        logger.info(`Enqueuing ${gatedUsers.length} insight generation tasks`, {
             structuredData: true,
-            userCount: users.length,
+            userCount: gatedUsers.length,
             date: today,
         });
 
         // Initialize generation log for today
         await db.collection("insightGenerationLogs").doc(today).set({
             date: today,
-            totalUsers: users.length,
+            totalUsers: gatedUsers.length,
             startedAt: new Date().toISOString(),
             status: "enqueuing",
         });
@@ -1056,10 +1083,10 @@ export async function runGenerateDailyAstroInsights() {
 
         // Spread enqueue over 1 hour (3600 seconds) to distribute load
         const GENERATION_WINDOW_SECONDS = 3600; // 1 hour
-        const totalUsers = users.length;
+        const totalUsers = gatedUsers.length;
 
-        for (let i = 0; i < users.length; i++) {
-            const user = users[i];
+        for (let i = 0; i < gatedUsers.length; i++) {
+            const user = gatedUsers[i];
 
             try {
                 // Calculate delay: spread evenly over 1 hour
@@ -1098,10 +1125,10 @@ export async function runGenerateDailyAstroInsights() {
             date: today,
             enqueued,
             enqueueFailed,
-            total: users.length,
+            total: gatedUsers.length,
         });
 
-        return { success: true, enqueued, enqueueFailed, total: users.length };
+        return { success: true, enqueued, enqueueFailed, total: gatedUsers.length };
     } catch (error) {
         logger.error("Daily insights enqueue failed", {
             structuredData: true,

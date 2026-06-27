@@ -11,6 +11,7 @@ import { resolveActiveDasha } from "../lib/astro_helpers.js";
 import { calculateAshtakavarga } from "../lib/vedic_analysis.js";
 import { persistMetrics } from "./ai_telemetry.js";
 import { streamFromGemini } from "./ai_gemini.js";
+import { getChatSystemPrompt } from "./prompts/chat.js";
 
 // =============================================================================
 // CONFIGURATION
@@ -123,6 +124,12 @@ async function fetchUserContext(uid) {
     // Start with all astrologyData fields (sunSign, moonSign, ascendant, nakshatra,
     // birthChartData, processedPlanets, currentDasha, doshas, yogas, etc.)
     const context = { ...astroData };
+
+    // The user's actual name. Without this the prompt has no authoritative name,
+    // so the model would invent one or pull a stale one from durable memory
+    // (the "wrong name" bug). null when unknown — the prompt then forbids guessing.
+    context.userName =
+        userData.name || userData.displayName || userData.nickname || null;
 
     // The stored currentDasha pointer is a snapshot frozen at signup and never
     // advances — so its antardasha can already be in the past, which made the
@@ -251,7 +258,7 @@ export const aiChat = onRequest(
                 lastMessageLength: messages[messages.length - 1]?.content?.length || 0,
             });
 
-            if (messages.length === 0) {
+            if (messages.length === 0 && body.promptOnly !== true) {
                 res.set("Access-Control-Allow-Origin", "*");
                 return res.status(400).json({ error: "No messages provided" });
             }
@@ -325,6 +332,27 @@ export const aiChat = onRequest(
                     hasDailyInsight: !!astrologyContext.dailyInsight,
                     hasAyurveda: !!astrologyContext.ayurveda,
                     hasTodayTransits: !!astrologyContext.todayTransits,
+                });
+            }
+
+            // ── Voice relay: prompt-only mode ───────────────────────────────
+            // The Gemini Live API voice path needs the SAME assembled persona +
+            // chart/ayurveda/memory context the text brain uses, but as a one-shot
+            // systemInstruction (the Live model itself does STT + brain + TTS).
+            // Return it as JSON and skip the chat stream entirely. This reuses the
+            // whole auth + context-fetch path above with zero new Cloud Functions.
+            if (body.promptOnly === true) {
+                const systemPrompt = getChatSystemPrompt(
+                    astrologyContext, userLocation, /* isVoice */ true);
+                logger.info("Voice prompt-only request served", {
+                    structuredData: true, chatId, contextSource,
+                    promptChars: systemPrompt.length,
+                });
+                res.set("Access-Control-Allow-Origin", "*");
+                return res.status(200).json({
+                    systemPrompt,
+                    userName: astrologyContext?.userName || null,
+                    contextSource,
                 });
             }
 

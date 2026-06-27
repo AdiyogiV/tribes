@@ -17,7 +17,7 @@ import { HttpsError } from "firebase-functions/v2/https";
 import { getFunctions } from "firebase-admin/functions";
 import { DateTime } from "luxon";
 import { db, logger } from "../../lib/firebase.js";
-import { requireAuth } from "../../lib/auth_utils.js";
+import { requireAuth, getRecentlyActiveUids } from "../../lib/auth_utils.js";
 import { runFlavor } from "../engine/insight_engine.js";
 import {
     perHouseFlavor,
@@ -69,10 +69,24 @@ export async function runEnqueuePerHouseReadings() {
         const queue = getFunctions().taskQueue(QUEUE_NAME);
         const candidates = [];
 
+        // Activity gate: skip users who haven't opened the app recently, so we
+        // don't pay Vertex to regenerate per-house readings for dormant
+        // accounts when their cycle happens to expire. PER_HOUSE_ACTIVE_DAYS=0
+        // disables the gate.
+        const activeDays = parseInt(process.env.PER_HOUSE_ACTIVE_DAYS || "14", 10);
+        const activeUids = activeDays > 0 ?
+            await getRecentlyActiveUids(activeDays) :
+            null;
+        let skippedDormant = 0;
+
         usersSnap.forEach((doc) => {
             scanned++;
             if (TEST_UID_ALLOWLIST.length && !TEST_UID_ALLOWLIST.includes(doc.id)) {
                 return; // not in test allowlist, silently skip
+            }
+            if (activeUids && !activeUids.has(doc.id)) {
+                skippedDormant++;
+                return; // dormant account, skip regeneration
             }
             const astro = doc.data().astrologyData;
             if (!astro?.ascendant && !astro?.lagna) {
@@ -128,11 +142,12 @@ export async function runEnqueuePerHouseReadings() {
             enqueued,
             skippedFresh,
             skippedNoData,
+            skippedDormant,
             enqueueFailed,
             cycleDays: PER_HOUSE_CYCLE_DAYS,
         });
 
-        return { scanned, enqueued, skippedFresh, skippedNoData, enqueueFailed };
+        return { scanned, enqueued, skippedFresh, skippedNoData, skippedDormant, enqueueFailed };
     } catch (error) {
         logger.error("❌ Per-house enqueue failed", {
             structuredData: true,

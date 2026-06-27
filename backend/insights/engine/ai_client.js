@@ -163,7 +163,15 @@ export async function callGemini(opts) {
     const vertexAI = getVertexAI();
     const modelConfig = {
         model,
-        generationConfig: { temperature, maxOutputTokens },
+        generationConfig: {
+            temperature,
+            maxOutputTokens,
+            // Thinking OFF. Gemini 2.5 Flash bills thinking tokens at the output
+            // rate; for these structured batch generations the prompt already
+            // does the reasoning, so thinking was pure wasted spend. Single
+            // biggest lever on the nightly Vertex bill.
+            thinkingConfig: { thinkingBudget: 0 },
+        },
     };
     if (googleSearch) {
         modelConfig.tools = [{ googleSearch: {} }];
