@@ -675,16 +675,6 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
       child: wheel,
     );
 
-    // Hairline divider so the wheel + vibe read as one unit, not two stuck
-    // together.
-    final divider = Divider(
-      height: 1,
-      thickness: 1,
-      indent: AppDimensions.paddingLg,
-      endIndent: AppDimensions.paddingLg,
-      color: c.withValues(alpha: 0.08),
-    );
-
     // Wheel + Daily Vibe share ONE Material card. [wheelFirst] flips which
     // sits on top. The wheel's OverlayPortal still paints its magnified
     // visual above this card regardless of child order.
@@ -696,8 +686,8 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: widget.wheelFirst
-            ? [wheelContent, divider, vibeContent]
-            : [vibeContent, divider, wheelContent],
+            ? [wheelContent, vibeContent]
+            : [vibeContent, wheelContent],
       ),
       // Mood check-in + Week forecast have been extracted to standalone
       // NakshatraMoodCheckInCard / NakshatraWeekForecastCard widgets and
