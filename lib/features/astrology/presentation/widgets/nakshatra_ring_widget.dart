@@ -661,52 +661,60 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
     final cardColor =
         isDark ? Theme.of(context).colorScheme.surface : Colors.white;
 
-    final vibeCard = _buildDailyVibeCard(c, isDark, cardColor);
+    final vibeContent = _buildDailyVibeContent(c, isDark, cardColor);
     final wheel = _buildWheel(c, isDark);
-    const gap = SizedBox(height: AppDimensions.spacingMd);
 
-    // Wrap the wheel in a Material card that matches the other dashboard
-    // cards (elevation 2, rounded corners, surface color). The wheel's
-    // OverlayPortal renders the actual wheel visual ABOVE this card so the
-    // magnified wheel still spills over the card edges and adjacent
-    // siblings — the card just frames the wheel's at-rest layout slot.
-    final wheelCard = Material(
+    // The wheel's at-rest layout slot. Its OverlayPortal renders the actual
+    // (and magnified) wheel visual ABOVE this card, so the wheel still spills
+    // over the card edges and adjacent siblings — this just frames the slot.
+    final wheelContent = Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.paddingMd,
+        vertical: AppDimensions.paddingLg,
+      ),
+      child: wheel,
+    );
+
+    // Hairline divider so the wheel + vibe read as one unit, not two stuck
+    // together.
+    final divider = Divider(
+      height: 1,
+      thickness: 1,
+      indent: AppDimensions.paddingLg,
+      endIndent: AppDimensions.paddingLg,
+      color: c.withValues(alpha: 0.08),
+    );
+
+    // Wheel + Daily Vibe share ONE Material card. [wheelFirst] flips which
+    // sits on top. The wheel's OverlayPortal still paints its magnified
+    // visual above this card regardless of child order.
+    return Material(
       color: cardColor,
       elevation: 2,
       shadowColor: Colors.black.withValues(alpha: 0.2),
       borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppDimensions.paddingMd,
-          vertical: AppDimensions.paddingLg,
-        ),
-        child: wheel,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: widget.wheelFirst
+            ? [wheelContent, divider, vibeContent]
+            : [vibeContent, divider, wheelContent],
       ),
-    );
-
-    // Wheel uses OverlayPortal internally so its magnified visual always
-    // paints above the vibeCard (and external siblings) regardless of
-    // sibling paint order in this Column.
-    return Column(
-      children: widget.wheelFirst
-          ? [wheelCard, gap, vibeCard]
-          : [vibeCard, gap, wheelCard],
       // Mood check-in + Week forecast have been extracted to standalone
       // NakshatraMoodCheckInCard / NakshatraWeekForecastCard widgets and
-      // placed at the bottom of HolyCowCosmicContent so they are independent
+      // placed at the bottom of the dashboard so they are independent
       // cards on the page — not buried inside the wheel widget.
     );
   }
 
-  // ─── Daily Vibe card ───────────────────────────────────────────────────
+  // ─── Daily Vibe ─────────────────────────────────────────────────────────
   //
-  // Plain-English guidance derived from today's Tara Bala.
-  // Styled to match the other dashboard cards (Material, flat, text-focused).
+  // Plain-English guidance derived from today's Tara Bala. Returns content
+  // only (no Material) — it now shares the wheel's card. See build().
 
-  Widget _buildDailyVibeCard(Color c, bool isDark, Color cardColor) {
+  Widget _buildDailyVibeContent(Color c, bool isDark, Color cardColor) {
     // No birth data yet → invite the user to set it up.
     if (_birthIndex < 0) {
-      return _buildVibeEmptyState(c, isDark, cardColor);
+      return _buildVibeEmptyContent(c, isDark, cardColor);
     }
 
     // The vibe is driven by whatever's at the bottom of the wheel — so
@@ -717,7 +725,7 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
       birthIndex: _birthIndex,
       todayIndex: activeIdx,
     );
-    if (vibe == null) return _buildVibeEmptyState(c, isDark, cardColor);
+    if (vibe == null) return _buildVibeEmptyContent(c, isDark, cardColor);
 
     final tara = TaraBala.calculate(_birthIndex, activeIdx);
     final activeInfo = NakshatraData.getInfo(activeIdx);
@@ -735,98 +743,82 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
       isJanmaActive ? 'Janma Day' : tara.name,
     ].join(' · ');
 
-    return Material(
-      color: cardColor,
-      elevation: 2,
-      shadowColor: Colors.black.withValues(alpha: 0.2),
-      borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(AppDimensions.paddingLg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Vibe label
-            Text(
-              vibe.label,
-              style: TextStyle(
-                fontSize: AppTheme.holyCowTextSize + 4,
-                fontWeight: FontWeight.w700,
-                color: c,
-              ),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppDimensions.paddingLg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Vibe label
+          Text(
+            vibe.label,
+            style: TextStyle(
+              fontSize: AppTheme.holyCowTextSize + 4,
+              fontWeight: FontWeight.w700,
+              color: c,
             ),
-            const SizedBox(height: AppDimensions.spacingXs),
+          ),
+          const SizedBox(height: AppDimensions.spacingXs),
 
-            // Nakshatra · Tara subtitle
-            Text(
-              subtitle,
-              style: TextStyle(
-                fontSize: AppTheme.holyCowTextSize - 1,
-                fontWeight: FontWeight.w500,
-                color: c.withValues(alpha: 0.5),
-              ),
+          // Nakshatra · Tara subtitle
+          Text(
+            subtitle,
+            style: TextStyle(
+              fontSize: AppTheme.holyCowTextSize - 1,
+              fontWeight: FontWeight.w500,
+              color: c.withValues(alpha: 0.5),
             ),
-            const SizedBox(height: AppDimensions.spacingMd),
+          ),
+          const SizedBox(height: AppDimensions.spacingMd),
 
-            // Narrative
-            Text(
-              narrativeText,
-              maxLines: 4,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: AppTheme.holyCowTextSize,
-                fontWeight: FontWeight.w400,
-                color: c.withValues(alpha: 0.75),
-                height: 1.5,
-              ),
+          // Narrative
+          Text(
+            narrativeText,
+            maxLines: 4,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: AppTheme.holyCowTextSize,
+              fontWeight: FontWeight.w400,
+              color: c.withValues(alpha: 0.75),
+              height: 1.5,
             ),
-            const SizedBox(height: AppDimensions.spacingXs),
-          ],
-        ),
+          ),
+          const SizedBox(height: AppDimensions.spacingXs),
+        ],
       ),
     );
   }
 
-  /// Empty-state card shown when birth nakshatra isn't available.
-  Widget _buildVibeEmptyState(Color c, bool isDark, Color cardColor) {
+  /// Empty-state content shown when birth nakshatra isn't available.
+  /// Content only (no Material) — shares the wheel's card. See build().
+  Widget _buildVibeEmptyContent(Color c, bool isDark, Color cardColor) {
     final todayInfo = NakshatraData.getInfo(_todayIndex);
-    return Material(
-      color: cardColor,
-      elevation: 2,
-      shadowColor: Colors.black.withValues(alpha: 0.15),
-      borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(AppDimensions.paddingLg),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-          border: Border.all(
-            color: c.withValues(alpha: 0.15),
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Text('☽', style: TextStyle(fontSize: 24)),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    todayInfo != null
-                        ? 'Today\'s Moon is in ${todayInfo.name}'
-                        : 'Today\'s Sky',
-                    style: TextStyle(
-                      fontSize: AppTheme.holyCowTextSize + 2,
-                      fontWeight: FontWeight.w700,
-                      color: c,
-                    ),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppDimensions.paddingLg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text('\u263D', style: TextStyle(fontSize: 24)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  todayInfo != null
+                      ? 'Today\'s Moon is in ${todayInfo.name}'
+                      : 'Today\'s Sky',
+                  style: TextStyle(
+                    fontSize: AppTheme.holyCowTextSize + 2,
+                    fontWeight: FontWeight.w700,
+                    color: c,
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: AppDimensions.spacingSm),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.spacingSm),
             Text(
               'Add your birth date & time to unlock a personalised daily '
               'energy reading — how today\'s sky interacts with your birth star.',
@@ -838,8 +830,7 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 
   /// Opens a bottom sheet that demystifies the vibe — shows the
