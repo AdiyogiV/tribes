@@ -21,6 +21,7 @@ import 'package:aurogram/features/ayurveda/presentation/widgets/dosha_dashboard_
 import 'package:aurogram/shared/services/widget_data_service.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/nakshatra_ring_widget.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
+import 'package:aurogram/features/astrology/presentation/pages/holycow/widgets/holycow_panchang_resolver.dart';
 import 'package:aurogram/features/astrology/presentation/pages/holycow/widgets/holycow_muhurat_placeholder.dart';
 import 'package:aurogram/features/astrology/presentation/pages/holycow/widgets/holycow_desktop_today_strip.dart';
 import 'package:aurogram/features/astrology/presentation/pages/holycow/widgets/holycow_signin_cta_banner.dart';
@@ -93,66 +94,20 @@ class HolyCowCosmicContent extends StatelessWidget {
 
     final todayPanchang = skyService.getTodayPanchang();
 
-    // Merged samvat/panchang for the nakshatra ring's tithi strip.
-    // Priority: todaySamvat (richest tithi data) → insightPanchang → globalPanchang.
-    // Computed here (not inside the Builder closure) so it can be passed to
-    // NakshatraRingWidget without restructuring the Builder tree.
-    final todaySamvatRaw = insight?.astrologicalData?['todaySamvat'];
-    final todaySamvatMap = todaySamvatRaw is Map
-        ? Map<String, dynamic>.from(todaySamvatRaw)
-        : null;
-    final insightPanchangRaw = insight?.astrologicalData?['panchang'];
-    final insightPanchangMap = insightPanchangRaw is Map
-        ? Map<String, dynamic>.from(insightPanchangRaw)
-        : null;
-    final mergedSamvat = <String, dynamic>{};
-    if (todaySamvatMap != null) mergedSamvat.addAll(todaySamvatMap);
-    if (insightPanchangMap != null) {
-      insightPanchangMap.forEach((k, v) { if (v != null) mergedSamvat[k] = v; });
-    }
-    if (todayPanchang != null) {
-      todayPanchang.forEach((k, v) { if (v != null) mergedSamvat[k] = v; });
-    }
-    final nakshatraSamvat = mergedSamvat.isNotEmpty ? mergedSamvat : null;
+    // Single source of truth for the panchang merge + nakshatra precedence
+    // chain (shared with the wheel builder via HolyCowPanchangResolver).
+    final panchang = HolyCowPanchangResolver.resolve(
+      insight: insight,
+      skyService: skyService,
+      calendarService: calendarService,
+    );
+    final nakshatraSamvat = panchang.nakshatraSamvat;
+    final todayNakshatra = panchang.todayNakshatra;
 
     // Push the fully-merged samvat to native home screen widgets.
     // This is the most complete data source (insight + panchang + samvat).
     if (nakshatraSamvat != null) {
       WidgetDataService.instance.updateWidgetData(nakshatraSamvat);
-    }
-
-    // Resolve today's nakshatra at the parent level so the desktop strip can
-    // render the NAKSHATRA cell for signed-out users.  We follow the exact
-    // same precedence chain the wheel widget uses (insight panchang first,
-    // global panchang second) — that path is known to succeed where the
-    // strip's prior fallback (todayPanchang/samvat keys only) failed.
-    String? todayNakshatra;
-    final panchangRawForStrip = insight?.astrologicalData?['panchang'];
-    if (panchangRawForStrip is Map) {
-      todayNakshatra = _extractNakshatraName(panchangRawForStrip['nakshatra']);
-    }
-    if (todayNakshatra == null || todayNakshatra.isEmpty) {
-      if (todayPanchang != null) {
-        todayNakshatra = _extractNakshatraName(todayPanchang['nakshatra']);
-      }
-    }
-    // Last-ditch fallback: walk the merged samvat for any nakshatra-shaped key.
-    if (todayNakshatra == null || todayNakshatra.isEmpty) {
-      for (final key in const [
-        'nakshatra',
-        'nakshatra_name',
-        'moonNakshatra',
-      ]) {
-        final extracted = _extractNakshatraName(mergedSamvat[key]);
-        if (extracted != null && extracted.isNotEmpty) {
-          todayNakshatra = extracted;
-          break;
-        }
-      }
-    }
-    // Derive from Moon longitude — works for all users, no auth needed.
-    if (todayNakshatra == null || todayNakshatra.isEmpty) {
-      todayNakshatra = calendarService?.getDay(DateTime.now())?.nakshatraName;
     }
 
     // Check actual renderable content, not just map keys — the card
@@ -418,51 +373,15 @@ class HolyCowCosmicContent extends StatelessWidget {
   /// wheel renders ABOVE the Daily Vibe card (wheel is the visual hero).
   Widget _buildWheelWidget({bool wheelFirst = false}) {
     return Builder(builder: (context) {
-      // Re-resolve samvat / panchang inside this builder so the wheel
-      // sees the freshest data on rebuilds.
-      final insightTransits =
-          insight?.astrologicalData?['transits'] as Map<String, dynamic>?;
-      final _ = insightTransits; // suppress unused-local lint
-      final todaySamvatRaw = insight?.astrologicalData?['todaySamvat'];
-      final todaySamvatMap = todaySamvatRaw is Map
-          ? Map<String, dynamic>.from(todaySamvatRaw)
-          : null;
-      final insightPanchangRaw = insight?.astrologicalData?['panchang'];
-      final insightPanchangMap = insightPanchangRaw is Map
-          ? Map<String, dynamic>.from(insightPanchangRaw)
-          : null;
-      final mergedSamvat = <String, dynamic>{};
-      if (todaySamvatMap != null) mergedSamvat.addAll(todaySamvatMap);
-      if (insightPanchangMap != null) {
-        insightPanchangMap.forEach((k, v) {
-          if (v != null) mergedSamvat[k] = v;
-        });
-      }
-      final tp = skyService.getTodayPanchang();
-      if (tp != null) {
-        tp.forEach((k, v) {
-          if (v != null) mergedSamvat[k] = v;
-        });
-      }
-      final nakshatraSamvat = mergedSamvat.isNotEmpty ? mergedSamvat : null;
-
-      String? todayNakshatra;
-      final panchangRaw = insight?.astrologicalData?['panchang'];
-      if (panchangRaw is Map) {
-        todayNakshatra = _extractNakshatraName(panchangRaw['nakshatra']);
-      }
-      if (todayNakshatra == null || todayNakshatra.isEmpty) {
-        final globalP = skyService.getTodayPanchang();
-        if (globalP != null) {
-          todayNakshatra = _extractNakshatraName(globalP['nakshatra']);
-        }
-      }
-      // Fallback: derive from Moon longitude in the astro calendar.
-      // This works for all users (no auth needed) and is the same
-      // source the date card uses via CalendarDay.effectiveNakshatraIndex.
-      if (todayNakshatra == null || todayNakshatra.isEmpty) {
-        todayNakshatra = calendarService?.getDay(DateTime.now())?.nakshatraName;
-      }
+      // Re-resolve panchang inside this builder so the wheel sees the
+      // freshest data on rebuilds. Same resolver as build() — one source.
+      final panchang = HolyCowPanchangResolver.resolve(
+        insight: insight,
+        skyService: skyService,
+        calendarService: calendarService,
+      );
+      final nakshatraSamvat = panchang.nakshatraSamvat;
+      final todayNakshatra = panchang.todayNakshatra;
       final birthNakshatra = profile?.moonNakshatra ?? profile?.nakshatra;
       final lagnaNakshatra = profile?.lagnaNakshatra;
       return NakshatraRingWidget(
@@ -713,20 +632,6 @@ class HolyCowCosmicContent extends StatelessWidget {
 
               const SizedBox(height: AppDimensions.spacingSection),
     ];
-  }
-
-  /// Extract a nakshatra name from panchang data which may be a plain
-  /// String or a Map with a 'name' key.
-  static String? _extractNakshatraName(dynamic value) {
-    if (value == null) return null;
-    if (value is String && value.isNotEmpty) return value;
-    if (value is Map) {
-      return value['name']?.toString() ??
-          value['nakshatra']?.toString() ??
-          value.values.firstOrNull?.toString();
-    }
-    final s = value.toString();
-    return s.isNotEmpty ? s : null;
   }
 
   /// Build and show the per-house current-state popup for a tap on the
