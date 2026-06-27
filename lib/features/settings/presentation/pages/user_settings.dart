@@ -19,6 +19,9 @@ import 'package:aurogram/shared/presentation/widgets/universal/transparent_toolb
 import 'package:aurogram/features/anonymous_messages/anonymous_message_settings_service.dart';
 import 'package:aurogram/features/settings/presentation/widgets/settings_dialogs.dart';
 import 'package:aurogram/features/settings/presentation/widgets/settings_tiles.dart';
+import 'package:aurogram/features/ai_chat/voice/voice_engine_pref.dart';
+import 'package:aurogram/features/ai_chat/voice/voice_mic_mode_pref.dart';
+import 'package:aurogram/features/ai_chat/domain/aryabhatt_memory_service.dart';
 
 // Re-export sub-widgets so existing imports continue to work
 export 'package:aurogram/features/settings/presentation/widgets/settings_exports.dart';
@@ -39,12 +42,50 @@ class UserSettingsPageState extends State<UserSettingsPage> {
   bool _isLoadingPrivacy = true;
   bool _isAnonymousMessagesEnabled = true; // ignore: unused_field
   bool _isLoadingAnonymousMessages = true; // ignore: unused_field
+  // Voice engine: true = Live (premium, Vertex — best voice), false = CX
+  // (Dialogflow CX, paid by trial credits = free to us).
+  bool _useLiveVoice = true;
+  // Mic behaviour: true = wait your turn (half-duplex, mic muted while Aryabhatt
+  // speaks), false = open mic (full-duplex, talk over him to interrupt).
+  bool _waitTurnMic = true;
+  // Aryabhatt durable-memory "forget me" control.
+  final AryabhattMemoryService _memory = AryabhattMemoryService();
+  bool _clearingMemory = false;
 
   @override
   void initState() {
     super.initState();
     _loadPrivacySetting();
     _loadAnonymousMessagesSetting();
+    _loadVoiceEngineSetting();
+    _loadVoiceMicModeSetting();
+  }
+
+  Future<void> _loadVoiceEngineSetting() async {
+    final engine = await VoiceEnginePref.read();
+    if (mounted) {
+      setState(() => _useLiveVoice = engine == VoiceEngine.live);
+    }
+  }
+
+  Future<void> _toggleVoiceEngine(bool useLive) async {
+    if (!kIsWeb) HapticFeedback.lightImpact();
+    setState(() => _useLiveVoice = useLive);
+    await VoiceEnginePref.set(useLive ? VoiceEngine.live : VoiceEngine.cx);
+  }
+
+  Future<void> _loadVoiceMicModeSetting() async {
+    final mode = await VoiceMicModePref.read();
+    if (mounted) {
+      setState(() => _waitTurnMic = mode == VoiceMicMode.waitTurn);
+    }
+  }
+
+  Future<void> _toggleVoiceMicMode(bool waitTurn) async {
+    if (!kIsWeb) HapticFeedback.lightImpact();
+    setState(() => _waitTurnMic = waitTurn);
+    await VoiceMicModePref.set(
+        waitTurn ? VoiceMicMode.waitTurn : VoiceMicMode.openMic);
   }
 
   Future<void> _loadPrivacySetting() async {
@@ -221,6 +262,21 @@ class UserSettingsPageState extends State<UserSettingsPage> {
                             ),
                             SizedBox(height: sectionSpacing),
 
+                            // Aryabhatt Section - Only for logged in users
+                            // (voice + memory both require auth). Groups every
+                            // Aryabhatt control in one home.
+                            if (isLoggedIn) ...[
+                              _buildSectionHeader(
+                                  context, 'Aryabhatt', isDesktop),
+                              SizedBox(height: isDesktop ? 12 : 8),
+                              _buildVoiceEngineToggle(context, isDesktop),
+                              const SizedBox(height: AppDimensions.spacingMd),
+                              _buildVoiceMicModeToggle(context, isDesktop),
+                              const SizedBox(height: AppDimensions.spacingMd),
+                              _buildClearMemoryTile(context, isDesktop),
+                              SizedBox(height: sectionSpacing),
+                            ],
+
                             // Privacy Section - Only for logged in users
                             if (isLoggedIn) ...[
                               _buildSectionHeader(
@@ -339,6 +395,109 @@ class UserSettingsPageState extends State<UserSettingsPage> {
         ),
       ),
     );
+  }
+
+  Widget _buildVoiceEngineToggle(BuildContext context, bool isDesktop) {
+    final primaryColor = AppTheme.primaryColor;
+    return SettingsTiles.buildToggleCard(
+      context: context,
+      isDesktop: isDesktop,
+      icon: _useLiveVoice
+          ? Icons.auto_awesome_rounded
+          : Icons.record_voice_over_rounded,
+      iconColor: primaryColor,
+      title: _useLiveVoice ? 'Premium Voice (Live)' : 'Standard Voice',
+      subtitle: _useLiveVoice
+          ? 'Most natural voice & instant barge-in'
+          : 'Lighter voice — kinder on resources',
+      value: _useLiveVoice,
+      onChanged: _toggleVoiceEngine,
+    );
+  }
+
+  Widget _buildVoiceMicModeToggle(BuildContext context, bool isDesktop) {
+    final primaryColor = AppTheme.primaryColor;
+    return SettingsTiles.buildToggleCard(
+      context: context,
+      isDesktop: isDesktop,
+      icon: _waitTurnMic
+          ? Icons.hearing_rounded
+          : Icons.mic_rounded,
+      iconColor: primaryColor,
+      title: _waitTurnMic ? 'Wait your turn' : 'Always listening',
+      subtitle: _waitTurnMic
+          ? 'Mic listens only after Aryabhatt finishes — no echo'
+          : 'Talk over him any time to interrupt',
+      value: _waitTurnMic,
+      onChanged: _toggleVoiceMicMode,
+    );
+  }
+
+  Widget _buildClearMemoryTile(BuildContext context, bool isDesktop) {
+    return SettingsTiles.buildSettingsTile(
+      context: context,
+      icon: Icons.psychology_alt_outlined,
+      iconColor: AppTheme.honeyAmber,
+      title: 'Clear memory',
+      subtitle: _clearingMemory
+          ? 'Clearing\u2026'
+          : 'Make Aryabhatt forget what he knows about you',
+      isDesktop: isDesktop,
+      onTap: _clearingMemory ? () {} : _confirmAndClearMemory,
+    );
+  }
+
+  Future<void> _confirmAndClearMemory() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Clear memory?'),
+        content: const Text(
+          'Aryabhatt will forget everything he remembers about you from past '
+          'chats \u2014 your ongoing concerns, goals, and life details. Your '
+          'conversations stay; only the long-term memory is wiped.\n\n'
+          'This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
+            child: const Text('Clear memory'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _clearingMemory = true);
+    try {
+      await _memory.clearMemory();
+      if (!mounted) return;
+      _showMemoryToast("Aryabhatt's memory has been cleared.");
+    } catch (_) {
+      if (!mounted) return;
+      _showMemoryToast("Couldn't clear memory. Please try again.",
+          error: true);
+    } finally {
+      if (mounted) setState(() => _clearingMemory = false);
+    }
+  }
+
+  void _showMemoryToast(String message, {bool error = false}) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: error ? Colors.redAccent.shade700 : null,
+        ),
+      );
   }
 
   Widget _buildThemeToggleTile(BuildContext context, bool isDesktop) {

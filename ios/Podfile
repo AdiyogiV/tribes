@@ -48,6 +48,12 @@ target 'Runner' do
   #
   pod 'AgoraRtcEngine_iOS', '~> 4.5.0', :subspecs => ['RtcBasic']
 
+  # gRPC 1.69 does not ship the module map CocoaPods expects when the
+  # project-wide modular headers setting is applied.
+  pod 'gRPC-Core', :modular_headers => false
+  pod 'gRPC-C++', :modular_headers => false
+  pod 'BoringSSL-GRPC', :modular_headers => false
+
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
   
   target 'RunnerTests' do

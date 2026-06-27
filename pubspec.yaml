@@ -140,7 +140,6 @@ flutter:
     - assets/images/
     - assets/icons/
     - assets/animations/
-    - assets/audio/
 
   # Deferred components for faster initial load (disabled due to Android build issues)
   # deferred-components:
