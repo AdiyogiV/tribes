@@ -1,27 +1,19 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
-import 'package:aurogram/core/routing/route_names.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/timeline/muhurat_timeline_widget.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cards/cosmic_date_time_card.dart';
-import 'package:aurogram/features/astrology/presentation/widgets/cards/upcoming_events_card.dart';
-import 'package:aurogram/features/astrology/presentation/widgets/cards/your_chart_mini_card.dart';
-import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/widgets/cosmic_sky_chart_card.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/cosmic_dashboard_data.dart';
-import 'package:aurogram/features/astrology/presentation/widgets/dialogs/house_details_dialog.dart';
-import 'package:aurogram/features/astrology/data/utils/chart_utils.dart';
 import 'package:aurogram/shared/models/astrology_profile.dart';
 import 'package:aurogram/shared/models/daily_insight.dart';
 import 'package:aurogram/shared/models/ayurveda_profile.dart';
 import 'package:aurogram/features/astrology/domain/sky_positions_service.dart';
 import 'package:aurogram/features/astrology/domain/astro_calendar_service.dart';
-import 'package:aurogram/features/ayurveda/presentation/widgets/dosha_dashboard_card.dart';
 import 'package:aurogram/shared/services/widget_data_service.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/nakshatra_ring_widget.dart';
-import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/features/astrology/presentation/pages/holycow/widgets/holycow_panchang_resolver.dart';
+import 'package:aurogram/features/astrology/presentation/pages/holycow/widgets/holycow_secondary_cards.dart';
 import 'package:aurogram/features/astrology/presentation/pages/holycow/widgets/holycow_muhurat_placeholder.dart';
 import 'package:aurogram/features/astrology/presentation/pages/holycow/widgets/holycow_desktop_today_strip.dart';
 import 'package:aurogram/features/astrology/presentation/pages/holycow/widgets/holycow_signin_cta_banner.dart';
@@ -88,10 +80,6 @@ class HolyCowCosmicContent extends StatelessWidget {
     final brown = AppTheme.primaryColor;
     final bottomInset = MediaQuery.of(context).padding.bottom;
 
-    // Fallback positions from insight transits (used when sky cache misses)
-    final insightTransits =
-        insight?.astrologicalData?['transits'] as Map<String, dynamic>?;
-
     final todayPanchang = skyService.getTodayPanchang();
 
     // Single source of truth for the panchang merge + nakshatra precedence
@@ -110,14 +98,6 @@ class HolyCowCosmicContent extends StatelessWidget {
       WidgetDataService.instance.updateWidgetData(nakshatraSamvat);
     }
 
-    // Check actual renderable content, not just map keys — the card
-    // itself returns SizedBox.shrink() when extracted values are empty,
-    // so the surrounding spread must match to avoid phantom spacing.
-    final hasPanchang = todayPanchang != null &&
-        todayPanchang.isNotEmpty &&
-        (todayPanchang['nakshatra'] != null ||
-            todayPanchang['yoga'] != null ||
-            todayPanchang['karana'] != null);
     final cardColor = isDark ? const Color(0xFF1A1A1C) : Colors.white;
 
     // ──────────────────────────────────────────────────────────────────────
@@ -260,16 +240,25 @@ class HolyCowCosmicContent extends StatelessWidget {
         // On mobile the wheel + text-insight combo is injected directly
         // BELOW the Current Sky card. On desktop the wheel lives in its own
         // left column, so we don't inject it into the secondary list.
-        final secondaryCards = _secondaryCards(
-          context: context,
-          isDark: isDark,
-          brown: brown,
-          cardColor: cardColor,
-          insightTransits: insightTransits,
-          todayPanchang: todayPanchang,
-          hasPanchang: hasPanchang,
+        final secondaryCards = HolyCowSecondaryCards(
+          profile: profile,
+          insight: insight,
+          ayurvedaProfile: ayurvedaProfile,
+          loadingState: loadingState,
+          skyService: skyService,
+          calendarService: calendarService,
+          sliderValueNotifier: sliderValueNotifier,
+          sliderDateNotifier: sliderDateNotifier,
+          showTransitOverlay: showTransitOverlay,
+          chartBlendValue: chartBlendValue,
+          onSliderChanged: onSliderChanged,
+          onResetToToday: onResetToToday,
+          onToggleTransitOverlay: onToggleTransitOverlay,
+          onBlendValueChanged: onBlendValueChanged,
+          onLoadSkyPositions: onLoadSkyPositions,
+          onTriggerCachePopulation: onTriggerCachePopulation,
+          nakshatraController: nakshatraController,
           spacing: spacing,
-          nakshatraSamvat: nakshatraSamvat,
           insertAfterSkyCard: isWide ? null : wheelWidget,
         );
 
@@ -327,7 +316,7 @@ class HolyCowCosmicContent extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          ...secondaryCards,
+                          secondaryCards,
                           if (desktopInlineCta != null) ...[
                             desktopInlineCta,
                             SizedBox(height: spacing),
@@ -352,7 +341,7 @@ class HolyCowCosmicContent extends StatelessWidget {
                 headerWidget,
                 // Time guidance sits right under the date card.
                 muhuratCard,
-                ...secondaryCards,
+                secondaryCards,
                 if (mobileCtaBanner != null) ...[
                   mobileCtaBanner,
                   SizedBox(height: spacing),
@@ -448,267 +437,6 @@ class HolyCowCosmicContent extends StatelessWidget {
         }
         return const SizedBox.shrink();
       },
-    );
-  }
-
-  List<Widget> _secondaryCards({
-    required BuildContext context,
-    required bool isDark,
-    required Color brown,
-    required Color cardColor,
-    required Map<String, dynamic>? insightTransits,
-    required Map<String, dynamic>? todayPanchang,
-    required bool hasPanchang,
-    required double spacing,
-    required Map<String, dynamic>? nakshatraSamvat,
-    Widget? insertAfterSkyCard,
-  }) {
-    return [
-              // Current Sky with optional Birth Chart overlay
-              if (loadingState.isSkyLoaded) ...[
-                ValueListenableBuilder<double>(
-                  valueListenable: sliderValueNotifier,
-                  builder: (context, sliderValue, _) {
-                    return ValueListenableBuilder<DateTime>(
-                      valueListenable: sliderDateNotifier,
-                      builder: (context, sliderDate, _) {
-                        // Position lookup chain:
-                        // 1. SkyPositionsService (exact, ±30 days)
-                        // 2. AstroCalendarService (compact, ±365 days)
-                        // 3. Insight transits (today only, fallback)
-                        final skyPositions =
-                            skyService.getPositionsForDate(sliderDate);
-                        final today = DateTime.now();
-                        final isSliderToday =
-                            sliderDate.year == today.year &&
-                            sliderDate.month == today.month &&
-                            sliderDate.day == today.day;
-                        Map<String, dynamic>? positions;
-                        if (skyPositions != null && skyPositions.isNotEmpty) {
-                          positions = skyPositions;
-                        } else if (calendarService != null) {
-                          positions = calendarService!.getPositionsForDate(sliderDate);
-                        }
-                        positions ??= isSliderToday ? insightTransits : null;
-
-                        if (positions == null || positions.isEmpty) {
-                          return const SizedBox.shrink();
-                        }
-                        return CosmicSkyChartCard(
-                          currentPositions: positions,
-                          birthChartData: profile?.birthChartData,
-                          isDark: isDark,
-                          sliderValue: sliderValue,
-                          sliderDate: sliderDate,
-                          skyDataLoaded: loadingState.isSkyLoaded,
-                          skyDataLoading: loadingState.isSkyLoading,
-                          showTransitOverlay: showTransitOverlay,
-                          chartBlendValue: chartBlendValue,
-                          onSliderChanged: onSliderChanged,
-                          onResetToToday: onResetToToday,
-                          onToggleTransitOverlay: onToggleTransitOverlay,
-                          onBlendValueChanged: onBlendValueChanged,
-                          onLoadSkyPositions: onLoadSkyPositions,
-                          onTriggerCachePopulation: onTriggerCachePopulation,
-                          getPositionsForDate: (date) {
-                            // Try exact sky positions first, then calendar.
-                            return skyService.getPositionsForDate(date)
-                                ?? calendarService?.getPositionsForDate(date);
-                          },
-                          getInterpolatedPositions: (date) {
-                            // Try interpolated sky positions first, then calendar.
-                            final interp = skyService.getInterpolatedPositions(date);
-                            if (interp != null && interp.isNotEmpty) return interp;
-                            return calendarService?.getPositionsForDate(date);
-                          },
-                          onExploreBirthChart: profile != null
-                              ? () {
-                                  final uid =
-                                      FirebaseAuth.instance.currentUser?.uid ??
-                                          '';
-                                  context.push(
-                                      '${RouteNames.astrologyDetails}/$uid');
-                                }
-                              : null,
-                          onHouseTap: (houseNumber, currentPositions) {
-                            _showSkyHouseDialog(
-                              context,
-                              profile,
-                              houseNumber,
-                              currentPositions,
-                              isDark,
-                            );
-                          },
-                          insightText: insight?.displayMessage,
-                        );
-                      },
-                    );
-                  },
-                ),
-                SizedBox(height: spacing),
-              ],
-
-              // Wheel + text-insight combo — injected directly BELOW the
-              // Current Sky card on mobile. When sky data hasn't loaded the
-              // sky block is skipped and this slots in at the top instead.
-              if (insertAfterSkyCard != null) ...[
-                insertAfterSkyCard,
-                SizedBox(height: spacing),
-              ],
-
-              // (Muhurat / time-guidance card moved out of the secondary list
-              //  to sit directly beneath the date card — see _buildMuhuratCard
-              //  and its placement in build().)
-
-              // Upcoming Planetary Events
-              // The card internally filters to major planets and may
-              // return SizedBox.shrink() — only add spacing when the
-              // card will actually render content.
-              if (loadingState.isEventsLoaded &&
-                  skyService.hasUpcomingEvents &&
-                  skyService.allUpcomingEvents.any((e) =>
-                      const ['Sun', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn']
-                          .contains(e.planet))) ...[
-                UpcomingEventsCard(
-                  brown: brown,
-                  events: skyService.allUpcomingEvents,
-                  maxEvents: 8,
-                ),
-                SizedBox(height: spacing),
-              ],
-
-              // Current Balance (Ayurveda Vikriti) — tappable → Ayurveda Details
-              if (ayurvedaProfile != null &&
-                  ayurvedaProfile!.prakriti != null) ...[
-                GestureDetector(
-                  onTap: () {
-                    final uid =
-                        FirebaseAuth.instance.currentUser?.uid ?? '';
-                    context.push('${RouteNames.ayurvedaDetails}/$uid');
-                  },
-                  child: TodaysBalanceCard(
-                    prakriti: ayurvedaProfile!.prakriti!,
-                    vikriti: ayurvedaProfile!.vikriti,
-                    isCalculating: false,
-                    lastCheckIn: ayurvedaProfile!.lastCheckIn,
-                    isDark: isDark,
-                  ),
-                ),
-                SizedBox(height: spacing),
-              ],
-
-              // Your Birth Stars card (matches profile card style)
-              if (profile != null) ...[
-                YourChartMiniCard(
-                  profile: profile!,
-                  brown: brown,
-                  onTap: () {
-                    final uid =
-                        FirebaseAuth.instance.currentUser?.uid ?? '';
-                    context.push('${RouteNames.astrologyDetails}/$uid');
-                  },
-                ),
-                SizedBox(height: spacing),
-              ],
-
-              // (Current Energy moved into the Daily Vibe hero card at the top
-              // of the page — the NakshatraRingWidget now consumes `insight`
-              // and renders its message inline. The standalone card here would
-              // duplicate that content, so it's been removed.)
-
-              // ── Mood check-in — bottom of page ──────────────────────────────
-              // This lives here, not inside NakshatraRingWidget, so it is an
-              // independent card that can be freely repositioned.
-              // NakshatraMoodCheckInCard collapses when the wheel is not at
-              // today.
-              if (nakshatraController != null) ...[
-                NakshatraMoodCheckInCard(controller: nakshatraController!),
-                SizedBox(height: spacing),
-              ],
-
-              // (Sign-in CTA used to live here — moved out to a full-width
-              // banner below the 2-column row so it doesn't lopside the right
-              // column.  See HolyCowCosmicContent.build → ctaBanner.)
-
-              const SizedBox(height: AppDimensions.spacingSection),
-    ];
-  }
-
-  /// Build and show the per-house current-state popup for a tap on the
-  /// Current Sky chart. Combines transiting planets (from [currentPositions])
-  /// with the user's natal interpretation and the biweekly sky reading
-  /// stored on [profile].
-  void _showSkyHouseDialog(
-    BuildContext context,
-    AstrologyProfile? profile,
-    int houseNumber,
-    Map<String, dynamic> currentPositions,
-    bool isDark,
-  ) {
-    final lagnaSignIndex =
-        ChartUtils.getLagnaSignIndex(profile?.birthChartData);
-
-    // In the sign-fixed Current Sky chart the geometric tap position maps
-    // directly to a zodiac sign (1=Aries, 2=Taurus, …), NOT to the user's
-    // house number.  Convert sign position → actual house number so every
-    // lookup below (natal interpretation, sky reading, planet filter) uses
-    // the correct house.
-    final tappedSignIndex = houseNumber - 1; // 0-based (0=Aries)
-    final actualHouse =
-        ((tappedSignIndex - lagnaSignIndex + 12) % 12) + 1;
-
-    final zodiacSign =
-        HouseSignifications.getSignForHouse(actualHouse, lagnaSignIndex);
-    final signLord = HouseSignifications.getSignLord(zodiacSign);
-
-    // Walk current sky positions and pick those whose sign maps to this house.
-    final planets = <String>[];
-    currentPositions.forEach((planet, data) {
-      if (data is! Map) return;
-      if (planet.toLowerCase() == 'ascendant') return;
-
-      final m = Map<String, dynamic>.from(
-          data.map((k, v) => MapEntry(k.toString(), v)));
-      final sign = (m['sign'] as String?)?.toLowerCase() ?? '';
-      int? signIndex = ChartConstants.signToIndex[sign];
-      if (signIndex == null) {
-        final lon = m['longitude'];
-        if (lon is num) signIndex = (lon / 30).floor() % 12;
-      }
-      if (signIndex == null) return;
-
-      final h = ((signIndex - lagnaSignIndex + 12) % 12) + 1;
-      if (h == actualHouse) planets.add(planet);
-    });
-
-    // Current Sky context — sky reading only, no natal interpretation.
-    SkyHouseReading? skyReading;
-    String? cycleEndDate;
-    final houses = profile?.skyHouseReadings?['houses'];
-    if (houses is Map) {
-      final raw = houses['$actualHouse'] ?? houses[actualHouse];
-      if (raw is Map) {
-        skyReading = SkyHouseReading(
-          headline: (raw['headline'] as String?)?.trim(),
-          reading: (raw['reading'] as String?)?.trim(),
-          focus: (raw['focus'] as String?)?.trim(),
-          watch: (raw['watch'] as String?)?.trim(),
-        );
-      }
-      cycleEndDate = profile?.skyHouseReadings?['cycleEndDate'] as String?;
-    }
-
-    HouseDetailsDialog.show(
-      context,
-      HouseInfo(
-        houseNumber: actualHouse,
-        zodiacSign: zodiacSign,
-        signLord: signLord,
-        planets: planets,
-        skyReading: skyReading,
-        cycleEndDate: cycleEndDate,
-      ),
-      isDark,
     );
   }
 
