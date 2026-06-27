@@ -29,8 +29,8 @@ import 'package:aurogram/features/astrology/presentation/widgets/nakshatra_ring_
 import 'package:aurogram/shared/presentation/widgets/universal/dark_mode_toggle.dart';
 import 'package:aurogram/shared/providers/theme_provider.dart';
 
-class HolyCowPage extends StatefulWidget {
-  const HolyCowPage({
+class DashboardPage extends StatefulWidget {
+  const DashboardPage({
     super.key,
     this.onScrollHidesBottomBar,
   });
@@ -40,10 +40,10 @@ class HolyCowPage extends StatefulWidget {
   final void Function(bool hide)? onScrollHidesBottomBar;
 
   @override
-  HolyCowPageState createState() => HolyCowPageState();
+  DashboardPageState createState() => DashboardPageState();
 }
 
-class HolyCowPageState extends State<HolyCowPage>
+class DashboardPageState extends State<DashboardPage>
     with AutomaticKeepAliveClientMixin, TickerProviderStateMixin {
   @override
   bool get wantKeepAlive => true;

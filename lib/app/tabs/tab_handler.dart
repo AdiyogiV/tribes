@@ -6,7 +6,7 @@ import 'package:aurogram/features/auth/init_user.dart';
 import 'package:aurogram/features/auth/login.dart';
 import 'package:aurogram/features/onboarding/presentation/pages/ftue_welcome.dart';
 import 'package:aurogram/app/tabs/grams.dart';
-import 'package:aurogram/features/astrology/presentation/pages/holycow.dart';
+import 'package:aurogram/features/astrology/presentation/pages/dashboard.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/nakshatra_ring_widget.dart'
     show wheelInteractingNotifier;
 import 'package:aurogram/app/tabs/messages.dart';
@@ -248,7 +248,7 @@ class TabHandlerState extends State<TabHandler>
     Widget tab;
     switch (index) {
       case 0:
-        tab = HolyCowPage(
+        tab = DashboardPage(
           key: const PageStorageKey('holycow_auth'),
           onScrollHidesBottomBar: (hide) =>
               _scrollHidesBottomBarNotifier.value = hide,
@@ -264,7 +264,7 @@ class TabHandlerState extends State<TabHandler>
         tab = UserProfilePage(uid: userId);
         break;
       default:
-        tab = HolyCowPage(
+        tab = DashboardPage(
           key: const PageStorageKey('holycow_auth'),
           onScrollHidesBottomBar: (hide) =>
               _scrollHidesBottomBarNotifier.value = hide,
@@ -288,7 +288,7 @@ class TabHandlerState extends State<TabHandler>
     Widget tab;
     switch (index) {
       case 0:
-        tab = HolyCowPage(
+        tab = DashboardPage(
           key: const PageStorageKey('holycow_unauth'),
           onScrollHidesBottomBar: (hide) =>
               _scrollHidesBottomBarNotifier.value = hide,
@@ -304,7 +304,7 @@ class TabHandlerState extends State<TabHandler>
         tab = const UserSettingsPage(showBackButton: false);
         break;
       default:
-        tab = HolyCowPage(
+        tab = DashboardPage(
           key: const PageStorageKey('holycow_unauth'),
           onScrollHidesBottomBar: (hide) =>
               _scrollHidesBottomBarNotifier.value = hide,
