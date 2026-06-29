@@ -18,7 +18,10 @@ class GlassContainer extends StatelessWidget {
     this.borderRadius = 20,
     this.blurSigma = 3,
     this.baseColor,
+    this.border,
   });
+
+  final Border? border;
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +68,7 @@ class GlassContainer extends StatelessWidget {
                   barBase.withValues(alpha: isDark ? 0.80 : 0.85),
                 ],
               ),
-              border: Border.all(
+              border: border ?? Border.all(
                 color: isDark
                     ? Colors.white.withValues(alpha: 0.10)
                     : barBase.withValues(alpha: 0.32),

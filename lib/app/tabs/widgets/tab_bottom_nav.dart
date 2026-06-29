@@ -61,6 +61,7 @@ indexFromRight * (gap + itemWidth);
           height: 70,
           padding: EdgeInsets.zero,
           baseColor: barBase,
+          border: Border.all(color: Colors.transparent, width: 0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [

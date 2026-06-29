@@ -15,7 +15,7 @@ class AppColors {
   static const Color primaryBrandColor = Color(0xFF5A3D34); // Rich warm brown
   /// Softer golden for dark mode (less bright for comfort)
   static const Color primaryBrandColorDark =
-      Color(0xFFB8925E); // Soft muted gold
+      Color(0xFFFFFFFF); // White (dark-mode primary)
   /// Lighter brown shade
   static const Color primaryLightColor = Color(0xFF8D6E63); // Brown 400
   /// Deep espresso brown
@@ -71,16 +71,17 @@ class AppColors {
   /// Light mode: Light sky blue (from logo sky/clouds)
   static const Color scaffoldLightColor = Color(0xFFE8F4FC);
 
-  /// Dark mode: Deep purple-blue night sky
-  static const Color scaffoldDarkColor = Color(0xFF080C14);
+  /// Dark mode: Dark grey background (not pure black). Cards/surfaces step up
+  /// slightly so elevation reads.
+  static const Color scaffoldDarkColor = Color(0xFF080808);
 
   /// Card backgrounds
   static const Color cardLightColor = Color(0xFFFFFFFF);
-  static const Color cardDarkColor = Color(0xFF121A2A);
+  static const Color cardDarkColor = Color(0xFF141414);
 
   /// Surface colors for elevated elements
   static const Color surfaceLightColor = Color(0xFFF5FAFD);
-  static const Color surfaceDarkColor = Color(0xFF0C1220);
+  static const Color surfaceDarkColor = Color(0xFF0E0E0E);
 
   // ============================================
   // TEXT COLORS

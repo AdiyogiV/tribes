@@ -1,8 +1,9 @@
 import 'dart:async';
+import 'dart:ui';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/app/tabs/widgets/tab_bottom_nav.dart';
 import 'package:aurogram/features/ai_chat/voice/voice_session_controller.dart';
@@ -23,6 +24,53 @@ class HolyCowVoiceCow extends StatefulWidget {
   State<HolyCowVoiceCow> createState() => _HolyCowVoiceCowState();
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Custom Wavy Clipper
+// ─────────────────────────────────────────────────────────────────────────────
+class WavyCircleClipper extends CustomClipper<Path> {
+  final double pulse;
+
+  WavyCircleClipper(this.pulse);
+
+  @override
+  Path getClip(Size size) {
+    final Path path = Path();
+    final double center = size.width / 2;
+    final double radius = size.width / 2;
+    
+    // Idle state has a very subtle organic wobble. 
+    // Active state amplifies the wobble based on the pulse.
+    final double waveIntensity = 0.03 + (pulse * 0.05);
+
+    const int samples = 120;
+    for (int i = 0; i <= samples; i++) {
+      final double t = (i / samples) * 2 * math.pi;
+      
+      // Organic sine/cosine math for a smooth blob shape
+      final double wobble = math.sin(t * 4 + (pulse * math.pi * 2)) * (radius * waveIntensity) + 
+                            math.cos(t * 7 - (pulse * math.pi)) * (radius * waveIntensity * 0.6);
+                            
+      final double r = radius + wobble;
+      final double x = center + r * math.cos(t);
+      final double y = center + r * math.sin(t);
+      
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant WavyCircleClipper oldClipper) {
+    return oldClipper.pulse != pulse;
+  }
+}
+
+
 class _HolyCowVoiceCowState extends State<HolyCowVoiceCow>
     with SingleTickerProviderStateMixin {
   final VoiceSessionController _voice = VoiceSessionController();
@@ -31,8 +79,8 @@ class _HolyCowVoiceCowState extends State<HolyCowVoiceCow>
   /// Last error surfaced via SnackBar, so we don't spam the same one.
   String? _shownError;
 
-  static const double _idleSize = 100.0;
-  static const double _activeSize = 150.0;
+  static const double _idleSize = 70.0;
+  static const double _activeSize = 110.0;
 
   @override
   void initState() {
@@ -115,6 +163,7 @@ class _HolyCowVoiceCowState extends State<HolyCowVoiceCow>
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final tabCenterFromRight = TabBottomNav.itemCenterFromRight(screenWidth, 0);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return AnimatedBuilder(
       animation: Listenable.merge([_voice, _pulse]),
@@ -122,7 +171,7 @@ class _HolyCowVoiceCowState extends State<HolyCowVoiceCow>
         final state = _voice.state;
         final active = _inCall;
         final pulse = active ? _pulse.value : 0.0;
-        final size = (active ? _activeSize : _idleSize) + (pulse * 14);
+        final size = active ? _activeSize : _idleSize;
         final reply = _voice.aryabhattReply;
 
         return Align(
@@ -158,39 +207,63 @@ class _HolyCowVoiceCowState extends State<HolyCowVoiceCow>
                     ),
                   ),
 
-                // The cow itself — grows + glows when talking.
+                // The icon itself — chic, translucent glass.
                 GestureDetector(
                   onTap: _toggle,
                   onLongPress: active ? null : widget.onShowKeyboard,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeOut,
-                    width: size,
-                    height: size,
-                    decoration: active
-                        ? BoxDecoration(
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: (state == VoiceCallState.error
-                                        ? Colors.redAccent
-                                        : AppTheme.primaryColor)
-                                    .withValues(alpha: 0.45),
-                                blurRadius: 28 + (pulse * 24),
-                                spreadRadius: 4 + (pulse * 8),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      if (active)
+                        Transform.scale(
+                          scale: 1.0 + (pulse * 0.4),
+                          child: Container(
+                            width: size,
+                            height: size,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: (state == VoiceCallState.error ? Colors.redAccent : AppTheme.primaryColor)
+                                    .withValues(alpha: (1.0 - pulse).clamp(0.0, 1.0) * 0.5),
+                                width: 1.0,
                               ),
-                            ],
-                          )
-                        : null,
-                    child: Image.asset(
-                      'assets/images/cow1.png',
-                      fit: BoxFit.contain,
-                      errorBuilder: (_, __, ___) => Icon(
-                        Icons.auto_awesome,
-                        color: AppTheme.primaryColor,
-                        size: size * 0.5,
+                            ),
+                          ),
+                        ),
+                      // Wavy clipped glass container
+                      ClipPath(
+                        clipper: WavyCircleClipper(active ? pulse : 0.0),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeOutBack,
+                            width: size,
+                            height: size,
+                            decoration: BoxDecoration(
+                              color: isDark 
+                                  ? Colors.white.withValues(alpha: 0.03) 
+                                  : Colors.black.withValues(alpha: 0.02),
+                            ),
+                            child: Transform.translate(
+                              offset: const Offset(0, 6), // Move slightly down inside the circle
+                              child: Transform.scale(
+                                scale: 1.15, // Zoom slightly to kill any built-in PNG padding
+                                child: Image.asset(
+                                  'assets/images/cow1.png',
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Icon(
+                                    Icons.auto_awesome,
+                                    color: AppTheme.primaryColor,
+                                    size: size * 0.5,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
 

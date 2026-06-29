@@ -76,7 +76,9 @@ class _CosmicDateTimeCardState extends State<CosmicDateTimeCard> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final Color cardColor =
-        isDark ? Theme.of(context).colorScheme.surface : Colors.white;
+        isDark ? const Color(0xFF000000) : Colors.white;
+    final fgMain = isDark ? Colors.white : Colors.black87;
+    final fgMuted = isDark ? Colors.white54 : Colors.black54;
     final c = AppTheme.primaryColor;
     final samvat = widget.samvat;
 
@@ -155,18 +157,16 @@ class _CosmicDateTimeCardState extends State<CosmicDateTimeCard> {
       width: double.infinity,
       child: Material(
         color: cardColor,
-        elevation: 2,
-        shadowColor: Colors.black.withValues(alpha: 0.2),
+        elevation: isDark ? 0 : 2,
+        shadowColor: Colors.black.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
         child: Stack(
           children: [
             // Card content — horizontal: clock left, text right
             Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppDimensions.paddingLg,
-                AppDimensions.paddingMd,
-                AppDimensions.paddingLg,
-                AppDimensions.paddingMd,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.paddingXl,
+                vertical: AppDimensions.paddingXl,
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -177,79 +177,92 @@ class _CosmicDateTimeCardState extends State<CosmicDateTimeCard> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Pr · Gh · Pa — only for live "now" view
-                        if (vedicTimeShort != null)
+                        // Pr · Gh · Pa — Eyebrow
+                        if (vedicTimeShort != null) ...[
                           Text(
-                            vedicTimeShort,
+                            vedicTimeShort.toUpperCase(),
                             style: TextStyle(
-                              fontSize: AppTheme.holyCowTextSize,
-                              fontWeight: FontWeight.w500,
-                              color: c,
-                              height: 1.4,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 2.0,
+                              color: fgMuted,
                             ),
                           ),
-                        // Month: Vaishakha Masa
-                        if (monthLine != null)
-                          Text(
-                            monthLine,
-                            style: TextStyle(
-                              fontSize: AppTheme.holyCowTextSize,
-                              fontWeight: FontWeight.w500,
-                              color: c,
-                              height: 1.4,
-                            ),
-                          ),
-                        // Paksha: Krishna
-                        if (pakshaLine != null)
-                          Text(
-                            pakshaLine,
-                            style: TextStyle(
-                              fontSize: AppTheme.holyCowTextSize,
-                              fontWeight: FontWeight.w500,
-                              color: c,
-                              height: 1.4,
-                            ),
-                          ),
+                          const SizedBox(height: 16),
+                        ],
+                        
                         // Tithi name: Chaturdashi
                         if (tithiNameOnly != null)
                           Text(
                             tithiNameOnly,
                             style: TextStyle(
-                              fontSize: AppTheme.holyCowTextSize,
-                              fontWeight: FontWeight.w500,
-                              color: c,
-                              height: 1.4,
+                              fontFamily: 'Georgia',
+                              fontStyle: FontStyle.italic,
+                              fontSize: 32,
+                              color: fgMain.withValues(alpha: 0.95),
+                              letterSpacing: -0.5,
+                              height: 1.1,
                             ),
                           ),
+                          
+                        // Paksha: Krishna
+                        if (pakshaLine != null)
+                          Text(
+                            pakshaLine,
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w300,
+                              color: fgMain.withValues(alpha: 0.8),
+                              height: 1.2,
+                            ),
+                          ),
+                          
+                        if (tithiNameOnly != null || pakshaLine != null)
+                          const SizedBox(height: 12),
+                          
+                        // Month: Vaishakha Masa
+                        if (monthLine != null)
+                          Text(
+                            monthLine,
+                            style: TextStyle(
+                              fontFamily: 'Georgia',
+                              fontStyle: FontStyle.italic,
+                              fontSize: 14,
+                              color: fgMuted.withValues(alpha: 0.8),
+                            ),
+                          ),
+                          
                         // Numeric date
-                        if (vedicNumericDate != null)
+                        if (vedicNumericDate != null) ...[
+                          const SizedBox(height: 4),
                           Text(
                             vedicNumericDate,
                             style: TextStyle(
-                              fontSize: AppTheme.holyCowTextSize,
-                              fontWeight: FontWeight.w500,
-                              color: c.withValues(alpha: 0.5),
-                              height: 1.4,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 1.5,
+                              color: fgMuted.withValues(alpha: 0.4),
                             ),
                           ),
+                        ],
                       ],
                     ),
                   ),
                   const SizedBox(width: AppDimensions.spacingMdLg),
-                  // Vedic Clock — right side (only for live "now" view)
+                  // Vedic Clock — right side
                   if (showingToday)
                     VedicClockWidget(
                       time: _now,
                       isDark: isDark,
-                      size: 70,
+                      size: 90,
                     ),
                 ],
               ),
             ),
             // Info button — top-right corner
             Positioned(
-              top: 8,
-              right: 8,
+              top: 12,
+              right: 12,
               child: GestureDetector(
                 onTap: () => _showVedicTimeInfo(context, isDark, c),
                 behavior: HitTestBehavior.opaque,
@@ -257,8 +270,8 @@ class _CosmicDateTimeCardState extends State<CosmicDateTimeCard> {
                   padding: const EdgeInsets.all(4),
                   child: Icon(
                     Icons.info_outline_rounded,
-                    size: 15,
-                    color: c.withValues(alpha: 0.3),
+                    size: 18,
+                    color: fgMuted.withValues(alpha: 0.4),
                   ),
                 ),
               ),
@@ -727,14 +740,38 @@ class _VedicCombinedCardState extends State<VedicCombinedCard> {
     final ghati = VedicTimeUtils.getGhati(_now);
     final pala = VedicTimeUtils.getPala(_now);
     final daysDiff = displayDate.difference(todayDate).inDays;
-
-    final ghatiStr = showingToday ? '$ghati GHATI' : null;
-    final palaStr = showingToday ? '${pala.toString().padLeft(2, '0')} PALA' : null;
-    final praharStr = showingToday ? praharName.toUpperCase() : null;
     final offsetStr = showingToday ? 'TODAY' : (daysDiff > 0 ? 'IN $daysDiff DAYS' : '${daysDiff.abs()} DAYS AGO');
 
     final primaryWhite = Colors.white.withValues(alpha: 0.95);
     final secondaryWhite = Colors.white.withValues(alpha: 0.5);
+
+    // Left Column: Classic, chic, editorial (Serif Italic)
+    final leftStyle = TextStyle(
+      fontFamily: 'Georgia',
+      fontStyle: FontStyle.italic,
+      color: primaryWhite,
+      fontSize: 16,
+      letterSpacing: 0.5,
+      height: 1.5,
+    );
+
+    // Right Column: Clean, modern, precise (Sans-serif Light)
+    final rightStyle = TextStyle(
+      color: primaryWhite.withValues(alpha: 0.9),
+      fontSize: 16,
+      fontWeight: FontWeight.w300,
+      letterSpacing: 1.0,
+      height: 1.5,
+    );
+
+    // Bottom Footer Tags
+    final bottomStyle = TextStyle(
+      color: primaryWhite.withValues(alpha: 0.85),
+      fontSize: 11,
+      fontWeight: FontWeight.w600,
+      letterSpacing: 1.5,
+      height: 1.5,
+    );
 
     return SizedBox(
       width: double.infinity,
@@ -742,55 +779,73 @@ class _VedicCombinedCardState extends State<VedicCombinedCard> {
         color: Colors.transparent,
         elevation: 0,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // LEFT: Date in 3 lines
+              // LEFT COLUMN (Date Stack)
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (lunarMonth != null) Text(lunarMonth.toUpperCase(), style: TextStyle(color: primaryWhite, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1.0, height: 1.2)),
-                    if (pakshaLine != null) Text(pakshaLine.toUpperCase(), style: TextStyle(color: primaryWhite, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1.0, height: 1.2)),
-                    if (tithiNameOnly != null) Text(tithiNameOnly.toUpperCase(), style: TextStyle(color: primaryWhite, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1.0, height: 1.2)),
-                    if (vedicNumericDate != null) Text(vedicNumericDate.toUpperCase(), style: TextStyle(color: secondaryWhite, fontSize: 9.5, fontWeight: FontWeight.w500, letterSpacing: 1.0, height: 1.2)),
+                    if (lunarMonth != null) Text(lunarMonth, style: leftStyle),
+                    if (pakshaLine != null) Text(pakshaLine, style: leftStyle),
+                    if (tithiNameOnly != null) Text(tithiNameOnly, style: leftStyle),
+                    if (vedicNumericDate != null) ...[
+                      const SizedBox(height: 6),
+                      Text(vedicNumericDate.toUpperCase(), style: bottomStyle),
+                    ],
                   ],
                 ),
               ),
               
-              // RIGHT: Time block & Reset
+              // RIGHT COLUMN (Time Stack)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (ghatiStr != null)
-                    Text(ghatiStr, style: TextStyle(color: primaryWhite, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1.0, height: 1.2)),
-                  if (palaStr != null)
-                    Text(palaStr, style: TextStyle(color: primaryWhite, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1.0, height: 1.2)),
-                  if (praharStr != null)
-                    Text(praharStr, style: TextStyle(color: primaryWhite, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1.0, height: 1.2)),
-                  if (ghatiStr != null || praharStr != null) const SizedBox(height: 2),
+                  if (showingToday) ...[
+                    if (ghati != null) Text('${ghati} Ghati', style: rightStyle),
+                    if (pala != null) Text('${pala.toString().padLeft(2, '0')} Pala', style: rightStyle),
+                    if (praharName != '') Text(praharName, style: rightStyle),
+                  ],
+                  
+                  const SizedBox(height: 6),
                   if (showingToday)
-                    Text('TODAY', style: TextStyle(color: secondaryWhite, fontSize: 9.5, fontWeight: FontWeight.w500, letterSpacing: 1.0, height: 1.2))
+                    Text('LIVE', style: bottomStyle.copyWith(color: primaryWhite))
                   else ...[
-                    Text(offsetStr, style: TextStyle(color: primaryWhite, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1.0, height: 1.2)),
-                    const SizedBox(height: 4),
+                    Text(offsetStr, style: bottomStyle.copyWith(color: primaryWhite)),
+                    const SizedBox(height: 6),
                     GestureDetector(
                       onTap: () {
                         HapticFeedback.lightImpact();
                         widget.onResetToToday?.call();
                       },
                       behavior: HitTestBehavior.opaque,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.replay_rounded, size: 11, color: secondaryWhite),
-                          const SizedBox(width: 4),
-                          Text('RESET', style: TextStyle(color: secondaryWhite, fontSize: 9.5, fontWeight: FontWeight.w500, letterSpacing: 1.0, height: 1.2)),
-                        ],
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: primaryWhite.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(100),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.replay_rounded, size: 10, color: primaryWhite),
+                            const SizedBox(width: 4),
+                            Text(
+                              'TODAY', 
+                              style: TextStyle(
+                                color: primaryWhite, 
+                                fontSize: 9, 
+                                fontWeight: FontWeight.w700, 
+                                letterSpacing: 1.5,
+                              )
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],

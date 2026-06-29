@@ -1,14 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// "Solid Ribbon" timeline — a compact, Swiss-watch-minimal rendering.
-///
-/// Instead of floating labels on connector sticks across stacked lanes, the
-/// track is a single solid ribbon split into two internal halves:
-///   • top half  → auspicious events (their names embedded inside the block)
-///   • bottom half → inauspicious events (names embedded inside the block)
-/// The current time is a stark white needle slicing through the whole ribbon,
-/// and tiny hour ticks sit immediately below. No "Time Guidance" title, no
-/// connector sticks, no vertical lanes.
+/// "Modern Axis" timeline.
+/// Ultra-modern, minimal, and grounded. Features a central continuous axis 
+/// to anchor the events, with precise geometric blocks floating above and below.
 class TimelineVisual extends StatelessWidget {
   final List<Map<String, dynamic>> events;
   final int startTime;
@@ -33,16 +27,12 @@ class TimelineVisual extends StatelessWidget {
     this.onEventTap,
   });
 
-  // ── Ribbon geometry ──
-  static const double _ribbonHeight = 24.0;
-  static const double _halfHeight = _ribbonHeight / 2;
+  static const double _timelineHeight = 84.0;
+  static const double _axisY = 34.0;
 
-  double _xForMinute(int minute) =>
-      ((minute - startTime) / 60.0) * hourWidth;
+  double _xForMinute(int minute) => ((minute - startTime) / 60.0) * hourWidth;
 
-  /// One event block embedded inside the ribbon. [topHalf] decides which
-  /// internal track it occupies.
-  Widget _eventBlock(Map<String, dynamic> event, {required bool topHalf}) {
+  Widget _eventBlock(Map<String, dynamic> event, {required bool isTop}) {
     final start = event['start'] as int;
     final end = event['end'] as int;
     final color = event['color'] as Color;
@@ -51,35 +41,36 @@ class TimelineVisual extends StatelessWidget {
     final left = _xForMinute(start);
     final rawWidth = _xForMinute(end) - left;
     final width = rawWidth > 2 ? rawWidth : 2.0;
-    final showLabel = width > 30;
+    final showLabel = width > 35;
+
+    // Mathematically precise floating: 4px gap from the axis
+    final top = isTop ? _axisY - 24 : _axisY + 4;
 
     return Positioned(
       left: left,
-      top: topHalf ? 0 : _halfHeight,
+      top: top,
       child: GestureDetector(
         onTap: onEventTap == null ? null : () => onEventTap!(event),
         child: Container(
           width: width,
-          height: _halfHeight,
-          alignment: Alignment.center,
+          height: 20,
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.85),
+            color: color.withValues(alpha: 0.25),
+            borderRadius: BorderRadius.circular(4),
           ),
+          alignment: Alignment.centerLeft,
+          padding: const EdgeInsets.symmetric(horizontal: 6),
           child: showLabel
-              ? Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 3),
-                  child: Text(
-                    name,
-                    maxLines: 1,
-                    overflow: TextOverflow.clip,
-                    softWrap: false,
-                    style: const TextStyle(
-                      fontSize: 8,
-                      height: 1.0,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.6,
-                      color: Colors.white,
-                    ),
+              ? Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.clip,
+                  softWrap: false,
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.5,
+                    color: color,
                   ),
                 )
               : null,
@@ -100,102 +91,97 @@ class TimelineVisual extends StatelessWidget {
         currentTimeMinutes! >= startTime &&
         currentTimeMinutes! <= endTime;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // ── The Ribbon ──
-        SizedBox(
-          width: timelineWidth,
-          height: _ribbonHeight,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              // Base track surface (so empty time still reads as a ribbon).
-              Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: Colors.black,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                ),
-              ),
-              // Thread splitting the two halves.
-              Positioned(
-                left: 0,
-                right: 0,
-                top: _halfHeight - 1,
-                child: Container(
-                  height: 2,
-                  color: Colors.white.withValues(alpha: isDark ? 0.15 : 0.2),
-                ),
-              ),
-              // Clip event blocks to the rounded ribbon shape.
-              Positioned.fill(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      ...auspicious
-                          .map((e) => _eventBlock(e, topHalf: true)),
-                      ...inauspicious
-                          .map((e) => _eventBlock(e, topHalf: false)),
-                    ],
-                  ),
-                ),
-              ),
-              // The "Now" needle: a stark white vertical hairline.
-              if (hasNow)
-                Positioned(
-                  left: _xForMinute(currentTimeMinutes!) - 0.5,
-                  top: 0,
-                  child: Container(
-                    width: 1,
-                    height: _ribbonHeight,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(0.5),
-                    ),
-                  ),
-                ),
-            ],
+    return SizedBox(
+      width: timelineWidth,
+      height: _timelineHeight,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // 1. The Central Axis Line
+          Positioned(
+            left: 0,
+            right: 0,
+            top: _axisY,
+            child: Container(
+              height: 1,
+              color: Colors.white.withValues(alpha: 0.15),
+            ),
           ),
-        ),
-        const SizedBox(height: 2),
-        // ── Hour ticks immediately below the ribbon ──
-        SizedBox(
-          width: timelineWidth,
-          height: 12,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: List.generate(hoursCount, (index) {
-              final absoluteMinutes = startTime + (index * 60);
-              final hourOfDay = (absoluteMinutes % (24 * 60)) ~/ 60;
-              final hour12 = hourOfDay == 0
-                  ? 12
-                  : (hourOfDay > 12 ? hourOfDay - 12 : hourOfDay);
-              final ampm = hourOfDay < 12 ? 'AM' : 'PM';
-              return Positioned(
-                left: index * hourWidth - 30,
-                top: 0,
-                child: SizedBox(
-                  width: 60,
-                  child: Text(
-                    '$hour12 $ampm',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 8.5,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.3,
-                      color: Colors.white.withValues(alpha: 0.4),
+
+          // 2. Hour Nodes on the Axis
+          ...List.generate(hoursCount, (index) {
+            final absoluteMinutes = startTime + (index * 60);
+            final hourOfDay = (absoluteMinutes % (24 * 60)) ~/ 60;
+            final hour12 = hourOfDay == 0 ? 12 : (hourOfDay > 12 ? hourOfDay - 12 : hourOfDay);
+            final ampm = hourOfDay < 12 ? 'AM' : 'PM';
+            final x = index * hourWidth;
+            
+            return Positioned(
+              left: x - 30,
+              top: _axisY - 2,
+              child: SizedBox(
+                width: 60,
+                child: Column(
+                  children: [
+                    // Node on the axis
+                    Container(
+                      width: 1, 
+                      height: 5, 
+                      color: Colors.white.withValues(alpha: 0.3)
                     ),
-                  ),
+                    const SizedBox(height: 30),
+                    // Text at the bottom
+                    Text(
+                      '$hour12 $ampm',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white.withValues(alpha: 0.5),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
                 ),
-              );
-            }),
-          ),
-        ),
-      ],
+              ),
+            );
+          }),
+
+          // 3. Floating Modern Blocks
+          ...auspicious.map((e) => _eventBlock(e, isTop: true)),
+          ...inauspicious.map((e) => _eventBlock(e, isTop: false)),
+
+          // 4. The "Now" Indicator Needle
+          if (hasNow) ...[
+            // Subtle but visible vertical line
+            Positioned(
+              left: _xForMinute(currentTimeMinutes!) - 0.5,
+              top: _axisY - 14,
+              child: Container(
+                width: 1,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.35),
+                  borderRadius: BorderRadius.circular(0.5),
+                ),
+              ),
+            ),
+            // Clean node on the axis
+            Positioned(
+              left: _xForMinute(currentTimeMinutes!) - 1.5,
+              top: _axisY - 1.0,
+              child: Container(
+                width: 3,
+                height: 3,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.8),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

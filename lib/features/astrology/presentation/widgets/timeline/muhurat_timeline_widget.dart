@@ -52,7 +52,7 @@ class _MuhuratTimelineWidgetState extends State<MuhuratTimelineWidget>
       elevation: 0,
       borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        padding: const EdgeInsets.fromLTRB(0, 16, 0, 16),
         child: TimelineContent(
           muhurat: widget.muhurat,
           isDark: isDark,

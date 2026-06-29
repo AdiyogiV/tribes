@@ -171,11 +171,19 @@ class AppHeaderStyle {
             fontWeight: FontWeight.w900,
             letterSpacing: 1.2,
           )
-        : Text(
-            title,
-            style: ThemeHelper.headerStyle.copyWith(
-              fontWeight: FontWeight.w900,
-              letterSpacing: 1.2,
+        : Builder(
+            builder: (context) => Text(
+              title,
+              style: TextStyle(
+                fontFamily: 'Georgia',
+                fontStyle: FontStyle.italic,
+                fontSize: 24,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white.withValues(alpha: 0.95)
+                    : Colors.black87,
+                letterSpacing: -0.5,
+                height: 1.1,
+              ),
             ),
           );
 
