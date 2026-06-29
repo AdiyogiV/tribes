@@ -40,6 +40,8 @@ class RouteNames {
 
   // ── Cosmic Dashboard ────────────────────────────────────────────────
   static const cosmicDashboard = '/cosmic/dashboard';
+  static const cosmicMinimal = '/cosmic/minimal';
+  static const cosmicWeekly = '/cosmic/weekly';
 
   // ── Calling ──────────────────────────────────────────────────────────
   static const callScreen = '/call';

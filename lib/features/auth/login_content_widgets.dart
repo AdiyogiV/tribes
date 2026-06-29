@@ -1,83 +1,14 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:aurogram/core/theme/app_theme.dart';
-import 'package:aurogram/core/theme/theme_helper.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 
-/// Brand header with welcome text.
-class LoginBrandHeader extends StatelessWidget {
-  final bool isWide;
-
-  const LoginBrandHeader({super.key, required this.isWide});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const SizedBox(height: AppDimensions.spacingMd),
-        Text(
-          'welcome to aurogram',
-          textAlign: TextAlign.center,
-          style: ThemeHelper.headerStyle.copyWith(
-            fontWeight: FontWeight.w900,
-            height: 1.2,
-          ),
-        ),
-        const SizedBox(height: AppDimensions.spacingSection),
-      ],
-    );
-  }
-}
-
-/// Icon strip showing benefits/brand icons.
-class LoginBenefitsStrip extends StatelessWidget {
-  final bool isWide;
-
-  const LoginBenefitsStrip({super.key, required this.isWide});
-
-  @override
-  Widget build(BuildContext context) {
-    final double iconSize = isWide ? 72 : 64;
-
-    return Wrap(
-      alignment: WrapAlignment.center,
-      runSpacing: 16,
-      spacing: 10,
-      children: [
-        Image.asset(
-          'assets/icons/namaste.png',
-          width: iconSize,
-          height: iconSize,
-          fit: BoxFit.contain,
-        ),
-        Image.asset(
-          'assets/images/icon_transparent.png',
-          width: iconSize,
-          height: iconSize,
-          fit: BoxFit.contain,
-        ),
-        Image.asset(
-          'assets/images/cow1.png',
-          width: iconSize,
-          height: iconSize,
-          fit: BoxFit.contain,
-        ),
-      ],
-    );
-  }
-}
-
-/// EULA acceptance checkbox + policy links.
+/// EULA acceptance via implied consent + policy links.
 class LoginPolicyText extends StatelessWidget {
-  final bool eulaAccepted;
-  final ValueChanged<bool> onEulaChanged;
   final ValueChanged<String> onShowPolicy;
 
   const LoginPolicyText({
     super.key,
-    required this.eulaAccepted,
-    required this.onEulaChanged,
     required this.onShowPolicy,
   });
 
@@ -87,30 +18,14 @@ class LoginPolicyText extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: AppDimensions.paddingXxl),
       child: Column(
         children: [
-          // EULA Acceptance Checkbox
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Checkbox(
-                value: eulaAccepted,
-                onChanged: (value) => onEulaChanged(value ?? false),
-                activeColor: AppTheme.primaryColor,
-                checkColor: Colors.white,
-              ),
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => onEulaChanged(!eulaAccepted),
-                  child: Text(
-                    'I agree to the Terms of Service, Privacy Policy, and Community Guidelines',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppTheme.primaryColor,
-                          fontSize: 14,
-                          height: 1.4,
-                        ),
-                  ),
+          Text(
+            'By tapping continue, you agree to our',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppTheme.primaryColor,
+                  fontSize: 14,
+                  height: 1.4,
                 ),
-              ),
-            ],
           ),
           SizedBox(height: AppDimensions.spacingMd),
           Wrap(

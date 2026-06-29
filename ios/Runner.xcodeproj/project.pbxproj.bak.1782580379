@@ -1,0 +1,1603 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 54;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		04D573EE9558C116819C4CC3 /* Pods_RunnerTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CF0ADB76C7DEF7471278EDBC /* Pods_RunnerTests.framework */; };
+		058456882F8903C200EDD664 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 058456872F8903C200EDD664 /* WidgetKit.framework */; };
+		0584568A2F8903C200EDD664 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 058456892F8903C200EDD664 /* SwiftUI.framework */; };
+		0A9B155B96E5BD75B068428E /* WatchSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E576E09EC1A80A2B133278CD /* WatchSessionManager.swift */; };
+		113E545D9BDBF22639199822 /* NadiEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 398A433AD74F60C3AB06F207 /* NadiEngine.swift */; };
+		1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */ = {isa = PBXBuildFile; fileRef = 1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */; };
+		21ABD6FAF1034C69C4F1D745 /* MuhuratView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10F0E1406E34B7689995EF02 /* MuhuratView.swift */; };
+		331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331C807B294A618700263BE5 /* RunnerTests.swift */; };
+		3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */; };
+		67D3FF2347F3B3CE4E090496 /* VedicClockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 800C6C312753DAC2BBA4677E /* VedicClockView.swift */; };
+		6BAB15A8DA6045FEA1BD804B /* VedicTimeCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CA34A0F8DD3BD570756A86C /* VedicTimeCalculator.swift */; };
+		74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74858FAE1ED2DC5600515810 /* AppDelegate.swift */; };
+		7B652419EB64D2C2A9D101CB /* CosmicNowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DCEF5510812CACF03BACC57 /* CosmicNowView.swift */; };
+		83190CEEFC39C975BDA7B154 /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 988CB635266D640262D6930F /* Pods_Runner.framework */; };
+		8A05399C0348231ED7902E77 /* LocalCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCB31F9E1137016E741C3752 /* LocalCache.swift */; };
+		8FFF93114D5D44DC2C679333 /* AuroWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCA260669A555FE61EA6C8EE /* AuroWatchApp.swift */; };
+		92CFEB783A7FF77CC4F9595A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D135A5024408438A11E58CB8 /* ContentView.swift */; };
+		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
+		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
+		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
+		9EF8F85F514CCB82BD528388 /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47036F15F80BF9D94BD7AF58 /* NotificationsView.swift */; };
+		A7B3C8D4E5F60192B8E4D302 /* SkyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7B3C8D4E5F60192B8E4D301 /* SkyView.swift */; };
+		AA1B2C3D4E5F607182930A01 /* OjasEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B2C3D4E5F607182930B01 /* OjasEngine.swift */; };
+		AA1B2C3D4E5F607182930A02 /* OjasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B2C3D4E5F607182930B02 /* OjasView.swift */; };
+		AA1B2C3D4E5F607182930A03 /* DhatuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B2C3D4E5F607182930B03 /* DhatuView.swift */; };
+		AA1B2C3D4E5F607182930A04 /* DinacharyaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B2C3D4E5F607182930B04 /* DinacharyaView.swift */; };
+		AA1B2C3D4E5F607182930A05 /* RituView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B2C3D4E5F607182930B05 /* RituView.swift */; };
+		AA1B2C3D4E5F607182930A06 /* VedicTimeTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B2C3D4E5F607182930B06 /* VedicTimeTextView.swift */; };
+		AA1B2C3D4E5F607182930A07 /* AuroLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B2C3D4E5F607182930B07 /* AuroLogger.swift */; };
+		AE89FDCA6E49A85DE21D1F9C /* WatchSyncManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E634DE73DFC312E04A7FE8B4 /* WatchSyncManager.swift */; };
+		B431D2432C367FBF00A97FCA /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = B431D2422C367FBF00A97FCA /* GoogleService-Info.plist */; };
+		B431D2442C367FBF00A97FCA /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = B431D2422C367FBF00A97FCA /* GoogleService-Info.plist */; };
+		BABC9A7B4C906902D30EC663 /* HealthKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15BC72371629DA54F5B17C32 /* HealthKitManager.swift */; };
+		BB01A2C3D4E5F607182930A1 /* BackgroundHealthSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB01A2C3D4E5F607182930B1 /* BackgroundHealthSync.swift */; };
+		CC01A2C3D4E5F607182930A1 /* AbhyangaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC01A2C3D4E5F607182930B1 /* AbhyangaView.swift */; };
+		CC02A2C3D4E5F607182930A1 /* AgniView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC02A2C3D4E5F607182930B1 /* AgniView.swift */; };
+		CC03A2C3D4E5F607182930A1 /* AyurvedaHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC03A2C3D4E5F607182930B1 /* AyurvedaHubView.swift */; };
+		CC04A2C3D4E5F607182930A1 /* HridayaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC04A2C3D4E5F607182930B1 /* HridayaView.swift */; };
+		CC05A2C3D4E5F607182930A1 /* MantraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC05A2C3D4E5F607182930B1 /* MantraView.swift */; };
+		CC06A2C3D4E5F607182930A1 /* NadiView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC06A2C3D4E5F607182930B1 /* NadiView.swift */; };
+		CC07A2C3D4E5F607182930A1 /* NidraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC07A2C3D4E5F607182930B1 /* NidraView.swift */; };
+		CC08A2C3D4E5F607182930A1 /* PrakritiView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC08A2C3D4E5F607182930B1 /* PrakritiView.swift */; };
+		CC09A2C3D4E5F607182930A1 /* PranaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC09A2C3D4E5F607182930B1 /* PranaView.swift */; };
+		CC10A2C3D4E5F607182930A1 /* PranayamaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC10A2C3D4E5F607182930B1 /* PranayamaView.swift */; };
+		CC11A2C3D4E5F607182930A1 /* RemedyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC11A2C3D4E5F607182930B1 /* RemedyView.swift */; };
+		CC12A2C3D4E5F607182930A1 /* SensorsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC12A2C3D4E5F607182930B1 /* SensorsView.swift */; };
+		CC13A2C3D4E5F607182930A1 /* VikritiView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC13A2C3D4E5F607182930B1 /* VikritiView.swift */; };
+		CC14A2C3D4E5F607182930A1 /* VyayamaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC14A2C3D4E5F607182930B1 /* VyayamaView.swift */; };
+		E3608B744B0B7713FDF82B42 /* AuroWatch WidgetExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 058456862F8903C200EDD664 /* AuroWatch WidgetExtension.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		E6C0B65C8496D6F9AE92FD33 /* InsightView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDCE9BA538A2956C4A0D4ACB /* InsightView.swift */; };
+		E76855332AE0C9563A850423 /* AuroTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE5210EE6CBF4D7119299FA8 /* AuroTheme.swift */; };
+		F6F357E8BAA2BF029B93064B /* NadiMonitorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AFA99A008445D7183012F2E /* NadiMonitorView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		331C8085294A63A400263BE5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 97C146E61CF9000F007C117D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 97C146ED1CF9000F007C117D;
+			remoteInfo = Runner;
+		};
+		890B1BDFF70F9AA12ACBF672 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 97C146E61CF9000F007C117D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 058456852F8903C200EDD664;
+			remoteInfo = "AuroWatch WidgetExtension";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		53A4D3D10ACAAF932E68543F /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				E3608B744B0B7713FDF82B42 /* AuroWatch WidgetExtension.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9705A1C41CF9048500538489 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		01B53BD9C8A1C796C69C8E99 /* Pods-Runner.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.debug.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"; sourceTree = "<group>"; };
+		058455B42F88E40400EDD664 /* AuroWatch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "AuroWatch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		058456862F8903C200EDD664 /* AuroWatch WidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "AuroWatch WidgetExtension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
+		058456872F8903C200EDD664 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		058456892F8903C200EDD664 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		0DCEF5510812CACF03BACC57 /* CosmicNowView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CosmicNowView.swift; sourceTree = "<group>"; };
+		1013531FABA1CF6BE6CBBAF3 /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		10C58F49D9BD917F7D7E00B5 /* Pods-RunnerTests.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.profile.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.profile.xcconfig"; sourceTree = "<group>"; };
+		10F0E1406E34B7689995EF02 /* MuhuratView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MuhuratView.swift; sourceTree = "<group>"; };
+		1498D2321E8E86230040F4C2 /* GeneratedPluginRegistrant.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GeneratedPluginRegistrant.h; sourceTree = "<group>"; };
+		1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GeneratedPluginRegistrant.m; sourceTree = "<group>"; };
+		15BC72371629DA54F5B17C32 /* HealthKitManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HealthKitManager.swift; sourceTree = "<group>"; };
+		331C807B294A618700263BE5 /* RunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunnerTests.swift; sourceTree = "<group>"; };
+		331C8081294A63A400263BE5 /* RunnerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunnerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		398A433AD74F60C3AB06F207 /* NadiEngine.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NadiEngine.swift; sourceTree = "<group>"; };
+		3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = AppFrameworkInfo.plist; path = Flutter/AppFrameworkInfo.plist; sourceTree = "<group>"; };
+		47036F15F80BF9D94BD7AF58 /* NotificationsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
+		4CA34A0F8DD3BD570756A86C /* VedicTimeCalculator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VedicTimeCalculator.swift; sourceTree = "<group>"; };
+		54B02B402269250207D64193 /* Pods-RunnerTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.debug.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.debug.xcconfig"; sourceTree = "<group>"; };
+		6AFA99A008445D7183012F2E /* NadiMonitorView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NadiMonitorView.swift; sourceTree = "<group>"; };
+		74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Runner-Bridging-Header.h"; sourceTree = "<group>"; };
+		74858FAE1ED2DC5600515810 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		7AFA3C8E1D35360C0083082E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Flutter/Release.xcconfig; sourceTree = "<group>"; };
+		8D2F9A332F90C2A400E1D501 /* Profile.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Profile.xcconfig; path = Flutter/Profile.xcconfig; sourceTree = "<group>"; };
+		800C6C312753DAC2BBA4677E /* VedicClockView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VedicClockView.swift; sourceTree = "<group>"; };
+		9740EEB21CF90195004384FC /* Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Debug.xcconfig; path = Flutter/Debug.xcconfig; sourceTree = "<group>"; };
+		9740EEB31CF90195004384FC /* Generated.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Generated.xcconfig; path = Flutter/Generated.xcconfig; sourceTree = "<group>"; };
+		97C146EE1CF9000F007C117D /* Runner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Runner.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		97C146FB1CF9000F007C117D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		97C146FD1CF9000F007C117D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		97C147001CF9000F007C117D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		97C147021CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		988CB635266D640262D6930F /* Pods_Runner.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Runner.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		A525AFB70D70AB83AA05B94B /* Pods-RunnerTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.release.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.release.xcconfig"; sourceTree = "<group>"; };
+		A7B3C8D4E5F60192B8E4D301 /* SkyView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SkyView.swift; sourceTree = "<group>"; };
+		AA1B2C3D4E5F607182930B01 /* OjasEngine.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OjasEngine.swift; sourceTree = "<group>"; };
+		AA1B2C3D4E5F607182930B02 /* OjasView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OjasView.swift; sourceTree = "<group>"; };
+		AA1B2C3D4E5F607182930B03 /* DhatuView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DhatuView.swift; sourceTree = "<group>"; };
+		AA1B2C3D4E5F607182930B04 /* DinacharyaView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DinacharyaView.swift; sourceTree = "<group>"; };
+		AA1B2C3D4E5F607182930B05 /* RituView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RituView.swift; sourceTree = "<group>"; };
+		AA1B2C3D4E5F607182930B06 /* VedicTimeTextView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VedicTimeTextView.swift; sourceTree = "<group>"; };
+		AA1B2C3D4E5F607182930B07 /* AuroLogger.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuroLogger.swift; sourceTree = "<group>"; };
+		B431D2412C367A8100A97FCA /* Runner.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Runner.entitlements; sourceTree = "<group>"; };
+		B431D2422C367FBF00A97FCA /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		B431D2432C367A8100A97FCA /* Release.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Release.entitlements; sourceTree = "<group>"; };
+		BB01A2C3D4E5F607182930B1 /* BackgroundHealthSync.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BackgroundHealthSync.swift; sourceTree = "<group>"; };
+		C724EB05E3B1C067B1D843F7 /* AuroWatch.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = AuroWatch.entitlements; sourceTree = "<group>"; };
+		CC01A2C3D4E5F607182930B1 /* AbhyangaView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AbhyangaView.swift; sourceTree = "<group>"; };
+		CC02A2C3D4E5F607182930B1 /* AgniView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AgniView.swift; sourceTree = "<group>"; };
+		CC03A2C3D4E5F607182930B1 /* AyurvedaHubView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AyurvedaHubView.swift; sourceTree = "<group>"; };
+		CC04A2C3D4E5F607182930B1 /* HridayaView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HridayaView.swift; sourceTree = "<group>"; };
+		CC05A2C3D4E5F607182930B1 /* MantraView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MantraView.swift; sourceTree = "<group>"; };
+		CC06A2C3D4E5F607182930B1 /* NadiView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NadiView.swift; sourceTree = "<group>"; };
+		CC07A2C3D4E5F607182930B1 /* NidraView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NidraView.swift; sourceTree = "<group>"; };
+		CC08A2C3D4E5F607182930B1 /* PrakritiView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PrakritiView.swift; sourceTree = "<group>"; };
+		CC09A2C3D4E5F607182930B1 /* PranaView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PranaView.swift; sourceTree = "<group>"; };
+		CC10A2C3D4E5F607182930B1 /* PranayamaView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PranayamaView.swift; sourceTree = "<group>"; };
+		CC11A2C3D4E5F607182930B1 /* RemedyView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RemedyView.swift; sourceTree = "<group>"; };
+		CC12A2C3D4E5F607182930B1 /* SensorsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SensorsView.swift; sourceTree = "<group>"; };
+		CC13A2C3D4E5F607182930B1 /* VikritiView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VikritiView.swift; sourceTree = "<group>"; };
+		CC14A2C3D4E5F607182930B1 /* VyayamaView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VyayamaView.swift; sourceTree = "<group>"; };
+		CF0ADB76C7DEF7471278EDBC /* Pods_RunnerTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RunnerTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		D102527C63EBCBCBADD401D0 /* Pods-Runner.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.release.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"; sourceTree = "<group>"; };
+		D135A5024408438A11E58CB8 /* ContentView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		D67B8261AB322F9C8D8497EA /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		DCB31F9E1137016E741C3752 /* LocalCache.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LocalCache.swift; sourceTree = "<group>"; };
+		DE5210EE6CBF4D7119299FA8 /* AuroTheme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuroTheme.swift; sourceTree = "<group>"; };
+		E576E09EC1A80A2B133278CD /* WatchSessionManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchSessionManager.swift; sourceTree = "<group>"; };
+		E634DE73DFC312E04A7FE8B4 /* WatchSyncManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchSyncManager.swift; sourceTree = "<group>"; };
+		EDC3BA653D29A40E0B1E6066 /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
+		FCA260669A555FE61EA6C8EE /* AuroWatchApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuroWatchApp.swift; sourceTree = "<group>"; };
+		FDCE9BA538A2956C4A0D4ACB /* InsightView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InsightView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		058456972F8903C400EDD664 /* Exceptions for "AuroWatch Widget" folder in "AuroWatch WidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 058456852F8903C200EDD664 /* AuroWatch WidgetExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		0584568B2F8903C200EDD664 /* AuroWatch Widget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				058456972F8903C400EDD664 /* Exceptions for "AuroWatch Widget" folder in "AuroWatch WidgetExtension" target */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = "AuroWatch Widget";
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		058455B12F88E40400EDD664 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		058456832F8903C200EDD664 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0584568A2F8903C200EDD664 /* SwiftUI.framework in Frameworks */,
+				058456882F8903C200EDD664 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		97C146EB1CF9000F007C117D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				83190CEEFC39C975BDA7B154 /* Pods_Runner.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DC9CEE3670D57AA4E1D5384E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				04D573EE9558C116819C4CC3 /* Pods_RunnerTests.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		07C3AE22E2411A31F8CF2F47 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				AA1B2C3D4E5F607182930B07 /* AuroLogger.swift */,
+				14CC0B16E41BFF6024E5C37C /* Cache */,
+				5762AA597411B182766C3D03 /* Health */,
+				9D80D68ECADFD7533CF45C80 /* Sync */,
+				BC592B54C6BD4511AB033B81 /* Theme */,
+				6E6DAB280D024B90BA54D83B /* VedicTime */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		14CC0B16E41BFF6024E5C37C /* Cache */ = {
+			isa = PBXGroup;
+			children = (
+				DCB31F9E1137016E741C3752 /* LocalCache.swift */,
+			);
+			path = Cache;
+			sourceTree = "<group>";
+		};
+		253E5C5FBEB3868836CEAB33 /* AuroWatch Watch App */ = {
+			isa = PBXGroup;
+			children = (
+				1013531FABA1CF6BE6CBBAF3 /* Assets.xcassets */,
+				C724EB05E3B1C067B1D843F7 /* AuroWatch.entitlements */,
+				FCA260669A555FE61EA6C8EE /* AuroWatchApp.swift */,
+				4948A7D4918F5B9022C48340 /* Complications */,
+				D135A5024408438A11E58CB8 /* ContentView.swift */,
+				07C3AE22E2411A31F8CF2F47 /* Core */,
+				95DBC0A86311CE34949A380E /* Features */,
+				D67B8261AB322F9C8D8497EA /* Info.plist */,
+			);
+			path = "AuroWatch Watch App";
+			sourceTree = "<group>";
+		};
+		331C8082294A63A400263BE5 /* RunnerTests */ = {
+			isa = PBXGroup;
+			children = (
+				331C807B294A618700263BE5 /* RunnerTests.swift */,
+			);
+			path = RunnerTests;
+			sourceTree = "<group>";
+		};
+		408CA79BE7120B8A0D43585D /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				01B53BD9C8A1C796C69C8E99 /* Pods-Runner.debug.xcconfig */,
+				D102527C63EBCBCBADD401D0 /* Pods-Runner.release.xcconfig */,
+				EDC3BA653D29A40E0B1E6066 /* Pods-Runner.profile.xcconfig */,
+				54B02B402269250207D64193 /* Pods-RunnerTests.debug.xcconfig */,
+				A525AFB70D70AB83AA05B94B /* Pods-RunnerTests.release.xcconfig */,
+				10C58F49D9BD917F7D7E00B5 /* Pods-RunnerTests.profile.xcconfig */,
+			);
+			path = Pods;
+			sourceTree = "<group>";
+		};
+		4948A7D4918F5B9022C48340 /* Complications */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Complications;
+			sourceTree = "<group>";
+		};
+		4E5EC22179BB106D8874A206 /* Notifications */ = {
+			isa = PBXGroup;
+			children = (
+				47036F15F80BF9D94BD7AF58 /* NotificationsView.swift */,
+			);
+			path = Notifications;
+			sourceTree = "<group>";
+		};
+		5762AA597411B182766C3D03 /* Health */ = {
+			isa = PBXGroup;
+			children = (
+				15BC72371629DA54F5B17C32 /* HealthKitManager.swift */,
+				398A433AD74F60C3AB06F207 /* NadiEngine.swift */,
+				AA1B2C3D4E5F607182930B01 /* OjasEngine.swift */,
+			);
+			path = Health;
+			sourceTree = "<group>";
+		};
+		6E6DAB280D024B90BA54D83B /* VedicTime */ = {
+			isa = PBXGroup;
+			children = (
+				800C6C312753DAC2BBA4677E /* VedicClockView.swift */,
+				4CA34A0F8DD3BD570756A86C /* VedicTimeCalculator.swift */,
+				AA1B2C3D4E5F607182930B06 /* VedicTimeTextView.swift */,
+			);
+			path = VedicTime;
+			sourceTree = "<group>";
+		};
+		95DBC0A86311CE34949A380E /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				AA1B2C3D4E5F607182930C01 /* Ayurveda */,
+				B93F3342BB76655F56800319 /* CosmicNow */,
+				A8567D06569CDA4739485FA2 /* Insight */,
+				AC60FCEF4CAC19A30A9579EF /* Muhurat */,
+				B23BE44586FE7368AAB58E4F /* NadiMonitor */,
+				4E5EC22179BB106D8874A206 /* Notifications */,
+				A7B3C8D4E5F60192B8E4D303 /* Sky */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		9740EEB11CF90186004384FC /* Flutter */ = {
+			isa = PBXGroup;
+			children = (
+				3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */,
+				9740EEB21CF90195004384FC /* Debug.xcconfig */,
+				7AFA3C8E1D35360C0083082E /* Release.xcconfig */,
+				8D2F9A332F90C2A400E1D501 /* Profile.xcconfig */,
+				9740EEB31CF90195004384FC /* Generated.xcconfig */,
+			);
+			name = Flutter;
+			sourceTree = "<group>";
+		};
+		97C146E51CF9000F007C117D = {
+			isa = PBXGroup;
+			children = (
+				9740EEB11CF90186004384FC /* Flutter */,
+				97C146F01CF9000F007C117D /* Runner */,
+				0584568B2F8903C200EDD664 /* AuroWatch Widget */,
+				97C146EF1CF9000F007C117D /* Products */,
+				331C8082294A63A400263BE5 /* RunnerTests */,
+				408CA79BE7120B8A0D43585D /* Pods */,
+				A23871A20D8A3ABFD0BA463E /* Frameworks */,
+				253E5C5FBEB3868836CEAB33 /* AuroWatch Watch App */,
+			);
+			sourceTree = "<group>";
+		};
+		97C146EF1CF9000F007C117D /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				97C146EE1CF9000F007C117D /* Runner.app */,
+				331C8081294A63A400263BE5 /* RunnerTests.xctest */,
+				058455B42F88E40400EDD664 /* AuroWatch Watch App.app */,
+				058456862F8903C200EDD664 /* AuroWatch WidgetExtension.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		97C146F01CF9000F007C117D /* Runner */ = {
+			isa = PBXGroup;
+			children = (
+				B431D2412C367A8100A97FCA /* Runner.entitlements */,
+				B431D2432C367A8100A97FCA /* Release.entitlements */,
+				97C146FA1CF9000F007C117D /* Main.storyboard */,
+				97C146FD1CF9000F007C117D /* Assets.xcassets */,
+				97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */,
+				B431D2422C367FBF00A97FCA /* GoogleService-Info.plist */,
+				97C147021CF9000F007C117D /* Info.plist */,
+				1498D2321E8E86230040F4C2 /* GeneratedPluginRegistrant.h */,
+				1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */,
+				74858FAE1ED2DC5600515810 /* AppDelegate.swift */,
+				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
+				EA71BE2F96BA73DACFAF492F /* WatchBridge */,
+			);
+			path = Runner;
+			sourceTree = "<group>";
+		};
+		9D80D68ECADFD7533CF45C80 /* Sync */ = {
+			isa = PBXGroup;
+			children = (
+				E634DE73DFC312E04A7FE8B4 /* WatchSyncManager.swift */,
+				BB01A2C3D4E5F607182930B1 /* BackgroundHealthSync.swift */,
+			);
+			path = Sync;
+			sourceTree = "<group>";
+		};
+		A23871A20D8A3ABFD0BA463E /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				058456872F8903C200EDD664 /* WidgetKit.framework */,
+				058456892F8903C200EDD664 /* SwiftUI.framework */,
+				988CB635266D640262D6930F /* Pods_Runner.framework */,
+				CF0ADB76C7DEF7471278EDBC /* Pods_RunnerTests.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		A7B3C8D4E5F60192B8E4D303 /* Sky */ = {
+			isa = PBXGroup;
+			children = (
+				A7B3C8D4E5F60192B8E4D301 /* SkyView.swift */,
+			);
+			path = Sky;
+			sourceTree = "<group>";
+		};
+		A8567D06569CDA4739485FA2 /* Insight */ = {
+			isa = PBXGroup;
+			children = (
+				FDCE9BA538A2956C4A0D4ACB /* InsightView.swift */,
+			);
+			path = Insight;
+			sourceTree = "<group>";
+		};
+		AA1B2C3D4E5F607182930C01 /* Ayurveda */ = {
+			isa = PBXGroup;
+			children = (
+				CC01A2C3D4E5F607182930B1 /* AbhyangaView.swift */,
+				CC02A2C3D4E5F607182930B1 /* AgniView.swift */,
+				CC03A2C3D4E5F607182930B1 /* AyurvedaHubView.swift */,
+				AA1B2C3D4E5F607182930B03 /* DhatuView.swift */,
+				AA1B2C3D4E5F607182930B04 /* DinacharyaView.swift */,
+				CC04A2C3D4E5F607182930B1 /* HridayaView.swift */,
+				CC05A2C3D4E5F607182930B1 /* MantraView.swift */,
+				CC06A2C3D4E5F607182930B1 /* NadiView.swift */,
+				CC07A2C3D4E5F607182930B1 /* NidraView.swift */,
+				AA1B2C3D4E5F607182930B02 /* OjasView.swift */,
+				CC08A2C3D4E5F607182930B1 /* PrakritiView.swift */,
+				CC09A2C3D4E5F607182930B1 /* PranaView.swift */,
+				CC10A2C3D4E5F607182930B1 /* PranayamaView.swift */,
+				CC11A2C3D4E5F607182930B1 /* RemedyView.swift */,
+				AA1B2C3D4E5F607182930B05 /* RituView.swift */,
+				CC12A2C3D4E5F607182930B1 /* SensorsView.swift */,
+				CC13A2C3D4E5F607182930B1 /* VikritiView.swift */,
+				CC14A2C3D4E5F607182930B1 /* VyayamaView.swift */,
+			);
+			path = Ayurveda;
+			sourceTree = "<group>";
+		};
+		AC60FCEF4CAC19A30A9579EF /* Muhurat */ = {
+			isa = PBXGroup;
+			children = (
+				10F0E1406E34B7689995EF02 /* MuhuratView.swift */,
+			);
+			path = Muhurat;
+			sourceTree = "<group>";
+		};
+		B23BE44586FE7368AAB58E4F /* NadiMonitor */ = {
+			isa = PBXGroup;
+			children = (
+				6AFA99A008445D7183012F2E /* NadiMonitorView.swift */,
+			);
+			path = NadiMonitor;
+			sourceTree = "<group>";
+		};
+		B93F3342BB76655F56800319 /* CosmicNow */ = {
+			isa = PBXGroup;
+			children = (
+				0DCEF5510812CACF03BACC57 /* CosmicNowView.swift */,
+			);
+			path = CosmicNow;
+			sourceTree = "<group>";
+		};
+		BC592B54C6BD4511AB033B81 /* Theme */ = {
+			isa = PBXGroup;
+			children = (
+				DE5210EE6CBF4D7119299FA8 /* AuroTheme.swift */,
+			);
+			path = Theme;
+			sourceTree = "<group>";
+		};
+		EA71BE2F96BA73DACFAF492F /* WatchBridge */ = {
+			isa = PBXGroup;
+			children = (
+				E576E09EC1A80A2B133278CD /* WatchSessionManager.swift */,
+			);
+			path = WatchBridge;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		058455B32F88E40400EDD664 /* AuroWatch Watch App */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 058455C32F88E40600EDD664 /* Build configuration list for PBXNativeTarget "AuroWatch Watch App" */;
+			buildPhases = (
+				058455B02F88E40400EDD664 /* Sources */,
+				058455B12F88E40400EDD664 /* Frameworks */,
+				058455B22F88E40400EDD664 /* Resources */,
+				53A4D3D10ACAAF932E68543F /* Embed App Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				38901F4790C09F636764EF82 /* PBXTargetDependency */,
+			);
+			name = "AuroWatch Watch App";
+			productName = "AuroWatch Watch App";
+			productReference = 058455B42F88E40400EDD664 /* AuroWatch Watch App.app */;
+			productType = "com.apple.product-type.application";
+		};
+		058456852F8903C200EDD664 /* AuroWatch WidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 058456982F8903C400EDD664 /* Build configuration list for PBXNativeTarget "AuroWatch WidgetExtension" */;
+			buildPhases = (
+				058456822F8903C200EDD664 /* Sources */,
+				058456832F8903C200EDD664 /* Frameworks */,
+				058456842F8903C200EDD664 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				0584568B2F8903C200EDD664 /* AuroWatch Widget */,
+			);
+			name = "AuroWatch WidgetExtension";
+			productName = "AuroWatch WidgetExtension";
+			productReference = 058456862F8903C200EDD664 /* AuroWatch WidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		331C8080294A63A400263BE5 /* RunnerTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 331C8087294A63A400263BE5 /* Build configuration list for PBXNativeTarget "RunnerTests" */;
+			buildPhases = (
+				E2FFA5EEA604F61A72810BE4 /* [CP] Check Pods Manifest.lock */,
+				331C807D294A63A400263BE5 /* Sources */,
+				331C807F294A63A400263BE5 /* Resources */,
+				DC9CEE3670D57AA4E1D5384E /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				331C8086294A63A400263BE5 /* PBXTargetDependency */,
+			);
+			name = RunnerTests;
+			productName = RunnerTests;
+			productReference = 331C8081294A63A400263BE5 /* RunnerTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		97C146ED1CF9000F007C117D /* Runner */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 97C147051CF9000F007C117D /* Build configuration list for PBXNativeTarget "Runner" */;
+			buildPhases = (
+				694641EBD56D0D4D11CE5FD9 /* [CP] Check Pods Manifest.lock */,
+				9740EEB61CF901F6004384FC /* Run Script */,
+				97C146EA1CF9000F007C117D /* Sources */,
+				97C146EB1CF9000F007C117D /* Frameworks */,
+				97C146EC1CF9000F007C117D /* Resources */,
+				9705A1C41CF9048500538489 /* Embed Frameworks */,
+				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
+				18D4188B2EDAD14A00719080 /* Upload Crashlytics dSYM */,
+				028735763B0CEA097E6BF342 /* [CP] Embed Pods Frameworks */,
+				5D925BE1B6819B0C9479DE51 /* [CP] Copy Pods Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Runner;
+			productName = Runner;
+			productReference = 97C146EE1CF9000F007C117D /* Runner.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		97C146E61CF9000F007C117D /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastSwiftUpdateCheck = 2640;
+				LastUpgradeCheck = 1510;
+				ORGANIZATIONNAME = "";
+				TargetAttributes = {
+					058455B32F88E40400EDD664 = {
+						CreatedOnToolsVersion = 26.4;
+					};
+					058456852F8903C200EDD664 = {
+						CreatedOnToolsVersion = 26.4;
+					};
+					331C8080294A63A400263BE5 = {
+						CreatedOnToolsVersion = 14.0;
+						TestTargetID = 97C146ED1CF9000F007C117D;
+					};
+					97C146ED1CF9000F007C117D = {
+						CreatedOnToolsVersion = 7.3.1;
+						LastSwiftMigration = 1100;
+					};
+				};
+			};
+			buildConfigurationList = 97C146E91CF9000F007C117D /* Build configuration list for PBXProject "Runner" */;
+			compatibilityVersion = "Xcode 9.3";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 97C146E51CF9000F007C117D;
+			productRefGroup = 97C146EF1CF9000F007C117D /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				97C146ED1CF9000F007C117D /* Runner */,
+				331C8080294A63A400263BE5 /* RunnerTests */,
+				058455B32F88E40400EDD664 /* AuroWatch Watch App */,
+				058456852F8903C200EDD664 /* AuroWatch WidgetExtension */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		058455B22F88E40400EDD664 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		058456842F8903C200EDD664 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		331C807F294A63A400263BE5 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B431D2442C367FBF00A97FCA /* GoogleService-Info.plist in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		97C146EC1CF9000F007C117D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */,
+				3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */,
+				B431D2432C367FBF00A97FCA /* GoogleService-Info.plist in Resources */,
+				97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */,
+				97C146FC1CF9000F007C117D /* Main.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		028735763B0CEA097E6BF342 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		18D4188B2EDAD14A00719080 /* Upload Crashlytics dSYM */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Upload Crashlytics dSYM";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# dSYM upload disabled to prevent archive build hanging\n# Upload dSYMs manually after distribution using:\n# ${PODS_ROOT}/FirebaseCrashlytics/upload-symbols -gsp ${PROJECT_DIR}/Runner/GoogleService-Info.plist -p ios <path-to-dsyms>\nexit 0\n";
+		};
+		3B06AD1E1E4923F5004D2608 /* Thin Binary */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${TARGET_BUILD_DIR}/${INFOPLIST_PATH}",
+			);
+			name = "Thin Binary";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "/bin/sh \"$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh\" embed_and_thin";
+		};
+		5D925BE1B6819B0C9479DE51 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		694641EBD56D0D4D11CE5FD9 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-Runner-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		9740EEB61CF901F6004384FC /* Run Script */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Run Script";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "/bin/sh \"$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh\" build";
+		};
+		E2FFA5EEA604F61A72810BE4 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-RunnerTests-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		058455B02F88E40400EDD664 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8FFF93114D5D44DC2C679333 /* AuroWatchApp.swift in Sources */,
+				92CFEB783A7FF77CC4F9595A /* ContentView.swift in Sources */,
+				8A05399C0348231ED7902E77 /* LocalCache.swift in Sources */,
+				BABC9A7B4C906902D30EC663 /* HealthKitManager.swift in Sources */,
+				113E545D9BDBF22639199822 /* NadiEngine.swift in Sources */,
+				AE89FDCA6E49A85DE21D1F9C /* WatchSyncManager.swift in Sources */,
+				BB01A2C3D4E5F607182930A1 /* BackgroundHealthSync.swift in Sources */,
+				E76855332AE0C9563A850423 /* AuroTheme.swift in Sources */,
+				67D3FF2347F3B3CE4E090496 /* VedicClockView.swift in Sources */,
+				6BAB15A8DA6045FEA1BD804B /* VedicTimeCalculator.swift in Sources */,
+				7B652419EB64D2C2A9D101CB /* CosmicNowView.swift in Sources */,
+				E6C0B65C8496D6F9AE92FD33 /* InsightView.swift in Sources */,
+				21ABD6FAF1034C69C4F1D745 /* MuhuratView.swift in Sources */,
+				A7B3C8D4E5F60192B8E4D302 /* SkyView.swift in Sources */,
+				F6F357E8BAA2BF029B93064B /* NadiMonitorView.swift in Sources */,
+				9EF8F85F514CCB82BD528388 /* NotificationsView.swift in Sources */,
+				AA1B2C3D4E5F607182930A01 /* OjasEngine.swift in Sources */,
+				AA1B2C3D4E5F607182930A02 /* OjasView.swift in Sources */,
+				AA1B2C3D4E5F607182930A03 /* DhatuView.swift in Sources */,
+				AA1B2C3D4E5F607182930A04 /* DinacharyaView.swift in Sources */,
+				AA1B2C3D4E5F607182930A05 /* RituView.swift in Sources */,
+				CC01A2C3D4E5F607182930A1 /* AbhyangaView.swift in Sources */,
+				CC02A2C3D4E5F607182930A1 /* AgniView.swift in Sources */,
+				CC03A2C3D4E5F607182930A1 /* AyurvedaHubView.swift in Sources */,
+				CC04A2C3D4E5F607182930A1 /* HridayaView.swift in Sources */,
+				CC05A2C3D4E5F607182930A1 /* MantraView.swift in Sources */,
+				CC06A2C3D4E5F607182930A1 /* NadiView.swift in Sources */,
+				CC07A2C3D4E5F607182930A1 /* NidraView.swift in Sources */,
+				CC08A2C3D4E5F607182930A1 /* PrakritiView.swift in Sources */,
+				CC09A2C3D4E5F607182930A1 /* PranaView.swift in Sources */,
+				CC10A2C3D4E5F607182930A1 /* PranayamaView.swift in Sources */,
+				CC11A2C3D4E5F607182930A1 /* RemedyView.swift in Sources */,
+				CC12A2C3D4E5F607182930A1 /* SensorsView.swift in Sources */,
+				CC13A2C3D4E5F607182930A1 /* VikritiView.swift in Sources */,
+				CC14A2C3D4E5F607182930A1 /* VyayamaView.swift in Sources */,
+				AA1B2C3D4E5F607182930A06 /* VedicTimeTextView.swift in Sources */,
+				AA1B2C3D4E5F607182930A07 /* AuroLogger.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		058456822F8903C200EDD664 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		331C807D294A63A400263BE5 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		97C146EA1CF9000F007C117D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */,
+				1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */,
+				0A9B155B96E5BD75B068428E /* WatchSessionManager.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		331C8086294A63A400263BE5 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 97C146ED1CF9000F007C117D /* Runner */;
+			targetProxy = 331C8085294A63A400263BE5 /* PBXContainerItemProxy */;
+		};
+		38901F4790C09F636764EF82 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "AuroWatch WidgetExtension";
+			target = 058456852F8903C200EDD664 /* AuroWatch WidgetExtension */;
+			targetProxy = 890B1BDFF70F9AA12ACBF672 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		97C146FA1CF9000F007C117D /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				97C146FB1CF9000F007C117D /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				97C147001CF9000F007C117D /* Base */,
+			);
+			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		058455C02F88E40600EDD664 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = "AuroWatch Watch App/AuroWatch.entitlements";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 71;
+				DEVELOPMENT_TEAM = 6CF95PPRR7;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "AuroWatch Watch App/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Aurogram;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Aurogram reads heart rate and HRV data to provide Vedic pulse (Nadi) analysis and Ayurvedic health insights personalized to your body's rhythms.";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.canay.dhaara;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 71.0.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.canay.dhaara.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "watchsimulator watchos";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.4;
+			};
+			name = Debug;
+		};
+		058455C12F88E40600EDD664 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = "AuroWatch Watch App/AuroWatch.entitlements";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 71;
+				DEVELOPMENT_TEAM = 6CF95PPRR7;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "AuroWatch Watch App/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Aurogram;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Aurogram reads heart rate and HRV data to provide Vedic pulse (Nadi) analysis and Ayurvedic health insights personalized to your body's rhythms.";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.canay.dhaara;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 71.0.0;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.canay.dhaara.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "watchsimulator watchos";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.4;
+			};
+			name = Release;
+		};
+		058455C22F88E40600EDD664 /* Profile */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = "AuroWatch Watch App/AuroWatch.entitlements";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 71;
+				DEVELOPMENT_TEAM = 6CF95PPRR7;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "AuroWatch Watch App/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Aurogram;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Aurogram reads heart rate and HRV data to provide Vedic pulse (Nadi) analysis and Ayurvedic health insights personalized to your body's rhythms.";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.canay.dhaara;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 71.0.0;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.canay.dhaara.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "watchsimulator watchos";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.4;
+			};
+			name = Profile;
+		};
+		058456992F8903C400EDD664 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 71;
+				DEVELOPMENT_TEAM = 6CF95PPRR7;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "AuroWatch Widget/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "AuroWatch Widget";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 71.0.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.canay.dhaara.watchkitapp.widget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "watchsimulator watchos";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.4;
+			};
+			name = Debug;
+		};
+		0584569A2F8903C400EDD664 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 71;
+				DEVELOPMENT_TEAM = 6CF95PPRR7;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "AuroWatch Widget/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "AuroWatch Widget";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 71.0.0;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.canay.dhaara.watchkitapp.widget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "watchsimulator watchos";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.4;
+			};
+			name = Release;
+		};
+		0584569B2F8903C400EDD664 /* Profile */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 71;
+				DEVELOPMENT_TEAM = 6CF95PPRR7;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "AuroWatch Widget/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "AuroWatch Widget";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 71.0.0;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.canay.dhaara.watchkitapp.widget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "watchsimulator watchos";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.4;
+			};
+			name = Profile;
+		};
+		249021D3217E4FDB00AE95B9 /* Profile */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Profile;
+		};
+		249021D4217E4FDB00AE95B9 /* Profile */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 8D2F9A332F90C2A400E1D501 /* Profile.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = Runner/Release.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 71;
+				DEVELOPMENT_TEAM = 6CF95PPRR7;
+				ENABLE_BITCODE = NO;
+				FLUTTER_BUILD_NAME = 71.0.0;
+				FLUTTER_BUILD_NUMBER = 71;
+				INFOPLIST_FILE = Runner/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Aurogram;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 71.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.canay.dhaara;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Profile;
+		};
+		331C8088294A63A400263BE5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 54B02B402269250207D64193 /* Pods-RunnerTests.debug.xcconfig */;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 6CF95PPRR7;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.canay.dhaara.RunnerTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Runner.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Runner";
+			};
+			name = Debug;
+		};
+		331C8089294A63A400263BE5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = A525AFB70D70AB83AA05B94B /* Pods-RunnerTests.release.xcconfig */;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 6CF95PPRR7;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.canay.dhaara.RunnerTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Runner.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Runner";
+			};
+			name = Release;
+		};
+		331C808A294A63A400263BE5 /* Profile */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 10C58F49D9BD917F7D7E00B5 /* Pods-RunnerTests.profile.xcconfig */;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 6CF95PPRR7;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.canay.dhaara.RunnerTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Runner.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Runner";
+			};
+			name = Profile;
+		};
+		97C147031CF9000F007C117D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = AppIcon;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		97C147041CF9000F007C117D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = AppIcon;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		97C147061CF9000F007C117D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 9740EEB21CF90195004384FC /* Debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 71;
+				DEVELOPMENT_TEAM = 6CF95PPRR7;
+				ENABLE_BITCODE = NO;
+				FLUTTER_BUILD_NAME = 71.0.0;
+				FLUTTER_BUILD_NUMBER = 71;
+				INFOPLIST_FILE = Runner/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Aurogram;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 71.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.canay.dhaara;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		97C147071CF9000F007C117D /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 7AFA3C8E1D35360C0083082E /* Release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = Runner/Release.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 71;
+				DEVELOPMENT_TEAM = 6CF95PPRR7;
+				ENABLE_BITCODE = NO;
+				FLUTTER_BUILD_NAME = 71.0.0;
+				FLUTTER_BUILD_NUMBER = 71;
+				INFOPLIST_FILE = Runner/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Aurogram;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 71.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.canay.dhaara;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		058455C32F88E40600EDD664 /* Build configuration list for PBXNativeTarget "AuroWatch Watch App" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				058455C02F88E40600EDD664 /* Debug */,
+				058455C12F88E40600EDD664 /* Release */,
+				058455C22F88E40600EDD664 /* Profile */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		058456982F8903C400EDD664 /* Build configuration list for PBXNativeTarget "AuroWatch WidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				058456992F8903C400EDD664 /* Debug */,
+				0584569A2F8903C400EDD664 /* Release */,
+				0584569B2F8903C400EDD664 /* Profile */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		331C8087294A63A400263BE5 /* Build configuration list for PBXNativeTarget "RunnerTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				331C8088294A63A400263BE5 /* Debug */,
+				331C8089294A63A400263BE5 /* Release */,
+				331C808A294A63A400263BE5 /* Profile */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		97C146E91CF9000F007C117D /* Build configuration list for PBXProject "Runner" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				97C147031CF9000F007C117D /* Debug */,
+				97C147041CF9000F007C117D /* Release */,
+				249021D3217E4FDB00AE95B9 /* Profile */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		97C147051CF9000F007C117D /* Build configuration list for PBXNativeTarget "Runner" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				97C147061CF9000F007C117D /* Debug */,
+				97C147071CF9000F007C117D /* Release */,
+				249021D4217E4FDB00AE95B9 /* Profile */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 97C146E61CF9000F007C117D /* Project object */;
+}

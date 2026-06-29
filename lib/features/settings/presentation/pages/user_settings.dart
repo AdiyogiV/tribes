@@ -70,12 +70,22 @@ class UserSettingsPageState extends State<UserSettingsPage> {
 
   Future<void> _toggleVoiceEngine(bool useLive) async {
     if (!kIsWeb) HapticFeedback.lightImpact();
+    final engine = useLive ? VoiceEngine.live : VoiceEngine.cx;
     setState(() => _useLiveVoice = useLive);
-    await VoiceEnginePref.set(useLive ? VoiceEngine.live : VoiceEngine.cx);
+    await VoiceEnginePref.set(engine);
+    // If the user hasn't explicitly overridden mic mode, keep the mic toggle
+    // tracking the engine's smart default (Live→always-listening for barge-in,
+    // CX→wait-your-turn to avoid echo) so the UI shows what will really happen.
+    final override = await VoiceMicModePref.readOverride();
+    if (override == null && mounted) {
+      setState(() => _waitTurnMic =
+          VoiceMicModePref.defaultFor(engine) == VoiceMicMode.waitTurn);
+    }
   }
 
   Future<void> _loadVoiceMicModeSetting() async {
-    final mode = await VoiceMicModePref.read();
+    final engine = await VoiceEnginePref.read();
+    final mode = await VoiceMicModePref.effectiveFor(engine);
     if (mounted) {
       setState(() => _waitTurnMic = mode == VoiceMicMode.waitTurn);
     }

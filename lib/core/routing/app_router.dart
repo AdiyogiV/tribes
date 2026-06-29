@@ -55,6 +55,8 @@ import 'package:aurogram/features/astrology/presentation/pages/saved_insights_pa
 import 'package:aurogram/features/astrology/presentation/pages/compatibility_details_page.dart';
 import 'package:aurogram/features/astrology/presentation/pages/current_sky_page.dart';
 import 'package:aurogram/features/onboarding/presentation/pages/onboarding_complete.dart';
+import 'package:aurogram/features/astrology/presentation/pages/minimal_dashboard.dart';
+import 'package:aurogram/features/astrology/presentation/pages/melooha_dashboard.dart';
 
 /// Global app router instance — set once during app startup.
 ///
@@ -363,7 +365,17 @@ GoRouter createAppRouter(GlobalKey<NavigatorState> navigatorKey) {
       GoRoute(
         path: RouteNames.cosmicDashboard,
         name: 'cosmicDashboard',
-        builder: (_, __) => const CosmicDashboard(),
+        builder: (_, __) => const Scaffold(body: CosmicDashboard()), // Wraps to provide scaffold if needed, but the original might be fine.
+      ),
+      GoRoute(
+        path: RouteNames.cosmicMinimal,
+        name: 'cosmicMinimal',
+        builder: (_, __) => const MinimalDashboardPage(),
+      ),
+      GoRoute(
+        path: RouteNames.cosmicWeekly,
+        name: 'cosmicWeekly',
+        builder: (_, __) => const MeloohaDashboardPage(),
       ),
 
       // ── Notifications ──────────────────────────────────────────────────

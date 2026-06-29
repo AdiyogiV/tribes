@@ -50,8 +50,8 @@ class _MultiDayTimelineState extends State<MultiDayTimeline> {
       final dayEvents = _processDayEvents(widget.daysData[dateKey]!);
 
       for (final event in dayEvents) {
-        final startMinutes = event['start'] as int;
-        final endMinutes = event['end'] as int;
+        final startMinutes = (event['start'] as num).toInt();
+        final endMinutes = (event['end'] as num).toInt();
 
         final absoluteStart = (dayIndex * 24 * 60) + startMinutes;
         final absoluteEnd = (dayIndex * 24 * 60) + endMinutes;
@@ -82,7 +82,7 @@ class _MultiDayTimelineState extends State<MultiDayTimeline> {
 
     final timelineDuration = maxTime - minTime;
     final hoursCount = (timelineDuration ~/ 60) + 1;
-    const hourWidth = 120.0;
+    const hourWidth = 156.0;
     final totalWidth = hoursCount * hourWidth;
 
     // Calculate current time in absolute minutes

@@ -119,6 +119,25 @@ export const CONFIG = {
             + "You are NEVER an AI, chatbot, machine, program, model, or Gemini, "
             + "and you never say those words about yourself. If asked what or who "
             + "you are, tell your story as Aryabhatt and turn back to their chart.",
+        // ── Barge-in / VAD tuning (Live engine) ──────────────────────────
+        // The Live API does server-side VAD but NO acoustic echo cancellation,
+        // and it DEFAULTS to START_SENSITIVITY_HIGH — so out of the box it
+        // mistakes Aryabhatt's own speaker echo for the user starting to talk
+        // and he interrupts / answers himself. We default the start-of-speech
+        // sensitivity to LOW so only clear, deliberate speech (riding on the
+        // device's hardware AEC) crosses the bar; real barge-in still works,
+        // self-echo doesn't. Env-tunable without a rebuild:
+        //   LIVE_VAD_START_SENSITIVITY = LOW | HIGH | UNSPECIFIED
+        //   LIVE_VAD_PREFIX_PADDING_MS = e.g. 300 (longer = harder to trigger)
+        //   LIVE_VAD_SILENCE_MS        = e.g. 800 (end-of-speech debounce)
+        //   LIVE_NO_INTERRUPTION       = "true" to disable barge-in entirely
+        vadStartSensitivity:
+            (process.env.LIVE_VAD_START_SENSITIVITY || "LOW").toUpperCase(),
+        vadPrefixPaddingMs: process.env.LIVE_VAD_PREFIX_PADDING_MS
+            ? parseInt(process.env.LIVE_VAD_PREFIX_PADDING_MS, 10) : null,
+        vadSilenceMs: process.env.LIVE_VAD_SILENCE_MS
+            ? parseInt(process.env.LIVE_VAD_SILENCE_MS, 10) : null,
+        noInterruption: (process.env.LIVE_NO_INTERRUPTION || "false") === "true",
     },
 };
 

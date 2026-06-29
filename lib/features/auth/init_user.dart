@@ -2,12 +2,13 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:aurogram/features/profile/domain/user_service.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/shared/presentation/responsive/responsive.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/shared/presentation/widgets/universal/transparent_toolbox.dart';
-import 'package:aurogram/features/onboarding/presentation/pages/ftue_welcome.dart';
+import 'package:aurogram/core/routing/route_names.dart';
 import 'package:aurogram/shared/presentation/widgets/feedback/snack_bar_service.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 
@@ -91,9 +92,7 @@ class InitUserState extends State<InitUser>
       // Discard if the user has typed more since this call started.
       if (callId != _usernameCallId || !mounted) return;
 
-      final existing = doc.exists
-          ? (doc.data() as Map<String, dynamic>? ?? {})
-          : <String, dynamic>{};
+      final existing = doc.exists ? (doc.data() ?? {}) : <String, dynamic>{};
 
       for (int i = 0; i < 50; i++) {
         final candidate = '$base${random.nextInt(9000) + 1000}';
@@ -145,20 +144,11 @@ class InitUserState extends State<InitUser>
       }
 
       if (mounted) {
-        // Use push (not pushReplacement) so TabHandler remains as the root route
-        // When user completes FTUE, popUntil(route.isFirst) will return to TabHandler
-        // which will rebuild with Authenticated status and show the tabs
-        Navigator.of(context).push(
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) =>
-                const FtueWelcome(),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) {
-              return FadeTransition(opacity: animation, child: child);
-            },
-            transitionDuration: const Duration(milliseconds: 400),
-          ),
-        );
+        // Go straight to birth-details setup (poem/FTUE welcome removed).
+        // Use push (not pushReplacement) so TabHandler remains the root route;
+        // when onboarding completes, popUntil(route.isFirst) returns here and
+        // TabHandler rebuilds with Authenticated status to show the tabs.
+        context.push(RouteNames.astrologySetup);
       }
     } catch (e) {
       AppLogger.e('Profile error', category: LogCategory.auth, error: e);

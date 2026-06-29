@@ -22,7 +22,7 @@
  */
 
 import { EventEmitter } from "node:events";
-import { GoogleGenAI, Modality } from "@google/genai";
+import { GoogleGenAI, Modality, StartSensitivity, ActivityHandling } from "@google/genai";
 import { CONFIG } from "./config.js";
 
 export class LiveVoiceSession extends EventEmitter {
@@ -84,6 +84,14 @@ export class LiveVoiceSession extends EventEmitter {
             // multilingual auto-detect (understand AND answer in any language).
             if (languageCode) speechConfig.languageCode = languageCode;
 
+            // VAD tuning: the Live API has NO echo cancellation and defaults to
+            // a hair-trigger (START_SENSITIVITY_HIGH), so Aryabhatt's own
+            // speaker echo gets mistaken for the user and he answers himself.
+            // Default start sensitivity to LOW so only deliberate speech (with
+            // the device's hardware AEC behind it) interrupts; real barge-in
+            // still works. All env-tunable (see CONFIG.live).
+            const realtimeInputConfig = this._buildRealtimeInputConfig();
+
             this._session = await ai.live.connect({
                 model,
                 config: {
@@ -96,8 +104,10 @@ export class LiveVoiceSession extends EventEmitter {
                     // Transcripts of both sides, so the client UI still shows text.
                     inputAudioTranscription: {},
                     outputAudioTranscription: {},
-                    // Built-in VAD barge-in is ON by default. This single feature
-                    // replaces ALL of our custom interrupt threshold logic.
+                    // Built-in VAD barge-in, but de-sensitized against self-echo
+                    // (see _buildRealtimeInputConfig). Omitted entirely if it
+                    // resolves to defaults so we never send an empty object.
+                    ...(realtimeInputConfig ? { realtimeInputConfig } : {}),
                 },
                 callbacks: {
                     onopen: () => {
@@ -120,6 +130,35 @@ export class LiveVoiceSession extends EventEmitter {
         } catch (err) {
             this.emit("error", err instanceof Error ? err : new Error(String(err)));
         }
+    }
+
+    /**
+     * Build the Live API realtimeInputConfig from CONFIG.live VAD knobs. Returns
+     * null when everything is at the API default (so we don't send an empty
+     * object). Defaults start-of-speech sensitivity to LOW to stop Aryabhatt's
+     * own speaker echo from false-triggering a "user is talking" interrupt.
+     */
+    _buildRealtimeInputConfig() {
+        const {
+            vadStartSensitivity, vadPrefixPaddingMs, vadSilenceMs, noInterruption,
+        } = CONFIG.live;
+
+        const aad = {};
+        const startMap = {
+            LOW: StartSensitivity.START_SENSITIVITY_LOW,
+            HIGH: StartSensitivity.START_SENSITIVITY_HIGH,
+        };
+        if (startMap[vadStartSensitivity]) {
+            aad.startOfSpeechSensitivity = startMap[vadStartSensitivity];
+        }
+        if (vadPrefixPaddingMs != null) aad.prefixPaddingMs = vadPrefixPaddingMs;
+        if (vadSilenceMs != null) aad.silenceDurationMs = vadSilenceMs;
+
+        const cfg = {};
+        if (Object.keys(aad).length) cfg.automaticActivityDetection = aad;
+        if (noInterruption) cfg.activityHandling = ActivityHandling.NO_INTERRUPTION;
+
+        return Object.keys(cfg).length ? cfg : null;
     }
 
     /**

@@ -551,6 +551,30 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
                 // Header
                 _buildHeader(brown),
 
+                // Try minimalist view button
+                Center(
+                  child: Column(
+                    children: [
+                      TextButton.icon(
+                        onPressed: () => context.push('/cosmic/minimal'),
+                        icon: const Icon(Icons.auto_awesome),
+                        label: const Text("Try Minimalist View (Co-Star vibe)"),
+                        style: TextButton.styleFrom(
+                          foregroundColor: isDark ? Colors.white70 : Colors.black87,
+                        ),
+                      ),
+                      TextButton.icon(
+                        onPressed: () => context.push('/cosmic/weekly'),
+                        icon: const Icon(Icons.calendar_view_week),
+                        label: const Text("Try Weekly View (Melooha vibe)"),
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color(0xFF8B78FF), // Soft purple
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
                 SizedBox(height: spacing),
 
                 // Mandala first (floats without card)

@@ -3,6 +3,8 @@ import 'dart:math';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:aurogram/features/astrology/presentation/widgets/cards/vedic_time_utils.dart';
 import 'package:flutter/services.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
@@ -40,8 +42,8 @@ class NakshatraWheelController extends ChangeNotifier {
   static const int _n = 27;
 
   int _activeIndex = -1;
-  int _todayIndex  = -1;
-  int _birthIndex  = -1;
+  int _todayIndex = -1;
+  int _birthIndex = -1;
 
   /// Cumulative day offset tracked by boundary crossings.
   /// Forward crossing = +1, backward = −1.  Unbounded (no modulo wrap).
@@ -89,12 +91,12 @@ class NakshatraWheelController extends ChangeNotifier {
     required int cumulativeOffset,
   }) {
     if (_activeIndex == activeIndex &&
-        _todayIndex  == todayIndex  &&
-        _birthIndex  == birthIndex  &&
+        _todayIndex == todayIndex &&
+        _birthIndex == birthIndex &&
         _cumulativeOffset == cumulativeOffset) return;
     _activeIndex = activeIndex;
-    _todayIndex  = todayIndex;
-    _birthIndex  = birthIndex;
+    _todayIndex = todayIndex;
+    _birthIndex = birthIndex;
     _cumulativeOffset = cumulativeOffset;
     notifyListeners();
   }
@@ -144,6 +146,7 @@ class NakshatraRingWidget extends StatefulWidget {
   final String? birthNakshatra;
   final String? sunNakshatra;
   final String? lagnaNakshatra;
+
   /// Today's merged panchang/samvat map (same data source as CosmicDateTimeCard).
   /// Used to derive today's tithi and project it ±7 days across the forecast strip.
   final Map<String, dynamic>? todaySamvat;
@@ -194,7 +197,7 @@ class NakshatraRingWidget extends StatefulWidget {
 }
 
 class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   // ─── Rotation ──────────────────────────────────────────────────────────────
   // Unbounded controller — value = angle in radians (grows without limit).
   late AnimationController _controller;
@@ -202,6 +205,28 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
   bool _isDragging = false;
   double? _lastPanAngle;
   double _wheelDiameter = 0;
+
+  // ─── Inertia physics (the "weight" of the wheel) ──────────────────────────
+  // The wheel has MASS: its angle eases toward the finger instead of snapping.
+  // Low follow = laggy/heavy; on release, momentum carries and friction bleeds
+  // it off. These two constants are the real heaviness knobs.
+  Ticker? _spin;
+  double _targetAngle = 0; // where the finger wants the wheel
+  double _velocity = 0; // current angular velocity (rad/s)
+  int? _lastTickUs;
+  bool _spinDragging = false;
+
+  /// Mass time-constant (seconds): how slowly the wheel catches up to the
+  /// finger. Bigger = heavier / more lag. ~0.02 feels light, ~0.25 feels like
+  /// dragging a millstone.
+  static const double _massTau = 0.16;
+
+  /// Friction e-folding rate (per second) after release. Bigger = stops
+  /// sooner (more friction). Smaller = longer coast.
+  static const double _frictionRate = 3.5;
+
+  /// Below this angular speed (rad/s) the wheel is considered at rest.
+  static const double _restSpeed = 0.05;
 
   // ─── Long-press magnifier ─────────────────────────────────────────────────
   bool _isMagnified = false;
@@ -219,7 +244,7 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
       OverlayPortalController();
 
   // ─── Selection (auto — always the nakshatra at 12 o'clock / top) ──────────
-  int _currentBottomIndex = -1;  // field name kept for compatibility
+  int _currentBottomIndex = -1; // field name kept for compatibility
 
   // ─── Geometry constants ────────────────────────────────────────────────────
   /// Angle of Ashwini's center, clockwise from 12 o'clock, in radians.
@@ -296,8 +321,18 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
   /// "May 17"-style short date.
   String _formatDate(DateTime d) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
     ];
     return '${months[d.month - 1]} ${d.day}';
   }
@@ -318,15 +353,15 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
     widget.controller?._resetOffset();
     _controller
         .animateTo(
-          current + delta,
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.easeOutCubic,
-        )
+      current + delta,
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeOutCubic,
+    )
         .whenComplete(() {
-          _isReturningToToday = false;
-          _cumulativeOffset = 0; // ensure clean after animation
-          if (mounted) widget.onDateChanged?.call(_displayedDate);
-        });
+      _isReturningToToday = false;
+      _cumulativeOffset = 0; // ensure clean after animation
+      if (mounted) widget.onDateChanged?.call(_displayedDate);
+    });
   }
 
   /// Animate the wheel so the given nakshatra index sits at the top.
@@ -354,13 +389,13 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
     final delta = ((targetAngle - current) % twoPi + twoPi + pi) % twoPi - pi;
     _controller
         .animateTo(
-          current + delta,
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeOutCubic,
-        )
+      current + delta,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeOutCubic,
+    )
         .whenComplete(() {
-          if (mounted) widget.onDateChanged?.call(_displayedDate);
-        });
+      if (mounted) widget.onDateChanged?.call(_displayedDate);
+    });
   }
 
   /// Jump the wheel to a specific day offset from today.
@@ -381,13 +416,13 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
     final delta = ((targetAngle - current) % twoPi + twoPi + pi) % twoPi - pi;
     _controller
         .animateTo(
-          current + delta,
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeOutCubic,
-        )
+      current + delta,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeOutCubic,
+    )
         .whenComplete(() {
-          if (mounted) widget.onDateChanged?.call(_displayedDate);
-        });
+      if (mounted) widget.onDateChanged?.call(_displayedDate);
+    });
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -473,6 +508,7 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
     widget.wheelResetSignal?.removeListener(_onExternalResetToToday);
     _controller.removeListener(_onRotation);
     _resumeTimer?.cancel();
+    _spin?.dispose();
     _controller.dispose();
     // Null out the jump callbacks so a disposed widget is never called.
     widget.controller?._jumpCallback = null;
@@ -542,10 +578,86 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
   void _stopAll() {
     _controller.stop();
     _resumeTimer?.cancel();
+    _spin?.stop();
+    _spinDragging = false;
+    _velocity = 0;
+    _lastTickUs = null;
   }
 
   void _scheduleResume() {
     _resumeTimer?.cancel();
+  }
+
+  // ── Inertia engine ─────────────────────────────────────────────────────────
+  // One ticker drives both phases:
+  //   • while dragging  → ease the wheel toward the finger (mass/lag),
+  //     measuring velocity along the way.
+  //   • after release   → apply that velocity and decay it with friction.
+
+  void _startSpin() {
+    _spin ??= createTicker(_onSpinTick);
+    _lastTickUs = null;
+    if (!_spin!.isActive) _spin!.start();
+  }
+
+  void _onSpinTick(Duration elapsed) {
+    final nowUs = elapsed.inMicroseconds;
+    if (_lastTickUs == null) {
+      _lastTickUs = nowUs;
+      return;
+    }
+    var dt = (nowUs - _lastTickUs!) / 1e6;
+    _lastTickUs = nowUs;
+    if (dt <= 0) return;
+    if (dt > 0.05) dt = 0.05; // clamp after a stall
+
+    if (_spinDragging) {
+      // Critically-damped chase toward the finger target. The wheel lags by
+      // ~_massTau seconds → that lag IS the felt weight.
+      final k = 1 - exp(-dt / _massTau);
+      final prev = _controller.value;
+      final next = prev + (_targetAngle - prev) * k;
+      _velocity = (next - prev) / dt; // remember speed for the release
+      _controller.value = next;
+    } else {
+      // Friction coast.
+      _velocity *= exp(-_frictionRate * dt);
+      _controller.value += _velocity * dt;
+      if (_velocity.abs() < _restSpeed) {
+        _velocity = 0;
+        _spin?.stop();
+        _lastTickUs = null;
+        _scheduleResume();
+        if (mounted) widget.onDateChanged?.call(_displayedDate);
+      }
+    }
+  }
+
+  /// Feed a finger-delta into the inertia engine (shared by rotate + magnify).
+  void _spinDragBegin(double startAngle) {
+    _stopAll();
+    _targetAngle = _controller.value;
+    _velocity = 0;
+    _spinDragging = true;
+    _lastPanAngle = startAngle;
+    _startSpin();
+  }
+
+  void _spinDragUpdate(double delta) {
+    _targetAngle += delta;
+  }
+
+  void _spinDragRelease() {
+    _spinDragging = false;
+    // Ticker keeps running; friction now decays _velocity to rest.
+    // If it's already basically still, settle immediately.
+    if (_velocity.abs() < _restSpeed) {
+      _velocity = 0;
+      _spin?.stop();
+      _lastTickUs = null;
+      _scheduleResume();
+      if (mounted) widget.onDateChanged?.call(_displayedDate);
+    }
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -562,65 +674,38 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
   void _onRotateStart(DragStartDetails d) {
     if (_wheelDiameter <= 0) return;
     _isDragging = true;
-    _stopAll();
     final cx = _wheelDiameter / 2;
-    _lastPanAngle = atan2(d.localPosition.dx - cx, -(d.localPosition.dy - cx));
+    _spinDragBegin(atan2(d.localPosition.dx - cx, -(d.localPosition.dy - cx)));
   }
 
   void _onRotateUpdate(DragUpdateDetails d) {
     if (_lastPanAngle == null || _wheelDiameter <= 0) return;
     final cx = _wheelDiameter / 2;
-    final currentAngle = atan2(d.localPosition.dx - cx, -(d.localPosition.dy - cx));
+    final currentAngle =
+        atan2(d.localPosition.dx - cx, -(d.localPosition.dy - cx));
     double delta = currentAngle - _lastPanAngle!;
     if (delta > pi) delta -= 2 * pi;
     if (delta < -pi) delta += 2 * pi;
     _lastPanAngle = currentAngle;
-    _controller.value += delta * 0.65;
+    // Move the finger TARGET; the wheel eases toward it with mass.
+    _spinDragUpdate(delta);
   }
 
   void _onRotateEnd(DragEndDetails d) {
     _isDragging = false;
-    final touchAngle = _lastPanAngle;
     _lastPanAngle = null;
-
-    if (touchAngle != null && _wheelDiameter > 0) {
-      final r = _wheelDiameter / 2;
-      final v = d.velocity.pixelsPerSecond;
-      final tangentialVel = v.dx * cos(touchAngle) + v.dy * sin(touchAngle);
-      final angularVel = tangentialVel / r;
-
-      if (angularVel.abs() > 0.7) {
-        final ms = (angularVel.abs() * 500).clamp(250.0, 1400.0);
-        final flingAngle = angularVel * ms / 1000 * 0.32;
-        _controller
-            .animateTo(
-              _controller.value + flingAngle,
-              duration: Duration(milliseconds: ms.toInt()),
-              curve: Curves.decelerate,
-            )
-            .whenComplete(() {
-              if (mounted) {
-                _scheduleResume();
-                widget.onDateChanged?.call(_displayedDate);
-              }
-            });
-        return;
-      }
-    }
-    _scheduleResume();
-    widget.onDateChanged?.call(_displayedDate);
+    _spinDragRelease();
   }
 
   void _onRotateCancel() {
     _isDragging = false;
     _lastPanAngle = null;
-    _scheduleResume();
+    _spinDragRelease();
   }
 
   // ── Magnifier ──────────────────────────────────────────────────────────────
 
   void _onMagnifyStart(LongPressStartDetails d) {
-    _stopAll();
     setState(() {
       _isMagnified = true;
       _magnifyOrigin = d.localPosition;
@@ -628,26 +713,27 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
     // Seed rotation angle so dragging while zoomed rotates the wheel.
     if (_wheelDiameter > 0) {
       final cx = _wheelDiameter / 2;
-      _lastPanAngle = atan2(d.localPosition.dx - cx, -(d.localPosition.dy - cx));
+      _spinDragBegin(
+          atan2(d.localPosition.dx - cx, -(d.localPosition.dy - cx)));
     }
   }
 
   void _onMagnifyMove(LongPressMoveUpdateDetails d) {
     if (_lastPanAngle == null || _wheelDiameter <= 0) return;
     final cx = _wheelDiameter / 2;
-    final currentAngle = atan2(d.localPosition.dx - cx, -(d.localPosition.dy - cx));
+    final currentAngle =
+        atan2(d.localPosition.dx - cx, -(d.localPosition.dy - cx));
     double delta = currentAngle - _lastPanAngle!;
     if (delta > pi) delta -= 2 * pi;
     if (delta < -pi) delta += 2 * pi;
     _lastPanAngle = currentAngle;
-    _controller.value += delta * 0.65;
+    _spinDragUpdate(delta);
   }
 
   void _onMagnifyEnd(LongPressEndDetails d) {
     setState(() => _isMagnified = false);
     _lastPanAngle = null;
-    _scheduleResume();
-    widget.onDateChanged?.call(_displayedDate);
+    _spinDragRelease();
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -656,28 +742,21 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
 
   @override
   Widget build(BuildContext context) {
-    final c = AppTheme.primaryColor;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor =
-        isDark ? Theme.of(context).colorScheme.surface : Colors.white;
+    final c = isDark ? Colors.white : Colors.black87;
+    final cardColor = isDark ? Colors.black : Colors.white;
 
     final vibeContent = _buildDailyVibeContent(c, isDark, cardColor);
     final wheel = _buildWheel(c, isDark);
 
-    // The wheel's at-rest layout slot. Its OverlayPortal renders the actual
-    // (and magnified) wheel visual ABOVE this card, so the wheel still spills
-    // over the card edges and adjacent siblings — this just frames the slot.
-    final wheelContent = Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.paddingMd,
-        vertical: AppDimensions.paddingLg,
-      ),
-      child: wheel,
+    // Header summary: energy label + alignment %, derived from today's Tara.
+    final headerVibe = DailyVibe.forUser(
+      birthIndex: _birthIndex,
+      todayIndex: _activeIndex,
     );
+    final headerTara = TaraBala.calculate(_birthIndex, _activeIndex);
+    final headerAlignment = _taraAlignmentPercent(headerTara.type);
 
-    // Wheel + Daily Vibe share ONE Material card. [wheelFirst] flips which
-    // sits on top. The wheel's OverlayPortal still paints its magnified
-    // visual above this card regardless of child order.
     return Material(
       color: cardColor,
       elevation: 2,
@@ -685,14 +764,59 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
       borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        children: widget.wheelFirst
-            ? [wheelContent, vibeContent]
-            : [vibeContent, wheelContent],
+        children: [
+          // ── HEADER: Context ──
+          Padding(
+            padding: const EdgeInsets.only(top: 22, bottom: 14),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Prominent: energy label + alignment %.
+                for (final line in [
+                  if (headerVibe != null) headerVibe.label.toUpperCase(),
+                ])
+                  Text(
+                    line,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      height: 1.4,
+                      letterSpacing: 3.0,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+                if (headerVibe != null)
+                  Text(
+                    '$headerAlignment% ALIGNED',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      height: 1.4,
+                      letterSpacing: 3.0,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+
+          // ── MOON: elegant, on-brand, sits just above the wheel ──
+          _buildMoon(c, isDark),
+
+          // ── WHEEL AREA ──
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.paddingXs,
+            ),
+            child: wheel,
+          ),
+
+          // ── VIBE CONTENT ──
+          vibeContent,
+        ],
       ),
-      // Mood check-in + Week forecast have been extracted to standalone
-      // NakshatraMoodCheckInCard / NakshatraWeekForecastCard widgets and
-      // placed at the bottom of the dashboard so they are independent
-      // cards on the page — not buried inside the wheel widget.
     );
   }
 
@@ -717,21 +841,11 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
     );
     if (vibe == null) return _buildVibeEmptyContent(c, isDark, cardColor);
 
-    final tara = TaraBala.calculate(_birthIndex, activeIdx);
-    final activeInfo = NakshatraData.getInfo(activeIdx);
     final isAtToday = _isAtToday;
-    final isJanmaActive =
-        _birthIndex >= 0 && activeIdx == _birthIndex;
     // Narrative: AI insight on today, static vibe template otherwise.
     final aiMessage = widget.insight?.displayMessage ?? '';
     final useInsight = isAtToday && aiMessage.isNotEmpty;
     final narrativeText = useInsight ? aiMessage : vibe.narrative;
-
-    // Subtitle: "Mrigashira · Sampat Tara" or "Mrigashira · Janma Day"
-    final subtitle = <String>[
-      if (activeInfo != null) activeInfo.name,
-      isJanmaActive ? 'Janma Day' : tara.name,
-    ].join(' · ');
 
     return Container(
       width: double.infinity,
@@ -740,28 +854,6 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Vibe label
-          Text(
-            vibe.label,
-            style: TextStyle(
-              fontSize: AppTheme.holyCowTextSize + 4,
-              fontWeight: FontWeight.w700,
-              color: c,
-            ),
-          ),
-          const SizedBox(height: AppDimensions.spacingXs),
-
-          // Nakshatra · Tara subtitle
-          Text(
-            subtitle,
-            style: TextStyle(
-              fontSize: AppTheme.holyCowTextSize - 1,
-              fontWeight: FontWeight.w500,
-              color: c.withValues(alpha: 0.5),
-            ),
-          ),
-          const SizedBox(height: AppDimensions.spacingMd),
-
           // Narrative
           Text(
             narrativeText,
@@ -809,18 +901,18 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
             ],
           ),
           const SizedBox(height: AppDimensions.spacingSm),
-            Text(
-              'Add your birth date & time to unlock a personalised daily '
-              'energy reading — how today\'s sky interacts with your birth star.',
-              style: TextStyle(
-                fontSize: AppTheme.holyCowTextSize,
-                color: c.withValues(alpha: 0.7),
-                height: 1.4,
-              ),
+          Text(
+            'Add your birth date & time to unlock a personalised daily '
+            'energy reading — how today\'s sky interacts with your birth star.',
+            style: TextStyle(
+              fontSize: AppTheme.holyCowTextSize,
+              color: c.withValues(alpha: 0.7),
+              height: 1.4,
             ),
-          ],
-        ),
-      );
+          ),
+        ],
+      ),
+    );
   }
 
   /// Opens a bottom sheet that demystifies the vibe — shows the
@@ -838,8 +930,7 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
   }) {
     HapticFeedback.selectionClick();
     final birthInfo = NakshatraData.getInfo(_birthIndex);
-    final distance =
-        ((_activeIndex - _birthIndex + 27) % 27); // 0..26
+    final distance = ((_activeIndex - _birthIndex + 27) % 27); // 0..26
     final taraSlotIndex = (distance % 9) + 1; // 1..9 for display
 
     showModalBottomSheet<void>(
@@ -1006,8 +1097,7 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
                   padding: const EdgeInsets.all(AppDimensions.paddingMd),
                   decoration: BoxDecoration(
                     color: accent.withValues(alpha: isDark ? 0.12 : 0.06),
-                    borderRadius: BorderRadius.circular(
-                        AppDimensions.radiusMd),
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1174,19 +1264,65 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
     return SizedBox(
       width: double.infinity,
       child: LayoutBuilder(builder: (context, constraints) {
-        final total = (constraints.maxWidth * 0.92).clamp(0.0, _maxWheelDiameter);
+        // 0.96 leaves a small margin so the wave's bulges breathe outward
+        // without poking past the card's side edges.
+        final total =
+            (constraints.maxWidth * 0.97).clamp(0.0, _maxWheelDiameter);
         _wheelDiameter = total;
         final imgDia = total - 2 * (_selectedRingWidth + _ringGap);
 
+        // How far the wheel box sits from the card's horizontal edges, so the
+        // dimmer can stretch all the way out (no uncovered side padding).
+        final dimHExt =
+            (constraints.maxWidth - total) / 2 + AppDimensions.paddingXs;
+
         // Scale alignment — maps press point inside the wheel to AnimatedScale's
-        // alignment convention (−1..1).  Locked at press; doesn't change on drag.
+        // alignment convention (-1..1). Locked at press; doesn't change on drag.
         final magAlignX = total > 0 ? (_magnifyOrigin.dx / total) * 2 - 1 : 0.0;
         final magAlignY = total > 0 ? (_magnifyOrigin.dy / total) * 2 - 1 : 0.0;
 
-        // The full interactive wheel — gestures + animated scale + visual.
-        // Hoisted into the OverlayPortal so the magnified wheel + tara ring
-        // ALWAYS paint above adjacent sibling cards (date card above,
-        // energy/vibe card below) regardless of normal Column paint order.
+        // Scale alignment
+        final Widget rotatingLayer = Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.center,
+          children: [
+            SizedBox(
+              width: imgDia,
+              height: imgDia,
+              child: ClipOval(
+                child: Image.asset(
+                  'assets/images/nakshatra_wheel.jpeg',
+                  fit: BoxFit.cover,
+                  width: imgDia,
+                  height: imgDia,
+                  gaplessPlayback: true,
+                  frameBuilder: (context, child, frame, loaded) {
+                    if (loaded) return child;
+                    return AnimatedOpacity(
+                      opacity: frame != null ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 300),
+                      child: child,
+                    );
+                  },
+                ),
+              ),
+            ),
+            CustomPaint(
+              size: Size(total, total),
+              painter: _TaraRingPainter(
+                birthIndex: _birthIndex,
+                todayIndex: _todayIndex,
+                selectedIndex: _activeIndex,
+                primaryColor: c,
+                isDark: isDark,
+                isJanmaDay: _isJanmaDay,
+                rotation: _controller,
+              ),
+            ),
+          ],
+        );
+
+        // ── The full interactive wheel: strictly square, never distorts ──
         final Widget wheelVisual = Listener(
           behavior: HitTestBehavior.opaque,
           onPointerDown: (_) {
@@ -1215,10 +1351,12 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
                     ..onCancel = _onRotateCancel;
                 },
               ),
-              LongPressGestureRecognizer:
-                  GestureRecognizerFactoryWithHandlers<LongPressGestureRecognizer>(
+              LongPressGestureRecognizer: GestureRecognizerFactoryWithHandlers<
+                  LongPressGestureRecognizer>(
                 () => LongPressGestureRecognizer(
-                    duration: const Duration(milliseconds: 50)),
+                    // Deliberate press-and-hold to zoom. Long enough that a
+                    // quick scroll/flick never accidentally triggers it.
+                    duration: const Duration(milliseconds: 400)),
                 (instance) {
                   instance
                     ..onLongPressStart = _onMagnifyStart
@@ -1228,13 +1366,14 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
               ),
             },
             child: AnimatedScale(
-              scale: _isMagnified ? 1.25 : 1.0,
+              scale: _isMagnified ? 1.55 : 1.0,
               alignment: Alignment(
                 magAlignX.clamp(-1.0, 1.0),
                 magAlignY.clamp(-1.0, 1.0),
               ),
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOut,
+              // Slower, silkier zoom in/out.
+              duration: const Duration(milliseconds: 380),
+              curve: Curves.easeOutCubic,
               child: SizedBox(
                 width: total,
                 height: total,
@@ -1246,62 +1385,34 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
                       clipBehavior: Clip.none,
                       alignment: Alignment.center,
                       children: [
-                        // Rotating layer (image + tara ring)
+                        // Rotating artwork + ring
                         Transform.rotate(angle: angle, child: child),
-                        // Markers — positioned in screen-space so icons stay upright
+
+                        // Upright markers (birth / today / selected)
                         ..._buildMarkers(total, c, angle, isDark),
+
+                        // NOTE: bottom dimming is NOT here anymore — it lives at
+                        // the CARD level (see build()) so it covers the wave's
+                        // outward bulges too, and only applies when unmagnified.
+
+                        // Center date hub
+                        _buildDateHub(c, isDark),
+
+                        // NOTE: "DRAG TO EXPLORE" moved to the overlay stack
+                        // (above the dim band) so it stays bright.
                       ],
                     );
                   },
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    alignment: Alignment.center,
-                    children: [
-                      SizedBox(
-                        width: imgDia,
-                        height: imgDia,
-                        child: ClipOval(
-                          child: Image.asset(
-                            'assets/images/nakshatra_wheel.jpeg',
-                            fit: BoxFit.cover,
-                            width: imgDia,
-                            height: imgDia,
-                            gaplessPlayback: true,
-                            frameBuilder: (context, child, frame, loaded) {
-                              if (loaded) return child;
-                              return AnimatedOpacity(
-                                opacity: frame != null ? 1.0 : 0.0,
-                                duration: const Duration(milliseconds: 300),
-                                child: child,
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                      CustomPaint(
-                        size: Size(total, total),
-                        painter: _TaraRingPainter(
-                          birthIndex: _birthIndex,
-                          todayIndex: _todayIndex,
-                          selectedIndex: _activeIndex,
-                          primaryColor: c,
-                          isDark: isDark,
-                          isJanmaDay: _isJanmaDay,
-                        ),
-                      ),
-                    ],
-                  ),
+                  child: rotatingLayer,
                 ),
               ),
             ),
           ),
         );
 
-        // Full wheel: render the entire circle. The OverlayPortal uses the
-        // nearest scoped _LocalOverlayScope ancestor (set up in holycow.dart)
-        // so the magnified wheel paints ABOVE sibling cards — and because we
-        // do NOT clip it here, the zoomed (1.25x) wheel is free to spill out
-        // beyond the card bounds.
+        // Hoist into the OverlayPortal so the magnified (1.25x) wheel paints
+        // above sibling cards. The follower box matches the wheel exactly
+        // (square), so nothing is ever compressed into an oval.
         return Center(
           child: CompositedTransformTarget(
             link: _wheelLayerLink,
@@ -1318,13 +1429,126 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
                     targetAnchor: Alignment.topLeft,
                     followerAnchor: Alignment.topLeft,
                     showWhenUnlinked: false,
-                    // No clip: the full square wheel renders, and the magnified
-                    // state overflows the card freely.
-                    child: wheelVisual,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        wheelVisual,
+                        // Bottom dimming, painted ON TOP of the whole wheel
+                        // (incl. the wave's outward bulges) but OUTSIDE the
+                        // zoom scale — so it only applies when unmagnified.
+                        if (!_isMagnified)
+                          Positioned(
+                            left: -dimHExt,
+                            right: -dimHExt,
+                            top: 0,
+                            bottom: 0,
+                            child: IgnorePointer(
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [
+                                      Colors.transparent,
+                                      Colors.black.withValues(alpha: 0.00),
+                                      Colors.black.withValues(alpha: 0.04),
+                                      Colors.black.withValues(alpha: 0.10),
+                                      Colors.black.withValues(alpha: 0.18),
+                                      Colors.black.withValues(alpha: 0.29),
+                                      Colors.black.withValues(alpha: 0.43),
+                                      Colors.black.withValues(alpha: 0.59),
+                                      Colors.black.withValues(alpha: 0.76),
+                                      Colors.black.withValues(alpha: 0.92),
+                                      Colors.black,
+                                    ],
+                                    stops: const [
+                                      0.00,
+                                      0.30,
+                                      0.40,
+                                      0.48,
+                                      0.55,
+                                      0.62,
+                                      0.69,
+                                      0.76,
+                                      0.83,
+                                      0.90,
+                                      1.00,
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        // "MOON IN <name>" + "DRAG TO EXPLORE" — above the
+                        // dim band so they stay readable as the wheel darkens.
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          bottom: total * 0.10,
+                          child: IgnorePointer(
+                            child: AnimatedOpacity(
+                              duration: const Duration(milliseconds: 200),
+                              opacity: _isMagnified ? 0.0 : 1.0,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'MOON IN',
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      fontSize: 7,
+                                      letterSpacing: 2.0,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    NakshatraData.getInfo(_activeIndex)
+                                            ?.name
+                                            .toUpperCase() ??
+                                        '...',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      letterSpacing: 2.5,
+                                      fontWeight: FontWeight.w800,
+                                      color: c.withValues(alpha: 0.95),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(Icons.chevron_left,
+                                          size: 11, color: Colors.white),
+                                      const SizedBox(width: 6),
+                                      const Text(
+                                        'DRAG TO EXPLORE',
+                                        style: TextStyle(
+                                          fontSize: 7,
+                                          letterSpacing: 2.0,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      const Icon(Icons.chevron_right,
+                                          size: 11, color: Colors.white),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },
-              // Placeholder reserves the full wheel height in the Column.
+              // Placeholder reserves the square wheel footprint in the Column.
               child: SizedBox(width: total, height: total),
             ),
           ),
@@ -1333,12 +1557,64 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
     );
   }
 
+  /// Center date hub — shows the displayed date / TODAY.
+  Widget _buildDateHub(Color c, bool isDark) {
+    return Container(
+      width: 62,
+      height: 62,
+      decoration: BoxDecoration(
+        // Semi-transparent so the wheel art faintly shows through the hub.
+        color: (isDark ? Colors.black : Colors.white).withValues(alpha: 0.70),
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withValues(alpha: 0.22), blurRadius: 14),
+        ],
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        _isAtToday ? _formatDate(DateTime.now()) : _formatDate(_displayedDate),
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w900,
+          color: c,
+        ),
+      ),
+    );
+  }
+
+  /// Elegant hand-drawn moon (custom-painted in the app palette) shown above
+  /// the wheel. Replaces the OS emoji for a premium, on-brand look.
+  Widget _buildMoon(Color c, bool isDark) {
+    final phase = VedicTimeUtils.getMoonPhaseFraction(_displayedDate);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        CustomPaint(
+          size: const Size(38, 38),
+          painter: _MoonPhasePainter(
+            phase: phase,
+            litColor:
+                isDark ? const Color(0xFFF3EFE6) : const Color(0xFF1A1A1A),
+            darkColor: Colors.black,
+          ),
+        ),
+        const SizedBox(height: 14),
+      ],
+    );
+  }
+
   // ─── Markers (icons stay upright) ──────────────────────────────────────────
 
   List<Widget> _buildMarkers(
       double diameter, Color c, double rotAngle, bool isDark) {
     final markers = <Widget>[];
-    final radius = diameter / 2 - _selectedRingWidth / 2;
+    // Place markers on the dividing line between the outer nakshatra band and
+    // the inner zodiac band of the artwork (~0.73 of the image radius). Fully
+    // inside the wheel, so the dimming overlay darkens them completely.
+    final imgRadius = diameter / 2 - (_selectedRingWidth + _ringGap);
+    final radius = imgRadius * 0.70;
 
     // Marker icon helper — adds a subtle shadow so icons pop on any ring color.
     Widget markerIcon(IconData icon, double size, Color color) {
@@ -1647,9 +1923,7 @@ class _NakshatraMoodCheckInCardState extends State<NakshatraMoodCheckInCard> {
               style: TextStyle(
                 fontSize: 9,
                 fontWeight: FontWeight.w700,
-                color: isSelected
-                    ? option.color
-                    : c.withValues(alpha: 0.55),
+                color: isSelected ? option.color : c.withValues(alpha: 0.55),
                 letterSpacing: 0.3,
               ),
             ),
@@ -1719,9 +1993,8 @@ class NakshatraWeekForecastCard extends StatelessWidget {
 
   static int? _todayTithiIndex(Map<String, dynamic>? samvat) {
     if (samvat == null) return null;
-    final rawNum = samvat['number'] ??
-        samvat['tithi_number'] ??
-        samvat['tithiNumber'];
+    final rawNum =
+        samvat['number'] ?? samvat['tithi_number'] ?? samvat['tithiNumber'];
     int? tithiNum;
     if (rawNum is num) {
       tithiNum = rawNum.toInt();
@@ -1730,9 +2003,8 @@ class NakshatraWeekForecastCard extends StatelessWidget {
     }
     if (tithiNum == null) return null;
     if (tithiNum > 15) return tithiNum.clamp(16, 30);
-    final rawPaksha = samvat['paksha']?.toString() ??
-        samvat['tithiPaksha']?.toString() ??
-        '';
+    final rawPaksha =
+        samvat['paksha']?.toString() ?? samvat['tithiPaksha']?.toString() ?? '';
     final isKrishna = rawPaksha.toLowerCase().contains('krishna') ||
         rawPaksha.toLowerCase().contains('krsna');
     return isKrishna ? (tithiNum + 15).clamp(16, 30) : tithiNum.clamp(1, 15);
@@ -1927,8 +2199,7 @@ class NakshatraWeekForecastCard extends StatelessWidget {
                       width: isFocused ? 1.0 : 0.8,
                     )
                   : (isToday && !isFocused
-                      ? Border.all(
-                          color: c.withValues(alpha: 0.25), width: 0.8)
+                      ? Border.all(color: c.withValues(alpha: 0.25), width: 0.8)
                       : null),
             ),
             child: Column(
@@ -2013,8 +2284,7 @@ class NakshatraWeekForecastCard extends StatelessWidget {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color:
-                          const Color(0xFFFFD700).withValues(alpha: 0.45),
+                      color: const Color(0xFFFFD700).withValues(alpha: 0.45),
                       blurRadius: 4,
                       spreadRadius: 0.5,
                     ),
@@ -2034,8 +2304,131 @@ class NakshatraWeekForecastCard extends StatelessWidget {
 }
 
 // =============================================================================
+// Moon phase painter
+// =============================================================================
+
+/// Draws an elegant moon for a given synodic [phase] (0=new, 0.5=full).
+/// Uses two arcs (bright limb + terminator) so crescents and gibbous phases
+/// render with a smooth, real terminator curve — no OS emoji.
+class _MoonPhasePainter extends CustomPainter {
+  _MoonPhasePainter({
+    required this.phase,
+    required this.litColor,
+    required this.darkColor,
+  });
+
+  final double phase; // 0..1
+  final Color litColor;
+  final Color darkColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final r = (size.width < size.height ? size.width : size.height) / 2 - 1;
+
+    // 1. Draw the Base Dark Moon first (pure flat black/darkColor).
+    // This perfectly prevents any edge/rim bleeding because the background is already black.
+    canvas.drawCircle(center, r, Paint()..color = darkColor);
+
+    // 2. Calculate Illuminated Region (litPath)
+    final illum = (1 - cos(2 * pi * phase)) / 2;
+    final waxing = phase < 0.5;
+
+    final litPath = Path();
+    if (illum > 0.001) {
+      final top = Offset(center.dx, center.dy - r);
+      final bottom = Offset(center.dx, center.dy + r);
+      final termW = (r * (1 - 2 * illum)).abs();
+      final isCrescent = illum < 0.5;
+
+      litPath.moveTo(top.dx, top.dy);
+      litPath.arcToPoint(bottom, radius: Radius.circular(r), clockwise: waxing);
+      litPath.arcToPoint(top,
+          radius: Radius.elliptical(termW, r),
+          clockwise: waxing ? isCrescent : !isCrescent);
+      litPath.close();
+
+      // 3. Clip the canvas to ONLY the lit section
+      canvas.save();
+      canvas.clipPath(litPath);
+
+      // 4. Draw the Lunar Surface (Regolith) INSIDE the clipped area
+      canvas.drawCircle(center, r, Paint()..color = litColor);
+
+      // 5. Draw Lunar Maria (dark basaltic plains fixed to the tidally locked face)
+      final mariaColor = Color.lerp(litColor, darkColor, 0.3)!;
+      final mariaPaint = Paint()
+        ..color = mariaColor
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, r * 0.15)
+        ..isAntiAlias = true;
+
+      // Oceanus Procellarum
+      canvas.drawOval(
+        Rect.fromCenter(
+            center: center + Offset(-r * 0.4, -r * 0.1),
+            width: r * 0.5,
+            height: r * 1.1),
+        mariaPaint,
+      );
+      // Mare Imbrium
+      canvas.drawCircle(
+          center + Offset(r * 0.15, -r * 0.45), r * 0.35, mariaPaint);
+      // Mare Serenitatis & Tranquillitatis
+      canvas.drawOval(
+        Rect.fromCenter(
+            center: center + Offset(r * 0.45, -r * 0.1),
+            width: r * 0.4,
+            height: r * 0.6),
+        mariaPaint,
+      );
+      // Mare Fecunditatis
+      canvas.drawCircle(
+          center + Offset(r * 0.3, r * 0.35), r * 0.25, mariaPaint);
+      // Mare Nubium
+      canvas.drawCircle(
+          center + Offset(-r * 0.15, r * 0.35), r * 0.25, mariaPaint);
+
+      // Tycho Crater
+      final tychoPaint = Paint()
+        ..color = litColor
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, r * 0.05);
+      canvas.drawCircle(
+          center + Offset(-r * 0.1, r * 0.55), r * 0.08, tychoPaint);
+
+      // Restore the canvas (removing the clip)
+      canvas.restore();
+    }
+  }
+
+  @override
+  bool shouldRepaint(_MoonPhasePainter old) =>
+      old.phase != phase ||
+      old.litColor != litColor ||
+      old.darkColor != darkColor;
+}
+
+// =============================================================================
 // Tara ring painter
 // =============================================================================
+
+/// Quality weight per tara type: -1 pinches the aura inward (caution),
+/// +1 bulges it outward (most auspicious). Shared by the wave painter and the
+/// alignment-percentage readout so they never drift apart.
+const Map<TaraType, double> _taraQuality = {
+  TaraType.vadha: -1.0,
+  TaraType.pratyari: -0.7,
+  TaraType.vipat: -0.45,
+  TaraType.janma: 0.15,
+  TaraType.kshema: 0.5,
+  TaraType.mitra: 0.6,
+  TaraType.sampat: 0.75,
+  TaraType.sadhaka: 0.85,
+  TaraType.paramaMitra: 1.0,
+};
+
+/// Maps a tara quality (-1..+1) to a friendly 0..100 "alignment" percentage.
+int _taraAlignmentPercent(TaraType t) =>
+    (50 + (_taraQuality[t] ?? 0.0) * 47).round().clamp(0, 100);
 
 class _TaraRingPainter extends CustomPainter {
   final int birthIndex;
@@ -2045,6 +2438,11 @@ class _TaraRingPainter extends CustomPainter {
   final bool isDark;
   final bool isJanmaDay;
 
+  /// Live wheel rotation. Used both to repaint each frame AND to fade the
+  /// wave line toward the SCREEN bottom (so the dimming follows the line
+  /// even where it bulges outside the wheel box).
+  final Animation<double> rotation;
+
   _TaraRingPainter({
     required this.birthIndex,
     required this.todayIndex,
@@ -2052,138 +2450,87 @@ class _TaraRingPainter extends CustomPainter {
     required this.primaryColor,
     required this.isDark,
     required this.isJanmaDay,
-  });
+    required this.rotation,
+  }) : super(repaint: rotation);
 
   static const int _n = 27;
   static const double _seg = 2 * pi / _n;
-  static const double _gap = 0.03;
-  static const double _thin = 3.0;
-  static const double _thick = 6.0;
-  static const double _ashwiniOffset =
-      _NakshatraRingWidgetState._ashwiniOffset;
+  static const double _ashwiniOffset = _NakshatraRingWidgetState._ashwiniOffset;
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2 - _thick / 2;
-    final rect = Rect.fromCircle(center: center, radius: radius);
 
-    // ── Janma Day golden glow ────────────────────────────────────────
-    if (isJanmaDay) {
-      canvas.drawCircle(
-        center,
-        radius + 2,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 10
-          ..color = const Color(0xFFFFD700)
-              .withValues(alpha: isDark ? 0.12 : 0.08)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
-      );
+    // Per-nakshatra alignment quality relative to the birth star.
+    // Without birth data the aura is a calm, perfect circle.
+    final q = List<double>.filled(_n, 0.0);
+    if (birthIndex >= 0) {
+      for (int i = 0; i < _n; i++) {
+        final tara = TaraBala.calculate(birthIndex, i);
+        q[i] = _taraQuality[tara.type] ?? 0.0;
+      }
     }
 
-    // ── Background track ─────────────────────────────────────────────
-    canvas.drawCircle(
-      center,
-      radius,
+    // Aura geometry. Bulges OUT past the artwork on auspicious nakshatras,
+    // pinches IN on cautionary ones. Sized to stay just inside the card.
+    // Dramatic amplitude that bulges OUT past the wheel (and the card edge
+    // if needed). The line self-fades toward the screen bottom, so even the
+    // outward bulges darken as they go down.
+    final baseR = size.width / 2 - 9.0;
+    const amp = 18.0; // dramatic-ish, spills slightly outside
+    final maxR = baseR + amp;
+
+    // Smooth radius at any angle by cosine-interpolating between the two
+    // nearest nakshatra centres → soft, continuous waviness.
+    double radiusAt(double theta) {
+      final f = ((_ashwiniOffset - theta) / _seg) % _n;
+      final i0 = f.floor() % _n;
+      final i1 = (i0 + 1) % _n;
+      final t = f - f.floor();
+      final w = (1 - cos(t * pi)) / 2;
+      final qv = q[i0] * (1 - w) + q[i1] * w;
+      return baseR + amp * qv;
+    }
+
+    // One continuous, smooth closed path — no segmentation.
+    final path = Path();
+    const steps = 540;
+    for (int s = 0; s <= steps; s++) {
+      final theta = (s / steps) * 2 * pi; // 0 = up
+      final r = radiusAt(theta);
+      final x = center.dx + r * sin(theta);
+      final y = center.dy - r * cos(theta);
+      if (s == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+    path.close();
+
+    // Screen-vertical fade via a gradient SHADER on the single stroke. It's
+    // counter-rotated by the live wheel angle so it stays vertical on screen
+    // as the wheel spins — bright across the top, fading out toward the
+    // bottom, so the line darkens even where it bulges outside the box.
+    final angle = rotation.value;
+    final lit = Colors.white.withValues(alpha: isDark ? 0.95 : 0.85);
+    final shader = LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [lit, lit, Colors.white.withValues(alpha: 0.0)],
+      stops: const [0.0, 0.52, 0.96],
+      transform: GradientRotation(-angle),
+    ).createShader(Rect.fromCircle(center: center, radius: maxR));
+
+    canvas.drawPath(
+      path,
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = _thin
-        ..color = primaryColor.withValues(alpha: isDark ? 0.06 : 0.04),
+        ..strokeWidth = 1.8
+        ..strokeJoin = StrokeJoin.round
+        ..isAntiAlias = true
+        ..shader = shader,
     );
-
-    // ── Tara segments ────────────────────────────────────────────────
-    for (int i = 0; i < _n; i++) {
-      final isSelected = i == selectedIndex;
-      final isToday = i == todayIndex;
-      final isBirth = i == birthIndex && !isToday;
-
-      Color color;
-      double width;
-      double alpha;
-
-      if (birthIndex >= 0) {
-        final tara = TaraBala.calculate(birthIndex, i);
-        final isFav = tara.isFavorable;
-        final isNeutral = tara.type == TaraType.janma;
-
-        if (isSelected) {
-          color = isNeutral
-              ? const Color(0xFFFFD700)
-              : (isFav
-                  ? const Color(0xFF4CAF50)
-                  : const Color(0xFFE53935));
-          width = _thick;
-          alpha = 0.85;
-        } else if (isToday) {
-          color = primaryColor;
-          width = _thin + 1.5;
-          alpha = 0.7;
-        } else if (isBirth) {
-          color = primaryColor;
-          width = _thin + 0.5;
-          alpha = 0.5;
-        } else {
-          color = isNeutral
-              ? primaryColor
-              : (isFav
-                  ? const Color(0xFF4CAF50)
-                  : const Color(0xFFE53935));
-          width = _thin;
-          alpha = isDark ? 0.22 : 0.15;
-        }
-      } else {
-        color = primaryColor;
-        width = isSelected || isToday ? _thick : _thin;
-        alpha = isSelected || isToday ? 0.8 : (isDark ? 0.15 : 0.10);
-      }
-
-      final paint = Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round
-        ..strokeWidth = width
-        ..color = color.withValues(alpha: alpha);
-
-      final ccwEdge = _ashwiniOffset - i * _seg - _seg / 2;
-      final start = ccwEdge - pi / 2;
-
-      canvas.drawArc(rect, start + _gap / 2, _seg - _gap, false, paint);
-
-      // ── Today anchor glow ─────────────────────────────────────────────
-      // Always visible on today's segment so the user can locate "now"
-      // no matter how far they've rotated.  Skipped if it's also the
-      // selected one (already glowing below) or Janma day (whole ring glows).
-      if (isToday && !isSelected && !isJanmaDay) {
-        canvas.drawArc(
-          rect,
-          start + _gap / 2,
-          _seg - _gap,
-          false,
-          Paint()
-            ..style = PaintingStyle.stroke
-            ..strokeCap = StrokeCap.round
-            ..strokeWidth = width + 6
-            ..color = primaryColor.withValues(alpha: isDark ? 0.22 : 0.18)
-            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
-        );
-      }
-
-      // Glow on selected
-      if (isSelected) {
-        canvas.drawArc(
-          rect,
-          start + _gap / 2,
-          _seg - _gap,
-          false,
-          Paint()
-            ..style = PaintingStyle.stroke
-            ..strokeCap = StrokeCap.round
-            ..strokeWidth = width + 5
-            ..color = color.withValues(alpha: 0.18)
-            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
-        );
-      }
-    }
   }
 
   @override
@@ -2252,4 +2599,3 @@ class _PulsingIconState extends State<_PulsingIcon>
     );
   }
 }
-

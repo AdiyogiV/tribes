@@ -1,0 +1,1 @@
+sed -i '' -e 's/final vibeContent = _buildDailyVibeContent(c, isDark, cardColor);/final vibeContent = _buildDailyVibeContent(c, isDark, cardColor);/' lib/features/astrology/presentation/widgets/nakshatra_ring_widget.dart

@@ -8,6 +8,7 @@ import 'package:aurogram/core/theme/header_style.dart';
 import 'package:aurogram/shared/presentation/responsive/responsive.dart';
 import 'package:aurogram/features/auth/login_widgets.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
+import 'package:aurogram/features/astrology/presentation/widgets/rotating_nakshatra_wheel.dart';
 
 class LoginPage extends StatefulWidget {
   /// When true, shows a back button (e.g. when pushed as a route).
@@ -29,7 +30,22 @@ class LoginPageState extends State<LoginPage> {
   bool _codeSent = false;
   bool _isLoading = false;
   bool _isVerifyingOTP = false;
-  bool _eulaAccepted = false; // EULA acceptance required for App Store compliance
+
+  /// Height occupied by the transparent app bar (toolbar + web top padding).
+  /// Used to offset content now that the body extends behind the header.
+  double get _headerHeight =>
+      AppHeaderStyle.headerToolbarHeight + (kIsWeb ? AppHeaderStyle.webTopPadding : 0.0);
+
+  /// Rotating Nakshatra wheel header (decorative; same illustration the
+  /// dashboard uses, minus the interactivity).
+  Widget _buildWheelHeader({required bool isWide}) {
+    return Center(
+      child: RotatingNakshatraWheel(
+        size: isWide ? 240 : 220,
+        rotationPeriod: const Duration(seconds: 30),
+      ),
+    );
+  }
 
   @override
   void dispose() {
@@ -246,6 +262,9 @@ class LoginPageState extends State<LoginPage> {
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         resizeToAvoidBottomInset: true,
+        // Let content render behind the transparent header (floating header,
+        // matching the other tabs).
+        extendBodyBehindAppBar: true,
         appBar: AppHeaderStyle.buildStandardAppBar(
           context: context,
           title: 'login',
@@ -281,15 +300,12 @@ class LoginPageState extends State<LoginPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const SizedBox(height: AppHeaderStyle.contentTopPadding),
+                SizedBox(
+                    height: _headerHeight + AppHeaderStyle.contentTopPadding),
                 const SizedBox(height: AppDimensions.spacingXxl),
-                LoginBenefitsStrip(isWide: true),
+                _buildWheelHeader(isWide: true),
                 const SizedBox(height: AppDimensions.spacingXxl),
-                LoginBrandHeader(isWide: true),
-                const SizedBox(height: AppDimensions.spacingSection),
                 LoginPolicyText(
-                  eulaAccepted: _eulaAccepted,
-                  onEulaChanged: (v) => setState(() => _eulaAccepted = v),
                   onShowPolicy: (type) => showPolicyDialog(context, type),
                 ),
                 const SizedBox(height: AppDimensions.spacingSection),
@@ -329,20 +345,18 @@ class LoginPageState extends State<LoginPage> {
           ),
           child: Padding(
             padding: EdgeInsets.only(
-              top: AppHeaderStyle.contentTopPadding,
+              top: mediaQuery.padding.top +
+                  _headerHeight +
+                  AppHeaderStyle.contentTopPadding,
               bottom: contentBottomPadding,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: AppDimensions.spacingMd),
-                LoginBenefitsStrip(isWide: false),
+                _buildWheelHeader(isWide: false),
                 const SizedBox(height: AppDimensions.spacingXxl),
-                LoginBrandHeader(isWide: false),
-                const SizedBox(height: AppDimensions.spacingSection),
                 LoginPolicyText(
-                  eulaAccepted: _eulaAccepted,
-                  onEulaChanged: (v) => setState(() => _eulaAccepted = v),
                   onShowPolicy: (type) => showPolicyDialog(context, type),
                 ),
                 const SizedBox(height: AppDimensions.spacingSection),
@@ -416,7 +430,7 @@ class LoginPageState extends State<LoginPage> {
             : SendVerificationToolbox(
                 onTap: _verifyPhone,
                 isLoading: _isLoading,
-                enabled: _eulaAccepted,
+                enabled: true,
               ),
       ],
     );

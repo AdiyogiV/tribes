@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:aurogram/shared/presentation/widgets/flash.dart';
 import 'package:aurogram/features/auth/init_user.dart';
 import 'package:aurogram/features/auth/login.dart';
-import 'package:aurogram/features/onboarding/presentation/pages/ftue_welcome.dart';
 import 'package:aurogram/app/tabs/grams.dart';
 import 'package:aurogram/features/astrology/presentation/pages/dashboard.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/nakshatra_ring_widget.dart'
@@ -456,10 +455,12 @@ class TabHandlerState extends State<TabHandler>
             // Handle auth status
             switch (newStatus) {
               case Status.Unauthenticated:
-                // Check if first-time user should see FTUE
+                // First-time, logged-out users go straight to login
+                // (poem/FTUE welcome removed). Returning guests whose FTUE is
+                // already marked shown still get the guest tabs.
                 final onboardingService = OnboardingService();
                 if (onboardingService.shouldShowFtue()) {
-                  return const FtueWelcome();
+                  return const LoginPage(showBackButton: false);
                 }
                 // Notification prompt now triggered via status change above
                 return _buildTabsContainer(context, auth, false);

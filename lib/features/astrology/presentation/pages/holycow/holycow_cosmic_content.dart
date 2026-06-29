@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
+import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/timeline/muhurat_timeline_widget.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cards/cosmic_date_time_card.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/cosmic_dashboard_data.dart';
@@ -173,9 +174,10 @@ class HolyCowCosmicContent extends StatelessWidget {
         // Build the canonical wheel widget once — same instance is used in
         // both layouts so wheel state (controller, animations) is preserved
         // across tier transitions.  The text insight (Daily Vibe card)
-        // renders ABOVE the wheel (wheelFirst: false) so the guidance text
-        // sits on top and the wheel below it on both mobile and desktop.
-        final wheelWidget = _buildWheelWidget(wheelFirst: false);
+        // renders BELOW the wheel (wheelFirst: true) so the wheel is the
+        // visual hero and the guidance text sits beneath it on both mobile
+        // and desktop.
+        final wheelWidget = _buildWheelWidget(wheelFirst: true);
 
         // The header — dense strip on desktop, split cards on mobile.
         // Desktop: single dense strip.
@@ -212,8 +214,12 @@ class HolyCowCosmicContent extends StatelessWidget {
           },
         );
 
-        // Mobile: single combined card (clock left, date center, time right)
-        final combinedCardWidget = ValueListenableBuilder<DateTime>(
+        // Mobile: ONE card that MERGES the date/clock row with the Time
+        // Guidance timeline below it. Each half renders "embedded" (no inner
+        // card surface) so they share a single Material/shadow. The muhurat
+        // half only appears when there's data (or a loading placeholder in the
+        // today window); otherwise the card is just the date row.
+        final mergedDateMuhuratCard = ValueListenableBuilder<DateTime>(
           valueListenable: sliderDateNotifier,
           builder: (context, sliderDate, _) {
             final today = DateTime.now();
@@ -223,12 +229,46 @@ class HolyCowCosmicContent extends StatelessWidget {
             final dateSamvat =
                 calendarService?.getPanchangForDate(sliderDate) ??
                     (isToday ? nakshatraSamvat : null);
-            return VedicCombinedCard(
-              samvat: dateSamvat,
-              brown: brown,
-              selectedDate: isToday ? null : sliderDate,
-              onResetToToday: onResetToToday,
-              nakshatraName: isToday ? todayNakshatra : null,
+
+            // One source of truth: the astro calendar carries muhurat for
+            // every day in range.
+            final calMuhurat = calendarService?.getMuhuratForDate(sliderDate);
+            final hasMuhurat = calMuhurat != null && calMuhurat.isNotEmpty;
+            final daysDiff = sliderDate
+                .difference(DateTime(today.year, today.month, today.day))
+                .inDays
+                .abs();
+            final showLoading = !hasMuhurat &&
+                loadingState.isMuhuratLoading &&
+                daysDiff <= 1 &&
+                FirebaseAuth.instance.currentUser != null;
+
+            return Material(
+              color: Colors.black,
+              elevation: 2,
+              shadowColor: Colors.black.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  VedicCombinedCard(
+                    samvat: dateSamvat,
+                    brown: brown,
+                    selectedDate: isToday ? null : sliderDate,
+                    onResetToToday: onResetToToday,
+                    nakshatraName: isToday ? todayNakshatra : null,
+                    embedded: true,
+                  ),
+                  if (hasMuhurat) ...[
+                    MuhuratTimelineWidget(
+                        muhurat: calMuhurat, embedded: true),
+                  ] else if (showLoading) ...[
+                    HolyCowMuhuratPlaceholder(
+                        cardColor: cardColor, embedded: true),
+                  ],
+                ],
+              ),
             );
           },
         );
@@ -259,7 +299,7 @@ class HolyCowCosmicContent extends StatelessWidget {
           onTriggerCachePopulation: onTriggerCachePopulation,
           nakshatraController: nakshatraController,
           spacing: spacing,
-          insertAfterSkyCard: isWide ? null : wheelWidget,
+          insertBeforeSkyCard: isWide ? null : wheelWidget,
         );
 
         // Time-guidance (muhurat) card — sits directly beneath the date card.
@@ -329,18 +369,14 @@ class HolyCowCosmicContent extends StatelessWidget {
                 SizedBox(height: 16 + bottomInset),
               ] else ...[
                 // Single-column stack (mobile + small tablet)
-                // Combined clock+date card → muhurat → sky card → wheel+insight
+                // Merged date+Time-Guidance card → sky card → wheel+insight
                 //
                 // The wheel itself uses OverlayPortal internally so its
                 // magnified visual paints ABOVE adjacent cards regardless of
                 // normal Column paint order. It now sits directly below the
                 // Current Sky card (injected into secondaryCards).
-                combinedCardWidget,
-                SizedBox(height: spacing + 10),
-                // Falls back to combined card for non-today selected dates
-                headerWidget,
-                // Time guidance sits right under the date card.
-                muhuratCard,
+                mergedDateMuhuratCard,
+                SizedBox(height: spacing),
                 secondaryCards,
                 if (mobileCtaBanner != null) ...[
                   mobileCtaBanner,

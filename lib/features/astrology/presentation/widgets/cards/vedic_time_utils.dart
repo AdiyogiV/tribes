@@ -125,6 +125,20 @@ class VedicTimeUtils {
     return '🌑';
   }
 
+  /// Moon phase as a fraction of the synodic cycle.
+  /// 0.0 = new moon, 0.25 = first quarter, 0.5 = full, 0.75 = last quarter.
+  /// Same epoch/algorithm as [getMoonPhaseEmoji] so they always agree.
+  static double getMoonPhaseFraction(DateTime time) {
+    final ref = DateTime.utc(2000, 1, 6, 18, 14, 0);
+    final diffMs =
+        time.toUtc().millisecondsSinceEpoch - ref.millisecondsSinceEpoch;
+    final days = diffMs / (86400.0 * 1000.0);
+    const synodic = 29.530588;
+    var phase = (days / synodic) % 1.0;
+    if (phase < 0) phase += 1.0;
+    return phase;
+  }
+
   /// Short Vedic time: "Pr6 . Gh42 . Pa48"
   static String getVedicTimeShort(DateTime time) {
     const sunriseHour = 6;

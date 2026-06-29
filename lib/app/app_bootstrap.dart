@@ -272,25 +272,39 @@ class AppBootstrap {
   /// Load sky positions, muhurat, and panchang from cache/backend
   /// and push to watch via applicationContext BEFORE the watch asks.
   /// Also listens for fullSync requests at the app level.
+  ///
+  /// Note on the previous `isWatchPaired()` gate: the WCSession activation
+  /// snapshot is racy at cold launch — `isWatchAppInstalled` is frequently
+  /// `false` even when the watch app is installed. Gating the entire push
+  /// on it meant a freshly-launched phone never populated
+  /// `applicationContext`, and the watch's own `requestSync()` arrives before
+  /// the phone is reachable, so the watch stayed empty until the next launch.
+  ///
+  /// Instead we always do the work on iOS:
+  ///   * sky/muhurat fetches are needed for the in-app dashboard anyway.
+  ///   * `updateApplicationContext` is cheap, queued by the OS, and survives
+  ///     the watch app being uninstalled/asleep — no harm if there is no watch.
+  ///   * the fullSync listener also handles re-pushes when
+  ///     `sessionWatchStateDidChange` / `sessionReachabilityDidChange` fire
+  ///     on the phone side (see WatchSessionManager.swift).
   static Future<void> _sendSkyToWatch() async {
     try {
-      // Check if watch is paired BEFORE doing any work
-      final watchPaired = await WatchService.instance.isWatchPaired();
-      if (!watchPaired) {
-        AppLogger.i('Bootstrap: Watch not paired, skipping sky/muhurat/panchang sync',
+      final skyService = SkyPositionsService();
+      final skyOk = await skyService.fetchPositions();
+      final muhuratOk = await skyService.fetchGlobalMuhurat();
+
+      if (!skyOk) {
+        AppLogger.w('Bootstrap: Sky fetch failed — watch will have no sky data',
             category: LogCategory.general);
-        // Still load sky positions for in-app use, but don't send to watch
-        final skyService = SkyPositionsService();
-        await skyService.fetchPositions();
-        await skyService.fetchGlobalMuhurat();
-        return;
       }
 
-      final skyService = SkyPositionsService();
+      // On non-iOS, sky/muhurat are still loaded above for in-app use.
+      // Skip the watch bridge entirely (channel calls would just throw
+      // MissingPluginException anyway).
+      if (kIsWeb || !PlatformServices.instance.isIOS) return;
 
-      // 1) Sky positions
-      final skyOk = await skyService.fetchPositions();
-      if (skyOk) {
+      Future<void> pushSky() async {
+        if (!skyOk) return;
         final positions = skyService.getPositionsForDate(DateTime.now());
         if (positions != null && positions.isNotEmpty) {
           AppLogger.i('Bootstrap: Sending sky to watch',
@@ -298,55 +312,43 @@ class AppBootstrap {
               data: {'planetCount': positions.length});
           await WatchService.instance.sendSkyPositions(positions);
         }
-
-        // Also send panchang if available
         final panchang = skyService.getTodayPanchang();
         if (panchang != null) {
           AppLogger.i('Bootstrap: Sending panchang to watch',
               category: LogCategory.general);
           await WatchService.instance.sendPanchang(panchang);
         }
-      } else {
-        AppLogger.w('Bootstrap: Sky fetch failed — watch will have no sky data',
-            category: LogCategory.general);
       }
 
-      // 2) Muhurat (global, fetched separately)
-      final muhuratOk = await skyService.fetchGlobalMuhurat();
-      if (muhuratOk) {
+      Future<void> pushMuhurat() async {
+        if (!muhuratOk) return;
         final muhurat = skyService.globalMuhurat;
-        if (muhurat != null) {
-          final windows = WatchService.extractMuhuratWindows(muhurat);
-          if (windows.isNotEmpty) {
-            AppLogger.i('Bootstrap: Sending muhurat to watch',
-                category: LogCategory.general,
-                data: {'windowCount': windows.length});
-            await WatchService.instance.sendMuhurat(windows);
-          }
+        if (muhurat == null) return;
+        final windows = WatchService.extractMuhuratWindows(muhurat);
+        if (windows.isNotEmpty) {
+          AppLogger.i('Bootstrap: Sending muhurat to watch',
+              category: LogCategory.general,
+              data: {'windowCount': windows.length});
+          await WatchService.instance.sendMuhurat(windows);
         }
       }
 
-      // 3) Listen for watch fullSync requests at the app level.
-      // This ensures the watch gets data even if CosmicDashboard is not mounted.
+      // Initial push. applicationContext is persisted by WatchConnectivity
+      // and delivered to the watch the next time it launches, so this is
+      // safe to call regardless of current watch reachability/installation.
+      await pushSky();
+      await pushMuhurat();
+
+      // Re-push on fullSync requests. These are emitted both by the watch
+      // (when it explicitly requests data) and by the phone-side
+      // WatchSessionManager when isWatchAppInstalled flips true or the
+      // watch becomes reachable post-launch.
       WatchService.instance.onWatchData.listen((data) {
         if (data['request'] == 'fullSync') {
           AppLogger.i('Bootstrap: Watch requested fullSync',
               category: LogCategory.general);
-          final pos = skyService.getPositionsForDate(DateTime.now());
-          if (pos != null && pos.isNotEmpty) {
-            WatchService.instance.sendSkyPositions(pos);
-          }
-          final muh = skyService.globalMuhurat;
-          if (muh != null) {
-            final wins = WatchService.extractMuhuratWindows(muh);
-            if (wins.isNotEmpty) {
-              WatchService.instance.sendMuhurat(wins);
-            }
-          }
-          final pan = skyService.getTodayPanchang();
-          if (pan != null) {
-            WatchService.instance.sendPanchang(pan);
-          }
+          unawaited(pushSky());
+          unawaited(pushMuhurat());
         }
       });
     } catch (e) {

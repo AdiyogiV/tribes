@@ -56,6 +56,10 @@ class VoiceSessionController extends ChangeNotifier {
   // stream the whole call so the user can talk over him (barge-in, Live only).
   VoiceMicMode _micMode = VoiceMicMode.waitTurn;
 
+  // Which engine this call uses (read once at start). The relay routes on it,
+  // and it also drives the smart mic-mode default (Live→openMic, CX→waitTurn).
+  VoiceEngine _engine = VoiceEngine.live;
+
   // Native player ring-buffer size = ~1s of 24kHz PCM16 (48000 B/s). The Live
   // API streams Aryabhatt's voice in fast BURSTS (often a whole sentence at
   // once), so a small buffer underruns the moment the event loop is busy with
@@ -66,6 +70,16 @@ class VoiceSessionController extends ChangeNotifier {
   // queue and only this ~1s already in the native buffer fades out.
   static const int _playerBufferBytes = 49152;
 
+  // PCM16 mono bytes the player consumes per second at the (sped-up) playback
+  // rate — used to estimate when fed audio has finished playing out. Must use
+  // the PLAYBACK rate (ttsSampleRate x playbackSpeed), not the source rate.
+  static int get _playbackBytesPerSec =>
+      VoiceRelayConfig.ttsPlaybackSampleRate * 2;
+
+  // Acoustic tail added after the computed playout end before re-arming the
+  // mic: covers speaker decay + AEC settle so the last syllable can't leak in.
+  static const Duration _micReopenGuard = Duration(milliseconds: 250);
+
   // TTS playback is fed to flutter_sound ONE buffer at a time, awaited, so the
   // native player can apply backpressure. The relay bursts a whole reply at
   // once; without this queue the overlapping un-awaited feeds overflow the
@@ -74,6 +88,18 @@ class VoiceSessionController extends ChangeNotifier {
   final Queue<Uint8List> _ttsQueue = Queue<Uint8List>();
   bool _draining = false;
   bool _turnEndPending = false;
+
+  // Wall-clock playback tracking. The native player buffers up to ~1s of audio
+  // (_playerBufferBytes), so "the TTS queue is empty" does NOT mean Aryabhatt
+  // has stopped coming out of the speaker — up to a second of his voice is
+  // still playing out. We record when playback began and how many bytes we've
+  // fed this turn, then re-arm the mic only once that audio has actually played
+  // out (+ a short acoustic tail). Otherwise the mic reopens over his own voice
+  // and the relay transcribes his echo => he talks to himself. This is the ONLY
+  // echo guard for Standard/CX, whose relay has none of its own.
+  DateTime? _playbackStartedAt;
+  int _playbackBytesFed = 0;
+  Timer? _finishTurnTimer;
   // Set the instant a barge-in (interrupt) arrives. While true, any TTS audio
   // still in flight from the cut-off turn is dropped so it can't sneak into the
   // player after we've flushed it. Cleared when the next reply begins.
@@ -114,12 +140,16 @@ class VoiceSessionController extends ChangeNotifier {
   Future<void> start() async {
     if (_state != VoiceCallState.idle && _state != VoiceCallState.ended) return;
     _micStarted = _relayReady = false;
-    _micMode = await VoiceMicModePref.read();
+    _engine = await VoiceEnginePref.read();
+    _micMode = await VoiceMicModePref.effectiveFor(_engine);
     // Clear last call's transcript + reply so a fresh tap never flashes stale
     // text in the caption before the first reply.
     _userTranscript = '';
     _aryabhattReply = '';
     _suppressAudio = false;
+    _finishTurnTimer?.cancel();
+    _playbackStartedAt = null;
+    _playbackBytesFed = 0;
     _setState(VoiceCallState.connecting);
     _ttsChunks = _ttsBytes = _micChunks = _micBytes = 0;
     AppLogger.i('Voice call starting',
@@ -249,7 +279,7 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
     // `engine` lets the user pick Live (premium) vs CX (credit-funded) — the
     // relay falls back to its own default if we send nothing.
     final sessionId = const Uuid().v4();
-    final engine = await VoiceEnginePref.read();
+    final engine = _engine;
     _channel!.sink.add(jsonEncode({
       'type': 'start',
       'token': token,
@@ -355,6 +385,12 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
       case 'reply':
         _aryabhattReply = (msg['text'] as String?) ?? '';
         _turnEndPending = false;
+        // A fresh turn's audio is about to arrive — cancel any pending mic
+        // re-arm and reset the playback clock so this turn is measured on its
+        // own (the CX flow emits one 'reply' per turn before its audio).
+        _finishTurnTimer?.cancel();
+        _playbackStartedAt = null;
+        _playbackBytesFed = 0;
         // A fresh reply is starting — stop dropping audio (any barge-in flush
         // is done; from here the incoming chunks belong to THIS turn).
         _suppressAudio = false;
@@ -369,6 +405,7 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
             data: {'queued': _ttsQueue.length, 'draining': _draining});
         _suppressAudio = true;
         _turnEndPending = false;
+        _finishTurnTimer?.cancel();
         _flushPlayback();
         if (_state == VoiceCallState.speaking) {
           _setState(VoiceCallState.listening);
@@ -387,7 +424,7 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
               'draining': _draining,
             });
         if (_ttsQueue.isEmpty && !_draining) {
-          _finishTurn();
+          _scheduleFinishTurn();
         } else {
           _turnEndPending = true;
         }
@@ -458,6 +495,11 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
         }
         try {
           await _player.feedUint8FromStream(merged);
+          // Mark the start of playout on the first fed buffer of the turn, and
+          // tally bytes so we can compute when this turn's audio finishes
+          // leaving the speaker (see _scheduleFinishTurn).
+          _playbackStartedAt ??= DateTime.now();
+          _playbackBytesFed += merged.length;
         } catch (e) {
           AppLogger.w('Voice: TTS feed failed',
               category: LogCategory.voice, data: {'error': e.toString()});
@@ -470,14 +512,44 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
     // If the server already signalled end-of-turn while we were still playing,
     // reopen the mic now that the queue is empty.
     if (_turnEndPending && _ttsQueue.isEmpty) {
-      _finishTurn();
+      _scheduleFinishTurn();
     }
+  }
+
+  /// Re-arm the mic only AFTER Aryabhatt's audio has actually played out of the
+  /// speaker. The relay's `speaking_done` (and an emptied queue) only mean we've
+  /// FED every byte to the native player — up to ~1s is still buffered and
+  /// audibly playing. Re-arming the mic then makes it capture his own tail,
+  /// which the (guard-less) CX relay transcribes => he replies to himself.
+  ///
+  /// So we compute when the fed audio finishes from a playback clock
+  /// (bytes ÷ playback byte-rate, anchored at first feed) and delay the mic
+  /// re-arm until then + a short acoustic tail. Deterministic, no polling.
+  void _scheduleFinishTurn() {
+    _finishTurnTimer?.cancel();
+    final started = _playbackStartedAt;
+    Duration delay = _micReopenGuard;
+    if (started != null && _playbackBytesFed > 0) {
+      final playoutMs =
+          (_playbackBytesFed * 1000 / _playbackBytesPerSec).ceil();
+      final elapsedMs = DateTime.now().difference(started).inMilliseconds;
+      final remainingMs = (playoutMs - elapsedMs).clamp(0, playoutMs);
+      delay = Duration(milliseconds: remainingMs) + _micReopenGuard;
+    }
+    if (delay <= Duration.zero) {
+      _finishTurn();
+      return;
+    }
+    _finishTurnTimer = Timer(delay, _finishTurn);
   }
 
   /// Reopen the floor to the user after Aryabhatt finishes speaking.
   void _finishTurn() {
+    _finishTurnTimer?.cancel();
     _turnEndPending = false;
     _userTranscript = '';
+    _playbackStartedAt = null;
+    _playbackBytesFed = 0;
     if (_state == VoiceCallState.speaking ||
         _state == VoiceCallState.thinking) {
       _setState(VoiceCallState.listening);
@@ -519,6 +591,9 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
   Future<void> _cleanupOnce() async {
     _ttsQueue.clear();
     _turnEndPending = false;
+    _finishTurnTimer?.cancel();
+    _playbackStartedAt = null;
+    _playbackBytesFed = 0;
     _micStarted = _relayReady = false;
     await _micSub?.cancel();
     _micSub = null;

@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import 'package:aurogram/shared/presentation/widgets/media/common_widgets.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
@@ -640,14 +639,9 @@ class VedicCombinedCard extends StatefulWidget {
   final Map<String, dynamic>? samvat;
   final Color brown;
   final DateTime? selectedDate;
-
-  /// Called when user taps "Today" to snap back.
   final VoidCallback? onResetToToday;
-
-  /// Nakshatra name resolved by the parent (from insight/global panchang).
-  /// The samvat map from getPanchangForDate() often lacks this key, so the
-  /// parent passes it explicitly.
   final String? nakshatraName;
+  final bool embedded;
 
   const VedicCombinedCard({
     super.key,
@@ -656,6 +650,7 @@ class VedicCombinedCard extends StatefulWidget {
     this.selectedDate,
     this.onResetToToday,
     this.nakshatraName,
+    this.embedded = false,
   });
 
   @override
@@ -690,14 +685,10 @@ class _VedicCombinedCardState extends State<VedicCombinedCard> {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
-    final cardColor =
-        brightness == Brightness.dark ? Theme.of(context).colorScheme.surface : Colors.white;
-    final c = AppTheme.primaryColor;
     final samvat = widget.samvat;
     final showingToday = _isShowingToday;
 
-    // ── Date info ──
+    // Date info
     final vedicNumericDate = VedicTimeUtils.buildVedicNumericDate(samvat);
     final fullVedicDate = VedicTimeUtils.buildFullVedicDate(samvat);
     final lunarMonth = samvat?['lunar_month_full_name']?.toString() ??
@@ -718,164 +709,92 @@ class _VedicCombinedCardState extends State<VedicCombinedCard> {
     String? tithiNameOnly;
     if (tithiLine != null) {
       if (pakshaRaw.isNotEmpty) {
-        final pakshaCapitalized =
-            '${pakshaRaw[0].toUpperCase()}${pakshaRaw.substring(1)}';
+        final pakshaCapitalized = '${pakshaRaw[0].toUpperCase()}${pakshaRaw.substring(1)}';
         pakshaLine = pakshaCapitalized;
-        final withoutPaksha =
-            tithiLine.replaceFirst(pakshaCapitalized, '').trim();
+        final withoutPaksha = tithiLine.replaceFirst(pakshaCapitalized, '').trim();
         tithiNameOnly = withoutPaksha.isNotEmpty ? withoutPaksha : null;
       } else {
         tithiNameOnly = tithiLine;
       }
     }
 
-    // ── Nakshatra (moon's position) ──
-    // Prefer the parent-supplied value (resolved from insight/global panchang).
-    // Fall back to samvat keys just in case.
-    String? nakshatraName = widget.nakshatraName;
-    if (nakshatraName == null || nakshatraName.isEmpty) {
-      for (final key in const ['nakshatra', 'nakshatra_name', 'moonNakshatra', 'nakshatraName']) {
-        final raw = samvat?[key];
-        if (raw == null) continue;
-        if (raw is String && raw.isNotEmpty) {
-          nakshatraName = raw;
-          break;
-        }
-        if (raw is Map) {
-          nakshatraName = raw['name']?.toString() ??
-              raw['nakshatra']?.toString() ??
-              raw.values.firstOrNull?.toString();
-          if (nakshatraName != null && nakshatraName.isNotEmpty) break;
-        }
-      }
-    }
-
-    // Days offset for non-today
     final today = DateTime.now();
     final todayDate = DateTime(today.year, today.month, today.day);
     final selectedDate = widget.selectedDate ?? todayDate;
     final displayDate = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
 
-    // ── Vedic time: live for today, date-appropriate for other dates ──
-    final timeRef = showingToday ? _now : displayDate;
-    final moonEmoji = VedicTimeUtils.getMoonPhaseEmoji(timeRef);
     final praharName = VedicTimeUtils.getPraharName(_now);
     final ghati = VedicTimeUtils.getGhati(_now);
     final pala = VedicTimeUtils.getPala(_now);
     final daysDiff = displayDate.difference(todayDate).inDays;
 
-    final textStyle = TextStyle(
-      fontSize: AppTheme.holyCowTextSize,
-      fontWeight: FontWeight.w600,
-      color: c,
-      height: 1.25,
-    );
+    final ghatiStr = showingToday ? '$ghati GHATI' : null;
+    final palaStr = showingToday ? '${pala.toString().padLeft(2, '0')} PALA' : null;
+    final praharStr = showingToday ? praharName.toUpperCase() : null;
+    final offsetStr = showingToday ? 'TODAY' : (daysDiff > 0 ? 'IN $daysDiff DAYS' : '${daysDiff.abs()} DAYS AGO');
 
-    // ── 3-column layout: [ Moon | Date | Time ] ──
-
-    Widget _divider() => Container(
-          width: 1,
-          height: 70,
-          margin: const EdgeInsets.symmetric(horizontal: 8),
-          decoration: BoxDecoration(
-            color: c.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(0.5),
-          ),
-        );
+    final primaryWhite = Colors.white.withValues(alpha: 0.95);
+    final secondaryWhite = Colors.white.withValues(alpha: 0.5);
 
     return SizedBox(
       width: double.infinity,
-      height: 140,
       child: Material(
-        color: cardColor,
-        elevation: 2,
-        shadowColor: Colors.black.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+        color: Colors.transparent,
+        elevation: 0,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // ── COL 1 (flex 5): Panchang date ──
+              // LEFT: Date in 3 lines
               Expanded(
-                flex: 5,
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (lunarMonth != null)
-                      Text(lunarMonth, style: textStyle,
-                          textAlign: TextAlign.center),
-                    if (pakshaLine != null)
-                      Text(pakshaLine, style: textStyle,
-                          textAlign: TextAlign.center),
-                    if (tithiNameOnly != null)
-                      Text(tithiNameOnly, style: textStyle,
-                          textAlign: TextAlign.center),
-                    if (vedicNumericDate != null)
-                      Text(vedicNumericDate, style: textStyle,
-                          textAlign: TextAlign.center),
+                    if (lunarMonth != null) Text(lunarMonth.toUpperCase(), style: TextStyle(color: primaryWhite, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1.0, height: 1.2)),
+                    if (pakshaLine != null) Text(pakshaLine.toUpperCase(), style: TextStyle(color: primaryWhite, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1.0, height: 1.2)),
+                    if (tithiNameOnly != null) Text(tithiNameOnly.toUpperCase(), style: TextStyle(color: primaryWhite, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1.0, height: 1.2)),
+                    if (vedicNumericDate != null) Text(vedicNumericDate.toUpperCase(), style: TextStyle(color: secondaryWhite, fontSize: 9.5, fontWeight: FontWeight.w500, letterSpacing: 1.0, height: 1.2)),
                   ],
                 ),
               ),
-
-              _divider(),
-
-              // ── COL 2 (flex 2): Moon + Nakshatra ──
-              Expanded(
-                flex: 2,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(moonEmoji,
-                        style: const TextStyle(fontSize: 34, height: 1.1),
-                        textAlign: TextAlign.center),
-                  ],
-                ),
-              ),
-
-              _divider(),
-
-              // ── COL 3 (flex 3): Vedic time / days offset ──
-              Expanded(
-                flex: 3,
-                child: showingToday
-                    ? Column(
+              
+              // RIGHT: Time block & Reset
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (ghatiStr != null)
+                    Text(ghatiStr, style: TextStyle(color: primaryWhite, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1.0, height: 1.2)),
+                  if (palaStr != null)
+                    Text(palaStr, style: TextStyle(color: primaryWhite, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1.0, height: 1.2)),
+                  if (praharStr != null)
+                    Text(praharStr, style: TextStyle(color: primaryWhite, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1.0, height: 1.2)),
+                  if (ghatiStr != null || praharStr != null) const SizedBox(height: 2),
+                  if (showingToday)
+                    Text('TODAY', style: TextStyle(color: secondaryWhite, fontSize: 9.5, fontWeight: FontWeight.w500, letterSpacing: 1.0, height: 1.2))
+                  else ...[
+                    Text(offsetStr, style: TextStyle(color: primaryWhite, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1.0, height: 1.2)),
+                    const SizedBox(height: 4),
+                    GestureDetector(
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        widget.onResetToToday?.call();
+                      },
+                      behavior: HitTestBehavior.opaque,
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
-                            '$ghati·${pala.toString().padLeft(2, '0')}',
-                            style: textStyle,
-                          ),
-                          Text(praharName, style: textStyle),
-                        ],
-                      )
-                    : Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _DaysOffsetLabel(days: daysDiff, color: c),
-                          const SizedBox(height: 6),
-                          GestureDetector(
-                            onTap: () {
-                              HapticFeedback.lightImpact();
-                              widget.onResetToToday?.call();
-                            },
-                            behavior: HitTestBehavior.opaque,
-                            child: Container(
-                              width: 36,
-                              height: 36,
-                              decoration: BoxDecoration(
-                                color: c.withValues(alpha: 0.1),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                Icons.replay_rounded,
-                                size: 18,
-                                color: c,
-                              ),
-                            ),
-                          ),
+                          Icon(Icons.replay_rounded, size: 11, color: secondaryWhite),
+                          const SizedBox(width: 4),
+                          Text('RESET', style: TextStyle(color: secondaryWhite, fontSize: 9.5, fontWeight: FontWeight.w500, letterSpacing: 1.0, height: 1.2)),
                         ],
                       ),
+                    ),
+                  ],
+                ],
               ),
             ],
           ),
@@ -885,41 +804,6 @@ class _VedicCombinedCardState extends State<VedicCombinedCard> {
   }
 }
 
-/// Compact "±N days" label shown on the left column when not showing today.
-///
-/// Positive days = future ("In 5 days"), negative = past ("2 days ago"),
-/// zero shouldn't appear (showingToday would be true).
-class _DaysOffsetLabel extends StatelessWidget {
-  final int days;
-  final Color color;
-  const _DaysOffsetLabel({required this.days, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    final abs = days.abs();
-    final isFuture = days > 0;
-    final textStyle = TextStyle(
-      fontSize: AppTheme.holyCowTextSize,
-      fontWeight: FontWeight.w600,
-      color: color,
-      height: 1.25,
-    );
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (isFuture)
-          Text('In $abs', style: textStyle),
-        if (!isFuture)
-          Text('$abs ${abs == 1 ? 'day' : 'days'}', style: textStyle),
-        if (isFuture)
-          Text(abs == 1 ? 'day' : 'days', style: textStyle),
-        if (!isFuture)
-          Text('ago', style: textStyle),
-      ],
-    );
-  }
-}
 
 /// Time-only card: Vedic clock + Prahar · Ghati · Pala readout.
 class VedicTimeCard extends StatefulWidget {

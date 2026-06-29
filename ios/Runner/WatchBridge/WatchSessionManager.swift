@@ -150,7 +150,16 @@ extension WatchSessionManager: WCSessionDelegate {
         if let error = error {
             print("📱 WC activation error: \(error.localizedDescription)")
         } else {
-            print("📱 WC activated. Paired: \(session.isPaired), Watch app: \(session.isWatchAppInstalled)")
+            print("📱 WC activated. Paired: \(session.isPaired), Watch app: \(session.isWatchAppInstalled), Reachable: \(session.isReachable)")
+        }
+
+        // The state available right at activation is racy at cold launch —
+        // `isWatchAppInstalled` is frequently `false` here even when the watch
+        // app is installed and running. Signal Flutter so it can push sky /
+        // muhurat / panchang as soon as the real state arrives via the
+        // sessionWatchStateDidChange / sessionReachabilityDidChange callbacks.
+        if session.isPaired && session.isWatchAppInstalled {
+            onWatchData?(["request": "fullSync"])
         }
     }
 
@@ -161,6 +170,29 @@ extension WatchSessionManager: WCSessionDelegate {
     func sessionDidDeactivate(_ session: WCSession) {
         print("📱 WC session deactivated — reactivating")
         session.activate()
+    }
+
+    /// Fired when `isPaired` / `isWatchAppInstalled` / `isComplicationEnabled`
+    /// changes. Critical because the initial activation snapshot frequently
+    /// reports `isWatchAppInstalled = false` even when the watch app is
+    /// actually installed; the real value arrives moments later via this
+    /// callback. Trigger a re-push of sky/muhurat/panchang when the watch app
+    /// becomes available.
+    func sessionWatchStateDidChange(_ session: WCSession) {
+        print("📱 Watch state changed. Paired: \(session.isPaired), Watch app: \(session.isWatchAppInstalled), Reachable: \(session.isReachable)")
+        if session.isPaired && session.isWatchAppInstalled {
+            onWatchData?(["request": "fullSync"])
+        }
+    }
+
+    /// Fired when the watch becomes reachable / unreachable. When reachability
+    /// flips on we re-push so a watch that just woke up gets fresh data
+    /// without having to send its own `requestSync` message.
+    func sessionReachabilityDidChange(_ session: WCSession) {
+        print("📱 Watch reachability changed: \(session.isReachable)")
+        if session.isReachable {
+            onWatchData?(["request": "fullSync"])
+        }
     }
 
     /// Handle sync requests FROM watch.

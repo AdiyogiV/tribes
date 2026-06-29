@@ -334,8 +334,35 @@ class HealthKitManager: ObservableObject {
             }
             if let error = error {
                 AuroLog.error("HealthKit auth error: \(error.localizedDescription)", category: .health)
-            } else {
-                AuroLog.info("HealthKit authorized: \(success)", category: .health)
+                return
+            }
+
+            // `success` only confirms the consent UI completed — it does NOT
+            // guarantee any individual type was granted. Apple deliberately
+            // hides per-type READ authorization status from us (for privacy),
+            // so a denied type just returns empty samples with no error.
+            AuroLog.info("HealthKit consent flow completed (success=\(success))", category: .health)
+
+            // `getRequestStatusForAuthorization` is one of the few signals we
+            // do get: it tells us whether the system thinks we still need to
+            // show the dialog. If `.shouldRequest`, the user either hasn't
+            // been asked or denied at least one type. Logging it makes
+            // "why are my signals nil?" debuggable.
+            self.store.getRequestStatusForAuthorization(toShare: [], read: self.readTypes) { status, statusError in
+                if let statusError = statusError {
+                    AuroLog.warn("getRequestStatusForAuthorization failed: \(statusError.localizedDescription)", category: .health)
+                } else {
+                    switch status {
+                    case .unknown:
+                        AuroLog.warn("HealthKit auth status: unknown", category: .health)
+                    case .shouldRequest:
+                        AuroLog.warn("HealthKit auth status: shouldRequest — one or more types not yet authorized. If signals stay nil, open the Watch app → Privacy → Health → enable all categories.", category: .health)
+                    case .unnecessary:
+                        AuroLog.info("HealthKit auth status: unnecessary (system has all needed grants)", category: .health)
+                    @unknown default:
+                        AuroLog.warn("HealthKit auth status: unrecognized rawValue=\(status.rawValue)", category: .health)
+                    }
+                }
                 if success {
                     self.fetchAllReadings()
                 }
@@ -454,22 +481,37 @@ class HealthKitManager: ObservableObject {
     }
 
     /// Log a summary of all available signals after a full fetch.
+    ///
+    /// Counter-type fetches (highHRCount, lowHRCount, irregularRhythmCount,
+    /// ecgCount, workoutCount, standHours) always assign their value, even
+    /// when the query returned zero samples — so they otherwise appear
+    /// "available" with value `0`. To produce a useful summary we treat
+    /// `0` on those counters the same as missing data, and call out the
+    /// always-on core signals (HR/HRV/RHR/Steps) explicitly so it's obvious
+    /// when a permission issue is in play.
     private func logSignalSummary() {
-        var available: [String] = []
-        var missing: [String] = []
-        let signals: [(String, Any?)] = [
-            ("HRV", latestHRV), ("RHR", latestRestingHR), ("HR", latestHeartRate),
+        // Counters whose 0 means "no event yet" — not the same as "type
+        // unavailable", but useless for activity diagnostics. Suppress them
+        // from the available list when 0 so we don't pad the count.
+        func nonZero(_ v: Int?) -> Int? { (v ?? 0) > 0 ? v : nil }
+
+        let coreSignals: [(String, Any?)] = [
+            ("HR", latestHeartRate), ("HRV", latestHRV),
+            ("RHR", latestRestingHR), ("Steps", todaySteps),
+        ]
+        let otherSignals: [(String, Any?)] = [
             ("Sleep", lastSleepDuration), ("Deep", lastDeepSleepMinutes), ("REM", lastREMSleepMinutes),
             ("Temp", latestWristTemp), ("Resp", latestRespiratoryRate), ("VO2", latestVO2Max),
-            ("Steps", todaySteps), ("Recovery", latestHRRecovery), ("SpO2", latestSpO2),
+            ("Recovery", latestHRRecovery), ("SpO2", latestSpO2),
             ("Energy", todayActiveEnergy), ("Mindful", todayMindfulMinutes),
-            ("Stand", todayStandHours), ("Exercise", todayExerciseMinutes), ("WalkHR", latestWalkingHR),
+            ("Stand", nonZero(todayStandHours)), ("Exercise", todayExerciseMinutes), ("WalkHR", latestWalkingHR),
             ("Daylight", todayDaylightMinutes), ("EnvAudio", latestEnvAudioExposure),
             ("HeadAudio", latestHeadphoneAudioExposure),
-            ("AFib", latestAFibBurden), ("HighHR", todayHighHRCount), ("LowHR", todayLowHRCount),
-            ("Irreg", todayIrregularRhythmCount), ("ECG", todayECGCount),
+            ("AFib", latestAFibBurden),
+            ("HighHR", nonZero(todayHighHRCount)), ("LowHR", nonZero(todayLowHRCount)),
+            ("Irreg", nonZero(todayIrregularRhythmCount)), ("ECG", nonZero(todayECGCount)),
             ("Basal", todayBasalEnergy), ("Dist", todayDistanceMeters), ("Flights", todayFlightsClimbed),
-            ("StandMin", todayStandMinutes), ("Workouts", todayWorkoutCount),
+            ("StandMin", todayStandMinutes), ("Workouts", nonZero(todayWorkoutCount)),
             ("WalkSpd", latestWalkingSpeed), ("StepLen", latestWalkingStepLength),
             ("DblSup", latestWalkingDoubleSupport), ("Asym", latestWalkingAsymmetry),
             ("StairUp", latestStairAscentSpeed), ("StairDn", latestStairDescentSpeed),
@@ -479,14 +521,31 @@ class HealthKitManager: ObservableObject {
             ("RunVO", latestRunningVerticalOsc),
             ("Mass", latestBodyMass), ("BMI", latestBodyMassIndex), ("Fat", latestBodyFatPercentage),
             ("Lean", latestLeanBodyMass), ("Height", latestHeight),
-            ("BodyT", latestBodyTemperature)
+            ("BodyT", latestBodyTemperature),
         ]
-        for (name, val) in signals {
+
+        let allSignals = coreSignals + otherSignals
+        var available: [String] = []
+        var missing: [String] = []
+        for (name, val) in allSignals {
             if val != nil { available.append(name) } else { missing.append(name) }
         }
-        AuroLog.info("Signals available: \(available.joined(separator: ", ")) (\(available.count)/\(signals.count))", category: .health)
+
+        let coreMissing = coreSignals.filter { $0.1 == nil }.map { $0.0 }
+        AuroLog.info("Signals available: \(available.joined(separator: ", ")) (\(available.count)/\(allSignals.count))", category: .health)
         if !missing.isEmpty {
             AuroLog.debug("Signals missing: \(missing.joined(separator: ", "))", category: .health)
+        }
+
+        // The four core signals should be present on any worn Apple Watch.
+        // If most of them are missing it almost always means the user denied
+        // per-type read permission in the HealthKit consent dialog (`isAuthorized:
+        // true` only confirms the dialog completed, not that any types were
+        // granted). Surface that explicitly so it's obvious in the logs.
+        if coreMissing.count >= 3 {
+            AuroLog.warn("Core signals missing (\(coreMissing.joined(separator: ", "))) — likely a HealthKit read-permission issue. On the iPhone, open the Watch app → Health → enable all categories for Aurogram, OR Settings → Privacy & Security → Health → Aurogram → toggle each type on.", category: .health)
+        } else if !coreMissing.isEmpty {
+            AuroLog.debug("Core signals missing: \(coreMissing.joined(separator: ", "))", category: .health)
         }
     }
 
@@ -625,6 +684,9 @@ class HealthKitManager: ObservableObject {
 
         let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: HKObjectQueryNoLimit,
                                    sortDescriptors: [sort]) { _, samples, error in
+            if let error = error {
+                AuroLog.error("fetchSleepData failed: \(error.localizedDescription)", category: .health)
+            }
             guard let samples = samples as? [HKCategorySample], !samples.isEmpty else {
                 completion?()
                 return
@@ -766,7 +828,10 @@ class HealthKitManager: ObservableObject {
         let predicate = HKQuery.predicateForSamples(withStart: start, end: .now)
 
         let query = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: predicate,
-                                       options: .cumulativeSum) { _, stats, _ in
+                                       options: .cumulativeSum) { _, stats, error in
+            if let error = error {
+                AuroLog.error("fetchTodaySteps failed: \(error.localizedDescription)", category: .health)
+            }
             let steps = stats?.sumQuantity()?.doubleValue(for: .count())
             DispatchQueue.main.async {
                 self.todaySteps = steps.map { Int($0) }
@@ -982,7 +1047,10 @@ class HealthKitManager: ObservableObject {
         let predicate = HKQuery.predicateForSamples(withStart: start, end: .now)
         let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)
         let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: HKObjectQueryNoLimit,
-                                   sortDescriptors: [sort]) { _, samples, _ in
+                                   sortDescriptors: [sort]) { _, samples, error in
+            if let error = error {
+                AuroLog.error("fetchTodayStandHours failed: \(error.localizedDescription)", category: .health)
+            }
             // Stood = HKCategoryValueAppleStandHour.stood (rawValue 0)
             let stood = (samples as? [HKCategorySample])?.filter {
                 $0.value == HKCategoryValueAppleStandHour.stood.rawValue
@@ -1156,7 +1224,10 @@ class HealthKitManager: ObservableObject {
         let predicate = HKQuery.predicateForSamples(withStart: start, end: .now)
         let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
         let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: HKObjectQueryNoLimit,
-                                   sortDescriptors: [sort]) { _, samples, _ in
+                                   sortDescriptors: [sort]) { _, samples, error in
+            if let error = error {
+                AuroLog.error("fetchTodayECGCount failed: \(error.localizedDescription)", category: .health)
+            }
             let count = samples?.count ?? 0
             let latest = (samples?.first as? HKSample)?.startDate
             DispatchQueue.main.async {
@@ -1237,7 +1308,10 @@ class HealthKitManager: ObservableObject {
         let predicate = HKQuery.predicateForSamples(withStart: start, end: .now)
         let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
         let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: HKObjectQueryNoLimit,
-                                   sortDescriptors: [sort]) { _, samples, _ in
+                                   sortDescriptors: [sort]) { _, samples, error in
+            if let error = error {
+                AuroLog.error("fetchTodayWorkoutSummary failed: \(error.localizedDescription)", category: .health)
+            }
             let workouts = (samples as? [HKWorkout]) ?? []
             let count = workouts.count
             let totalSec = workouts.reduce(0.0) { $0 + $1.duration }
@@ -1770,7 +1844,10 @@ class HealthKitManager: ObservableObject {
         let predicate = HKQuery.predicateForSamples(withStart: start, end: .now)
         let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
         let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: HKObjectQueryNoLimit,
-                                   sortDescriptors: [sort]) { _, samples, _ in
+                                   sortDescriptors: [sort]) { _, samples, error in
+            if let error = error {
+                AuroLog.error("countTodayCategory(\(type.identifier)) failed: \(error.localizedDescription)", category: .health)
+            }
             let count = samples?.count ?? 0
             let latest = (samples?.first as? HKSample)?.startDate
             completion(count, latest)
@@ -1783,7 +1860,10 @@ class HealthKitManager: ObservableObject {
         let start = Calendar.current.startOfDay(for: .now)
         let predicate = HKQuery.predicateForSamples(withStart: start, end: .now)
         let query = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: predicate,
-                                       options: .cumulativeSum) { _, stats, _ in
+                                       options: .cumulativeSum) { _, stats, error in
+            if let error = error {
+                AuroLog.error("sumTodayQuantity(\(type.identifier)) failed: \(error.localizedDescription)", category: .health)
+            }
             let value = stats?.sumQuantity()?.doubleValue(for: unit)
             completion(value, .now)
         }
@@ -1819,7 +1899,10 @@ class HealthKitManager: ObservableObject {
         let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)
 
         let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: HKObjectQueryNoLimit,
-                                   sortDescriptors: [sort]) { _, samples, _ in
+                                   sortDescriptors: [sort]) { _, samples, error in
+            if let error = error {
+                AuroLog.error("fetchHistory(\(type.identifier)) failed: \(error.localizedDescription)", category: .health)
+            }
             let results = (samples as? [HKQuantitySample])?.map { sample in
                 TimestampedValue(
                     value: sample.quantity.doubleValue(for: unit),

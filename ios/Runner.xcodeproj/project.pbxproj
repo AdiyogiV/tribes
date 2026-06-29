@@ -23,6 +23,7 @@
 		83190CEEFC39C975BDA7B154 /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 988CB635266D640262D6930F /* Pods_Runner.framework */; };
 		8A05399C0348231ED7902E77 /* LocalCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCB31F9E1137016E741C3752 /* LocalCache.swift */; };
 		8FFF93114D5D44DC2C679333 /* AuroWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCA260669A555FE61EA6C8EE /* AuroWatchApp.swift */; };
+		91C94EE74DD273C4757B0A42 /* AuroWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 058455B42F88E40400EDD664 /* AuroWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		92CFEB783A7FF77CC4F9595A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D135A5024408438A11E58CB8 /* ContentView.swift */; };
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
@@ -69,6 +70,13 @@
 			remoteGlobalIDString = 97C146ED1CF9000F007C117D;
 			remoteInfo = Runner;
 		};
+		40B66D821657F9EA6031E95F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 97C146E61CF9000F007C117D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 058455B32F88E40400EDD664;
+			remoteInfo = "AuroWatch Watch App";
+		};
 		890B1BDFF70F9AA12ACBF672 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 97C146E61CF9000F007C117D /* Project object */;
@@ -100,6 +108,17 @@
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F334DBB0C1EE1CA11CAA2FDC /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				91C94EE74DD273C4757B0A42 /* AuroWatch Watch App.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
@@ -126,8 +145,8 @@
 		74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Runner-Bridging-Header.h"; sourceTree = "<group>"; };
 		74858FAE1ED2DC5600515810 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		7AFA3C8E1D35360C0083082E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Flutter/Release.xcconfig; sourceTree = "<group>"; };
-		8D2F9A332F90C2A400E1D501 /* Profile.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Profile.xcconfig; path = Flutter/Profile.xcconfig; sourceTree = "<group>"; };
 		800C6C312753DAC2BBA4677E /* VedicClockView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VedicClockView.swift; sourceTree = "<group>"; };
+		8D2F9A332F90C2A400E1D501 /* Profile.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Profile.xcconfig; path = Flutter/Profile.xcconfig; sourceTree = "<group>"; };
 		9740EEB21CF90195004384FC /* Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Debug.xcconfig; path = Flutter/Debug.xcconfig; sourceTree = "<group>"; };
 		9740EEB31CF90195004384FC /* Generated.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Generated.xcconfig; path = Flutter/Generated.xcconfig; sourceTree = "<group>"; };
 		97C146EE1CF9000F007C117D /* Runner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Runner.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -572,6 +591,7 @@
 				97C146EB1CF9000F007C117D /* Frameworks */,
 				97C146EC1CF9000F007C117D /* Resources */,
 				9705A1C41CF9048500538489 /* Embed Frameworks */,
+				F334DBB0C1EE1CA11CAA2FDC /* Embed Watch Content */,
 				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
 				18D4188B2EDAD14A00719080 /* Upload Crashlytics dSYM */,
 				028735763B0CEA097E6BF342 /* [CP] Embed Pods Frameworks */,
@@ -580,6 +600,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				CB18A066E6B5E02409591A65 /* PBXTargetDependency */,
 			);
 			name = Runner;
 			productName = Runner;
@@ -884,6 +905,12 @@
 			name = "AuroWatch WidgetExtension";
 			target = 058456852F8903C200EDD664 /* AuroWatch WidgetExtension */;
 			targetProxy = 890B1BDFF70F9AA12ACBF672 /* PBXContainerItemProxy */;
+		};
+		CB18A066E6B5E02409591A65 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "AuroWatch Watch App";
+			target = 058455B32F88E40400EDD664 /* AuroWatch Watch App */;
+			targetProxy = 40B66D821657F9EA6031E95F /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
