@@ -52,11 +52,16 @@ ORCHESTRATE                        functions/schedulers/unified_orchestrator.js
 | Promise | Does the chart promise it? | D1 + D9 + house lords | astro_api / vedic_analysis |
 | Timing  | Is that period running? | Vimshottari dasha | daily_insight_context |
 | Trigger | Is a transit activating it? | Gochara (Moon + Lagna) | flavors/per_house |
-| Strength| Strong enough to deliver? | Ashtakavarga + Shadbala | vedic_analysis (computed) |
+| Strength| Strong enough to deliver? | Ashtakavarga + Shadbala | vedic_analysis -> wired into readings |
 
-> Note: Ashtakavarga bindus + D9 are **computed and stored** but not yet fully
-> fed into the daily/per-house prompts. Wiring them in is the highest-leverage
-> accuracy upgrade (cheap: prompt/context change, no new math).
+> Strength IS wired: every transit in the daily insight and per-house reading
+> now carries its Ashtakavarga bindus (0-8) + quality, and prompts weigh
+> predictions by it. Shadbala (strong/weak planets) is in the daily too.
+>
+> D9 Navamsa is computed + stored (`astrologyData.navamsa`) but intentionally
+> NOT fed into daily/per-house prompts: D9 speaks to long-term *promise*, not
+> daily *timing*, so it belongs in the one-time first/current-times readings.
+> Kept simple on purpose.
 
 ## Adding a new reading
 Write a `flavor` (see `insights/README.md`) and call `runFlavor(flavor, { uid })`.
