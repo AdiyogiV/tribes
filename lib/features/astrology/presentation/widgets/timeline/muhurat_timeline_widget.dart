@@ -52,7 +52,9 @@ class _MuhuratTimelineWidgetState extends State<MuhuratTimelineWidget>
       elevation: 0,
       borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(0, 16, 0, 16),
+        // Trim the top gap when embedded (it sits directly under the date row);
+        // keep the full gap when standalone.
+        padding: EdgeInsets.fromLTRB(0, widget.embedded ? 4 : 16, 0, 16),
         child: TimelineContent(
           muhurat: widget.muhurat,
           isDark: isDark,

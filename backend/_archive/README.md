@@ -13,6 +13,13 @@ Contents:
   Search news + Gemini). Wrote to Firestore `cosmic_daily_output/{date}`.
 - `mundane/` — the Brihat Samhita rules engine (adhyaya / kriya / yantra / varga),
   a second, heavier world-prediction pipeline.
+- `lib/` — the compute cluster that ONLY the mundane engine used (dead in
+  production once mundane was archived):
+  `signal_engine, signal_store, signal_types, aspect_calculator, vedic_yogas`
+  (mundane yogas), `agent_memory, news_feed, news_archive, upcoming_transits,
+  future_transits, astro_context` (superseded by `lib/daily_insight_context.js`).
+  NOTE: these still `import` live `lib/` siblings (constants, vedic_utils) by
+  `./name` — if revived, fix paths to `../../lib/name`.
 
 ## Why it was turned off
 It is a **separate product concern** from the personal daily reading and was
