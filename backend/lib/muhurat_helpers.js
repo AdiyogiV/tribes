@@ -1,7 +1,7 @@
 /**
  * Shared Muhurat Parsing Helpers
  *
- * Extracted from free_astro.js and sky_positions.js to eliminate duplication.
+ * Extracted from astro_api.js and sky_positions.js to eliminate duplication.
  * Both files had near-identical parseMuhuratDay and processUnifiedTimeline functions.
  */
 

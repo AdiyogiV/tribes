@@ -35,7 +35,7 @@ import {
     handleCalculateCompatibility,
     handleSearchGeoLocation,
     invalidateCompatibilityCache,
-} from "../functions/free_astro.js";
+} from "../functions/astro_api.js";
 
 import {
     handleSyncAstroProfile,

@@ -13,7 +13,7 @@
 import { db, logger } from "./firebase.js";
 // Vertex AI — no API key needed (uses ADC)
 import { DateTime } from "luxon";
-import { runAstroFlow } from "../functions/free_astro.js";
+import { runAstroFlow } from "../functions/astro_api.js";
 import { buildAstroSearchContext } from "./search.js";
 import { calculateWholeSignHouse } from "./vedic_analysis.js";
 import { extractAscendantDegree, normalizeDasha } from "./astro_helpers.js";

@@ -25,7 +25,7 @@ export function getOrdinal(n) {
 
 // =============================================================================
 // JSON UTILITIES
-// Used by: lib/astro_helpers.js, functions/free_astro.js
+// Used by: lib/astro_helpers.js, functions/astro_api.js
 // =============================================================================
 
 /**

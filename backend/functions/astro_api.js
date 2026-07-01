@@ -1,3 +1,6 @@
+// astro_api.js — the app's gateway to the ephemeris/astrology data provider
+// (FreeAstrologyAPI). Wraps chart, dasha, panchang, navamsa (D9), D10,
+// shadbala, yogas + compatibility. `runAstroFlow()` is the main entry.
 import { HttpsError } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions/v2";
 import { DateTime } from "luxon";

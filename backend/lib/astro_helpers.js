@@ -2,7 +2,7 @@
  * Shared astrology helper functions
  *
  * Utility functions used across multiple astrology modules
- * (free_astro, daily_astro_insights, ayurveda, sky_positions, etc.)
+ * (astro_api, daily_astro_insights, ayurveda, sky_positions, etc.)
  */
 
 import { unwrapJsonOutput, safeParseJson } from "./utils.js";
