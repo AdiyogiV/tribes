@@ -28,7 +28,7 @@ slightly different fallback behavior, ~6 places where bugs hide.
 ├────────────────────────────────────────────────────────────┤
 │  L2  CONTEXT   →  one assembler with scope filters         │
 ├────────────────────────────────────────────────────────────┤
-│  L1  COMPUTE   →  pure math (vedic_analysis, signal_engine)│
+│  L1  COMPUTE   →  pure math (vedic_analysis)               │
 └────────────────────────────────────────────────────────────┘
 ```
 
@@ -83,12 +83,11 @@ That's it. Engine handles Gemini, parsing, retries, caching, storage, telemetry.
 | Reading type            | Status      | Source file                    |
 |-------------------------|-------------|--------------------------------|
 | per_house (popup)       | ✅ SHIPPED  | flavors/per_house.js           |
-| daily_insight           | TODO        | functions/daily_astro_insights |
-| first_reading           | TODO        | functions/first_reading        |
-| current_times           | TODO        | functions/current_times_reading|
-| cosmic_daily            | TODO        | functions/cosmic_daily         |
-| house_interpretations   | TODO        | functions/house_interpretations|
-| news_digest             | TODO        | functions/ai_daily_digest      |
+| daily_insight           | shares engine AI client; own module (multi-card notifications) | functions/daily_astro_insights |
+| first_reading           | SHIPPED     | flavors/first_reading.js       |
+| current_times           | SHIPPED     | flavors/current_times.js       |
+| cosmic_daily / mundane  | ARCHIVED    | backend/_archive/              |
+| house_interpretations   | not migrated| lib/house_interpretations      |
 
 Migrations happen one flavor at a time, each behind a feature flag, never big-bang.
 
