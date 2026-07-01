@@ -73,15 +73,15 @@ class AppColors {
 
   /// Dark mode: Dark grey background (not pure black). Cards/surfaces step up
   /// slightly so elevation reads.
-  static const Color scaffoldDarkColor = Color(0xFF080808);
+  static const Color scaffoldDarkColor = Color(0xFF141414);
 
   /// Card backgrounds
   static const Color cardLightColor = Color(0xFFFFFFFF);
-  static const Color cardDarkColor = Color(0xFF141414);
+  static const Color cardDarkColor = Color(0xFF202020);
 
   /// Surface colors for elevated elements
   static const Color surfaceLightColor = Color(0xFFF5FAFD);
-  static const Color surfaceDarkColor = Color(0xFF0E0E0E);
+  static const Color surfaceDarkColor = Color(0xFF1A1A1A);
 
   // ============================================
   // TEXT COLORS

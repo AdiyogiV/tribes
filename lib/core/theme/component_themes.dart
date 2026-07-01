@@ -19,7 +19,7 @@ class ComponentThemes {
       scaffoldBackgroundColor:
           isDarkMode ? AppColors.scaffoldDarkColor : AppColors.scaffoldLightColor,
       barBackgroundColor: isDarkMode
-          ? const Color(0xFF080808) // Dark grey bar
+          ? const Color(0xFF141414) // Dark grey bar
           : const Color(0xFFF0F8FC), // Light sky blue bar
       textTheme: CupertinoTextThemeData(
         primaryColor:
@@ -61,7 +61,7 @@ class ComponentThemes {
       colorScheme: ColorScheme(
         primary: primaryClr,
         primaryContainer:
-            isDarkMode ? const Color(0xFF1C1C1C) : const Color(0xFFD7CCC8),
+            isDarkMode ? const Color(0xFF282828) : const Color(0xFFD7CCC8),
         secondary: AppColors.accentColor,
         secondaryContainer:
             isDarkMode ? const Color(0xFF283520) : const Color(0xFFFFF3E0),
@@ -199,7 +199,7 @@ class ComponentThemes {
 
       // Bottom Navigation Bar Theme
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        backgroundColor: isDarkMode ? const Color(0xFF080808) : Colors.white,
+        backgroundColor: isDarkMode ? const Color(0xFF141414) : Colors.white,
         selectedItemColor: primaryClr,
         unselectedItemColor: textSecondaryClr,
         type: BottomNavigationBarType.fixed,
@@ -208,7 +208,7 @@ class ComponentThemes {
 
       // Navigation Bar Theme (Material 3)
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: isDarkMode ? const Color(0xFF080808) : Colors.white,
+        backgroundColor: isDarkMode ? const Color(0xFF141414) : Colors.white,
         indicatorColor: primaryClr.withValues(alpha: 0.2),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
@@ -363,7 +363,7 @@ class ComponentThemes {
       // Snack Bar Theme
       snackBarTheme: SnackBarThemeData(
         backgroundColor:
-            isDarkMode ? const Color(0xFF161616) : const Color(0xFF2D2016),
+            isDarkMode ? const Color(0xFF242424) : const Color(0xFF2D2016),
         contentTextStyle: const TextStyle(
           color: Color(0xFFF5F0E8),
           fontSize: 14,
