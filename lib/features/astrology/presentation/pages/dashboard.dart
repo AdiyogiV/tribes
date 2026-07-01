@@ -57,12 +57,13 @@ class DashboardPageState extends State<DashboardPage>
   bool _lastReportedHideBar = false;
   bool _wheelInteracting = false;
 
-  // Collapsible AI input — expanded on first load so the bar greets the user,
-  // then auto-collapses as soon as they scroll/tap around. All of its state
-  // (expanded flag + text + focus) lives in this controller so toggling the
-  // bar rebuilds ONLY the bar + spacer, never the whole dashboard.
+  // Collapsible AI input — COLLAPSED on first load so the dashboard greets the
+  // user with just the Aryabhatt cow icon (tap = voice chat, long-press = text
+  // input). All of its state (expanded flag + text + focus) lives in this
+  // controller so toggling the bar rebuilds ONLY the bar + spacer, never the
+  // whole dashboard.
   final HolyCowInputBarController _inputBar =
-      HolyCowInputBarController(expanded: true);
+      HolyCowInputBarController(expanded: false);
 
   // ── Input-bar layout + motion constants (single source of truth) ──
   // Tail spacer reserved at the bottom of the scroll content so the floating
@@ -121,11 +122,10 @@ if (!_didPrecache) {
         const AssetImage('assets/images/nakshatra_wheel.jpeg'),
         context,
       );
-      // Decode the collapsed-cow asset NOW, while the page is idle. Otherwise
-      // its first paint happens on the first scroll (the bar is expanded by
-      // default, so the cow starts at opacity 0 and is never painted until the
-      // collapse) — and that cold decode lands right on the first scroll frame,
-      // causing a one-time hitch. Precaching moves the cost off the gesture.
+      // Decode the collapsed-cow asset NOW, while the page is idle, so its
+      // first paint doesn't pay a cold-decode cost. The bar is collapsed by
+      // default, so the cow is the very first thing shown — precaching keeps
+      // that initial paint smooth.
       precacheImage(const AssetImage('assets/images/cow1.png'), context);
     }
   }
@@ -412,6 +412,20 @@ if (!_didPrecache) {
     _inputBar.toggle();
   }
 
+  // When a call starts we hide the bottom tab bar once (just like a
+  // scroll-down); normal scroll behaviour then takes over — scroll up brings
+  // it back, scroll down hides it again.
+  void _handleVoiceActiveChanged(bool active) {
+    // Keep the scroll tracker in sync so the very next scroll gesture reports
+    // the correct transition (otherwise scroll-up wouldn't restore the bar).
+    _lastReportedHideBar = active;
+    // Slide the cow down with the tab bar (same motion as a scroll-down) so it
+    // drops to fill the space instead of floating awkwardly high.
+    _inputBar.setHidden(active);
+    // Reuse the existing hide-on-scroll plumbing to hide/show the bar.
+    widget.onScrollHidesBottomBar?.call(active);
+  }
+
   // ─────────────────────────────────────────────────────────────
   // Build
   // ─────────────────────────────────────────────────────────────
@@ -520,7 +534,11 @@ dashboardInputBuilder: _buildInputBar,
                   ),
                   child: _inputBar.expanded
                       ? _buildInputBar()
-                      : HolyCowVoiceCow(onShowKeyboard: _toggleInputBar),
+                      : HolyCowVoiceCow(
+                          onShowKeyboard: _toggleInputBar,
+                          onShowRecent: _showRecentConversations,
+                          onActiveChanged: _handleVoiceActiveChanged,
+                        ),
                 ),
               ),
             ),

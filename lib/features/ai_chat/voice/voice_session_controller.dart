@@ -494,11 +494,16 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
           offset += p.length;
         }
         try {
-          await _player.feedUint8FromStream(merged);
-          // Mark the start of playout on the first fed buffer of the turn, and
-          // tally bytes so we can compute when this turn's audio finishes
-          // leaving the speaker (see _scheduleFinishTurn).
+          // Mark the start of playout BEFORE the feed, not after. The player
+          // buffers only ~1s, so feedUint8FromStream applies backpressure and
+          // BLOCKS for most of a long buffer's duration while it drains. If we
+          // stamped the clock after the await, that blocked time (seconds, for
+          // a full reply) wouldn't count toward playout — so _scheduleFinishTurn
+          // would then wait the entire duration AGAIN, re-arming the mic seconds
+          // late (long, awkward dead air after he stops). Stamping before the
+          // feed anchors the clock at the moment audio actually starts playing.
           _playbackStartedAt ??= DateTime.now();
+          await _player.feedUint8FromStream(merged);
           _playbackBytesFed += merged.length;
         } catch (e) {
           AppLogger.w('Voice: TTS feed failed',
@@ -564,6 +569,37 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
     _errorMessage = message;
     _setState(VoiceCallState.error);
     unawaited(_cleanup());
+  }
+
+  /// User tapped "my turn": cut Aryabhatt off mid-sentence and hand the floor
+  /// back to the mic. This is the CLIENT-initiated twin of the server-driven
+  /// `interrupt` control frame — needed because in waitTurn (half-duplex) mode
+  /// the mic is muted while he speaks, so the user has no voice-only way to
+  /// barge in. We locally drop everything not yet played (the ~340ms already in
+  /// the native buffer fades out cleanly), tell the relay to stop generating
+  /// too, and flip to [VoiceCallState.listening] which unmutes the mic.
+  ///
+  /// Safe if the relay ignores the frame: [_suppressAudio] keeps discarding the
+  /// cut-off turn's audio until the next `reply` arrives, so he can't sneak back
+  /// in. Only meaningful while actually speaking; a no-op otherwise.
+  void interruptAndListen() {
+    if (_state != VoiceCallState.speaking &&
+        _state != VoiceCallState.thinking) {
+      return;
+    }
+    AppLogger.i('User interrupt: taking the floor',
+        category: LogCategory.voice,
+        data: {'queued': _ttsQueue.length, 'draining': _draining});
+    _suppressAudio = true;
+    _turnEndPending = false;
+    _finishTurnTimer?.cancel();
+    _flushPlayback();
+    try {
+      _channel?.sink.add(jsonEncode({'type': 'interrupt'}));
+    } catch (_) {
+      // socket already closing — local suppression still handles it
+    }
+    _setState(VoiceCallState.listening);
   }
 
   /// User tapped hang up.

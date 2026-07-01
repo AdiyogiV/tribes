@@ -62,9 +62,25 @@ class VoiceMicModePref {
   }
 
   /// The mic mode that actually applies for [engine]: the user's explicit
-  /// choice if any, otherwise the engine-aware smart default.
+  /// choice if any, otherwise the engine-aware smart default — CLAMPED to
+  /// what the engine/platform can actually support safely.
+  ///
+  /// [openMic] (full-duplex) is only safe where BOTH true barge-in and echo
+  /// cancellation exist: the Live engine on a real device (native VAD +
+  /// hardware AEC). Everywhere else an open mic just feeds Aryabhatt's own
+  /// voice back into STT and he talks to himself:
+  ///   * web — no working AEC for flutter_sound's output;
+  ///   * CX — no server-side echo guard AND no interrupt handling.
+  /// So even if the user (or a stale stored override) picked [openMic], we
+  /// force [waitTurn] in those cases. This is the single choke point where the
+  /// "openMic only where it works" rule lives.
   static Future<VoiceMicMode> effectiveFor(VoiceEngine engine) async {
-    return await readOverride() ?? defaultFor(engine);
+    final mode = await readOverride() ?? defaultFor(engine);
+    if (mode == VoiceMicMode.openMic &&
+        (kIsWeb || engine != VoiceEngine.live)) {
+      return VoiceMicMode.waitTurn;
+    }
+    return mode;
   }
 
   /// Persist an explicit mic-mode override. Takes effect on the next call.
