@@ -17,6 +17,7 @@ import {
 import { getFunctions } from "firebase-admin/functions";
 import { getUpcomingSignIngresses, getUpcomingRetrogrades } from "./sky_positions.js";
 import { stripMarkdown, normalizeDasha, normalizeChart } from "../lib/astro_helpers.js";
+import { getTransitBinduScore } from "../lib/vedic_analysis.js";
 import { INSIGHT_SYSTEM_PROMPT, buildInsightUserPrompt } from "./prompts/daily_insights.js";
 import { callGemini } from "../insights/engine/ai_client.js";
 import { buildDashaContext, getTodayAstroData } from "../lib/daily_insight_context.js";
@@ -114,13 +115,27 @@ async function generateInsightWithAI(userAstroData, todayAstroData) {
     // NOTE: Transit house numbers are calculated relative to user's natal Lagna (ascendant)
     // This is the correct Vedic astrology method for transit interpretation
     const transits = todayAstroData.transits || {};
+    // Ashtakavarga transit strength (natal BAV/SAV, stored on the user).
+    const ashtakavarga = userAstroData.ashtakavarga || null;
+    const ZODIAC = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
+        "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
+    const BINDU_PLANETS = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn"];
     const transitList = Object.entries(transits)
         .filter(([name]) => name !== "Ascendant")
         .map(([name, data]) => {
             const sign = data.sign || "?";
             const house = data.house || "";
             // Transit house is relative to user's natal Lagna
-            return house ? `${name} in ${sign} (transiting user's ${house}th house)` : `${name} in ${sign}`;
+            let line = house ? `${name} in ${sign} (transiting user's ${house}th house)` : `${name} in ${sign}`;
+            const canon = BINDU_PLANETS.find((c) => name.toLowerCase().includes(c.toLowerCase()));
+            if (canon && ashtakavarga) {
+                const signIdx = ZODIAC.findIndex((z) => z.toLowerCase() === sign.toLowerCase());
+                if (signIdx >= 0) {
+                    const b = getTransitBinduScore(canon, signIdx, ashtakavarga);
+                    if (b) line += ` [${b.bindus}/8 bindus: ${b.quality}]`;
+                }
+            }
+            return line;
         })
         .join(", ") || "Unknown";
 

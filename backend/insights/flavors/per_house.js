@@ -27,6 +27,7 @@ import { db, FieldValue, logger } from "../../lib/firebase.js";
 import { DateTime } from "luxon";
 import {
     calculateWholeSignHouse,
+    getTransitBinduScore,
 } from "../../lib/vedic_analysis.js";
 import {
     getUpcomingSignIngresses,
@@ -109,7 +110,7 @@ function signNameToIndex(name) {
  * currently in it.  Also annotates each entry with its house-from-Moon and
  * Gochara favorability so the prompt can reference it.
  */
-function bucketTransitsByHouse(skyPositions, userAscendantDegree, moonSignIndex) {
+function bucketTransitsByHouse(skyPositions, userAscendantDegree, moonSignIndex, ashtakavarga) {
     const buckets = Object.fromEntries(
         Array.from({ length: 12 }, (_, i) => [i + 1, []]),
     );
@@ -123,20 +124,28 @@ function bucketTransitsByHouse(skyPositions, userAscendantDegree, moonSignIndex)
         const house = calculateWholeSignHouse(deg, userAscendantDegree);
         if (!house || house < 1 || house > 12) continue;
 
+        const transitSignIdx = Math.floor(deg / 30) % 12;
+
+        // Canonical Navagraha name (for Gochara + Ashtakavarga lookups)
+        const canonName = Object.keys(GOCHARA_FAVORABLE).find(
+            (k) => name.toLowerCase().includes(k.toLowerCase()),
+        );
+
         // House from Moon (Gochara reference)
         let houseFromMoon = null;
         let gochara = null;
-        if (moonSignIndex != null) {
-            const transitSignIdx = Math.floor(deg / 30) % 12;
+        if (moonSignIndex != null && canonName) {
             houseFromMoon = ((transitSignIdx - moonSignIndex + 12) % 12) + 1;
-            const canonName = Object.keys(GOCHARA_FAVORABLE).find(
-                (k) => name.toLowerCase().includes(k.toLowerCase()),
-            );
-            if (canonName) {
-                gochara = GOCHARA_FAVORABLE[canonName].includes(houseFromMoon)
-                    ? "favorable"
-                    : "unfavorable";
-            }
+            gochara = GOCHARA_FAVORABLE[canonName].includes(houseFromMoon)
+                ? "favorable"
+                : "unfavorable";
+        }
+
+        // Ashtakavarga transit strength: bindus (0-8) in the transited sign.
+        // The classical filter for whether a transit can actually deliver.
+        let bindu = null;
+        if (canonName && ashtakavarga) {
+            bindu = getTransitBinduScore(canonName, transitSignIdx, ashtakavarga);
         }
 
         buckets[house].push({
@@ -146,6 +155,8 @@ function bucketTransitsByHouse(skyPositions, userAscendantDegree, moonSignIndex)
             isRetro: data.isRetro === true || data.isRetro === "true",
             houseFromMoon,
             gochara,
+            bindus: bindu?.bindus ?? null,
+            binduQuality: bindu?.quality ?? null,
         });
     }
     return buckets;
@@ -235,6 +246,7 @@ const SYSTEM_PROMPT = `You are a masterful Vedic astrologer (Jyotishi) writing p
 VEDIC FRAMEWORK you follow:
 • Whole-sign houses (Rashi-based) — the standard Parashara system.
 • Transit results are judged primarily from the Moon sign (Chandra Rashi) per Gochara Shastra.  Each transit planet is tagged "favorable" or "unfavorable" from Moon — honor this assessment.
+• Ashtakavarga bindus (0-8) measure whether a transit can actually DELIVER: 5+ bindus = strong/reliable (a favorable transit lands, an unfavorable one is cushioned); 3-4 = mixed/moderate; 0-2 = weak (even a favorable transit underdelivers; an unfavorable one bites harder).  Weigh bindus together with the Moon-Gochara tag — they refine each other.
 • When Sade Sati or Kantaka Shani is active, treat it as the dominant background theme — it colors every house Saturn touches.
 • Dasha–transit alignment: a transit is most powerful when the transiting planet is also the active dasha lord or connects to it.  Mention timing naturally when relevant.
 • Retrograde transits re-activate unfinished karma of that house — they don't simply "delay."
@@ -327,7 +339,8 @@ PER-HOUSE DATA:
             user += `Transiting now: ${transits.map((t) => {
                 let s = `${t.planet} in ${t.sign}`;
                 if (t.isRetro) s += " (retrograde)";
-                if (t.houseFromMoon != null) s += ` [${t.houseFromMoon}th from Moon → ${t.gochara || "neutral"}]`;
+                if (t.houseFromMoon != null) s += ` [${t.houseFromMoon}th from Moon -> ${t.gochara || "neutral"}]`;
+                if (t.bindus != null) s += ` {${t.bindus}/8 bindus -> ${t.binduQuality}}`;
                 return s;
             }).join("; ")}\n`;
         }
@@ -407,6 +420,7 @@ export const perHouseFlavor = {
             skyPositions,
             userAscendantDegree,
             moonSignIndex,
+            astro.ashtakavarga,
         );
         const saturnConditions = detectSaturnConditions(skyPositions, moonSignIndex);
 

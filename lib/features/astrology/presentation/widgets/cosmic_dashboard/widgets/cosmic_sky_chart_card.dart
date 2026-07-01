@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:kundali_chart/kundali_chart.dart';
 import 'package:aurogram/features/astrology/data/utils/chart_utils.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
+import 'package:aurogram/shared/presentation/widgets/universal/transparent_toolbox.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/widgets/chart_blend_slider.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/widgets/timeline_slider.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/kundali_house_hit_test.dart';
@@ -73,7 +74,6 @@ class CosmicSkyChartCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cardColor = isDark ? const Color(0xFF1A1A1C) : Colors.white;
     final c = AppTheme.primaryColor;
 
     // Calculate positions based on slider
@@ -100,11 +100,9 @@ class CosmicSkyChartCard extends StatelessWidget {
         : null;
     final hasBirthChart = birthHouses != null && birthLabels != null;
 
-    return Material(
-      color: cardColor,
-      elevation: 2,
-      shadowColor: Colors.black.withValues(alpha: 0.2),
-      borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+    return TransparentToolbox.buildCard(
+      context: context,
+      padding: EdgeInsets.zero,
       child: Column(
         children: [
           // Header with date display and birth chart toggle

@@ -83,6 +83,7 @@ ${doshaList.length > 0 ? `Challenges: ${doshaList.join(", ")}` : ""}
 Ruler: ${todayLord} | Tithi: ${tithi} | Moon Nakshatra: ${todayNakshatra}
 Strong: ${strongPlanets} | Weak: ${weakPlanets}
 Transits (houses relative to ${lagna} Lagna): ${transitList}
+(Ashtakavarga bindus in brackets = transit strength: 5-8 strong/reliable, 3-4 mixed, 0-2 weak. A favorable transit with high bindus lands well; low bindus mean even a good transit underdelivers. Weight predictions by bindus.)
 ${upcomingEventsText ? `\n\n═══ UPCOMING PLANETARY EVENTS (AUTHORITATIVE DATES) ═══\n${upcomingEventsText}\n⚠️ IMPORTANT: Use ONLY these dates for sign change and retrograde predictions. Do NOT guess or use other sources.` : ""}
 
 ═══ CREATE 4 SHAREABLE INSIGHT CARDS ═══
