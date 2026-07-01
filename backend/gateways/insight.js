@@ -13,9 +13,9 @@
  *   - generatePerHouseNow            [auth]     Force regenerate per-house readings
  *   - submitInsightFeedback          [auth]     Submit thumbs up/down for insight
  *   - toggleFavoriteInsight          [auth]     Toggle favorite status for insight
- *   - cosmicDailyManual              [auth]     Manual trigger for cosmic daily
- *   - generateMundaneForecast        [public]   Generate mundane astrology forecast
- *   - getMundaneForecast             [public]   Read cached mundane forecast
+ *
+ * NOTE: mundane/world methods (cosmicDailyManual, generateMundaneForecast,
+ * getMundaneForecast) were archived — see backend/_archive/.
  */
 
 import { onCall, HttpsError } from "firebase-functions/v2/https";
@@ -34,11 +34,7 @@ import {
     handleSubmitInsightFeedback,
     handleToggleFavoriteInsight,
 } from "../functions/astro_engagement.js";
-import { handleCosmicDailyManual } from "../functions/cosmic_daily.js";
-import {
-    handleGenerateMundaneForecast,
-    handleGetMundaneForecast,
-} from "../mundane/index.js";
+// Mundane/world handlers archived — see backend/_archive/.
 
 // Method registry — maps method name to handler + auth requirement
 const methods = {
@@ -50,11 +46,6 @@ const methods = {
     generatePerHouseNow: { handler: (req) => handleGeneratePerHouseNow(req), auth: true },
     submitInsightFeedback: { handler: (req) => handleSubmitInsightFeedback(req), auth: true },
     toggleFavoriteInsight: { handler: (req) => handleToggleFavoriteInsight(req), auth: true },
-    cosmicDailyManual: { handler: (req) => handleCosmicDailyManual(req), auth: true },
-
-    // Public methods (no auth required)
-    generateMundaneForecast: { handler: (req) => handleGenerateMundaneForecast(req), auth: false },
-    getMundaneForecast: { handler: (req) => handleGetMundaneForecast(req), auth: false },
 };
 
 export const insightGateway = onCall({

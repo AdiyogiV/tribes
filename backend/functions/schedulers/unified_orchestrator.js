@@ -26,11 +26,10 @@
  * Phase 2: Data Refresh (sequential — Phase 3 needs this)
  *   - refreshSkyPositionsDaily (positions + panchang + muhurat, single source)
  *
- * Phase 3: Content Generation (parallel — both use fresh sky data)
- *   - cosmicDailyScheduled
- *   - refreshMundanePanchanga
+ * Phase 3: (removed) Mundane/world content generation was archived —
+ *   see backend/_archive/. Personal insights no longer depend on it.
  *
- * Phase 4: User Insights (sequential — depends on Phases 2+3)
+ * Phase 4: User Insights (sequential — depends on Phase 2)
  *   - generateDailyAstroInsights (enqueues per-user Cloud Tasks)
  *   - enqueuePerHouseReadings    (enqueues per-house Cloud Tasks)
  *
@@ -52,9 +51,7 @@ import { runRefreshUserMemories } from "../user_memory.js";
 // Phase 2: Data refresh runners
 import { runRefreshSkyPositionsDaily } from "../sky_positions.js";
 
-// Phase 3: Content generation runners
-import { runCosmicDailyScheduled } from "../cosmic_daily.js";
-import { runRefreshMundanePanchanga } from "../../mundane/yantra/agni_karya.js";
+// Phase 3 (mundane/world content) archived — see backend/_archive/.
 
 // Phase 4: User insight runners
 import { runGenerateDailyAstroInsights } from "../daily_astro_insights.js";
@@ -137,14 +134,10 @@ export const unifiedOrchestrator = onSchedule({
 
     // (muhurat is now part of the sky_positions smartPrefetch — single source)
 
-    // ── Phase 3: Content Generation (parallel — both use fresh sky data)
-    logger.info("Phase 3: Content Generation");
-    results.push(...await Promise.all([
-        runTask("cosmicDailyScheduled", runCosmicDailyScheduled),
-        runTask("refreshMundanePanchanga", runRefreshMundanePanchanga),
-    ]));
+    // ── Phase 3: (archived) mundane/world content generation ───────────
+    // Removed — personal insights don't depend on it. See backend/_archive/.
 
-    // ── Phase 4: User Insights (sequential — depends on Phases 2+3) ───
+    // ── Phase 4: User Insights (sequential — depends on Phase 2) ───────
     logger.info("Phase 4: User Insights");
     results.push(await runTask("generateDailyAstroInsights", runGenerateDailyAstroInsights));
     results.push(await runTask("enqueuePerHouseReadings", runEnqueuePerHouseReadings));

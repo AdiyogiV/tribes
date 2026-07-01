@@ -15,6 +15,8 @@ analyzer:
     # Exclude build directories
     - "build/**"
     - ".dart_tool/**"
+    # Exclude archived (unmaintained) code
+    - "**/_archive/**"
 
   language:
     strict-casts: false      # Too noisy — 400+ false positives from Firestore dynamic data

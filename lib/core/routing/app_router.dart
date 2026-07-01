@@ -53,7 +53,6 @@ import 'package:aurogram/features/spaces/presentation/widgets/media_gallery_page
 import 'package:aurogram/features/spaces/presentation/widgets/tiles/video_player_screen.dart';
 import 'package:aurogram/features/astrology/presentation/pages/saved_insights_page.dart';
 import 'package:aurogram/features/astrology/presentation/pages/compatibility_details_page.dart';
-import 'package:aurogram/features/astrology/presentation/pages/current_sky_page.dart';
 import 'package:aurogram/features/onboarding/presentation/pages/onboarding_complete.dart';
 import 'package:aurogram/features/astrology/presentation/pages/minimal_dashboard.dart';
 import 'package:aurogram/features/astrology/presentation/pages/melooha_dashboard.dart';
@@ -498,17 +497,7 @@ GoRouter createAppRouter(GlobalKey<NavigatorState> navigatorKey) {
         },
       ),
 
-      // ── Current Sky ───────────────────────────────────────────────────
-      GoRoute(
-        path: RouteNames.currentSky,
-        name: 'currentSky',
-        builder: (_, state) {
-          final extra = state.extra as Map<String, dynamic>? ?? {};
-          return CurrentSkyPage(
-            uid: extra['uid'] as String? ?? '',
-          );
-        },
-      ),
+      // ── Current Sky (mundane/world view) — archived, see _archive/ ──
 
       // ── Onboarding Complete ──────────────────────────────────────────
       GoRoute(

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:aurogram/features/astrology/domain/current_sky_service.dart';
+import 'package:aurogram/features/astrology/_archive/current_sky_service.dart';
 import 'package:aurogram/features/astrology/domain/astrology_service.dart';
 
 /// Current Sky Page — Global Cosmic Intelligence Dashboard.

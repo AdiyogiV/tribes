@@ -101,7 +101,6 @@ class RouteNames {
   // ── Astrology (additional) ──────────────────────────────────────────
   static const savedInsights = '/astrology/saved';
   static const compatibilityDetails = '/astrology/compatibility';
-  static const currentSky = '/astrology/current-sky';
 
   // ── Onboarding ──────────────────────────────────────────────────────
   static const onboardingComplete = '/onboarding/complete';
