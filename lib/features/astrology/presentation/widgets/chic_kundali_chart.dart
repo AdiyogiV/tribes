@@ -265,11 +265,11 @@ class _KundaliPainter extends CustomPainter {
 
         // Draw Transits OUTSIDE the geometric triangle (Transit Zone / Weather)
         if (hasTransit) {
-          final tText = tPlanets.join(joinStr);
-          _drawText(
+          _drawColoredPlanets(
               canvas: canvas,
-              text: tText,
+              planets: tPlanets,
               style: transitPlanetStyle!,
+              joinStr: joinStr,
               center: Offset(ax + (pDir.dx * 72.0),
                   ay + (pDir.dy * 72.0))); // Pushed far outside the line
         }
@@ -288,11 +288,11 @@ class _KundaliPainter extends CustomPainter {
                           46.0))); // Centered in house (pushed out to clear labels)
         } else if (hasTransit) {
           // fallback if rendering just transits
-          final tText = tPlanets.join(joinStr);
-          _drawText(
+          _drawColoredPlanets(
               canvas: canvas,
-              text: tText,
+              planets: tPlanets,
               style: transitPlanetStyle ?? planetStyle,
+              joinStr: joinStr,
               center: Offset(ax + (pDir.dx * 46.0), ay + (pDir.dy * 46.0)));
         }
       }
@@ -310,7 +310,7 @@ class _KundaliPainter extends CustomPainter {
     final center = Offset(w / 2, h / 2);
     final paint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = lineWidth * 0.6
+      ..strokeWidth = lineWidth * 1.3
       ..isAntiAlias = true
       ..strokeCap = StrokeCap.round;
 
@@ -330,7 +330,8 @@ class _KundaliPainter extends CustomPainter {
           if (to == from) continue;
 
           final a = _planetCenter(from, w, h, dist);
-          final b = _planetCenter(to, w, h, 42.0);
+          // Land on the target house's zodiac label (inner, dist 20).
+          final b = _planetCenter(to, w, h, 20.0);
 
           // Pick the perpendicular side pointing away from the busy centre so
           // the wave bows AROUND the middle rather than through it.
@@ -349,8 +350,8 @@ class _KundaliPainter extends CustomPainter {
           // sine ripple. Both vanish at the endpoints so the line anchors
           // cleanly on planet and house.
           final outwardBase = len * 0.18 + lane;
-          const amplitude = 6.0;
-          const waves = 3;
+          const amplitude = 10.0;
+          const waves = 4;
           Offset pt(double t) {
             final base =
                 Offset(a.dx + (b.dx - a.dx) * t, a.dy + (b.dy - a.dy) * t);
@@ -390,6 +391,37 @@ class _KundaliPainter extends CustomPainter {
         ..lineTo(tip.dx, tip.dy)
         ..lineTo(right.dx, right.dy),
       paint,
+    );
+  }
+
+  /// Draws a group of planet tokens, each tinted with its own planet colour.
+  void _drawColoredPlanets({
+    required Canvas canvas,
+    required List<String> planets,
+    required TextStyle style,
+    required String joinStr,
+    required Offset center,
+  }) {
+    final children = <TextSpan>[];
+    for (int i = 0; i < planets.length; i++) {
+      children.add(TextSpan(
+        text: planets[i],
+        style: style.copyWith(color: _planetColor(planets[i])),
+      ));
+      if (i < planets.length - 1) {
+        children.add(TextSpan(text: joinStr, style: style));
+      }
+    }
+    final textPainter = TextPainter(
+      text: TextSpan(children: children),
+      textDirection: TextDirection.ltr,
+      textAlign: TextAlign.center,
+    );
+    textPainter.layout();
+    textPainter.paint(
+      canvas,
+      Offset(center.dx - textPainter.width / 2,
+          center.dy - textPainter.height / 2),
     );
   }
 
