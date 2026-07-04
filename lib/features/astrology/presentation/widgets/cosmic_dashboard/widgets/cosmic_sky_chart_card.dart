@@ -409,12 +409,12 @@ class CosmicSkyChartCard extends StatelessWidget {
                           chartLineWidth = 1.5;
 
                           pStyle = TextStyle(
-                            fontSize: 8.5,
-                            fontWeight: FontWeight
-                                .w500, // Thinner, smaller font for birth planets
+                            fontSize: 11.0,
+                            fontWeight: FontWeight.w700,
+                            fontStyle: FontStyle.normal,
                             color: AppTheme.primaryColor.withValues(alpha: 0.8),
                             letterSpacing: 0.5,
-                            height: 1.1,
+                            height: 1.2,
                           );
 
                           // The transits (sky planets) stack above the birth planets inside the same house
