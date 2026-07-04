@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 class ChicKundaliChart extends StatelessWidget {
@@ -321,7 +323,8 @@ class _KundaliPainter extends CustomPainter {
       final a = _planetCenter(from, w, h, dist);
       final b = _planetCenter(to, w, h, 42.0);
 
-      // Angular routing around the busy centre.
+      // Pick the perpendicular side that points away from the busy centre so
+      // the wave bows AROUND the middle rather than through it.
       final mid = Offset((a.dx + b.dx) / 2, (a.dy + b.dy) / 2);
       var dir = b - a;
       final len = dir.distance;
@@ -332,19 +335,32 @@ class _KundaliPainter extends CustomPainter {
       if (perp.dx * fromCenter.dx + perp.dy * fromCenter.dy < 0) {
         perp = Offset(-perp.dx, -perp.dy);
       }
-      final ctrl =
-          Offset(mid.dx + perp.dx * len * 0.25, mid.dy + perp.dy * len * 0.25);
 
-      canvas.drawPath(
-        Path()
-          ..moveTo(a.dx, a.dy)
-          ..lineTo(ctrl.dx, ctrl.dy)
-          ..lineTo(b.dx, b.dy),
-        paint,
-      );
+      // Perpendicular offset at parameter t: a gentle outward bow (goes around
+      // the centre) plus a sine ripple. Both vanish at the endpoints so the
+      // line still anchors cleanly on planet and house.
+      final outwardBase = len * 0.18;
+      const amplitude = 6.0;
+      const waves = 3;
+      Offset pt(double t) {
+        final base = Offset(a.dx + (b.dx - a.dx) * t, a.dy + (b.dy - a.dy) * t);
+        final off = outwardBase * math.sin(t * math.pi) +
+            amplitude * math.sin(t * math.pi * waves);
+        return Offset(base.dx + perp.dx * off, base.dy + perp.dy * off);
+      }
 
-      _arrowHead(canvas, b, ctrl, paint); // gaze lands on the target house
-      if (mutual) _arrowHead(canvas, a, ctrl, paint); // both ways for the 7th
+      const steps = 40;
+      final path = Path()..moveTo(a.dx, a.dy);
+      for (int s = 1; s <= steps; s++) {
+        final p = pt(s / steps);
+        path.lineTo(p.dx, p.dy);
+      }
+      canvas.drawPath(path, paint);
+
+      _arrowHead(canvas, b, pt(0.9), paint); // gaze lands on the target house
+      if (mutual) {
+        _arrowHead(canvas, a, pt(0.1), paint); // both ways for the 7th
+      }
     }
   }
 
