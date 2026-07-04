@@ -189,27 +189,15 @@ class _KundaliPainter extends CustomPainter {
       }
 
       if (isOverlayActive) {
-        // ALWAYS draw the corner-aligned highlighted space to define the structural "Birth Zone"
-        // Chic upgrade: use a subtle radial gradient fading outward from the inner vertex
+        // Draw the corner-aligned birth-chart house region as a flat grey fill.
         final bgPath = Path()
           ..moveTo(ax, ay)
           ..lineTo(p2.dx, p2.dy)
           ..lineTo(p3.dx, p3.dy)
           ..close();
 
-        // Anchor the glow at the centroid of THIS house's triangle so the
-        // four inner houses (which share the center vertex) each get their
-        // own distinct pool of light instead of piling up at the center.
-        final cx = (ax + p2.dx + p3.dx) / 3;
-        final cy = (ay + p2.dy + p3.dy) / 3;
         final bgPaint = Paint()
-          ..shader = RadialGradient(
-            colors: [
-              strokeColor.withValues(alpha: 0.14),
-              strokeColor.withValues(alpha: 0.0),
-            ],
-          ).createShader(
-              Rect.fromCircle(center: Offset(cx, cy), radius: S * 0.55))
+          ..color = const Color(0x33FFFFFF) // subtle flat grey
           ..style = PaintingStyle.fill;
         canvas.drawPath(bgPath, bgPaint);
         // Draw Birth Planets INSIDE the geometric triangle (Birth Zone / Inner Sanctum)
