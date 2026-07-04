@@ -6,7 +6,6 @@ import 'package:aurogram/features/astrology/presentation/widgets/chic_kundali_ch
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/widgets/timeline_slider.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/kundali_house_hit_test.dart';
-import 'package:aurogram/core/theme/app_dimensions.dart';
 
 /// Card widget displaying the current sky chart with optional birth chart overlay
 class CosmicSkyChartCard extends StatelessWidget {
@@ -92,74 +91,86 @@ class CosmicSkyChartCard extends StatelessWidget {
         : null;
     final hasBirthChart = birthHouses != null && birthLabels != null;
 
-    final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
-    final Color cardColor =
-        isDarkTheme ? Theme.of(context).colorScheme.surface : Colors.white;
-    return Material(
-      color: cardColor,
-      elevation: 2,
-      shadowColor: Colors.black.withValues(alpha: 0.2),
-      borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(AppDimensions.paddingLg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Standard Header (Matches Upcoming Events)
-            Text(
-              isSliderOnToday ? 'Current Sky' : 'Time Travel',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: AppTheme.holyCowTextSize,
-                fontWeight: FontWeight.w700,
-                color: c,
-              ),
-            ),
+    final bg = const Color(0xFF000000); // Vlack (black)
+    final fgMain = Colors.white;
+    final fgMuted = Colors.white54;
 
-            const SizedBox(height: AppDimensions.spacingMd),
-
-            // Subtext / Daily Insight
-            if (insightText != null && insightText!.trim().isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: Text(
-                  insightText!,
-                  textAlign: TextAlign.center,
+    return Container(
+      width: double.infinity,
+      color: bg,
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Chic Editorial Header
+          RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: isSliderOnToday ? 'Current ' : 'Time ',
                   style: TextStyle(
-                    color: c.withValues(alpha: 0.7),
-                    fontSize: AppTheme.holyCowTextSize - 1,
-                    height: 1.4,
+                    fontFamily: 'Georgia',
+                    fontStyle: FontStyle.italic,
+                    color: c,
+                    fontSize: 32,
+                    letterSpacing: -1.2,
                   ),
                 ),
-              ),
-
-            const SizedBox(height: 24), // Breathing room
-
-            // Chart with overlay
-            _buildChart(
-              context,
-              positions,
-              skyHouses,
-              skyLabels,
-              birthHouses,
-              birthLabels,
-              hasBirthChart,
-              dateStr,
+                TextSpan(
+                  text: isSliderOnToday ? 'Sky.' : 'Travel.',
+                  style: TextStyle(
+                    fontFamily: 'Georgia',
+                    fontStyle: FontStyle.italic,
+                    color: fgMain,
+                    fontSize: 32,
+                    fontWeight: FontWeight.w300,
+                    letterSpacing: -1.2,
+                  ),
+                ),
+              ],
             ),
+          ),
 
-            // Legend — clarifies natal vs transit planets
-            if (hasBirthChart) ...[
-              const SizedBox(height: 20),
-              _buildLegend(context, c),
-            ],
+          if (insightText != null && insightText!.trim().isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              insightText!,
+              style: TextStyle(
+                color: fgMuted,
+                fontSize: 15,
+                height: 1.4,
+                fontWeight: FontWeight.w300,
+              ),
+            ),
+          ],
 
-            const SizedBox(height: 28),
+          const SizedBox(height: 32), // Breathing room
 
-            // Return to Today Action (Centered, Chic)
-            if (!isSliderOnToday) ...[
-              GestureDetector(
+          // Chart with overlay
+          _buildChart(
+            context,
+            positions,
+            skyHouses,
+            skyLabels,
+            birthHouses,
+            birthLabels,
+            hasBirthChart,
+            dateStr,
+          ),
+
+          // Legend — clarifies natal vs transit planets
+          if (hasBirthChart) ...[
+            const SizedBox(height: 20),
+            Center(child: _buildLegend(context, c)),
+          ],
+
+          const SizedBox(height: 32),
+
+          // Return to Today Action (Centered, Chic)
+          if (!isSliderOnToday) ...[
+            Center(
+              child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: onResetToToday,
                 child: Row(
@@ -169,7 +180,7 @@ class CosmicSkyChartCard extends StatelessWidget {
                     Icon(
                       Icons.replay_circle_filled_rounded,
                       size: 14,
-                      color: c.withValues(alpha: 0.8),
+                      color: fgMain,
                     ),
                     const SizedBox(width: 8),
                     Text(
@@ -178,32 +189,32 @@ class CosmicSkyChartCard extends StatelessWidget {
                         fontSize: 9,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 2.0,
-                        color: c.withValues(alpha: 0.8),
+                        color: fgMain,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
-            ],
-
-            // Time Slider
-            TimelineSlider(
-              value: sliderValue,
-              onChanged: skyDataLoaded ? onSliderChanged : null,
-              hasData: skyDataLoaded,
-              isLoading: skyDataLoading,
-              onLoadData: onLoadSkyPositions,
-              onForceRefresh: onTriggerCachePopulation,
-              isDark: isDark,
             ),
+            const SizedBox(height: 24),
+          ],
 
-            // Explore birth chart affordance
-            // Only shown if we somehow don't have birth chart data and want them to add it,
-            // OR it's just completely hidden now for ultra-minimalism.
-            if (onExploreBirthChart != null && !hasBirthChart) ...[
-              const SizedBox(height: 24),
-              GestureDetector(
+          // Time Slider (forced dark mode)
+          TimelineSlider(
+            value: sliderValue,
+            onChanged: skyDataLoaded ? onSliderChanged : null,
+            hasData: skyDataLoaded,
+            isLoading: skyDataLoading,
+            onLoadData: onLoadSkyPositions,
+            onForceRefresh: onTriggerCachePopulation,
+            isDark: true,
+          ),
+
+          // Explore birth chart affordance
+          if (onExploreBirthChart != null && !hasBirthChart) ...[
+            const SizedBox(height: 32),
+            Center(
+              child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: () {
                   HapticFeedback.lightImpact();
@@ -219,29 +230,28 @@ class CosmicSkyChartCard extends StatelessWidget {
                         fontSize: 9,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 3.0,
-                        color: c.withValues(alpha: 0.6),
+                        color: c,
                       ),
                     ),
                     const SizedBox(width: 8),
                     Icon(
                       Icons.arrow_forward_rounded,
                       size: 13,
-                      color: c.withValues(alpha: 0.6),
+                      color: c,
                     ),
                   ],
                 ),
               ),
-            ],
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
 
   /// Legend distinguishing natal (gold) from transit (sky) planets.
   Widget _buildLegend(BuildContext context, Color c) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final transitColor = isDark ? Colors.white : Colors.black;
+    final transitColor = Colors.white;
 
     Widget entry(Color dot, String label) => Row(
           mainAxisSize: MainAxisSize.min,
@@ -349,6 +359,24 @@ class CosmicSkyChartCard extends StatelessWidget {
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
+                      // Soft radial halo — frames the chart with gentle depth
+                      Builder(builder: (context) {
+                        return Container(
+                          width: innerSize,
+                          height: innerSize,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: RadialGradient(
+                              colors: [
+                                AppTheme.primaryColor.withValues(alpha: 0.15),
+                                AppTheme.primaryColor.withValues(alpha: 0.0),
+                              ],
+                              stops: const [0.55, 1.0],
+                            ),
+                          ),
+                        );
+                      }),
+
                       // Chic Kundali Chart (Handles both Sky, Birth, and "Visiting Spirits" Overlay)
                       Builder(builder: (context) {
                         // Default to showing just the Sky chart
@@ -356,14 +384,10 @@ class CosmicSkyChartCard extends StatelessWidget {
                         List<String>? displayLabels = skyLabels;
                         List<List<String>>? visitingPlanets;
 
-                        final isDarkTheme =
-                            Theme.of(context).brightness == Brightness.dark;
-                        final lineColor = isDarkTheme
-                            ? Colors.white.withValues(alpha: 0.5)
-                            : Colors.black.withValues(alpha: 0.4);
-                        final planetColor = isDarkTheme
-                            ? Colors.white.withValues(alpha: 1.0)
-                            : Colors.black.withValues(alpha: 1.0);
+                        // Forced dark mode since the card is stark black
+                        final lineColor = Colors.white.withValues(alpha: 0.3);
+                        final planetColor =
+                            Colors.white.withValues(alpha: 0.85);
 
                         Color strokeColor = lineColor;
                         double chartLineWidth = 1.0;
