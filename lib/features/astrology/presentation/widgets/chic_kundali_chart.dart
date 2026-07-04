@@ -100,20 +100,12 @@ class _KundaliPainter extends CustomPainter {
     canvas.drawPath(allLines, shadowPaint);
     canvas.restore();
 
-    // 3. Crisp, slightly gradient-stroked structural lines for the cross
+    // 3. Very subtle structural lines for the cross + inner diamond
     final linePaint = Paint()
-      ..strokeWidth = lineWidth
+      ..strokeWidth = lineWidth * 0.5
       ..style = PaintingStyle.stroke
       ..isAntiAlias = true
-      ..shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          strokeColor.withValues(alpha: 0.9),
-          strokeColor,
-          strokeColor.withValues(alpha: 0.6),
-        ],
-      ).createShader(Rect.fromLTWH(0, 0, w, h));
+      ..color = strokeColor.withValues(alpha: 0.2);
 
     canvas.drawPath(diagonals, linePaint);
     canvas.drawPath(innerDiamond, linePaint);
