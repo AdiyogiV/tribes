@@ -126,19 +126,15 @@ class _KundaliPainter extends CustomPainter {
     );
   }
 
-  /// Vedic drishti: house-count offsets a planet aspects. Every planet sees
-  /// the 7th; Mars also 4th/8th, Jupiter 5th/9th, Saturn 3rd/10th.
+  /// Vedic drishti, SPECIAL aspects only (the universal 7th is dropped to keep
+  /// the chart legible). Mars 4th/8th, Jupiter 5th/9th, Saturn 3rd/10th. Other
+  /// planets cast no line.
   List<int> _aspectOffsets(String token) {
     final p = token.toLowerCase();
-    final offsets = <int>[6];
-    if (p.startsWith('ma')) {
-      offsets.addAll(const [3, 7]);
-    } else if (p.startsWith('ju')) {
-      offsets.addAll(const [4, 8]);
-    } else if (p.startsWith('sa')) {
-      offsets.addAll(const [2, 9]);
-    }
-    return offsets;
+    if (p.startsWith('ma')) return const [3, 7];
+    if (p.startsWith('ju')) return const [4, 8];
+    if (p.startsWith('sa')) return const [2, 9];
+    return const [];
   }
 
   /// A distinct colour per planet so each aspect line can be traced back to
