@@ -28,12 +28,8 @@ class HolyCowCosmicContent extends StatelessWidget {
   final SkyPositionsService skyService;
   final ValueNotifier<double> sliderValueNotifier;
   final ValueNotifier<DateTime> sliderDateNotifier;
-  final bool showTransitOverlay;
-  final double chartBlendValue;
   final ValueChanged<double> onSliderChanged;
   final VoidCallback onResetToToday;
-  final VoidCallback onToggleTransitOverlay;
-  final ValueChanged<double> onBlendValueChanged;
   final Future<void> Function({bool isRetry}) onLoadSkyPositions;
   final Future<void> Function() onTriggerCachePopulation;
 
@@ -61,12 +57,8 @@ class HolyCowCosmicContent extends StatelessWidget {
     required this.skyService,
     required this.sliderValueNotifier,
     required this.sliderDateNotifier,
-    required this.showTransitOverlay,
-    required this.chartBlendValue,
     required this.onSliderChanged,
     required this.onResetToToday,
-    required this.onToggleTransitOverlay,
-    required this.onBlendValueChanged,
     required this.onLoadSkyPositions,
     required this.onTriggerCachePopulation,
     this.wheelResetSignal,
@@ -261,8 +253,7 @@ class HolyCowCosmicContent extends StatelessWidget {
                     embedded: true,
                   ),
                   if (hasMuhurat) ...[
-                    MuhuratTimelineWidget(
-                        muhurat: calMuhurat, embedded: true),
+                    MuhuratTimelineWidget(muhurat: calMuhurat, embedded: true),
                   ] else if (showLoading) ...[
                     HolyCowMuhuratPlaceholder(
                         cardColor: cardColor, embedded: true),
@@ -289,12 +280,8 @@ class HolyCowCosmicContent extends StatelessWidget {
           calendarService: calendarService,
           sliderValueNotifier: sliderValueNotifier,
           sliderDateNotifier: sliderDateNotifier,
-          showTransitOverlay: showTransitOverlay,
-          chartBlendValue: chartBlendValue,
           onSliderChanged: onSliderChanged,
           onResetToToday: onResetToToday,
-          onToggleTransitOverlay: onToggleTransitOverlay,
-          onBlendValueChanged: onBlendValueChanged,
           onLoadSkyPositions: onLoadSkyPositions,
           onTriggerCachePopulation: onTriggerCachePopulation,
           nakshatraController: nakshatraController,
@@ -475,5 +462,4 @@ class HolyCowCosmicContent extends StatelessWidget {
       },
     );
   }
-
 }

@@ -9,7 +9,6 @@ class ChicKundaliChart extends StatelessWidget {
 
   final Color strokeColor;
   final double lineWidth;
-  final TextStyle houseLabelStyle;
   final TextStyle planetStyle;
   final TextStyle? transitPlanetStyle;
 
@@ -20,7 +19,6 @@ class ChicKundaliChart extends StatelessWidget {
     this.transitHouses,
     required this.strokeColor,
     required this.lineWidth,
-    required this.houseLabelStyle,
     required this.planetStyle,
     this.transitPlanetStyle,
   });
@@ -35,7 +33,6 @@ class ChicKundaliChart extends StatelessWidget {
         transitHouses: transitHouses,
         strokeColor: strokeColor,
         lineWidth: lineWidth,
-        houseLabelStyle: houseLabelStyle,
         planetStyle: planetStyle,
         transitPlanetStyle: transitPlanetStyle,
       ),
@@ -50,7 +47,6 @@ class _KundaliPainter extends CustomPainter {
 
   final Color strokeColor;
   final double lineWidth;
-  final TextStyle houseLabelStyle;
   final TextStyle planetStyle;
   final TextStyle? transitPlanetStyle;
 
@@ -60,7 +56,6 @@ class _KundaliPainter extends CustomPainter {
     this.transitHouses,
     required this.strokeColor,
     required this.lineWidth,
-    required this.houseLabelStyle,
     required this.planetStyle,
     this.transitPlanetStyle,
   });

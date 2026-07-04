@@ -95,18 +95,19 @@ class DashboardPageState extends State<DashboardPage>
   static const Duration _cachePopulationDelay = Duration(seconds: 8);
 
   final ValueNotifier<double> _sliderValueNotifier = ValueNotifier(0.5);
-  final ValueNotifier<DateTime> _sliderDateNotifier = ValueNotifier(DateTime.now());
+  final ValueNotifier<DateTime> _sliderDateNotifier =
+      ValueNotifier(DateTime.now());
+
   /// Incremented whenever the user taps "Today" — the nakshatra wheel listens
   /// and snaps back to today in sync with the sky chart.
   final ValueNotifier<int> _wheelResetNotifier = ValueNotifier(0);
 
   /// Live wheel state — the controller is notified on every nakshatra boundary
   /// crossing during drag, enabling the sky chart to move in real time.
-  final NakshatraWheelController _nakshatraController = NakshatraWheelController();
+  final NakshatraWheelController _nakshatraController =
+      NakshatraWheelController();
 
   DashboardLoadingState _loadingState = const DashboardLoadingState();
-  bool _showTransitOverlay = false;
-  double _chartBlendValue = 0.0;
 
   // Key for desktop layout — allows parent to trigger inline chat
   final _desktopLayoutKey = GlobalKey<HolyCowDesktopLayoutState>();
@@ -116,7 +117,7 @@ class DashboardPageState extends State<DashboardPage>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-if (!_didPrecache) {
+    if (!_didPrecache) {
       _didPrecache = true;
       precacheImage(
         const AssetImage('assets/images/nakshatra_wheel.jpeg'),
@@ -166,7 +167,8 @@ if (!_didPrecache) {
       _loadUpcomingEvents();
     }
     if (_skyService.globalMuhurat != null) {
-      _loadingState = _loadingState.copyWith(muhurat: DashboardLoadState.loaded);
+      _loadingState =
+          _loadingState.copyWith(muhurat: DashboardLoadState.loaded);
     } else {
       _loadGlobalMuhurat();
     }
@@ -221,33 +223,38 @@ if (!_didPrecache) {
 
   Future<void> _loadUpcomingEvents() async {
     if (_loadingState.events == DashboardLoadState.loading) return;
-    setState(() => _loadingState = _loadingState.copyWith(events: DashboardLoadState.loading));
+    setState(() => _loadingState =
+        _loadingState.copyWith(events: DashboardLoadState.loading));
     final success = await _skyService.fetchUpcomingEvents();
     if (mounted) {
       setState(() => _loadingState = _loadingState.copyWith(
-        events: success ? DashboardLoadState.loaded : DashboardLoadState.error,
-      ));
+            events:
+                success ? DashboardLoadState.loaded : DashboardLoadState.error,
+          ));
     }
   }
 
   Future<void> _loadSkyPositions({bool isRetry = false}) async {
     if (_loadingState.isSkyLoading) return;
-    setState(() => _loadingState = _loadingState.copyWith(sky: DashboardLoadState.loading));
+    setState(() => _loadingState =
+        _loadingState.copyWith(sky: DashboardLoadState.loading));
     final success = await _skyService.fetchPositions();
     if (!mounted) return;
     setState(() => _loadingState = _loadingState.copyWith(
-      sky: success ? DashboardLoadState.loaded : DashboardLoadState.error,
-      skyRetryCount: success ? 0 : _loadingState.skyRetryCount,
-    ));
+          sky: success ? DashboardLoadState.loaded : DashboardLoadState.error,
+          skyRetryCount: success ? 0 : _loadingState.skyRetryCount,
+        ));
     if (!success) {
       if (_loadingState.skyRetryCount == 0 && _skyService.availableDays == 0) {
         await _triggerSkyPositionsCachePopulation();
       }
       if (_loadingState.skyRetryCount < _maxSkyLoadRetries) {
         final newRetryCount = _loadingState.skyRetryCount + 1;
-        setState(() => _loadingState = _loadingState.copyWith(skyRetryCount: newRetryCount));
+        setState(() => _loadingState =
+            _loadingState.copyWith(skyRetryCount: newRetryCount));
         Future.delayed(_retryBaseDelay * newRetryCount, () {
-          if (mounted && !_loadingState.isSkyLoaded) _loadSkyPositions(isRetry: true);
+          if (mounted && !_loadingState.isSkyLoaded)
+            _loadSkyPositions(isRetry: true);
         });
       }
     }
@@ -255,14 +262,18 @@ if (!_didPrecache) {
 
   Future<void> _triggerSkyPositionsCachePopulation() async {
     try {
-      final functions = FirebaseFunctions.instanceFor(region: 'asia-southeast2');
+      final functions =
+          FirebaseFunctions.instanceFor(region: 'asia-southeast2');
       await functions.httpsCallable('astroGateway').call({
-        'method': 'prefetchSkyPositions', 'daysBack': 30, 'daysAhead': 30,
+        'method': 'prefetchSkyPositions',
+        'daysBack': 30,
+        'daysAhead': 30,
       });
       await Future.delayed(_cachePopulationDelay);
       if (mounted) _loadSkyPositions(isRetry: true);
     } catch (e) {
-      AppLogger.e('Failed to populate sky cache', category: LogCategory.ui, error: e);
+      AppLogger.e('Failed to populate sky cache',
+          category: LogCategory.ui, error: e);
     }
   }
 
@@ -292,23 +303,25 @@ if (!_didPrecache) {
     ]);
     if (!mounted) return;
     setState(() => _loadingState = _loadingState.copyWith(
-      sky: _skyService.availableDays > 0
-          ? DashboardLoadState.loaded
-          : DashboardLoadState.error,
-      muhurat: _skyService.globalMuhurat != null
-          ? DashboardLoadState.loaded
-          : DashboardLoadState.error,
-    ));
+          sky: _skyService.availableDays > 0
+              ? DashboardLoadState.loaded
+              : DashboardLoadState.error,
+          muhurat: _skyService.globalMuhurat != null
+              ? DashboardLoadState.loaded
+              : DashboardLoadState.error,
+        ));
   }
 
   Future<void> _loadGlobalMuhurat() async {
     if (_loadingState.muhurat == DashboardLoadState.loading || !mounted) return;
-    setState(() => _loadingState = _loadingState.copyWith(muhurat: DashboardLoadState.loading));
+    setState(() => _loadingState =
+        _loadingState.copyWith(muhurat: DashboardLoadState.loading));
     final success = await _skyService.fetchGlobalMuhurat();
     if (!mounted) return;
     setState(() => _loadingState = _loadingState.copyWith(
-      muhurat: success ? DashboardLoadState.loaded : DashboardLoadState.error,
-    ));
+          muhurat:
+              success ? DashboardLoadState.loaded : DashboardLoadState.error,
+        ));
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -326,9 +339,8 @@ if (!_didPrecache) {
 
     final date = _nakshatraController.displayedDate;
     final today = DateTime.now();
-    final daysOffset = date
-        .difference(DateTime(today.year, today.month, today.day))
-        .inDays;
+    final daysOffset =
+        date.difference(DateTime(today.year, today.month, today.day)).inDays;
     // Map days to slider range: 0.5 = today, 0.0 = −N days, 1.0 = +N days
     _sliderValueNotifier.value =
         (0.5 + daysOffset / (2 * _sliderRangeDays)).clamp(0.0, 1.0);
@@ -343,8 +355,8 @@ if (!_didPrecache) {
     _sliderValueNotifier.value = value;
     final daysOffset = ((value - 0.5) * 2 * _sliderRangeDays).round();
     final now = DateTime.now();
-    _sliderDateNotifier.value = DateTime(now.year, now.month, now.day)
-        .add(Duration(days: daysOffset));
+    _sliderDateNotifier.value =
+        DateTime(now.year, now.month, now.day).add(Duration(days: daysOffset));
   }
 
   void _resetSliderToToday() {
@@ -353,17 +365,6 @@ if (!_didPrecache) {
     _sliderDateNotifier.value = DateTime.now();
     // Signal the nakshatra wheel to also snap back to today.
     _wheelResetNotifier.value++;
-  }
-
-  void _toggleTransitOverlay() {
-    setState(() {
-      _showTransitOverlay = !_showTransitOverlay;
-      if (_showTransitOverlay) _chartBlendValue = 0.0;
-    });
-  }
-
-  void _onBlendValueChanged(double value) {
-    setState(() => _chartBlendValue = value);
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -443,7 +444,7 @@ if (!_didPrecache) {
         body: HolyCowDesktopLayout(
           key: _desktopLayoutKey,
           cosmicDashboardBuilder: _buildCosmicDashboardContent,
-dashboardInputBuilder: _buildInputBar,
+          dashboardInputBuilder: _buildInputBar,
         ),
       );
     }
@@ -559,8 +560,7 @@ dashboardInputBuilder: _buildInputBar,
       actionButton: DarkModeToggle(
         isDark: Theme.of(context).brightness == Brightness.dark,
         size: 110,
-        onChanged: (_) =>
-            context.read<ThemeProvider>().temporaryToggle(),
+        onChanged: (_) => context.read<ThemeProvider>().temporaryToggle(),
       ),
       showSearchField: false,
     );
@@ -600,12 +600,8 @@ dashboardInputBuilder: _buildInputBar,
         sliderRangeDays: _sliderRangeDays,
         sliderValueNotifier: _sliderValueNotifier,
         sliderDateNotifier: _sliderDateNotifier,
-        showTransitOverlay: _showTransitOverlay,
-        chartBlendValue: _chartBlendValue,
         onSliderChanged: _onSliderChanged,
         onResetToToday: _resetSliderToToday,
-        onToggleTransitOverlay: _toggleTransitOverlay,
-        onBlendValueChanged: _onBlendValueChanged,
         onLoadSkyPositions: _loadSkyPositions,
         onTriggerCachePopulation: _triggerSkyPositionsCachePopulation,
         wheelResetSignal: _wheelResetNotifier,
@@ -625,13 +621,15 @@ dashboardInputBuilder: _buildInputBar,
               builder: (context, ayurvedaSnapshot) {
                 final profile = profileSnapshot.data;
                 final insight = insightSnapshot.data;
-                final isLoading =
-                    profileSnapshot.connectionState == ConnectionState.waiting &&
+                final isLoading = profileSnapshot.connectionState ==
+                        ConnectionState.waiting &&
                     profile == null;
 
                 if (isLoading) {
-                  final isDark = Theme.of(context).brightness == Brightness.dark;
-                  return HolyCowCosmicSkeleton(isDark: isDark, brown: AppTheme.primaryColor);
+                  final isDark =
+                      Theme.of(context).brightness == Brightness.dark;
+                  return HolyCowCosmicSkeleton(
+                      isDark: isDark, brown: AppTheme.primaryColor);
                 }
 
                 return HolyCowCosmicContent(
@@ -644,12 +642,8 @@ dashboardInputBuilder: _buildInputBar,
                   sliderRangeDays: _sliderRangeDays,
                   sliderValueNotifier: _sliderValueNotifier,
                   sliderDateNotifier: _sliderDateNotifier,
-                  showTransitOverlay: _showTransitOverlay,
-                  chartBlendValue: _chartBlendValue,
                   onSliderChanged: _onSliderChanged,
                   onResetToToday: _resetSliderToToday,
-                  onToggleTransitOverlay: _toggleTransitOverlay,
-                  onBlendValueChanged: _onBlendValueChanged,
                   onLoadSkyPositions: _loadSkyPositions,
                   onTriggerCachePopulation: _triggerSkyPositionsCachePopulation,
                   wheelResetSignal: _wheelResetNotifier,

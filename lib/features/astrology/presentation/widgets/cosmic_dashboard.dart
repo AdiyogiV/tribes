@@ -132,10 +132,6 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
   int? _lastSentMuhuratHash;
   int? _lastSentSkyHash;
 
-  // Transit overlay state
-  bool _showTransitOverlay = false;
-  double _chartBlendValue = 0.0;
-
   StreamSubscription<Map<String, dynamic>>? _watchSyncSub;
 
   @override
@@ -150,19 +146,26 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
     _watchSyncSub = WatchService.instance.onWatchData.listen((data) {
       AppLogger.i('CosmicDashboard: Watch data received',
           category: LogCategory.ui,
-          data: {'keys': data.keys.toList(), 'isSkyLoaded': _loadingState.isSkyLoaded});
+          data: {
+            'keys': data.keys.toList(),
+            'isSkyLoaded': _loadingState.isSkyLoaded
+          });
       if (data['request'] == 'fullSync') {
         if (_loadingState.isSkyLoaded) {
           final positions = _skyService.getPositionsForDate(DateTime.now());
           AppLogger.i('CosmicDashboard: fullSync - sky positions lookup',
               category: LogCategory.ui,
-              data: {'hasPositions': positions != null, 'count': positions?.length ?? 0});
+              data: {
+                'hasPositions': positions != null,
+                'count': positions?.length ?? 0
+              });
           if (positions != null && positions.isNotEmpty) {
             _lastSentSkyHash = null; // Force re-send
             _sendWatchSkyIfChanged(positions);
           }
         } else {
-          AppLogger.w('CosmicDashboard: fullSync requested but sky not loaded yet',
+          AppLogger.w(
+              'CosmicDashboard: fullSync requested but sky not loaded yet',
               category: LogCategory.ui);
         }
       }
@@ -217,7 +220,8 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
 
   void _sendWatchSkyIfChanged(Map<String, dynamic>? positions) {
     if (positions == null || positions.isEmpty) {
-      AppLogger.w('CosmicDashboard: _sendWatchSkyIfChanged skipped - no positions',
+      AppLogger.w(
+          'CosmicDashboard: _sendWatchSkyIfChanged skipped - no positions',
           category: LogCategory.ui);
       return;
     }
@@ -225,8 +229,7 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
     if (hash == _lastSentSkyHash) return;
     _lastSentSkyHash = hash;
     AppLogger.i('CosmicDashboard: Sending sky to watch',
-        category: LogCategory.ui,
-        data: {'planetCount': positions.length});
+        category: LogCategory.ui, data: {'planetCount': positions.length});
     unawaited(WatchService.instance.sendSkyPositions(positions));
   }
 
@@ -418,19 +421,6 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
     _sliderDateNotifier.value = DateTime.now();
   }
 
-  void _toggleTransitOverlay() {
-    setState(() {
-      _showTransitOverlay = !_showTransitOverlay;
-      if (_showTransitOverlay) {
-        _chartBlendValue = 0.0;
-      }
-    });
-  }
-
-  void _onBlendValueChanged(double value) {
-    setState(() => _chartBlendValue = value);
-  }
-
   // ─────────────────────────────────────────────────────────────
   // Build Methods
   // ─────────────────────────────────────────────────────────────
@@ -560,7 +550,8 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
                         icon: const Icon(Icons.auto_awesome),
                         label: const Text("Try Minimalist View (Co-Star vibe)"),
                         style: TextButton.styleFrom(
-                          foregroundColor: isDark ? Colors.white70 : Colors.black87,
+                          foregroundColor:
+                              isDark ? Colors.white70 : Colors.black87,
                         ),
                       ),
                       TextButton.icon(
@@ -568,7 +559,8 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
                         icon: const Icon(Icons.calendar_view_week),
                         label: const Text("Try Weekly View (Melooha vibe)"),
                         style: TextButton.styleFrom(
-                          foregroundColor: const Color(0xFF8B78FF), // Soft purple
+                          foregroundColor:
+                              const Color(0xFF8B78FF), // Soft purple
                         ),
                       ),
                     ],
@@ -677,12 +669,8 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
                             sliderDate: sliderDate,
                             skyDataLoaded: _loadingState.isSkyLoaded,
                             skyDataLoading: _loadingState.isSkyLoading,
-                            showTransitOverlay: _showTransitOverlay,
-                            chartBlendValue: _chartBlendValue,
                             onSliderChanged: _onSliderChanged,
                             onResetToToday: _resetSliderToToday,
-                            onToggleTransitOverlay: _toggleTransitOverlay,
-                            onBlendValueChanged: _onBlendValueChanged,
                             onLoadSkyPositions: _loadSkyPositions,
                             onTriggerCachePopulation:
                                 _triggerSkyPositionsCachePopulation,
@@ -963,6 +951,9 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
   }
 
   void _showInfoSnackbar(String message) {
-    showCustomSnackBar(context, message: message, duration: const Duration(seconds: 2), behavior: SnackBarBehavior.floating);
+    showCustomSnackBar(context,
+        message: message,
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating);
   }
 }

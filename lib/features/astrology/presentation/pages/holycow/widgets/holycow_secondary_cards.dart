@@ -33,12 +33,8 @@ class HolyCowSecondaryCards extends StatelessWidget {
   final AstroCalendarService? calendarService;
   final ValueNotifier<double> sliderValueNotifier;
   final ValueNotifier<DateTime> sliderDateNotifier;
-  final bool showTransitOverlay;
-  final double chartBlendValue;
   final ValueChanged<double> onSliderChanged;
   final VoidCallback onResetToToday;
-  final VoidCallback onToggleTransitOverlay;
-  final ValueChanged<double> onBlendValueChanged;
   final Future<void> Function({bool isRetry}) onLoadSkyPositions;
   final Future<void> Function() onTriggerCachePopulation;
   final NakshatraWheelController? nakshatraController;
@@ -58,12 +54,8 @@ class HolyCowSecondaryCards extends StatelessWidget {
     required this.calendarService,
     required this.sliderValueNotifier,
     required this.sliderDateNotifier,
-    required this.showTransitOverlay,
-    required this.chartBlendValue,
     required this.onSliderChanged,
     required this.onResetToToday,
-    required this.onToggleTransitOverlay,
-    required this.onBlendValueChanged,
     required this.onLoadSkyPositions,
     required this.onTriggerCachePopulation,
     required this.nakshatraController,
@@ -82,7 +74,7 @@ class HolyCowSecondaryCards extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-                // Wheel + text-insight combo — injected directly ABOVE the Current Sky card on mobile.
+        // Wheel + text-insight combo — injected directly ABOVE the Current Sky card on mobile.
         if (insertBeforeSkyCard != null) ...[
           insertBeforeSkyCard!,
           SizedBox(height: spacing),
@@ -144,12 +136,8 @@ class HolyCowSecondaryCards extends StatelessWidget {
                     sliderDate: sliderDate,
                     skyDataLoaded: loadingState.isSkyLoaded,
                     skyDataLoading: loadingState.isSkyLoading,
-                    showTransitOverlay: showTransitOverlay,
-                    chartBlendValue: chartBlendValue,
                     onSliderChanged: onSliderChanged,
                     onResetToToday: onResetToToday,
-                    onToggleTransitOverlay: onToggleTransitOverlay,
-                    onBlendValueChanged: onBlendValueChanged,
                     onLoadSkyPositions: onLoadSkyPositions,
                     onTriggerCachePopulation: onTriggerCachePopulation,
                     getPositionsForDate: (date) {
@@ -159,8 +147,7 @@ class HolyCowSecondaryCards extends StatelessWidget {
                     },
                     getInterpolatedPositions: (date) {
                       // Try interpolated sky positions first, then calendar.
-                      final interp =
-                          skyService.getInterpolatedPositions(date);
+                      final interp = skyService.getInterpolatedPositions(date);
                       if (interp != null && interp.isNotEmpty) return interp;
                       return calendarService?.getPositionsForDate(date);
                     },
@@ -168,8 +155,7 @@ class HolyCowSecondaryCards extends StatelessWidget {
                         ? () {
                             final uid =
                                 FirebaseAuth.instance.currentUser?.uid ?? '';
-                            context.push(
-                                '${RouteNames.astrologyDetails}/$uid');
+                            context.push('${RouteNames.astrologyDetails}/$uid');
                           }
                         : null,
                     onHouseTap: (houseNumber, currentPositions) {
@@ -190,15 +176,18 @@ class HolyCowSecondaryCards extends StatelessWidget {
           SizedBox(height: spacing),
         ],
 
-
-
         // Upcoming Planetary Events. The card internally filters to major
         // planets and may return SizedBox.shrink() — only add spacing when
         // the card will actually render content.
         if (loadingState.isEventsLoaded &&
             skyService.hasUpcomingEvents &&
             skyService.allUpcomingEvents.any((e) => const [
-                  'Sun', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn',
+                  'Sun',
+                  'Mars',
+                  'Mercury',
+                  'Jupiter',
+                  'Venus',
+                  'Saturn',
                 ].contains(e.planet))) ...[
           UpcomingEventsCard(
             brown: brown,

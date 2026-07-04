@@ -5,10 +5,8 @@ import 'package:aurogram/features/astrology/data/utils/chart_utils.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/chic_kundali_chart.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/shared/presentation/widgets/universal/transparent_toolbox.dart';
-import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/widgets/chart_blend_slider.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/widgets/timeline_slider.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/kundali_house_hit_test.dart';
-import 'package:aurogram/core/theme/app_dimensions.dart';
 
 /// Card widget displaying the current sky chart with optional birth chart overlay
 class CosmicSkyChartCard extends StatelessWidget {
@@ -23,12 +21,8 @@ class CosmicSkyChartCard extends StatelessWidget {
   final DateTime sliderDate;
   final bool skyDataLoaded;
   final bool skyDataLoading;
-  final bool showTransitOverlay;
-  final double chartBlendValue;
   final ValueChanged<double> onSliderChanged;
   final VoidCallback onResetToToday;
-  final VoidCallback onToggleTransitOverlay;
-  final ValueChanged<double> onBlendValueChanged;
   final VoidCallback? onLoadSkyPositions;
   final VoidCallback? onTriggerCachePopulation;
   final Map<String, dynamic>? Function(DateTime) getPositionsForDate;
@@ -56,12 +50,8 @@ class CosmicSkyChartCard extends StatelessWidget {
     required this.sliderDate,
     required this.skyDataLoaded,
     required this.skyDataLoading,
-    required this.showTransitOverlay,
-    required this.chartBlendValue,
     required this.onSliderChanged,
     required this.onResetToToday,
-    required this.onToggleTransitOverlay,
-    required this.onBlendValueChanged,
     this.onLoadSkyPositions,
     this.onTriggerCachePopulation,
     required this.getPositionsForDate,
@@ -271,90 +261,6 @@ class CosmicSkyChartCard extends StatelessWidget {
     return currentPositions;
   }
 
-  Widget _buildHeader(
-    Color c,
-    String dateStr,
-    bool isSliderOnToday,
-    bool hasBirthChart,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // Date/Title
-          Expanded(
-            child: Text(
-              isSliderOnToday ? 'Current Sky' : dateStr,
-              style: TextStyle(
-                fontSize: AppTheme.holyCowTextSize,
-                fontWeight: FontWeight.w700,
-                color: c,
-              ),
-            ),
-          ),
-          // Action buttons
-          Row(
-            children: [
-              // Birth chart overlay toggle
-              if (hasBirthChart)
-                GestureDetector(
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    onToggleTransitOverlay();
-                  },
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: showTransitOverlay
-                          ? c.withValues(alpha: 0.15)
-                          : c.withValues(alpha: 0.08),
-                      borderRadius:
-                          BorderRadius.circular(AppDimensions.radiusMd),
-                    ),
-                    child: Text(
-                      showTransitOverlay ? 'Sky Only' : 'Show Birth',
-                      style: TextStyle(
-                        fontSize: AppTheme.holyCowTextSize,
-                        fontWeight: FontWeight.w600,
-                        color:
-                            c.withValues(alpha: showTransitOverlay ? 0.8 : 0.6),
-                      ),
-                    ),
-                  ),
-                ),
-              // Reset to today button
-              if (!isSliderOnToday) ...[
-                const SizedBox(width: AppDimensions.spacingSm),
-                GestureDetector(
-                  onTap: onResetToToday,
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: c.withValues(alpha: 0.15),
-                      borderRadius:
-                          BorderRadius.circular(AppDimensions.radiusMd),
-                    ),
-                    child: Text(
-                      'Today',
-                      style: TextStyle(
-                        fontSize: AppTheme.holyCowTextSize,
-                        fontWeight: FontWeight.w600,
-                        color: c.withValues(alpha: 0.7),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildChart(
     BuildContext context,
     Map<String, dynamic> positions,
@@ -419,9 +325,6 @@ class CosmicSkyChartCard extends StatelessWidget {
                         final lineColor = isDarkTheme
                             ? Colors.white.withValues(alpha: 0.5)
                             : Colors.black.withValues(alpha: 0.4);
-                        final labelColor = isDarkTheme
-                            ? Colors.white.withValues(alpha: 0.5)
-                            : Colors.black.withValues(alpha: 0.5);
                         final planetColor = isDarkTheme
                             ? Colors.white.withValues(alpha: 1.0)
                             : Colors.black.withValues(alpha: 1.0);
@@ -471,14 +374,6 @@ class CosmicSkyChartCard extends StatelessWidget {
                           // Ultra-thin, chic geometry
                           strokeColor: strokeColor,
                           lineWidth: chartLineWidth,
-                          houseLabelStyle: TextStyle(
-                            fontFamily: 'Georgia',
-                            fontSize: 9.0, // Subdued but legible
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.5,
-                            color: labelColor,
-                            height: 1.1,
-                          ),
                           planetStyle: pStyle,
                           transitPlanetStyle: TextStyle(
                             fontSize: 11.0, // Extremely Prominent
