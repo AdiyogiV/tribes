@@ -280,89 +280,93 @@ class _KundaliPainter extends CustomPainter {
     }
   }
 
-  /// Draws subtle curved drishti lines between houses that contain planets.
-  /// Uses the transit (live sky) planets when available so the connections
-  /// actually move with time; otherwise falls back to the natal chart.
+  /// Draws simple, directional drishti lines from each aspecting planet to the
+  /// houses it aspects. Uses transit planets when available (so it moves with
+  /// time), else the natal chart. The mutual 7th is drawn once with an
+  /// arrowhead on both ends.
   void _drawAspects(Canvas canvas, double w, double h) {
     final bool useTransit = transitHouses != null && transitPlanetStyle != null;
     final source = useTransit ? transitHouses! : houses;
     final dist = useTransit ? 72.0 : 42.0;
 
+    // Collect every directed aspect (from house -> aspected house).
+    final aspects = <int>{}; // key = from*12 + to
+    for (int from = 0; from < 12 && from < source.length; from++) {
+      final planets = _clean(source[from]);
+      if (planets.isEmpty) continue;
+      for (final p in planets) {
+        for (final off in _aspectOffsets(p)) {
+          final to = (from + off) % 12;
+          if (to != from) aspects.add(from * 12 + to);
+        }
+      }
+    }
+
     final center = Offset(w / 2, h / 2);
-    final aspectPaint = Paint()
+    final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = lineWidth * 0.6
       ..isAntiAlias = true
       ..strokeCap = StrokeCap.round
       ..color = strokeColor.withValues(alpha: 0.22);
 
-    // Directed dedupe (from*12 + to). Drishti is one-way: a planet's gaze on
-    // a house does not imply the reverse (only the mutual 7th coincides).
     final drawn = <int>{};
+    for (final key in aspects) {
+      if (!drawn.add(key)) continue;
+      final from = key ~/ 12;
+      final to = key % 12;
+      final mutual = aspects.contains(to * 12 + from);
+      if (mutual) drawn.add(to * 12 + from); // collapse the mutual 7th
 
-    for (int from = 0; from < 12 && from < source.length; from++) {
-      final planets = _clean(source[from]);
-      if (planets.isEmpty) continue;
+      final a = _planetCenter(from, w, h, dist);
+      final b = _planetCenter(to, w, h, 42.0);
 
-      // Union of all houses these planets aspect. Vedic drishti is cast on the
-      // whole HOUSE regardless of whether a planet occupies it.
-      final targets = <int>{};
-      for (final p in planets) {
-        for (final off in _aspectOffsets(p)) {
-          targets.add((from + off) % 12);
-        }
+      // Angular routing around the busy centre.
+      final mid = Offset((a.dx + b.dx) / 2, (a.dy + b.dy) / 2);
+      var dir = b - a;
+      final len = dir.distance;
+      if (len == 0) continue;
+      dir = dir / len;
+      var perp = Offset(-dir.dy, dir.dx);
+      final fromCenter = mid - center;
+      if (perp.dx * fromCenter.dx + perp.dy * fromCenter.dy < 0) {
+        perp = Offset(-perp.dx, -perp.dy);
       }
+      final ctrl =
+          Offset(mid.dx + perp.dx * len * 0.25, mid.dy + perp.dy * len * 0.25);
 
-      for (final to in targets) {
-        if (to == from) continue;
-        if (!drawn.add(from * 12 + to)) continue;
-
-        // Source = the aspecting planet's position; target = the centre of the
-        // aspected house (occupancy independent).
-        final a = _planetCenter(from, w, h, dist);
-        final b = _planetCenter(to, w, h, 42.0);
-
-        // Route AROUND the busy centre with an angular outward waypoint.
-        final mid = Offset((a.dx + b.dx) / 2, (a.dy + b.dy) / 2);
-        var dir = b - a;
-        final len = dir.distance;
-        if (len == 0) continue;
-        dir = dir / len;
-        var perp = Offset(-dir.dy, dir.dx);
-        final fromCenter = mid - center;
-        if (perp.dx * fromCenter.dx + perp.dy * fromCenter.dy < 0) {
-          perp = Offset(-perp.dx, -perp.dy);
-        }
-        final bulge = len * 0.25;
-        final ctrl = Offset(mid.dx + perp.dx * bulge, mid.dy + perp.dy * bulge);
-
-        final path = Path()
+      canvas.drawPath(
+        Path()
           ..moveTo(a.dx, a.dy)
           ..lineTo(ctrl.dx, ctrl.dy)
-          ..lineTo(b.dx, b.dy);
-        canvas.drawPath(path, aspectPaint);
+          ..lineTo(b.dx, b.dy),
+        paint,
+      );
 
-        // Arrowhead at the target end, showing the direction of the gaze.
-        var arrive = b - ctrl;
-        final al = arrive.distance;
-        if (al == 0) continue;
-        arrive = arrive / al;
-        final aPerp = Offset(-arrive.dy, arrive.dx);
-        const headLen = 7.0;
-        const headW = 4.0;
-        final base =
-            Offset(b.dx - arrive.dx * headLen, b.dy - arrive.dy * headLen);
-        final left =
-            Offset(base.dx + aPerp.dx * headW, base.dy + aPerp.dy * headW);
-        final right =
-            Offset(base.dx - aPerp.dx * headW, base.dy - aPerp.dy * headW);
-        final head = Path()
-          ..moveTo(left.dx, left.dy)
-          ..lineTo(b.dx, b.dy)
-          ..lineTo(right.dx, right.dy);
-        canvas.drawPath(head, aspectPaint);
-      }
+      _arrowHead(canvas, b, ctrl, paint); // gaze lands on the target house
+      if (mutual) _arrowHead(canvas, a, ctrl, paint); // both ways for the 7th
     }
+  }
+
+  /// Draws a small V arrowhead at [tip], pointing away from [from].
+  void _arrowHead(Canvas canvas, Offset tip, Offset from, Paint paint) {
+    var d = tip - from;
+    final l = d.distance;
+    if (l == 0) return;
+    d = d / l;
+    final perp = Offset(-d.dy, d.dx);
+    const headLen = 7.0;
+    const headW = 4.0;
+    final base = Offset(tip.dx - d.dx * headLen, tip.dy - d.dy * headLen);
+    final left = Offset(base.dx + perp.dx * headW, base.dy + perp.dy * headW);
+    final right = Offset(base.dx - perp.dx * headW, base.dy - perp.dy * headW);
+    canvas.drawPath(
+      Path()
+        ..moveTo(left.dx, left.dy)
+        ..lineTo(tip.dx, tip.dy)
+        ..lineTo(right.dx, right.dy),
+      paint,
+    );
   }
 
   void _drawText({
