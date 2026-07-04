@@ -7,7 +7,8 @@ import { DateTime } from "luxon";
 
 import { db, FieldValue } from "../lib/firebase.js";
 import { requireAuth } from "../lib/auth_utils.js";
-import { runAstroFlow, invalidateCompatibilityCache } from "./astro_api.js";
+import { runAstroFlow } from "./astro_api.js";
+import { invalidateCompatibilityCache } from "./compatibility.js";
 import { generateHouseInterpretations } from "../lib/house_interpretations.js";
 import { resetAndRecalculateAyurveda } from "../lib/ayurveda_service.js";
 

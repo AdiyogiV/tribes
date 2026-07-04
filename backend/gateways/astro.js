@@ -32,10 +32,12 @@ import {
 
 import {
     handleFreeAstroCalculate,
-    handleCalculateCompatibility,
-    handleSearchGeoLocation,
-    invalidateCompatibilityCache,
 } from "../functions/astro_api.js";
+import {
+    handleCalculateCompatibility,
+    invalidateCompatibilityCache,
+} from "../functions/compatibility.js";
+import { handleSearchGeoLocation } from "../functions/geo_search.js";
 
 import {
     handleSyncAstroProfile,
