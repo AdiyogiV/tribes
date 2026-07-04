@@ -310,7 +310,7 @@ class _KundaliPainter extends CustomPainter {
     final center = Offset(w / 2, h / 2);
     final paint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = lineWidth * 1.3
+      ..strokeWidth = lineWidth * 3.5
       ..isAntiAlias = true
       ..strokeCap = StrokeCap.round;
 
@@ -320,7 +320,7 @@ class _KundaliPainter extends CustomPainter {
 
       for (int pi = 0; pi < planets.length; pi++) {
         final planet = planets[pi];
-        paint.color = _planetColor(planet).withValues(alpha: 0.7);
+        paint.color = _planetColor(planet).withValues(alpha: 0.35);
         // Fan multiple planets sharing a house into separate lanes so their
         // (otherwise overlapping) lines stay distinguishable.
         final lane = pi * 7.0;
