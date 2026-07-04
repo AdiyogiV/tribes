@@ -39,8 +39,7 @@ class OjasResult {
   });
 
   /// Sum of modifier deltas applied to base.
-  int get modifierDelta =>
-      modifiers.fold(0, (sum, m) => sum + m.delta.round());
+  int get modifierDelta => modifiers.fold(0, (sum, m) => sum + m.delta.round());
 }
 
 /// One primary contributor to the Ojas score.
@@ -182,7 +181,8 @@ class OjasEngine {
         weight: w,
         rawDisplay: '${hrv.round()} ms',
         baselineDisplay: 'base ${base.avgHRV.round()} ± ${base.stdHRV.round()}',
-        explanation: 'Z-score from personal baseline. Closer to your norm = better recovery.',
+        explanation:
+            'Z-score from personal baseline. Closer to your norm = better recovery.',
       ));
       weightedSum += s * w;
       totalWeight += w;
@@ -190,7 +190,8 @@ class OjasEngine {
 
     // 2. Sleep — 22%
     if (sleepHours != null) {
-      final s = _sleepScore(sleepHours, deepSleepMins, remSleepMins, coreSleepMins);
+      final s =
+          _sleepScore(sleepHours, deepSleepMins, remSleepMins, coreSleepMins);
       const w = 0.22;
       final archParts = <String>[
         if (deepSleepMins != null) 'deep ${deepSleepMins.round()}m',
@@ -204,8 +205,10 @@ class OjasEngine {
         status: _signalStatus(s),
         weight: w,
         rawDisplay: '${sleepHours.toStringAsFixed(1)} h',
-        baselineDisplay: archParts.isEmpty ? 'ideal 7–8.5 h' : archParts.join(' · '),
-        explanation: 'Duration peaks at 7.5 h. Deep + REM + core architecture adds bonus.',
+        baselineDisplay:
+            archParts.isEmpty ? 'ideal 7–8.5 h' : archParts.join(' · '),
+        explanation:
+            'Duration peaks at 7.5 h. Deep + REM + core architecture adds bonus.',
       ));
       weightedSum += s * w;
       totalWeight += w;
@@ -239,7 +242,8 @@ class OjasEngine {
         score: s,
         status: _signalStatus(s),
         weight: w,
-        rawDisplay: '${wristTemp >= 0 ? "+" : ""}${wristTemp.toStringAsFixed(2)}°C',
+        rawDisplay:
+            '${wristTemp >= 0 ? "+" : ""}${wristTemp.toStringAsFixed(2)}°C',
         baselineDisplay: 'vs your norm',
         explanation: 'Stable wrist temp = no illness/stress signal.',
       ));
@@ -267,7 +271,8 @@ class OjasEngine {
 
     // 6. Activity blend — 7%
     final stepsS = steps != null ? _movementScore(steps) : null;
-    final energyS = activeEnergy != null ? _activeEnergyScore(activeEnergy) : null;
+    final energyS =
+        activeEnergy != null ? _activeEnergyScore(activeEnergy) : null;
     if (stepsS != null || energyS != null) {
       final blended = [stepsS, energyS].whereType<double>().toList();
       final s = blended.reduce((a, b) => a + b) / blended.length;
@@ -303,12 +308,19 @@ class OjasEngine {
     // HR Recovery (±5)
     if (hrRecovery != null) {
       final double delta;
-      if (hrRecovery >= 25) { delta = 5; }
-      else if (hrRecovery >= 15) { delta = 2; }
-      else if (hrRecovery >= 8) { delta = -1; }
-      else { delta = -5; }
+      if (hrRecovery >= 25) {
+        delta = 5;
+      } else if (hrRecovery >= 15) {
+        delta = 2;
+      } else if (hrRecovery >= 8) {
+        delta = -1;
+      } else {
+        delta = -5;
+      }
       modifiers.add(OjasModifier(
-        name: 'HR Recovery', detail: '${hrRecovery.round()} bpm drop', delta: delta,
+        name: 'HR Recovery',
+        detail: '${hrRecovery.round()} bpm drop',
+        delta: delta,
       ));
       modSum += delta;
     }
@@ -316,12 +328,19 @@ class OjasEngine {
     // Stand hours (±4)
     if (standHours != null) {
       final double delta;
-      if (standHours >= 12) { delta = 2; }
-      else if (standHours >= 8) { delta = 0; }
-      else if (standHours >= 5) { delta = -2; }
-      else { delta = -4; }
+      if (standHours >= 12) {
+        delta = 2;
+      } else if (standHours >= 8) {
+        delta = 0;
+      } else if (standHours >= 5) {
+        delta = -2;
+      } else {
+        delta = -4;
+      }
       modifiers.add(OjasModifier(
-        name: 'Stand Hours', detail: '$standHours h', delta: delta,
+        name: 'Stand Hours',
+        detail: '$standHours h',
+        delta: delta,
       ));
       modSum += delta;
     }
@@ -332,10 +351,14 @@ class OjasEngine {
       if (pct < 92) {
         ceilingVal = min(ceilingVal, 60);
         modifiers.add(OjasModifier(
-          name: 'SpO₂ Cap', detail: '${pct.round()}%', delta: 0, note: 'caps total at 60',
+          name: 'SpO₂ Cap',
+          detail: '${pct.round()}%',
+          delta: 0,
+          note: 'caps total at 60',
         ));
       } else if (pct < 95) {
-        modifiers.add(OjasModifier(name: 'SpO₂', detail: '${pct.round()}%', delta: -2));
+        modifiers.add(
+            OjasModifier(name: 'SpO₂', detail: '${pct.round()}%', delta: -2));
         modSum += -2;
       }
     }
@@ -343,12 +366,19 @@ class OjasEngine {
     // Daylight (±5)
     if (daylightMins != null) {
       final double delta;
-      if (daylightMins >= 120) { delta = 3; }
-      else if (daylightMins >= 60) { delta = 1; }
-      else if (daylightMins >= 30) { delta = 0; }
-      else { delta = -5; }
+      if (daylightMins >= 120) {
+        delta = 3;
+      } else if (daylightMins >= 60) {
+        delta = 1;
+      } else if (daylightMins >= 30) {
+        delta = 0;
+      } else {
+        delta = -5;
+      }
       modifiers.add(OjasModifier(
-        name: 'Daylight', detail: '${daylightMins.round()} min', delta: delta,
+        name: 'Daylight',
+        detail: '${daylightMins.round()} min',
+        delta: delta,
       ));
       modSum += delta;
     }
@@ -357,7 +387,9 @@ class OjasEngine {
     if (envAudioExposure != null && envAudioExposure > 85) {
       final delta = envAudioExposure > 90 ? -5.0 : -2.0;
       modifiers.add(OjasModifier(
-        name: 'Audio Load', detail: '${envAudioExposure.round()} dB', delta: delta,
+        name: 'Audio Load',
+        detail: '${envAudioExposure.round()} dB',
+        delta: delta,
       ));
       modSum += delta;
     }
@@ -365,11 +397,17 @@ class OjasEngine {
     // Mindfulness (+5)
     if (mindfulMins != null && mindfulMins > 0) {
       final double delta;
-      if (mindfulMins >= 20) { delta = 5; }
-      else if (mindfulMins >= 10) { delta = 3; }
-      else { delta = 1; }
+      if (mindfulMins >= 20) {
+        delta = 5;
+      } else if (mindfulMins >= 10) {
+        delta = 3;
+      } else {
+        delta = 1;
+      }
       modifiers.add(OjasModifier(
-        name: 'Mindful', detail: '${mindfulMins.round()} min', delta: delta,
+        name: 'Mindful',
+        detail: '${mindfulMins.round()} min',
+        delta: delta,
       ));
       modSum += delta;
     }
@@ -383,14 +421,17 @@ class OjasEngine {
       final detail = afib > 0
           ? 'afib ${(afib * 100).toStringAsFixed(1)}%'
           : '$irregCount irreg · $highHR high';
-      modifiers.add(OjasModifier(name: 'Cardiac Alerts', detail: detail, delta: delta));
+      modifiers.add(
+          OjasModifier(name: 'Cardiac Alerts', detail: detail, delta: delta));
       modSum += delta;
     }
 
     // Walking steadiness
     if (walkingSteadiness != null && walkingSteadiness < 0.4) {
       modifiers.add(OjasModifier(
-        name: 'Gait Steadiness', detail: '${(walkingSteadiness * 100).round()}%', delta: -5,
+        name: 'Gait Steadiness',
+        detail: '${(walkingSteadiness * 100).round()}%',
+        delta: -5,
       ));
       modSum += -5;
     }
@@ -408,7 +449,8 @@ class OjasEngine {
 
     // Falls
     if (fallCount != null && fallCount > 0) {
-      modifiers.add(OjasModifier(name: 'Falls', detail: '$fallCount today', delta: -10));
+      modifiers.add(
+          OjasModifier(name: 'Falls', detail: '$fallCount today', delta: -10));
       modSum += -10;
     }
 
@@ -416,7 +458,8 @@ class OjasEngine {
     if (lowCardioFitnessCount != null && lowCardioFitnessCount > 0) {
       modifiers.add(OjasModifier(
         name: 'Low Cardio Fit',
-        detail: '$lowCardioFitnessCount alert${lowCardioFitnessCount == 1 ? "" : "s"}',
+        detail:
+            '$lowCardioFitnessCount alert${lowCardioFitnessCount == 1 ? "" : "s"}',
         delta: -3,
       ));
       modSum += -3;
@@ -427,12 +470,16 @@ class OjasEngine {
       if (rmssd >= 50) {
         final delta = rmssd >= 80 ? 5.0 : 3.0;
         modifiers.add(OjasModifier(
-          name: 'Vagal Tone', detail: 'RMSSD ${rmssd.round()} ms', delta: delta,
+          name: 'Vagal Tone',
+          detail: 'RMSSD ${rmssd.round()} ms',
+          delta: delta,
         ));
         modSum += delta;
       } else if (rmssd < 15) {
         modifiers.add(OjasModifier(
-          name: 'Vagal Tone', detail: 'RMSSD ${rmssd.round()} ms', delta: -3,
+          name: 'Vagal Tone',
+          detail: 'RMSSD ${rmssd.round()} ms',
+          delta: -3,
         ));
         modSum += -3;
       }
@@ -441,14 +488,16 @@ class OjasEngine {
     // UV
     if (uvExposure != null && uvExposure > 6) {
       modifiers.add(OjasModifier(
-        name: 'UV Load', detail: '${uvExposure.toStringAsFixed(1)} MED', delta: -2,
+        name: 'UV Load',
+        detail: '${uvExposure.toStringAsFixed(1)} MED',
+        delta: -2,
       ));
       modSum += -2;
     }
 
     // Heart Rate Stress — current HR / resting HR ratio (Nadi Pariksha proxy)
-    if (heartRate != null && restingHR != null && restingHR! > 0) {
-      final ratio = heartRate / restingHR!;
+    if (heartRate != null && restingHR != null && restingHR > 0) {
+      final ratio = heartRate / restingHR;
       if (ratio <= 1.10) {
         modifiers.add(OjasModifier(
           name: 'Pulse Calm',
@@ -476,11 +525,17 @@ class OjasEngine {
     // VO₂ Max — aerobic capacity / Prana reservoir
     if (vo2Max != null) {
       final double delta;
-      if (vo2Max >= 50) { delta = 5; }
-      else if (vo2Max >= 42) { delta = 3; }
-      else if (vo2Max >= 35) { delta = 0; }
-      else if (vo2Max >= 25) { delta = -2; }
-      else { delta = -5; }
+      if (vo2Max >= 50) {
+        delta = 5;
+      } else if (vo2Max >= 42) {
+        delta = 3;
+      } else if (vo2Max >= 35) {
+        delta = 0;
+      } else if (vo2Max >= 25) {
+        delta = -2;
+      } else {
+        delta = -5;
+      }
       if (delta != 0) {
         modifiers.add(OjasModifier(
           name: 'Cardio Fitness',
@@ -494,13 +549,20 @@ class OjasEngine {
     // Exercise minutes — Vyayama (half-capacity effort is ideal in Ayurveda)
     if (exerciseMins != null && exerciseMins > 0) {
       final double delta;
-      if (exerciseMins > 150) { delta = -2; }
-      else if (exerciseMins >= 20) { delta = 3; }
-      else if (exerciseMins >= 10) { delta = 1; }
-      else { delta = 0; }
+      if (exerciseMins > 150) {
+        delta = -2;
+      } else if (exerciseMins >= 20) {
+        delta = 3;
+      } else if (exerciseMins >= 10) {
+        delta = 1;
+      } else {
+        delta = 0;
+      }
       if (delta != 0) {
         modifiers.add(OjasModifier(
-          name: 'Exercise', detail: '${exerciseMins.round()} min', delta: delta,
+          name: 'Exercise',
+          detail: '${exerciseMins.round()} min',
+          delta: delta,
         ));
         modSum += delta;
       }
@@ -510,31 +572,35 @@ class OjasEngine {
     if (pnn50 != null) {
       if (pnn50 >= 0.25) {
         modifiers.add(OjasModifier(
-          name: 'Vagal PNN50', detail: '${(pnn50 * 100).toStringAsFixed(1)}%', delta: 2,
+          name: 'Vagal PNN50',
+          detail: '${(pnn50 * 100).toStringAsFixed(1)}%',
+          delta: 2,
         ));
         modSum += 2;
       } else if (pnn50 < 0.03) {
         modifiers.add(OjasModifier(
-          name: 'Vagal PNN50', detail: '${(pnn50 * 100).toStringAsFixed(1)}%', delta: -2,
+          name: 'Vagal PNN50',
+          detail: '${(pnn50 * 100).toStringAsFixed(1)}%',
+          delta: -2,
         ));
         modSum += -2;
       }
     }
 
     // Walking HR efficiency — cardiac recovery during movement
-    if (walkingHR != null && restingHR != null && restingHR! > 0) {
-      final ratio = walkingHR / restingHR!;
+    if (walkingHR != null && restingHR != null && restingHR > 0) {
+      final ratio = walkingHR / restingHR;
       if (ratio < 1.3) {
         modifiers.add(OjasModifier(
           name: 'Walk Efficiency',
-          detail: '${walkingHR.round()} / ${restingHR!.round()} bpm',
+          detail: '${walkingHR.round()} / ${restingHR.round()} bpm',
           delta: 3,
         ));
         modSum += 3;
       } else if (ratio > 1.8) {
         modifiers.add(OjasModifier(
           name: 'Walk Efficiency',
-          detail: '${walkingHR.round()} / ${restingHR!.round()} bpm',
+          detail: '${walkingHR.round()} / ${restingHR.round()} bpm',
           delta: -3,
         ));
         modSum += -3;
@@ -587,12 +653,16 @@ class OjasEngine {
       if (bodyTemp > 38.0) {
         ceilingVal = min(ceilingVal, 55);
         modifiers.add(OjasModifier(
-          name: 'Fever Cap', detail: '${bodyTemp.toStringAsFixed(1)}°C', delta: 0,
+          name: 'Fever Cap',
+          detail: '${bodyTemp.toStringAsFixed(1)}°C',
+          delta: 0,
           note: 'caps total at 55',
         ));
       } else if (bodyTemp > 37.5) {
         modifiers.add(OjasModifier(
-          name: 'Warm Temp', detail: '${bodyTemp.toStringAsFixed(1)}°C', delta: -3,
+          name: 'Warm Temp',
+          detail: '${bodyTemp.toStringAsFixed(1)}°C',
+          delta: -3,
         ));
         modSum += -3;
       }
@@ -630,7 +700,8 @@ class OjasEngine {
 
   // ─── Individual Signal Scoring (0.0–1.0) ──────────────────────────────
 
-  static double _sleepScore(double hours, double? deepMins, double? remMins, double? coreMins) {
+  static double _sleepScore(
+      double hours, double? deepMins, double? remMins, double? coreMins) {
     double dur;
     if (hours < 4.0) {
       dur = 0.15;

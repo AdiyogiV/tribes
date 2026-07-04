@@ -75,8 +75,7 @@ class _CosmicDateTimeCardState extends State<CosmicDateTimeCard> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final Color cardColor =
-        isDark ? const Color(0xFF000000) : Colors.white;
+    final Color cardColor = isDark ? const Color(0xFF000000) : Colors.white;
     final fgMain = isDark ? Colors.white : Colors.black87;
     final fgMuted = isDark ? Colors.white54 : Colors.black54;
     final c = AppTheme.primaryColor;
@@ -84,7 +83,8 @@ class _CosmicDateTimeCardState extends State<CosmicDateTimeCard> {
 
     final showingToday = _isShowingToday;
     final displayDate = _displayDate;
-    final vedicTimeShort = showingToday ? VedicTimeUtils.getVedicTimeShort(_now) : null;
+    final vedicTimeShort =
+        showingToday ? VedicTimeUtils.getVedicTimeShort(_now) : null;
     final samvatYear = VedicTimeUtils.buildSamvatYearNameOnly(samvat);
     final vedicNumericDate = VedicTimeUtils.buildVedicNumericDate(samvat);
 
@@ -143,12 +143,16 @@ class _CosmicDateTimeCardState extends State<CosmicDateTimeCard> {
     // Warn if stale data somehow leaks through (birth date in today's card)
     final vikramNumber = samvat?['vikram_chaitradi_number'];
     final isValidYear = VedicTimeUtils.isValidVikramYearForToday(vikramNumber);
-    if (samvat != null && !isValidYear && vikramNumber != null && showingToday) {
+    if (samvat != null &&
+        !isValidYear &&
+        vikramNumber != null &&
+        showingToday) {
       AppLogger.w('CosmicDateTimeCard: STALE birth data in today card!',
           category: LogCategory.ui,
           data: {
             'vikramYear': vikramNumber,
-            'expectedRange': '${displayDate.year + 55}-${displayDate.year + 59}',
+            'expectedRange':
+                '${displayDate.year + 55}-${displayDate.year + 59}',
             'timestamp': samvat['timestamp'],
           });
     }
@@ -190,7 +194,7 @@ class _CosmicDateTimeCardState extends State<CosmicDateTimeCard> {
                           ),
                           const SizedBox(height: 16),
                         ],
-                        
+
                         // Tithi name: Chaturdashi
                         if (tithiNameOnly != null)
                           Text(
@@ -204,7 +208,7 @@ class _CosmicDateTimeCardState extends State<CosmicDateTimeCard> {
                               height: 1.1,
                             ),
                           ),
-                          
+
                         // Paksha: Krishna
                         if (pakshaLine != null)
                           Text(
@@ -216,10 +220,10 @@ class _CosmicDateTimeCardState extends State<CosmicDateTimeCard> {
                               height: 1.2,
                             ),
                           ),
-                          
+
                         if (tithiNameOnly != null || pakshaLine != null)
                           const SizedBox(height: 12),
-                          
+
                         // Month: Vaishakha Masa
                         if (monthLine != null)
                           Text(
@@ -231,7 +235,7 @@ class _CosmicDateTimeCardState extends State<CosmicDateTimeCard> {
                               color: fgMuted.withValues(alpha: 0.8),
                             ),
                           ),
-                          
+
                         // Numeric date
                         if (vedicNumericDate != null) ...[
                           const SizedBox(height: 4),
@@ -363,15 +367,13 @@ class VedicTimeInfoSheet extends StatelessWidget {
                   ),
                   _buildInfoItem(
                     title: 'Ghati',
-                    description:
-                        'One day (sunrise to sunrise) = 60 Ghati. '
+                    description: 'One day (sunrise to sunrise) = 60 Ghati. '
                         'Each Ghati = 24 minutes. Think of it like the "hour" on a Vedic clock, '
                         'but with 60 divisions instead of 24.',
                   ),
                   _buildInfoItem(
                     title: 'Pala',
-                    description:
-                        'Each Ghati = 60 Pala. One Pala = 24 seconds. '
+                    description: 'Each Ghati = 60 Pala. One Pala = 24 seconds. '
                         'Like "minutes" on a Vedic clock. '
                         'So Ghati:Pala is like Hours:Minutes \u2014 a clean base-60 system.',
                   ),
@@ -387,8 +389,7 @@ class VedicTimeInfoSheet extends StatelessWidget {
                   ),
                   _buildInfoItem(
                     title: 'Paksha (Fortnight)',
-                    description:
-                        'Each month has two halves of 15 days. '
+                    description: 'Each month has two halves of 15 days. '
                         'Shukla Paksha (1) = bright/waxing half, new moon \u2192 full moon. '
                         'Krishna Paksha (2) = dark/waning half, full moon \u2192 new moon.',
                   ),
@@ -507,13 +508,12 @@ class VedicTimeInfoSheet extends StatelessWidget {
 /// Returns a value 1-15 (normalized for both pakshas)
 int? _extractTithiNumber(Map<String, dynamic>? samvat) {
   if (samvat == null) return null;
-  
+
   // Try direct number fields first (handles both global and insight panchang)
   // Global panchang: 'number', 'tithi_number'
   // Insight panchang: 'tithiNumber'
-  final directNumber = samvat['number'] ?? 
-                       samvat['tithi_number'] ?? 
-                       samvat['tithiNumber'];
+  final directNumber =
+      samvat['number'] ?? samvat['tithi_number'] ?? samvat['tithiNumber'];
   if (directNumber != null) {
     int? rawNumber;
     if (directNumber is int) {
@@ -521,7 +521,7 @@ int? _extractTithiNumber(Map<String, dynamic>? samvat) {
     } else {
       rawNumber = int.tryParse(directNumber.toString());
     }
-    
+
     if (rawNumber != null) {
       // Some APIs return continuous 1-30 numbering
       // Shukla: 1-15, Krishna: 16-30
@@ -532,13 +532,14 @@ int? _extractTithiNumber(Map<String, dynamic>? samvat) {
       return rawNumber;
     }
   }
-  
+
   // Try to extract from tithi name
   // Global panchang: 'name'
   // Insight panchang: 'tithi'
-  final tithiName = (samvat['name'] ?? samvat['tithi'] ?? '').toString().toLowerCase();
+  final tithiName =
+      (samvat['name'] ?? samvat['tithi'] ?? '').toString().toLowerCase();
   if (tithiName.isEmpty) return null;
-  
+
   // Map of tithi names to numbers
   const tithiNames = {
     'pratipada': 1, 'pratipat': 1, 'prathama': 1, 'padyami': 1, 'pratham': 1,
@@ -558,46 +559,55 @@ int? _extractTithiNumber(Map<String, dynamic>? samvat) {
     'purnima': 15, 'poornima': 15, 'pournami': 15,
     'amavasya': 15, 'amavas': 15, // New moon is also 15th tithi
   };
-  
+
   for (final entry in tithiNames.entries) {
     if (tithiName.contains(entry.key)) {
       return entry.value;
     }
   }
-  
+
   return null;
 }
 
 /// Extract paksha from panchang data
 String _extractPaksha(Map<String, dynamic>? samvat) {
   if (samvat == null) return '';
-  
+
   // Try direct paksha fields (handles both global and insight panchang)
   // Global panchang: 'paksha'
   // Insight panchang: 'tithiPaksha'
-  final paksha = (samvat['paksha'] ?? samvat['tithiPaksha'] ?? '').toString().toLowerCase();
-  
+  final paksha = (samvat['paksha'] ?? samvat['tithiPaksha'] ?? '')
+      .toString()
+      .toLowerCase();
+
   // Check if paksha contains 'shukla' or 'krishna' (handles "Shukla Paksha", "shukla", etc.)
   if (paksha.contains('shukla') || paksha.contains('sukla')) {
     return 'shukla';
   }
-  if (paksha.contains('krishna') || paksha.contains('krsna') || paksha.contains('krishan')) {
+  if (paksha.contains('krishna') ||
+      paksha.contains('krsna') ||
+      paksha.contains('krishan')) {
     return 'krishna';
   }
-  
+
   // Try to infer from tithi name
   // Global panchang: 'name'
   // Insight panchang: 'tithi'
-  final name = (samvat['name'] ?? samvat['tithi'] ?? '').toString().toLowerCase();
+  final name =
+      (samvat['name'] ?? samvat['tithi'] ?? '').toString().toLowerCase();
   final combined = '$paksha $name';
-  
-  if (combined.contains('shukla') || combined.contains('sukla') || combined.contains('waxing')) {
+
+  if (combined.contains('shukla') ||
+      combined.contains('sukla') ||
+      combined.contains('waxing')) {
     return 'shukla';
   }
-  if (combined.contains('krishna') || combined.contains('krsna') || combined.contains('waning')) {
+  if (combined.contains('krishna') ||
+      combined.contains('krsna') ||
+      combined.contains('waning')) {
     return 'krishna';
   }
-  
+
   // If name contains purnima, it's end of shukla paksha
   if (name.contains('purnima') || name.contains('poornima')) {
     return 'shukla';
@@ -606,11 +616,10 @@ String _extractPaksha(Map<String, dynamic>? samvat) {
   if (name.contains('amavasya') || name.contains('amavas')) {
     return 'krishna';
   }
-  
+
   // IMPORTANT: Check if tithi number is 16-30 (continuous numbering = Krishna paksha)
-  final rawNumber = samvat['number'] ?? 
-                    samvat['tithi_number'] ?? 
-                    samvat['tithiNumber'];
+  final rawNumber =
+      samvat['number'] ?? samvat['tithi_number'] ?? samvat['tithiNumber'];
   if (rawNumber != null) {
     int? num;
     if (rawNumber is int) {
@@ -626,7 +635,7 @@ String _extractPaksha(Map<String, dynamic>? samvat) {
       return 'shukla';
     }
   }
-  
+
   return '';
 }
 
@@ -722,9 +731,11 @@ class _VedicCombinedCardState extends State<VedicCombinedCard> {
     String? tithiNameOnly;
     if (tithiLine != null) {
       if (pakshaRaw.isNotEmpty) {
-        final pakshaCapitalized = '${pakshaRaw[0].toUpperCase()}${pakshaRaw.substring(1)}';
+        final pakshaCapitalized =
+            '${pakshaRaw[0].toUpperCase()}${pakshaRaw.substring(1)}';
         pakshaLine = pakshaCapitalized;
-        final withoutPaksha = tithiLine.replaceFirst(pakshaCapitalized, '').trim();
+        final withoutPaksha =
+            tithiLine.replaceFirst(pakshaCapitalized, '').trim();
         tithiNameOnly = withoutPaksha.isNotEmpty ? withoutPaksha : null;
       } else {
         tithiNameOnly = tithiLine;
@@ -734,16 +745,18 @@ class _VedicCombinedCardState extends State<VedicCombinedCard> {
     final today = DateTime.now();
     final todayDate = DateTime(today.year, today.month, today.day);
     final selectedDate = widget.selectedDate ?? todayDate;
-    final displayDate = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
+    final displayDate =
+        DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
 
     final praharName = VedicTimeUtils.getPraharName(_now);
     final ghati = VedicTimeUtils.getGhati(_now);
     final pala = VedicTimeUtils.getPala(_now);
     final daysDiff = displayDate.difference(todayDate).inDays;
-    final offsetStr = showingToday ? 'TODAY' : (daysDiff > 0 ? 'IN $daysDiff DAYS' : '${daysDiff.abs()} DAYS AGO');
+    final offsetStr = showingToday
+        ? 'TODAY'
+        : (daysDiff > 0 ? 'IN $daysDiff DAYS' : '${daysDiff.abs()} DAYS AGO');
 
     final primaryWhite = Colors.white.withValues(alpha: 0.95);
-    final secondaryWhite = Colors.white.withValues(alpha: 0.5);
 
     // Left Column: Classic, chic, editorial (Serif Italic)
     final leftStyle = TextStyle(
@@ -792,7 +805,8 @@ class _VedicCombinedCardState extends State<VedicCombinedCard> {
                   children: [
                     if (lunarMonth != null) Text(lunarMonth, style: leftStyle),
                     if (pakshaLine != null) Text(pakshaLine, style: leftStyle),
-                    if (tithiNameOnly != null) Text(tithiNameOnly, style: leftStyle),
+                    if (tithiNameOnly != null)
+                      Text(tithiNameOnly, style: leftStyle),
                     if (vedicNumericDate != null) ...[
                       const SizedBox(height: 6),
                       Text(vedicNumericDate.toUpperCase(), style: bottomStyle),
@@ -800,23 +814,25 @@ class _VedicCombinedCardState extends State<VedicCombinedCard> {
                   ],
                 ),
               ),
-              
+
               // RIGHT COLUMN (Time Stack)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (showingToday) ...[
-                    if (ghati != null) Text('${ghati} Ghati', style: rightStyle),
-                    if (pala != null) Text('${pala.toString().padLeft(2, '0')} Pala', style: rightStyle),
+                    Text('$ghati Ghati', style: rightStyle),
+                    Text('${pala.toString().padLeft(2, '0')} Pala',
+                        style: rightStyle),
                     if (praharName != '') Text(praharName, style: rightStyle),
                   ],
-                  
                   const SizedBox(height: 6),
                   if (showingToday)
-                    Text('LIVE', style: bottomStyle.copyWith(color: primaryWhite))
+                    Text('LIVE',
+                        style: bottomStyle.copyWith(color: primaryWhite))
                   else ...[
-                    Text(offsetStr, style: bottomStyle.copyWith(color: primaryWhite)),
+                    Text(offsetStr,
+                        style: bottomStyle.copyWith(color: primaryWhite)),
                     const SizedBox(height: 6),
                     GestureDetector(
                       onTap: () {
@@ -825,7 +841,8 @@ class _VedicCombinedCardState extends State<VedicCombinedCard> {
                       },
                       behavior: HitTestBehavior.opaque,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
                           color: primaryWhite.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(100),
@@ -833,17 +850,16 @@ class _VedicCombinedCardState extends State<VedicCombinedCard> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.replay_rounded, size: 10, color: primaryWhite),
+                            Icon(Icons.replay_rounded,
+                                size: 10, color: primaryWhite),
                             const SizedBox(width: 4),
-                            Text(
-                              'TODAY', 
-                              style: TextStyle(
-                                color: primaryWhite, 
-                                fontSize: 9, 
-                                fontWeight: FontWeight.w700, 
-                                letterSpacing: 1.5,
-                              )
-                            ),
+                            Text('TODAY',
+                                style: TextStyle(
+                                  color: primaryWhite,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 1.5,
+                                )),
                           ],
                         ),
                       ),
@@ -858,7 +874,6 @@ class _VedicCombinedCardState extends State<VedicCombinedCard> {
     );
   }
 }
-
 
 /// Time-only card: Vedic clock + Prahar · Ghati · Pala readout.
 class VedicTimeCard extends StatefulWidget {
@@ -891,12 +906,14 @@ class _VedicTimeCardState extends State<VedicTimeCard> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark ? Theme.of(context).colorScheme.surface : Colors.white;
+    final cardColor =
+        isDark ? Theme.of(context).colorScheme.surface : Colors.white;
     final c = AppTheme.primaryColor;
 
     // Compute Prahar, Ghati, Pala individually
     const sunriseHour = 6;
-    var secondsFromSunrise = (_now.hour - sunriseHour) * 3600 + _now.minute * 60 + _now.second;
+    var secondsFromSunrise =
+        (_now.hour - sunriseHour) * 3600 + _now.minute * 60 + _now.second;
     if (secondsFromSunrise < 0) secondsFromSunrise += 86400;
     final prahar = (secondsFromSunrise ~/ (180 * 60)) % 8 + 1;
     final ghati = secondsFromSunrise ~/ 1440;
@@ -1004,7 +1021,8 @@ class VedicDateCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark ? Theme.of(context).colorScheme.surface : Colors.white;
+    final cardColor =
+        isDark ? Theme.of(context).colorScheme.surface : Colors.white;
     final c = AppTheme.primaryColor;
 
     final vedicNumericDate = VedicTimeUtils.buildVedicNumericDate(samvat);
@@ -1040,7 +1058,10 @@ class VedicDateCard extends StatelessWidget {
     }
 
     // If there's nothing to show, collapse
-    if (monthLine == null && pakshaLine == null && tithiNameOnly == null && vedicNumericDate == null) {
+    if (monthLine == null &&
+        pakshaLine == null &&
+        tithiNameOnly == null &&
+        vedicNumericDate == null) {
       return const SizedBox.shrink();
     }
 

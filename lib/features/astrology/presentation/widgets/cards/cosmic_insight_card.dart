@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:aurogram/shared/models/daily_insight.dart';
-import 'package:aurogram/core/theme/app_theme.dart';
-import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/shared/presentation/widgets/universal/transparent_toolbox.dart';
 
 /// Card to display today's cosmic insight
@@ -10,6 +8,7 @@ import 'package:aurogram/shared/presentation/widgets/universal/transparent_toolb
 class CosmicInsightCard extends StatelessWidget {
   final DailyInsight insight;
   final Color brown;
+
   /// Optional tap handler — when set, card becomes tappable and shows
   /// a "See full reading" affordance at the bottom.
   final VoidCallback? onTap;
@@ -32,10 +31,12 @@ class CosmicInsightCard extends StatelessWidget {
     return TransparentToolbox.buildCard(
       context: context,
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
-      onTap: onTap != null ? () {
-        HapticFeedback.lightImpact();
-        onTap!();
-      } : null,
+      onTap: onTap != null
+          ? () {
+              HapticFeedback.lightImpact();
+              onTap!();
+            }
+          : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
@@ -98,4 +99,3 @@ class CosmicInsightCard extends StatelessWidget {
     );
   }
 }
-

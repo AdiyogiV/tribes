@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:aurogram/shared/models/daily_insight.dart';
 import 'package:aurogram/features/astrology/domain/astrology_service.dart';
-import 'package:aurogram/core/theme/app_theme.dart';
-import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/shared/presentation/widgets/universal/transparent_toolbox.dart';
 
 class DailyInsightCard extends StatefulWidget {
@@ -101,10 +99,12 @@ class _DailyInsightCardState extends State<DailyInsightCard> {
     return TransparentToolbox.buildCard(
       context: context,
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
-      onTap: widget.onTap != null ? () {
-        HapticFeedback.lightImpact();
-        widget.onTap!();
-      } : null,
+      onTap: widget.onTap != null
+          ? () {
+              HapticFeedback.lightImpact();
+              widget.onTap!();
+            }
+          : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
@@ -122,9 +122,9 @@ class _DailyInsightCardState extends State<DailyInsightCard> {
               height: 1.1,
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Insight text - airy, editorial style
           Text(
             widget.insight!.displayMessage,
@@ -137,7 +137,7 @@ class _DailyInsightCardState extends State<DailyInsightCard> {
               height: 1.5,
             ),
           ),
-          
+
           // Action buttons
           if (widget.showActions) ...[
             const SizedBox(height: 28),
@@ -149,7 +149,8 @@ class _DailyInsightCardState extends State<DailyInsightCard> {
                       ? Icons.thumb_up
                       : Icons.thumb_up_outlined,
                   isActive: _reaction == 'thumbs_up',
-                  onTap: _hasReacted ? null : () => _submitReaction('thumbs_up'),
+                  onTap:
+                      _hasReacted ? null : () => _submitReaction('thumbs_up'),
                   fgMuted: fgMuted,
                   isDark: isDark,
                 ),
@@ -161,7 +162,8 @@ class _DailyInsightCardState extends State<DailyInsightCard> {
                       ? Icons.thumb_down
                       : Icons.thumb_down_outlined,
                   isActive: _reaction == 'thumbs_down',
-                  onTap: _hasReacted ? null : () => _submitReaction('thumbs_down'),
+                  onTap:
+                      _hasReacted ? null : () => _submitReaction('thumbs_down'),
                   fgMuted: fgMuted,
                   isDark: isDark,
                   isNegative: true,
@@ -248,5 +250,4 @@ class _DailyInsightCardState extends State<DailyInsightCard> {
       ),
     );
   }
-}
 }

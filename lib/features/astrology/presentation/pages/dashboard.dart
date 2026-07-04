@@ -253,8 +253,9 @@ class DashboardPageState extends State<DashboardPage>
         setState(() => _loadingState =
             _loadingState.copyWith(skyRetryCount: newRetryCount));
         Future.delayed(_retryBaseDelay * newRetryCount, () {
-          if (mounted && !_loadingState.isSkyLoaded)
+          if (mounted && !_loadingState.isSkyLoaded) {
             _loadSkyPositions(isRetry: true);
+          }
         });
       }
     }

@@ -93,7 +93,9 @@ class NakshatraWheelController extends ChangeNotifier {
     if (_activeIndex == activeIndex &&
         _todayIndex == todayIndex &&
         _birthIndex == birthIndex &&
-        _cumulativeOffset == cumulativeOffset) return;
+        _cumulativeOffset == cumulativeOffset) {
+      return;
+    }
     _activeIndex = activeIndex;
     _todayIndex = todayIndex;
     _birthIndex = birthIndex;
@@ -202,7 +204,6 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
   // Unbounded controller — value = angle in radians (grows without limit).
   late AnimationController _controller;
   Timer? _resumeTimer;
-  bool _isDragging = false;
   double? _lastPanAngle;
   double _wheelDiameter = 0;
 
@@ -299,8 +300,6 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
   /// overwrite the reset.
   bool _isReturningToToday = false;
 
-  int get _dateOffsetFromToday => _cumulativeOffset;
-
   /// The date currently shown at the top of the wheel.
   DateTime get _displayedDate {
     final now = DateTime.now();
@@ -310,13 +309,6 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
 
   /// True when the wheel is at today's position (default state).
   bool get _isAtToday => _cumulativeOffset == 0;
-
-  /// Days until the user's next Janma Day (Moon returning to birth star).
-  /// Returns 0 today, 1 tomorrow, etc.  Returns -1 when birth data missing.
-  int get _daysUntilJanma {
-    if (_birthIndex < 0 || _todayIndex < 0) return -1;
-    return (_birthIndex - _todayIndex + 27) % 27;
-  }
 
   /// "May 17"-style short date.
   String _formatDate(DateTime d) {
@@ -673,7 +665,6 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
 
   void _onRotateStart(DragStartDetails d) {
     if (_wheelDiameter <= 0) return;
-    _isDragging = true;
     final cx = _wheelDiameter / 2;
     _spinDragBegin(atan2(d.localPosition.dx - cx, -(d.localPosition.dy - cx)));
   }
@@ -692,13 +683,11 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
   }
 
   void _onRotateEnd(DragEndDetails d) {
-    _isDragging = false;
     _lastPanAngle = null;
     _spinDragRelease();
   }
 
   void _onRotateCancel() {
-    _isDragging = false;
     _lastPanAngle = null;
     _spinDragRelease();
   }
@@ -912,344 +901,6 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
           ),
         ],
       ),
-    );
-  }
-
-  /// Opens a bottom sheet that demystifies the vibe — shows the
-  /// underlying Tara, the calculation, and reminds the user that this
-  /// is a guide, not a horoscope.  Helps build trust over time.
-  void _showWhyThisVibeSheet({
-    required Color c,
-    required bool isDark,
-    required Color cardColor,
-    required DailyVibe vibe,
-    required TaraBala tara,
-    required NakshatraInfo? activeInfo,
-    required Color accent,
-    required bool isAtToday,
-  }) {
-    HapticFeedback.selectionClick();
-    final birthInfo = NakshatraData.getInfo(_birthIndex);
-    final distance = ((_activeIndex - _birthIndex + 27) % 27); // 0..26
-    final taraSlotIndex = (distance % 9) + 1; // 1..9 for display
-
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: cardColor,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppDimensions.radiusXl),
-        ),
-      ),
-      builder: (sheetCtx) {
-        Widget step(String num, String title, String body) => Padding(
-              padding: const EdgeInsets.only(bottom: 14),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 26,
-                    height: 26,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: accent.withValues(alpha: isDark ? 0.20 : 0.12),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Text(
-                      num,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: accent,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: TextStyle(
-                            fontSize: AppTheme.holyCowTextSize,
-                            fontWeight: FontWeight.w700,
-                            color: c.withValues(alpha: 0.9),
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          body,
-                          style: TextStyle(
-                            fontSize: AppTheme.holyCowTextSize - 1,
-                            fontWeight: FontWeight.w400,
-                            color: c.withValues(alpha: 0.65),
-                            height: 1.4,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            );
-
-        return SafeArea(
-          top: false,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(
-              AppDimensions.paddingLg,
-              AppDimensions.paddingMd,
-              AppDimensions.paddingLg,
-              AppDimensions.paddingLg,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Grabber handle.
-                Center(
-                  child: Container(
-                    width: 36,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 14),
-                    decoration: BoxDecoration(
-                      color: c.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-
-                // Title row.
-                Row(
-                  children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: accent.withValues(alpha: isDark ? 0.16 : 0.10),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        vibe.icon,
-                        size: 20,
-                        color: accent,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Why ${vibe.label}?',
-                            style: TextStyle(
-                              fontSize: AppTheme.holyCowTextSize + 4,
-                              fontWeight: FontWeight.w700,
-                              color: accent,
-                            ),
-                          ),
-                          Text(
-                            isAtToday
-                                ? 'Today\'s reading explained'
-                                : 'Reading explained',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                              color: c.withValues(alpha: 0.5),
-                              letterSpacing: 0.3,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: AppDimensions.spacingLg),
-
-                // The three-step explanation.
-                step(
-                  '1',
-                  'Your birth star',
-                  birthInfo != null
-                      ? '${birthInfo.name} — the nakshatra the Moon occupied when you were born.'
-                      : 'The nakshatra the Moon occupied when you were born.',
-                ),
-                step(
-                  '2',
-                  'The Moon\'s current star',
-                  activeInfo != null
-                      ? '${activeInfo.name} — where the Moon sits ${isAtToday ? "today" : "on ${_formatDate(_displayedDate)}"}.'
-                      : 'Where the Moon sits ${isAtToday ? "today" : "on ${_formatDate(_displayedDate)}"}.',
-                ),
-                step(
-                  '3',
-                  'Tara Bala distance',
-                  'Counting from your birth star to the Moon\'s star gives '
-                      'a 1–9 slot. Slot $taraSlotIndex = ${tara.name} '
-                      '(${tara.meaning}).',
-                ),
-
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(AppDimensions.paddingMd),
-                  decoration: BoxDecoration(
-                    color: accent.withValues(alpha: isDark ? 0.12 : 0.06),
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'WHAT IT MEANS FOR YOU',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: accent,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        tara.guidance,
-                        style: TextStyle(
-                          fontSize: AppTheme.holyCowTextSize,
-                          fontWeight: FontWeight.w400,
-                          color: c.withValues(alpha: 0.8),
-                          height: 1.45,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // ── Nakshatra details ──
-                if (activeInfo != null) ...[
-                  const SizedBox(height: AppDimensions.spacingMd),
-                  Divider(color: c.withValues(alpha: 0.08), height: 1),
-                  const SizedBox(height: AppDimensions.spacingMd),
-                  Text(
-                    activeInfo.title.toUpperCase(),
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: c.withValues(alpha: 0.4),
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    activeInfo.description,
-                    style: TextStyle(
-                      fontSize: AppTheme.holyCowTextSize,
-                      fontWeight: FontWeight.w400,
-                      color: c.withValues(alpha: 0.75),
-                      height: 1.45,
-                    ),
-                  ),
-                  const SizedBox(height: AppDimensions.spacingMd),
-                  // Ruler / Deity / Nature
-                  Row(children: [
-                    _meta('Ruler', activeInfo.ruler, c),
-                    _dot(c),
-                    _meta('Deity', activeInfo.deity, c),
-                    _dot(c),
-                    _meta('Nature', activeInfo.nature, c),
-                  ]),
-                  // Next nakshatra preview (today only)
-                  if (isAtToday) ...[
-                    const SizedBox(height: AppDimensions.spacingMd),
-                    Builder(builder: (context) {
-                      final nextIdx = (_activeIndex + 1) % 27;
-                      final nextInfo = NakshatraData.getInfo(nextIdx);
-                      final nextTara = _birthIndex >= 0
-                          ? TaraBala.calculate(_birthIndex, nextIdx)
-                          : null;
-                      if (nextInfo == null) return const SizedBox.shrink();
-                      return Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppDimensions.paddingMd,
-                          vertical: AppDimensions.paddingSm,
-                        ),
-                        decoration: BoxDecoration(
-                          color: c.withValues(alpha: isDark ? 0.06 : 0.03),
-                          borderRadius:
-                              BorderRadius.circular(AppDimensions.radiusSm),
-                        ),
-                        child: Text.rich(TextSpan(children: [
-                          TextSpan(
-                            text: 'Next: ${nextInfo.name}',
-                            style: TextStyle(
-                              fontSize: AppTheme.holyCowTextSize - 1,
-                              fontWeight: FontWeight.w600,
-                              color: c.withValues(alpha: 0.5),
-                            ),
-                          ),
-                          TextSpan(
-                            text: '  ·  ~24hrs',
-                            style: TextStyle(
-                              fontSize: AppTheme.holyCowTextSize - 1,
-                              fontWeight: FontWeight.w400,
-                              color: c.withValues(alpha: 0.35),
-                            ),
-                          ),
-                          if (nextTara != null) ...[
-                            TextSpan(
-                              text: '\nYour Tara shifts to: ${nextTara.name}',
-                              style: TextStyle(
-                                fontSize: AppTheme.holyCowTextSize - 1,
-                                fontWeight: FontWeight.w500,
-                                color: _taraColor(nextTara.isFavorable, isDark),
-                              ),
-                            ),
-                            TextSpan(
-                              text: nextTara.isFavorable ? ' ✓' : ' ⚠',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: _taraAccent(nextTara.isFavorable),
-                              ),
-                            ),
-                          ],
-                        ])),
-                      );
-                    }),
-                  ],
-                ],
-
-                const SizedBox(height: AppDimensions.spacingMd),
-
-                // Disclaimer footer.
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      Icons.auto_awesome_rounded,
-                      size: 14,
-                      color: c.withValues(alpha: 0.35),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'A gentle nudge — not a verdict. Trust what '
-                        'lands for you and let the rest go.',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontStyle: FontStyle.italic,
-                          color: c.withValues(alpha: 0.5),
-                          height: 1.4,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 
@@ -1701,53 +1352,6 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
 
     return markers;
   }
-
-  // ─── Small helpers ─────────────────────────────────────────────────────────
-
-  Widget _badge(String label, Color bg, Color fg) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
-          color: bg.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
-          border: Border.all(color: bg.withValues(alpha: 0.2)),
-        ),
-        child: Text(label,
-            style: TextStyle(
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
-                color: fg,
-                letterSpacing: 0.8)),
-      );
-
-  Widget _meta(String label, String value, Color c) => Expanded(
-        child: Column(children: [
-          Text(label,
-              style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                  color: c.withValues(alpha: 0.35),
-                  letterSpacing: 0.5)),
-          const SizedBox(height: 2),
-          Text(value,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                  fontSize: AppTheme.holyCowTextSize,
-                  fontWeight: FontWeight.w600,
-                  color: c.withValues(alpha: 0.7))),
-        ]),
-      );
-
-  Widget _dot(Color c) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Text('·', style: TextStyle(color: c.withValues(alpha: 0.2))),
-      );
-
-  Color _taraColor(bool favorable, bool isDark) => favorable
-      ? (isDark ? const Color(0xFF81C784) : const Color(0xFF388E3C))
-      : (isDark ? const Color(0xFFEF5350) : const Color(0xFFC62828));
-
-  Color _taraAccent(bool favorable) =>
-      favorable ? const Color(0xFF4CAF50) : const Color(0xFFE53935);
 }
 
 // =============================================================================
