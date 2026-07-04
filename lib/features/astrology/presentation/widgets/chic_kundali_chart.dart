@@ -307,7 +307,6 @@ class _KundaliPainter extends CustomPainter {
     final source = useTransit ? transitHouses! : houses;
     final dist = useTransit ? 72.0 : 42.0;
 
-    final center = Offset(w / 2, h / 2);
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = lineWidth * 3.5
@@ -321,59 +320,40 @@ class _KundaliPainter extends CustomPainter {
       for (int pi = 0; pi < planets.length; pi++) {
         final planet = planets[pi];
         paint.color = _planetColor(planet).withValues(alpha: 0.35);
-        // Fan multiple planets sharing a house into separate lanes so their
-        // (otherwise overlapping) lines stay distinguishable.
-        final lane = pi * 7.0;
 
         for (final off in _aspectOffsets(planet)) {
           final to = (from + off) % 12;
           if (to == from) continue;
 
-          final a = _planetCenter(from, w, h, dist);
-          // Land on the target house's zodiac label (inner, dist 20).
-          final b = _planetCenter(to, w, h, 20.0);
-
-          // Pick the perpendicular side pointing away from the busy centre so
-          // the wave bows AROUND the middle rather than through it.
-          final mid = Offset((a.dx + b.dx) / 2, (a.dy + b.dy) / 2);
-          var dir = b - a;
-          final len = dir.distance;
-          if (len == 0) continue;
-          dir = dir / len;
-          var perp = Offset(-dir.dy, dir.dx);
-          final fromCenter = mid - center;
-          if (perp.dx * fromCenter.dx + perp.dy * fromCenter.dy < 0) {
-            perp = Offset(-perp.dx, -perp.dy);
-          }
-
-          // Perpendicular offset at t: outward bow (+ per-planet lane) plus a
-          // sine ripple. Both vanish at the endpoints so the line anchors
-          // cleanly on planet and house.
-          // Per-line seeded randomness: each connection gets its own
-          // amplitude, wave count and phase so the web looks organic. Seeded
-          // (not live) so it stays stable across repaints instead of jittering.
+          // Drishti travels THROUGH the intervening houses: thread the line
+          // from the planet, through each consecutive house's zodiac label, to
+          // the target house's label. (An N-house aspect literally looks past
+          // every house in between.)
           final rnd = math.Random(from * 1000 + to * 10 + pi);
-          final outwardBase = len * 0.18 + lane;
-          final amplitude = 8.0 + rnd.nextDouble() * 18.0; // 8..26
-          final waves = 3 + rnd.nextInt(5); // 3..7
-          final phase = rnd.nextDouble() * 2 * math.pi;
-          Offset pt(double t) {
-            final base =
-                Offset(a.dx + (b.dx - a.dx) * t, a.dy + (b.dy - a.dy) * t);
-            final env = math.sin(t * math.pi); // fade to 0 at both ends
-            final o = outwardBase * env +
-                env * amplitude * math.sin(t * math.pi * waves + phase);
-            return Offset(base.dx + perp.dx * o, base.dy + perp.dy * o);
+          final points = <Offset>[_planetCenter(from, w, h, dist)];
+          for (int k = 1; k <= off; k++) {
+            final idx = (from + k) % 12;
+            var p = _planetCenter(idx, w, h, 20.0);
+            if (k < off) {
+              // Organic wiggle on the intermediate houses; endpoints stay put
+              // so the line anchors cleanly on planet and target label.
+              p = Offset(p.dx + (rnd.nextDouble() - 0.5) * 22.0,
+                  p.dy + (rnd.nextDouble() - 0.5) * 22.0);
+            }
+            points.add(p);
           }
 
-          const steps = 40;
-          final path = Path()..moveTo(a.dx, a.dy);
-          for (int s = 1; s <= steps; s++) {
-            final p = pt(s / steps);
-            path.lineTo(p.dx, p.dy);
+          // Smooth curve through the waypoints (quadratic via midpoints).
+          final path = Path()..moveTo(points.first.dx, points.first.dy);
+          for (int k = 1; k < points.length - 1; k++) {
+            final mid = Offset((points[k].dx + points[k + 1].dx) / 2,
+                (points[k].dy + points[k + 1].dy) / 2);
+            path.quadraticBezierTo(points[k].dx, points[k].dy, mid.dx, mid.dy);
           }
+          path.lineTo(points.last.dx, points.last.dy);
           canvas.drawPath(path, paint);
-          _arrowHead(canvas, b, pt(0.9), paint);
+
+          _arrowHead(canvas, points.last, points[points.length - 2], paint);
         }
       }
     }
