@@ -110,6 +110,22 @@ class _KundaliPainter extends CustomPainter {
         h * _anchors[i].dy + _pushDirs[i].dy * dist,
       );
 
+  /// A random point scattered inside house [i]'s wedge (out along its push
+  /// direction, jittered sideways). Used so aspect lines wander through the
+  /// intervening houses rather than all hitting the label.
+  Offset _randomPointInHouse(int i, double w, double h, math.Random rnd) {
+    final ax = w * _anchors[i].dx;
+    final ay = h * _anchors[i].dy;
+    final d = _pushDirs[i];
+    final perp = Offset(-d.dy, d.dx);
+    final along = 15.0 + rnd.nextDouble() * 45.0; // 15..60 out from the vertex
+    final side = (rnd.nextDouble() - 0.5) * 50.0; // -25..25 sideways
+    return Offset(
+      ax + d.dx * along + perp.dx * side,
+      ay + d.dy * along + perp.dy * side,
+    );
+  }
+
   /// Vedic drishti: house-count offsets a planet aspects. Every planet sees
   /// the 7th; Mars also 4th/8th, Jupiter 5th/9th, Saturn 3rd/10th.
   List<int> _aspectOffsets(String token) {
@@ -333,14 +349,13 @@ class _KundaliPainter extends CustomPainter {
           final points = <Offset>[_planetCenter(from, w, h, dist)];
           for (int k = 1; k <= off; k++) {
             final idx = (from + k) % 12;
-            var p = _planetCenter(idx, w, h, 20.0);
-            if (k < off) {
-              // Organic wiggle on the intermediate houses; endpoints stay put
-              // so the line anchors cleanly on planet and target label.
-              p = Offset(p.dx + (rnd.nextDouble() - 0.5) * 22.0,
-                  p.dy + (rnd.nextDouble() - 0.5) * 22.0);
+            if (k == off) {
+              // Final target: land on the house's zodiac label.
+              points.add(_planetCenter(idx, w, h, 20.0));
+            } else {
+              // Pass through a RANDOM point inside each intervening house.
+              points.add(_randomPointInHouse(idx, w, h, rnd));
             }
-            points.add(p);
           }
 
           // Smooth curve through the waypoints (quadratic via midpoints).
