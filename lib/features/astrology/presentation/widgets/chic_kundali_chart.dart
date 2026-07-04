@@ -110,22 +110,6 @@ class _KundaliPainter extends CustomPainter {
         h * _anchors[i].dy + _pushDirs[i].dy * dist,
       );
 
-  /// A random point scattered inside house [i]'s wedge (out along its push
-  /// direction, jittered sideways). Used so aspect lines wander through the
-  /// intervening houses rather than all hitting the label.
-  Offset _randomPointInHouse(int i, double w, double h, math.Random rnd) {
-    final ax = w * _anchors[i].dx;
-    final ay = h * _anchors[i].dy;
-    final d = _pushDirs[i];
-    final perp = Offset(-d.dy, d.dx);
-    final along = 15.0 + rnd.nextDouble() * 45.0; // 15..60 out from the vertex
-    final side = (rnd.nextDouble() - 0.5) * 50.0; // -25..25 sideways
-    return Offset(
-      ax + d.dx * along + perp.dx * side,
-      ay + d.dy * along + perp.dy * side,
-    );
-  }
-
   /// Vedic drishti, SPECIAL aspects only (the universal 7th is dropped to keep
   /// the chart legible). Mars 4th/8th, Jupiter 5th/9th, Saturn 3rd/10th. Other
   /// planets cast no line.
@@ -337,34 +321,37 @@ class _KundaliPainter extends CustomPainter {
           final to = (from + off) % 12;
           if (to == from) continue;
 
-          // Drishti travels THROUGH the intervening houses: thread the line
-          // from the planet, through each consecutive house's zodiac label, to
-          // the target house's label. (An N-house aspect literally looks past
-          // every house in between.)
+          // Direct, slightly-wavy line from the planet to the target house's
+          // zodiac label.
           final rnd = math.Random(from * 1000 + to * 10 + pi);
-          final points = <Offset>[_planetCenter(from, w, h, dist)];
-          for (int k = 1; k <= off; k++) {
-            final idx = (from + k) % 12;
-            if (k == off) {
-              // Final target: land on the house's zodiac label.
-              points.add(_planetCenter(idx, w, h, 20.0));
-            } else {
-              // Pass through a RANDOM point inside each intervening house.
-              points.add(_randomPointInHouse(idx, w, h, rnd));
-            }
+          final a = _planetCenter(from, w, h, dist);
+          final b = _planetCenter(to, w, h, 20.0);
+          var dir = b - a;
+          final len = dir.distance;
+          if (len == 0) continue;
+          dir = dir / len;
+          final perp = Offset(-dir.dy, dir.dx);
+
+          const amplitude = 6.0; // slight
+          final waves = 2 + rnd.nextInt(2); // 2..3
+          final phase = rnd.nextDouble() * math.pi;
+          Offset pt(double t) {
+            final base =
+                Offset(a.dx + (b.dx - a.dx) * t, a.dy + (b.dy - a.dy) * t);
+            final env = math.sin(t * math.pi); // fade to 0 at both ends
+            final o = env * amplitude * math.sin(t * math.pi * waves + phase);
+            return Offset(base.dx + perp.dx * o, base.dy + perp.dy * o);
           }
 
-          // Smooth curve through the waypoints (quadratic via midpoints).
-          final path = Path()..moveTo(points.first.dx, points.first.dy);
-          for (int k = 1; k < points.length - 1; k++) {
-            final mid = Offset((points[k].dx + points[k + 1].dx) / 2,
-                (points[k].dy + points[k + 1].dy) / 2);
-            path.quadraticBezierTo(points[k].dx, points[k].dy, mid.dx, mid.dy);
+          const steps = 32;
+          final path = Path()..moveTo(a.dx, a.dy);
+          for (int s = 1; s <= steps; s++) {
+            final p = pt(s / steps);
+            path.lineTo(p.dx, p.dy);
           }
-          path.lineTo(points.last.dx, points.last.dy);
           canvas.drawPath(path, paint);
 
-          _arrowHead(canvas, points.last, points[points.length - 2], paint);
+          _arrowHead(canvas, b, pt(0.9), paint);
         }
       }
     }
