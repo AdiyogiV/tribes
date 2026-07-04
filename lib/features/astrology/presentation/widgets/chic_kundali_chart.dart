@@ -80,27 +80,7 @@ class _KundaliPainter extends CustomPainter {
       ..lineTo(0, h / 2)
       ..close();
 
-    final allLines = Path()..addPath(diagonals, Offset.zero);
-
-    // 1. Fill the inner diamond (houses 1, 4, 7, 10) with solid black
-    final glassPaint = Paint()
-      ..color = const Color(0xFF000000)
-      ..style = PaintingStyle.fill;
-    canvas.drawPath(innerDiamond, glassPaint);
-
-    // 2. Drop Shadow behind the grid lines
-    final shadowPaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.6)
-      ..strokeWidth = lineWidth
-      ..style = PaintingStyle.stroke
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0);
-
-    canvas.save();
-    canvas.translate(0, 2); // subtle Y shift
-    canvas.drawPath(allLines, shadowPaint);
-    canvas.restore();
-
-    // 3. Very subtle structural lines for the cross + inner diamond
+    // Very subtle structural lines shared by the cross + inner diamond
     final linePaint = Paint()
       ..strokeWidth = lineWidth * 0.5
       ..style = PaintingStyle.stroke
@@ -219,19 +199,11 @@ class _KundaliPainter extends CustomPainter {
 
         final bgPaint = Paint()
           ..shader = RadialGradient(
-            center: Alignment(
-                (ax - w / 2) / (w / 2 == 0 ? 1 : w / 2),
-                (ay - h / 2) /
-                    (h / 2 == 0
-                        ? 1
-                        : h /
-                            2)), // Center the gradient exactly on the house's inner corner
-            radius: 0.4,
             colors: [
               strokeColor.withValues(alpha: 0.15),
               strokeColor.withValues(alpha: 0.0),
             ],
-          ).createShader(Rect.fromLTWH(0, 0, w, h))
+          ).createShader(Rect.fromCircle(center: Offset(ax, ay), radius: S))
           ..style = PaintingStyle.fill;
         canvas.drawPath(bgPath, bgPaint);
 
