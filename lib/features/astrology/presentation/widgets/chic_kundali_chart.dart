@@ -121,22 +121,6 @@ class _KundaliPainter extends CustomPainter {
       const Offset(0, -1), // H12 (Push Up)
     ];
 
-    // Center of mass for the Zodiac labels
-    final labelCenters = [
-      const Offset(0.5, 0.25), // H1
-      const Offset(0.25, 0.12), // H2
-      const Offset(0.12, 0.25), // H3
-      const Offset(0.25, 0.5), // H4
-      const Offset(0.12, 0.75), // H5
-      const Offset(0.25, 0.88), // H6
-      const Offset(0.5, 0.75), // H7
-      const Offset(0.75, 0.88), // H8
-      const Offset(0.88, 0.75), // H9
-      const Offset(0.75, 0.5), // H10
-      const Offset(0.88, 0.25), // H11
-      const Offset(0.75, 0.12), // H12
-    ];
-
     for (int i = 0; i < 12; i++) {
       if (i >= houses.length) break;
 
@@ -185,16 +169,20 @@ class _KundaliPainter extends CustomPainter {
       if (houseLabels != null && i < houseLabels!.length) {
         final nameStr = houseLabels![i].trim();
 
-        // Push the Zodiac Name into the innermost corner of the house.
-        final namePush = 14.0;
+        // Keep the label close to the central anchor with just a little
+        // breathing room so it doesn't sit exactly on the vertex.
+        final namePush = 20.0;
         final nameX = ax + (pDir.dx * namePush);
         final nameY = ay + (pDir.dy * namePush);
 
         _drawText(
           canvas: canvas,
           text: nameStr.toUpperCase(),
-          style: houseLabelStyle.copyWith(
-              letterSpacing: 1.0, fontWeight: FontWeight.w500),
+          style: planetStyle.copyWith(
+            fontSize: (planetStyle.fontSize ?? 9.0) - 1.5,
+            letterSpacing: 1.5,
+            fontWeight: FontWeight.w800,
+          ),
           center: Offset(nameX, nameY),
         );
       }

@@ -354,7 +354,7 @@ class ChartUtils {
             // Calculate which HOUSE this sign falls into given the lagna
             // If lagna is 3 (Cancer), and planet is in 4 (Leo): house is (4 - 3 + 12) % 12 = 1. (2nd house)
             final houseIndex = (signIndex - lagnaSignIndex + 12) % 12;
-            
+
             tempHousePositions.putIfAbsent(houseIndex, () => []);
             tempHousePositions[houseIndex]!.add(name);
           }
@@ -379,5 +379,4 @@ class ChartUtils {
     final lagnaSignIndex = getLagnaSignIndex(birthChartData);
     return getSignFixedLabels(lagnaSignIndex);
   }
-
 }
