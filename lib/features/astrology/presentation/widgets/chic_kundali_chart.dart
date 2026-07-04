@@ -296,13 +296,16 @@ class _KundaliPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round
       ..color = strokeColor.withValues(alpha: 0.22);
 
-    final drawn = <int>{}; // dedupe by (from*12 + to)
+    // Directed dedupe (from*12 + to). Drishti is one-way: a planet's gaze on
+    // a house does not imply the reverse (only the mutual 7th coincides).
+    final drawn = <int>{};
 
     for (int from = 0; from < 12 && from < source.length; from++) {
       final planets = _clean(source[from]);
       if (planets.isEmpty) continue;
 
-      // Union of all aspect targets for the planets sitting in this house.
+      // Union of all houses these planets aspect. Vedic drishti is cast on the
+      // whole HOUSE regardless of whether a planet occupies it.
       final targets = <int>{};
       for (final p in planets) {
         for (final off in _aspectOffsets(p)) {
@@ -312,19 +315,14 @@ class _KundaliPainter extends CustomPainter {
 
       for (final to in targets) {
         if (to == from) continue;
-        if (to >= source.length || _clean(source[to]).isEmpty) {
-          continue; // only connect planet↔planet
-        }
+        if (!drawn.add(from * 12 + to)) continue;
 
-        final key = from < to ? from * 12 + to : to * 12 + from;
-        if (!drawn.add(key)) continue;
-
+        // Source = the aspecting planet's position; target = the centre of the
+        // aspected house (occupancy independent).
         final a = _planetCenter(from, w, h, dist);
-        final b = _planetCenter(to, w, h, dist);
+        final b = _planetCenter(to, w, h, 42.0);
 
-        // Route the connection AROUND the busy centre instead of straight
-        // through it: bow the arc outward, perpendicular to the a-b line, on
-        // the side that points away from the chart centre.
+        // Route AROUND the busy centre with an angular outward waypoint.
         final mid = Offset((a.dx + b.dx) / 2, (a.dy + b.dy) / 2);
         var dir = b - a;
         final len = dir.distance;
@@ -338,14 +336,31 @@ class _KundaliPainter extends CustomPainter {
         final bulge = len * 0.25;
         final ctrl = Offset(mid.dx + perp.dx * bulge, mid.dy + perp.dy * bulge);
 
-        // Straight, angular routing (a -> outward waypoint -> b) instead of a
-        // smooth curve, so the connections read squarish while still going
-        // around the busy centre.
         final path = Path()
           ..moveTo(a.dx, a.dy)
           ..lineTo(ctrl.dx, ctrl.dy)
           ..lineTo(b.dx, b.dy);
         canvas.drawPath(path, aspectPaint);
+
+        // Arrowhead at the target end, showing the direction of the gaze.
+        var arrive = b - ctrl;
+        final al = arrive.distance;
+        if (al == 0) continue;
+        arrive = arrive / al;
+        final aPerp = Offset(-arrive.dy, arrive.dx);
+        const headLen = 7.0;
+        const headW = 4.0;
+        final base =
+            Offset(b.dx - arrive.dx * headLen, b.dy - arrive.dy * headLen);
+        final left =
+            Offset(base.dx + aPerp.dx * headW, base.dy + aPerp.dy * headW);
+        final right =
+            Offset(base.dx - aPerp.dx * headW, base.dy - aPerp.dy * headW);
+        final head = Path()
+          ..moveTo(left.dx, left.dy)
+          ..lineTo(b.dx, b.dy)
+          ..lineTo(right.dx, right.dy);
+        canvas.drawPath(head, aspectPaint);
       }
     }
   }
