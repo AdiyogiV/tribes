@@ -68,7 +68,6 @@ class _KundaliPainter extends CustomPainter {
     // --- CHIC LAYERED GEOMETRY ---
 
     // Core structural paths
-    final outerSquare = Path()..addRect(Rect.fromLTWH(0, 0, w, h));
     final diagonals = Path()
       ..moveTo(0, 0)
       ..lineTo(w, h)
@@ -82,7 +81,6 @@ class _KundaliPainter extends CustomPainter {
       ..close();
 
     final allLines = Path()
-      ..addPath(outerSquare, Offset.zero)
       ..addPath(diagonals, Offset.zero)
       ..addPath(innerDiamond, Offset.zero);
 
@@ -111,7 +109,7 @@ class _KundaliPainter extends CustomPainter {
     canvas.drawPath(allLines, shadowPaint);
     canvas.restore();
 
-    // 3. Crisp, slightly gradient-stroked structural lines
+    // 3. Crisp, slightly gradient-stroked structural lines for the cross
     final linePaint = Paint()
       ..strokeWidth = lineWidth
       ..style = PaintingStyle.stroke
@@ -126,7 +124,15 @@ class _KundaliPainter extends CustomPainter {
         ],
       ).createShader(Rect.fromLTWH(0, 0, w, h));
 
-    canvas.drawPath(allLines, linePaint);
+    // 4. Ultra-subtle paint for the diamond
+    final diamondPaint = Paint()
+      ..strokeWidth = lineWidth * 0.5 // Thinner
+      ..style = PaintingStyle.stroke
+      ..isAntiAlias = true
+      ..color = strokeColor.withValues(alpha: 0.3); // Fainter
+
+    canvas.drawPath(diagonals, linePaint);
+    canvas.drawPath(innerDiamond, diamondPaint);
 
     // 3. Define the true geometric inner corners (anchors) for the planets
     final houseAnchors = [
