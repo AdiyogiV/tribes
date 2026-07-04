@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:aurogram/shared/models/daily_insight.dart';
 import 'package:aurogram/features/astrology/domain/astrology_service.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
+import 'package:aurogram/shared/presentation/widgets/universal/transparent_toolbox.dart';
 
 class DailyInsightCard extends StatefulWidget {
   final DailyInsight? insight;
@@ -89,97 +91,89 @@ class _DailyInsightCardState extends State<DailyInsightCard> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final brownColor = AppTheme.astroBrown(isDark);
+    final fgMain = isDark ? Colors.white : Colors.black;
+    final fgMuted = isDark ? Colors.white54 : Colors.black54;
 
     if (widget.insight == null) {
-      return _buildEmptyCard(isDark, brownColor);
+      return _buildEmptyCard(isDark, fgMain, fgMuted);
     }
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
-      padding: const EdgeInsets.all(AppDimensions.paddingMd),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.1)
-              : Colors.grey.withValues(alpha: 0.15),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.1)
-                : Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-            spreadRadius: 0,
-          ),
-        ],
-      ),
+    return TransparentToolbox.buildCard(
+      context: context,
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+      onTap: widget.onTap != null ? () {
+        HapticFeedback.lightImpact();
+        widget.onTap!();
+      } : null,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Header - theme or default title
+          // Header - Chic Editorial Theme
           Text(
-            widget.insight!.displayTheme.toUpperCase(),
+            widget.insight!.displayTheme.toLowerCase(),
+            textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: brownColor,
-              letterSpacing: 0.8,
+              fontFamily: 'Georgia',
+              fontStyle: FontStyle.italic,
+              fontSize: 26,
+              letterSpacing: -0.5,
+              color: fgMain,
+              height: 1.1,
             ),
           ),
-          const SizedBox(height: AppDimensions.spacingMd),
-          // Insight text - full text, no cutting (uses displayMessage for v3+ compatibility)
+          
+          const SizedBox(height: 16),
+          
+          // Insight text - airy, editorial style
           Text(
             widget.insight!.displayMessage,
+            textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
+              fontFamily: 'Georgia',
+              fontStyle: FontStyle.italic,
+              fontSize: 12.5,
+              color: fgMuted,
               height: 1.5,
-              color: brownColor.withValues(alpha: 0.9),
             ),
           ),
+          
           // Action buttons
           if (widget.showActions) ...[
-            const SizedBox(height: AppDimensions.spacingMdLg),
-            Container(
-              height: 1,
-              color: brownColor.withValues(alpha: 0.15),
-            ),
-            const SizedBox(height: AppDimensions.spacingMdSm),
+            const SizedBox(height: 28),
             Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Reaction buttons
                 _buildActionButton(
                   icon: _reaction == 'thumbs_up'
                       ? Icons.thumb_up
                       : Icons.thumb_up_outlined,
                   isActive: _reaction == 'thumbs_up',
                   onTap: _hasReacted ? null : () => _submitReaction('thumbs_up'),
-                  brownColor: brownColor,
+                  fgMuted: fgMuted,
                   isDark: isDark,
                 ),
-                const SizedBox(width: AppDimensions.spacingLg),
+                const SizedBox(width: 14),
+                Text('·', style: TextStyle(fontSize: 12, color: fgMuted)),
+                const SizedBox(width: 14),
                 _buildActionButton(
                   icon: _reaction == 'thumbs_down'
                       ? Icons.thumb_down
                       : Icons.thumb_down_outlined,
                   isActive: _reaction == 'thumbs_down',
                   onTap: _hasReacted ? null : () => _submitReaction('thumbs_down'),
-                  brownColor: brownColor,
+                  fgMuted: fgMuted,
                   isDark: isDark,
                   isNegative: true,
                 ),
-                const Spacer(),
-                // Bookmark button
+                const SizedBox(width: 14),
+                Text('·', style: TextStyle(fontSize: 12, color: fgMuted)),
+                const SizedBox(width: 14),
                 _buildActionButton(
                   icon: _isFavorite ? Icons.bookmark : Icons.bookmark_border,
                   isActive: _isFavorite,
                   onTap: _isLoadingFavorite ? null : _toggleFavorite,
-                  brownColor: brownColor,
+                  fgMuted: fgMuted,
                   isDark: isDark,
                 ),
               ],
@@ -194,69 +188,59 @@ class _DailyInsightCardState extends State<DailyInsightCard> {
     required IconData icon,
     required bool isActive,
     required VoidCallback? onTap,
-    required Color brownColor,
+    required Color fgMuted,
     required bool isDark,
     bool isNegative = false,
   }) {
     final activeColor = isNegative
         ? (isDark ? Colors.red.shade300 : Colors.red.shade600)
-        : brownColor;
+        : (isDark ? Colors.white : Colors.black);
 
     return GestureDetector(
-      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        if (onTap != null) {
+          HapticFeedback.lightImpact();
+          onTap();
+        }
+      },
       child: Icon(
         icon,
-        size: 18,
-        color: isActive
-            ? activeColor
-            : brownColor.withValues(alpha: 0.5),
+        size: 16,
+        color: isActive ? activeColor : fgMuted,
       ),
     );
   }
 
-  Widget _buildEmptyCard(bool isDark, Color brownColor) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
-      padding: const EdgeInsets.all(AppDimensions.paddingMd),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.1)
-              : Colors.grey.withValues(alpha: 0.15),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.1)
-                : Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-            spreadRadius: 0,
-          ),
-        ],
-      ),
+  Widget _buildEmptyCard(bool isDark, Color fgMain, Color fgMuted) {
+    return TransparentToolbox.buildCard(
+      context: context,
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            'YOUR INSIGHT',
+            'Your insight',
+            textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: brownColor,
-              letterSpacing: 0.8,
+              fontFamily: 'Georgia',
+              fontStyle: FontStyle.italic,
+              fontSize: 26,
+              letterSpacing: -0.5,
+              color: fgMain,
+              height: 1.1,
             ),
           ),
-          const SizedBox(height: AppDimensions.spacingMd),
+          const SizedBox(height: 16),
           Text(
             'Your personalized guidance will appear here.',
+            textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: brownColor.withValues(alpha: 0.9),
+              fontFamily: 'Georgia',
+              fontStyle: FontStyle.italic,
+              fontSize: 12.5,
+              color: fgMuted,
               height: 1.5,
             ),
           ),
@@ -264,5 +248,5 @@ class _DailyInsightCardState extends State<DailyInsightCard> {
       ),
     );
   }
-
+}
 }

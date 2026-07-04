@@ -104,11 +104,58 @@ class CosmicSkyChartCard extends StatelessWidget {
 
     return TransparentToolbox.buildCard(
       context: context,
-      padding: EdgeInsets.zero,
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Header with date display and birth chart toggle
-          _buildHeader(c, dateStr, isSliderOnToday, hasBirthChart),
+          // Dateline
+          Text(
+            dateStr.toUpperCase(),
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 3.0,
+              color: c.withValues(alpha: 0.6),
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          // Editorial Title
+          Text(
+            isSliderOnToday ? 'Current Sky' : 'Time Travel',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: 'Georgia',
+              fontStyle: FontStyle.italic,
+              fontSize: 26,
+              letterSpacing: -0.5,
+              color: c,
+              height: 1.1,
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          // Subtext / Daily Insight
+          if (insightText != null && insightText!.trim().isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Text(
+                insightText!,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: c.withValues(alpha: 0.7),
+                  fontSize: 12.5,
+                  height: 1.5,
+                  fontFamily: 'Georgia',
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
+
+          const SizedBox(height: 28), // Breathing room
 
           // Chart with overlay
           _buildChart(
@@ -122,13 +169,37 @@ class CosmicSkyChartCard extends StatelessWidget {
             dateStr,
           ),
 
-          // Blend slider when overlay is active
-          if (showTransitOverlay && hasBirthChart)
-            ChartBlendSlider(
-              value: chartBlendValue,
-              onChanged: onBlendValueChanged,
-              isDark: isDark,
+          const SizedBox(height: 28),
+
+          // Return to Today Action (Centered, Chic)
+          if (!isSliderOnToday) ...[
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: onResetToToday,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.replay_circle_filled_rounded,
+                    size: 14,
+                    color: c.withValues(alpha: 0.8),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'RETURN TO TODAY',
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 2.0,
+                      color: c.withValues(alpha: 0.8),
+                    ),
+                  ),
+                ],
+              ),
             ),
+            const SizedBox(height: 16),
+          ],
 
           // Time Slider
           TimelineSlider(
@@ -142,54 +213,39 @@ class CosmicSkyChartCard extends StatelessWidget {
           ),
 
           // Explore birth chart affordance
-          if (onExploreBirthChart != null && hasBirthChart)
+          // Only shown if we somehow don't have birth chart data and want them to add it,
+          // OR it's just completely hidden now for ultra-minimalism.
+          if (onExploreBirthChart != null && !hasBirthChart) ...[
+            const SizedBox(height: 24),
             GestureDetector(
+              behavior: HitTestBehavior.opaque,
               onTap: () {
                 HapticFeedback.lightImpact();
                 onExploreBirthChart!();
               },
-              child: Padding(
-                padding: const EdgeInsets.only(
-                  bottom: AppDimensions.paddingLg,
-                  top: AppDimensions.spacingSm,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Explore birth chart',
-                      style: TextStyle(
-                        fontSize: AppTheme.holyCowTextSize,
-                        fontWeight: FontWeight.w600,
-                        color: c.withValues(alpha: 0.5),
-                      ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'ADD BIRTH DETAILS',
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 3.0,
+                      color: c.withValues(alpha: 0.6),
                     ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      size: 11,
-                      color: c.withValues(alpha: 0.4),
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    Icons.arrow_forward_rounded,
+                    size: 13,
+                    color: c.withValues(alpha: 0.6),
+                  ),
+                ],
               ),
             ),
-
-          // Daily insight main text
-          if (insightText != null && insightText!.trim().isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: Text(
-                insightText!,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: AppTheme.holyCowTextSize,
-                  fontWeight: FontWeight.w500,
-                  height: 1.5,
-                  color: c.withValues(alpha: 0.85),
-                ),
-              ),
-            ),
+          ],
         ],
       ),
     );
@@ -381,9 +437,7 @@ class CosmicSkyChartCard extends StatelessWidget {
                         );
 
                         // The Editorial Typographical Overlap (Single Chart)
-                        if (showTransitOverlay &&
-                            birthHouses != null &&
-                            birthLabels != null) {
+                        if (hasBirthChart && birthHouses != null) {
                           // The foundation is the Birth Chart
                           displayHouses = birthHouses;
                           displayLabels = birthLabels;
@@ -392,7 +446,7 @@ class CosmicSkyChartCard extends StatelessWidget {
                           chartLineWidth = 1.5;
 
                           pStyle = TextStyle(
-                            fontSize: 7.5,
+                            fontSize: 8.5,
                             fontWeight: FontWeight
                                 .w500, // Thinner, smaller font for birth planets
                             color: AppTheme.primaryColor.withValues(alpha: 0.8),
@@ -419,14 +473,15 @@ class CosmicSkyChartCard extends StatelessWidget {
                           lineWidth: chartLineWidth,
                           houseLabelStyle: TextStyle(
                             fontFamily: 'Georgia',
-                            fontSize: 7.0, // Subdued
-                            fontWeight: FontWeight.w500,
+                            fontSize: 9.0, // Subdued but legible
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.5,
                             color: labelColor,
                             height: 1.1,
                           ),
                           planetStyle: pStyle,
                           transitPlanetStyle: TextStyle(
-                            fontSize: 10.0, // Prominent
+                            fontSize: 11.0, // Extremely Prominent
                             fontWeight: FontWeight.w700, // Bold
                             fontStyle: FontStyle.normal, // Regular (not italic)
                             color: planetColor, // White/Black matching theme

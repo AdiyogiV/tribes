@@ -1,6 +1,6 @@
 // compatibility.js — kundli matching / relationship compatibility.
 //
-// Split out of astro_api.js: compatibility is its own product surface (two
+// Split out of ephemeris.js: compatibility is its own product surface (two
 // users, blocked/follow checks, its own cache version + scoring), distinct
 // from the single-user ephemeris flow. Shares the one HTTP client.
 

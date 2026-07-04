@@ -1,6 +1,6 @@
 // free_astro_client.js — the single low-level HTTP client for FreeAstrologyAPI.
 //
-// Extracted from astro_api.js so that every caller (the ephemeris flow,
+// Extracted from ephemeris.js so that every caller (the ephemeris flow,
 // compatibility, geo search) shares ONE fetch wrapper, ONE api-key resolver,
 // and ONE error-handling path instead of each file re-implementing it.
 //

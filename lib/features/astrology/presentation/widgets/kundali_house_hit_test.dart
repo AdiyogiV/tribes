@@ -46,9 +46,10 @@ int? houseFromLocalTap({
   required double localY,
   required double containerWidth,
   required double containerHeight,
-  required double padding,
+  double padding = 0.0,
   required double scaleX,
   required double scaleY,
+  double drawingScale = 0.8, // 0.8 for kundali_chart package, 1.0 for custom native charts
 }) {
   final innerHeight = containerHeight - (padding * 2);
   final cx = containerWidth / 2;
@@ -58,8 +59,8 @@ int? houseFromLocalTap({
   final tapX = (localX - cx) / scaleX;
   final tapY = (localY - cy) / scaleY;
 
-  // The kundali_chart package draws the diamond at 0.8 of the available box.
-  final halfSize = (innerHeight * 0.8) / 2;
+  // Account for internal padding of the drawing itself
+  final halfSize = (innerHeight * drawingScale) / 2;
   if (halfSize <= 0) return null;
 
   return houseFromNormalizedTap(tapX / halfSize, tapY / halfSize);

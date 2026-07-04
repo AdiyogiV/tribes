@@ -13,7 +13,7 @@
 import { db, logger } from "./firebase.js";
 // Vertex AI — no API key needed (uses ADC)
 import { DateTime } from "luxon";
-import { runAstroFlow } from "../functions/astro_api.js";
+import { runEphemerisFlow } from "../functions/ephemeris.js";
 import { buildAstroSearchContext } from "./search.js";
 import { calculateWholeSignHouse } from "./vedic_analysis.js";
 import { extractAscendantDegree, normalizeDasha } from "./astro_helpers.js";
@@ -149,7 +149,7 @@ export async function getTodayAstroData(userAstroData) {
             usingCurrentLocation: !!(userAstroData.currentLatitude && userAstroData.currentLongitude),
         });
 
-        const result = await runAstroFlow({
+        const result = await runEphemerisFlow({
             mode: "standard", // planets + panchang + samvat. No natal-only extras
             payload: todayPayload,
             timeZoneId: currentTimeZone || "UTC",

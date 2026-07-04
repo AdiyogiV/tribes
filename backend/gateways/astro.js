@@ -32,7 +32,7 @@ import {
 
 import {
     handleFreeAstroCalculate,
-} from "../functions/astro_api.js";
+} from "../functions/ephemeris.js";
 import {
     handleCalculateCompatibility,
     invalidateCompatibilityCache,

@@ -173,7 +173,7 @@ class _KundaliPainter extends CustomPainter {
 
       // Calculate perfect geometric background triangle for the corner
       final double S =
-          45.0; // The cutoff line distance (increased for larger inner section)
+          52.0; // The cutoff line distance (increased for larger inner section)
       final edge1 = Offset(pDir.dx + pDir.dy, pDir.dy - pDir.dx);
       final edge2 = Offset(pDir.dx - pDir.dy, pDir.dy + pDir.dx);
       final p2 = Offset(ax + edge1.dx * S, ay + edge1.dy * S);
@@ -183,34 +183,18 @@ class _KundaliPainter extends CustomPainter {
           transitHouses != null && transitPlanetStyle != null;
 
       if (houseLabels != null && i < houseLabels!.length) {
-        final parts = houseLabels![i].split(' ');
-        final numStr = parts.isNotEmpty ? parts[0] : '';
-        final nameStr = parts.length > 1 ? parts.sublist(1).join(' ') : '';
+        final nameStr = houseLabels![i].trim();
 
-        // Push the House Number into the absolute innermost corner
-        // ax, ay is the exact corner of the house.
-        final numPush = 10.0;
-        final nx = ax + (pDir.dx * numPush);
-        final ny = ay + (pDir.dy * numPush);
-
-        _drawText(
-          canvas: canvas,
-          text: numStr,
-          style: houseLabelStyle.copyWith(fontWeight: FontWeight.w700),
-          center: Offset(nx, ny),
-        );
-
-        // Push the Zodiac Name slightly outside the number
-        final namePush = 20.0;
+        // Push the Zodiac Name into the innermost corner of the house.
+        final namePush = 14.0;
         final nameX = ax + (pDir.dx * namePush);
         final nameY = ay + (pDir.dy * namePush);
 
         _drawText(
           canvas: canvas,
-          text: nameStr,
+          text: nameStr.toUpperCase(),
           style: houseLabelStyle.copyWith(
-              fontSize: (houseLabelStyle.fontSize ?? 7.0) - 1.0,
-              fontWeight: FontWeight.w400),
+              letterSpacing: 1.0, fontWeight: FontWeight.w500),
           center: Offset(nameX, nameY),
         );
       }
@@ -225,7 +209,9 @@ class _KundaliPainter extends CustomPainter {
           ..close();
 
         final bgPaint = Paint()
-          ..color = strokeColor.withValues(alpha: 0.12)
+          ..color = strokeColor.withValues(
+              alpha:
+                  0.08) // More subtle highlight, removing the harsh cutoff line entirely
           ..style = PaintingStyle.fill;
         canvas.drawPath(bgPath, bgPaint);
 
@@ -237,8 +223,8 @@ class _KundaliPainter extends CustomPainter {
               canvas: canvas,
               text: bText,
               style: planetStyle,
-              center: Offset(ax + (pDir.dx * 36.0),
-                  ay + (pDir.dy * 36.0))); // Tucked near the edge of the zone
+              center: Offset(ax + (pDir.dx * 42.0),
+                  ay + (pDir.dy * 42.0))); // Tucked near the edge of the zone
         }
 
         // Draw Transits OUTSIDE the geometric triangle (Transit Zone / Weather)
@@ -248,8 +234,8 @@ class _KundaliPainter extends CustomPainter {
               canvas: canvas,
               text: tText,
               style: transitPlanetStyle!,
-              center: Offset(ax + (pDir.dx * 62.0),
-                  ay + (pDir.dy * 62.0))); // Pushed far outside the line
+              center: Offset(ax + (pDir.dx * 72.0),
+                  ay + (pDir.dy * 72.0))); // Pushed far outside the line
         }
       } else {
         // Standard Single Chart Mode (No overlay ring)
@@ -260,10 +246,10 @@ class _KundaliPainter extends CustomPainter {
               text: bText,
               style: planetStyle,
               center: Offset(
-                  ax + (pDir.dx * 38.0),
+                  ax + (pDir.dx * 46.0),
                   ay +
                       (pDir.dy *
-                          38.0))); // Centered in house (pushed out to clear labels)
+                          46.0))); // Centered in house (pushed out to clear labels)
         } else if (hasTransit) {
           // fallback if rendering just transits
           final tText = tPlanets.join(joinStr);
@@ -271,7 +257,7 @@ class _KundaliPainter extends CustomPainter {
               canvas: canvas,
               text: tText,
               style: transitPlanetStyle ?? planetStyle,
-              center: Offset(ax + (pDir.dx * 38.0), ay + (pDir.dy * 38.0)));
+              center: Offset(ax + (pDir.dx * 46.0), ay + (pDir.dy * 46.0)));
         }
       }
     }

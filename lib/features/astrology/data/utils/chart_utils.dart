@@ -283,15 +283,12 @@ class ChartUtils {
       final planetNames = tempSignPositions[index] ?? [];
       if (planetNames.isEmpty) return <String>[];
 
-      final symbols = planetNames
-          .map((n) => getPlanetSymbol(n.replaceAll('(R)', '')))
-          .join(' ');
       final initials = planetNames.map((n) {
         final base = getPlanetInitials(n.replaceAll('(R)', ''));
         return n.contains('(R)') ? '$baseᴿ' : base;
       }).join(' ');
 
-      return ['\n$symbols\n$initials'];
+      return ['\n$initials'];
     });
 
     AppLogger.d(
@@ -316,25 +313,25 @@ class ChartUtils {
     return result;
   }
 
-  /// Get labels with FIXED signs (Aries first) but house numbers from lagna
-  /// South Indian style: Signs stay fixed, house numbers rotate
+  /// Get labels mapped dynamically so the Ascendant (Lagna) is always in House 1 (Top diamond).
+  /// North Indian style: House 1 is fixed at top, Signs rotate.
   static List<String> getSignFixedLabels(int lagnaSignIndex) {
     return List.generate(12, (index) {
-      final abbr = ChartConstants
-          .zodiacAbbrs[index]; // Fixed sign order (Aries=0, Taurus=1...)
-      // Calculate house number: how many signs from lagna to this sign + 1
-      // e.g., if lagna is Cancer (3), Aries (0) is house ((0-3+12)%12)+1 = 10
-      final houseNum = ((index - lagnaSignIndex + 12) % 12) + 1;
-      return '$houseNum $abbr';
+      // The sign index that occupies this physical house block.
+      // House 1 (index 0) gets the lagna sign. House 2 (index 1) gets lagna + 1, etc.
+      final signIndex = (lagnaSignIndex + index) % 12;
+      final abbr = ChartConstants.zodiacAbbrs[signIndex];
+      // House numbers removed per design — show sign abbreviation only.
+      return abbr;
     });
   }
 
   /// Extract houses from birth chart data for chart display
-  /// Places planets by their SIGN position (Aries=0, Taurus=1, etc.)
-  /// South Indian style - signs are fixed, house numbers rotate based on lagna
+  /// Maps planets into North Indian houses where Lagna is always House 1 (index 0).
   static List<List<String>> extractBirthChartHouses(
       Map<String, dynamic> birthChartData) {
-    final Map<int, List<String>> tempSignPositions = {};
+    final lagnaSignIndex = getLagnaSignIndex(birthChartData);
+    final Map<int, List<String>> tempHousePositions = {};
 
     try {
       final planetsObj = extractPlanetsMap(birthChartData);
@@ -354,9 +351,12 @@ class ChartUtils {
           if (name != null &&
               name.toLowerCase() != 'ascendant' &&
               signIndex != null) {
-            // Place planet at its SIGN position (Aries=0, Taurus=1, etc.)
-            tempSignPositions.putIfAbsent(signIndex, () => []);
-            tempSignPositions[signIndex]!.add(name);
+            // Calculate which HOUSE this sign falls into given the lagna
+            // If lagna is 3 (Cancer), and planet is in 4 (Leo): house is (4 - 3 + 12) % 12 = 1. (2nd house)
+            final houseIndex = (signIndex - lagnaSignIndex + 12) % 12;
+            
+            tempHousePositions.putIfAbsent(houseIndex, () => []);
+            tempHousePositions[houseIndex]!.add(name);
           }
         });
       }
@@ -365,13 +365,12 @@ class ChartUtils {
     }
 
     return List.generate(12, (index) {
-      final planetNames = tempSignPositions[index] ?? [];
+      final planetNames = tempHousePositions[index] ?? [];
       if (planetNames.isEmpty) return <String>[];
 
-      final symbols = planetNames.map((n) => getPlanetSymbol(n)).join(' ');
       final initials = planetNames.map((n) => getPlanetInitials(n)).join(' ');
 
-      return ['\n$symbols\n$initials'];
+      return ['\n$initials'];
     });
   }
 

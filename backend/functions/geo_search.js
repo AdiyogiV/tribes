@@ -1,6 +1,6 @@
 // geo_search.js — location autocomplete via FreeAstrologyAPI geo-details.
 //
-// Split out of astro_api.js: geo lookup is a location-search concern, not an
+// Split out of ephemeris.js: geo lookup is a location-search concern, not an
 // astrology-computation concern. Self-contained; shares the one HTTP client.
 
 import { logger } from "firebase-functions/v2";

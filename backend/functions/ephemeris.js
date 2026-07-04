@@ -1,6 +1,6 @@
-// astro_api.js — the app's gateway to the ephemeris/astrology data provider
+// ephemeris.js — the app's gateway to the ephemeris/astrology data provider
 // (FreeAstrologyAPI). Wraps chart, dasha, panchang, navamsa (D9), D10,
-// shadbala, yogas + compatibility. `runAstroFlow()` is the main entry.
+// shadbala, yogas + compatibility. `runEphemerisFlow()` is the main entry.
 import { HttpsError } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions/v2";
 import { DateTime } from "luxon";
@@ -433,7 +433,7 @@ const calculateCombustionStates = (planets) => {
  * 
  * NOTE: Muhurat disabled by default - takes 8-9s for a feature used in one place
  */
-export const runAstroFlow = async ({
+export const runEphemerisFlow = async ({
     mode = "full",
     payload,
     timeZoneId,
@@ -453,7 +453,7 @@ export const runAstroFlow = async ({
     let samvatInfo = null;
     const offsetHours = typeof timeZoneOffset === "number" ? timeZoneOffset : 0;
 
-    logger.info(`🚀 runAstroFlow starting`, {
+    logger.info(`🚀 runEphemerisFlow starting`, {
         mode,
         shouldFetchPlanets,
         shouldFetchDasha,
@@ -1512,7 +1512,7 @@ export const runAstroFlow = async ({
     if (!hasBasicData) {
         // Planet data fetch failed - mark as partial and log the issue
         result.syncStatus = "partial";
-        logger.error(`❌ runAstroFlow FAILED - no planet data retrieved`, {
+        logger.error(`❌ runEphemerisFlow FAILED - no planet data retrieved`, {
             structuredData: true,
             mode,
             hasPlanets: !!planetData,
@@ -1528,7 +1528,7 @@ export const runAstroFlow = async ({
                     mode === "muhurat" ? "muhurat_complete" : "partial";
     }
 
-    logger.info(`✅ runAstroFlow completed`, {
+    logger.info(`✅ runEphemerisFlow completed`, {
         mode,
         syncStatus: result.syncStatus,
         hasPlanets: !!planetData,
@@ -1646,7 +1646,7 @@ export async function handleFreeAstroCalculate(request) {
             timezone: timeZoneOffset,
         };
 
-        const result = await runAstroFlow({
+        const result = await runEphemerisFlow({
             mode,
             payload,
             timeZoneId,

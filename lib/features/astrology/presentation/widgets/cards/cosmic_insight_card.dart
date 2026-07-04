@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:aurogram/shared/models/daily_insight.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
+import 'package:aurogram/shared/presentation/widgets/universal/transparent_toolbox.dart';
 
 /// Card to display today's cosmic insight
 /// Matches astrology details page card styling
@@ -23,86 +24,78 @@ class CosmicInsightCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final Color cardColor =
-        isDark ? Theme.of(context).colorScheme.surface : Colors.white;
-    final c = AppTheme.primaryColor;
+    final fgMain = isDark ? Colors.white : Colors.black;
+    final fgMuted = isDark ? Colors.white54 : Colors.black54;
 
     final message = insight.displayMessage;
 
-    final card = Material(
-      color: cardColor,
-      elevation: 2,
-      shadowColor: Colors.black.withValues(alpha: 0.2),
-      borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(AppDimensions.paddingLg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Header - Title Case, matches astrology details page
+    return TransparentToolbox.buildCard(
+      context: context,
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+      onTap: onTap != null ? () {
+        HapticFeedback.lightImpact();
+        onTap!();
+      } : null,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header - Chic Editorial
+          Text(
+            'Current Energy',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: 'Georgia',
+              fontStyle: FontStyle.italic,
+              fontSize: 26,
+              letterSpacing: -0.5,
+              color: fgMain,
+              height: 1.1,
+            ),
+          ),
+          // Message - airy, editorial style
+          if (message.isNotEmpty) ...[
+            const SizedBox(height: 16),
             Text(
-              'Current Energy',
+              message,
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: AppTheme.holyCowTextSize,
-                fontWeight: FontWeight.w700,
-                color: c,
+                fontFamily: 'Georgia',
+                fontStyle: FontStyle.italic,
+                fontSize: 12.5,
+                color: fgMuted,
+                height: 1.5,
               ),
             ),
-            // Message - full text
-            if (message.isNotEmpty) ...[
-              const SizedBox(height: AppDimensions.spacingMd),
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: AppTheme.holyCowTextSize,
-                  fontWeight: FontWeight.w500,
-                  color: c.withValues(alpha: 0.7),
-                  height: 1.5,
-                ),
-              ),
-            ],
-            // "See full reading" affordance
-            if (onTap != null) ...[
-              const SizedBox(height: AppDimensions.spacingMd),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'See more insights',
-                    style: TextStyle(
-                      fontSize: AppTheme.holyCowTextSize,
-                      fontWeight: FontWeight.w600,
-                      color: c.withValues(alpha: 0.5),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Icon(
-                    Icons.arrow_forward_ios_rounded,
-                    size: 11,
-                    color: c.withValues(alpha: 0.4),
-                  ),
-                ],
-              ),
-            ],
           ],
-        ),
+          // "See full reading" affordance
+          if (onTap != null) ...[
+            const SizedBox(height: 28),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'SEE MORE INSIGHTS',
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 3.0,
+                    color: fgMuted,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(
+                  Icons.arrow_forward_rounded,
+                  size: 13,
+                  color: fgMuted,
+                ),
+              ],
+            ),
+          ],
+        ],
       ),
     );
-
-    if (onTap != null) {
-      return GestureDetector(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          onTap!();
-        },
-        child: card,
-      );
-    }
-
-    return card;
   }
 }
+

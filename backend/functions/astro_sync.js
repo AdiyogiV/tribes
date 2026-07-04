@@ -7,7 +7,7 @@ import { DateTime } from "luxon";
 
 import { db, FieldValue } from "../lib/firebase.js";
 import { requireAuth } from "../lib/auth_utils.js";
-import { runAstroFlow } from "./astro_api.js";
+import { runEphemerisFlow } from "./ephemeris.js";
 import { invalidateCompatibilityCache } from "./compatibility.js";
 import { generateHouseInterpretations } from "../lib/house_interpretations.js";
 import { resetAndRecalculateAyurveda } from "../lib/ayurveda_service.js";
@@ -217,7 +217,7 @@ export async function handleSyncAstroProfile(request) {
     };
 
     // OPTIMIZATION: Start first reading generation IMMEDIATELY in parallel
-    // The AI call takes ~2-3s, so start it NOW before runAstroFlow
+    // The AI call takes ~2-3s, so start it NOW before runEphemerisFlow
     // Track promise so we can await it later if needed
     let earlyFirstReadingPromise = null;
     if (mode === "basic" && !astroData.firstReading?.content) {
@@ -233,7 +233,7 @@ export async function handleSyncAstroProfile(request) {
         }
     }
 
-    const astroResult = await runAstroFlow({
+    const astroResult = await runEphemerisFlow({
         mode,
         payload,
         timeZoneId,
@@ -571,7 +571,7 @@ async function triggerStandardSync(uid) {
     };
 
     try {
-        const astroResult = await runAstroFlow({
+        const astroResult = await runEphemerisFlow({
             mode: "standard",
             payload,
             timeZoneId,

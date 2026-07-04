@@ -13,7 +13,7 @@ Everything follows the classical Vedic recipe: **promise -> timing -> trigger ->
 
 ```
 DATA SOURCE
-  astro_api.js (runAstroFlow)  --calls-->  FreeAstrologyAPI (real ephemeris)
+  ephemeris.js (runEphemerisFlow)  --calls-->  FreeAstrologyAPI (real ephemeris)
       returns: D1 chart, D9 navamsa, D10, Vimshottari dasha,
                panchang, shadbala, ashtakavarga, yogas
       stored on: users/{uid}.astrologyData   (via astro_sync.js on signup/refresh)
@@ -49,7 +49,7 @@ ORCHESTRATE                        functions/schedulers/unified_orchestrator.js
 ## The Vedic 4-step recipe (and where each lives)
 | Step | Question | Tool | File |
 |---|---|---|---|
-| Promise | Does the chart promise it? | D1 + D9 + house lords | astro_api / vedic_analysis |
+| Promise | Does the chart promise it? | D1 + D9 + house lords | ephemeris / vedic_analysis |
 | Timing  | Is that period running? | Vimshottari dasha | daily_insight_context |
 | Trigger | Is a transit activating it? | Gochara (Moon + Lagna) | flavors/per_house |
 | Strength| Strong enough to deliver? | Ashtakavarga + Shadbala | vedic_analysis -> wired into readings |
