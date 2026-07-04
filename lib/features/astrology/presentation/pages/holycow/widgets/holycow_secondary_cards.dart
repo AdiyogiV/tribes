@@ -10,10 +10,8 @@ import 'package:aurogram/shared/models/ayurveda_profile.dart';
 import 'package:aurogram/features/astrology/domain/sky_positions_service.dart';
 import 'package:aurogram/features/astrology/domain/astro_calendar_service.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cards/upcoming_events_card.dart';
-import 'package:aurogram/features/astrology/presentation/widgets/cards/your_chart_mini_card.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/widgets/cosmic_sky_chart_card.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/cosmic_dashboard_data.dart';
-import 'package:aurogram/features/astrology/presentation/widgets/nakshatra_ring_widget.dart';
 import 'package:aurogram/features/ayurveda/presentation/widgets/dosha_dashboard_card.dart';
 import 'package:aurogram/features/astrology/presentation/pages/holycow/widgets/holycow_sky_house_dialog.dart';
 
@@ -37,7 +35,6 @@ class HolyCowSecondaryCards extends StatelessWidget {
   final VoidCallback onResetToToday;
   final Future<void> Function({bool isRetry}) onLoadSkyPositions;
   final Future<void> Function() onTriggerCachePopulation;
-  final NakshatraWheelController? nakshatraController;
   final double spacing;
 
   /// Wheel + text-insight combo injected directly below the Current Sky card
@@ -58,7 +55,6 @@ class HolyCowSecondaryCards extends StatelessWidget {
     required this.onResetToToday,
     required this.onLoadSkyPositions,
     required this.onTriggerCachePopulation,
-    required this.nakshatraController,
     required this.spacing,
     this.insertBeforeSkyCard,
   });
@@ -194,27 +190,6 @@ class HolyCowSecondaryCards extends StatelessWidget {
             events: skyService.allUpcomingEvents,
             maxEvents: 8,
           ),
-          SizedBox(height: spacing),
-        ],
-
-        // Your Birth Stars card (matches profile card style)
-        if (profile != null) ...[
-          YourChartMiniCard(
-            profile: profile!,
-            brown: brown,
-            onTap: () {
-              final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
-              context.push('${RouteNames.astrologyDetails}/$uid');
-            },
-          ),
-          SizedBox(height: spacing),
-        ],
-
-        // Mood check-in — bottom of page. Lives here (not inside
-        // NakshatraRingWidget) so it is an independent, freely-repositionable
-        // card. Collapses when the wheel is not at today.
-        if (nakshatraController != null) ...[
-          NakshatraMoodCheckInCard(controller: nakshatraController!),
           SizedBox(height: spacing),
         ],
 

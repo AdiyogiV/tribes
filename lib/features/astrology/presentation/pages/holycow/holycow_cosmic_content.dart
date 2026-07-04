@@ -284,7 +284,6 @@ class HolyCowCosmicContent extends StatelessWidget {
           onResetToToday: onResetToToday,
           onLoadSkyPositions: onLoadSkyPositions,
           onTriggerCachePopulation: onTriggerCachePopulation,
-          nakshatraController: nakshatraController,
           spacing: spacing,
           insertBeforeSkyCard: isWide ? null : wheelWidget,
         );
