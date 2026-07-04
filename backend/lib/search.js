@@ -185,31 +185,6 @@ export async function getLagnaMeaning(lagna) {
 }
 
 /**
- * Get Moon Sign meaning - Cache Forever
- * @param {string} moonSign - Moon sign (e.g., "Cancer", "Leo")
- */
-export async function getMoonSignMeaning(moonSign) {
-    if (!moonSign) return null;
-
-    const cacheKey = moonSign.toLowerCase();
-    const cached = await getCachedAstroKnowledge("moonSign", cacheKey);
-    if (cached) return cached;
-
-    const results = await performWebSearch(
-        `${moonSign} Moon sign emotional patterns mind vedic astrology rashi`
-    );
-
-    const meaning = {
-        sign: moonSign,
-        characteristics: extractBestSnippet(results),
-        searchedAt: new Date().toISOString(),
-    };
-
-    await cacheAstroKnowledge("moonSign", cacheKey, meaning);
-    return meaning;
-}
-
-/**
  * Get Nakshatra meaning - Cache Forever
  * @param {string} nakshatra - Nakshatra name (e.g., "Rohini", "Ashwini")
  */
@@ -383,31 +358,6 @@ export async function getPlanetRemedies(planet, isWeak = true) {
 }
 
 /**
- * Get House signification - Cache Forever
- * @param {number} house - House number (1-12)
- */
-export async function getHouseMeaning(house) {
-    if (!house || house < 1 || house > 12) return null;
-
-    const cacheKey = `house_${house}`;
-    const cached = await getCachedAstroKnowledge("house", cacheKey);
-    if (cached) return cached;
-
-    const results = await performWebSearch(
-        `${getOrdinal(house)} house meaning significations vedic astrology bhava`
-    );
-
-    const meaning = {
-        house,
-        significations: extractBestSnippet(results),
-        searchedAt: new Date().toISOString(),
-    };
-
-    await cacheAstroKnowledge("house", cacheKey, meaning);
-    return meaning;
-}
-
-/**
  * Get Retrograde survival guide - Cache Forever
  * @param {string} planet - Planet name (e.g., "Mercury", "Venus")
  */
@@ -466,32 +416,6 @@ export async function getGlobalAstroEvents(date) {
 
     await cacheAstroCurrent("global", cacheKey, events, 7); // Cache 7 days
     return events;
-}
-
-/**
- * Get current retrograde status - Cache 7 days
- * @param {Date} date - Date to search for
- */
-export async function getCurrentRetrogrades(date) {
-    const month = date.toLocaleString("en", { month: "long" });
-    const year = date.getFullYear();
-    const cacheKey = `retrogrades_${year}_${date.getMonth()}`;
-
-    const cached = await getCachedAstroCurrent("retrogrades", cacheKey);
-    if (cached) return cached;
-
-    const results = await performWebSearch(
-        `Mercury Venus Mars Jupiter Saturn retrograde ${month} ${year} dates status direct`
-    );
-
-    const retrogrades = {
-        planets: parseRetrogrades(results),
-        details: extractBestSnippet(results, 300),
-        searchedAt: new Date().toISOString(),
-    };
-
-    await cacheAstroCurrent("retrogrades", cacheKey, retrogrades, 7);
-    return retrogrades;
 }
 
 /**
@@ -604,35 +528,6 @@ export async function getMonthlyFestivals(date) {
 
     await cacheAstroCurrent("festivals", cacheKey, festivals, 30);
     return festivals;
-}
-
-/**
- * Get today's astrological weather - Cache 1 day
- * @param {Date} date - Date to search for
- */
-export async function getDailyAstroWeather(date) {
-    const dateStr = date.toISOString().split("T")[0];
-    const cacheKey = `daily_${dateStr}`;
-
-    const cached = await getCachedAstroCurrent("daily", cacheKey);
-    if (cached) return cached;
-
-    const month = date.toLocaleString("en", { month: "long" });
-    const day = date.getDate();
-    const year = date.getFullYear();
-
-    const results = await performWebSearch(
-        `astrological energy today ${month} ${day} ${year} planetary aspects vedic`
-    );
-
-    const weather = {
-        date: dateStr,
-        overview: extractBestSnippet(results, 300),
-        searchedAt: new Date().toISOString(),
-    };
-
-    await cacheAstroCurrent("daily", cacheKey, weather, 1);
-    return weather;
 }
 
 // =============================================================================

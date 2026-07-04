@@ -16,11 +16,6 @@
  */
 
 import { logger } from "firebase-functions";
-import {
-    GANDMOOL_NAKSHATRAS,
-    HOUSE_SIGNIFICATIONS,
-    NAKSHATRAS as SHARED_NAKSHATRAS,
-} from "./constants.js";
 import { normalizeDasha } from "./astro_helpers.js";
 
 // ============================================================================
@@ -158,17 +153,6 @@ const ASPECT_STRENGTHS = {
 };
 
 /**
- * Transit significance scores for calculateTransitSignificance()
- */
-const TRANSIT_SCORES = {
-    MAJOR_HOUSE: 10,          // Kendra houses (1, 4, 7, 10)
-    SECONDARY_HOUSE: 7,       // Trikona + 2nd/11th houses (2, 5, 9, 11)
-    TERTIARY_HOUSE: 3,        // Dusthana + minor houses (3, 6, 8, 12)
-    SLOW_PLANET_BONUS: 5,     // Extra weight for Saturn, Jupiter, Rahu, Ketu
-    LAGNA_ASPECT: 10,         // Aspect to Ascendant
-};
-
-/**
  * Nakshatra list for reference (27 nakshatras)
  */
 const NAKSHATRAS = [
@@ -178,13 +162,6 @@ const NAKSHATRAS = [
     "Moola", "Purva Ashadha", "Uttara Ashadha", "Shravana", "Dhanishta", "Shatabhisha",
     "Purva Bhadrapada", "Uttara Bhadrapada", "Revati",
 ];
-
-/**
- * Get house signification
- */
-export function getHouseSignification(houseNumber) {
-    return HOUSE_SIGNIFICATIONS[houseNumber] || "Unknown house";
-}
 
 /**
  * Calculate house number from degree (1-12)
@@ -256,81 +233,6 @@ export function calculateWholeSignHouse(planetDegree, ascendantDegree) {
     // Planet in same sign as Lagna = 1st house
     const houseIndex = ((planetSignIndex - ascendantSignIndex + 12) % 12);
     return houseIndex + 1; // Convert 0-11 to 1-12
-}
-
-/**
- * Calculate VEDIC aspects (Drishti)
- * 
- * In Vedic astrology, aspects are based on HOUSES, not degrees like Western astrology.
- * - All planets aspect the 7th house from themselves (180°)
- * - Mars additionally aspects 4th and 8th houses (90° and 210°)
- * - Jupiter additionally aspects 5th and 9th houses (120° and 240°)
- * - Saturn additionally aspects 3rd and 10th houses (60° and 270°)
- * - Rahu/Ketu aspect like Jupiter (5th and 9th)
- * 
- * Reference: BPHS Chapter 26
- */
-export function calculateVedicAspect(aspectingPlanet, aspectingDegree, aspectedDegree) {
-    if (aspectingDegree == null || aspectedDegree == null) return null;
-
-    // Calculate house distance (1-12)
-    let houseDiff = Math.floor(((aspectedDegree - aspectingDegree + 360) % 360) / 30) + 1;
-    if (houseDiff > 12) houseDiff -= 12;
-    
-    const aspects = [];
-    
-    // All planets have full 7th aspect (opposition)
-    if (houseDiff === 7) {
-        aspects.push({ type: "full_aspect", house: 7, strength: 100 });
-    }
-    
-    // Special aspects based on planet
-    const planetName = aspectingPlanet?.toString() || "";
-    
-    if (planetName.includes("Mars")) {
-        // Mars aspects 4th and 8th with full strength
-        if (houseDiff === 4) aspects.push({ type: "special_aspect", house: 4, strength: 100 });
-        if (houseDiff === 8) aspects.push({ type: "special_aspect", house: 8, strength: 100 });
-    }
-    
-    if (planetName.includes("Jupiter")) {
-        // Jupiter aspects 5th and 9th with full strength
-        if (houseDiff === 5) aspects.push({ type: "special_aspect", house: 5, strength: 100 });
-        if (houseDiff === 9) aspects.push({ type: "special_aspect", house: 9, strength: 100 });
-    }
-    
-    if (planetName.includes("Saturn")) {
-        // Saturn aspects 3rd and 10th with full strength
-        if (houseDiff === 3) aspects.push({ type: "special_aspect", house: 3, strength: 100 });
-        if (houseDiff === 10) aspects.push({ type: "special_aspect", house: 10, strength: 100 });
-    }
-    
-    if (planetName.includes("Rahu") || planetName.includes("Ketu")) {
-        // Rahu/Ketu aspect like Jupiter (5th and 9th)
-        if (houseDiff === 5) aspects.push({ type: "special_aspect", house: 5, strength: 100 });
-        if (houseDiff === 9) aspects.push({ type: "special_aspect", house: 9, strength: 100 });
-    }
-    
-    // Conjunction (same house)
-    if (houseDiff === 1) {
-        // Check actual degree proximity for conjunction
-        const diff = Math.abs(aspectingDegree - aspectedDegree);
-        const angle = Math.min(diff, 360 - diff);
-        if (angle < 12) { // Traditional conjunction orb
-            aspects.push({ type: "conjunction", house: 1, strength: 100, orb: angle });
-        }
-    }
-    
-    return aspects.length > 0 ? aspects : null;
-}
-
-/**
- * Check if a planet aspects another planet (Vedic method)
- * Returns true if aspectingPlanet aspects aspectedPlanet
- */
-export function doesPlanetAspect(aspectingPlanet, aspectingDegree, aspectedDegree) {
-    const aspects = calculateVedicAspect(aspectingPlanet, aspectingDegree, aspectedDegree);
-    return aspects && aspects.length > 0;
 }
 
 /**
@@ -449,87 +351,6 @@ export function checkCombustion(planetName, planetDegree, sunDegree, isRetrograd
 }
 
 /**
- * Check Gandmool Dosha
- * Birth in certain nakshatras is considered inauspicious
- */
-export function checkGandmoolDosha(moonNakshatra) {
-    if (!moonNakshatra) return null;
-    
-    const nakshatra = moonNakshatra.toString();
-    const isGandmool = GANDMOOL_NAKSHATRAS.some(
-        gn => nakshatra.toLowerCase().includes(gn.toLowerCase())
-    );
-    
-    if (isGandmool) {
-        return {
-            hasGandmool: true,
-            nakshatra: moonNakshatra,
-            description: `Born in ${moonNakshatra} nakshatra - Gandmool Dosha present. Traditional remedies may be beneficial.`,
-        };
-    }
-    
-    return { hasGandmool: false };
-}
-
-/**
- * Check Kemadruma Yoga (very important negative yoga)
- * Moon without planets in 2nd or 12th from it causes mental troubles and poverty
- * 
- * Reference: BPHS, Phaladeepika
- * 
- * Cancellation occurs if:
- * - Moon in Kendra from Lagna
- * - Moon conjunct/aspected by benefics
- * - Moon in Kendra from a planet
- */
-export function checkKemadrumaYoga(moonHouse, moonDegree, planets, ascDegree) {
-    if (moonHouse == null || moonDegree == null || !planets) return null;
-    
-    // Houses 2nd and 12th from Moon
-    const house2ndFromMoon = moonHouse === 12 ? 1 : moonHouse + 1;
-    const house12thFromMoon = moonHouse === 1 ? 12 : moonHouse - 1;
-    
-    let hasPlanetIn2nd = false;
-    let hasPlanetIn12th = false;
-    const relevantPlanets = ["Mars", "Mercury", "Jupiter", "Venus", "Saturn"];
-    
-    for (const planetName of relevantPlanets) {
-        const planet = planets[planetName];
-        if (!planet) continue;
-        
-        const pDegree = planet.fullDegree || planet.full_degree || planet.longitude;
-        if (pDegree == null) continue;
-        
-        const pHouse = calculateHouseFromDegree(pDegree, ascDegree);
-        
-        if (pHouse === house2ndFromMoon) hasPlanetIn2nd = true;
-        if (pHouse === house12thFromMoon) hasPlanetIn12th = true;
-    }
-    
-    // Kemadruma exists if no planets in 2nd or 12th from Moon
-    if (!hasPlanetIn2nd && !hasPlanetIn12th) {
-        // Check for cancellation
-        const isMoonInKendra = [1, 4, 7, 10].includes(moonHouse);
-        
-        if (isMoonInKendra) {
-            return {
-                hasKemadruma: false,
-                cancelled: true,
-                reason: "Moon in Kendra from Lagna cancels Kemadruma",
-            };
-        }
-        
-        return {
-            hasKemadruma: true,
-            description: "Kemadruma Yoga - Moon without support in adjacent houses. May indicate periods of loneliness or financial challenges. Benefic aspects can mitigate.",
-            severity: "Moderate",
-        };
-    }
-    
-    return { hasKemadruma: false };
-}
-
-/**
  * Calculate aspects between two planets (Western-style, for compatibility)
  * Kept for backward compatibility
  */
@@ -548,45 +369,6 @@ export function calculateAspect(degree1, degree2) {
     if (Math.abs(angle - 60) < orb) return { type: "sextile", angle, strength: ASPECT_STRENGTHS.SEXTILE };
 
     return null;
-}
-
-/**
- * Calculate house activations from transits
- * Returns array of activated houses with significations
- */
-export function calculateHouseActivations(natalChart, transits) {
-    if (!natalChart || !transits) return [];
-
-    const activations = [];
-    // Handle ascendant as number or object
-    const ascendantDegree = typeof natalChart.ascendant === "number"
-        ? natalChart.ascendant
-        : (natalChart.ascendant?.fullDegree || natalChart.ascendant?.longitude);
-
-    if (ascendantDegree == null) return [];
-
-    // Process each transiting planet
-    Object.entries(transits).forEach(([planet, transitData]) => {
-        if (!transitData || typeof transitData !== "object") return;
-
-        const transitDegree = transitData.degree || transitData.fullDegree || transitData.longitude;
-        if (transitDegree == null) return;
-
-        const houseNumber = calculateHouseFromDegree(transitDegree, ascendantDegree);
-        if (!houseNumber) return;
-
-        const signification = getHouseSignification(houseNumber);
-
-        activations.push({
-            planet,
-            house: houseNumber,
-            signification,
-            transitSign: transitData.sign,
-            transitDegree,
-        });
-    });
-
-    return activations;
 }
 
 /**
@@ -628,82 +410,6 @@ export function calculateTransitAspects(natalChart, transits) {
     });
 
     return aspects;
-}
-
-/**
- * Calculate significance score for a transit
- * Higher score = more significant
- */
-export function calculateTransitSignificance(transitData, natalPlanet, planetName) {
-    if (!transitData || !natalPlanet) return 0;
-
-    let score = 0;
-
-    // House importance
-    const houseNumber = transitData.house;
-    if (houseNumber) {
-        // Major houses (1, 4, 7, 10) are more significant
-        if ([1, 4, 7, 10].includes(houseNumber)) {
-            score += TRANSIT_SCORES.MAJOR_HOUSE;
-        } else if ([2, 5, 9, 11].includes(houseNumber)) {
-            score += TRANSIT_SCORES.SECONDARY_HOUSE;
-        } else {
-            score += TRANSIT_SCORES.TERTIARY_HOUSE;
-        }
-    }
-
-    // Planet importance (slow planets are more significant)
-    const slowPlanets = ["Saturn", "Jupiter", "Rahu", "Ketu"];
-    if (slowPlanets.includes(planetName)) {
-        score += TRANSIT_SCORES.SLOW_PLANET_BONUS;
-    }
-
-    // Aspect to Lagna (most significant)
-    if (transitData.aspectsToLagna) {
-        score += TRANSIT_SCORES.LAGNA_ASPECT;
-    }
-
-    return score;
-}
-
-/**
- * Score house activations by significance
- */
-export function scoreHouseActivations(houseActivations, dashaData) {
-    if (!houseActivations || houseActivations.length === 0) return [];
-
-    return houseActivations.map(activation => {
-        let significance = 0;
-
-        // House importance
-        if ([1, 4, 7, 10].includes(activation.house)) {
-            significance += 10;
-        } else if ([2, 5, 9, 11].includes(activation.house)) {
-            significance += 7;
-        } else {
-            significance += 3;
-        }
-
-        // Planet importance
-        const slowPlanets = ["Saturn", "Jupiter", "Rahu", "Ketu"];
-        if (slowPlanets.includes(activation.planet)) {
-            significance += 5;
-        }
-
-        // Dasha interaction (if transit planet is Dasha lord)
-        if (dashaData) {
-            const { mahaDasha, antarDasha } = normalizeDasha(dashaData);
-            if (activation.planet === mahaDasha || activation.planet === antarDasha) {
-                significance += 8;
-            }
-        }
-
-        return {
-            ...activation,
-            score: significance, // Use 'score' for consistency with frontend expectations
-            significance, // Keep both for backward compatibility
-        };
-    }).sort((a, b) => (b.score || b.significance) - (a.score || a.significance)); // Sort by score descending
 }
 
 /**
@@ -771,15 +477,6 @@ const EXALTATION = {
 const KENDRA_HOUSES = [1, 4, 7, 10];
 // Trikona houses (trines): 1, 5, 9
 const TRIKONA_HOUSES = [1, 5, 9];
-
-/**
- * Get sign number (1-12) from sign name
- */
-function getSignNumber(signName) {
-    if (!signName) return null;
-    const idx = VEDIC_SIGNS.findIndex(s => s.toLowerCase() === signName.toLowerCase());
-    return idx >= 0 ? idx + 1 : null;
-}
 
 /**
  * Get house number from planet degree and ascendant degree
@@ -876,8 +573,6 @@ export function calculateRajYogas(planets, ascendant) {
     const jupiter = getPlanetInfo("Jupiter");
     const venus = getPlanetInfo("Venus");
     const saturn = getPlanetInfo("Saturn");
-    const rahu = getPlanetInfo("Rahu");
-    const ketu = getPlanetInfo("Ketu");
 
     // ========================================
     // 1. PANCH MAHAPURUSHA YOGAS
