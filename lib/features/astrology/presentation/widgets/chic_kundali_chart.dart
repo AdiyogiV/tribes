@@ -101,10 +101,11 @@ class _KundaliPainter extends CustomPainter {
       .where((s) => s.isNotEmpty)
       .toList();
 
-  /// The pixel point where a house's planets are drawn.
-  Offset _planetCenter(int i, double w, double h) => Offset(
-        w * _anchors[i].dx + _pushDirs[i].dx * 42.0,
-        h * _anchors[i].dy + _pushDirs[i].dy * 42.0,
+  /// The pixel point where a house's planets are drawn. [dist] matches the
+  /// push distance used when rendering the text (42 natal, 72 transit).
+  Offset _planetCenter(int i, double w, double h, double dist) => Offset(
+        w * _anchors[i].dx + _pushDirs[i].dx * dist,
+        h * _anchors[i].dy + _pushDirs[i].dy * dist,
       );
 
   /// Vedic drishti: house-count offsets a planet aspects. Every planet sees
@@ -280,7 +281,13 @@ class _KundaliPainter extends CustomPainter {
   }
 
   /// Draws subtle curved drishti lines between houses that contain planets.
+  /// Uses the transit (live sky) planets when available so the connections
+  /// actually move with time; otherwise falls back to the natal chart.
   void _drawAspects(Canvas canvas, double w, double h) {
+    final bool useTransit = transitHouses != null && transitPlanetStyle != null;
+    final source = useTransit ? transitHouses! : houses;
+    final dist = useTransit ? 72.0 : 42.0;
+
     final center = Offset(w / 2, h / 2);
     final aspectPaint = Paint()
       ..style = PaintingStyle.stroke
@@ -291,8 +298,8 @@ class _KundaliPainter extends CustomPainter {
 
     final drawn = <int>{}; // dedupe by (from*12 + to)
 
-    for (int from = 0; from < 12 && from < houses.length; from++) {
-      final planets = _clean(houses[from]);
+    for (int from = 0; from < 12 && from < source.length; from++) {
+      final planets = _clean(source[from]);
       if (planets.isEmpty) continue;
 
       // Union of all aspect targets for the planets sitting in this house.
@@ -305,13 +312,15 @@ class _KundaliPainter extends CustomPainter {
 
       for (final to in targets) {
         if (to == from) continue;
-        if (_clean(houses[to]).isEmpty) continue; // only connect planet↔planet
+        if (to >= source.length || _clean(source[to]).isEmpty) {
+          continue; // only connect planet↔planet
+        }
 
         final key = from < to ? from * 12 + to : to * 12 + from;
         if (!drawn.add(key)) continue;
 
-        final a = _planetCenter(from, w, h);
-        final b = _planetCenter(to, w, h);
+        final a = _planetCenter(from, w, h, dist);
+        final b = _planetCenter(to, w, h, dist);
 
         // Route the connection AROUND the busy centre instead of straight
         // through it: bow the arc outward, perpendicular to the a-b line, on
