@@ -349,14 +349,20 @@ class _KundaliPainter extends CustomPainter {
           // Perpendicular offset at t: outward bow (+ per-planet lane) plus a
           // sine ripple. Both vanish at the endpoints so the line anchors
           // cleanly on planet and house.
+          // Per-line seeded randomness: each connection gets its own
+          // amplitude, wave count and phase so the web looks organic. Seeded
+          // (not live) so it stays stable across repaints instead of jittering.
+          final rnd = math.Random(from * 1000 + to * 10 + pi);
           final outwardBase = len * 0.18 + lane;
-          const amplitude = 10.0;
-          const waves = 4;
+          final amplitude = 8.0 + rnd.nextDouble() * 18.0; // 8..26
+          final waves = 3 + rnd.nextInt(5); // 3..7
+          final phase = rnd.nextDouble() * 2 * math.pi;
           Offset pt(double t) {
             final base =
                 Offset(a.dx + (b.dx - a.dx) * t, a.dy + (b.dy - a.dy) * t);
-            final o = outwardBase * math.sin(t * math.pi) +
-                amplitude * math.sin(t * math.pi * waves);
+            final env = math.sin(t * math.pi); // fade to 0 at both ends
+            final o = outwardBase * env +
+                env * amplitude * math.sin(t * math.pi * waves + phase);
             return Offset(base.dx + perp.dx * o, base.dy + perp.dy * o);
           }
 
