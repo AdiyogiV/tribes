@@ -12,12 +12,12 @@
  * Birth in these requires specific remedies
  */
 export const GANDMOOL_NAKSHATRAS = [
-    "Ashwini",     // 0 - Beginning of Aries
-    "Ashlesha",    // 8 - End of Cancer
-    "Magha",       // 9 - Beginning of Leo
-    "Jyeshtha",    // 17 - End of Scorpio
-    "Moola",       // 18 - Beginning of Sagittarius
-    "Revati",      // 26 - End of Pisces
+    "Ashwini", // 0 - Beginning of Aries
+    "Ashlesha", // 8 - End of Cancer
+    "Magha", // 9 - Beginning of Leo
+    "Jyeshtha", // 17 - End of Scorpio
+    "Moola", // 18 - Beginning of Sagittarius
+    "Revati", // 26 - End of Pisces
 ];
 
 /**
@@ -45,11 +45,6 @@ export const ZODIAC_SIGNS = [
 export const PLANETS = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu"];
 
 /**
- * Traditional 7 planets (excluding shadow planets)
- */
-export const TRADITIONAL_PLANETS = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn"];
-
-/**
  * House significations in Vedic astrology (Bhava Karakatwa)
  * Personal (natal chart) perspective.
  */
@@ -69,69 +64,20 @@ export const HOUSE_SIGNIFICATIONS = {
 };
 
 /**
- * House significations for Mundane (world) astrology — Medini Jyotish.
- * Kalpurush Kundli: fixed Aries ascendant.
- */
-export const MUNDANE_HOUSES = {
-    1:  { name: "Lagna",      domain: "nation, national identity, general public, collective mood" },
-    2:  { name: "Dhana",      domain: "economy, national wealth, banks, currency, trade, revenue" },
-    3:  { name: "Sahaja",     domain: "communications, media, transport, neighbors, short journeys" },
-    4:  { name: "Sukha",      domain: "land, agriculture, infrastructure, opposition party, homeland, weather" },
-    5:  { name: "Putra",      domain: "children, education, speculation, entertainment, diplomacy" },
-    6:  { name: "Ripu",       domain: "military, health, disease, labor, service, enemies" },
-    7:  { name: "Yuvati",     domain: "foreign affairs, war/peace, treaties, open enemies, partnerships" },
-    8:  { name: "Randhra",    domain: "death, crisis, taxes, debt, insurance, transformation, secrets" },
-    9:  { name: "Dharma",     domain: "law, religion, judiciary, philosophy, long journeys, foreign lands" },
-    10: { name: "Karma",      domain: "government, ruler, authority, reputation, executive power" },
-    11: { name: "Labha",      domain: "parliament, legislature, alliances, gains, aspirations" },
-    12: { name: "Vyaya",      domain: "losses, exile, espionage, hospitals, prisons, foreign settlements" },
-};
-
-/**
  * Planet rulership — which signs each planet rules.
  * Standard Parashari lordship. Rahu/Ketu co-lordship per BPHS.
  */
 export const PLANET_RULERSHIP = {
-    Sun:     ["Leo"],
-    Moon:    ["Cancer"],
-    Mars:    ["Aries", "Scorpio"],
+    Sun: ["Leo"],
+    Moon: ["Cancer"],
+    Mars: ["Aries", "Scorpio"],
     Mercury: ["Gemini", "Virgo"],
     Jupiter: ["Sagittarius", "Pisces"],
-    Venus:   ["Taurus", "Libra"],
-    Saturn:  ["Capricorn", "Aquarius"],
-    Rahu:    ["Aquarius"],   // co-lord with Saturn
-    Ketu:    ["Scorpio"],    // co-lord with Mars
+    Venus: ["Taurus", "Libra"],
+    Saturn: ["Capricorn", "Aquarius"],
+    Rahu: ["Aquarius"], // co-lord with Saturn
+    Ketu: ["Scorpio"], // co-lord with Mars
 };
-
-/**
- * Sign → house number (fixed Aries ascendant = natural zodiac).
- * Used by mundane astrology modules.
- */
-export const SIGN_TO_HOUSE = {
-    aries: 1,    taurus: 2,   gemini: 3,    cancer: 4,
-    leo: 5,      virgo: 6,    libra: 7,     scorpio: 8,
-    sagittarius: 9, capricorn: 10, aquarius: 11, pisces: 12,
-};
-
-// ── Position helpers (derive sign/nakshatra from longitude) ─────────────
-
-/** Get sign name from sidereal longitude. */
-export function getSignFromLongitude(longitude) {
-    if (longitude == null) return null;
-    return ZODIAC_SIGNS[Math.floor(((longitude % 360) + 360) % 360 / 30)];
-}
-
-/** Get sign degree (0-30) from sidereal longitude. */
-export function getSignDegree(longitude) {
-    if (longitude == null) return null;
-    return ((longitude % 360) + 360) % 360 % 30;
-}
-
-/** Get house number (1-12, Kalpurush) from sidereal longitude. */
-export function getHouseFromLongitude(longitude) {
-    if (longitude == null) return null;
-    return Math.floor(((longitude % 360) + 360) % 360 / 30) + 1;
-}
 
 // =============================================================================
 // SPACE TYPES (must match lib/modal/spaceTypes.dart and firestore.rules)
@@ -143,75 +89,10 @@ export function getHouseFromLongitude(longitude) {
  * 0 = legacy open (public), 1 = public, 2 = private, 3 = legacy personal (deprecated)
  */
 export const SPACE_TYPES = {
-    OPEN: 0,       // legacy open → public
-    PUBLIC: 1,     // public
-    PRIVATE: 2,    // private - must NOT appear in globalFeed
-    PERSONAL: 3,   // legacy personal (deprecated)
-};
-
-/** Space is eligible for global feed iff type is OPEN or PUBLIC and not limitedVisibility */
-export function isPublicSpaceType(spaceType) {
-    return spaceType === SPACE_TYPES.OPEN || spaceType === SPACE_TYPES.PUBLIC;
-}
-
-// =============================================================================
-// FIRESTORE COLLECTIONS
-// =============================================================================
-
-export const COLLECTIONS = {
-    USERS: "users",
-    SPACES: "spaces",
-    POSTS: "posts",
-    NOTIFICATIONS: "notifications",
-    ASTRO_CACHE: "astroCache",
-    ASTRO_KNOWLEDGE: "astroKnowledge",
-    ASTRO_CURRENT: "astroCurrent",
-    AI_CHAT_SESSIONS: "ai_chat_sessions",
-    FUNCTION_EVENTS: "functionEvents",
-    GLOBAL_FEED: "globalFeed",
-};
-
-// =============================================================================
-// NOTIFICATION TYPES
-// =============================================================================
-
-export const NOTIFICATION_TYPES = {
-    REPLY: "reply",
-    INVITE: "invite",
-    ADDED_TO_GROUP: "addedtogroup",
-    REQUEST: "request",
-    NAMASTE: "namaste",
-    NEW_SPACE_POST: "newSpacePost",
-    LIKE: "like",
-    DAILY_ASTRO_INSIGHT: "dailyAstroInsight",
-    CHAT: "chat",
-    MESSAGE: "message",
-    ANONYMOUS_MESSAGE: "anonymousMessage",
-};
-
-// =============================================================================
-// INSIGHT CARD TYPES
-// =============================================================================
-
-export const INSIGHT_CARD_TYPES = {
-    HERO: "hero",
-    PREDICTION: "prediction",
-    STRENGTH: "strength",
-    GUIDANCE: "guidance",
-};
-
-// =============================================================================
-// CACHE TTL CONSTANTS (in hours)
-// =============================================================================
-
-export const CACHE_TTL = {
-    TRANSIT: 6,       // Refresh every 6 hours
-    AI_INSIGHT: 4,    // Insights refresh 4x daily
-    SEARCH: 12,       // Search context refresh 2x daily
-    DAILY: 24,        // 1 day
-    WEEKLY: 168,      // 7 days
-    MONTHLY: 720,     // 30 days
-    FOREVER: -1,      // Never expires
+    OPEN: 0, // legacy open → public
+    PUBLIC: 1, // public
+    PRIVATE: 2, // private - must NOT appear in globalFeed
+    PERSONAL: 3, // legacy personal (deprecated)
 };
 
 // =============================================================================
@@ -242,22 +123,6 @@ export const FREE_ASTROLOGY_API = {
         SHADBALA: "/shadbala/summary",
         ASHTAKOOT: "/match-making/ashtakoot-score",
     },
-};
-
-// =============================================================================
-// AI CONFIGURATION
-// =============================================================================
-
-export const AI_CONFIG = {
-    OPENROUTER_URL: "https://openrouter.ai/api/v1/chat/completions",
-    DEFAULT_MODEL: "openai/gpt-4o-mini",
-    FALLBACK_MODELS: [
-        "openai/gpt-4o-mini",
-        "anthropic/claude-3-haiku",
-        "google/gemini-flash-1.5",
-    ],
-    MAX_TOKENS: 4096,
-    TEMPERATURE: 0.7,
 };
 
 // =============================================================================
@@ -293,36 +158,6 @@ export const BATCH_SIZES = {
 };
 
 // =============================================================================
-// TIMEOUTS (in milliseconds)
-// =============================================================================
-
-export const TIMEOUTS = {
-    // API request timeouts
-    API_REQUEST_MS: 30000,
-    // Stale deletion threshold (1 hour)
-    STALE_DELETION_THRESHOLD_MS: 60 * 60 * 1000,
-    // FCM notification TTL (24 hours)
-    FCM_TTL_MS: 86400000,
-    // Call notification timeout (60 seconds)
-    CALL_NOTIFICATION_TIMEOUT_MS: 60000,
-    // API rate limiting delay
-    API_RATE_LIMIT_DELAY_MS: 100,
-};
-
-// =============================================================================
-// INSIGHT SCHEDULING
-// =============================================================================
-
-export const INSIGHT_SCHEDULE = {
-    // Dispatch times in 24-hour format (IST)
-    DISPATCH_TIMES: ["06:00", "12:00", "17:00", "21:00"],
-    // Time slots for collection names (without colon)
-    TIME_SLOTS: ["0600", "1200", "1700", "2100"],
-    // Days to keep dispatch entries before cleanup
-    DISPATCH_RETENTION_DAYS: 7,
-};
-
-// =============================================================================
 // AURA POINTS
 // =============================================================================
 
@@ -338,15 +173,3 @@ export const AURA_POINTS = {
     ASTROLOGY_SETUP: 10,
     DAILY_INSIGHT_VIEW: 1,
 };
-
-// =============================================================================
-// AI AGENT CONFIGURATION
-// =============================================================================
-
-/**
- * HolyCow AI user ID - used for AI profile posts and interactions
- * Must match lib/providers/ai_chat_provider.dart HOLYCOW_USER_ID
- */
-export const HOLYCOW_AI_USER_ID = "holycow_system_user";
-
-
