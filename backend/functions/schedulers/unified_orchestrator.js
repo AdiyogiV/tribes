@@ -43,7 +43,7 @@ import { logger } from "firebase-functions/v2";
 
 // Phase 1: Cleanup runners
 import { runCleanupTypingIndicators } from "../cleanup_typing.js";
-import { runCleanupOldDispatchEntries, runCleanupExpiredCacheEntries } from "../daily_astro_insights.js";
+import { runCleanupOldDispatchEntries, runCleanupExpiredCacheEntries } from "../maintenance.js";
 import { runCleanupOrphanedFeedEntries } from "../feeds.js";
 import { runProcessPendingDeletions } from "../user_deletion.js";
 import { runRefreshUserMemories } from "../user_memory.js";

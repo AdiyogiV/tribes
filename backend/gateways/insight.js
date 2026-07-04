@@ -27,8 +27,8 @@ import { handleGenerateFirstReading } from "../functions/first_reading.js";
 import { handleGenerateCurrentTimesReading } from "../functions/current_times_reading.js";
 import {
     handleGenerateInsightForCurrentUser,
-    handleClearAstroCaches,
 } from "../functions/daily_astro_insights.js";
+import { handleClearAstroCaches } from "../functions/maintenance.js";
 import { handleGeneratePerHouseNow } from "../insights/orchestration/per_house_scheduler.js";
 import {
     handleSubmitInsightFeedback,
