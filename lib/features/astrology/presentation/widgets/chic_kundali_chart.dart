@@ -227,7 +227,7 @@ class _KundaliPainter extends CustomPainter {
           canvas: canvas,
           text: nameStr.toUpperCase(),
           style: planetStyle.copyWith(
-            fontSize: (planetStyle.fontSize ?? 9.0) - 1.5,
+            fontSize: 7.0, // Keep house labels small regardless of planet size
             letterSpacing: 1.5,
             fontWeight: FontWeight.w800,
           ),
