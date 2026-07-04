@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-import 'package:kundali_chart/kundali_chart.dart';
 import 'package:aurogram/features/astrology/data/utils/chart_utils.dart';
+import 'package:aurogram/features/astrology/presentation/widgets/chic_kundali_chart.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/shared/presentation/widgets/universal/transparent_toolbox.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/widgets/chart_blend_slider.dart';
@@ -33,11 +33,14 @@ class CosmicSkyChartCard extends StatelessWidget {
   final VoidCallback? onTriggerCachePopulation;
   final Map<String, dynamic>? Function(DateTime) getPositionsForDate;
   final Map<String, dynamic>? Function(DateTime) getInterpolatedPositions;
+
   /// Optional callback to navigate to the Astrology Details (birth chart) page.
   final VoidCallback? onExploreBirthChart;
+
   /// Optional daily insight main text. When non-empty, a small insight
   /// block is rendered at the bottom of the card.
   final String? insightText;
+
   /// Optional callback fired when the user taps a house in the sky chart.
   /// Receives the house number (1..12). Used by the parent to show a
   /// per-house current-state popup (HouseDetailsDialog).
@@ -69,8 +72,7 @@ class CosmicSkyChartCard extends StatelessWidget {
   });
 
   /// Whether the time slider is parked at "today" (its midpoint).
-  bool get isSliderOnToday =>
-      (sliderValue - _todaySliderValue).abs() < 0.01;
+  bool get isSliderOnToday => (sliderValue - _todaySliderValue).abs() < 0.01;
 
   @override
   Widget build(BuildContext context) {
@@ -252,7 +254,8 @@ class CosmicSkyChartCard extends StatelessWidget {
                       color: showTransitOverlay
                           ? c.withValues(alpha: 0.15)
                           : c.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                      borderRadius:
+                          BorderRadius.circular(AppDimensions.radiusMd),
                     ),
                     child: Text(
                       showTransitOverlay ? 'Sky Only' : 'Show Birth',
@@ -275,7 +278,8 @@ class CosmicSkyChartCard extends StatelessWidget {
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
                       color: c.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                      borderRadius:
+                          BorderRadius.circular(AppDimensions.radiusMd),
                     ),
                     child: Text(
                       'Today',
@@ -315,7 +319,7 @@ class CosmicSkyChartCard extends StatelessWidget {
         final chartWidth = availableWidth.clamp(200.0, 500.0);
         const padding = 12.0;
         final innerSize = chartWidth - (padding * 2);
-        const baseScale = 1.23;
+        const baseScale = 1.0;
 
         return Center(
           child: RepaintBoundary(
@@ -338,90 +342,104 @@ class CosmicSkyChartCard extends StatelessWidget {
                       }
                     },
               child: Container(
-              width: chartWidth,
-              height: chartWidth,
-              padding: const EdgeInsets.all(padding),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
-                child: Transform.scale(
-                  scale: baseScale,
-                  alignment: Alignment.center,
-                  child: SizedBox(
-                    width: innerSize,
-                    height: innerSize,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        // Current Sky Chart
-                        Opacity(
-                          opacity: showTransitOverlay
-                              ? (1 - chartBlendValue).clamp(0.15, 1.0)
-                              : 1.0,
-                          child: KundaliChart(
-                            key: ValueKey('sky_$dateStr'),
-                            houses: skyHouses,
-                            strokeColor: isDark
-                                ? Colors.teal.shade300
-                                : Colors.teal.shade700,
-                            houseLabelStyle: TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w500,
-                              color: isDark
-                                  ? Colors.teal.shade300
-                                  : Colors.teal.shade700,
-                              height: 1.2,
-                            ),
-                            planetStyle: TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w800,
-                              color: isDark
-                                  ? Colors.cyan.shade300
-                                  : Colors.teal.shade900,
-                              height: 1.2,
-                            ),
-                            lineWidth: 1,
-                            houseLabels: skyLabels,
-                          ),
-                        ),
+                width: chartWidth,
+                height: chartWidth,
+                padding: const EdgeInsets.all(padding),
+                child: SizedBox(
+                  width: innerSize,
+                  height: innerSize,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Chic Kundali Chart (Handles both Sky, Birth, and "Visiting Spirits" Overlay)
+                      Builder(builder: (context) {
+                        // Default to showing just the Sky chart
+                        List<List<String>> displayHouses = skyHouses;
+                        List<String>? displayLabels = skyLabels;
+                        List<List<String>>? visitingPlanets;
 
-                        // Birth Chart Overlay (same size)
+                        final isDarkTheme =
+                            Theme.of(context).brightness == Brightness.dark;
+                        final lineColor = isDarkTheme
+                            ? Colors.white.withValues(alpha: 0.5)
+                            : Colors.black.withValues(alpha: 0.4);
+                        final labelColor = isDarkTheme
+                            ? Colors.white.withValues(alpha: 0.5)
+                            : Colors.black.withValues(alpha: 0.5);
+                        final planetColor = isDarkTheme
+                            ? Colors.white.withValues(alpha: 1.0)
+                            : Colors.black.withValues(alpha: 1.0);
+
+                        Color strokeColor = lineColor;
+                        double chartLineWidth = 1.0;
+                        TextStyle pStyle = TextStyle(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w500,
+                          color: planetColor,
+                          letterSpacing: 0.5,
+                          height: 1.2,
+                        );
+
+                        // The Editorial Typographical Overlap (Single Chart)
                         if (showTransitOverlay &&
                             birthHouses != null &&
-                            birthLabels != null)
-                          Opacity(
-                            opacity: chartBlendValue.clamp(0.15, 1.0),
-                            child: KundaliChart(
-                              houses: birthHouses,
-                              strokeColor: isDark
-                                  ? Colors.amber.shade400
-                                  : Colors.amber.shade700,
-                              houseLabelStyle: TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w600,
-                                color: isDark
-                                    ? Colors.amber.shade400
-                                    : Colors.amber.shade800,
-                                height: 1.2,
-                              ),
-                              planetStyle: TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w900,
-                                color: isDark
-                                    ? Colors.orange.shade300
-                                    : Colors.deepOrange.shade700,
-                                height: 1.2,
-                              ),
-                              lineWidth: 1.5,
-                              houseLabels: birthLabels,
-                            ),
+                            birthLabels != null) {
+                          // The foundation is the Birth Chart
+                          displayHouses = birthHouses;
+                          displayLabels = birthLabels;
+                          strokeColor = AppTheme.primaryColor
+                              .withValues(alpha: 0.85); // Prominent Gold lines
+                          chartLineWidth = 1.5;
+
+                          pStyle = TextStyle(
+                            fontSize: 7.5,
+                            fontWeight: FontWeight
+                                .w500, // Thinner, smaller font for birth planets
+                            color: AppTheme.primaryColor.withValues(alpha: 0.8),
+                            letterSpacing: 0.5,
+                            height: 1.1,
+                          );
+
+                          // The transits (sky planets) stack above the birth planets inside the same house
+                          // Since both birthHouses and skyHouses are indexed by SIGN (0=Aries), they align perfectly 1:1.
+                          visitingPlanets = List.generate(12, (index) {
+                            if (index < skyHouses.length) {
+                              return skyHouses[index]; // Clean, no dots
+                            }
+                            return <String>[];
+                          });
+                        }
+
+                        return ChicKundaliChart(
+                          houses: displayHouses,
+                          houseLabels: displayLabels,
+                          transitHouses: visitingPlanets,
+                          // Ultra-thin, chic geometry
+                          strokeColor: strokeColor,
+                          lineWidth: chartLineWidth,
+                          houseLabelStyle: TextStyle(
+                            fontFamily: 'Georgia',
+                            fontSize: 7.0, // Subdued
+                            fontWeight: FontWeight.w500,
+                            color: labelColor,
+                            height: 1.1,
                           ),
-                      ],
-                    ),
+                          planetStyle: pStyle,
+                          transitPlanetStyle: TextStyle(
+                            fontSize: 10.0, // Prominent
+                            fontWeight: FontWeight.w700, // Bold
+                            fontStyle: FontStyle.normal, // Regular (not italic)
+                            color: planetColor, // White/Black matching theme
+                            letterSpacing: 0.5,
+                            height: 1.2,
+                          ),
+                        );
+                      }),
+                    ],
                   ),
                 ),
               ),
             ),
-          ),
           ),
         );
       },
