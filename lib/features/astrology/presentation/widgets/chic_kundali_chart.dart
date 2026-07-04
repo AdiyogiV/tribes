@@ -125,6 +125,23 @@ class _KundaliPainter extends CustomPainter {
     return offsets;
   }
 
+  /// A distinct colour per planet so each aspect line can be traced back to
+  /// its source. Matched on the first two letters of the token (Su, Mo, Ma,
+  /// Me, Ju, Ve, Sa, Ra, Ke).
+  Color _planetColor(String token) {
+    final p = token.toLowerCase();
+    if (p.startsWith('su')) return const Color(0xFFFFB74D); // Sun - amber
+    if (p.startsWith('mo')) return const Color(0xFFE0E0E0); // Moon - silver
+    if (p.startsWith('ma')) return const Color(0xFFEF5350); // Mars - red
+    if (p.startsWith('me')) return const Color(0xFF66BB6A); // Mercury - green
+    if (p.startsWith('ju')) return const Color(0xFFFFD54F); // Jupiter - gold
+    if (p.startsWith('ve')) return const Color(0xFFF06292); // Venus - pink
+    if (p.startsWith('sa')) return const Color(0xFF42A5F5); // Saturn - blue
+    if (p.startsWith('ra')) return const Color(0xFF8D6E63); // Rahu - brown
+    if (p.startsWith('ke')) return const Color(0xFFBA68C8); // Ketu - purple
+    return strokeColor; // fallback
+  }
+
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width;
@@ -282,84 +299,75 @@ class _KundaliPainter extends CustomPainter {
     }
   }
 
-  /// Draws simple, directional drishti lines from each aspecting planet to the
-  /// houses it aspects. Uses transit planets when available (so it moves with
-  /// time), else the natal chart. The mutual 7th is drawn once with an
-  /// arrowhead on both ends.
+  /// Draws directional drishti lines from each aspecting planet to the houses
+  /// it aspects, coloured per planet so each line is traceable to its source.
+  /// Uses transit planets when available (so it moves with time), else natal.
   void _drawAspects(Canvas canvas, double w, double h) {
     final bool useTransit = transitHouses != null && transitPlanetStyle != null;
     final source = useTransit ? transitHouses! : houses;
     final dist = useTransit ? 72.0 : 42.0;
-
-    // Collect every directed aspect (from house -> aspected house).
-    final aspects = <int>{}; // key = from*12 + to
-    for (int from = 0; from < 12 && from < source.length; from++) {
-      final planets = _clean(source[from]);
-      if (planets.isEmpty) continue;
-      for (final p in planets) {
-        for (final off in _aspectOffsets(p)) {
-          final to = (from + off) % 12;
-          if (to != from) aspects.add(from * 12 + to);
-        }
-      }
-    }
 
     final center = Offset(w / 2, h / 2);
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = lineWidth * 0.6
       ..isAntiAlias = true
-      ..strokeCap = StrokeCap.round
-      ..color = strokeColor.withValues(alpha: 0.22);
+      ..strokeCap = StrokeCap.round;
 
-    final drawn = <int>{};
-    for (final key in aspects) {
-      if (!drawn.add(key)) continue;
-      final from = key ~/ 12;
-      final to = key % 12;
-      final mutual = aspects.contains(to * 12 + from);
-      if (mutual) drawn.add(to * 12 + from); // collapse the mutual 7th
+    for (int from = 0; from < 12 && from < source.length; from++) {
+      final planets = _clean(source[from]);
+      if (planets.isEmpty) continue;
 
-      final a = _planetCenter(from, w, h, dist);
-      final b = _planetCenter(to, w, h, 42.0);
+      for (int pi = 0; pi < planets.length; pi++) {
+        final planet = planets[pi];
+        paint.color = _planetColor(planet).withValues(alpha: 0.7);
+        // Fan multiple planets sharing a house into separate lanes so their
+        // (otherwise overlapping) lines stay distinguishable.
+        final lane = pi * 7.0;
 
-      // Pick the perpendicular side that points away from the busy centre so
-      // the wave bows AROUND the middle rather than through it.
-      final mid = Offset((a.dx + b.dx) / 2, (a.dy + b.dy) / 2);
-      var dir = b - a;
-      final len = dir.distance;
-      if (len == 0) continue;
-      dir = dir / len;
-      var perp = Offset(-dir.dy, dir.dx);
-      final fromCenter = mid - center;
-      if (perp.dx * fromCenter.dx + perp.dy * fromCenter.dy < 0) {
-        perp = Offset(-perp.dx, -perp.dy);
-      }
+        for (final off in _aspectOffsets(planet)) {
+          final to = (from + off) % 12;
+          if (to == from) continue;
 
-      // Perpendicular offset at parameter t: a gentle outward bow (goes around
-      // the centre) plus a sine ripple. Both vanish at the endpoints so the
-      // line still anchors cleanly on planet and house.
-      final outwardBase = len * 0.18;
-      const amplitude = 6.0;
-      const waves = 3;
-      Offset pt(double t) {
-        final base = Offset(a.dx + (b.dx - a.dx) * t, a.dy + (b.dy - a.dy) * t);
-        final off = outwardBase * math.sin(t * math.pi) +
-            amplitude * math.sin(t * math.pi * waves);
-        return Offset(base.dx + perp.dx * off, base.dy + perp.dy * off);
-      }
+          final a = _planetCenter(from, w, h, dist);
+          final b = _planetCenter(to, w, h, 42.0);
 
-      const steps = 40;
-      final path = Path()..moveTo(a.dx, a.dy);
-      for (int s = 1; s <= steps; s++) {
-        final p = pt(s / steps);
-        path.lineTo(p.dx, p.dy);
-      }
-      canvas.drawPath(path, paint);
+          // Pick the perpendicular side pointing away from the busy centre so
+          // the wave bows AROUND the middle rather than through it.
+          final mid = Offset((a.dx + b.dx) / 2, (a.dy + b.dy) / 2);
+          var dir = b - a;
+          final len = dir.distance;
+          if (len == 0) continue;
+          dir = dir / len;
+          var perp = Offset(-dir.dy, dir.dx);
+          final fromCenter = mid - center;
+          if (perp.dx * fromCenter.dx + perp.dy * fromCenter.dy < 0) {
+            perp = Offset(-perp.dx, -perp.dy);
+          }
 
-      _arrowHead(canvas, b, pt(0.9), paint); // gaze lands on the target house
-      if (mutual) {
-        _arrowHead(canvas, a, pt(0.1), paint); // both ways for the 7th
+          // Perpendicular offset at t: outward bow (+ per-planet lane) plus a
+          // sine ripple. Both vanish at the endpoints so the line anchors
+          // cleanly on planet and house.
+          final outwardBase = len * 0.18 + lane;
+          const amplitude = 6.0;
+          const waves = 3;
+          Offset pt(double t) {
+            final base =
+                Offset(a.dx + (b.dx - a.dx) * t, a.dy + (b.dy - a.dy) * t);
+            final o = outwardBase * math.sin(t * math.pi) +
+                amplitude * math.sin(t * math.pi * waves);
+            return Offset(base.dx + perp.dx * o, base.dy + perp.dy * o);
+          }
+
+          const steps = 40;
+          final path = Path()..moveTo(a.dx, a.dy);
+          for (int s = 1; s <= steps; s++) {
+            final p = pt(s / steps);
+            path.lineTo(p.dx, p.dy);
+          }
+          canvas.drawPath(path, paint);
+          _arrowHead(canvas, b, pt(0.9), paint);
+        }
       }
     }
   }
