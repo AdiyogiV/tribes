@@ -81,8 +81,7 @@ class _KundaliPainter extends CustomPainter {
       ..close();
 
     final allLines = Path()
-      ..addPath(diagonals, Offset.zero)
-      ..addPath(innerDiamond, Offset.zero);
+      ..addPath(diagonals, Offset.zero);
 
     // 1. Elevated Center (Glassmorphism fill)
     final glassPaint = Paint()
@@ -124,15 +123,8 @@ class _KundaliPainter extends CustomPainter {
         ],
       ).createShader(Rect.fromLTWH(0, 0, w, h));
 
-    // 4. Ultra-subtle paint for the diamond
-    final diamondPaint = Paint()
-      ..strokeWidth = lineWidth * 0.5 // Thinner
-      ..style = PaintingStyle.stroke
-      ..isAntiAlias = true
-      ..color = strokeColor.withValues(alpha: 0.3); // Fainter
-
     canvas.drawPath(diagonals, linePaint);
-    canvas.drawPath(innerDiamond, diamondPaint);
+
 
     // 3. Define the true geometric inner corners (anchors) for the planets
     final houseAnchors = [
