@@ -65,24 +65,68 @@ class _KundaliPainter extends CustomPainter {
     final w = size.width;
     final h = size.height;
 
-    final paint = Paint()
-      ..color = strokeColor
-      ..strokeWidth = lineWidth
-      ..style = PaintingStyle.stroke
-      ..isAntiAlias = true;
+    // --- CHIC LAYERED GEOMETRY ---
 
-    // 1. Draw the Diagonals (X)
-    canvas.drawLine(const Offset(0, 0), Offset(w, h), paint);
-    canvas.drawLine(Offset(w, 0), Offset(0, h), paint);
-
-    // 2. Draw the Inner Diamond
-    final path = Path()
+    // Core structural paths
+    final outerSquare = Path()..addRect(Rect.fromLTWH(0, 0, w, h));
+    final diagonals = Path()
+      ..moveTo(0, 0)
+      ..lineTo(w, h)
+      ..moveTo(w, 0)
+      ..lineTo(0, h);
+    final innerDiamond = Path()
       ..moveTo(w / 2, 0)
       ..lineTo(w, h / 2)
       ..lineTo(w / 2, h)
       ..lineTo(0, h / 2)
       ..close();
-    canvas.drawPath(path, paint);
+
+    final allLines = Path()
+      ..addPath(outerSquare, Offset.zero)
+      ..addPath(diagonals, Offset.zero)
+      ..addPath(innerDiamond, Offset.zero);
+
+    // 1. Elevated Center (Glassmorphism fill)
+    final glassPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          strokeColor.withValues(alpha: 0.12),
+          strokeColor.withValues(alpha: 0.0),
+        ],
+      ).createShader(Rect.fromLTWH(0, 0, w, h))
+      ..style = PaintingStyle.fill;
+    canvas.drawPath(innerDiamond, glassPaint);
+
+    // 2. Drop Shadow behind the grid lines
+    final shadowPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.6)
+      ..strokeWidth = lineWidth
+      ..style = PaintingStyle.stroke
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0);
+
+    canvas.save();
+    canvas.translate(0, 2); // subtle Y shift
+    canvas.drawPath(allLines, shadowPaint);
+    canvas.restore();
+
+    // 3. Crisp, slightly gradient-stroked structural lines
+    final linePaint = Paint()
+      ..strokeWidth = lineWidth
+      ..style = PaintingStyle.stroke
+      ..isAntiAlias = true
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          strokeColor.withValues(alpha: 0.9),
+          strokeColor,
+          strokeColor.withValues(alpha: 0.6),
+        ],
+      ).createShader(Rect.fromLTWH(0, 0, w, h));
+
+    canvas.drawPath(allLines, linePaint);
 
     // 3. Define the true geometric inner corners (anchors) for the planets
     final houseAnchors = [
@@ -184,7 +228,7 @@ class _KundaliPainter extends CustomPainter {
 
       if (isOverlayActive) {
         // ALWAYS draw the corner-aligned highlighted space to define the structural "Birth Zone"
-        // This gives the chart a unified 12-pointed inner ring.
+        // Chic upgrade: use a subtle radial gradient fading outward from the inner vertex
         final bgPath = Path()
           ..moveTo(ax, ay)
           ..lineTo(p2.dx, p2.dy)
@@ -192,9 +236,20 @@ class _KundaliPainter extends CustomPainter {
           ..close();
 
         final bgPaint = Paint()
-          ..color = strokeColor.withValues(
-              alpha:
-                  0.08) // More subtle highlight, removing the harsh cutoff line entirely
+          ..shader = RadialGradient(
+            center: Alignment(
+                (ax - w / 2) / (w / 2 == 0 ? 1 : w / 2),
+                (ay - h / 2) /
+                    (h / 2 == 0
+                        ? 1
+                        : h /
+                            2)), // Center the gradient exactly on the house's inner corner
+            radius: 0.4,
+            colors: [
+              strokeColor.withValues(alpha: 0.15),
+              strokeColor.withValues(alpha: 0.0),
+            ],
+          ).createShader(Rect.fromLTWH(0, 0, w, h))
           ..style = PaintingStyle.fill;
         canvas.drawPath(bgPath, bgPaint);
 
