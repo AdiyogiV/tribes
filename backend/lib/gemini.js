@@ -7,10 +7,10 @@
  * telemetry, model upgrades) happen in ONE place.
  */
 
-import { db, logger } from "../../lib/firebase.js";
+import { db, logger } from "./firebase.js";
 import { FieldValue } from "firebase-admin/firestore";
-import { getVertexAI, extractText } from "../../lib/vertex_client.js";
-import { AI_MODELS } from "../../lib/config.js";
+import { getVertexAI, extractText } from "./vertex_client.js";
+import { AI_MODELS } from "./config.js";
 
 const DEFAULTS = {
     model: AI_MODELS.GEMINI_FLASH,

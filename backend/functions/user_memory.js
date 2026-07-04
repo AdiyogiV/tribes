@@ -19,7 +19,7 @@
  */
 
 import { db, FieldValue, logger } from "../lib/firebase.js";
-import { callGemini } from "../insights/engine/ai_client.js";
+import { callGemini } from "../lib/gemini.js";
 
 const HOLYCOW_USER_ID = "holycow_system_user";
 const MEMORY_DOC_PATH = (uid) => `users/${uid}/memory/profile`;

@@ -11,7 +11,7 @@ import { getUpcomingSignIngresses, getUpcomingRetrogrades } from "./sky_position
 import { stripMarkdown, normalizeChart } from "../lib/astro_helpers.js";
 import { getTransitBinduScore } from "../lib/vedic_analysis.js";
 import { INSIGHT_SYSTEM_PROMPT, buildInsightUserPrompt } from "./prompts/daily_insights.js";
-import { callGemini } from "../insights/engine/ai_client.js";
+import { callGemini } from "../lib/gemini.js";
 import { buildDashaContext, getTodayAstroData } from "../lib/daily_insight_context.js";
 
 /**

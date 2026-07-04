@@ -24,7 +24,7 @@
  */
 
 import { logger } from "../../lib/firebase.js";
-import { callGemini } from "./ai_client.js";
+import { callGemini } from "../../lib/gemini.js";
 import { getCached, setCached } from "./cache.js";
 
 /**
