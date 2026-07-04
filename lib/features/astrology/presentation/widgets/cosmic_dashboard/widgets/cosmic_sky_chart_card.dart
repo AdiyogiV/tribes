@@ -359,24 +359,6 @@ class CosmicSkyChartCard extends StatelessWidget {
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      // Soft radial halo — frames the chart with gentle depth
-                      Builder(builder: (context) {
-                        return Container(
-                          width: innerSize,
-                          height: innerSize,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: RadialGradient(
-                              colors: [
-                                AppTheme.primaryColor.withValues(alpha: 0.15),
-                                AppTheme.primaryColor.withValues(alpha: 0.0),
-                              ],
-                              stops: const [0.55, 1.0],
-                            ),
-                          ),
-                        );
-                      }),
-
                       // Chic Kundali Chart (Handles both Sky, Birth, and "Visiting Spirits" Overlay)
                       Builder(builder: (context) {
                         // Default to showing just the Sky chart
