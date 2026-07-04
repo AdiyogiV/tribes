@@ -1,7 +1,0 @@
---- lib/features/astrology/presentation/widgets/nakshatra_ring_widget.dart
-+++ lib/features/astrology/presentation/widgets/nakshatra_ring_widget.dart
-@@ -647,15 +647,7 @@
-     );
-   }
- 
--  // ─── Daily Vibe ─────────────────────────────────────────────────────────
