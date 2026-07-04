@@ -95,7 +95,7 @@ class _KundaliPainter extends CustomPainter {
     // triangles (which share the center vertex) don't stack alpha and look
     // like a gradient.
     if (transitHouses != null && transitPlanetStyle != null) {
-      const s = 68.0;
+      const s = 44.0;
       final anchors = [
         const Offset(0.5, 0.5),
         const Offset(0.25, 0.25),
