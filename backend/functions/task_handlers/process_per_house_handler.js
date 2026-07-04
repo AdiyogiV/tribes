@@ -1,17 +1,11 @@
 /**
  * Handler for `process_per_house` task type.
  *
- * Originally `processPerHouseTask` in insights/orchestration/per_house_scheduler.js.
- * Runs the per-house flavor of the insight engine for one user.
- *
+ * Generates one user's per-house readings for the current cycle.
  * Payload: { uid }
  */
 
-import { runFlavor } from "../../insights/engine/insight_engine.js";
-import {
-    perHouseFlavor,
-    computeCycleWindow,
-} from "../../insights/flavors/per_house.js";
+import { generatePerHouse, computeCycleWindow } from "../per_house.js";
 
 export async function handleProcessPerHouse(payload, ctx) {
     const { uid } = payload || {};
@@ -22,24 +16,18 @@ export async function handleProcessPerHouse(payload, ctx) {
         return; // don't retry
     }
 
-    const window = computeCycleWindow();
+    const { cycleStart, cycleEnd } = computeCycleWindow();
     logger.info("[per_house-worker] processing", {
-        structuredData: true,
-        uid,
-        cycleStart: window.cycleStart,
-        cycleEnd: window.cycleEnd,
+        structuredData: true, uid, cycleStart, cycleEnd,
     });
 
     try {
-        const { result, latencyMs } = await runFlavor(perHouseFlavor, {
-            uid,
-            ...window,
-        });
+        const { houses, latencyMs } = await generatePerHouse(uid, cycleStart, cycleEnd);
         logger.info("[per_house-worker] done", {
             structuredData: true,
             uid,
             latencyMs,
-            houseCount: Object.keys(result?.houses || {}).length,
+            houseCount: Object.keys(houses || {}).length,
         });
     } catch (error) {
         logger.error("[per_house-worker] failed", {

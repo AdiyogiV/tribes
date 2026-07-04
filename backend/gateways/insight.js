@@ -29,7 +29,7 @@ import {
     handleGenerateInsightForCurrentUser,
 } from "../functions/daily_astro_insights.js";
 import { handleClearAstroCaches } from "../functions/maintenance.js";
-import { handleGeneratePerHouseNow } from "../insights/orchestration/per_house_scheduler.js";
+import { handleGeneratePerHouseNow } from "../functions/per_house.js";
 import {
     handleSubmitInsightFeedback,
     handleToggleFavoriteInsight,

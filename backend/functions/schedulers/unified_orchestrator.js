@@ -55,7 +55,7 @@ import { runRefreshSkyPositionsDaily } from "../sky_positions.js";
 
 // Phase 4: User insight runners
 import { runGenerateDailyAstroInsights } from "../daily_astro_insights.js";
-import { runEnqueuePerHouseReadings } from "../../insights/orchestration/per_house_scheduler.js";
+import { runEnqueuePerHouseReadings } from "../per_house.js";
 
 // Phase 5: Health runners
 import { runNightlyHealthAnalysis, runWeeklyHealthAggregation } from "../ayurveda.js";

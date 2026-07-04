@@ -648,31 +648,30 @@ async function triggerHouseInterpretations(uid, astroData) {
 
 /**
  * Trigger biweekly per-house current-state readings for a user.
- * Runs the per_house flavor in-process (background) so the readings are ready
- * the moment the user opens astro details. Subsequent regenerations are handled
- * by the daily scheduler in insights/orchestration/per_house_scheduler.js.
+ * Generates in-process (background) so the readings are ready the moment the
+ * user opens astro details. Subsequent regenerations are handled by the daily
+ * scheduler in functions/per_house.js.
  */
 async function triggerPerHouseReadings(uid) {
     try {
-        const { runFlavor } = await import("../insights/engine/insight_engine.js");
-        const { perHouseFlavor, computeCycleWindow, needsRegeneration } =
-            await import("../insights/flavors/per_house.js");
+        const { generatePerHouse, computeCycleWindow, needsRegeneration } =
+            await import("./per_house.js");
 
         // Re-read the user doc since we just wrote to it.
         const snap = await db.collection("users").doc(uid).get();
         const astro = snap.data()?.astrologyData;
         if (!astro) return;
         if (!needsRegeneration(astro.skyHouseReadings)) {
-            logger.info("🏠 Per-house readings already fresh, skipping", { uid });
+            logger.info("Per-house readings already fresh, skipping", { uid });
             return;
         }
 
         const window = computeCycleWindow();
-        logger.info("🏠 Generating per-house biweekly readings", { uid, ...window });
-        const { latencyMs } = await runFlavor(perHouseFlavor, { uid, ...window });
-        logger.info("✅ Per-house readings saved", { uid, latencyMs });
+        logger.info("Generating per-house biweekly readings", { uid, ...window });
+        const { latencyMs } = await generatePerHouse(uid, window.cycleStart, window.cycleEnd);
+        logger.info("Per-house readings saved", { uid, latencyMs });
     } catch (error) {
-        logger.error("❌ Per-house readings failed", { uid, error: error.message });
+        logger.error("Per-house readings failed", { uid, error: error.message });
         // Don't throw - background operation
     }
 }
@@ -681,4 +680,3 @@ async function triggerPerHouseReadings(uid) {
 // Cloud Function call (generateInsightForCurrentUser). This ensures the insight
 // generation runs as an independent Cloud Function invocation, avoiding the
 // deprioritization issue that occurs with fire-and-forget within the same function.
-
