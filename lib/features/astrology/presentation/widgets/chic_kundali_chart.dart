@@ -90,6 +90,61 @@ class _KundaliPainter extends CustomPainter {
     canvas.drawPath(diagonals, linePaint);
     canvas.drawPath(innerDiamond, linePaint);
 
+    // Flat grey highlight for all birth-chart house regions. Built as ONE
+    // combined path and filled a single time so overlapping inner-house
+    // triangles (which share the center vertex) don't stack alpha and look
+    // like a gradient.
+    if (transitHouses != null && transitPlanetStyle != null) {
+      const s = 52.0;
+      final anchors = [
+        const Offset(0.5, 0.5),
+        const Offset(0.25, 0.25),
+        const Offset(0.25, 0.25),
+        const Offset(0.5, 0.5),
+        const Offset(0.25, 0.75),
+        const Offset(0.25, 0.75),
+        const Offset(0.5, 0.5),
+        const Offset(0.75, 0.75),
+        const Offset(0.75, 0.75),
+        const Offset(0.5, 0.5),
+        const Offset(0.75, 0.25),
+        const Offset(0.75, 0.25),
+      ];
+      final dirs = [
+        const Offset(0, -1),
+        const Offset(0, -1),
+        const Offset(-1, 0),
+        const Offset(-1, 0),
+        const Offset(-1, 0),
+        const Offset(0, 1),
+        const Offset(0, 1),
+        const Offset(0, 1),
+        const Offset(1, 0),
+        const Offset(1, 0),
+        const Offset(1, 0),
+        const Offset(0, -1),
+      ];
+      final highlightPath = Path();
+      for (int i = 0; i < 12 && i < houses.length; i++) {
+        final ax = w * anchors[i].dx;
+        final ay = h * anchors[i].dy;
+        final d = dirs[i];
+        final e1 = Offset(d.dx + d.dy, d.dy - d.dx);
+        final e2 = Offset(d.dx - d.dy, d.dy + d.dx);
+        highlightPath
+          ..moveTo(ax, ay)
+          ..lineTo(ax + e1.dx * s, ay + e1.dy * s)
+          ..lineTo(ax + e2.dx * s, ay + e2.dy * s)
+          ..close();
+      }
+      canvas.drawPath(
+        highlightPath,
+        Paint()
+          ..color = const Color(0x33FFFFFF)
+          ..style = PaintingStyle.fill,
+      );
+    }
+
     // 3. Define the true geometric inner corners (anchors) for the planets
     final houseAnchors = [
       const Offset(0.5, 0.5), // H1 (Absolute Center)
@@ -156,14 +211,6 @@ class _KundaliPainter extends CustomPainter {
       final isSideHouse = pDir.dx != 0;
       final joinStr = isSideHouse ? '\n' : ' ';
 
-      // Calculate perfect geometric background triangle for the corner
-      final double S =
-          52.0; // The cutoff line distance (increased for larger inner section)
-      final edge1 = Offset(pDir.dx + pDir.dy, pDir.dy - pDir.dx);
-      final edge2 = Offset(pDir.dx - pDir.dy, pDir.dy + pDir.dx);
-      final p2 = Offset(ax + edge1.dx * S, ay + edge1.dy * S);
-      final p3 = Offset(ax + edge2.dx * S, ay + edge2.dy * S);
-
       final bool isOverlayActive =
           transitHouses != null && transitPlanetStyle != null;
 
@@ -189,17 +236,6 @@ class _KundaliPainter extends CustomPainter {
       }
 
       if (isOverlayActive) {
-        // Draw the corner-aligned birth-chart house region as a flat grey fill.
-        final bgPath = Path()
-          ..moveTo(ax, ay)
-          ..lineTo(p2.dx, p2.dy)
-          ..lineTo(p3.dx, p3.dy)
-          ..close();
-
-        final bgPaint = Paint()
-          ..color = const Color(0x33FFFFFF) // subtle flat grey
-          ..style = PaintingStyle.fill;
-        canvas.drawPath(bgPath, bgPaint);
         // Draw Birth Planets INSIDE the geometric triangle (Birth Zone / Inner Sanctum)
         // Pushed further out toward the edge of the highlighted area to make room for the labels
         if (hasBirth) {
