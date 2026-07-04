@@ -486,13 +486,12 @@ async function triggerFirstReading(uid, userName, astroData) {
     logger.info("📖 Generating first reading internally", { uid });
 
     try {
-        const { runFlavor } = await import("../insights/engine/insight_engine.js");
-        const { firstReadingFlavor } = await import("../insights/flavors/first_reading.js");
+        const { generateFirstReading } = await import("./first_reading.js");
 
         // Pass pre-loaded data to avoid redundant Firestore read
-        await runFlavor(firstReadingFlavor, { uid, userName, astroData });
+        await generateFirstReading(uid, userName, astroData);
 
-        logger.info("✅ First reading generated and saved", { uid });
+        logger.info(" First reading generated and saved", { uid });
         return true;
     } catch (error) {
         logger.error("❌ First reading generation failed", {

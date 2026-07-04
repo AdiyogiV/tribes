@@ -126,7 +126,12 @@ class CosmicSkyChartCard extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
+
+          // Ornamental hairline divider (editorial flourish)
+          _buildOrnament(c),
+
+          const SizedBox(height: 14),
 
           // Subtext / Daily Insight
           if (insightText != null && insightText!.trim().isNotEmpty)
@@ -145,7 +150,7 @@ class CosmicSkyChartCard extends StatelessWidget {
               ),
             ),
 
-          const SizedBox(height: 28), // Breathing room
+          const SizedBox(height: 24), // Breathing room
 
           // Chart with overlay
           _buildChart(
@@ -158,6 +163,12 @@ class CosmicSkyChartCard extends StatelessWidget {
             hasBirthChart,
             dateStr,
           ),
+
+          // Legend — clarifies natal vs transit planets
+          if (hasBirthChart) ...[
+            const SizedBox(height: 20),
+            _buildLegend(context, c),
+          ],
 
           const SizedBox(height: 28),
 
@@ -238,6 +249,73 @@ class CosmicSkyChartCard extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+
+  /// A slim, editorial hairline flourish: line — diamond — line.
+  Widget _buildOrnament(Color c) {
+    Widget line(List<Color> colors) => Container(
+          width: 44,
+          height: 1,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(colors: colors),
+          ),
+        );
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        line([c.withValues(alpha: 0.0), c.withValues(alpha: 0.35)]),
+        const SizedBox(width: 8),
+        Transform.rotate(
+          angle: 0.785398, // 45° — a tiny diamond
+          child: Container(
+            width: 4,
+            height: 4,
+            color: c.withValues(alpha: 0.5),
+          ),
+        ),
+        const SizedBox(width: 8),
+        line([c.withValues(alpha: 0.35), c.withValues(alpha: 0.0)]),
+      ],
+    );
+  }
+
+  /// Legend distinguishing natal (gold) from transit (sky) planets.
+  Widget _buildLegend(BuildContext context, Color c) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final transitColor = isDark ? Colors.white : Colors.black;
+
+    Widget entry(Color dot, String label) => Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 7,
+              height: 7,
+              decoration: BoxDecoration(
+                color: dot,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 7),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 2.0,
+                color: c.withValues(alpha: 0.7),
+              ),
+            ),
+          ],
+        );
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        entry(c.withValues(alpha: 0.85), 'NATAL'),
+        const SizedBox(width: 20),
+        entry(transitColor.withValues(alpha: 0.75), 'TRANSIT'),
+      ],
     );
   }
 

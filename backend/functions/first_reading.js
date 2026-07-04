@@ -1,51 +1,225 @@
 /**
- * First Reading — Cloud Function wrapper.
+ * First Reading — self-contained Cloud Function logic.
  *
- * Thin shell around the insights engine first_reading flavor.
- * The real logic (prompt, validation, storage) lives in
- * insights/flavors/first_reading.js. This file only handles:
- *   - Firebase onCall wiring + auth
- *   - "Already exists" fast path (no AI call)
- *   - Response formatting for the Flutter client
- *   - Backward-compat exports for astro_sync.js
+ * A one-time birth-chart personality reading (~150-180 words markdown) about
+ * who the person is: identity, personality, core gifts. NO timing/predictions.
+ *
+ * Recipe (one flat pass, no engine): build context -> prompt -> callGemini ->
+ * store. Cache: the reading itself on users/{uid}.astrologyData.firstReading
+ * (permanent — birth data doesn't change).
  */
 
 import { HttpsError } from "firebase-functions/v2/https";
-import { db, logger } from "../lib/firebase.js";
+import { db, FieldValue, logger } from "../lib/firebase.js";
 import { requireAuth } from "../lib/auth_utils.js";
-import { runFlavor } from "../insights/engine/insight_engine.js";
-import {
-    firstReadingFlavor,
-    buildCosmicHighlights,
-} from "../insights/flavors/first_reading.js";
+import { callGemini } from "../lib/gemini.js";
+import { normalizeDasha } from "../lib/astro_helpers.js";
 
-// Re-export for astro_sync.js backward compatibility
-export { buildCosmicHighlights };
+// ── Nakshatra lookup (pure data, no API call) ───────────────────────
+const NAKSHATRA_INFO = {
+    "Ashwini": { title: "The Star of Transport", description: "Swift, pioneering, and healing energy" },
+    "Bharani": { title: "The Star of Restraint", description: "Creative, transformative, and intense" },
+    "Krittika": { title: "The Star of Fire", description: "Sharp, purifying, and determined" },
+    "Rohini": { title: "The Star of Ascent", description: "Creative, nurturing, and magnetic" },
+    "Mrigashira": { title: "The Searching Star", description: "Curious, gentle, and seeking" },
+    "Ardra": { title: "The Star of Sorrow", description: "Transformative, intellectual, and intense" },
+    "Punarvasu": { title: "The Star of Renewal", description: "Optimistic, nurturing, and wise" },
+    "Pushya": { title: "The Star of Nourishment", description: "Caring, spiritual, and supportive" },
+    "Ashlesha": { title: "The Clinging Star", description: "Intuitive, mysterious, and transformative" },
+    "Magha": { title: "The Star of Power", description: "Regal, ancestral, and authoritative" },
+    "Purva Phalguni": { title: "The Fruit of the Tree", description: "Creative, romantic, and fortunate" },
+    "Uttara Phalguni": { title: "The Later Fruit", description: "Generous, helpful, and prosperous" },
+    "Hasta": { title: "The Hand Star", description: "Skillful, clever, and resourceful" },
+    "Chitra": { title: "The Star of Opportunity", description: "Brilliant, creative, and visionary" },
+    "Swati": { title: "The Self-Going Star", description: "Independent, flexible, and balanced" },
+    "Vishakha": { title: "The Star of Purpose", description: "Determined, ambitious, and focused" },
+    "Anuradha": { title: "The Star of Success", description: "Devoted, friendly, and successful" },
+    "Jyeshtha": { title: "The Chief Star", description: "Protective, senior, and wise" },
+    "Mula": { title: "The Root Star", description: "Investigative, transformative, and powerful" },
+    "Purva Ashadha": { title: "The Invincible Star", description: "Confident, purifying, and victorious" },
+    "Uttara Ashadha": { title: "The Universal Star", description: "Principled, victorious, and righteous" },
+    "Shravana": { title: "The Star of Learning", description: "Listening, wise, and connected" },
+    "Dhanishtha": { title: "The Star of Symphony", description: "Wealthy, musical, and adaptable" },
+    "Shatabhisha": { title: "The Hundred Stars", description: "Healing, mysterious, and independent" },
+    "Purva Bhadrapada": { title: "The Burning Pair", description: "Intense, transformative, and spiritual" },
+    "Uttara Bhadrapada": { title: "The Warrior Star", description: "Deep, wise, and controlled" },
+    "Revati": { title: "The Wealthy Star", description: "Nurturing, prosperous, and compassionate" },
+};
+
+const DASHA_DESCRIPTIONS = {
+    "Sun": "A period of leadership, authority, and self-expression",
+    "Moon": "A time for emotional growth, nurturing, and intuition",
+    "Mars": "An era of action, courage, and determination",
+    "Mercury": "A phase of learning, communication, and adaptability",
+    "Jupiter": "A blessed time of wisdom, expansion, and good fortune",
+    "Venus": "A period of love, creativity, and material comforts",
+    "Saturn": "A time for discipline, hard work, and building foundations",
+    "Rahu": "An era of worldly ambitions and unconventional paths",
+    "Ketu": "A period of spiritual growth and letting go",
+};
 
 /**
- * Handler: Generate first reading logic.
- * Extracted for gateway reuse. Called after astro sync completes for new users.
- * Returns cached reading on fast path; generates via insights engine otherwise.
+ * Build 2-3 cosmic highlights from chart data (no AI call). Exported for astro_sync.
+ */
+export function buildCosmicHighlights(astroData) {
+    const highlights = [];
+
+    const rajYogas = astroData.rajYogas || [];
+    if (rajYogas.length > 0) {
+        const yoga = rajYogas[0];
+        highlights.push({
+            type: "yoga",
+            icon: "stars",
+            title: yoga.name || yoga.yoga || "Raj Yoga",
+            subtitle: "Special Blessing",
+            description: yoga.description || yoga.meaning || "A powerful yoga bringing success and prosperity",
+            color: "#F59E0B",
+        });
+    }
+
+    const { mahaDasha, antarDasha, levels } = normalizeDasha(astroData.currentDasha);
+
+    if (mahaDasha) {
+        let endInfo = "";
+        if (levels.maha?.end) {
+            try {
+                const endYear = new Date(levels.maha.end).getFullYear();
+                endInfo = ` until ${endYear}`;
+            } catch (e) {
+                // ignore parse error
+            }
+        }
+
+        highlights.push({
+            type: "dasha",
+            icon: "planet",
+            title: `${mahaDasha} Mahadasha${endInfo}`,
+            subtitle: antarDasha ? `${antarDasha} Antardasha active` : "Current Life Phase",
+            description: DASHA_DESCRIPTIONS[mahaDasha] || "A significant planetary period shaping your life",
+            color: "#8B5CF6",
+        });
+    }
+
+    const nakshatra = astroData.nakshatra || astroData.moonNakshatra;
+    if (nakshatra) {
+        const info = NAKSHATRA_INFO[nakshatra] || { title: "Moon Nakshatra", description: "Your lunar mansion shapes your inner nature" };
+        highlights.push({
+            type: "nakshatra",
+            icon: "moon",
+            title: nakshatra,
+            subtitle: info.title,
+            description: info.description,
+            color: "#10B981",
+        });
+    }
+
+    return highlights.slice(0, 3);
+}
+
+function buildPrompt(ctx) {
+    const hasRajYoga = ctx.rajYogas.length > 0;
+    const primaryYoga = hasRajYoga ? ctx.rajYogas[0] : null;
+
+    return {
+        system: "You are a bold, insightful astrologer who creates readings that feel deeply personal and transformative. You make specific, confident claims that help people understand profound truths about themselves. You avoid technical jargon and speak in plain, powerful language. CRITICAL: You must output valid markdown in every response—use **bold** for key claims, *italics* for nuance, ### for section headings (e.g. ### Your Inner Architecture), and - for bullet lists. Your raw text will be rendered as markdown; if you output plain text only, the reading will look flat and unformatted.",
+
+        user: `Write a bold, personalized BIRTH CHART reading for ${ctx.userName || "them"}.
+Focus ONLY on who they are—their personality, identity, and core gifts. Do NOT mention current life phase, predictions, or what's coming. No timing.
+
+THEIR CHART:
+- Sun: ${ctx.sunSign} (core identity)
+- Moon: ${ctx.moonSign} (emotional nature)
+- Rising: ${ctx.ascendant} (how they appear to others)
+${hasRajYoga ? `- Special Blessing: ${primaryYoga.name || "A powerful alignment bringing success"}` : ""}
+
+CRITICAL RULES:
+1. NO technical astrology terms (no "Mahadasha", "Raj Yoga", "celestial bodies", etc.)
+2. NO predictions or "what's coming" or "right now" or life phase—this reading is ONLY about who they are from birth.
+3. Be BOLD and SPECIFIC - make claims that stand out
+4. Use "You" directly - speak TO them
+5. Make it EMOTIONALLY RESONANT - they should feel seen
+6. Be TRANSFORMATIVE - help them understand something profound about themselves
+
+MARKDOWN FORMATTING (MANDATORY - your response will be rendered as markdown):
+- Use **bold** for at least two key phrases (e.g. **You are someone who...**).
+- Use *italics* for subtle or reflective lines.
+- Start sections with ### headings exactly: ### Your Inner Architecture, ### How You Move Through the World, ### A Hidden Strength.
+- Use bullet points with - for lists of traits or gifts.
+- Keep paragraphs short (2-3 sentences). Blank line between paragraphs.
+
+STRUCTURE (150-180 words) - output this exact structure with markdown:
+1. Opening: One sentence with **bold** claim about who they are.
+2. ### Your Inner Architecture
+   - 2-3 bullet points or a short paragraph on their core gift/power.
+3. ### How You Move Through the World
+   - 2-3 sentences on how they show up and how others experience them.
+4. ### A Hidden Strength
+   - One short paragraph on a quality they may not fully own yet.
+
+TONE: Confident, personal, transformative. No jargon. No timing or predictions.
+
+OUTPUT: Your entire response must be valid markdown (headings, bold, bullets). Write the BIRTH reading now:`,
+    };
+}
+
+/**
+ * Core: generate + store the first reading. Returns the markdown text.
+ * Exported for astro_sync (called during sync with pre-loaded chart).
+ */
+export async function generateFirstReading(uid, userName, astroData) {
+    const ctx = {
+        userName: userName || "",
+        sunSign: astroData.sunSign || "Unknown",
+        moonSign: astroData.moonSign || "Unknown",
+        ascendant: astroData.ascendant || astroData.lagna || "Unknown",
+        rajYogas: astroData.rajYogas || [],
+    };
+    const { system, user } = buildPrompt(ctx);
+
+    const { text } = await callGemini({
+        systemPrompt: system,
+        userPrompt: user,
+        temperature: 0.95,
+        expectJson: false,
+        flavorName: "first_reading",
+    });
+
+    if (typeof text !== "string" || text.length < 50) {
+        throw new Error("first_reading produced invalid result");
+    }
+
+    const highlights = buildCosmicHighlights(astroData);
+    await db.collection("users").doc(uid).update({
+        "astrologyData.firstReading": {
+            content: text,
+            highlights,
+            generatedAt: FieldValue.serverTimestamp(),
+            sunSign: astroData.sunSign,
+            moonSign: astroData.moonSign,
+            ascendant: astroData.ascendant || astroData.lagna,
+        },
+    });
+    logger.info("First reading stored", { uid, contentLength: text.length });
+
+    return text;
+}
+
+/**
+ * onCall handler: generate the birth reading (or return the permanent cached one).
  */
 export async function handleGenerateFirstReading(request) {
     const uid = requireAuth(request, "generate first reading");
     const startTime = Date.now();
-    logger.info("📖 generateFirstReading invoked", { uid });
+    logger.info("generateFirstReading invoked", { uid });
 
     try {
         const userRef = db.collection("users").doc(uid);
         const userSnap = await userRef.get();
-
-        if (!userSnap.exists) {
-            throw new HttpsError("not-found", "User not found");
-        }
+        if (!userSnap.exists) throw new HttpsError("not-found", "User not found");
 
         const userData = userSnap.data();
         const astroData = userData.astrologyData;
-
-        if (!astroData) {
-            throw new HttpsError("failed-precondition", "No astrology data found");
-        }
+        if (!astroData) throw new HttpsError("failed-precondition", "No astrology data found");
 
         // Fast path — reading already exists (permanent, never expires)
         if (astroData.firstReading?.content) {
@@ -65,28 +239,25 @@ export async function handleGenerateFirstReading(request) {
             return { success: false, error: "Astro data not ready yet", data: null };
         }
 
-        // Generate via insights engine (gatherContext → prompt → AI → validate → store)
-        const { result } = await runFlavor(firstReadingFlavor, { uid });
+        const userName = userData.name || userData.displayName || "";
+        const content = await generateFirstReading(uid, userName, astroData);
 
-        // Build highlights for the response (store() already saved them to Firestore)
-        const highlights = buildCosmicHighlights(astroData);
-
-        logger.info("✅ First reading complete", {
-            uid, latency: Date.now() - startTime, contentLength: result?.length,
+        logger.info("First reading complete", {
+            uid, latency: Date.now() - startTime, contentLength: content?.length,
         });
 
         return {
             success: true,
             alreadyExists: false,
             data: {
-                content: result,
-                highlights,
+                content,
+                highlights: buildCosmicHighlights(astroData),
                 generatedAt: new Date().toISOString(),
             },
         };
     } catch (error) {
         if (error instanceof HttpsError) throw error;
-        logger.error("❌ First reading failed", {
+        logger.error("First reading failed", {
             uid, error: error.message, stack: error.stack?.substring(0, 300),
             latency: Date.now() - startTime,
         });
