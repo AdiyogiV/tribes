@@ -60,6 +60,68 @@ class _KundaliPainter extends CustomPainter {
     this.transitPlanetStyle,
   });
 
+  // North Indian house geometry, declared once (DRY).
+  // Anchor = the house's inner vertex (fractional of canvas size).
+  static const List<Offset> _anchors = [
+    Offset(0.5, 0.5), // H1 (center)
+    Offset(0.25, 0.25), // H2 (top-left)
+    Offset(0.25, 0.25), // H3 (top-left)
+    Offset(0.5, 0.5), // H4 (center)
+    Offset(0.25, 0.75), // H5 (bottom-left)
+    Offset(0.25, 0.75), // H6 (bottom-left)
+    Offset(0.5, 0.5), // H7 (center)
+    Offset(0.75, 0.75), // H8 (bottom-right)
+    Offset(0.75, 0.75), // H9 (bottom-right)
+    Offset(0.5, 0.5), // H10 (center)
+    Offset(0.75, 0.25), // H11 (top-right)
+    Offset(0.75, 0.25), // H12 (top-right)
+  ];
+
+  // Direction each house's content is pushed away from its vertex.
+  static const List<Offset> _pushDirs = [
+    Offset(0, -1), // H1 up
+    Offset(0, -1), // H2 up
+    Offset(-1, 0), // H3 left
+    Offset(-1, 0), // H4 left
+    Offset(-1, 0), // H5 left
+    Offset(0, 1), // H6 down
+    Offset(0, 1), // H7 down
+    Offset(0, 1), // H8 down
+    Offset(1, 0), // H9 right
+    Offset(1, 0), // H10 right
+    Offset(1, 0), // H11 right
+    Offset(0, -1), // H12 up
+  ];
+
+  /// Splits a raw house entry into clean planet tokens.
+  List<String> _clean(List<String> raw) => raw
+      .join(' ')
+      .trim()
+      .split(RegExp(r'\s+'))
+      .where((s) => s.isNotEmpty)
+      .toList();
+
+  /// The pixel point where a house's planets are drawn.
+  Offset _planetCenter(int i, double w, double h) => Offset(
+        w * _anchors[i].dx + _pushDirs[i].dx * 42.0,
+        h * _anchors[i].dy + _pushDirs[i].dy * 42.0,
+      );
+
+  /// Vedic drishti: house-count offsets a planet aspects. Every planet sees
+  /// the 7th; Mars also 4th/8th, Jupiter 5th/9th, Saturn 3rd/10th.
+  List<int> _aspectOffsets(String token) {
+    final p = token.toLowerCase();
+    final offsets = <int>[6];
+    if (p.startsWith('ma')) {
+      offsets.addAll(const [3, 7]);
+    } else if (p.startsWith('ju')) {
+      offsets.addAll(const [4, 8]);
+    } else if (p.startsWith('sa')) {
+      offsets.addAll(const [2, 9]);
+    }
+    return offsets;
+  }
+
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width;
@@ -95,39 +157,11 @@ class _KundaliPainter extends CustomPainter {
     // don't stack alpha. No glow — just a whisper of color.
     if (transitHouses != null && transitPlanetStyle != null) {
       const s = 56.0;
-      final anchors = [
-        const Offset(0.5, 0.5),
-        const Offset(0.25, 0.25),
-        const Offset(0.25, 0.25),
-        const Offset(0.5, 0.5),
-        const Offset(0.25, 0.75),
-        const Offset(0.25, 0.75),
-        const Offset(0.5, 0.5),
-        const Offset(0.75, 0.75),
-        const Offset(0.75, 0.75),
-        const Offset(0.5, 0.5),
-        const Offset(0.75, 0.25),
-        const Offset(0.75, 0.25),
-      ];
-      final dirs = [
-        const Offset(0, -1),
-        const Offset(0, -1),
-        const Offset(-1, 0),
-        const Offset(-1, 0),
-        const Offset(-1, 0),
-        const Offset(0, 1),
-        const Offset(0, 1),
-        const Offset(0, 1),
-        const Offset(1, 0),
-        const Offset(1, 0),
-        const Offset(1, 0),
-        const Offset(0, -1),
-      ];
       final highlightPath = Path();
       for (int i = 0; i < 12 && i < houses.length; i++) {
-        final ax = w * anchors[i].dx;
-        final ay = h * anchors[i].dy;
-        final d = dirs[i];
+        final ax = w * _anchors[i].dx;
+        final ay = h * _anchors[i].dy;
+        final d = _pushDirs[i];
         final e1 = Offset(d.dx + d.dy, d.dy - d.dx);
         final e2 = Offset(d.dx - d.dy, d.dy + d.dx);
         highlightPath
@@ -144,45 +178,17 @@ class _KundaliPainter extends CustomPainter {
       );
     }
 
-    // 3. Define the true geometric inner corners (anchors) for the planets
-    final houseAnchors = [
-      const Offset(0.5, 0.5), // H1 (Absolute Center)
-      const Offset(0.25, 0.25), // H2 (Top-Left inner corner)
-      const Offset(0.25, 0.25), // H3 (Top-Left inner corner)
-      const Offset(0.5, 0.5), // H4 (Absolute Center)
-      const Offset(0.25, 0.75), // H5 (Bottom-Left inner corner)
-      const Offset(0.25, 0.75), // H6 (Bottom-Left inner corner)
-      const Offset(0.5, 0.5), // H7 (Absolute Center)
-      const Offset(0.75, 0.75), // H8 (Bottom-Right inner corner)
-      const Offset(0.75, 0.75), // H9 (Bottom-Right inner corner)
-      const Offset(0.5, 0.5), // H10 (Absolute Center)
-      const Offset(0.75, 0.25), // H11 (Top-Right inner corner)
-      const Offset(0.75, 0.25), // H12 (Top-Right inner corner)
-    ];
+    // Aspect (drishti) connection lines between houses that hold planets.
+    _drawAspects(canvas, w, h);
 
-    // The direction to push the text block away from the vertex to avoid crossing lines
-    final housePushDirs = [
-      const Offset(0, -1), // H1 (Push Up)
-      const Offset(0, -1), // H2 (Push Up)
-      const Offset(-1, 0), // H3 (Push Left)
-      const Offset(-1, 0), // H4 (Push Left)
-      const Offset(-1, 0), // H5 (Push Left)
-      const Offset(0, 1), // H6 (Push Down)
-      const Offset(0, 1), // H7 (Push Down)
-      const Offset(0, 1), // H8 (Push Down)
-      const Offset(1, 0), // H9 (Push Right)
-      const Offset(1, 0), // H10 (Push Right)
-      const Offset(1, 0), // H11 (Push Right)
-      const Offset(0, -1), // H12 (Push Up)
-    ];
-
+    // 3. Draw the per-house content (labels + planets).
     for (int i = 0; i < 12; i++) {
       if (i >= houses.length) break;
 
       // Calculate anchor for planets and apply the directional push
-      final ax = w * houseAnchors[i].dx;
-      final ay = h * houseAnchors[i].dy;
-      final pDir = housePushDirs[i];
+      final ax = w * _anchors[i].dx;
+      final ay = h * _anchors[i].dy;
+      final pDir = _pushDirs[i];
 
       final rawBPlanets = houses[i];
       final rawTPlanets = transitHouses != null && i < transitHouses!.length
@@ -190,18 +196,8 @@ class _KundaliPainter extends CustomPainter {
           : const <String>[];
 
       // Clean the lists (upstream might pass pre-joined strings with spaces)
-      final bPlanets = rawBPlanets
-          .join(' ')
-          .trim()
-          .split(RegExp(r'\s+'))
-          .where((s) => s.isNotEmpty)
-          .toList();
-      final tPlanets = rawTPlanets
-          .join(' ')
-          .trim()
-          .split(RegExp(r'\s+'))
-          .where((s) => s.isNotEmpty)
-          .toList();
+      final bPlanets = _clean(rawBPlanets);
+      final tPlanets = _clean(rawTPlanets);
 
       final hasBirth = bPlanets.isNotEmpty;
       final hasTransit = tPlanets.isNotEmpty && transitPlanetStyle != null;
@@ -279,6 +275,52 @@ class _KundaliPainter extends CustomPainter {
               style: transitPlanetStyle ?? planetStyle,
               center: Offset(ax + (pDir.dx * 46.0), ay + (pDir.dy * 46.0)));
         }
+      }
+    }
+  }
+
+  /// Draws subtle curved drishti lines between houses that contain planets.
+  void _drawAspects(Canvas canvas, double w, double h) {
+    final center = Offset(w / 2, h / 2);
+    final aspectPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = lineWidth * 0.6
+      ..isAntiAlias = true
+      ..strokeCap = StrokeCap.round
+      ..color = strokeColor.withValues(alpha: 0.22);
+
+    final drawn = <int>{}; // dedupe by (from*12 + to)
+
+    for (int from = 0; from < 12 && from < houses.length; from++) {
+      final planets = _clean(houses[from]);
+      if (planets.isEmpty) continue;
+
+      // Union of all aspect targets for the planets sitting in this house.
+      final targets = <int>{};
+      for (final p in planets) {
+        for (final off in _aspectOffsets(p)) {
+          targets.add((from + off) % 12);
+        }
+      }
+
+      for (final to in targets) {
+        if (to == from) continue;
+        if (_clean(houses[to]).isEmpty) continue; // only connect planet↔planet
+
+        final key = from < to ? from * 12 + to : to * 12 + from;
+        if (!drawn.add(key)) continue;
+
+        final a = _planetCenter(from, w, h);
+        final b = _planetCenter(to, w, h);
+
+        // Bow the line gently toward the chart centre for an organic arc.
+        final mid = Offset((a.dx + b.dx) / 2, (a.dy + b.dy) / 2);
+        final ctrl = Offset.lerp(mid, center, 0.35)!;
+
+        final path = Path()
+          ..moveTo(a.dx, a.dy)
+          ..quadraticBezierTo(ctrl.dx, ctrl.dy, b.dx, b.dy);
+        canvas.drawPath(path, aspectPaint);
       }
     }
   }
