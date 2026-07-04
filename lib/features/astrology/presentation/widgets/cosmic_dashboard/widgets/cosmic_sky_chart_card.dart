@@ -4,9 +4,9 @@ import 'package:intl/intl.dart';
 import 'package:aurogram/features/astrology/data/utils/chart_utils.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/chic_kundali_chart.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
-import 'package:aurogram/shared/presentation/widgets/universal/transparent_toolbox.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/widgets/timeline_slider.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/kundali_house_hit_test.dart';
+import 'package:aurogram/core/theme/app_dimensions.dart';
 
 /// Card widget displaying the current sky chart with optional birth chart overlay
 class CosmicSkyChartCard extends StatelessWidget {
@@ -92,162 +92,171 @@ class CosmicSkyChartCard extends StatelessWidget {
         : null;
     final hasBirthChart = birthHouses != null && birthLabels != null;
 
-    return TransparentToolbox.buildCard(
-      context: context,
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // Dateline
-          Text(
-            dateStr.toUpperCase(),
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 9,
-              fontWeight: FontWeight.w500,
-              letterSpacing: 3.0,
-              color: c.withValues(alpha: 0.6),
+    final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
+    final Color cardColor =
+        isDarkTheme ? Theme.of(context).colorScheme.surface : Colors.white;
+    return Material(
+      color: cardColor,
+      elevation: 2,
+      shadowColor: Colors.black.withValues(alpha: 0.2),
+      borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Dateline
+            Text(
+              dateStr.toUpperCase(),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w500,
+                letterSpacing: 3.0,
+                color: c.withValues(alpha: 0.6),
+              ),
             ),
-          ),
 
-          const SizedBox(height: 10),
+            const SizedBox(height: 10),
 
-          // Editorial Title
-          Text(
-            isSliderOnToday ? 'Current Sky' : 'Time Travel',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontFamily: 'Georgia',
-              fontStyle: FontStyle.italic,
-              fontSize: 26,
-              letterSpacing: -0.5,
-              color: c,
-              height: 1.1,
+            // Editorial Title
+            Text(
+              isSliderOnToday ? 'Current Sky' : 'Time Travel',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Georgia',
+                fontStyle: FontStyle.italic,
+                fontSize: 26,
+                letterSpacing: -0.5,
+                color: c,
+                height: 1.1,
+              ),
             ),
-          ),
 
-          const SizedBox(height: 14),
+            const SizedBox(height: 14),
 
-          // Ornamental hairline divider (editorial flourish)
-          _buildOrnament(c),
+            // Ornamental hairline divider (editorial flourish)
+            _buildOrnament(c),
 
-          const SizedBox(height: 14),
+            const SizedBox(height: 14),
 
-          // Subtext / Daily Insight
-          if (insightText != null && insightText!.trim().isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: Text(
-                insightText!,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: c.withValues(alpha: 0.7),
-                  fontSize: 12.5,
-                  height: 1.5,
-                  fontFamily: 'Georgia',
-                  fontStyle: FontStyle.italic,
+            // Subtext / Daily Insight
+            if (insightText != null && insightText!.trim().isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Text(
+                  insightText!,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: c.withValues(alpha: 0.7),
+                    fontSize: 12.5,
+                    height: 1.5,
+                    fontFamily: 'Georgia',
+                    fontStyle: FontStyle.italic,
+                  ),
                 ),
               ),
+
+            const SizedBox(height: 24), // Breathing room
+
+            // Chart with overlay
+            _buildChart(
+              context,
+              positions,
+              skyHouses,
+              skyLabels,
+              birthHouses,
+              birthLabels,
+              hasBirthChart,
+              dateStr,
             ),
 
-          const SizedBox(height: 24), // Breathing room
+            // Legend — clarifies natal vs transit planets
+            if (hasBirthChart) ...[
+              const SizedBox(height: 20),
+              _buildLegend(context, c),
+            ],
 
-          // Chart with overlay
-          _buildChart(
-            context,
-            positions,
-            skyHouses,
-            skyLabels,
-            birthHouses,
-            birthLabels,
-            hasBirthChart,
-            dateStr,
-          ),
+            const SizedBox(height: 28),
 
-          // Legend — clarifies natal vs transit planets
-          if (hasBirthChart) ...[
-            const SizedBox(height: 20),
-            _buildLegend(context, c),
-          ],
-
-          const SizedBox(height: 28),
-
-          // Return to Today Action (Centered, Chic)
-          if (!isSliderOnToday) ...[
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: onResetToToday,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.replay_circle_filled_rounded,
-                    size: 14,
-                    color: c.withValues(alpha: 0.8),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'RETURN TO TODAY',
-                    style: TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 2.0,
+            // Return to Today Action (Centered, Chic)
+            if (!isSliderOnToday) ...[
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: onResetToToday,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.replay_circle_filled_rounded,
+                      size: 14,
                       color: c.withValues(alpha: 0.8),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 8),
+                    Text(
+                      'RETURN TO TODAY',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 2.0,
+                        color: c.withValues(alpha: 0.8),
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(height: 16),
+            ],
+
+            // Time Slider
+            TimelineSlider(
+              value: sliderValue,
+              onChanged: skyDataLoaded ? onSliderChanged : null,
+              hasData: skyDataLoaded,
+              isLoading: skyDataLoading,
+              onLoadData: onLoadSkyPositions,
+              onForceRefresh: onTriggerCachePopulation,
+              isDark: isDark,
             ),
-            const SizedBox(height: 16),
-          ],
 
-          // Time Slider
-          TimelineSlider(
-            value: sliderValue,
-            onChanged: skyDataLoaded ? onSliderChanged : null,
-            hasData: skyDataLoaded,
-            isLoading: skyDataLoading,
-            onLoadData: onLoadSkyPositions,
-            onForceRefresh: onTriggerCachePopulation,
-            isDark: isDark,
-          ),
-
-          // Explore birth chart affordance
-          // Only shown if we somehow don't have birth chart data and want them to add it,
-          // OR it's just completely hidden now for ultra-minimalism.
-          if (onExploreBirthChart != null && !hasBirthChart) ...[
-            const SizedBox(height: 24),
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () {
-                HapticFeedback.lightImpact();
-                onExploreBirthChart!();
-              },
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'ADD BIRTH DETAILS',
-                    style: TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 3.0,
+            // Explore birth chart affordance
+            // Only shown if we somehow don't have birth chart data and want them to add it,
+            // OR it's just completely hidden now for ultra-minimalism.
+            if (onExploreBirthChart != null && !hasBirthChart) ...[
+              const SizedBox(height: 24),
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  onExploreBirthChart!();
+                },
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'ADD BIRTH DETAILS',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 3.0,
+                        color: c.withValues(alpha: 0.6),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(
+                      Icons.arrow_forward_rounded,
+                      size: 13,
                       color: c.withValues(alpha: 0.6),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Icon(
-                    Icons.arrow_forward_rounded,
-                    size: 13,
-                    color: c.withValues(alpha: 0.6),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
