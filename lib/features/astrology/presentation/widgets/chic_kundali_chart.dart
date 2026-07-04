@@ -313,9 +313,21 @@ class _KundaliPainter extends CustomPainter {
         final a = _planetCenter(from, w, h);
         final b = _planetCenter(to, w, h);
 
-        // Bow the line gently toward the chart centre for an organic arc.
+        // Route the connection AROUND the busy centre instead of straight
+        // through it: bow the arc outward, perpendicular to the a-b line, on
+        // the side that points away from the chart centre.
         final mid = Offset((a.dx + b.dx) / 2, (a.dy + b.dy) / 2);
-        final ctrl = Offset.lerp(mid, center, 0.35)!;
+        var dir = b - a;
+        final len = dir.distance;
+        if (len == 0) continue;
+        dir = dir / len;
+        var perp = Offset(-dir.dy, dir.dx);
+        final fromCenter = mid - center;
+        if (perp.dx * fromCenter.dx + perp.dy * fromCenter.dy < 0) {
+          perp = Offset(-perp.dx, -perp.dy);
+        }
+        final bulge = len * 0.55;
+        final ctrl = Offset(mid.dx + perp.dx * bulge, mid.dy + perp.dy * bulge);
 
         final path = Path()
           ..moveTo(a.dx, a.dy)
