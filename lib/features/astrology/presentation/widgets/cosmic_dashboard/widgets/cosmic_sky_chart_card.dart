@@ -397,12 +397,6 @@ class CosmicSkyChartCard extends StatelessWidget {
                           color: planetColor,
                           letterSpacing: 0.5,
                           height: 1.2,
-                          shadows: [
-                            Shadow(
-                              color: Colors.white.withValues(alpha: 0.3),
-                              blurRadius: 4.0,
-                            ),
-                          ],
                         );
 
                         // The Editorial Typographical Overlap (Single Chart)
@@ -421,13 +415,6 @@ class CosmicSkyChartCard extends StatelessWidget {
                             color: AppTheme.primaryColor.withValues(alpha: 0.8),
                             letterSpacing: 0.5,
                             height: 1.1,
-                            shadows: [
-                              Shadow(
-                                color: AppTheme.primaryColor
-                                    .withValues(alpha: 0.4),
-                                blurRadius: 4.0,
-                              ),
-                            ],
                           );
 
                           // The transits (sky planets) stack above the birth planets inside the same house
@@ -455,17 +442,6 @@ class CosmicSkyChartCard extends StatelessWidget {
                             color: planetColor, // White/Black matching theme
                             letterSpacing: 0.5,
                             height: 1.2,
-                            shadows: [
-                              Shadow(
-                                color: Colors.black.withValues(alpha: 0.8),
-                                blurRadius: 4.0,
-                                offset: const Offset(0, 1),
-                              ),
-                              Shadow(
-                                color: Colors.white.withValues(alpha: 0.4),
-                                blurRadius: 8.0,
-                              ),
-                            ],
                           ),
                         );
                       }),
