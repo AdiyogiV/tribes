@@ -324,13 +324,11 @@ export async function generateInsightForUserForce(userId, userAstroData, forceRe
             logger.info("🔄 Force regenerating (no existing insight)", { userId, date: today });
         }
 
-        // First-time (no existing): deliver immediately so user gets notifications now
-        const immediateDelivery = !existing.exists;
-        return generateNewInsight(userId, userAstroData, insightRef, today, skipNotification, immediateDelivery);
+        return generateNewInsight(userId, userAstroData, insightRef, today, skipNotification);
     }
 
-    // First-time insight (no existing): deliver immediately
-    return generateNewInsight(userId, userAstroData, insightRef, today, false, true);
+    // First-time insight (no existing): generate and notify
+    return generateNewInsight(userId, userAstroData, insightRef, today, false);
 }
 
 /**
@@ -481,204 +479,50 @@ async function extractAndSavePredictions(userId, insightDate, sections) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// ═══════════════════════════════════════════════════════════════
-// CLOUD TASKS DISPATCH: Enqueue scheduled notification tasks
-// Each card gets its own Cloud Task scheduled for specific time
+// NOTIFICATION: one "your daily reading is ready" push per day
 // ═══════════════════════════════════════════════════════════════
 
 /**
- * Enqueue dispatch tasks for each card notification
- * Each task is scheduled for its specific time (6 AM, 12 PM, 5 PM, 9 PM IST)
- * @param {string} userId - User ID
- * @param {string} date - Date string (yyyy-MM-dd)
- * @param {Array} sections - Processed sections with scheduledFor times
+ * Create a single notification doc for today's reading. The sendPushNotification
+ * Firestore trigger (functions/notifications.js) turns this into an FCM push.
+ * @param {string} userId
+ * @param {string} today   - yyyy-MM-dd
+ * @param {Object} insightData - the saved reading (for title + preview)
  */
-async function enqueueDispatchTasks(userId, date, sections) {
-    if (!sections || sections.length === 0) {
-        return;
+async function sendDailyReadyNotification(userId, today, insightData) {
+    try {
+        const notificationRef = db
+            .collection("notifications")
+            .doc(userId)
+            .collection("notifications")
+            .doc();
+
+        await notificationRef.set({
+            type: "dailyAstroInsight",
+            title: insightData.theme || "Your daily reading is ready",
+            preview: stripMarkdown(insightData.message || "").substring(0, 150),
+            insightId: today,
+            date: today,
+            timestamp: FieldValue.serverTimestamp(),
+            read: false,
+        });
+
+        logger.info("[NOTIFY] Daily reading notification sent", {
+            structuredData: true, userId, date: today,
+        });
+    } catch (error) {
+        logger.error("[NOTIFY] Failed to send daily reading notification", {
+            structuredData: true, userId, error: String(error),
+        });
     }
-
-    const functions = getFunctions();
-    // Unified taskRouter queue — see backend/functions/task_router.js
-    const dispatchQueue = functions.taskQueue("locations/asia-southeast2/functions/taskRouter");
-
-    const now = DateTime.now().setZone("Asia/Kolkata");
-
-    // Parse the date from insight (should be today's date)
-    const insightDate = DateTime.fromFormat(date, "yyyy-MM-dd", { zone: "Asia/Kolkata" });
-
-    let enqueued = 0;
-    let failed = 0;
-
-    for (let i = 0; i < sections.length; i++) {
-        const section = sections[i];
-        const scheduledFor = section.scheduledFor || "06:00";
-
-        // Parse scheduled time (e.g., "06:00" -> 6 AM IST on insight date)
-        const [hours, minutes] = scheduledFor.split(":").map(Number);
-        let scheduledTime = insightDate.set({ hour: hours, minute: minutes, second: 0, millisecond: 0 });
-
-        // If scheduled time is in the past, schedule for today (if generating late)
-        // This handles edge case where generation happens after scheduled time
-        if (scheduledTime < now) {
-            scheduledTime = now.set({ hour: hours, minute: minutes, second: 0, millisecond: 0 });
-            // If still in past, schedule for next occurrence (tomorrow)
-            if (scheduledTime < now) {
-                scheduledTime = scheduledTime.plus({ days: 1 });
-            }
-        }
-
-        // Calculate seconds until scheduled time
-        const delaySeconds = Math.max(0, Math.floor((scheduledTime.toMillis() - now.toMillis()) / 1000));
-
-        try {
-            await dispatchQueue.enqueue({
-                taskType: "dispatch_card_notification", // routed by task_router.js
-                userId,
-                date,
-                cardIndex: i,
-                cardType: "insight", // Unified type
-                title: section.title || "",
-                content: section.content || "",
-                scheduledFor,
-            }, {
-                scheduleDelaySeconds: delaySeconds,
-            });
-
-            enqueued++;
-        } catch (error) {
-            failed++;
-            logger.error("[DISPATCH-ENQUEUE] Failed to enqueue dispatch task", {
-                structuredData: true,
-                userId,
-                cardIndex: i,
-                scheduledFor,
-                error: String(error),
-            });
-        }
-    }
-
-    logger.info("[DISPATCH-ENQUEUE] Enqueued dispatch tasks", {
-        structuredData: true,
-        userId,
-        date,
-        enqueued,
-        failed,
-        totalCards: sections.length,
-    });
-}
-
-// ═══════════════════════════════════════════════════════════════
-// IMMEDIATE NOTIFICATION DELIVERY
-// Sends ALL card notifications together with delays between each
-// ═══════════════════════════════════════════════════════════════
-
-/**
- * Helper to wait for specified milliseconds
- */
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-/**
- * Send ALL card notifications for an insight immediately
- * Cards are sent with 10 second delays between each
- * @param {string} userId - User ID
- * @param {string} today - Date string (yyyy-MM-dd)
- * @param {Array} sections - Processed sections from insight
- * @param {DocumentReference} insightRef - Reference to insight document
- */
-async function sendAllCardNotifications(userId, today, sections, insightRef) {
-    logger.info("[NOTIFICATIONS] Starting immediate delivery of all cards", {
-        structuredData: true,
-        userId,
-        date: today,
-        cardCount: sections.length,
-    });
-
-    const DELAY_BETWEEN_CARDS_MS = 10000; // 10 seconds between each notification
-    let sentCount = 0;
-    let errorCount = 0;
-
-    for (let index = 0; index < sections.length; index++) {
-        const section = sections[index];
-
-        // Add delay between notifications (skip for first one)
-        if (index > 0) {
-            logger.info(`[NOTIFICATIONS] Waiting ${DELAY_BETWEEN_CARDS_MS / 1000}s before next card`, {
-                structuredData: true,
-                userId,
-                nextCard: index,
-            });
-            await delay(DELAY_BETWEEN_CARDS_MS);
-        }
-
-        try {
-            // Create notification document
-            const notificationRef = db
-                .collection("notifications")
-                .doc(userId)
-                .collection("notifications")
-                .doc();
-
-            const notificationData = {
-                type: "dailyAstroInsight",
-                cardType: "insight", // Unified type
-                cardIndex: index,
-                totalCards: sections.length,
-                title: section.title || "",
-                preview: stripMarkdown(section.content || "").substring(0, 150),
-                sectionData: section.data || {},
-                insightId: today,
-                date: today,
-                timestamp: FieldValue.serverTimestamp(),
-                read: false,
-            };
-
-            await notificationRef.set(notificationData);
-
-            // Mark this card as notified in the insight document
-            await insightRef.update({
-                [`cardNotifications.${index}.sent`]: true,
-                [`cardNotifications.${index}.sentAt`]: FieldValue.serverTimestamp(),
-            });
-
-            sentCount++;
-            logger.info(`[NOTIFICATIONS] Sent card ${index + 1}/${sections.length}`, {
-                structuredData: true,
-                userId,
-                cardIndex: index,
-                title: section.title,
-            });
-        } catch (cardError) {
-            errorCount++;
-            logger.error(`[NOTIFICATIONS] Failed to send card ${index}`, {
-                structuredData: true,
-                userId,
-                cardIndex: index,
-                error: String(cardError),
-            });
-        }
-    }
-
-    logger.info("[NOTIFICATIONS] Completed delivery", {
-        structuredData: true,
-        userId,
-        date: today,
-        sentCount,
-        errorCount,
-        totalCards: sections.length,
-    });
-
-    return { sentCount, errorCount };
 }
 
 /**
- * Core insight generation logic
- * When immediateDelivery is true (first-time insight): send all card notifications now.
- * When false: enqueue staggered tasks (6 AM, 12 PM, 5 PM, 9 PM IST).
- * @param {boolean} skipNotification - When true, skip both immediate and staggered delivery (e.g. cooldown)
- * @param {boolean} immediateDelivery - When true, deliver all cards now via sendAllCardNotifications; skip enqueue.
+ * Core insight generation logic. Generates today's reading, saves it, and
+ * (unless skipNotification) sends ONE "your daily reading is ready" push.
+ * @param {boolean} skipNotification - When true, skip the notification (e.g. cooldown on regenerate)
  */
-async function generateNewInsight(userId, userAstroData, insightRef, today, skipNotification = false, immediateDelivery = false) {
+async function generateNewInsight(userId, userAstroData, insightRef, today, skipNotification = false) {
     try {
         const startTime = Date.now();
 
@@ -723,30 +567,12 @@ async function generateNewInsight(userId, userAstroData, insightRef, today, skip
         const structured = await generateInsightWithAI(userAstroData, todayAstroData);
         const step2Duration = Date.now() - step2Start;
 
-        // Use scheduledFor from AI response (Gemini now generates this)
-        // Fallback to first slot if missing
-        const getScheduleFor = (section) => {
-            return section.scheduledFor || "06:00"; // Default to first slot
-        };
-
-        // Process sections with scheduling info
+        // Process sections (one reading, shown together on the dashboard)
         const processedSections = (structured.sections || []).map((section, index) => ({
             ...section,
-            cardType: section.cardType || "insight", // Unified type
-            scheduledFor: getScheduleFor(section),
+            cardType: section.cardType || "insight",
             sectionIndex: index,
-            dispatched: false, // Track if notification sent
         }));
-
-        // Build cardNotifications tracking map
-        const cardNotifications = {};
-        processedSections.forEach((section, index) => {
-            cardNotifications[index] = {
-                sent: false,
-                window: section.scheduledFor,
-                cardType: "insight", // Unified type
-            };
-        });
 
         const insightData = {
             theme: structured.theme || "Today's Guidance",
@@ -791,9 +617,6 @@ async function generateNewInsight(userId, userAstroData, insightRef, today, skip
                     muhurat: todayAstroData.muhurat,
                 },
             },
-            notificationSent: false,
-            // Staggered delivery tracking - per-card notification status
-            cardNotifications: cardNotifications,
         };
 
         // Save (overwrites any existing - atomic operation)
@@ -826,50 +649,12 @@ async function generateNewInsight(userId, userAstroData, insightRef, today, skip
             // Don't throw - insight saved successfully
         }
 
-        // ═══════════════════════════════════════════════════════════════
-        // DELIVERY: First-time = immediate (all cards now); otherwise staggered (6/12/5/9 IST)
-        // ═══════════════════════════════════════════════════════════════
+        // Send ONE "your daily reading is ready" push (unless cooldown).
         if (!skipNotification) {
-            if (immediateDelivery) {
-                try {
-                    await sendAllCardNotifications(userId, today, processedSections, insightRef);
-                    logger.info("[INSIGHT-SAVED] Insight saved, immediate delivery sent", {
-                        structuredData: true,
-                        userId,
-                        date: today,
-                        cardCount: processedSections.length,
-                    });
-                } catch (deliverError) {
-                    logger.error("[INSIGHT-DELIVERY] Immediate delivery failed", {
-                        structuredData: true,
-                        userId,
-                        error: String(deliverError),
-                    });
-                    // Don't throw - insight doc is saved, user can open app and see it
-                }
-            } else {
-                try {
-                    await enqueueDispatchTasks(userId, today, processedSections);
-                    logger.info("[INSIGHT-SAVED] Insight saved, dispatch tasks enqueued", {
-                        structuredData: true,
-                        userId,
-                        date: today,
-                        cardCount: processedSections.length,
-                        scheduledTimes: [...new Set(processedSections.map((s) => s.scheduledFor))],
-                    });
-                } catch (dispatchError) {
-                    logger.error("[DISPATCH-ENQUEUE] Failed to enqueue dispatch tasks", {
-                        structuredData: true,
-                        userId,
-                        error: String(dispatchError),
-                    });
-                }
-            }
+            await sendDailyReadyNotification(userId, today, insightData);
         } else {
-            logger.info("[INSIGHT-SAVED] Insight saved, delivery skipped (cooldown)", {
-                structuredData: true,
-                userId,
-                date: today,
+            logger.info("[INSIGHT-SAVED] Insight saved, notification skipped (cooldown)", {
+                structuredData: true, userId, date: today,
             });
         }
 
@@ -1148,12 +933,5 @@ export async function runGenerateDailyAstroInsights() {
 // 5:00 AM IST. It is now invoked by `unifiedOrchestrator` (see
 // backend/functions/schedulers/unified_orchestrator.js Phase 4) via the
 // extracted `runGenerateDailyAstroInsights` runner above.
-
-// NOTE: The DISPATCH WORKER (`dispatchCardNotification`) used to live here as a
-// Cloud Tasks consumer. It has been merged into the unified `taskRouter`
-// (see backend/functions/task_router.js); the handler logic now lives in
-// backend/functions/task_handlers/dispatch_card_handler.js.
-// Enqueues from this file now target the `taskRouter` queue with
-// `taskType: "dispatch_card_notification"` set on the payload.
 
 
