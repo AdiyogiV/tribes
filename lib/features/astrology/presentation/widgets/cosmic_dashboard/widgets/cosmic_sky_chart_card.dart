@@ -102,44 +102,23 @@ class CosmicSkyChartCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+        padding: const EdgeInsets.all(AppDimensions.paddingLg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Dateline
-            Text(
-              dateStr.toUpperCase(),
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 9,
-                fontWeight: FontWeight.w500,
-                letterSpacing: 3.0,
-                color: c.withValues(alpha: 0.6),
-              ),
-            ),
-
-            const SizedBox(height: 10),
-
-            // Editorial Title
+            // Standard Header (Matches Upcoming Events)
             Text(
               isSliderOnToday ? 'Current Sky' : 'Time Travel',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontFamily: 'Georgia',
-                fontStyle: FontStyle.italic,
-                fontSize: 26,
-                letterSpacing: -0.5,
+                fontSize: AppTheme.holyCowTextSize,
+                fontWeight: FontWeight.w700,
                 color: c,
-                height: 1.1,
               ),
             ),
 
-            const SizedBox(height: 14),
-
-            // Ornamental hairline divider (editorial flourish)
-            _buildOrnament(c),
-
-            const SizedBox(height: 14),
+            const SizedBox(height: AppDimensions.spacingMd),
 
             // Subtext / Daily Insight
             if (insightText != null && insightText!.trim().isNotEmpty)
@@ -150,10 +129,8 @@ class CosmicSkyChartCard extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: c.withValues(alpha: 0.7),
-                    fontSize: 12.5,
-                    height: 1.5,
-                    fontFamily: 'Georgia',
-                    fontStyle: FontStyle.italic,
+                    fontSize: AppTheme.holyCowTextSize - 1,
+                    height: 1.4,
                   ),
                 ),
               ),
@@ -258,34 +235,6 @@ class CosmicSkyChartCard extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-
-  /// A slim, editorial hairline flourish: line — diamond — line.
-  Widget _buildOrnament(Color c) {
-    Widget line(List<Color> colors) => Container(
-          width: 44,
-          height: 1,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(colors: colors),
-          ),
-        );
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        line([c.withValues(alpha: 0.0), c.withValues(alpha: 0.35)]),
-        const SizedBox(width: 8),
-        Transform.rotate(
-          angle: 0.785398, // 45° — a tiny diamond
-          child: Container(
-            width: 4,
-            height: 4,
-            color: c.withValues(alpha: 0.5),
-          ),
-        ),
-        const SizedBox(width: 8),
-        line([c.withValues(alpha: 0.35), c.withValues(alpha: 0.0)]),
-      ],
     );
   }
 
