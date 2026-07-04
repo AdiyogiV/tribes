@@ -335,7 +335,7 @@ class _KundaliPainter extends CustomPainter {
         if (perp.dx * fromCenter.dx + perp.dy * fromCenter.dy < 0) {
           perp = Offset(-perp.dx, -perp.dy);
         }
-        final bulge = len * 0.55;
+        final bulge = len * 0.25;
         final ctrl = Offset(mid.dx + perp.dx * bulge, mid.dy + perp.dy * bulge);
 
         // Straight, angular routing (a -> outward waypoint -> b) instead of a
