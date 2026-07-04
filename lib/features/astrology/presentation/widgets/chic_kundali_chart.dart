@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 class ChicKundaliChart extends StatelessWidget {
@@ -67,18 +69,20 @@ class _KundaliPainter extends CustomPainter {
 
     // --- CHIC LAYERED GEOMETRY ---
 
-    // Core structural paths
+    // Core structural paths (gently wavy instead of dead-straight)
     final diagonals = Path()
-      ..moveTo(0, 0)
-      ..lineTo(w, h)
-      ..moveTo(w, 0)
-      ..lineTo(0, h);
+      ..addPath(_wavyLine(const Offset(0, 0), Offset(w, h)), Offset.zero)
+      ..addPath(_wavyLine(Offset(w, 0), Offset(0, h)), Offset.zero);
+
+    final top = Offset(w / 2, 0);
+    final right = Offset(w, h / 2);
+    final bottom = Offset(w / 2, h);
+    final left = Offset(0, h / 2);
     final innerDiamond = Path()
-      ..moveTo(w / 2, 0)
-      ..lineTo(w, h / 2)
-      ..lineTo(w / 2, h)
-      ..lineTo(0, h / 2)
-      ..close();
+      ..addPath(_wavyLine(top, right), Offset.zero)
+      ..addPath(_wavyLine(right, bottom), Offset.zero)
+      ..addPath(_wavyLine(bottom, left), Offset.zero)
+      ..addPath(_wavyLine(left, top), Offset.zero);
 
     // Very subtle structural lines shared by the cross + inner diamond
     final linePaint = Paint()
@@ -282,6 +286,27 @@ class _KundaliPainter extends CustomPainter {
         }
       }
     }
+  }
+
+  /// Builds a gently wavy path between two points using a sine wave applied
+  /// perpendicular to the line direction.
+  Path _wavyLine(Offset a, Offset b,
+      {double amplitude = 3.0, double waves = 2, int steps = 40}) {
+    final path = Path()..moveTo(a.dx, a.dy);
+    final dx = b.dx - a.dx;
+    final dy = b.dy - a.dy;
+    final len = math.sqrt(dx * dx + dy * dy);
+    if (len == 0) return path;
+    final px = -dy / len; // perpendicular unit vector
+    final py = dx / len;
+    for (int i = 1; i <= steps; i++) {
+      final t = i / steps;
+      // Fade the wave to zero at both endpoints so lines still meet cleanly.
+      final envelope = math.sin(t * math.pi);
+      final off = math.sin(t * math.pi * waves) * amplitude * envelope;
+      path.lineTo(a.dx + dx * t + px * off, a.dy + dy * t + py * off);
+    }
+    return path;
   }
 
   void _drawText({
