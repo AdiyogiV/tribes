@@ -24,20 +24,19 @@ COMPUTE (pure math, no AI)         lib/vedic_analysis.js
       lib/house_interpretations.js  -> natal house text
       lib/daily_insight_context.js  -> dasha phase, today's transits vs natal lagna
 
-GENERATE (AI)                      insights/engine/insight_engine.js  (runFlavor)
-      one shared pipeline: gather context -> prompt -> Gemini -> validate -> cache -> store
-      flavors/first_reading.js      one-time birth personality read
-      flavors/current_times.js      "where you are now" read
-      flavors/per_house.js          12-house Gochara, 14-day cycle
-      functions/daily_astro_insights.js
-                                    daily 4-card insight. Uses the SAME shared
-                                    AI client, but stays its own module because
-                                    it also schedules 4 timed notifications.
+GENERATE (AI)                      lib/gemini.js  (callGemini)
+      the ONE place we call Gemini (retries, JSON parsing, telemetry).
+      Each reading is one flat self-contained file: gather context -> prompt
+      -> callGemini -> validate -> store. No engine, no flavor objects.
+      functions/first_reading.js    one-time birth personality read
+      functions/current_times_reading.js  "where you are now" read
+      functions/per_house.js        12-house Gochara, 14-day cycle (+ scheduler)
+      functions/daily_astro_insights.js   daily insight + one "ready" push
 
 ORCHESTRATE                        functions/schedulers/unified_orchestrator.js
       one nightly cron (4:30 AM IST): refresh sky -> generate daily insights
-      -> enqueue per-house -> health. Per-card notifications fire via
-      functions/task_router.js (Cloud Tasks) at 6a / 12p / 5p / 9p IST.
+      -> enqueue per-house -> health. One "your daily reading is ready" push
+      per user (functions/notifications.js FCM trigger).
 ```
 
 ## Deployed surface (`index.js`)
@@ -64,5 +63,7 @@ ORCHESTRATE                        functions/schedulers/unified_orchestrator.js
 > Kept simple on purpose.
 
 ## Adding a new reading
-Write a `flavor` (see `insights/README.md`) and call `runFlavor(flavor, { uid })`.
-The engine handles Gemini, parsing, retries, caching, storage, telemetry.
+Create one file in `functions/` with a flat generator:
+gather context -> build prompt -> `callGemini` (from `lib/gemini.js`) ->
+validate -> store on the user doc. Wire the handler into a gateway method
+registry. No engine or flavor objects — just one readable file per reading.

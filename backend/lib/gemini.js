@@ -2,9 +2,10 @@
  * AI Client — the one place we talk to Gemini.
  *
  * Replaces ~6 separate copies of Gemini setup, JSON parsing, error handling,
- * and retry logic scattered across the codebase. Every flavor goes through
- * this same wrapper, so improvements (better retries, structured output,
- * telemetry, model upgrades) happen in ONE place.
+ * and retry logic that used to be scattered across the codebase. Every reading
+ * (first_reading, current_times, per_house, daily) and user_memory calls this
+ * one wrapper, so improvements (retries, structured output, telemetry, model
+ * upgrades) happen in ONE place.
  */
 
 import { db, logger } from "./firebase.js";
