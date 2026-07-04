@@ -116,6 +116,7 @@ class _KundaliPainter extends CustomPainter {
       ).createShader(Rect.fromLTWH(0, 0, w, h));
 
     canvas.drawPath(diagonals, linePaint);
+    canvas.drawPath(innerDiamond, linePaint);
 
     // 3. Define the true geometric inner corners (anchors) for the planets
     final houseAnchors = [
