@@ -338,9 +338,13 @@ class _KundaliPainter extends CustomPainter {
         final bulge = len * 0.55;
         final ctrl = Offset(mid.dx + perp.dx * bulge, mid.dy + perp.dy * bulge);
 
+        // Straight, angular routing (a -> outward waypoint -> b) instead of a
+        // smooth curve, so the connections read squarish while still going
+        // around the busy centre.
         final path = Path()
           ..moveTo(a.dx, a.dy)
-          ..quadraticBezierTo(ctrl.dx, ctrl.dy, b.dx, b.dy);
+          ..lineTo(ctrl.dx, ctrl.dy)
+          ..lineTo(b.dx, b.dy);
         canvas.drawPath(path, aspectPaint);
       }
     }
