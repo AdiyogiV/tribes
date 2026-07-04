@@ -90,61 +90,6 @@ class _KundaliPainter extends CustomPainter {
     canvas.drawPath(diagonals, linePaint);
     canvas.drawPath(innerDiamond, linePaint);
 
-    // Flat grey highlight for all birth-chart house regions. Built as ONE
-    // combined path and filled a single time so overlapping inner-house
-    // triangles (which share the center vertex) don't stack alpha and look
-    // like a gradient.
-    if (transitHouses != null && transitPlanetStyle != null) {
-      const s = 56.0;
-      final anchors = [
-        const Offset(0.5, 0.5),
-        const Offset(0.25, 0.25),
-        const Offset(0.25, 0.25),
-        const Offset(0.5, 0.5),
-        const Offset(0.25, 0.75),
-        const Offset(0.25, 0.75),
-        const Offset(0.5, 0.5),
-        const Offset(0.75, 0.75),
-        const Offset(0.75, 0.75),
-        const Offset(0.5, 0.5),
-        const Offset(0.75, 0.25),
-        const Offset(0.75, 0.25),
-      ];
-      final dirs = [
-        const Offset(0, -1),
-        const Offset(0, -1),
-        const Offset(-1, 0),
-        const Offset(-1, 0),
-        const Offset(-1, 0),
-        const Offset(0, 1),
-        const Offset(0, 1),
-        const Offset(0, 1),
-        const Offset(1, 0),
-        const Offset(1, 0),
-        const Offset(1, 0),
-        const Offset(0, -1),
-      ];
-      final highlightPath = Path();
-      for (int i = 0; i < 12 && i < houses.length; i++) {
-        final ax = w * anchors[i].dx;
-        final ay = h * anchors[i].dy;
-        final d = dirs[i];
-        final e1 = Offset(d.dx + d.dy, d.dy - d.dx);
-        final e2 = Offset(d.dx - d.dy, d.dy + d.dx);
-        highlightPath
-          ..moveTo(ax, ay)
-          ..lineTo(ax + e1.dx * s, ay + e1.dy * s)
-          ..lineTo(ax + e2.dx * s, ay + e2.dy * s)
-          ..close();
-      }
-      canvas.drawPath(
-        highlightPath,
-        Paint()
-          ..color = const Color(0x33FFFFFF)
-          ..style = PaintingStyle.fill,
-      );
-    }
-
     // 3. Define the true geometric inner corners (anchors) for the planets
     final houseAnchors = [
       const Offset(0.5, 0.5), // H1 (Absolute Center)
