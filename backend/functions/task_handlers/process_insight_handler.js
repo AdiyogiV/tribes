@@ -1,23 +1,31 @@
 /**
  * Handler for `process_insight` task type.
  *
- * Originally `processInsightTask` in insight_worker.js.
  * Generates one user's daily astrology insight via AI.
- *
- * Payload: { userId, astrologyData, date }
+ * Payload: { userId, date }  — the chart is re-read from the user doc here
+ * (we no longer ship the full chart through the task payload).
  */
 
 import { generateInsightForUserForce } from "../daily_astro_insights.js";
 
 export async function handleProcessInsight(payload, ctx) {
-    const { userId, astrologyData, date } = payload;
+    const { userId, date } = payload;
     const { db, logger } = ctx;
 
-    if (!userId || !astrologyData) {
-        logger.error("[INSIGHT-WORKER] Invalid task data", {
+    if (!userId) {
+        logger.error("[INSIGHT-WORKER] Invalid task data (no userId)", {
             structuredData: true,
-            hasUserId: !!userId,
-            hasAstrologyData: !!astrologyData,
+        });
+        return;
+    }
+
+    // Re-read the chart from the user doc (kept out of the task payload).
+    const userSnap = await db.collection("users").doc(userId).get();
+    const astrologyData = userSnap.exists ? userSnap.data()?.astrologyData : null;
+    if (!astrologyData) {
+        logger.warn("[INSIGHT-WORKER] User has no astrologyData, skipping", {
+            structuredData: true,
+            userId,
         });
         return;
     }

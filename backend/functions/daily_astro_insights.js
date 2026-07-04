@@ -793,8 +793,13 @@ export async function runGenerateDailyAstroInsights() {
     });
 
     try {
+        // Fetch only doc IDs (.select() with no fields). We no longer pull every
+        // user's full chart into memory just to enqueue — the worker re-reads the
+        // chart from the user doc when it processes each task. This keeps the
+        // nightly run's memory + task-payload size flat regardless of chart size.
         const usersSnapshot = await db.collection("users")
             .where("astrologyData", "!=", null)
+            .select()
             .get();
 
         if (usersSnapshot.empty) {
@@ -802,10 +807,7 @@ export async function runGenerateDailyAstroInsights() {
             return { success: true, enqueued: 0 };
         }
 
-        const users = usersSnapshot.docs.map((doc) => ({
-            userId: doc.id,
-            astrologyData: doc.data().astrologyData,
-        }));
+        const users = usersSnapshot.docs.map((doc) => doc.id);
 
         // Activity gate: only generate for users who actually opened the app
         // recently. We used to generate for EVERY user who ever finished their
@@ -819,7 +821,7 @@ export async function runGenerateDailyAstroInsights() {
         if (activeDays > 0) {
             const activeUids = await getRecentlyActiveUids(activeDays);
             const before = gatedUsers.length;
-            gatedUsers = gatedUsers.filter((u) => activeUids.has(u.userId));
+            gatedUsers = gatedUsers.filter((uid) => activeUids.has(uid));
             logger.info("Daily insights activity gate applied", {
                 structuredData: true,
                 activeDays,
@@ -865,7 +867,7 @@ export async function runGenerateDailyAstroInsights() {
         const totalUsers = gatedUsers.length;
 
         for (let i = 0; i < gatedUsers.length; i++) {
-            const user = gatedUsers[i];
+            const uid = gatedUsers[i];
 
             try {
                 // Calculate delay: spread evenly over 1 hour
@@ -874,8 +876,7 @@ export async function runGenerateDailyAstroInsights() {
 
                 await queue.enqueue({
                     taskType: "process_insight", // routed by task_router.js
-                    userId: user.userId,
-                    astrologyData: user.astrologyData,
+                    userId: uid,
                     date: today,
                 }, {
                     scheduleDelaySeconds: delaySeconds,
@@ -885,7 +886,7 @@ export async function runGenerateDailyAstroInsights() {
                 enqueueFailed++;
                 logger.warn("[ENQUEUE] Failed to enqueue task", {
                     structuredData: true,
-                    userId: user.userId,
+                    userId: uid,
                     error: String(e),
                 });
             }
