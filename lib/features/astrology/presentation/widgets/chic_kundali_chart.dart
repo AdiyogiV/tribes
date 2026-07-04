@@ -305,7 +305,7 @@ class _KundaliPainter extends CustomPainter {
 
     final paint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = lineWidth * 3.5
+      ..strokeWidth = lineWidth * 6.0
       ..isAntiAlias = true
       ..strokeCap = StrokeCap.round;
 
