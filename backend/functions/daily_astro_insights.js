@@ -78,8 +78,9 @@ async function generateInsightWithAI(userAstroData, todayAstroData) {
         doshaDetails.push(`Combustion: ${doshas.combust_planets.join(", ")} planets near Sun`);
     }
 
-    // Extract Shad Bala (planetary strength)
-    const shadBala = todayAstroData.shadBala || {};
+    // Extract Shad Bala (natal planetary strength — stored on the user at signup).
+    // Must be the user's own natal shadbala, NOT a "born-today" chart.
+    const shadBala = userAstroData.shadBala || {};
     const analysis = shadBala._analysis || {};
     const strongPlanets = (analysis.strongPlanets || []).map((p) => `${p.planet}(${p.strength}%)`).join(", ") || "Unknown";
     const weakPlanets = (analysis.weakPlanets || []).map((p) => `${p.planet}(${p.strength}%)`).join(", ") || "None";
@@ -758,7 +759,7 @@ async function generateNewInsight(userId, userAstroData, insightRef, today, skip
             astrologicalData: {
                 transits: todayAstroData.transits,
                 panchang: todayAstroData.panchang,
-                shadBala: todayAstroData.shadBala?._analysis || null,
+                shadBala: userAstroData.shadBala?._analysis || null,
                 // TODAY's samvat info (lunar month, vikram year, calendar data)
                 // This is for TODAY's date — distinct from profile.samvatInfo (birth date)
                 todaySamvat: todayAstroData.todaySamvat || null,
@@ -786,7 +787,7 @@ async function generateNewInsight(userId, userAstroData, insightRef, today, skip
                 todayData: {
                     transits: todayAstroData.transits,
                     panchang: todayAstroData.panchang,
-                    shadBala: todayAstroData.shadBala?._analysis || null,
+                    shadBala: userAstroData.shadBala?._analysis || null,
                     muhurat: todayAstroData.muhurat,
                 },
             },

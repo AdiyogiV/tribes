@@ -101,10 +101,11 @@ export async function buildDashaContext(userId, currentDasha) {
 
 /**
  * Get today's astrological data for a user's location.
- * Fetches panchang, transits, shadBala, muhurat, and samvat from the astro API.
+ * Fetches panchang, transits, and samvat from the astro API.
  * Calculates transit houses relative to user's natal Lagna (Whole Sign).
+ * Note: shadbala is natal (read from the user profile), not fetched here.
  * @param {Object} userAstroData - User's astrology profile from Firestore
- * @returns {{ panchang, transits, shadBala, muhurat, todaySamvat }}
+ * @returns {{ panchang, transits, muhurat, todaySamvat }}
  */
 export async function getTodayAstroData(userAstroData) {
     const { birthLatitude, birthLongitude, timeZone, timeZoneOffset } = userAstroData;
@@ -149,7 +150,7 @@ export async function getTodayAstroData(userAstroData) {
         });
 
         const result = await runAstroFlow({
-            mode: "full",
+            mode: "standard", // planets + panchang + samvat. No natal-only extras
             payload: todayPayload,
             timeZoneId: currentTimeZone || "UTC",
             timeZoneOffset: currentTimeZoneOffset,
@@ -204,9 +205,7 @@ export async function getTodayAstroData(userAstroData) {
             });
         }
 
-        // Extract Shad Bala, Muhurat, and Samvat
-        const shadBala = result.shadBala || {};
-
+        // Muhurat and Samvat (shadbala is natal, read from the user profile instead)
         const muhurat = {};
         const muhuratSource = result.muhurat?.days?.[DateTime.now().toFormat("yyyy-MM-dd")] || {};
         if (muhuratSource.rahuKala) muhurat.rahuKaal = muhuratSource.rahuKala;
@@ -220,19 +219,18 @@ export async function getTodayAstroData(userAstroData) {
 
         const todaySamvat = result.samvatInfo || null;
 
-        logger.info("✅ Today's data fetched", {
+        logger.info(" Today's data fetched", {
             structuredData: true,
             panchangKeys: Object.keys(panchang).filter((k) => panchang[k]).length,
             transitCount: Object.keys(transits).length,
-            hasShadBala: Object.keys(shadBala).length > 0,
             hasMuhurat: Object.keys(muhurat).length > 0,
             hasTodaySamvat: !!todaySamvat,
         });
 
-        return { panchang, transits, shadBala, muhurat, todaySamvat };
+        return { panchang, transits, muhurat, todaySamvat };
     } catch (error) {
         logger.error("Failed to get today's astro data", { error: String(error) });
-        return { panchang: {}, transits: {}, shadBala: {}, todaySamvat: null };
+        return { panchang: {}, transits: {}, todaySamvat: null };
     }
 }
 

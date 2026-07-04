@@ -118,24 +118,6 @@ const buildAntarDashas = (source, { fallbackToKey = false, offsetHours = 0 } = {
 // Reuse the house calculation from vedic_analysis.js (has defensive bounds checking)
 const getHouseFromDegrees = calculateHouseFromDegree;
 
-// Helper to check if a planet is between Rahu and Ketu (going clockwise from Rahu to Ketu)
-const isPlanetBetweenRahuKetu = (planetDegree, rahuDegree, ketuDegree) => {
-    // Normalize degrees to 0-360
-    const normPlanet = ((planetDegree % 360) + 360) % 360;
-    const normRahu = ((rahuDegree % 360) + 360) % 360;
-    const normKetu = ((ketuDegree % 360) + 360) % 360;
-
-    // Rahu and Ketu are always 180° apart, but we check both arcs
-    // The arc from Rahu going forward (clockwise in the zodiac) to Ketu
-    if (normRahu < normKetu) {
-        // Rahu to Ketu spans forward without crossing 360°
-        return normPlanet > normRahu && normPlanet < normKetu;
-    } else {
-        // Rahu to Ketu crosses 360° (e.g., Rahu at 350°, Ketu at 170°)
-        return normPlanet > normRahu || normPlanet < normKetu;
-    }
-};
-
 // Calculate doshas from planetary positions
 const calculateDoshasFromPlanets = (planets, ascendant = null) => {
     if (!planets || typeof planets !== "object") return null;
@@ -168,7 +150,7 @@ const calculateDoshasFromPlanets = (planets, ascendant = null) => {
         }
 
         // Search by internal name property
-        for (const [key, value] of Object.entries(planets)) {
+        for (const value of Object.values(planets)) {
             if (value && typeof value === "object") {
                 const planetName = (value.name || "").toString().toLowerCase();
                 if (planetName === name.toLowerCase()) {
