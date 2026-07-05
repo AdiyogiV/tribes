@@ -297,7 +297,10 @@ class _KundaliPainter extends CustomPainter {
 
   /// Draws directional drishti lines from each aspecting planet to the houses
   /// it aspects, coloured per planet so each line is traceable to its source.
-  /// Uses transit planets when available (so it moves with time), else natal.
+  /// A line is only drawn when the aspected house actually holds another
+  /// planet (a real planet-to-planet aspect) — aspects into empty houses are
+  /// skipped. Uses transit planets when available (so it moves with time),
+  /// else natal.
   void _drawAspects(Canvas canvas, double w, double h) {
     final bool useTransit = transitHouses != null && transitPlanetStyle != null;
     final source = useTransit ? transitHouses! : houses;
@@ -320,6 +323,11 @@ class _KundaliPainter extends CustomPainter {
         for (final off in _aspectOffsets(planet)) {
           final to = (from + off) % 12;
           if (to == from) continue;
+
+          // A drishti is only meaningful when it actually lands on another
+          // planet. Skip aspects into empty houses so the lines that remain
+          // each represent a real planet-to-planet aspect.
+          if (to >= source.length || _clean(source[to]).isEmpty) continue;
 
           // Direct, slightly-wavy line from the planet to the target house's
           // zodiac label.
