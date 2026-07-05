@@ -110,15 +110,19 @@ class _KundaliPainter extends CustomPainter {
         h * _anchors[i].dy + _pushDirs[i].dy * dist,
       );
 
-  /// Vedic drishti, SPECIAL aspects only (the universal 7th is dropped to keep
-  /// the chart legible). Mars 4th/8th, Jupiter 5th/9th, Saturn 3rd/10th. Other
-  /// planets cast no line.
+  /// Vedic drishti offsets (inclusive, own house = 1st, so 7th = +6).
+  ///
+  /// EVERY planet aspects its 7th house — that is the universal baseline, not
+  /// something "special". Mars, Jupiter and Saturn additionally cast their
+  /// special drishti *on top of* the 7th (never instead of it), so they get
+  /// three aspects each. Clutter is no longer a concern because [_drawAspects]
+  /// only draws a line when the aspected house actually holds a planet.
   List<int> _aspectOffsets(String token) {
     final p = token.toLowerCase();
-    if (p.startsWith('ma')) return const [3, 7];
-    if (p.startsWith('ju')) return const [4, 8];
-    if (p.startsWith('sa')) return const [2, 9];
-    return const [];
+    if (p.startsWith('ma')) return const [3, 6, 7]; // 4th, 7th, 8th
+    if (p.startsWith('ju')) return const [4, 6, 8]; // 5th, 7th, 9th
+    if (p.startsWith('sa')) return const [2, 6, 9]; // 3rd, 7th, 10th
+    return const [6]; // every other planet: universal 7th aspect
   }
 
   /// A distinct colour per planet so each aspect line can be traced back to
