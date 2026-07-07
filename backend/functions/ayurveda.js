@@ -39,8 +39,6 @@ export { resetAndRecalculateAyurveda };
 import { DateTime } from "luxon";
 import {
     calculateHouseFromDegree,
-    calculateTransitAspects,
-    scoreAspects,
     calculatePlanetDignity,
     calculateAshtakavarga,
     getTransitBinduScore,
@@ -137,24 +135,8 @@ function computeTransitEffectAndFactors({ transits, ascendantDegree, dashaData, 
         });
     }
 
-    // 2) Transit-to-natal aspects (small additive refinements)
-    // Uses degree-based aspects; we keep impact tiny.
-    const hasNatal = natalPlanets && Object.keys(natalPlanets).length > 0;
-    const transitAspects = hasNatal ?
-        calculateTransitAspects({ planets: natalPlanets }, transits) :
-        [];
-    const scored = scoreAspects(transitAspects, dashaData);
-    const topAspects = (scored || []).filter((a) => (a.score || a.significance || 0) >= 6).slice(0, 2);
-    for (const a of topAspects) {
-        const planet = a.transitPlanet;
-        const doshaInfo = PLANET_DOSHA?.[planet];
-        if (!doshaInfo) continue;
-
-        const aspectStrength = Math.max(1, Math.min(3, Math.round((a.score || a.significance || 6) / 6)));
-        raw[doshaInfo.primary] += aspectStrength * 0.8;
-        if (doshaInfo.secondary) raw[doshaInfo.secondary] += aspectStrength * 0.4;
-    }
-
+    // Transit dosha effect comes purely from planet-in-house placement above.
+    // (Western degree-aspect refinements were removed — not classical Jyotish.)
     const sum = raw.vata + raw.pitta + raw.kapha;
     if (sum <= 0) return { transitEffect: null, transitFactors: [] };
 
@@ -165,7 +147,7 @@ function computeTransitEffectAndFactors({ transits, ascendantDegree, dashaData, 
         kapha: Math.round(raw.kapha * scale),
     };
 
-    // Factors for explainability (top 2 planets + top aspects)
+    // Factors for explainability (top 2 transiting planets by house placement)
     perPlanet.sort((a, b) => b.weight - a.weight);
     const transitFactors = [];
 
@@ -178,15 +160,6 @@ function computeTransitEffectAndFactors({ transits, ascendantDegree, dashaData, 
             description: desc,
             dosha: p.primaryDosha,
             strength: Math.max(1, Math.min(10, Math.round(p.weight * 5))),
-        });
-    }
-
-    for (const a of topAspects) {
-        transitFactors.push({
-            source: "transitAspect",
-            description: `${a.transitPlanet} ${a.type} natal ${a.natalPlanet}`,
-            dosha: (PLANET_DOSHA?.[a.transitPlanet]?.primary) || "vata",
-            strength: Math.max(1, Math.min(10, Math.round((a.score || a.significance || 6)))),
         });
     }
 

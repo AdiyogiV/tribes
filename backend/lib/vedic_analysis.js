@@ -122,7 +122,8 @@ const YOGAKARAKA = {
 /**
  * Dignity scores used in calculatePlanetDignity()
  * Scale: 0 (weakest) to 100 (strongest)
- * Based on traditional Shadbala proportional strengths
+ * Classical Vedic dignity (Uccha/Neecha/Swakshetra/Moolatrikona/friend-enemy)
+ * expressed on a 0-100 scale. NOTE: this is dignity only — not full Shadbala.
  */
 const DIGNITY_SCORES = {
     EXALTED_BASE: 100,        // Maximum possible score at exact exaltation degree
@@ -136,20 +137,6 @@ const DIGNITY_SCORES = {
     FRIENDLY: 60,             // Planet in sign of friend
     NEUTRAL: 50,              // Planet in neutral sign (also default/unknown)
     ENEMY: 35,                // Planet in sign of enemy
-};
-
-/**
- * Aspect strength values for calculateAspect()
- * Higher = stronger influence between the two planets
- */
-const ASPECT_STRENGTHS = {
-    CONJUNCTION: 10,
-    OPPOSITION: 8,
-    TRINE: 6,
-    SQUARE: 5,
-    SEXTILE: 4,
-    ORB_DEGREES: 10,          // Standard orb for all aspects
-    MIN_STRENGTH_THRESHOLD: 4, // Minimum strength to include in results
 };
 
 /**
@@ -348,98 +335,6 @@ export function checkCombustion(planetName, planetDegree, sunDegree, isRetrograd
     }
     
     return { isCombust: false };
-}
-
-/**
- * Calculate aspects between two planets (Western-style, for compatibility)
- * Kept for backward compatibility
- */
-export function calculateAspect(degree1, degree2) {
-    if (degree1 == null || degree2 == null) return null;
-
-    const diff = Math.abs(degree1 - degree2);
-    const angle = Math.min(diff, 360 - diff);
-
-    // Using traditional Vedic conjunction orb
-    const orb = ASPECT_STRENGTHS.ORB_DEGREES;
-    if (angle < orb) return { type: "conjunction", angle, strength: ASPECT_STRENGTHS.CONJUNCTION };
-    if (Math.abs(angle - 180) < orb) return { type: "opposition", angle, strength: ASPECT_STRENGTHS.OPPOSITION };
-    if (Math.abs(angle - 120) < orb) return { type: "trine", angle, strength: ASPECT_STRENGTHS.TRINE };
-    if (Math.abs(angle - 90) < orb) return { type: "square", angle, strength: ASPECT_STRENGTHS.SQUARE };
-    if (Math.abs(angle - 60) < orb) return { type: "sextile", angle, strength: ASPECT_STRENGTHS.SEXTILE };
-
-    return null;
-}
-
-/**
- * Calculate aspects between transit and natal planets
- * Returns array of significant aspects
- */
-export function calculateTransitAspects(natalChart, transits) {
-    if (!natalChart || !transits) return [];
-
-    const aspects = [];
-    const natalPlanets = natalChart.planets || natalChart.birthChartData?.planets || {};
-
-    // Process each transiting planet
-    Object.entries(transits).forEach(([transitPlanet, transitData]) => {
-        if (!transitData || typeof transitData !== "object") return;
-
-        const transitDegree = transitData.degree || transitData.fullDegree || transitData.longitude;
-        if (transitDegree == null) return;
-
-        // Check aspects to all natal planets
-        Object.entries(natalPlanets).forEach(([natalPlanet, natalData]) => {
-            if (!natalData || typeof natalData !== "object") return;
-            if (transitPlanet === natalPlanet) return; // Skip same planet
-
-            const natalDegree = natalData.fullDegree || natalData.longitude;
-            if (natalDegree == null) return;
-
-            const aspect = calculateAspect(transitDegree, natalDegree);
-            if (aspect && aspect.strength >= ASPECT_STRENGTHS.MIN_STRENGTH_THRESHOLD) { // Only significant aspects
-                aspects.push({
-                    transitPlanet,
-                    natalPlanet,
-                    type: aspect.type,
-                    angle: aspect.angle,
-                    strength: aspect.strength,
-                });
-            }
-        });
-    });
-
-    return aspects;
-}
-
-/**
- * Score aspects by significance
- */
-export function scoreAspects(aspects, dashaData) {
-    if (!aspects || aspects.length === 0) return [];
-
-    return aspects.map(aspect => {
-        let significance = aspect.strength || 0;
-
-        // Aspect type importance
-        if (aspect.type === "conjunction" || aspect.type === "opposition") {
-            significance += 2;
-        }
-
-        // Dasha interaction
-        if (dashaData) {
-            const { mahaDasha, antarDasha } = normalizeDasha(dashaData);
-            if (aspect.transitPlanet === mahaDasha || aspect.transitPlanet === antarDasha) {
-                significance += 8;
-            }
-        }
-
-        return {
-            ...aspect,
-            score: significance, // Use 'score' for consistency with frontend expectations
-            significance, // Keep both for backward compatibility
-        };
-    }).sort((a, b) => (b.score || b.significance) - (a.score || a.significance)); // Sort by score descending
 }
 
 // ========================================
