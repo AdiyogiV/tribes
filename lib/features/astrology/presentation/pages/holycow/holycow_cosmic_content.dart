@@ -236,7 +236,7 @@ class HolyCowCosmicContent extends StatelessWidget {
                 FirebaseAuth.instance.currentUser != null;
 
             return Material(
-              color: Colors.black,
+              color: cardColor,
               elevation: 2,
               shadowColor: Colors.black.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(AppDimensions.radiusXl),

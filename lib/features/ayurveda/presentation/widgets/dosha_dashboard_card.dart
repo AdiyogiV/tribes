@@ -225,11 +225,11 @@ class TodaysBalanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Pure black minimal card
-    final bg = const Color(0xFF000000); // Vlack (black)
-    final fgMain = Colors.white;
-    final fgMuted = Colors.white54;
-    final fgFaint = Colors.white24;
+    // Theme-aware minimal card: night-black in dark, clean white in light.
+    final bg = isDark ? const Color(0xFF000000) : Colors.white;
+    final fgMain = isDark ? Colors.white : const Color(0xFF1A1A1C);
+    final fgMuted = isDark ? Colors.white54 : Colors.black54;
+    final fgFaint = isDark ? Colors.white24 : Colors.black26;
     
     final hasVikriti = vikriti != null;
 

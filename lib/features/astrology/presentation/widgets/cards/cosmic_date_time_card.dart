@@ -756,7 +756,11 @@ class _VedicCombinedCardState extends State<VedicCombinedCard> {
         ? 'TODAY'
         : (daysDiff > 0 ? 'IN $daysDiff DAYS' : '${daysDiff.abs()} DAYS AGO');
 
-    final primaryWhite = Colors.white.withValues(alpha: 0.95);
+    // Theme-aware ink: white on the dark surface, near-black on light. (Name
+    // kept as primaryWhite for the styles below; it's the primary text colour.)
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryWhite = (isDark ? Colors.white : const Color(0xFF1A1A1C))
+        .withValues(alpha: 0.95);
 
     // Left Column: Classic, chic, editorial (Serif Italic)
     final leftStyle = TextStyle(

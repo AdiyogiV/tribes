@@ -48,7 +48,11 @@ class _MuhuratTimelineWidgetState extends State<MuhuratTimelineWidget>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Material(
-      color: Colors.black,
+      // Embedded: transparent so it inherits the parent card's surface.
+      // Standalone: its own theme-aware surface.
+      color: widget.embedded
+          ? Colors.transparent
+          : (isDark ? const Color(0xFF000000) : Colors.white),
       elevation: 0,
       borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
       child: Padding(

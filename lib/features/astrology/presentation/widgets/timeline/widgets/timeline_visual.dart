@@ -91,6 +91,9 @@ class TimelineVisual extends StatelessWidget {
         currentTimeMinutes! >= startTime &&
         currentTimeMinutes! <= endTime;
 
+    // Theme-aware ink for axis/nodes/labels: white on dark, black on light.
+    final ink = isDark ? Colors.white : Colors.black;
+
     return SizedBox(
       width: timelineWidth,
       height: _timelineHeight,
@@ -104,7 +107,7 @@ class TimelineVisual extends StatelessWidget {
             top: _axisY,
             child: Container(
               height: 1,
-              color: Colors.white.withValues(alpha: 0.15),
+              color: ink.withValues(alpha: 0.15),
             ),
           ),
 
@@ -127,7 +130,7 @@ class TimelineVisual extends StatelessWidget {
                     Container(
                       width: 1, 
                       height: 5, 
-                      color: Colors.white.withValues(alpha: 0.3)
+                      color: ink.withValues(alpha: 0.3)
                     ),
                     const SizedBox(height: 30),
                     // Text at the bottom
@@ -137,7 +140,7 @@ class TimelineVisual extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 9.5,
                         fontWeight: FontWeight.w600,
-                        color: Colors.white.withValues(alpha: 0.5),
+                        color: ink.withValues(alpha: 0.5),
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -161,7 +164,7 @@ class TimelineVisual extends StatelessWidget {
                 width: 1,
                 height: 28,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.35),
+                  color: ink.withValues(alpha: 0.35),
                   borderRadius: BorderRadius.circular(0.5),
                 ),
               ),
@@ -174,7 +177,7 @@ class TimelineVisual extends StatelessWidget {
                 width: 3,
                 height: 3,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.8),
+                  color: ink.withValues(alpha: 0.8),
                   shape: BoxShape.circle,
                 ),
               ),

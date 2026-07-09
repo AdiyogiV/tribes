@@ -766,24 +766,24 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
                   Text(
                     line,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       height: 1.4,
                       letterSpacing: 3.0,
                       fontWeight: FontWeight.w800,
-                      color: Colors.white,
+                      color: c,
                     ),
                   ),
                 if (headerVibe != null)
                   Text(
                     '$headerAlignment% ALIGNED',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       height: 1.4,
                       letterSpacing: 3.0,
                       fontWeight: FontWeight.w800,
-                      color: Colors.white,
+                      color: c,
                     ),
                   ),
               ],
@@ -925,6 +925,10 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
         // dimmer can stretch all the way out (no uncovered side padding).
         final dimHExt =
             (constraints.maxWidth - total) / 2 + AppDimensions.paddingXs;
+
+        // The bottom dimmer must fade into the CARD surface, not always black,
+        // else it smudges black over the white card in light mode.
+        final fade = isDark ? Colors.black : Colors.white;
 
         // Scale alignment — maps press point inside the wheel to AnimatedScale's
         // alignment convention (-1..1). Locked at press; doesn't change on drag.
@@ -1100,16 +1104,16 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
                                     end: Alignment.bottomCenter,
                                     colors: [
                                       Colors.transparent,
-                                      Colors.black.withValues(alpha: 0.00),
-                                      Colors.black.withValues(alpha: 0.04),
-                                      Colors.black.withValues(alpha: 0.10),
-                                      Colors.black.withValues(alpha: 0.18),
-                                      Colors.black.withValues(alpha: 0.29),
-                                      Colors.black.withValues(alpha: 0.43),
-                                      Colors.black.withValues(alpha: 0.59),
-                                      Colors.black.withValues(alpha: 0.76),
-                                      Colors.black.withValues(alpha: 0.92),
-                                      Colors.black,
+                                      fade.withValues(alpha: 0.00),
+                                      fade.withValues(alpha: 0.04),
+                                      fade.withValues(alpha: 0.10),
+                                      fade.withValues(alpha: 0.18),
+                                      fade.withValues(alpha: 0.29),
+                                      fade.withValues(alpha: 0.43),
+                                      fade.withValues(alpha: 0.59),
+                                      fade.withValues(alpha: 0.76),
+                                      fade.withValues(alpha: 0.92),
+                                      fade,
                                     ],
                                     stops: const [
                                       0.00,
@@ -1145,11 +1149,11 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
                                   Text(
                                     'MOON IN',
                                     textAlign: TextAlign.center,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 7,
                                       letterSpacing: 2.0,
                                       fontWeight: FontWeight.w700,
-                                      color: Colors.white,
+                                      color: c.withValues(alpha: 0.7),
                                     ),
                                   ),
                                   const SizedBox(height: 2),
@@ -1171,21 +1175,23 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
                                     mainAxisSize: MainAxisSize.min,
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      const Icon(Icons.chevron_left,
-                                          size: 11, color: Colors.white),
+                                      Icon(Icons.chevron_left,
+                                          size: 11,
+                                          color: c.withValues(alpha: 0.7)),
                                       const SizedBox(width: 6),
-                                      const Text(
+                                      Text(
                                         'DRAG TO EXPLORE',
                                         style: TextStyle(
                                           fontSize: 7,
                                           letterSpacing: 2.0,
                                           fontWeight: FontWeight.w700,
-                                          color: Colors.white,
+                                          color: c.withValues(alpha: 0.7),
                                         ),
                                       ),
                                       const SizedBox(width: 6),
-                                      const Icon(Icons.chevron_right,
-                                          size: 11, color: Colors.white),
+                                      Icon(Icons.chevron_right,
+                                          size: 11,
+                                          color: c.withValues(alpha: 0.7)),
                                     ],
                                   ),
                                 ],

@@ -476,10 +476,13 @@ class CosmicSkyChartCard extends StatelessWidget {
                         List<String>? displayLabels = skyLabels;
                         List<List<String>>? visitingPlanets;
 
-                        // Forced dark mode since the card is stark black
-                        final lineColor = Colors.white.withValues(alpha: 0.3);
+                        // Theme-aware chart ink: white on the dark night sky,
+                        // near-black on the light surface.
+                        final lineColor = (isDark ? Colors.white : Colors.black)
+                            .withValues(alpha: 0.3);
                         final planetColor =
-                            Colors.white.withValues(alpha: 0.85);
+                            (isDark ? Colors.white : const Color(0xFF1A1A1C))
+                                .withValues(alpha: 0.85);
 
                         Color strokeColor = lineColor;
                         double chartLineWidth = 1.0;
