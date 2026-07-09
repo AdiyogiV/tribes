@@ -2,12 +2,19 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import 'package:aurogram/features/astrology/data/utils/sky_connection.dart';
+
 class ChicKundaliChart extends StatelessWidget {
   final List<List<String>> houses;
   final List<String>? houseLabels;
 
   /// The transit planets to draw in the same chart
   final List<List<String>>? transitHouses;
+
+  /// Curated transit→natal aspect lines to draw. When provided (non-empty),
+  /// these replace the generic whole-sign drishti — only the tight, meaningful
+  /// "sky is touching you" connections are shown.
+  final List<SkyConnection>? connections;
 
   final Color strokeColor;
   final double lineWidth;
@@ -19,6 +26,7 @@ class ChicKundaliChart extends StatelessWidget {
     required this.houses,
     this.houseLabels,
     this.transitHouses,
+    this.connections,
     required this.strokeColor,
     required this.lineWidth,
     required this.planetStyle,
@@ -33,6 +41,7 @@ class ChicKundaliChart extends StatelessWidget {
         houses: houses,
         houseLabels: houseLabels,
         transitHouses: transitHouses,
+        connections: connections,
         strokeColor: strokeColor,
         lineWidth: lineWidth,
         planetStyle: planetStyle,
@@ -46,6 +55,7 @@ class _KundaliPainter extends CustomPainter {
   final List<List<String>> houses;
   final List<String>? houseLabels;
   final List<List<String>>? transitHouses;
+  final List<SkyConnection>? connections;
 
   final Color strokeColor;
   final double lineWidth;
@@ -56,6 +66,7 @@ class _KundaliPainter extends CustomPainter {
     required this.houses,
     required this.houseLabels,
     this.transitHouses,
+    this.connections,
     required this.strokeColor,
     required this.lineWidth,
     required this.planetStyle,
@@ -299,16 +310,93 @@ class _KundaliPainter extends CustomPainter {
     }
   }
 
-  /// Draws directional drishti lines from each aspecting planet to the houses
-  /// it aspects, coloured per planet so each line is traceable to its source.
-  /// A line is only drawn when the aspected house actually holds another
-  /// planet (a real planet-to-planet aspect) — aspects into empty houses are
-  /// skipped. Uses transit planets when available (so it moves with time),
-  /// else natal.
+  /// Draws the curated "sky is touching you" lines.
+  ///
+  /// When [connections] is provided we draw ONLY those — the tight transit→natal
+  /// aspects that actually matter right now, coloured by their nature
+  /// (supportive gold / tense red / wild purple) with the strongest one drawn
+  /// as the bright, thick "hero". An empty list correctly draws nothing (a
+  /// quiet sky). When [connections] is null we fall back to the legacy
+  /// whole-sign drishti so natal-only charts still show something.
   void _drawAspects(Canvas canvas, double w, double h) {
+    final conns = connections;
+    if (conns != null) {
+      _drawConnections(canvas, w, h, conns);
+      return;
+    }
+    _drawDrishtiFallback(canvas, w, h);
+  }
+
+  Color _natureColor(SkyConnectionNature nature) {
+    switch (nature) {
+      case SkyConnectionNature.supportive:
+        return const Color(0xFFFFD54F); // warm gold
+      case SkyConnectionNature.tense:
+        return const Color(0xFFEF5350); // hot red
+      case SkyConnectionNature.wild:
+        return const Color(0xFFBA68C8); // electric purple
+    }
+  }
+
+  /// Draws each curated connection as a slightly-wavy line from the transiting
+  /// planet (outer ring) to the natal planet (inner ring). The first entry is
+  /// the hero (brightest + thickest) since [computeSkyConnections] sorts by
+  /// tightness.
+  void _drawConnections(
+      Canvas canvas, double w, double h, List<SkyConnection> conns) {
+    for (int i = 0; i < conns.length; i++) {
+      final c = conns[i];
+      final isHero = i == 0;
+      final base = _natureColor(c.nature);
+
+      final paint = Paint()
+        ..style = PaintingStyle.stroke
+        ..isAntiAlias = true
+        ..strokeCap = StrokeCap.round
+        ..strokeWidth = lineWidth * (isHero ? 6.5 : 3.5)
+        ..color = base.withValues(alpha: isHero ? 0.9 : 0.45);
+
+      final a = _planetCenter(c.fromSign, w, h, 72.0); // transit (outer)
+      final b = _planetCenter(c.toSign, w, h, 42.0); // natal (inner)
+      var dir = b - a;
+      final len = dir.distance;
+      if (len == 0) continue;
+      dir = dir / len;
+      final perp = Offset(-dir.dy, dir.dx);
+
+      final rnd = math.Random(c.fromSign * 100 + c.toSign);
+      final amplitude = isHero ? 8.0 : 5.0;
+      final waves = 2 + rnd.nextInt(2);
+      final phase = rnd.nextDouble() * math.pi;
+      Offset pt(double t) {
+        final baseP =
+            Offset(a.dx + (b.dx - a.dx) * t, a.dy + (b.dy - a.dy) * t);
+        final env = math.sin(t * math.pi);
+        final o = env * amplitude * math.sin(t * math.pi * waves + phase);
+        return Offset(baseP.dx + perp.dx * o, baseP.dy + perp.dy * o);
+      }
+
+      const steps = 32;
+      final path = Path()..moveTo(a.dx, a.dy);
+      for (int s = 1; s <= steps; s++) {
+        final p = pt(s / steps);
+        path.lineTo(p.dx, p.dy);
+      }
+      canvas.drawPath(path, paint);
+      _arrowHead(canvas, b, pt(0.9), paint);
+    }
+  }
+
+  /// Legacy whole-sign drishti (transit→natal), kept as a fallback for charts
+  /// that don't supply curated [connections].
+  void _drawDrishtiFallback(Canvas canvas, double w, double h) {
     final bool useTransit = transitHouses != null && transitPlanetStyle != null;
+    // Aspecting planets: the moving sky (transit) when available, else natal.
     final source = useTransit ? transitHouses! : houses;
-    final dist = useTransit ? 72.0 : 42.0;
+    final srcDist = useTransit ? 72.0 : 42.0;
+    // Targets that MATTER: always the native's natal placements.
+    final target = houses;
+    const tgtDist = 42.0;
 
     final paint = Paint()
       ..style = PaintingStyle.stroke
@@ -326,18 +414,17 @@ class _KundaliPainter extends CustomPainter {
 
         for (final off in _aspectOffsets(planet)) {
           final to = (from + off) % 12;
-          if (to == from) continue;
 
-          // A drishti is only meaningful when it actually lands on another
-          // planet. Skip aspects into empty houses so the lines that remain
-          // each represent a real planet-to-planet aspect.
-          if (to >= source.length || _clean(source[to]).isEmpty) continue;
+          // A drishti only matters when it lands on the native's chart — i.e.
+          // the aspected NATAL house actually holds a planet. Transit→transit
+          // (empty natal house) is mundane and skipped.
+          if (to >= target.length || _clean(target[to]).isEmpty) continue;
 
-          // Direct, slightly-wavy line from the planet to the target house's
-          // zodiac label.
+          // Direct, slightly-wavy line from the aspecting planet to the natal
+          // placement it touches.
           final rnd = math.Random(from * 1000 + to * 10 + pi);
-          final a = _planetCenter(from, w, h, dist);
-          final b = _planetCenter(to, w, h, 20.0);
+          final a = _planetCenter(from, w, h, srcDist);
+          final b = _planetCenter(to, w, h, tgtDist);
           var dir = b - a;
           final len = dir.distance;
           if (len == 0) continue;
@@ -447,6 +534,7 @@ class _KundaliPainter extends CustomPainter {
     return oldDelegate.houses != houses ||
         oldDelegate.houseLabels != houseLabels ||
         oldDelegate.transitHouses != transitHouses ||
+        oldDelegate.connections != connections ||
         oldDelegate.strokeColor != strokeColor ||
         oldDelegate.lineWidth != lineWidth;
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:aurogram/features/astrology/data/utils/chart_utils.dart';
+import 'package:aurogram/features/astrology/data/utils/sky_connection.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/chic_kundali_chart.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/widgets/timeline_slider.dart';
@@ -413,6 +414,12 @@ class CosmicSkyChartCard extends StatelessWidget {
                           houses: displayHouses,
                           houseLabels: displayLabels,
                           transitHouses: visitingPlanets,
+                          // Curated transit→natal aspect lines (only tight,
+                          // meaningful ones). Null when there's no birth chart
+                          // to aspect — the chart then falls back to drishti.
+                          connections: hasBirthChart
+                              ? computeSkyConnections(positions, birthChartData)
+                              : null,
                           // Ultra-thin, chic geometry
                           strokeColor: strokeColor,
                           lineWidth: chartLineWidth,
