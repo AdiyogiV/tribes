@@ -347,8 +347,8 @@ class _KundaliPainter extends CustomPainter {
         ..strokeWidth = lineWidth * (isHero ? 5.0 : 3.0)
         ..color = base.withValues(alpha: isHero ? 1.0 : 0.32);
 
-      final a = _planetCenter(c.fromSign, w, h, 72.0); // transit (outer)
-      final b = _planetCenter(c.toSign, w, h, 42.0); // natal (inner)
+      final a = _planetCenter(c.fromSign, w, h, 64.0); // just below transit planet
+      final b = _planetCenter(c.toSign, w, h, 27.0); // just above target zodiac
       var dir = b - a;
       final len = dir.distance;
       if (len == 0) continue;
@@ -356,8 +356,8 @@ class _KundaliPainter extends CustomPainter {
       final perp = Offset(-dir.dy, dir.dx);
 
       final rnd = math.Random(c.fromSign * 100 + c.toSign);
-      final amplitude = isHero ? 8.0 : 5.0;
-      final waves = 2 + rnd.nextInt(2);
+      final amplitude = isHero ? 14.0 : 10.0;
+      final waves = 3 + rnd.nextInt(3); // 3..5, nicely wavy
       final phase = rnd.nextDouble() * math.pi;
       Offset pt(double t) {
         final baseP =
