@@ -1253,8 +1253,17 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
             // dark night sky, warm-gold-lit with a soft grey shadow on light.
             litColor:
                 isDark ? const Color(0xFFF3EFE6) : const Color(0xFFE3B24A),
+            // Shadow (unlit) side. In dark mode it's black so the new moon
+            // vanishes into the night. In light mode it must be close to the
+            // card surface so an unlit disk doesn't look like a filled full
+            // moon — a barely-there warm tint instead of a solid grey slug.
             darkColor:
-                isDark ? Colors.black : const Color(0xFFCFC7B6),
+                isDark ? Colors.black : const Color(0xFFF0EBDF),
+            // Rim: subtle in dark mode, a soft grey outline in light mode so
+            // the sphere's edge (and thus the empty new moon) is legible.
+            rimColor: isDark
+                ? const Color(0xFFF3EFE6).withValues(alpha: 0.28)
+                : const Color(0xFFBBB2A0),
           ),
         ),
         const SizedBox(height: 14),
@@ -1707,11 +1716,17 @@ class _MoonPhasePainter extends CustomPainter {
     required this.phase,
     required this.litColor,
     required this.darkColor,
+    required this.rimColor,
   });
 
   final double phase; // 0..1
   final Color litColor;
   final Color darkColor;
+  // Thin outline stroke around the disk. Critical in light mode: at new moon
+  // the lit path is empty, so without a rim the shadow-colored disk would read
+  // as a *filled* (full) moon. The rim delineates the sphere so an unlit disk
+  // correctly reads as an empty new moon.
+  final Color rimColor;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1790,13 +1805,27 @@ class _MoonPhasePainter extends CustomPainter {
       // Restore the canvas (removing the clip)
       canvas.restore();
     }
+
+    // 6. Always stroke a thin rim so the disk boundary is visible even when the
+    // moon is (nearly) unlit — this is what makes a new moon read as empty
+    // rather than as a solid, filled circle.
+    canvas.drawCircle(
+      center,
+      r,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.0
+        ..color = rimColor
+        ..isAntiAlias = true,
+    );
   }
 
   @override
   bool shouldRepaint(_MoonPhasePainter old) =>
       old.phase != phase ||
       old.litColor != litColor ||
-      old.darkColor != darkColor;
+      old.darkColor != darkColor ||
+      old.rimColor != rimColor;
 }
 
 // =============================================================================
