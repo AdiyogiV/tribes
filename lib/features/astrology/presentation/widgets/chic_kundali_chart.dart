@@ -344,7 +344,7 @@ class _KundaliPainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..isAntiAlias = true
         ..strokeCap = StrokeCap.round
-        ..strokeWidth = lineWidth * (isHero ? 2.5 : 1.4)
+        ..strokeWidth = lineWidth * (isHero ? 1.6 : 1.0)
         ..color = base.withValues(alpha: isHero ? 1.0 : 0.32);
 
       final a = _planetCenter(c.fromSign, w, h, 64.0); // just below transit planet
@@ -423,7 +423,7 @@ class _KundaliPainter extends CustomPainter {
       // End marker: a very small arrowhead where the line meets the target
       // house's zodiac.
       _arrowHead(canvas, b, pts[pts.length - 2], paint,
-          headLen: 4.5, headW: 2.5);
+          headLen: 3.0, headW: 1.7);
     }
   }
 
