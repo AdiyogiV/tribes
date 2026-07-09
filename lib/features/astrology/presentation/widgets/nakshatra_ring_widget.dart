@@ -1764,16 +1764,29 @@ class _MoonPhasePainter extends CustomPainter {
 
     final litPath = Path();
     if (illum > 0.001) {
-      final top = Offset(center.dx, center.dy - r);
-      final bottom = Offset(center.dx, center.dy + r);
-      final termW = (r * (1 - 2 * illum)).abs();
-      final isCrescent = illum < 0.5;
-
-      litPath.moveTo(top.dx, top.dy);
-      litPath.arcToPoint(bottom, radius: Radius.circular(r), clockwise: waxing);
-      litPath.arcToPoint(top,
-          radius: Radius.elliptical(termW, r),
-          clockwise: waxing ? isCrescent : !isCrescent);
+      // Bulletproof lit-region: sample the bright limb (a semicircle) and the
+      // terminator (a half-ellipse whose signed width k goes +1 at new -> -1 at
+      // full). The old arcToPoint construction was ambiguous and rendered
+      // inverted (full on Amavasya, dark on Purnima); this polygon is not.
+      final k = 1 - 2 * illum; // +1 new .. 0 quarter .. -1 full
+      final limb = waxing ? 1.0 : -1.0; // N-hemisphere: waxing lit on the right
+      const steps = 120;
+      for (int i = 0; i <= steps; i++) {
+        final s = pi * i / steps;
+        final x = center.dx + limb * r * sin(s);
+        final y = center.dy - r * cos(s);
+        if (i == 0) {
+          litPath.moveTo(x, y);
+        } else {
+          litPath.lineTo(x, y);
+        }
+      }
+      for (int i = steps; i >= 0; i--) {
+        final s = pi * i / steps;
+        final x = center.dx + limb * k * r * sin(s);
+        final y = center.dy - r * cos(s);
+        litPath.lineTo(x, y);
+      }
       litPath.close();
 
       // 3. Clip the canvas to ONLY the lit section
