@@ -335,17 +335,17 @@ class _KundaliPainter extends CustomPainter {
       Canvas canvas, double w, double h, List<SkyConnection> conns) {
     for (int i = 0; i < conns.length; i++) {
       final c = conns[i];
-      final isHero = i == 0;
       // Colour the line by its SOURCE planet so it's traceable back to the
-      // transiting body (Saturn=blue, Jupiter=gold, ...).
+      // transiting body (Saturn=blue, Jupiter=gold, ...). All lines are drawn
+      // uniformly — no special "hero" treatment.
       final base = _planetColor(c.transitPlanet);
 
       final paint = Paint()
         ..style = PaintingStyle.stroke
         ..isAntiAlias = true
         ..strokeCap = StrokeCap.round
-        ..strokeWidth = lineWidth * (isHero ? 1.6 : 1.0)
-        ..color = base.withValues(alpha: isHero ? 1.0 : 0.32);
+        ..strokeWidth = lineWidth * 1.2
+        ..color = base.withValues(alpha: 0.55);
 
       final a = _planetCenter(c.fromSign, w, h, 64.0); // just below transit planet
       final b = _planetCenter(c.toSign, w, h, 27.0); // just above target zodiac
@@ -356,7 +356,7 @@ class _KundaliPainter extends CustomPainter {
       final perp = Offset(-dir.dy, dir.dx);
 
       final rnd = math.Random(c.fromSign * 100 + c.toSign);
-      final amplitude = isHero ? 14.0 : 10.0;
+      const amplitude = 11.0;
 
       // Bow the line OUTWARD, around the chart's centre, instead of letting it
       // cut straight through the middle where all the houses meet. We pick the
@@ -405,19 +405,6 @@ class _KundaliPainter extends CustomPainter {
         path.quadraticBezierTo(pts[k].dx, pts[k].dy, mid.dx, mid.dy);
       }
       path.lineTo(b.dx, b.dy);
-
-      // The hero gets a soft glow: a wide, blurred pass in its planet colour
-      // drawn underneath the crisp stroke.
-      if (isHero) {
-        final glow = Paint()
-          ..style = PaintingStyle.stroke
-          ..isAntiAlias = true
-          ..strokeCap = StrokeCap.round
-          ..strokeWidth = lineWidth * 6.0
-          ..color = base.withValues(alpha: 0.14)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.0);
-        canvas.drawPath(path, glow);
-      }
 
       canvas.drawPath(path, paint);
       // End marker: a very small arrowhead where the line meets the target
