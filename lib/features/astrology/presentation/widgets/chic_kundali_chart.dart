@@ -344,8 +344,8 @@ class _KundaliPainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..isAntiAlias = true
         ..strokeCap = StrokeCap.round
-        ..strokeWidth = lineWidth * (isHero ? 6.5 : 3.5)
-        ..color = base.withValues(alpha: isHero ? 0.9 : 0.45);
+        ..strokeWidth = lineWidth * (isHero ? 7.5 : 3.0)
+        ..color = base.withValues(alpha: isHero ? 1.0 : 0.32);
 
       final a = _planetCenter(c.fromSign, w, h, 72.0); // transit (outer)
       final b = _planetCenter(c.toSign, w, h, 42.0); // natal (inner)
@@ -373,6 +373,20 @@ class _KundaliPainter extends CustomPainter {
         final p = pt(s / steps);
         path.lineTo(p.dx, p.dy);
       }
+
+      // The hero gets a soft glow: a wide, blurred pass in its planet colour
+      // drawn underneath the crisp stroke.
+      if (isHero) {
+        final glow = Paint()
+          ..style = PaintingStyle.stroke
+          ..isAntiAlias = true
+          ..strokeCap = StrokeCap.round
+          ..strokeWidth = lineWidth * 16.0
+          ..color = base.withValues(alpha: 0.35)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8.0);
+        canvas.drawPath(path, glow);
+      }
+
       canvas.drawPath(path, paint);
       _arrowHead(canvas, b, pt(0.9), paint);
     }
