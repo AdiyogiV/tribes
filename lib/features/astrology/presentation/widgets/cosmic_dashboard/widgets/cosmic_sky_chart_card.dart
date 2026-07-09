@@ -168,48 +168,152 @@ class CosmicSkyChartCard extends StatelessWidget {
 
           const SizedBox(height: 32),
 
-          // Return to Today Action (Centered, Chic)
-          if (!isSliderOnToday) ...[
-            Center(
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: onResetToToday,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
+          // The Chic Typographic Date Stepper & Progress Bar
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onHorizontalDragUpdate: skyDataLoaded
+                ? (details) {
+                    // Slower scrub speed for precision
+                    final delta = details.primaryDelta! * 0.002;
+                    final newVal = (sliderValue + delta).clamp(0.0, 1.0);
+                    onSliderChanged(newVal);
+                  }
+                : null,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // PAST <   — TODAY —   > FUTURE
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Icon(
-                      Icons.replay_circle_filled_rounded,
-                      size: 14,
-                      color: fgMain,
+                    // PAST
+                    Row(
+                      children: [
+                        Icon(Icons.chevron_left,
+                            size: 12, color: fgMuted.withValues(alpha: 0.5)),
+                        const SizedBox(width: 4),
+                        Text(
+                          'PAST',
+                          style: TextStyle(
+                            fontSize: 8,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 2.0,
+                            color: fgMuted.withValues(alpha: 0.5),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'RETURN TO TODAY',
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 2.0,
-                        color: fgMain,
+
+                    // CENTER DATE
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      child: Text(
+                        isSliderOnToday ? '—  TODAY  —' : dateStr.toUpperCase(),
+                        key: ValueKey(dateStr),
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: isSliderOnToday
+                              ? FontWeight.w600
+                              : FontWeight.w400,
+                          letterSpacing: 4.0,
+                          color: isSliderOnToday ? fgMain : fgMuted,
+                        ),
                       ),
+                    ),
+
+                    // FUTURE
+                    Row(
+                      children: [
+                        Text(
+                          'FUTURE',
+                          style: TextStyle(
+                            fontSize: 8,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 2.0,
+                            color: fgMuted.withValues(alpha: 0.5),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(Icons.chevron_right,
+                            size: 12, color: fgMuted.withValues(alpha: 0.5)),
+                      ],
                     ),
                   ],
                 ),
+
+                const SizedBox(height: 12),
+
+                // Chic Hairline Progress Bar
+                Container(
+                  height: 1.0,
+                  width: double.infinity,
+                  color: fgMuted.withValues(alpha: 0.15),
+                  alignment: Alignment.centerLeft,
+                  child: FractionallySizedBox(
+                    widthFactor: sliderValue,
+                    child: Container(
+                      color: fgMain.withValues(alpha: 0.8),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Contextual Reset Button (on its own line)
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 20, // fixed height to prevent layout jump
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: isSliderOnToday
+                  ? const SizedBox.shrink()
+                  : Center(
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          onResetToToday();
+                        },
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.replay_circle_filled_rounded,
+                              size: 14,
+                              color: fgMain,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'RETURN TO TODAY',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 2.0,
+                                color: fgMain,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+            ),
+          ),
+
+          // Loading/Error Affordances
+          if (!skyDataLoaded) ...[
+            const SizedBox(height: 16),
+            Center(
+              child: Text(
+                skyDataLoading ? 'Aligning the spheres...' : 'Data unavailable',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: fgMuted.withValues(alpha: 0.6),
+                  fontStyle: FontStyle.italic,
+                ),
               ),
             ),
-            const SizedBox(height: 24),
           ],
-
-          // Time Slider (forced dark mode)
-          TimelineSlider(
-            value: sliderValue,
-            onChanged: skyDataLoaded ? onSliderChanged : null,
-            hasData: skyDataLoaded,
-            isLoading: skyDataLoading,
-            onLoadData: onLoadSkyPositions,
-            onForceRefresh: onTriggerCachePopulation,
-            isDark: true,
-          ),
 
           // Explore birth chart affordance
           if (onExploreBirthChart != null && !hasBirthChart) ...[
