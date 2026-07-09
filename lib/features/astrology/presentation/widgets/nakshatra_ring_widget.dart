@@ -1251,9 +1251,12 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
           size: const Size(38, 38),
           painter: _MoonPhasePainter(
             phase: phase,
+            // A moon should read as a moon in both themes: cream-lit on the
+            // dark night sky, warm-gold-lit with a soft grey shadow on light.
             litColor:
-                isDark ? const Color(0xFFF3EFE6) : const Color(0xFF1A1A1A),
-            darkColor: Colors.black,
+                isDark ? const Color(0xFFF3EFE6) : const Color(0xFFE3B24A),
+            darkColor:
+                isDark ? Colors.black : const Color(0xFFCFC7B6),
           ),
         ),
         const SizedBox(height: 14),
