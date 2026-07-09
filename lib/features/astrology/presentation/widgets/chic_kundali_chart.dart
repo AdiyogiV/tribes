@@ -327,17 +327,6 @@ class _KundaliPainter extends CustomPainter {
     _drawDrishtiFallback(canvas, w, h);
   }
 
-  Color _natureColor(SkyConnectionNature nature) {
-    switch (nature) {
-      case SkyConnectionNature.supportive:
-        return const Color(0xFFFFD54F); // warm gold
-      case SkyConnectionNature.tense:
-        return const Color(0xFFEF5350); // hot red
-      case SkyConnectionNature.wild:
-        return const Color(0xFFBA68C8); // electric purple
-    }
-  }
-
   /// Draws each curated connection as a slightly-wavy line from the transiting
   /// planet (outer ring) to the natal planet (inner ring). The first entry is
   /// the hero (brightest + thickest) since [computeSkyConnections] sorts by
@@ -347,7 +336,9 @@ class _KundaliPainter extends CustomPainter {
     for (int i = 0; i < conns.length; i++) {
       final c = conns[i];
       final isHero = i == 0;
-      final base = _natureColor(c.nature);
+      // Colour the line by its SOURCE planet so it's traceable back to the
+      // transiting body (Saturn=blue, Jupiter=gold, ...).
+      final base = _planetColor(c.transitPlanet);
 
       final paint = Paint()
         ..style = PaintingStyle.stroke
