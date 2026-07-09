@@ -12,12 +12,20 @@ enum VoiceEngine { live, cx }
 
 /// Persisted, app-wide choice of voice engine. The relay reads whatever the
 /// client sends in its `start` frame, so flipping this changes the NEXT call
-/// (no rebuild, no redeploy). Defaults to [VoiceEngine.live].
+/// (no rebuild, no redeploy). Defaults to [VoiceEngine.cx].
+///
+/// Why cx (not live) by default: the Live engine runs on Vertex AI's preview
+/// native-audio model, which needs provisioned quota + billing that isn't set
+/// up on this project (trial credits fund the Dialogflow CX path instead). An
+/// unprovisioned Live session fails its upstream Vertex WebSocket, which the
+/// relay forwards to the client as an opaque "unexpected websocket" error and
+/// the call never starts. cx is the funded, working path. Flip back to live
+/// (here or via Settings) once Vertex Live quota is granted.
 class VoiceEnginePref {
   VoiceEnginePref._();
 
   static const String _key = 'voice_engine';
-  static const VoiceEngine _default = VoiceEngine.live;
+  static const VoiceEngine _default = VoiceEngine.cx;
 
   /// Read the saved engine (defaults to [_default] if never set).
   static Future<VoiceEngine> read() async {
@@ -35,6 +43,10 @@ class VoiceEnginePref {
   static String wireValue(VoiceEngine engine) => engine.name;
 
   static VoiceEngine _fromWire(String? raw) {
-    return raw == VoiceEngine.cx.name ? VoiceEngine.cx : _default;
+    // Honour an explicit saved choice for BOTH engines; fall back to _default
+    // only when nothing (or something unrecognised) is stored.
+    if (raw == VoiceEngine.live.name) return VoiceEngine.live;
+    if (raw == VoiceEngine.cx.name) return VoiceEngine.cx;
+    return _default;
   }
 }
