@@ -262,6 +262,7 @@ class CosmicSkyChartCard extends StatelessWidget {
                 ),
               ],
             ),
+            ),
           ),
 
           // Contextual Reset Button (on its own line)
