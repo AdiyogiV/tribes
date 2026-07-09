@@ -91,7 +91,7 @@ class HolyCowCosmicContent extends StatelessWidget {
       WidgetDataService.instance.updateWidgetData(nakshatraSamvat);
     }
 
-    final cardColor = isDark ? const Color(0xFF1A1A1C) : Colors.white;
+    final cardColor = isDark ? const Color(0xFF000000) : Colors.white;
 
     // ──────────────────────────────────────────────────────────────────────
     // Adaptive web/desktop layout
