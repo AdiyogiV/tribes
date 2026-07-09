@@ -344,7 +344,7 @@ class _KundaliPainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..isAntiAlias = true
         ..strokeCap = StrokeCap.round
-        ..strokeWidth = lineWidth * (isHero ? 5.0 : 3.0)
+        ..strokeWidth = lineWidth * (isHero ? 3.5 : 2.0)
         ..color = base.withValues(alpha: isHero ? 1.0 : 0.32);
 
       final a = _planetCenter(c.fromSign, w, h, 64.0); // just below transit planet
