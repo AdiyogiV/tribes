@@ -68,9 +68,10 @@ const Map<String, String> _aspectVerb = {
 
 const Set<String> _harmonious = {'sextile', 'trine'};
 
-/// Max orb (degrees) for an aspect to count as "active now". Loose aspects
-/// aren't happening yet, so they're dropped.
-const double _maxOrb = 4.0;
+/// Max orb (degrees) for an aspect to count as "active now". Kept deliberately
+/// tight — a loose aspect isn't happening yet. Tighter orb = fewer, more
+/// meaningful lines (the count still floats: often 0–2, occasionally more).
+const double _maxOrb = 2.0;
 
 double _norm360(double d) {
   var x = d % 360;
