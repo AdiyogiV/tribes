@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
-import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/timeline/muhurat_timeline_widget.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cards/cosmic_date_time_card.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/cosmic_dashboard_data.dart';
@@ -237,9 +236,7 @@ class HolyCowCosmicContent extends StatelessWidget {
 
             return Material(
               color: cardColor,
-              elevation: 2,
-              shadowColor: Colors.black.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+              elevation: 0,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,

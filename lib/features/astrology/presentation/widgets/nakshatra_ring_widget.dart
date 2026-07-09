@@ -747,9 +747,7 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
 
     return Material(
       color: cardColor,
-      elevation: 2,
-      shadowColor: Colors.black.withValues(alpha: 0.2),
-      borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+      elevation: 0,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
