@@ -5,7 +5,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cards/vedic_time_utils.dart';
-import 'package:aurogram/features/astrology/domain/astro_calendar_service.dart';
 import 'package:flutter/services.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
@@ -153,12 +152,6 @@ class NakshatraRingWidget extends StatefulWidget {
   /// Used to derive today's tithi and project it ±7 days across the forecast strip.
   final Map<String, dynamic>? todaySamvat;
 
-  /// Accurate per-date panchang lookup. The moon glyph derives its phase from
-  /// this (via [CalendarDay.tithiNumber]) so it ALWAYS agrees with the tithi
-  /// shown elsewhere on the dashboard — e.g. Amavasya renders dark, not full.
-  /// Single source of truth: no independent synodic approximation.
-  final AstroCalendarService? calendarService;
-
   /// Called once every time the wheel **settles** on a new nakshatra (drag end,
   /// fling coast, or tap-to-jump animation complete).  The parent should write
   /// this date into the shared sky-chart [sliderDateNotifier].
@@ -193,7 +186,6 @@ class NakshatraRingWidget extends StatefulWidget {
     this.sunNakshatra,
     this.lagnaNakshatra,
     this.todaySamvat,
-    this.calendarService,
     this.onDateChanged,
     this.wheelResetSignal,
     this.controller,
@@ -1249,7 +1241,7 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
   /// Elegant hand-drawn moon (custom-painted in the app palette) shown above
   /// the wheel. Replaces the OS emoji for a premium, on-brand look.
   Widget _buildMoon(Color c, bool isDark) {
-    final phase = _moonPhaseFraction(_displayedDate);
+    final phase = VedicTimeUtils.getMoonPhaseFraction(_displayedDate);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -1261,39 +1253,13 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
             // dark night sky, warm-gold-lit with a soft grey shadow on light.
             litColor:
                 isDark ? const Color(0xFFF3EFE6) : const Color(0xFFE3B24A),
-            // Shadow (unlit) side: black melts into the night in dark mode; a
-            // soft grey holds the crescent/gibbous shape on light backgrounds.
             darkColor:
                 isDark ? Colors.black : const Color(0xFFCFC7B6),
-            // Rim: subtle in dark mode, a soft grey outline in light mode so
-            // the sphere's edge (and thus an empty new moon) stays legible.
-            rimColor: isDark
-                ? const Color(0xFFF3EFE6).withValues(alpha: 0.28)
-                : const Color(0xFFBBB2A0),
           ),
         ),
         const SizedBox(height: 14),
       ],
     );
-  }
-
-  /// Moon phase fraction (0 = new/Amavasya, 0.5 = full/Purnima) for [date].
-  ///
-  /// SINGLE SOURCE OF TRUTH: derive the phase from the SAME accurate panchang
-  /// tithi the rest of the dashboard shows, so the moon can never disagree with
-  /// the tithi label (the old bug: a synodic approximation drew a full moon on
-  /// Amavasya). [CalendarDay.tithiNumber] is continuous 1..30 where 15 =
-  /// Purnima (full) and 30 = Amavasya (new). Falls back to the astronomical
-  /// synodic calc only when the calendar has no data for [date].
-  double _moonPhaseFraction(DateTime date) {
-    final tithi = widget.calendarService?.getDay(date)?.tithiNumber;
-    if (tithi != null && tithi >= 1 && tithi <= 30) {
-      // Mid-tithi elongation: 12° per tithi, so fraction = (tithi - 0.5) / 30.
-      // tithi 15 -> 0.483 (≈full), tithi 30 -> 0.983 (≈new). The painter's
-      // (1 - cos(2π·phase))/2 turns these into illumination 1.0 and ~0.0.
-      return (tithi - 0.5) / 30.0;
-    }
-    return VedicTimeUtils.getMoonPhaseFraction(date);
   }
 
   // ─── Markers (icons stay upright) ──────────────────────────────────────────
@@ -1741,17 +1707,11 @@ class _MoonPhasePainter extends CustomPainter {
     required this.phase,
     required this.litColor,
     required this.darkColor,
-    required this.rimColor,
   });
 
   final double phase; // 0..1
   final Color litColor;
   final Color darkColor;
-  // Thin outline stroke around the disk. Critical in light mode: at new moon
-  // the lit path is empty, so without a rim the shadow-colored disk would read
-  // as a *filled* (full) moon. The rim delineates the sphere so an unlit disk
-  // correctly reads as an empty new moon.
-  final Color rimColor;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1830,27 +1790,13 @@ class _MoonPhasePainter extends CustomPainter {
       // Restore the canvas (removing the clip)
       canvas.restore();
     }
-
-    // 6. Always stroke a thin rim so the disk boundary is visible even when the
-    // moon is (nearly) unlit — this is what makes a new moon read as empty
-    // rather than as a solid, filled circle.
-    canvas.drawCircle(
-      center,
-      r,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.0
-        ..color = rimColor
-        ..isAntiAlias = true,
-    );
   }
 
   @override
   bool shouldRepaint(_MoonPhasePainter old) =>
       old.phase != phase ||
       old.litColor != litColor ||
-      old.darkColor != darkColor ||
-      old.rimColor != rimColor;
+      old.darkColor != darkColor;
 }
 
 // =============================================================================
