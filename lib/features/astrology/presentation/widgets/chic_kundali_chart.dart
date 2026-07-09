@@ -420,7 +420,10 @@ class _KundaliPainter extends CustomPainter {
       }
 
       canvas.drawPath(path, paint);
-      _arrowHead(canvas, b, pts[pts.length - 2], paint);
+      // End marker: a very small arrowhead where the line meets the target
+      // house's zodiac.
+      _arrowHead(canvas, b, pts[pts.length - 2], paint,
+          headLen: 4.5, headW: 2.5);
     }
   }
 
@@ -494,14 +497,13 @@ class _KundaliPainter extends CustomPainter {
   }
 
   /// Draws a small V arrowhead at [tip], pointing away from [from].
-  void _arrowHead(Canvas canvas, Offset tip, Offset from, Paint paint) {
+  void _arrowHead(Canvas canvas, Offset tip, Offset from, Paint paint,
+      {double headLen = 7.0, double headW = 4.0}) {
     var d = tip - from;
     final l = d.distance;
     if (l == 0) return;
     d = d / l;
     final perp = Offset(-d.dy, d.dx);
-    const headLen = 7.0;
-    const headW = 4.0;
     final base = Offset(tip.dx - d.dx * headLen, tip.dy - d.dy * headLen);
     final left = Offset(base.dx + perp.dx * headW, base.dy + perp.dy * headW);
     final right = Offset(base.dx - perp.dx * headW, base.dy - perp.dy * headW);
