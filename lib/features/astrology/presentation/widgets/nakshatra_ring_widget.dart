@@ -1241,7 +1241,11 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
   /// Elegant hand-drawn moon (custom-painted in the app palette) shown above
   /// the wheel. Replaces the OS emoji for a premium, on-brand look.
   Widget _buildMoon(Color c, bool isDark) {
-    final phase = VedicTimeUtils.getMoonPhaseFraction(_displayedDate);
+    // Drive the moon from the SAME panchang tithi shown as the label, so it can
+    // never disagree (the old synodic calc drifted: full on Amavasya, dark on
+    // Purnima). Falls back to the synodic calc only when no tithi is available.
+    final phase = _moonPhaseFromTithi() ??
+        VedicTimeUtils.getMoonPhaseFraction(_displayedDate);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -1260,6 +1264,38 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
         const SizedBox(height: 14),
       ],
     );
+  }
+
+  /// Today's tithi as a continuous 1..30 index (15 = Purnima, 30 = Amavasya),
+  /// read from the same panchang the labels use. Returns null if unavailable.
+  int? _todayUnifiedTithi() {
+    final samvat = widget.todaySamvat;
+    if (samvat == null) return null;
+    final rawNum =
+        samvat['number'] ?? samvat['tithi_number'] ?? samvat['tithiNumber'];
+    int? t;
+    if (rawNum is num) {
+      t = rawNum.toInt();
+    } else if (rawNum != null) {
+      t = int.tryParse(rawNum.toString());
+    }
+    if (t == null) return null;
+    if (t > 15) return t.clamp(16, 30);
+    final paksha = (samvat['paksha'] ?? samvat['tithiPaksha'] ?? '')
+        .toString()
+        .toLowerCase();
+    final isKrishna = paksha.contains('krishna') || paksha.contains('krsna');
+    return isKrishna ? (t + 15).clamp(16, 30) : t.clamp(1, 15);
+  }
+
+  /// Moon phase fraction (0 = new/Amavasya, 0.5 = full/Purnima) derived from
+  /// the tithi, projected across the wheel's day offset (~1 tithi per day).
+  /// phase = (tithi - 0.5) / 30 -> tithi 15 ≈ 0.483 (full), 30 ≈ 0.983 (new).
+  double? _moonPhaseFromTithi() {
+    final today = _todayUnifiedTithi();
+    if (today == null) return null;
+    final unified = ((today - 1 + _cumulativeOffset) % 30 + 30) % 30 + 1;
+    return (unified - 0.5) / 30.0;
   }
 
   // ─── Markers (icons stay upright) ──────────────────────────────────────────
