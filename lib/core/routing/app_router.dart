@@ -96,6 +96,16 @@ GoRouter createAppRouter(GlobalKey<NavigatorState> navigatorKey) {
       ),
 
       // ── Spaces ───────────────────────────────────────────────────────
+      // NOTE: This static route MUST be declared BEFORE '/space/:rid'.
+      // GoRouter matches in declaration order, so if '/space/:rid' came
+      // first it would capture '/space/create' with rid='create' and try
+      // to load a non-existent space ("Space not found! SpaceID: create").
+      GoRoute(
+        path: RouteNames.spaceCreation,
+        name: 'spaceCreation',
+        builder: (_, __) => SpaceCreationPage(),
+      ),
+
       GoRoute(
         path: '${RouteNames.spaceScreen}/:rid',
         name: 'spaceScreen',
@@ -419,13 +429,6 @@ GoRouter createAppRouter(GlobalKey<NavigatorState> navigatorKey) {
         path: RouteNames.uploads,
         name: 'uploads',
         builder: (_, __) => UploadsPage(),
-      ),
-
-      // ── Space Creation ──────────────────────────────────────────────────
-      GoRoute(
-        path: RouteNames.spaceCreation,
-        name: 'spaceCreation',
-        builder: (_, __) => SpaceCreationPage(),
       ),
 
       // ── Story Viewer ──────────────────────────────────────────────────
