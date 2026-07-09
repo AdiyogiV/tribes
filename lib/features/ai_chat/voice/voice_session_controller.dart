@@ -172,10 +172,13 @@ class VoiceSessionController extends ChangeNotifier {
       // Connect to the relay; the mic opens the moment it's ready (see
       // [_maybeStartMic]). No greeting — the user speaks first.
       await _connect();
-    } catch (e) {
+    } catch (e, st) {
       AppLogger.e('Voice session start failed',
-          category: LogCategory.voice, error: e);
-      _fail('Could not start the call');
+          category: LogCategory.voice, error: e, stackTrace: st);
+      // Surface the real reason (audio session / player / relay) instead of a
+      // generic message — a swallowed exception makes web failures impossible
+      // to diagnose from the field.
+      _fail('Could not start the call: $e');
     }
   }
 
