@@ -23,7 +23,9 @@ BOOTSTRAP="$BUILD_DIR/flutter_bootstrap.js"
 
 echo "▸ Building Flutter web (release)..."
 cd "$PROJECT_ROOT"
-flutter build web --release --no-wasm-dry-run
+# FLUTTER_BUILD_ARGS lets callers pass extra flags to `flutter build web`,
+# e.g. FLUTTER_BUILD_ARGS=--no-pub on machines that can't reach pub.dev.
+flutter build web --release --no-wasm-dry-run ${FLUTTER_BUILD_ARGS:-}
 
 # Verify bootstrap exists
 if [[ ! -f "$BOOTSTRAP" ]]; then
