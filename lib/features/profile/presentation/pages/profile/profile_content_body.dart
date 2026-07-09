@@ -169,19 +169,6 @@ class ProfileContentBody extends StatelessWidget {
 
               SizedBox(height: AppHeaderStyle.cardVerticalGap),
 
-              // Insights (own profile only)
-              if (uid != null && isOwnProfile) ...[
-                ProfileInsightsCard(
-                  isDark: isDark,
-                  astrologyProfileFuture: astrologyProfileFuture,
-                  dailyInsightStream: dailyInsightStream,
-                  onTap: () {
-                    context.push(RouteNames.dailyInsight, extra: {'uid': uid!});
-                  },
-                ),
-                SizedBox(height: AppHeaderStyle.cardVerticalGap),
-              ],
-
               // Astrology (stars)
               if (uid != null)
                 ProfileAstrologyCard(
@@ -223,6 +210,19 @@ class ProfileContentBody extends StatelessWidget {
                   theyFollowMe: theyFollowMe,
                   cachedProfileData: cachedProfileData,
                   compatibilityBadgeKey: compatibilityBadgeKey,
+                ),
+              ],
+
+              // Insights (own profile only) — shown last, just above posts
+              if (uid != null && isOwnProfile) ...[
+                SizedBox(height: AppHeaderStyle.cardVerticalGap),
+                ProfileInsightsCard(
+                  isDark: isDark,
+                  astrologyProfileFuture: astrologyProfileFuture,
+                  dailyInsightStream: dailyInsightStream,
+                  onTap: () {
+                    context.push(RouteNames.dailyInsight, extra: {'uid': uid!});
+                  },
                 ),
               ],
 
