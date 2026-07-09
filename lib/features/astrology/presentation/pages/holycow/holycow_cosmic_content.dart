@@ -397,6 +397,7 @@ class HolyCowCosmicContent extends StatelessWidget {
         birthNakshatra: birthNakshatra,
         lagnaNakshatra: lagnaNakshatra,
         todaySamvat: nakshatraSamvat,
+        calendarService: calendarService,
         wheelResetSignal: wheelResetSignal,
         controller: nakshatraController,
         insight: insight,
