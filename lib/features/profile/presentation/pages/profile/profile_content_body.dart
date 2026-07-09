@@ -149,23 +149,17 @@ class ProfileContentBody extends StatelessWidget {
             // states. Instead, FutureBuilders detect future-object changes
             // via didUpdateWidget and re-subscribe automatically.
             children: [
-              // Auroboard (rank, score)
-              ProfileAuroboardCard(
-                isDark: isDark,
-                auraScore: auraScore,
-                userRankFuture: userRankFuture,
-                onOpenLeaderboard: onOpenLeaderboard,
-              ),
+              // Auroboard card hidden — rank lives on the leaderboard and the
+              // aura score now shows inside the Stats card below.
 
-              SizedBox(height: AppHeaderStyle.cardVerticalGap),
-
-              // Stats (posts, followers, following)
+              // Stats (posts, followers, following, score)
               ProfileStatsCardWidget(
                 isDark: isDark,
                 isOwnProfile: isOwnProfile,
                 postCount: postCount,
                 followerCount: followerCount,
                 followingCount: followingCount,
+                auraScore: auraScore,
                 followStatus: followStatus,
                 theyFollowMe: theyFollowMe,
                 followService: followService,

@@ -1,5 +1,4 @@
 import 'package:aurogram/core/theme/app_dimensions.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/shared/presentation/widgets/universal/transparent_toolbox.dart';
@@ -13,6 +12,7 @@ class ProfileStatsCardWidget extends StatelessWidget {
   final int postCount;
   final int followerCount;
   final int followingCount;
+  final int auraScore;
   final String? followStatus;
   final bool theyFollowMe;
   final FollowService followService;
@@ -26,6 +26,7 @@ class ProfileStatsCardWidget extends StatelessWidget {
     required this.postCount,
     required this.followerCount,
     required this.followingCount,
+    required this.auraScore,
     required this.followStatus,
     required this.theyFollowMe,
     required this.followService,
@@ -52,39 +53,54 @@ class ProfileStatsCardWidget extends StatelessWidget {
             style: AppTheme.cardLabelStyle,
           ),
           const SizedBox(height: AppDimensions.spacingXs),
+          // Four stat items share the row equally via Expanded so the row
+          // never overflows on narrow screens (values are variable-width).
           Row(
             children: [
-              ProfileStatItem(
-                label: 'Posts',
-                value: postCount.toString(),
-                color: primaryColor,
+              Expanded(
+                child: ProfileStatItem(
+                  label: 'Posts',
+                  value: postCount.toString(),
+                  color: primaryColor,
+                ),
               ),
-              const SizedBox(width: AppDimensions.spacingXxl),
-              canOpenStats
-                  ? ProfileTappableStatItem(
-                      label: 'Followers',
-                      value: followService.getFollowerTier(followerCount),
-                      color: primaryColor,
-                      onTap: () => onOpenStatsWithTab?.call(initialTabIndex: 0),
-                    )
-                  : ProfileStatItem(
-                      label: 'Followers',
-                      value: followService.getFollowerTier(followerCount),
-                      color: primaryColor,
-                    ),
-              const SizedBox(width: AppDimensions.spacingXxl),
-              canOpenStats
-                  ? ProfileTappableStatItem(
-                      label: 'Following',
-                      value: followService.getFollowerTier(followingCount),
-                      color: primaryColor,
-                      onTap: () => onOpenStatsWithTab?.call(initialTabIndex: 1),
-                    )
-                  : ProfileStatItem(
-                      label: 'Following',
-                      value: followService.getFollowerTier(followingCount),
-                      color: primaryColor,
-                    ),
+              Expanded(
+                child: canOpenStats
+                    ? ProfileTappableStatItem(
+                        label: 'Followers',
+                        value: followService.getFollowerTier(followerCount),
+                        color: primaryColor,
+                        onTap: () =>
+                            onOpenStatsWithTab?.call(initialTabIndex: 0),
+                      )
+                    : ProfileStatItem(
+                        label: 'Followers',
+                        value: followService.getFollowerTier(followerCount),
+                        color: primaryColor,
+                      ),
+              ),
+              Expanded(
+                child: canOpenStats
+                    ? ProfileTappableStatItem(
+                        label: 'Following',
+                        value: followService.getFollowerTier(followingCount),
+                        color: primaryColor,
+                        onTap: () =>
+                            onOpenStatsWithTab?.call(initialTabIndex: 1),
+                      )
+                    : ProfileStatItem(
+                        label: 'Following',
+                        value: followService.getFollowerTier(followingCount),
+                        color: primaryColor,
+                      ),
+              ),
+              Expanded(
+                child: ProfileStatItem(
+                  label: 'Score',
+                  value: auraScore.toString(),
+                  color: primaryColor,
+                ),
+              ),
             ],
           ),
         ],
