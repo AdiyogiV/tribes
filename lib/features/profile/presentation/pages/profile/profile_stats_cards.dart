@@ -59,6 +59,13 @@ class ProfileStatsCardWidget extends StatelessWidget {
             children: [
               Expanded(
                 child: ProfileStatItem(
+                  label: 'Score',
+                  value: auraScore.toString(),
+                  color: primaryColor,
+                ),
+              ),
+              Expanded(
+                child: ProfileStatItem(
                   label: 'Posts',
                   value: postCount.toString(),
                   color: primaryColor,
@@ -93,13 +100,6 @@ class ProfileStatsCardWidget extends StatelessWidget {
                         value: followService.getFollowerTier(followingCount),
                         color: primaryColor,
                       ),
-              ),
-              Expanded(
-                child: ProfileStatItem(
-                  label: 'Score',
-                  value: auraScore.toString(),
-                  color: primaryColor,
-                ),
               ),
             ],
           ),
