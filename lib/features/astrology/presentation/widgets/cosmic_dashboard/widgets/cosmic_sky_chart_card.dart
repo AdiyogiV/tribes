@@ -168,6 +168,7 @@ class CosmicSkyChartCard extends StatelessWidget {
           const SizedBox(height: 32),
 
           // The Chic Typographic Date Stepper & Progress Bar
+          // Placed in a massive invisible container so the scrub area is huge
           GestureDetector(
             behavior: HitTestBehavior.opaque,
             onHorizontalDragUpdate: skyDataLoaded
@@ -178,10 +179,14 @@ class CosmicSkyChartCard extends StatelessWidget {
                     onSliderChanged(newVal);
                   }
                 : null,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // PAST <   — TODAY —   > FUTURE
+            child: Container(
+              width: double.infinity,
+              color: Colors.transparent,
+              padding: const EdgeInsets.symmetric(vertical: 32.0), // Massive vertical hit area
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // PAST <   — TODAY —   > FUTURE
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -260,7 +265,7 @@ class CosmicSkyChartCard extends StatelessWidget {
           ),
 
           // Contextual Reset Button (on its own line)
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           SizedBox(
             height: 20, // fixed height to prevent layout jump
             child: AnimatedSwitcher(
