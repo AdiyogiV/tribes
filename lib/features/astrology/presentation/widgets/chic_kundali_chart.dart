@@ -357,22 +357,34 @@ class _KundaliPainter extends CustomPainter {
 
       final rnd = math.Random(c.fromSign * 100 + c.toSign);
       final amplitude = isHero ? 14.0 : 10.0;
-      final waves = 3 + rnd.nextInt(3); // 3..5, nicely wavy
-      final phase = rnd.nextDouble() * math.pi;
-      Offset pt(double t) {
+
+      // Build an organic, randomly-wandering line (not a regular sine snake):
+      // scatter a few control points with random perpendicular offsets, fading
+      // to zero at both ends, then smooth them into a curve. Seeded per
+      // connection so it stays stable across repaints.
+      final segments = 5 + rnd.nextInt(3); // 5..7 kinks
+      final pts = <Offset>[a];
+      for (int k = 1; k < segments; k++) {
+        final t = k / segments;
+        final env = math.sin(t * math.pi); // 0 at ends, 1 mid
+        final o = (rnd.nextDouble() * 2 - 1) * amplitude * env;
         final baseP =
             Offset(a.dx + (b.dx - a.dx) * t, a.dy + (b.dy - a.dy) * t);
-        final env = math.sin(t * math.pi);
-        final o = env * amplitude * math.sin(t * math.pi * waves + phase);
-        return Offset(baseP.dx + perp.dx * o, baseP.dy + perp.dy * o);
+        pts.add(Offset(baseP.dx + perp.dx * o, baseP.dy + perp.dy * o));
       }
+      pts.add(b);
 
-      const steps = 32;
-      final path = Path()..moveTo(a.dx, a.dy);
-      for (int s = 1; s <= steps; s++) {
-        final p = pt(s / steps);
-        path.lineTo(p.dx, p.dy);
+      // Smooth the polyline through midpoints (quadratic beziers) for a
+      // flowing, hand-drawn feel.
+      final path = Path()..moveTo(pts.first.dx, pts.first.dy);
+      for (int k = 1; k < pts.length - 1; k++) {
+        final mid = Offset(
+          (pts[k].dx + pts[k + 1].dx) / 2,
+          (pts[k].dy + pts[k + 1].dy) / 2,
+        );
+        path.quadraticBezierTo(pts[k].dx, pts[k].dy, mid.dx, mid.dy);
       }
+      path.lineTo(b.dx, b.dy);
 
       // The hero gets a soft glow: a wide, blurred pass in its planet colour
       // drawn underneath the crisp stroke.
@@ -388,7 +400,7 @@ class _KundaliPainter extends CustomPainter {
       }
 
       canvas.drawPath(path, paint);
-      _arrowHead(canvas, b, pt(0.9), paint);
+      _arrowHead(canvas, b, pts[pts.length - 2], paint);
     }
   }
 
