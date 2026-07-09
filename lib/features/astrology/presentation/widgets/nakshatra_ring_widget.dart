@@ -1904,11 +1904,13 @@ class _TaraRingPainter extends CustomPainter {
     // as the wheel spins — bright across the top, fading out toward the
     // bottom, so the line darkens even where it bulges outside the box.
     final angle = rotation.value;
-    final lit = Colors.white.withValues(alpha: isDark ? 0.95 : 0.85);
+    // Theme-aware ring ink: white on dark, black on light.
+    final ringInk = isDark ? Colors.white : Colors.black;
+    final lit = ringInk.withValues(alpha: isDark ? 0.95 : 0.7);
     final shader = LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
-      colors: [lit, lit, Colors.white.withValues(alpha: 0.0)],
+      colors: [lit, lit, ringInk.withValues(alpha: 0.0)],
       stops: const [0.0, 0.52, 0.96],
       transform: GradientRotation(-angle),
     ).createShader(Rect.fromCircle(center: center, radius: maxR));

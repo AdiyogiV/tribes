@@ -91,9 +91,11 @@ class CosmicSkyChartCard extends StatelessWidget {
         : null;
     final hasBirthChart = birthHouses != null && birthLabels != null;
 
-    final bg = const Color(0xFF000000); // Vlack (black)
-    final fgMain = Colors.white;
-    final fgMuted = Colors.white54;
+    // Theme-aware surface + text. Dark = stark night-sky black; light = clean
+    // white paper with near-black ink.
+    final bg = isDark ? const Color(0xFF000000) : Colors.white;
+    final fgMain = isDark ? Colors.white : const Color(0xFF1A1A1C);
+    final fgMuted = isDark ? Colors.white54 : Colors.black54;
 
     return Container(
       width: double.infinity,
@@ -361,7 +363,7 @@ class CosmicSkyChartCard extends StatelessWidget {
 
   /// Legend distinguishing natal (gold) from transit (sky) planets.
   Widget _buildLegend(BuildContext context, Color c) {
-    final transitColor = Colors.white;
+    final transitColor = isDark ? Colors.white : const Color(0xFF1A1A1C);
 
     Widget entry(Color dot, String label) => Row(
           mainAxisSize: MainAxisSize.min,
