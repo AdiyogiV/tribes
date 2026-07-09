@@ -211,18 +211,34 @@ class CosmicSkyChartCard extends StatelessWidget {
                     ),
 
                     // CENTER DATE
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 200),
-                      child: Text(
-                        isSliderOnToday ? '—  TODAY  —' : dateStr.toUpperCase(),
-                        key: ValueKey(dateStr),
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: isSliderOnToday
-                              ? FontWeight.w600
-                              : FontWeight.w400,
-                          letterSpacing: 4.0,
-                          color: isSliderOnToday ? fgMain : fgMuted,
+                    // NOTE: key on the *today/not-today* state, NOT on dateStr.
+                    // AnimatedSwitcher keeps outgoing children alive for its
+                    // fade duration; during a fast scrub the date can bounce
+                    // back to a value it just left within that window, which
+                    // would give two live children the SAME ValueKey(dateStr)
+                    // => "Duplicate keys found" crash. Keying on the bool means
+                    // the date text updates in place while scrubbing (smoother,
+                    // no pile-up) and we only crossfade the meaningful TODAY
+                    // <-> date transition.
+                    Flexible(
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 200),
+                        child: Text(
+                          isSliderOnToday
+                              ? '—  TODAY  —'
+                              : dateStr.toUpperCase(),
+                          key: ValueKey(isSliderOnToday),
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: isSliderOnToday
+                                ? FontWeight.w600
+                                : FontWeight.w400,
+                            letterSpacing: 4.0,
+                            color: isSliderOnToday ? fgMain : fgMuted,
+                          ),
                         ),
                       ),
                     ),
