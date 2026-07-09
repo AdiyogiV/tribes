@@ -2,10 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:aurogram/features/ayurveda/domain/ayurveda_service.dart';
 import 'package:aurogram/shared/services/share/share_service.dart';
 import 'package:aurogram/shared/models/astrology_profile.dart';
-import 'package:aurogram/shared/models/ayurveda_profile.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/features/onboarding/domain/onboarding_constants.dart';
 import 'package:aurogram/features/onboarding/presentation/mixins/data_polling_mixin.dart';
@@ -14,7 +12,6 @@ import 'package:aurogram/features/onboarding/presentation/widgets/onboarding_pro
 import 'package:aurogram/features/onboarding/presentation/widgets/star_field_painter.dart';
 import 'package:aurogram/features/onboarding/presentation/steps/loading_phase.dart';
 import 'package:aurogram/features/onboarding/presentation/steps/sign_reveal_phase.dart';
-import 'package:aurogram/features/onboarding/presentation/steps/ayurveda_reveal_phase.dart';
 import 'package:aurogram/features/onboarding/presentation/steps/reading_phases.dart';
 import 'package:aurogram/features/onboarding/presentation/steps/path_choice_phase.dart';
 import 'package:aurogram/features/astrology/domain/sky_positions_service.dart';
@@ -53,14 +50,12 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
   // State
   int _phase = OnboardingPhase.loading;
   int _signRevealStep = 0; // 0=none, 1=sun, 2=moon, 3=rising
-  int _ayurvedaRevealStep = 0; // 0=none, then 1, 2, 3
   bool _isNavigating = false;
   String _loadingMessage = 'Reading the stars...';
   Timer? _messageTimer;
 
   // Data
   AstrologyProfile? _profile;
-  AyurvedaProfile? _ayurvedaProfile;
   String? _firstReadingContent;
   bool _isGeneratingReading = false;
   String? _currentTimesReadingContent;
@@ -80,11 +75,6 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
   AstrologyProfile? get pollingProfile => _profile;
   @override
   set pollingProfile(AstrologyProfile? v) => _profile = v;
-
-  @override
-  AyurvedaProfile? get pollingAyurvedaProfile => _ayurvedaProfile;
-  @override
-  set pollingAyurvedaProfile(AyurvedaProfile? v) => _ayurvedaProfile = v;
 
   @override
   String? get pollingFirstReadingContent => _firstReadingContent;
@@ -238,86 +228,6 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
     }
   }
 
-  void _goToHighlightsPhase() async {
-    if (!mounted || _profile == null) return;
-
-    pollForFirstReading();
-    triggerAyurvedaCalculationInBackground();
-    _goToAyurvedaPhase();
-  }
-
-  void _goToAyurvedaPhase() async {
-    if (!mounted || _profile == null) {
-      _goToReadingPhase();
-      return;
-    }
-
-    await waitForAyurvedaData();
-
-    if (_ayurvedaProfile == null || _ayurvedaProfile!.prakriti == null) {
-      AppLogger.i('No Ayurveda profile - skipping to reading phase',
-          category: LogCategory.general);
-      _goToReadingPhase();
-      return;
-    }
-
-    // Calculate Vikriti if not already available
-    if (_ayurvedaProfile!.vikriti == null && _profile != null) {
-      try {
-        final ayurvedaService = AyurvedaService();
-        final vikriti = await ayurvedaService.calculateVikriti(
-          profile: _ayurvedaProfile!,
-          astroProfile: _profile!,
-        );
-        if (mounted && vikriti != null) {
-          final updatedProfile = AyurvedaProfile(
-            prakriti: _ayurvedaProfile!.prakriti,
-            prakritiRefined: _ayurvedaProfile!.prakritiRefined,
-            questionsAnswered: _ayurvedaProfile!.questionsAnswered,
-            physicalProfile: _ayurvedaProfile!.physicalProfile,
-            agniType: _ayurvedaProfile!.agniType,
-            manasPrakriti: _ayurvedaProfile!.manasPrakriti,
-            healthVulnerabilities: _ayurvedaProfile!.healthVulnerabilities,
-            vikriti: vikriti,
-            checkInHistory: _ayurvedaProfile!.checkInHistory,
-            lastSymptoms: _ayurvedaProfile!.lastSymptoms,
-            lastCheckIn: _ayurvedaProfile!.lastCheckIn,
-            calculatedAt: _ayurvedaProfile!.calculatedAt,
-            version: _ayurvedaProfile!.version,
-          );
-          setState(() => _ayurvedaProfile = updatedProfile);
-
-          try {
-            await ayurvedaService.saveVikriti(vikriti);
-          } catch (saveErr) {
-            AppLogger.w(
-                'Failed to save Vikriti to Firestore during onboarding: $saveErr',
-                category: LogCategory.general);
-          }
-        }
-      } catch (e) {
-        AppLogger.w('Failed to calculate Vikriti during onboarding: $e',
-            category: LogCategory.general);
-      }
-    }
-
-    setState(() => _phase = OnboardingPhase.ayurveda);
-
-    await Future.delayed(AnimationTiming.initialRevealDelay);
-
-    final hasVikriti = _ayurvedaProfile?.vikriti != null;
-    final maxSteps = hasVikriti ? 3 : 2;
-
-    for (int step = 1; step <= maxSteps; step++) {
-      if (!mounted) return;
-      HapticFeedback.lightImpact();
-      setState(() => _ayurvedaRevealStep = step);
-      if (step < maxSteps) {
-        await Future.delayed(AnimationTiming.cardRevealDelay);
-      }
-    }
-  }
-
   void _goToReadingPhase() {
     if (!mounted) return;
     final hasReading =
@@ -379,14 +289,6 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
       case OnboardingPhase.signReveal:
         if (_signRevealStep >= 3) {
           canContinue = true;
-          continueAction = _goToHighlightsPhase;
-        }
-        break;
-      case OnboardingPhase.ayurveda:
-        final hasVikriti = _ayurvedaProfile?.vikriti != null;
-        final maxSteps = hasVikriti ? 3 : 2;
-        if (_ayurvedaRevealStep >= maxSteps) {
-          canContinue = true;
           continueAction = _goToReadingPhase;
         }
         break;
@@ -438,7 +340,6 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
                       OnboardingProgressSidebar(
                         currentPhase: _phase,
                         signRevealStep: _signRevealStep,
-                        ayurvedaRevealStep: _ayurvedaRevealStep,
                         hasReading: _firstReadingContent != null &&
                             _firstReadingContent!.isNotEmpty,
                         isGeneratingReading: _isGeneratingReading,
@@ -517,7 +418,7 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
         return SignRevealPhase(
           profile: _profile!,
           signRevealStep: _signRevealStep,
-          onContinue: _goToHighlightsPhase,
+          onContinue: _goToReadingPhase,
           onShare: () {
             final p = _profile!;
             final user = FirebaseAuth.instance.currentUser;
@@ -530,18 +431,6 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
               risingSign: p.ascendant ?? '',
             );
           },
-        );
-      case OnboardingPhase.ayurveda:
-        if (_ayurvedaProfile == null) {
-          return LoadingPhase(
-            loadingMessage: 'Analyzing your Ayurvedic constitution...',
-            planetPositions: _planetPositions,
-          );
-        }
-        return AyurvedaRevealPhase(
-          ayurvedaProfile: _ayurvedaProfile!,
-          ayurvedaRevealStep: _ayurvedaRevealStep,
-          onContinue: _goToReadingPhase,
         );
       case OnboardingPhase.birthReading:
         return BirthReadingPhase(

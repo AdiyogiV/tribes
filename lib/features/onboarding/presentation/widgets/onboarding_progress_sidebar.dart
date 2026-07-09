@@ -9,7 +9,6 @@ import 'package:aurogram/core/theme/app_dimensions.dart';
 class OnboardingProgressSidebar extends StatelessWidget {
   final int currentPhase;
   final int signRevealStep;
-  final int ayurvedaRevealStep;
   final bool hasReading;
   final bool isGeneratingReading;
   final bool hasCurrentTimesReading;
@@ -19,7 +18,6 @@ class OnboardingProgressSidebar extends StatelessWidget {
     super.key,
     required this.currentPhase,
     required this.signRevealStep,
-    required this.ayurvedaRevealStep,
     required this.hasReading,
     required this.isGeneratingReading,
     required this.hasCurrentTimesReading,
@@ -110,25 +108,14 @@ class OnboardingProgressSidebar extends StatelessWidget {
                   ),
                   _buildStep(
                     context: context,
-                    icon: Icons.spa_outlined,
-                    selectedIcon: Icons.spa_rounded,
-                    label: 'Ayurveda',
-                    isActive: currentPhase == 2,
-                    isCompleted: currentPhase > 2 ||
-                        (currentPhase == 2 && ayurvedaRevealStep >= 2),
-                    primaryColor: primaryColor,
-                    isDark: isDark,
-                  ),
-                  _buildStep(
-                    context: context,
                     icon: Icons.menu_book_outlined,
                     selectedIcon: Icons.menu_book_rounded,
                     label: 'Birth Reading',
-                    isActive: currentPhase == 3,
+                    isActive: currentPhase == 2,
                     isCompleted:
-                        currentPhase > 3 || (currentPhase == 3 && hasReading),
+                        currentPhase > 2 || (currentPhase == 2 && hasReading),
                     isGenerating:
-                        currentPhase == 3 && isGeneratingReading && !hasReading,
+                        currentPhase == 2 && isGeneratingReading && !hasReading,
                     primaryColor: primaryColor,
                     isDark: isDark,
                   ),
@@ -137,10 +124,10 @@ class OnboardingProgressSidebar extends StatelessWidget {
                     icon: Icons.schedule_outlined,
                     selectedIcon: Icons.schedule_rounded,
                     label: 'Current Times',
-                    isActive: currentPhase == 4,
-                    isCompleted: currentPhase > 4 ||
-                        (currentPhase == 4 && hasCurrentTimesReading),
-                    isGenerating: currentPhase == 4 &&
+                    isActive: currentPhase == 3,
+                    isCompleted: currentPhase > 3 ||
+                        (currentPhase == 3 && hasCurrentTimesReading),
+                    isGenerating: currentPhase == 3 &&
                         isGeneratingCurrentTimesReading &&
                         !hasCurrentTimesReading,
                     primaryColor: primaryColor,
@@ -151,8 +138,8 @@ class OnboardingProgressSidebar extends StatelessWidget {
                     icon: Icons.explore_outlined,
                     selectedIcon: Icons.explore_rounded,
                     label: 'Choose Your Path',
-                    isActive: currentPhase == 5,
-                    isCompleted: currentPhase > 5,
+                    isActive: currentPhase == 4,
+                    isCompleted: currentPhase > 4,
                     primaryColor: primaryColor,
                     isDark: isDark,
                   ),

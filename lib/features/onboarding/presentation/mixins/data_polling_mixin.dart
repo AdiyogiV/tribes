@@ -3,9 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:aurogram/core/di/injection.dart';
 import 'package:aurogram/shared/data/repositories/user_repository.dart';
 import 'package:aurogram/features/astrology/domain/astrology_service.dart';
-import 'package:aurogram/features/ayurveda/domain/ayurveda_service.dart';
 import 'package:aurogram/shared/models/astrology_profile.dart';
-import 'package:aurogram/shared/models/ayurveda_profile.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/features/onboarding/domain/onboarding_constants.dart';
 
@@ -19,9 +17,6 @@ mixin DataPollingMixin<T extends StatefulWidget> on State<T> {
   // ---- fields the host must provide ----
   AstrologyProfile? get pollingProfile;
   set pollingProfile(AstrologyProfile? value);
-
-  AyurvedaProfile? get pollingAyurvedaProfile;
-  set pollingAyurvedaProfile(AyurvedaProfile? value);
 
   String? get pollingFirstReadingContent;
   set pollingFirstReadingContent(String? value);
@@ -90,47 +85,6 @@ mixin DataPollingMixin<T extends StatefulWidget> on State<T> {
         category: LogCategory.general);
   }
 
-  /// Wait for Ayurveda data to be ready.
-  Future<void> waitForAyurvedaData() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
-
-    final ayurvedaService = AyurvedaService();
-    final startTime = DateTime.now();
-    int pollCount = 0;
-    const maxWait = Duration(seconds: 15); // Shorter wait for Ayurveda
-
-    AppLogger.i('Starting Ayurveda data poll for uid: $uid',
-        category: LogCategory.general);
-
-    while (DateTime.now().difference(startTime) < maxWait) {
-      pollCount++;
-      try {
-        final profile =
-            await ayurvedaService.getProfile(uid, forceRefresh: true);
-
-        if (profile != null && profile.prakriti != null) {
-          pollingAyurvedaProfile = profile;
-          AppLogger.i('✅ Ayurveda profile loaded after $pollCount polls',
-              category: LogCategory.general);
-          return;
-        } else if (pollCount % 3 == 0) {
-          AppLogger.d('Poll #$pollCount: Waiting for Ayurveda profile...',
-              category: LogCategory.general);
-        }
-      } catch (e) {
-        AppLogger.w('Ayurveda profile fetch error (poll #$pollCount): $e',
-            category: LogCategory.general);
-      }
-
-      if (!mounted) return;
-      await Future.delayed(AnimationTiming.astroRetryInterval);
-    }
-
-    AppLogger.w('Ayurveda data timeout after $pollCount polls',
-        category: LogCategory.general);
-  }
-
   /// Triggers daily insight generation as a separate Cloud Function call.
   /// Runs asynchronously - does not block the onboarding flow.
   void triggerDailyInsightInBackground() {
@@ -142,40 +96,6 @@ mixin DataPollingMixin<T extends StatefulWidget> on State<T> {
       AppLogger.i('✅ Daily insight generated', category: LogCategory.network);
     }).catchError((e) {
       AppLogger.w('Daily insight generation failed: $e',
-          category: LogCategory.network);
-    });
-  }
-
-  /// Triggers Ayurveda calculation asynchronously.
-  void triggerAyurvedaCalculationInBackground() {
-    final ayurvedaService = AyurvedaService();
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
-
-    AppLogger.i('🔮 Triggering Ayurveda calculation (background)',
-        category: LogCategory.network);
-
-    ayurvedaService
-        .getProfile(uid, forceRefresh: true)
-        .then((existingProfile) {
-      if (existingProfile != null && mounted) {
-        setState(() => pollingAyurvedaProfile = existingProfile);
-        AppLogger.i('✅ Ayurveda profile already exists',
-            category: LogCategory.network);
-      } else {
-        ayurvedaService.calculateProfile().then((newProfile) {
-          if (mounted && newProfile != null) {
-            setState(() => pollingAyurvedaProfile = newProfile);
-            AppLogger.i('✅ Ayurveda profile calculated',
-                category: LogCategory.network);
-          }
-        }).catchError((e) {
-          AppLogger.w('Ayurveda calculation failed: $e',
-              category: LogCategory.network);
-        });
-      }
-    }).catchError((e) {
-      AppLogger.w('Ayurveda profile fetch failed: $e',
           category: LogCategory.network);
     });
   }
