@@ -5,7 +5,6 @@ import 'package:aurogram/features/astrology/data/utils/chart_utils.dart';
 import 'package:aurogram/features/astrology/data/utils/sky_connection.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/chic_kundali_chart.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
-import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/widgets/timeline_slider.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/kundali_house_hit_test.dart';
 
 /// Card widget displaying the current sky chart with optional birth chart overlay
