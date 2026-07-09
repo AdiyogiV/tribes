@@ -358,16 +358,36 @@ class _KundaliPainter extends CustomPainter {
       final rnd = math.Random(c.fromSign * 100 + c.toSign);
       final amplitude = isHero ? 14.0 : 10.0;
 
-      // Build an organic, randomly-wandering line (not a regular sine snake):
-      // scatter a few control points with random perpendicular offsets, fading
-      // to zero at both ends, then smooth them into a curve. Seeded per
-      // connection so it stays stable across repaints.
+      // Bow the line OUTWARD, around the chart's centre, instead of letting it
+      // cut straight through the middle where all the houses meet. We pick the
+      // perpendicular side that points away from centre (i.e. the line swings
+      // clockwise/anticlockwise around the hub) and keep every control point on
+      // that side — so lines arc around rather than crossing the core.
+      final center = Offset(w / 2, h / 2);
+      final mid0 = Offset((a.dx + b.dx) / 2, (a.dy + b.dy) / 2);
+      final outward = mid0 - center;
+      double biasDir;
+      if (outward.distance > 1) {
+        biasDir =
+            (perp.dx * outward.dx + perp.dy * outward.dy) >= 0 ? 1.0 : -1.0;
+      } else {
+        // Degenerate: midpoint ~ centre. Use rotational sense instead.
+        final cross = (a.dx - center.dx) * (b.dy - center.dy) -
+            (a.dy - center.dy) * (b.dx - center.dx);
+        biasDir = cross >= 0 ? 1.0 : -1.0;
+      }
+
+      // Build an organic wandering arc: a strong outward bow + a little random
+      // jitter, all on the same (outward) side. Seeded per connection so it
+      // stays stable across repaints.
       final segments = 5 + rnd.nextInt(3); // 5..7 kinks
       final pts = <Offset>[a];
       for (int k = 1; k < segments; k++) {
         final t = k / segments;
         final env = math.sin(t * math.pi); // 0 at ends, 1 mid
-        final o = (rnd.nextDouble() * 2 - 1) * amplitude * env;
+        final o = biasDir *
+            env *
+            (amplitude * 1.6 + rnd.nextDouble() * amplitude * 0.9);
         final baseP =
             Offset(a.dx + (b.dx - a.dx) * t, a.dy + (b.dy - a.dy) * t);
         pts.add(Offset(baseP.dx + perp.dx * o, baseP.dy + perp.dy * o));
