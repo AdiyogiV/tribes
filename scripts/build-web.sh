@@ -20,6 +20,31 @@ DEPLOY=false
 PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BUILD_DIR="$PROJECT_ROOT/build/web"
 BOOTSTRAP="$BUILD_DIR/flutter_bootstrap.js"
+SW_FILE="$PROJECT_ROOT/web/firebase-messaging-sw.js"
+
+# On deploy, bump the service worker CACHE_VERSION so returning users get the
+# fresh build instead of a stale cache. Done before the build so the new value
+# is copied into build/web. The change stays in the working tree (source file)
+# for you to commit alongside the deploy.
+if $DEPLOY && [[ -f "$SW_FILE" ]]; then
+  echo "-> Bumping service worker CACHE_VERSION..."
+  python3 - "$SW_FILE" <<'PY'
+import re, sys
+path = sys.argv[1]
+with open(path) as f:
+    src = f.read()
+m = re.search(r"const CACHE_VERSION = '(\d+)';", src)
+if not m:
+    print("   could not find numeric CACHE_VERSION - skipping bump", file=sys.stderr)
+    sys.exit(0)
+old = int(m.group(1))
+new = old + 1
+src = src[:m.start()] + "const CACHE_VERSION = '%d';" % new + src[m.end():]
+with open(path, 'w') as f:
+    f.write(src)
+print("   CACHE_VERSION %d -> %d" % (old, new))
+PY
+fi
 
 echo "▸ Building Flutter web (release)..."
 cd "$PROJECT_ROOT"
