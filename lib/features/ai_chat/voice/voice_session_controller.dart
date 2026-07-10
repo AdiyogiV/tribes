@@ -647,7 +647,16 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
     } catch (_) {/* ignore */}
     _channel = null;
 
-    if (_playerOpen) {
+    // Close the player between calls on native platforms only. On WEB we must
+    // NOT close it: flutter_sound's web plugin re-injects its <script> tags on
+    // every openPlayer(), and the second injection throws
+    // "Identifier FLUTTER_SOUND_VERSION has already been declared" (likewise
+    // PLAYER_VERSION / RECORDER_VERSION). That permanently breaks the player
+    // module (initializeMediaPlayer becomes undefined) and kills every
+    // subsequent call. Keeping the one player instance open across calls means
+    // openPlayer() runs exactly once per page load, so nothing is re-injected.
+    // The PCM stream is designed to stay up for the whole session anyway.
+    if (_playerOpen && !kIsWeb) {
       _playerOpen = false;
       try {
         await _player.closePlayer();
