@@ -432,6 +432,20 @@ class DashboardPageState extends State<DashboardPage>
   // Build
   // ─────────────────────────────────────────────────────────────
 
+  /// The floating input's inner content: the collapsed cow (tap = voice call,
+  /// keyboard icon = switch to typing) OR the expanded text bar. Shared by the
+  /// mobile Positioned overlay AND the desktop/web layout so wide layouts get
+  /// the SAME voice-call affordance instead of a permanently-expanded text
+  /// field. Caller wraps this in a [ListenableBuilder] on [_inputBar] so the
+  /// swap rebuilds on toggle.
+  Widget _collapsedCowOrBar() => _inputBar.expanded
+      ? _buildInputBar()
+      : HolyCowVoiceCow(
+          onShowKeyboard: _toggleInputBar,
+          onShowRecent: _showRecentConversations,
+          onActiveChanged: _handleVoiceActiveChanged,
+        );
+
   @override
   Widget build(BuildContext context) {
     super.build(context); // Required for AutomaticKeepAliveClientMixin
@@ -445,7 +459,12 @@ class DashboardPageState extends State<DashboardPage>
         body: HolyCowDesktopLayout(
           key: _desktopLayoutKey,
           cosmicDashboardBuilder: _buildCosmicDashboardContent,
-          dashboardInputBuilder: _buildInputBar,
+          // Wide/web layout gets the same cow<->bar swap as mobile so the
+          // tap-to-call cow is available (was hard-wired to the expanded bar).
+          dashboardInputBuilder: () => ListenableBuilder(
+            listenable: _inputBar,
+            builder: (context, _) => _collapsedCowOrBar(),
+          ),
         ),
       );
     }
@@ -534,13 +553,7 @@ class DashboardPageState extends State<DashboardPage>
                     offset: Offset(0, dy),
                     child: child,
                   ),
-                  child: _inputBar.expanded
-                      ? _buildInputBar()
-                      : HolyCowVoiceCow(
-                          onShowKeyboard: _toggleInputBar,
-                          onShowRecent: _showRecentConversations,
-                          onActiveChanged: _handleVoiceActiveChanged,
-                        ),
+                  child: _collapsedCowOrBar(),
                 ),
               ),
             ),
