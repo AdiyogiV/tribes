@@ -1,8 +1,8 @@
 /**
  * Current Times Reading — self-contained Cloud Function logic.
  *
- * A dynamic "what's happening now" reading (~180-220 words markdown) focused on
- * present energy + near-term outlook, using the user's chart + current dasha.
+ * A short, chic "what's happening now" reading (~90-120 words markdown) focused
+ * on present energy + a bold near-term prediction, using the user's chart + dasha.
  *
  * Recipe (one flat pass, no engine): build context -> prompt -> callGemini -> store.
  * Cache: the reading itself on users/{uid}.astrologyData.currentTimesReading (24h).
@@ -47,29 +47,29 @@ function buildCtx(userName, astroData) {
 
 function buildPrompt(ctx) {
     return {
-        system: "You are a clear, supportive astrologer. You write 'current times' readings that feel relevant and actionable. You use markdown (bold, italics, headings) and avoid jargon. You never mention technical terms like Mahadasha or transits by name.",
-        user: `Write a "current times" reading for ${ctx.userName || "them"}—what's happening in their life NOW and what to expect in the next 2–4 months.
+        system: "You are a sharp, stylish astrologer who writes short, punchy 'current times' readings that feel like a confident whisper from someone who KNOWS what's coming. Minimal, chic, and a little fun. You make bold, specific predictions. You use markdown (bold, italics, headings) and never use jargon like 'Mahadasha' or 'transits'.",
+        user: `Write a short, chic "current times" reading for ${ctx.userName || "them"}—what's shifting in their life NOW and the bold prediction for the next 2–4 months.
 
-THEIR CHART (for context):
+THEIR CHART (context only, never name these terms):
 - Sun: ${ctx.sunSign}, Moon: ${ctx.moonSign}, Rising: ${ctx.ascendant}
 ${ctx.lifePhase ? `- Current life phase: ${ctx.lifePhase}` : ""}
 ${ctx.mahaDasha && ctx.antarDasha ? `- Active period: ${ctx.mahaDasha}–${ctx.antarDasha}` : ""}
 
 RULES:
-1. NO technical jargon (no "Mahadasha", "Antardasha", "transits" by name). Use plain language.
-2. Speak TO them ("You"). Be specific and confident.
-3. Focus on: (a) what's in the air for them right now, (b) what's likely to unfold in the next 2–4 months, (c) how to use this period well.
-4. Use **bold** and *italic* and ### headings. Many short paragraphs. Bullet points where helpful.
-5. One or two concrete time references (e.g. "in the next 6–8 weeks", "by mid-year").
+1. NO jargon. Plain, confident language.
+2. Speak TO them ("You"). Be specific and a little daring—this should feel predictive, not generic.
+3. Make ONE bold, concrete prediction with a real time reference (e.g. "by the end of summer", "in the next 6 weeks").
+4. Chic and minimal: every line earns its place. No filler, no throat-clearing.
+5. A touch of fun and personality is welcome.
 
-STRUCTURE (180–220 words):
-1. ### Right Now — 2–3 sentences on the current energy/theme.
-2. ### What's Coming — What to expect in the next 2–4 months; use **bold** for the key prediction.
-3. ### How to Navigate — 2–3 specific, actionable points.
+STRUCTURE (90–120 words, rich markdown):
+1. ### The Vibe Now — 1–2 punchy sentences on the current energy.
+2. ### What's Coming — the **bold prediction** with a time reference. Make it feel inevitable.
+3. ### Play It Smart — 2 crisp, specific moves as bullet points.
 
-TONE: Confident, warm, practical. No fluff.
+TONE: Confident, stylish, a little playful. Short sentences. No fluff.
 
-Write the current times reading now (180–220 words, rich markdown):`,
+Write it now (90–120 words, chic markdown):`,
     };
 }
 

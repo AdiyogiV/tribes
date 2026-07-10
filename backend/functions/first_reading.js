@@ -1,8 +1,9 @@
 /**
  * First Reading — self-contained Cloud Function logic.
  *
- * A one-time birth-chart personality reading (~150-180 words markdown) about
- * who the person is: identity, personality, core gifts. NO timing/predictions.
+ * A one-time birth-chart reading (~90-110 words markdown): who the person is
+ * (identity, personality, core gifts) plus a bold, destiny-flavored closing line.
+ * No dates or timed predictions—those live in the current times reading.
  *
  * Recipe (one flat pass, no engine): build context -> prompt -> callGemini ->
  * store. Cache: the reading itself on users/{uid}.astrologyData.firstReading
@@ -121,44 +122,38 @@ function buildPrompt(ctx) {
     const primaryYoga = hasRajYoga ? ctx.rajYogas[0] : null;
 
     return {
-        system: "You are a bold, insightful astrologer who creates readings that feel deeply personal and transformative. You make specific, confident claims that help people understand profound truths about themselves. You avoid technical jargon and speak in plain, powerful language. CRITICAL: You must output valid markdown in every response—use **bold** for key claims, *italics* for nuance, ### for section headings (e.g. ### Your Inner Architecture), and - for bullet lists. Your raw text will be rendered as markdown; if you output plain text only, the reading will look flat and unformatted.",
+        system: "You are a bold, stylish astrologer who writes short, chic birth-chart readings that feel like a designer label for someone's soul. Minimal, punchy, and a little fun. You make specific, confident claims and end with a daring line about their destiny. You avoid all jargon. CRITICAL: output valid markdown—**bold** for key claims, *italics* for nuance, ### for headings, - for bullets. Your text is rendered as markdown; plain text looks flat.",
 
-        user: `Write a bold, personalized BIRTH CHART reading for ${ctx.userName || "them"}.
-Focus ONLY on who they are—their personality, identity, and core gifts. Do NOT mention current life phase, predictions, or what's coming. No timing.
+        user: `Write a short, chic BIRTH reading for ${ctx.userName || "them"}.
+Capture who they are—their personality and core gifts—then end with a bold, destiny-flavored line about what they're built for. No timing, no dates, no "right now".
 
-THEIR CHART:
+THEIR CHART (context only, never name these terms):
 - Sun: ${ctx.sunSign} (core identity)
 - Moon: ${ctx.moonSign} (emotional nature)
-- Rising: ${ctx.ascendant} (how they appear to others)
-${hasRajYoga ? `- Special Blessing: ${primaryYoga.name || "A powerful alignment bringing success"}` : ""}
+- Rising: ${ctx.ascendant} (how they appear)
+${hasRajYoga ? `- Special blessing: ${primaryYoga.name || "a powerful alignment for success"}` : ""}
 
-CRITICAL RULES:
-1. NO technical astrology terms (no "Mahadasha", "Raj Yoga", "celestial bodies", etc.)
-2. NO predictions or "what's coming" or "right now" or life phase—this reading is ONLY about who they are from birth.
-3. Be BOLD and SPECIFIC - make claims that stand out
-4. Use "You" directly - speak TO them
-5. Make it EMOTIONALLY RESONANT - they should feel seen
-6. Be TRANSFORMATIVE - help them understand something profound about themselves
+RULES:
+1. NO jargon (no "Mahadasha", "Raj Yoga", "celestial bodies", etc.).
+2. Be BOLD, SPECIFIC, and a little fun—they should feel seen and want to screenshot it.
+3. Speak TO them ("You"). Every line earns its place—no filler.
+4. The final section is a daring claim about their trajectory/what they're destined for (feels predictive, but NO dates or timing).
 
-MARKDOWN FORMATTING (MANDATORY - your response will be rendered as markdown):
-- Use **bold** for at least two key phrases (e.g. **You are someone who...**).
-- Use *italics* for subtle or reflective lines.
-- Start sections with ### headings exactly: ### Your Inner Architecture, ### How You Move Through the World, ### A Hidden Strength.
-- Use bullet points with - for lists of traits or gifts.
-- Keep paragraphs short (2-3 sentences). Blank line between paragraphs.
+MARKDOWN (MANDATORY):
+- **bold** for at least two key phrases.
+- *italics* for a reflective line.
+- Exactly these headings: ### Your Signature, ### Where You're Headed.
+- Use - bullets for traits/gifts.
+- Short lines. Blank line between blocks.
 
-STRUCTURE (150-180 words) - output this exact structure with markdown:
-1. Opening: One sentence with **bold** claim about who they are.
-2. ### Your Inner Architecture
-   - 2-3 bullet points or a short paragraph on their core gift/power.
-3. ### How You Move Through the World
-   - 2-3 sentences on how they show up and how others experience them.
-4. ### A Hidden Strength
-   - One short paragraph on a quality they may not fully own yet.
+STRUCTURE (90–110 words):
+1. Opening: one punchy sentence with a **bold** claim about who they are.
+2. ### Your Signature — 2–3 crisp bullets on their core gifts and how they show up.
+3. ### Where You're Headed — one bold, destiny-flavored line about what they're built for.
 
-TONE: Confident, personal, transformative. No jargon. No timing or predictions.
+TONE: Confident, stylish, a little playful. No jargon. No timing.
 
-OUTPUT: Your entire response must be valid markdown (headings, bold, bullets). Write the BIRTH reading now:`,
+OUTPUT: valid markdown only. Write it now:`,
     };
 }
 
