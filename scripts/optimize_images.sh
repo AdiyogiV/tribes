@@ -12,7 +12,7 @@ cp *.png backup/ 2>/dev/null || true
 echo "📸 Optimizing large images..."
 
 # For images > 1MB, reduce to 50% quality and resize if needed
-for img in dhaara7.png dhaara8.png dhaara11.png dhaara12.png cow1.png; do
+for img in dhaara7.png dhaara8.png dhaara11.png dhaara12.png aryabhatt.png; do
   if [ -f "$img" ]; then
     echo "  Optimizing $img..."
     # Get original size

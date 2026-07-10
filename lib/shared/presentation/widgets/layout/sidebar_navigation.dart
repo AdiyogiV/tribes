@@ -310,7 +310,7 @@ class _SidebarNavigationState extends State<SidebarNavigation>
       width: size,
       height: size,
       child: Image.asset(
-        'assets/images/cow1.png',
+        'assets/images/aryabhatt.png',
         width: size,
         height: size,
         fit: BoxFit.contain,

@@ -127,7 +127,7 @@ class DashboardPageState extends State<DashboardPage>
       // first paint doesn't pay a cold-decode cost. The bar is collapsed by
       // default, so the cow is the very first thing shown — precaching keeps
       // that initial paint smooth.
-      precacheImage(const AssetImage('assets/images/cow1.png'), context);
+      precacheImage(const AssetImage('assets/images/aryabhatt.png'), context);
     }
   }
 

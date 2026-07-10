@@ -142,7 +142,7 @@ class _ChatInputAreaState extends State<ChatInputArea>
                 height: 70,
                 child: Center(
                   child: Image.asset(
-                    'assets/images/cow1.png',
+                    'assets/images/aryabhatt.png',
                     width: 48,
                     height: 48,
                     fit: BoxFit.contain,

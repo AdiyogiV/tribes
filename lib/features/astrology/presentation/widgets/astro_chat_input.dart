@@ -195,7 +195,7 @@ class _AstroChatInputState extends State<AstroChatInput> {
                 child: Opacity(
                   opacity: hasText ? 1.0 : 0.4,
                   child: Image.asset(
-                    'assets/images/cow1.png',
+                    'assets/images/aryabhatt.png',
                     width: 32,
                     height: 32,
                     errorBuilder: (_, __, ___) => Icon(

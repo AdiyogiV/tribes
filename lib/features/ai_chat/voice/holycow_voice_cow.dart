@@ -380,7 +380,7 @@ class _HolyCowVoiceCowState extends State<HolyCowVoiceCow>
                                 height: active ? 105.0 : 58.0,
                                 alignment: Alignment.bottomCenter,
                                 child: Image.asset(
-                                  'assets/images/cow1.png',
+                                  'assets/images/aryabhatt.png',
                                   fit: BoxFit.fitWidth,
                                   alignment: Alignment.bottomCenter,
                                   errorBuilder: (_, __, ___) => Icon(
