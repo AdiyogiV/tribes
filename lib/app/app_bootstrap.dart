@@ -15,6 +15,7 @@ import 'package:aurogram/features/ayurveda/domain/ayurveda_service.dart';
 import 'package:aurogram/features/astrology/domain/sky_positions_service.dart';
 import 'package:aurogram/platform/platform.dart';
 import 'package:aurogram/features/auth/auth_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:aurogram/core/notifications/fcm_background_handler.dart';
 import 'package:aurogram/app/app_providers.dart';
 import 'package:aurogram/app/app_root.dart';
@@ -124,6 +125,22 @@ class AppBootstrap {
     // app with zero offline cache and a 10s wait on every cold read.
     _configureFirestoreSettings();
 
+    // E2E test hook: disable phone-auth reCAPTCHA so headless automation can
+    // sign in with a Firebase test number (fixed OTP). Gated by
+    // --dart-define=E2E_TEST=true, so const-folded away entirely in real
+    // builds — it can never affect production.
+    if (const bool.fromEnvironment('E2E_TEST')) {
+      try {
+        await FirebaseAuth.instance
+            .setSettings(appVerificationDisabledForTesting: true);
+        AppLogger.w('E2E_TEST: phone-auth app verification DISABLED',
+            category: LogCategory.general);
+      } catch (e) {
+        AppLogger.e('E2E_TEST setSettings failed',
+            category: LogCategory.general, error: e);
+      }
+    }
+
     // App Check.
     //
     // DEBUG: handled NATIVELY in ios/Runner/AppDelegate.swift
@@ -207,9 +224,17 @@ class AppBootstrap {
       }
 
       FirebaseFirestore.instance.settings = Settings(
-        persistenceEnabled: true,
+        // E2E_TEST: use in-memory cache (no IndexedDB) to dodge the Firebase-JS
+        // 'INTERNAL ASSERTION FAILED (ca9)' persistence bug that fires in
+        // fresh headless automation contexts. Prod keeps persistence on.
+        persistenceEnabled: !const bool.fromEnvironment('E2E_TEST'),
         cacheSizeBytes: cacheSizeBytes,
         sslEnabled: !kIsWeb,
+        // Force long-polling on web. Firestore's default WebChannel streaming
+        // gets mangled by corporate/VPN proxies, which drives the firebase-js
+        // 12.x 'INTERNAL ASSERTION FAILED (ca9)' state and blanks the app after
+        // login. Long-polling is proxy-safe and fixes the blank-screen crash.
+        webExperimentalForceLongPolling: kIsWeb ? true : null,
         ignoreUndefinedProperties: true,
       );
       AppLogger.d('Firestore configured',
