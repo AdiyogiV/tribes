@@ -109,9 +109,11 @@ mixin StartupAuthMixin {
       }
 
       FirebaseFirestore.instance.settings = Settings(
-        persistenceEnabled: true,
+        persistenceEnabled: !const bool.fromEnvironment('E2E_TEST'),
         cacheSizeBytes: cacheSizeBytes,
         sslEnabled: !kIsWeb,
+        // Proxy/VPN-safe transport on web (avoids firebase-js ca9 crash).
+        webExperimentalForceLongPolling: kIsWeb ? true : null,
         ignoreUndefinedProperties: true,
       );
 
