@@ -100,10 +100,9 @@ class ProfileFollowButtonContent extends StatelessWidget {
 
 /// Builds the action items for own profile toolbar.
 List<Widget> buildOwnProfileActions({
-  required bool isDark,
+    required bool isDark,
   required VoidCallback onNamaste,
   required VoidCallback onInvites,
-  required VoidCallback onAddPost,
   required VoidCallback onNotifications,
   required VoidCallback onSettings,
 }) {
@@ -134,16 +133,7 @@ List<Widget> buildOwnProfileActions({
         size: iconSize,
       ),
     ),
-    // 3. Plus (centered)
-    ProfileNavItem(
-      onTap: onAddPost,
-      child: Icon(
-        CupertinoIcons.plus,
-        color: primaryColor,
-        size: iconSize,
-      ),
-    ),
-    // 4. Notifications (fourth)
+    // 3. Notifications
     ProfileNavItem(
       onTap: onNotifications,
       child: Icon(

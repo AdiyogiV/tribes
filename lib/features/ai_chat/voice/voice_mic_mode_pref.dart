@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:aurogram/core/config/feature_flags.dart';
 import 'package:aurogram/features/ai_chat/voice/voice_engine_pref.dart';
 
 /// How the microphone behaves during a voice call.
@@ -75,6 +76,9 @@ class VoiceMicModePref {
   /// force [waitTurn] in those cases. This is the single choke point where the
   /// "openMic only where it works" rule lives.
   static Future<VoiceMicMode> effectiveFor(VoiceEngine engine) async {
+    // When the voice-lab controls are hidden (production), everyone runs the
+    // safe half-duplex mode regardless of any previously saved override.
+    if (!FeatureFlags.showVoiceLabSettings) return VoiceMicMode.waitTurn;
     final mode = await readOverride() ?? defaultFor(engine);
     if (mode == VoiceMicMode.openMic &&
         (kIsWeb || engine != VoiceEngine.live)) {

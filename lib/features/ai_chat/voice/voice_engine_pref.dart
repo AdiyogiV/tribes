@@ -1,5 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:aurogram/core/config/feature_flags.dart';
+
 /// Which voice backend the relay should use for a session.
 ///
 /// * [live] — Gemini Live API (Charon native / half-cascade). Best, most
@@ -29,6 +31,10 @@ class VoiceEnginePref {
 
   /// Read the saved engine (defaults to [_default] if never set).
   static Future<VoiceEngine> read() async {
+    // When the voice-lab controls are hidden (production), everyone runs the
+    // safe default engine (Standard/CX) regardless of any previously saved
+    // choice, so a stale override can't leave a user on Live.
+    if (!FeatureFlags.showVoiceLabSettings) return _default;
     final prefs = await SharedPreferences.getInstance();
     return _fromWire(prefs.getString(_key));
   }

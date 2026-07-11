@@ -723,8 +723,7 @@ class UserProfilePageState extends State<UserProfilePage>
     return buildOwnProfileActions(
       isDark: isDark,
       onNamaste: openNamasteHistory,
-      onInvites: showInvites,
-      onAddPost: addPost,
+            onInvites: showInvites,
       onNotifications: openNotifications,
       onSettings: showSettings,
     );
