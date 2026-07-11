@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:aurogram/core/routing/route_names.dart';
 import 'package:aurogram/core/di/injection.dart';
+import 'package:aurogram/core/config/feature_flags.dart';
 import 'package:aurogram/shared/services/cache_service.dart';
 import 'package:aurogram/features/profile/domain/user_service.dart';
 import 'package:aurogram/features/auth/auth_service.dart';
@@ -279,10 +280,16 @@ class UserSettingsPageState extends State<UserSettingsPage> {
                               _buildSectionHeader(
                                   context, 'Aryabhatt', isDesktop),
                               SizedBox(height: isDesktop ? 12 : 8),
-                              _buildVoiceEngineToggle(context, isDesktop),
-                              const SizedBox(height: AppDimensions.spacingMd),
-                              _buildVoiceMicModeToggle(context, isDesktop),
-                              const SizedBox(height: AppDimensions.spacingMd),
+                              // Voice engine + mic-mode switches are internal-only
+                              // controls. Prod ships with the safe defaults
+                              // (Standard Voice + Wait-your-turn); the toggles are
+                              // hidden behind a feature flag but kept in code.
+                              if (FeatureFlags.showVoiceLabSettings) ...[
+                                _buildVoiceEngineToggle(context, isDesktop),
+                                const SizedBox(height: AppDimensions.spacingMd),
+                                _buildVoiceMicModeToggle(context, isDesktop),
+                                const SizedBox(height: AppDimensions.spacingMd),
+                              ],
                               _buildClearMemoryTile(context, isDesktop),
                               SizedBox(height: sectionSpacing),
                             ],

@@ -68,6 +68,18 @@ class FeatureFlags {
   /// Supported on all platforms (web via Geolocation API)
   static bool get isLocationSupported => true;
   
+  // ============ Aryabhatt / Voice Features ============
+
+  /// Whether the experimental voice controls are shown in Settings:
+  ///   * the voice-engine switch (Premium/Live vs Standard/CX), and
+  ///   * the mic-mode switch (Wait-your-turn vs Always-listening).
+  ///
+  /// Hidden from production users so the app ships with the safe defaults
+  /// (Standard Voice + Wait-your-turn). The code is kept intact for internal
+  /// testing — these controls appear automatically in debug builds. Flip to
+  /// `true` if you need them exposed in a release build for QA.
+  static bool get showVoiceLabSettings => kDebugMode;
+
   // ============ Platform Info ============
   
   /// Whether running on web
