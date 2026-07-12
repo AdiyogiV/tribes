@@ -34,6 +34,14 @@ enum VoiceCallState {
 /// filler clip plays on tap to cover the ~1-2s connect; the mic opens the
 /// instant the relay is ready.
 class VoiceSessionController extends ChangeNotifier {
+  // App-scoped singleton. Baba's voice session must OUTLIVE any single widget
+  // (the dashboard cow, the shell orb, a chat page) so a live call survives
+  // navigation and hands off between presences. Every `VoiceSessionController()`
+  // returns this one instance; it is never disposed for the app's lifetime.
+  VoiceSessionController._();
+  static final VoiceSessionController _instance = VoiceSessionController._();
+  factory VoiceSessionController() => _instance;
+
   final AudioRecorder _recorder = AudioRecorder();
   final FlutterSoundPlayer _player = FlutterSoundPlayer(logLevel: Level.off);
 

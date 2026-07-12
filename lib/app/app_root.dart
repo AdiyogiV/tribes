@@ -19,6 +19,7 @@ import 'package:aurogram/shared/providers/theme_provider.dart';
 import 'package:aurogram/shared/presentation/widgets/flash.dart';
 import 'package:aurogram/features/notifications/domain/notification_service.dart';
 import 'package:aurogram/features/calling/domain/call_service.dart';
+import 'package:aurogram/features/ai_chat/voice/baba_shell.dart';
 import 'package:aurogram/platform/platform.dart';
 import 'package:aurogram/app/app_bootstrap.dart' show initialDependenciesLoaded;
 
@@ -231,8 +232,11 @@ class AppRootState extends State<AppRoot> with WidgetsBindingObserver {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.getMaterialTheme(isDarkMode: isDark),
       builder: (context, child) {
-        // Show splash screen until deferred init completes (typically one frame)
-        final content = _appInitialized ? child! : const FlashScreen();
+        // Show splash screen until deferred init completes (typically one frame).
+        // Once ready, wrap every route in BabaShell so Baba floats over the
+        // whole app and survives navigation.
+        final content =
+            _appInitialized ? BabaShell(child: child!) : const FlashScreen();
         return CupertinoTheme(
           data: AppTheme.getCupertinoTheme(isDarkMode: isDark),
           child: MediaQuery(

@@ -8,6 +8,7 @@ import 'package:visibility_detector/visibility_detector.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/app/tabs/widgets/tab_bottom_nav.dart';
 import 'package:aurogram/features/ai_chat/voice/voice_session_controller.dart';
+import 'package:aurogram/features/ai_chat/voice/baba_presence.dart';
 import 'package:aurogram/features/ai_chat/voice/baba_voice_controls.dart';
 
 /// The Baba cow icon, but alive.
@@ -107,6 +108,9 @@ class _BabaVoiceCowState extends State<BabaVoiceCow>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // This cow is Baba's on-dashboard presence — tell the shell to stand down
+    // so we never render two Babas at once.
+    BabaPresence.instance.dashboardActive = true;
     _voice.addListener(_onVoiceChanged);
     _pulse = AnimationController(
       vsync: this,
@@ -119,7 +123,10 @@ class _BabaVoiceCowState extends State<BabaVoiceCow>
     WidgetsBinding.instance.removeObserver(this);
     _voice.removeListener(_onVoiceChanged);
     _pulse.dispose();
-    _voice.dispose();
+    // Cow leaving the tree → hand the stage back to the shell orb. Do NOT
+    // dispose _voice: it's the app-scoped singleton shared with the shell, and
+    // a live call must survive this widget so it can hand off.
+    BabaPresence.instance.dashboardActive = false;
     super.dispose();
   }
 
@@ -138,9 +145,10 @@ class _BabaVoiceCowState extends State<BabaVoiceCow>
   /// Collapses Aryabhatt back to his idle corner instead of secretly listening.
   void _handleVisibility(VisibilityInfo info) {
     if (!mounted) return;
-    if (info.visibleFraction < 0.1 && _inCall) {
-      _voice.hangUp();
-    }
+    // Off-screen (tab switch / route pushed on top) → the shell orb takes over
+    // as Baba's presence. Keep any live call running so it hands off seamlessly
+    // instead of hanging up. (Backgrounding still ends the call, above.)
+    BabaPresence.instance.dashboardActive = info.visibleFraction >= 0.1;
   }
 
   /// Surface call failures loudly instead of just shrinking the cow.
