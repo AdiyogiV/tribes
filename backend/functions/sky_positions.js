@@ -17,10 +17,10 @@ import { logger } from "firebase-functions";
 import { DateTime } from "luxon";
 import { db, FieldValue } from "../lib/firebase.js";
 import { freeAstrologyApiKey } from "../lib/secrets.js";
+import { callFreeAstro, callFreeAstroSafe } from "./free_astro_client.js";
 import { extractApiOutput } from "../lib/astro_helpers.js";
 import { parseMuhuratDay } from "../lib/muhurat_helpers.js";
 
-const API_BASE = "https://json.freeastrologyapi.com";
 const PLANETS_ENDPOINT = "/planets";
 const SAMVAT_ENDPOINT = "/samvatinfo";
 const LUNAR_MONTH_ENDPOINT = "/lunarmonthinfo";
@@ -137,11 +137,6 @@ function muhuratToCompact(muhuratDay) {
  * Fetch planetary positions from FreeAstrologyAPI for a specific date
  */
 async function fetchPlanetaryPositionsForDate(date) {
-    const apiKey = freeAstrologyApiKey.value();
-    if (!apiKey) {
-        throw new Error("FreeAstrologyAPI key not configured");
-    }
-
     const payload = {
         year: date.year,
         month: date.month,
@@ -158,21 +153,7 @@ async function fetchPlanetaryPositionsForDate(date) {
         },
     };
 
-    const response = await fetch(`${API_BASE}${PLANETS_ENDPOINT}`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "x-api-key": apiKey,
-        },
-        body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-        const error = await response.text();
-        throw new Error(`API error (${response.status}): ${error}`);
-    }
-
-    return response.json();
+    return callFreeAstro(PLANETS_ENDPOINT, payload);
 }
 
 /**
@@ -208,9 +189,6 @@ function extractPlanetData(apiResponse) {
  * Fetch panchang data for a date
  */
 async function fetchPanchangForDate(date) {
-    const apiKey = freeAstrologyApiKey.value();
-    if (!apiKey) return null;
-
     // Query at 6:00 AM IST (approximate sunrise at Ujjain).
     // In Vedic astrology the tithi at sunrise defines the day's tithi.
     // Noon queries risk picking up the NEXT tithi when the Moon moves
@@ -232,32 +210,17 @@ async function fetchPanchangForDate(date) {
         },
     };
 
-    const headers = {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-    };
-
     try {
         // Fetch panchang from 3 separate API endpoints
         // IMPORTANT: Log failures explicitly — silent nulls caused weeks of missing data
         const fetchWithLogging = async (endpoint, name) => {
-            try {
-                const r = await fetch(`${API_BASE}${endpoint}`, {
-                    method: "POST", headers, body: JSON.stringify(payload),
+            const res = await callFreeAstroSafe(endpoint, payload);
+            if (!res) {
+                logger.warn(`\u26a0\ufe0f Panchang API ${name} unavailable`, {
+                    endpoint, date: `${date.year}-${date.month}-${date.day}`,
                 });
-                if (!r.ok) {
-                    logger.warn(`⚠️ Panchang API ${name} returned ${r.status}`, {
-                        endpoint, status: r.status, date: `${date.year}-${date.month}-${date.day}`,
-                    });
-                    return null;
-                }
-                return await r.json();
-            } catch (err) {
-                logger.warn(`⚠️ Panchang API ${name} failed`, {
-                    endpoint, error: String(err), date: `${date.year}-${date.month}-${date.day}`,
-                });
-                return null;
             }
+            return res;
         };
         const [samvatRes, lunarRes, tithiRes] = await Promise.all([
             fetchWithLogging(SAMVAT_ENDPOINT, "samvat"),
@@ -336,11 +299,6 @@ async function fetchPanchangForDate(date) {
 }
 
 async function fetchMuhuratForDate(date) {
-    const apiKey = freeAstrologyApiKey.value();
-    if (!apiKey) {
-        throw new Error("FreeAstrologyAPI key not configured");
-    }
-
     const payload = {
         year: date.year,
         month: date.month,
@@ -357,21 +315,7 @@ async function fetchMuhuratForDate(date) {
         },
     };
 
-    const response = await fetch(`${API_BASE}${MUHURAT_ENDPOINT}`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "x-api-key": apiKey,
-        },
-        body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-        const error = await response.text();
-        throw new Error(`API error (${response.status}): ${error}`);
-    }
-
-    return response.json();
+    return callFreeAstro(MUHURAT_ENDPOINT, payload);
 }
 
 // ============================================================================
@@ -1159,4 +1103,3 @@ export async function handleGetAstroCalendar(request, data) {
         return { success: false, error: error.message, calendar: {} };
     }
 }
-
