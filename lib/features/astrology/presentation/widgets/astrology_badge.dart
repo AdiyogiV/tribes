@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:aurogram/shared/models/astrology_profile.dart';
 import 'package:aurogram/features/astrology/domain/astrology_service.dart';
 import 'package:aurogram/features/astrology/presentation/pages/astrology_details_page.dart';
-import 'package:aurogram/features/astrology/presentation/pages/astrology_setup_page.dart';
+import 'package:aurogram/features/astrology/presentation/pages/setup/immersive_setup_page.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 
@@ -236,7 +236,7 @@ class _AstrologyBadgeState extends State<AstrologyBadge> {
   void _navigateToSetup(BuildContext context) {
     Navigator.of(context, rootNavigator: true).push(
       CupertinoPageRoute(
-        builder: (context) => const AstrologySetupPage(),
+        builder: (context) => const ImmersiveSetupPage(),
       ),
     );
   }

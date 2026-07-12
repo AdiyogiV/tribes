@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:aurogram/shared/models/astrology_profile.dart';
-import 'package:aurogram/features/astrology/presentation/pages/astrology_setup_page.dart';
+import 'package:aurogram/features/astrology/presentation/pages/setup/immersive_setup_page.dart';
 import 'package:aurogram/features/astrology/data/utils/astrology_formatters.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
@@ -124,7 +124,7 @@ class BirthDetailsCard extends StatelessWidget {
   Future<void> _editProfile(BuildContext context) async {
     final result = await Navigator.of(context, rootNavigator: true).push(
       CupertinoPageRoute(
-        builder: (context) => const AstrologySetupPage(),
+        builder: (context) => const ImmersiveSetupPage(),
       ),
     );
 

@@ -8,7 +8,7 @@ import 'package:aurogram/shared/models/call.dart';
 // ── Page imports (centralized — only this file should import pages) ──────────
 import 'package:aurogram/features/astrology/presentation/pages/daily_insight_page.dart';
 import 'package:aurogram/features/astrology/presentation/pages/astrology_details_page.dart';
-import 'package:aurogram/features/astrology/presentation/pages/astrology_setup_page.dart';
+import 'package:aurogram/features/astrology/presentation/pages/setup/immersive_setup_page.dart';
 import 'package:aurogram/features/astrology/presentation/pages/astro_chat_page.dart';
 import 'package:aurogram/features/ayurveda/presentation/pages/ayurveda_details_page.dart';
 import 'package:aurogram/features/ayurveda/presentation/pages/prakriti_refinement_page.dart';
@@ -295,7 +295,7 @@ GoRouter createAppRouter(GlobalKey<NavigatorState> navigatorKey) {
       GoRoute(
         path: RouteNames.astrologySetup,
         name: 'astrologySetup',
-        builder: (_, __) => const AstrologySetupPage(),
+        builder: (_, __) => const ImmersiveSetupPage(),
       ),
 
       GoRoute(
