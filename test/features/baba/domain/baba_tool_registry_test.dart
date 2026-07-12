@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:aurogram/features/ai_chat/voice/baba_tool_registry.dart';
+import 'package:aurogram/features/baba/domain/baba_tool_registry.dart';
 
 /// Proves the tool-call machinery Baba relies on: registration, dispatch,
 /// per-screen handler binding/fallback, the whitelist, and error handling.

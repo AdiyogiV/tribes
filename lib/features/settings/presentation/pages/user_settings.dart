@@ -20,8 +20,8 @@ import 'package:aurogram/shared/presentation/widgets/universal/transparent_toolb
 import 'package:aurogram/features/anonymous_messages/anonymous_message_settings_service.dart';
 import 'package:aurogram/features/settings/presentation/widgets/settings_dialogs.dart';
 import 'package:aurogram/features/settings/presentation/widgets/settings_tiles.dart';
-import 'package:aurogram/features/ai_chat/voice/voice_engine_pref.dart';
-import 'package:aurogram/features/ai_chat/voice/voice_mic_mode_pref.dart';
+import 'package:aurogram/features/baba/voice/voice_engine_pref.dart';
+import 'package:aurogram/features/baba/voice/voice_mic_mode_pref.dart';
 import 'package:aurogram/features/ai_chat/domain/aryabhatt_memory_service.dart';
 
 // Re-export sub-widgets so existing imports continue to work

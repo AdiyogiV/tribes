@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:aurogram/core/theme/app_theme.dart';
-import 'package:aurogram/features/ai_chat/voice/voice_session_controller.dart';
+import 'package:aurogram/features/baba/voice/voice_session_controller.dart';
 
 /// The floating "call console" shown beneath the cow while a voice call is
 /// live. Pure presentational: it takes the current [state] plus a callback per

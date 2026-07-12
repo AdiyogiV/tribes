@@ -24,7 +24,7 @@ import 'package:aurogram/features/astrology/presentation/pages/baba/baba_empty_s
 import 'package:aurogram/features/astrology/presentation/pages/baba/baba_cosmic_content.dart';
 import 'package:aurogram/features/astrology/presentation/pages/baba/baba_input_bar_controller.dart';
 import 'package:aurogram/features/astrology/presentation/pages/baba/baba_input_bar.dart';
-import 'package:aurogram/features/ai_chat/voice/baba_voice_cow.dart';
+import 'package:aurogram/features/baba/presentation/baba_voice_cow.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/nakshatra_ring_widget.dart';
 import 'package:aurogram/shared/presentation/widgets/universal/dark_mode_toggle.dart';
 import 'package:aurogram/shared/providers/theme_provider.dart';

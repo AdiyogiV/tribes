@@ -7,9 +7,9 @@ import 'dart:ui';
 import 'package:visibility_detector/visibility_detector.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/app/tabs/widgets/tab_bottom_nav.dart';
-import 'package:aurogram/features/ai_chat/voice/voice_session_controller.dart';
-import 'package:aurogram/features/ai_chat/voice/baba_presence.dart';
-import 'package:aurogram/features/ai_chat/voice/baba_voice_controls.dart';
+import 'package:aurogram/features/baba/voice/voice_session_controller.dart';
+import 'package:aurogram/features/baba/domain/baba_presence.dart';
+import 'package:aurogram/features/baba/presentation/baba_voice_controls.dart';
 
 /// The Baba cow icon, but alive.
 ///

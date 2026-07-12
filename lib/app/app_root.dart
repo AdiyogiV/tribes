@@ -19,7 +19,7 @@ import 'package:aurogram/shared/providers/theme_provider.dart';
 import 'package:aurogram/shared/presentation/widgets/flash.dart';
 import 'package:aurogram/features/notifications/domain/notification_service.dart';
 import 'package:aurogram/features/calling/domain/call_service.dart';
-import 'package:aurogram/features/ai_chat/voice/baba_shell.dart';
+import 'package:aurogram/features/baba/presentation/baba_shell.dart';
 import 'package:aurogram/platform/platform.dart';
 import 'package:aurogram/app/app_bootstrap.dart' show initialDependenciesLoaded;
 

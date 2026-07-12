@@ -12,10 +12,10 @@ import 'package:uuid/uuid.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'package:aurogram/core/logging/app_logger.dart';
-import 'package:aurogram/features/ai_chat/voice/voice_relay_config.dart';
-import 'package:aurogram/features/ai_chat/voice/voice_engine_pref.dart';
-import 'package:aurogram/features/ai_chat/voice/voice_mic_mode_pref.dart';
-import 'package:aurogram/features/ai_chat/voice/baba_tool_registry.dart';
+import 'package:aurogram/features/baba/voice/voice_relay_config.dart';
+import 'package:aurogram/features/baba/voice/voice_engine_pref.dart';
+import 'package:aurogram/features/baba/voice/voice_mic_mode_pref.dart';
+import 'package:aurogram/features/baba/domain/baba_tool_registry.dart';
 
 /// High-level state of a live voice conversation with Aryabhatt.
 enum VoiceCallState {

@@ -2,6 +2,9 @@ import 'dart:async' show unawaited, runZonedGuarded, TimeoutException;
 import 'package:aurogram/firebase_options.dart';
 import 'package:aurogram/core/startup/startup_service.dart';
 import 'package:aurogram/features/onboarding/domain/onboarding_service.dart';
+import 'package:aurogram/features/onboarding/domain/baba_onboarding_tools.dart';
+import 'package:aurogram/features/baba/domain/baba_tool_registry.dart';
+import 'package:aurogram/features/baba/domain/baba_tool_catalog.dart';
 import 'package:aurogram/core/di/injection.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/core/storage/app_performance.dart';
@@ -190,6 +193,12 @@ class AppBootstrap {
 
   static Future<void> _completeAuthSetup() async {
     try {
+      // Register Baba's tool catalog once (core nav tools + onboarding
+      // declarations). Composition root wires baba + features together so
+      // baba/ never depends on a feature. Idempotent.
+      BabaToolCatalog.registerCore();
+      BabaToolRegistry.instance.registerAll(BabaOnboardingTools.declarations());
+
       await OnboardingService().initialize();
 
       AppLogger.d('Marking AuthService as ready (background)',

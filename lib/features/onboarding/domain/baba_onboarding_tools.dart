@@ -1,4 +1,4 @@
-import 'package:aurogram/features/ai_chat/voice/baba_tool_registry.dart';
+import 'package:aurogram/features/baba/domain/baba_tool_registry.dart';
 
 /// Baba's onboarding tools — the actions he uses to co-author the birth-details
 /// form by voice. The DECLARATIONS live here and are registered globally once

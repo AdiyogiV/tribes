@@ -5,25 +5,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:aurogram/core/theme/app_theme.dart';
-import 'package:aurogram/core/routing/route_names.dart';
-import 'package:aurogram/core/routing/app_router.dart';
-import 'package:aurogram/features/ai_chat/voice/baba_presence.dart';
-import 'package:aurogram/features/ai_chat/voice/baba_tool_registry.dart';
-import 'package:aurogram/features/ai_chat/voice/voice_session_controller.dart';
-import 'package:aurogram/features/onboarding/domain/baba_onboarding_tools.dart';
+import 'package:aurogram/features/baba/domain/baba_presence.dart';
+import 'package:aurogram/features/baba/voice/voice_session_controller.dart';
 
 /// The app-wide Baba presence.
 ///
 /// Wraps the whole app (mounted in `app_root`'s MaterialApp builder) so Baba
-/// floats OVER every route and survives navigation — the first rung of the
-/// "app wrapped in Baba" shell. He shares the one [VoiceSessionController]
-/// singleton, so a call started anywhere keeps going as you move around.
-///
-/// Rung 1 scope (deliberately small):
-///   * a global, tappable orb (tap = start/stop a voice call),
-///   * dismiss him (×) → collapses to a summon dot; tap the dot to bring back,
-///   * hides itself while the dashboard cow is on-screen (no double-Baba).
-/// Actions / guiding / tool-calls come in later rungs.
+/// floats OVER every route and survives navigation. He shares the one
+/// [VoiceSessionController] singleton, so a call started anywhere keeps going
+/// as you move around. Tools are registered at app start (see BabaToolCatalog);
+/// this widget is purely the presence UI.
 class BabaShell extends StatefulWidget {
   const BabaShell({super.key, required this.child});
 
@@ -49,48 +40,6 @@ class _BabaShellState extends State<BabaShell>
       duration: const Duration(milliseconds: 1300),
     )..repeat(reverse: true);
     _voice.addListener(_onVoiceChanged);
-    _registerGlobalTools();
-  }
-
-  /// Baba's always-available tools (Rung 2a proof: he can guide you around the
-  /// app by voice). Screens add their own scoped tools on top of these.
-  void _registerGlobalTools() {
-    BabaToolRegistry.instance.register(BabaTool(
-      name: 'navigateTo',
-      description: 'Take the user to one of the app\'s main screens. Use when '
-          'they ask to go somewhere, or when guiding them there yourself.',
-      parameters: {
-        'type': 'object',
-        'properties': {
-          'destination': {
-            'type': 'string',
-            'enum': ['home', 'dailyInsight', 'chat'],
-            'description': 'Which screen to open.',
-          },
-        },
-        'required': ['destination'],
-      },
-      defaultHandler: (args) async {
-        // Only whitelisted, confirmed-registered routes. (No /profile etc. -
-        // those are tabs, not routes, and would throw.)
-        const routes = {
-          'home': RouteNames.home,
-          'dailyInsight': RouteNames.dailyInsight,
-          'chat': RouteNames.aiChat,
-        };
-        final dest = args['destination'] as String?;
-        final path = routes[dest];
-        if (path == null) {
-          return {'navigated': false, 'reason': 'unknown destination: $dest'};
-        }
-        // Use the app's global GoRouter (same pattern as DynamicLinkNavigator).
-        appRouter.go(path);
-        return {'navigated': true, 'destination': dest};
-      },
-    ));
-
-    // Onboarding declarations (behavior bound by the birth-details screen).
-    BabaToolRegistry.instance.registerAll(BabaOnboardingTools.declarations());
   }
 
   @override
