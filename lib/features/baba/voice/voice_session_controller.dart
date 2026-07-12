@@ -194,6 +194,10 @@ class VoiceSessionController extends ChangeNotifier {
 
       await _configureAudioSession();
       await _openPlayer();
+      // If we were torn down during the permission prompt / audio setup (e.g.
+      // the app was backgrounded), abort instead of connecting a zombie socket
+      // that would fire its own kickoff turn.
+      if (_state != VoiceCallState.connecting) return;
       // Connect to the relay; the mic opens the moment it's ready (see
       // [_maybeStartMic]). No greeting — the user speaks first.
       await _connect();

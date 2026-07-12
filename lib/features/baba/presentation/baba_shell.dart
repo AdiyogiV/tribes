@@ -3,8 +3,10 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:aurogram/core/theme/app_theme.dart';
+import 'package:aurogram/features/astrology/domain/astrology_service.dart';
 import 'package:aurogram/features/baba/domain/baba_presence.dart';
 import 'package:aurogram/features/baba/voice/voice_session_controller.dart';
 
@@ -51,11 +53,19 @@ class _BabaShellState extends State<BabaShell>
     super.dispose();
   }
 
-  /// End the call if the app is backgrounded — never leave a live mic running.
+  /// End the call if the app is backgrounded WHILE AUDIO IS LIVE — never leave
+  /// a live mic running. We deliberately do NOT tear down during `connecting`:
+  /// the first-ever call raises the OS mic-permission dialog, which backgrounds
+  /// the app mid-connect; hanging up there left a zombie socket that fired a
+  /// second kickoff (double greeting + double navigate).
   @override
   void didChangeAppLifecycleState(AppLifecycleState lifecycle) {
     super.didChangeAppLifecycleState(lifecycle);
-    if (lifecycle != AppLifecycleState.resumed && _inCall) {
+    if (lifecycle == AppLifecycleState.resumed) return;
+    final s = _voice.state;
+    if (s == VoiceCallState.listening ||
+        s == VoiceCallState.thinking ||
+        s == VoiceCallState.speaking) {
       _voice.hangUp();
     }
   }
@@ -92,18 +102,38 @@ class _BabaShellState extends State<BabaShell>
       await _voice.hangUp();
     } else {
       // Baba LEADS: open the call with a directive so he greets + takes the
-      // initiative instead of waiting to be asked. (On CX this becomes the
-      // kickoff turn; on Live it's appended to his task for this call.)
-      _voice.directiveOverride =
-          'The user just opened you by tapping your orb. Greet them warmly in '
-          'one short breath, then TAKE THE LEAD - do not wait to be asked. If '
-          'they have not set up their birth details yet, offer to do it now and '
-          'take them to the birth-details screen to collect date, time and '
-          'place; otherwise offer a useful next step such as their daily '
-          'insight. Keep it to one or two sentences and end by moving them '
-          'forward.';
+      // initiative instead of waiting. The directive is DATA-AWARE so he never
+      // re-onboards someone who is already set up.
+      _voice.directiveOverride = await _leadDirective();
       await _voice.start();
     }
+  }
+
+  /// Build Baba's opening directive based on whether the user already has their
+  /// birth details. Prevents the "asks for birth date again" bug.
+  Future<String> _leadDirective() async {
+    var setUp = false;
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        final profile = await AstrologyService().getProfile(uid);
+        setUp = profile?.isComplete ?? false;
+      }
+    } catch (_) {
+      // If we can't tell, fall through to the safe onboarding lead.
+    }
+    if (setUp) {
+      return 'The user just opened you by tapping your orb. They ALREADY have '
+          'their birth details set up - do NOT ask for birth date, time or '
+          'place again. Greet them warmly in one short breath, then take the '
+          'lead: offer a useful next step such as their daily insight or invite '
+          'a question about their chart, and act on it if they agree.';
+    }
+    return 'The user just opened you by tapping your orb. Greet them warmly in '
+        'one short breath, then TAKE THE LEAD - do not wait to be asked. They '
+        'have NOT set up their birth details yet, so offer to do it now and '
+        'take them to the birth-details screen to collect date, time and place. '
+        'Keep it to one or two sentences and end by moving them forward.';
   }
 
   Color _stateColor(VoiceCallState state) {
