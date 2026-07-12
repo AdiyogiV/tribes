@@ -146,7 +146,7 @@ class _FollowAcceptedTileState extends State<FollowAcceptedTile> {
                     RichText(
                       text: TextSpan(
                         style: TextStyle(
-                          fontSize: AppTheme.holyCowTextSize,
+                          fontSize: AppTheme.babaTextSize,
                           color: primaryColor,
                           height: 1.3,
                         ),
@@ -166,7 +166,7 @@ class _FollowAcceptedTileState extends State<FollowAcceptedTile> {
                     Text(
                       _date,
                       style: TextStyle(
-                        fontSize: AppTheme.holyCowTextSize,
+                        fontSize: AppTheme.babaTextSize,
                         color: primaryColor.withValues(alpha: 0.45),
                       ),
                     ),

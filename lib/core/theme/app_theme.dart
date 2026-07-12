@@ -109,7 +109,7 @@ class AppTheme {
   // ------------------------------------------------------------------
   // Typography — delegated to AppTypography
   // ------------------------------------------------------------------
-  static const double holyCowTextSize = AppTypography.holyCowTextSize;
+  static const double babaTextSize = AppTypography.babaTextSize;
 
   static const double fontSizeXS = AppTypography.fontSizeXS;
   static const double fontSizeS = AppTypography.fontSizeS;

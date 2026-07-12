@@ -114,7 +114,7 @@ class _DailyInsightTileState extends State<DailyInsightTile> {
                             child: Text(
                               _title,
                               style: TextStyle(
-                                fontSize: AppTheme.holyCowTextSize,
+                                fontSize: AppTheme.babaTextSize,
                                 fontWeight: _isRead ? FontWeight.w600 : FontWeight.w700,
                                 color: AppTheme.textColor,
                                 height: 1.3,
@@ -139,7 +139,7 @@ class _DailyInsightTileState extends State<DailyInsightTile> {
                       Text(
                         _preview,
                         style: TextStyle(
-                          fontSize: AppTheme.holyCowTextSize,
+                          fontSize: AppTheme.babaTextSize,
                           color: AppTheme.textSecondaryColor,
                           height: 1.3,
                         ),
@@ -158,7 +158,7 @@ class _DailyInsightTileState extends State<DailyInsightTile> {
                             child: Text(
                               _cardType.toUpperCase(),
                               style: TextStyle(
-                                fontSize: AppTheme.holyCowTextSize,
+                                fontSize: AppTheme.babaTextSize,
                                 fontWeight: FontWeight.w600,
                                 color: AppTheme.primaryColor,
                                 letterSpacing: 0.3,
@@ -168,7 +168,7 @@ class _DailyInsightTileState extends State<DailyInsightTile> {
                           const SizedBox(width: AppDimensions.spacingSm),
                           Text(
                             '•',
-                            style: TextStyle(fontSize: AppTheme.holyCowTextSize, color: AppTheme.textSecondaryColor),
+                            style: TextStyle(fontSize: AppTheme.babaTextSize, color: AppTheme.textSecondaryColor),
                           ),
                           const SizedBox(width: AppDimensions.spacingSm),
                           Text(
@@ -177,7 +177,7 @@ class _DailyInsightTileState extends State<DailyInsightTile> {
                                     (widget.data!['timestamp'] as Timestamp).toDate())
                                 : _date.isNotEmpty ? _date : 'Today',
                             style: TextStyle(
-                              fontSize: AppTheme.holyCowTextSize,
+                              fontSize: AppTheme.babaTextSize,
                               color: AppTheme.textSecondaryColor,
                             ),
                           ),

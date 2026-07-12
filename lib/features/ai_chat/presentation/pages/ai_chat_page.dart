@@ -18,7 +18,7 @@ import 'package:aurogram/features/astrology/domain/astrology_service.dart';
 import 'package:aurogram/features/ayurveda/domain/ayurveda_service.dart';
 import 'package:aurogram/features/astrology/data/utils/astrology_context_builder.dart';
 
-/// Dedicated AI chat screen — pushed from HolyCow dashboard or history.
+/// Dedicated AI chat screen — pushed from Baba dashboard or history.
 ///
 /// Follows [SpaceChatScreen] patterns:
 /// - Mobile: `Navigator.push(CupertinoPageRoute)`.
@@ -160,7 +160,7 @@ class AiChatPageState extends State<AiChatPage> with WidgetsBindingObserver {
         );
         _provider?.setAstrologyContext(context);
 
-        AppLogger.i('Loaded user context for HolyCow chat', data: {
+        AppLogger.i('Loaded user context for Baba chat', data: {
           'hasProfile': profile != null,
           'hasAyurveda': ayurveda?.hasData ?? false,
           'sunSign': profile?.sunSign,

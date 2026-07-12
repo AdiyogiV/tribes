@@ -734,7 +734,7 @@ class _VoiceMessageWidgetState extends State<VoiceMessageWidget>
           '...',
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: AppTheme.holyCowTextSize,
+            fontSize: AppTheme.babaTextSize,
             fontWeight: FontWeight.w500,
             color: textColor,
           ),
@@ -762,7 +762,7 @@ class _VoiceMessageWidgetState extends State<VoiceMessageWidget>
         Text(
           _formatDuration(displayDuration),
           style: TextStyle(
-            fontSize: AppTheme.holyCowTextSize,
+            fontSize: AppTheme.babaTextSize,
             fontWeight: FontWeight.w600,
             color: textColor,
           ),

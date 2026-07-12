@@ -89,7 +89,7 @@ class _NamasteHistoryPageState extends State<NamasteHistoryPage>
                   'Namastes',
                   style: TextStyle(
                     color: AppTheme.primaryColor,
-                    fontSize: AppTheme.holyCowTextSize,
+                    fontSize: AppTheme.babaTextSize,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 0.3,
                   ),
@@ -136,12 +136,12 @@ class _NamasteHistoryPageState extends State<NamasteHistoryPage>
                           ? AppTheme.textSecondaryDarkColor
                           : AppTheme.textSecondaryLightColor,
                       labelStyle: TextStyle(
-                        fontSize: AppTheme.holyCowTextSize,
+                        fontSize: AppTheme.babaTextSize,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 0.3,
                       ),
                       unselectedLabelStyle: TextStyle(
-                        fontSize: AppTheme.holyCowTextSize,
+                        fontSize: AppTheme.babaTextSize,
                         fontWeight: FontWeight.w500,
                         letterSpacing: 0.3,
                       ),
@@ -188,7 +188,7 @@ class _NamasteHistoryPageState extends State<NamasteHistoryPage>
                           color: isDark
                               ? AppTheme.textSecondaryDarkColor
                               : AppTheme.textSecondaryLightColor,
-                          fontSize: AppTheme.holyCowTextSize,
+                          fontSize: AppTheme.babaTextSize,
                         ),
                         prefixIcon: Icon(
                           Icons.search_rounded,
@@ -219,7 +219,7 @@ class _NamasteHistoryPageState extends State<NamasteHistoryPage>
                       style: TextStyle(
                         color:
                             isDark ? AppTheme.textDarkColor : AppTheme.textLightColor,
-                        fontSize: AppTheme.holyCowTextSize,
+                        fontSize: AppTheme.babaTextSize,
                       ),
                     ),
                   ),
@@ -654,7 +654,7 @@ class _NamasteHistoryPageState extends State<NamasteHistoryPage>
                                 child: Text(
                                   name,
                                   style: TextStyle(
-                                    fontSize: AppTheme.holyCowTextSize,
+                                    fontSize: AppTheme.babaTextSize,
                                     fontWeight: FontWeight.w700,
                                     color: isDark
                                         ? AppTheme.textDarkColor
@@ -691,7 +691,7 @@ class _NamasteHistoryPageState extends State<NamasteHistoryPage>
                                     Text(
                                       isSent ? 'Sent' : 'Received',
                                       style: TextStyle(
-                                        fontSize: AppTheme.holyCowTextSize,
+                                        fontSize: AppTheme.babaTextSize,
                                         fontWeight: FontWeight.w600,
                                         color: isSent
                                             ? AppTheme.primaryColor
@@ -725,7 +725,7 @@ class _NamasteHistoryPageState extends State<NamasteHistoryPage>
                                 Text(
                                   _formatTimestamp(timestamp),
                                   style: TextStyle(
-                                    fontSize: AppTheme.holyCowTextSize,
+                                    fontSize: AppTheme.babaTextSize,
                                     color: isDark
                                         ? AppTheme.textSecondaryDarkColor
                                         : AppTheme.textSecondaryLightColor,
@@ -838,7 +838,7 @@ class _NamasteHistoryPageState extends State<NamasteHistoryPage>
                 Text(
                   title,
                   style: TextStyle(
-                    fontSize: AppTheme.holyCowTextSize,
+                    fontSize: AppTheme.babaTextSize,
                     fontWeight: FontWeight.w700,
                     color: isDark
                         ? AppTheme.textDarkColor
@@ -853,7 +853,7 @@ class _NamasteHistoryPageState extends State<NamasteHistoryPage>
                   child: Text(
                     subtitle,
                     style: TextStyle(
-                      fontSize: AppTheme.holyCowTextSize,
+                      fontSize: AppTheme.babaTextSize,
                       color: isDark
                           ? AppTheme.textSecondaryDarkColor
                           : AppTheme.textSecondaryLightColor,

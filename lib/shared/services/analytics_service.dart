@@ -96,7 +96,7 @@ class AnalyticsService {
     }
   }
 
-  /// Track when user asks HolyCow AI a question
+  /// Track when user asks Baba AI a question
   Future<void> trackAiChatMessage({String? topic}) async {
     try {
       await _analytics.logEvent(

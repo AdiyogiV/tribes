@@ -8,9 +8,9 @@ import 'package:visibility_detector/visibility_detector.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/app/tabs/widgets/tab_bottom_nav.dart';
 import 'package:aurogram/features/ai_chat/voice/voice_session_controller.dart';
-import 'package:aurogram/features/ai_chat/voice/holycow_voice_controls.dart';
+import 'package:aurogram/features/ai_chat/voice/baba_voice_controls.dart';
 
-/// The HolyCow cow icon, but alive.
+/// The Baba cow icon, but alive.
 ///
 /// Idle: a small cow parked above the profile tab (same spot as before).
 /// Tap it: it grows, glows, and Aryabhatt starts talking — a live voice call
@@ -18,8 +18,8 @@ import 'package:aurogram/features/ai_chat/voice/holycow_voice_controls.dart';
 /// Long-press: opens the text input bar (so typing still works).
 /// While a call is live a glass control bar appears below (history, my-turn,
 /// keyboard, end call).
-class HolyCowVoiceCow extends StatefulWidget {
-  const HolyCowVoiceCow({
+class BabaVoiceCow extends StatefulWidget {
+  const BabaVoiceCow({
     super.key,
     required this.onShowKeyboard,
     required this.onShowRecent,
@@ -37,7 +37,7 @@ class HolyCowVoiceCow extends StatefulWidget {
   final ValueChanged<bool> onActiveChanged;
 
   @override
-  State<HolyCowVoiceCow> createState() => _HolyCowVoiceCowState();
+  State<BabaVoiceCow> createState() => _BabaVoiceCowState();
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -89,7 +89,7 @@ class WavyCircleClipper extends CustomClipper<Path> {
   }
 }
 
-class _HolyCowVoiceCowState extends State<HolyCowVoiceCow>
+class _BabaVoiceCowState extends State<BabaVoiceCow>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   final VoiceSessionController _voice = VoiceSessionController();
   late final AnimationController _pulse;
@@ -279,7 +279,7 @@ class _HolyCowVoiceCowState extends State<HolyCowVoiceCow>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return VisibilityDetector(
-      key: const Key('holycow_voice_cow_visibility'),
+      key: const Key('baba_voice_cow_visibility'),
       onVisibilityChanged: _handleVisibility,
       child: AnimatedBuilder(
         animation: Listenable.merge([_voice, _pulse]),
@@ -442,7 +442,7 @@ class _HolyCowVoiceCowState extends State<HolyCowVoiceCow>
                               ),
                             ),
                             // Voice Controls
-                            HolyCowVoiceControls(
+                            BabaVoiceControls(
                               state: state,
                               onEndCall: _voice.hangUp,
                               onSwitchToText: _switchToText,

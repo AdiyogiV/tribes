@@ -152,7 +152,7 @@ class AiMessageBuilder {
               Text(
                 '${sources.length}',
                 style: TextStyle(
-                  fontSize: AppTheme.holyCowTextSize,
+                  fontSize: AppTheme.babaTextSize,
                   color: isDark ? Colors.white54 : Colors.grey[600],
                   fontWeight: FontWeight.w500,
                 ),
@@ -215,7 +215,7 @@ class AiMessageBuilder {
                 Text(
                   'Sources',
                   style: TextStyle(
-                    fontSize: AppTheme.holyCowTextSize,
+                    fontSize: AppTheme.babaTextSize,
                     fontWeight: FontWeight.w600,
                     color: isDark ? Colors.white : Colors.grey[800],
                   ),
@@ -224,7 +224,7 @@ class AiMessageBuilder {
                 Text(
                   '(${sources.length})',
                   style: TextStyle(
-                    fontSize: AppTheme.holyCowTextSize,
+                    fontSize: AppTheme.babaTextSize,
                     color: isDark ? Colors.white38 : Colors.grey[500],
                   ),
                 ),
@@ -335,7 +335,7 @@ class AiMessageBuilder {
                     child: Text(
                       source.displayLink,
                       style: TextStyle(
-                        fontSize: AppTheme.holyCowTextSize,
+                        fontSize: AppTheme.babaTextSize,
                         color: isDark ? Colors.white38 : Colors.grey[500],
                         fontWeight: FontWeight.w500,
                       ),
@@ -356,7 +356,7 @@ class AiMessageBuilder {
               Text(
                 source.title,
                 style: TextStyle(
-                  fontSize: AppTheme.holyCowTextSize,
+                  fontSize: AppTheme.babaTextSize,
                   fontWeight: FontWeight.w500,
                   color: isDark
                       ? Colors.white.withValues(alpha: 0.85)
@@ -373,7 +373,7 @@ class AiMessageBuilder {
               Text(
                 source.snippet,
                 style: TextStyle(
-                  fontSize: AppTheme.holyCowTextSize,
+                  fontSize: AppTheme.babaTextSize,
                   color: isDark
                       ? Colors.white.withValues(alpha: 0.45)
                       : Colors.grey[600],
@@ -398,7 +398,7 @@ class AiMessageBuilder {
                     Text(
                       'Cited',
                       style: TextStyle(
-                        fontSize: AppTheme.holyCowTextSize,
+                        fontSize: AppTheme.babaTextSize,
                         color: isDark ? Colors.white30 : Colors.grey[400],
                         fontWeight: FontWeight.w500,
                       ),

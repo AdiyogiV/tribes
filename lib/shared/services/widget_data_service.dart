@@ -15,7 +15,7 @@ import 'package:aurogram/features/astrology/presentation/widgets/cards/vedic_tim
 ///
 /// Call [updateWidgetData] whenever fresh panchang/samvat data is available
 /// (e.g. after daily insight load, after sky positions fetch, or when the
-/// HolyCow page resolves its merged samvat).
+/// Baba page resolves its merged samvat).
 class WidgetDataService {
   WidgetDataService._();
   static final instance = WidgetDataService._();
@@ -51,7 +51,7 @@ class WidgetDataService {
   /// Push the current panchang data to the native widget layer.
   ///
   /// [samvat] is the merged samvat/panchang map (same shape as
-  /// `nakshatraSamvat` in HolyCowCosmicContent).
+  /// `nakshatraSamvat` in BabaCosmicContent).
   ///
   /// Returns `true` if data was actually written (i.e. it changed).
   Future<bool> updateWidgetData(Map<String, dynamic>? samvat) async {

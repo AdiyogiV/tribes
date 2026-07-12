@@ -13,7 +13,7 @@ import 'package:aurogram/features/astrology/presentation/widgets/cards/upcoming_
 import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/widgets/cosmic_sky_chart_card.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/cosmic_dashboard_data.dart';
 import 'package:aurogram/features/ayurveda/presentation/widgets/dosha_dashboard_card.dart';
-import 'package:aurogram/features/astrology/presentation/pages/holycow/widgets/holycow_sky_house_dialog.dart';
+import 'package:aurogram/features/astrology/presentation/pages/baba/widgets/baba_sky_house_dialog.dart';
 
 /// The canonical stack of supporting cards for the cosmic dashboard, in their
 /// single source-of-truth display order: Current Sky -> (wheel) -> Upcoming
@@ -22,7 +22,7 @@ import 'package:aurogram/features/astrology/presentation/pages/holycow/widgets/h
 /// Rendered as a [Column] so the same instance can be dropped into either the
 /// single-column mobile stack or the desktop right pane. Cards self-hide
 /// (SizedBox.shrink) when their data is missing.
-class HolyCowSecondaryCards extends StatelessWidget {
+class BabaSecondaryCards extends StatelessWidget {
   final AstrologyProfile? profile;
   final DailyInsight? insight;
   final AyurvedaProfile? ayurvedaProfile;
@@ -41,7 +41,7 @@ class HolyCowSecondaryCards extends StatelessWidget {
   /// on mobile (null on desktop, where the wheel lives in its own column).
   final Widget? insertBeforeSkyCard;
 
-  const HolyCowSecondaryCards({
+  const BabaSecondaryCards({
     super.key,
     required this.profile,
     required this.insight,

@@ -12,7 +12,7 @@ import 'package:aurogram/features/ai_chat/presentation/widgets/recent_conversati
 import 'package:aurogram/features/ai_chat/domain/ai_chat_provider.dart';
 
 /// Page to display recent AI conversations
-/// Accessed from HolyCow page header
+/// Accessed from Baba page header
 class RecentConversationsPage extends StatefulWidget {
   final Function(String conversationId)? onConversationSelected;
 

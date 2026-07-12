@@ -97,7 +97,7 @@ class _NamasteTileState extends State<NamasteTile>
                       Text(
                         '$author greets you with namaste!',
                         style: TextStyle(
-                          fontSize: AppTheme.holyCowTextSize,
+                          fontSize: AppTheme.babaTextSize,
                           fontWeight: FontWeight.w600,
                           color: AppTheme.textColor,
                           height: 1.3,
@@ -107,7 +107,7 @@ class _NamasteTileState extends State<NamasteTile>
                       Text(
                         date,
                         style: TextStyle(
-                          fontSize: AppTheme.holyCowTextSize,
+                          fontSize: AppTheme.babaTextSize,
                           color: AppTheme.textSecondaryColor,
                         ),
                       ),

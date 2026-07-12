@@ -136,7 +136,7 @@ class _ChatInputAreaState extends State<ChatInputArea>
             children: [
               // Left gap — same as tab bar spaceEvenly leading gap
               SizedBox(width: gap),
-              // HolyCow icon — aligned with first tab bar icon
+              // Baba icon — aligned with first tab bar icon
               SizedBox(
                 width: 64,
                 height: 70,
@@ -198,7 +198,7 @@ class _ChatInputAreaState extends State<ChatInputArea>
           'Generating',
           style: TextStyle(
             color: AppTheme.primaryColor.withValues(alpha: 0.5),
-            fontSize: AppTheme.holyCowTextSize,
+            fontSize: AppTheme.babaTextSize,
           ),
         ),
       ],
@@ -241,7 +241,7 @@ class _ChatInputAreaState extends State<ChatInputArea>
             hintText: 'namaste',
             hintStyle: TextStyle(
               color: AppTheme.primaryColor.withValues(alpha: 0.6),
-              fontSize: AppTheme.holyCowTextSize,
+              fontSize: AppTheme.babaTextSize,
               fontWeight: FontWeight.w500,
             ),
             border: InputBorder.none,
@@ -254,7 +254,7 @@ class _ChatInputAreaState extends State<ChatInputArea>
           ),
           style: TextStyle(
             color: AppTheme.primaryColor.withValues(alpha: 0.85),
-            fontSize: AppTheme.holyCowTextSize,
+            fontSize: AppTheme.babaTextSize,
             fontWeight: FontWeight.w500,
           ),
           textAlign: TextAlign.center,
@@ -289,7 +289,7 @@ class _ChatInputAreaState extends State<ChatInputArea>
           'Recording...',
           style: TextStyle(
             color: Colors.red[400],
-            fontSize: AppTheme.holyCowTextSize,
+            fontSize: AppTheme.babaTextSize,
             fontWeight: FontWeight.w500,
             letterSpacing: 0.5,
           ),

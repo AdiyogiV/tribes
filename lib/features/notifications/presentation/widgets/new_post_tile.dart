@@ -227,7 +227,7 @@ class _NewPostTileState extends State<NewPostTile> {
                           Text(
                             '$author added a new post',
                             style: TextStyle(
-                              fontSize: AppTheme.holyCowTextSize,
+                              fontSize: AppTheme.babaTextSize,
                               fontWeight: FontWeight.w600,
                               color: AppTheme.textColor,
                               height: 1.3,
@@ -241,7 +241,7 @@ class _NewPostTileState extends State<NewPostTile> {
                                 Text(
                                   space,
                                   style: TextStyle(
-                                    fontSize: AppTheme.holyCowTextSize,
+                                    fontSize: AppTheme.babaTextSize,
                                     color: AppTheme.textSecondaryColor,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -249,7 +249,7 @@ class _NewPostTileState extends State<NewPostTile> {
                                 Text(
                                   ' • ',
                                   style: TextStyle(
-                                    fontSize: AppTheme.holyCowTextSize,
+                                    fontSize: AppTheme.babaTextSize,
                                     color: AppTheme.textSecondaryColor,
                                   ),
                                 ),
@@ -257,7 +257,7 @@ class _NewPostTileState extends State<NewPostTile> {
                               Text(
                                 date,
                                 style: TextStyle(
-                                  fontSize: AppTheme.holyCowTextSize,
+                                  fontSize: AppTheme.babaTextSize,
                                   color: AppTheme.textSecondaryColor,
                                 ),
                               ),
@@ -343,7 +343,7 @@ class _NewPostTileState extends State<NewPostTile> {
                                 child: Text(
                                   'GROUP',
                                   style: TextStyle(
-                                    fontSize: AppTheme.holyCowTextSize,
+                                    fontSize: AppTheme.babaTextSize,
                                     fontWeight: FontWeight.w600,
                                     color: AppTheme.textSecondaryColor,
                                     letterSpacing: 0.3,
@@ -442,7 +442,7 @@ class _NewPostTileState extends State<NewPostTile> {
                               child: Text(
                                 'NEW POST',
                                 style: TextStyle(
-                                  fontSize: AppTheme.holyCowTextSize,
+                                  fontSize: AppTheme.babaTextSize,
                                   fontWeight: FontWeight.w600,
                                   color: AppTheme.cardColor,
                                   letterSpacing: 0.3,

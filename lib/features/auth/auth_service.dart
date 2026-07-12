@@ -26,7 +26,7 @@ class AuthService extends ChangeNotifier {
   bool isUserNew = false;
 
   /// Initial tab index to navigate to after onboarding
-  /// null means use default (HolyCow/index 2)
+  /// null means use default (Baba/index 2)
   int? initialTabIndex;
 
   // Stream subscription for proper resource management

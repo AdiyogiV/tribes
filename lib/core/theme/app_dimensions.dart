@@ -218,8 +218,8 @@ class AppDimensions {
   static const double minCardWidth = 300;
 }
 
-/// Font size constants — complements [AppTheme.holyCowTextSize]
-/// for pages other than HolyCow.
+/// Font size constants — complements [AppTheme.babaTextSize]
+/// for pages other than Baba.
 ///
 /// USAGE:
 /// Before: `TextStyle(fontSize: 12)` → After: `TextStyle(fontSize: AppFontSizes.sm)`
@@ -241,7 +241,7 @@ class AppFontSizes {
   /// 14.0 — Body standard (most readable text)
   static const double bodyLg = 14;
 
-  /// 15.0 — Body large (matches holyCowTextSize)
+  /// 15.0 — Body large (matches babaTextSize)
   static const double bodyXl = 15;
 
   /// 16.0 — Subtitle, section header

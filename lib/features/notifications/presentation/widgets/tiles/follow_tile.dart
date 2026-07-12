@@ -165,7 +165,7 @@ class _FollowTileState extends State<FollowTile> {
                       RichText(
                         text: TextSpan(
                           style: TextStyle(
-                            fontSize: AppTheme.holyCowTextSize,
+                            fontSize: AppTheme.babaTextSize,
                             color: primaryColor,
                             height: 1.3,
                           ),
@@ -182,7 +182,7 @@ class _FollowTileState extends State<FollowTile> {
                       Text(
                         _date,
                         style: TextStyle(
-                          fontSize: AppTheme.holyCowTextSize,
+                          fontSize: AppTheme.babaTextSize,
                           color: primaryColor.withValues(alpha: 0.5),
                         ),
                       ),
@@ -221,7 +221,7 @@ class _FollowTileState extends State<FollowTile> {
             Text(
               'Following',
               style: TextStyle(
-                fontSize: AppTheme.holyCowTextSize,
+                fontSize: AppTheme.babaTextSize,
                 fontWeight: FontWeight.w600,
                 color: primaryColor.withValues(alpha: 0.7),
                 letterSpacing: -0.2,
@@ -270,7 +270,7 @@ class _FollowTileState extends State<FollowTile> {
         child: const Text(
           'Follow Back',
           style: TextStyle(
-            fontSize: AppTheme.holyCowTextSize,
+            fontSize: AppTheme.babaTextSize,
             fontWeight: FontWeight.w600,
             color: Colors.white,
             letterSpacing: -0.2,

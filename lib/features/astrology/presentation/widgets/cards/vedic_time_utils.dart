@@ -5,7 +5,7 @@ import 'package:aurogram/core/logging/app_logger.dart';
 /// IMPORTANT — Birth Date vs Today's Date:
 /// This class has TWO distinct use cases that must NEVER be mixed:
 ///
-/// 1. **TODAY's Vedic Date** (HolyCow page, cosmic dashboard):
+/// 1. **TODAY's Vedic Date** (Baba page, cosmic dashboard):
 ///    - Data source: `DailyInsight.astrologicalData['todaySamvat']` + `['panchang']`
 ///    - Or: `SkyPositionsService.getTodayPanchang()` (global panchang)
 ///    - Use [buildFullVedicDate] and [buildSamvatYear] (validates against current year)

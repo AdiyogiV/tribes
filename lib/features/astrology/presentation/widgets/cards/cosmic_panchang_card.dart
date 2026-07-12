@@ -49,7 +49,7 @@ class CosmicPanchangCard extends StatelessWidget {
               'Panchang',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: AppTheme.holyCowTextSize,
+                fontSize: AppTheme.babaTextSize,
                 fontWeight: FontWeight.w700,
                 color: c,
               ),
@@ -65,7 +65,7 @@ class CosmicPanchangCard extends StatelessWidget {
                         item.key,
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: AppTheme.holyCowTextSize,
+                          fontSize: AppTheme.babaTextSize,
                           fontWeight: FontWeight.w600,
                           color: c.withValues(alpha: 0.5),
                           letterSpacing: 0.3,
@@ -75,7 +75,7 @@ class CosmicPanchangCard extends StatelessWidget {
                       Text(
                         item.value,
                         style: TextStyle(
-                          fontSize: AppTheme.holyCowTextSize,
+                          fontSize: AppTheme.babaTextSize,
                           fontWeight: FontWeight.w700,
                           color: c,
                         ),

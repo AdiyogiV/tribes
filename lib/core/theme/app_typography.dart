@@ -9,7 +9,7 @@ class AppTypography {
   // ============================================
   // HOLYCOW PAGE — CONFIGURABLE TEXT SIZE
   // ============================================
-  static const double holyCowTextSize = 15.0;
+  static const double babaTextSize = 15.0;
 
   // ============================================
   // STANDARD FONT SIZES

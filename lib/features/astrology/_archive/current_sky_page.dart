@@ -34,7 +34,7 @@ class _CurrentSkyPageState extends State<CurrentSkyPage> {
 
   /// Calls `generatePerHouseNow` (asia-southeast2) — force-regenerates the
   /// biweekly per-house current-state readings. After this returns success,
-  /// the per-house popup on HolyCow's Current Sky chart will show the gold
+  /// the per-house popup on Baba's Current Sky chart will show the gold
   /// "RIGHT NOW" gradient block populated for all 12 houses.
   Future<void> _runPerHouse() async {
     if (_generatingHouses) return;

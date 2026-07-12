@@ -12,14 +12,14 @@ import 'package:aurogram/features/astrology/domain/sky_positions_service.dart';
 import 'package:aurogram/features/astrology/domain/astro_calendar_service.dart';
 import 'package:aurogram/shared/services/widget_data_service.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/nakshatra_ring_widget.dart';
-import 'package:aurogram/features/astrology/presentation/pages/holycow/widgets/holycow_panchang_resolver.dart';
-import 'package:aurogram/features/astrology/presentation/pages/holycow/widgets/holycow_secondary_cards.dart';
-import 'package:aurogram/features/astrology/presentation/pages/holycow/widgets/holycow_muhurat_placeholder.dart';
-import 'package:aurogram/features/astrology/presentation/pages/holycow/widgets/holycow_desktop_today_strip.dart';
-import 'package:aurogram/features/astrology/presentation/pages/holycow/widgets/holycow_signin_cta_banner.dart';
+import 'package:aurogram/features/astrology/presentation/pages/baba/widgets/baba_panchang_resolver.dart';
+import 'package:aurogram/features/astrology/presentation/pages/baba/widgets/baba_secondary_cards.dart';
+import 'package:aurogram/features/astrology/presentation/pages/baba/widgets/baba_muhurat_placeholder.dart';
+import 'package:aurogram/features/astrology/presentation/pages/baba/widgets/baba_desktop_today_strip.dart';
+import 'package:aurogram/features/astrology/presentation/pages/baba/widgets/baba_signin_cta_banner.dart';
 
 /// Builds the full cosmic dashboard content panel with all cards.
-class HolyCowCosmicContent extends StatelessWidget {
+class BabaCosmicContent extends StatelessWidget {
   final AstrologyProfile? profile;
   final DailyInsight? insight;
   final AyurvedaProfile? ayurvedaProfile;
@@ -47,7 +47,7 @@ class HolyCowCosmicContent extends StatelessWidget {
   /// Optional calendar service for extended-range position lookups.
   final AstroCalendarService? calendarService;
 
-  const HolyCowCosmicContent({
+  const BabaCosmicContent({
     super.key,
     required this.profile,
     required this.insight,
@@ -75,8 +75,8 @@ class HolyCowCosmicContent extends StatelessWidget {
     final todayPanchang = skyService.getTodayPanchang();
 
     // Single source of truth for the panchang merge + nakshatra precedence
-    // chain (shared with the wheel builder via HolyCowPanchangResolver).
-    final panchang = HolyCowPanchangResolver.resolve(
+    // chain (shared with the wheel builder via BabaPanchangResolver).
+    final panchang = BabaPanchangResolver.resolve(
       insight: insight,
       skyService: skyService,
       calendarService: calendarService,
@@ -190,7 +190,7 @@ class HolyCowCosmicContent extends StatelessWidget {
                     (isToday ? nakshatraSamvat : null);
 
             if (isWide) {
-              return HolyCowDesktopTodayStrip(
+              return BabaDesktopTodayStrip(
                 samvat: dateSamvat ?? nakshatraSamvat,
                 todayPanchang: todayPanchang,
                 brown: brown,
@@ -252,7 +252,7 @@ class HolyCowCosmicContent extends StatelessWidget {
                   if (hasMuhurat) ...[
                     MuhuratTimelineWidget(muhurat: calMuhurat, embedded: true),
                   ] else if (showLoading) ...[
-                    HolyCowMuhuratPlaceholder(
+                    BabaMuhuratPlaceholder(
                         cardColor: cardColor, embedded: true),
                   ],
                 ],
@@ -268,7 +268,7 @@ class HolyCowCosmicContent extends StatelessWidget {
         // On mobile the wheel + text-insight combo is injected directly
         // BELOW the Current Sky card. On desktop the wheel lives in its own
         // left column, so we don't inject it into the secondary list.
-        final secondaryCards = HolyCowSecondaryCards(
+        final secondaryCards = BabaSecondaryCards(
           profile: profile,
           insight: insight,
           ayurvedaProfile: ayurvedaProfile,
@@ -302,14 +302,14 @@ class HolyCowCosmicContent extends StatelessWidget {
         // space problem, so the horizontal banner sits at the bottom as before.
         final isSignedOut = FirebaseAuth.instance.currentUser == null;
         final desktopInlineCta = isSignedOut && isWide
-            ? HolyCowSignInCtaBanner(
+            ? BabaSignInCtaBanner(
                 brown: brown,
                 isDark: isDark,
                 horizontal: false,
               )
             : null;
         final mobileCtaBanner = isSignedOut && !isWide
-            ? HolyCowSignInCtaBanner(
+            ? BabaSignInCtaBanner(
                 brown: brown,
                 isDark: isDark,
                 horizontal: false,
@@ -383,7 +383,7 @@ class HolyCowCosmicContent extends StatelessWidget {
     return Builder(builder: (context) {
       // Re-resolve panchang inside this builder so the wheel sees the
       // freshest data on rebuilds. Same resolver as build() — one source.
-      final panchang = HolyCowPanchangResolver.resolve(
+      final panchang = BabaPanchangResolver.resolve(
         insight: insight,
         skyService: skyService,
         calendarService: calendarService,
@@ -451,7 +451,7 @@ class HolyCowCosmicContent extends StatelessWidget {
             FirebaseAuth.instance.currentUser != null) {
           return Padding(
             padding: EdgeInsets.only(bottom: spacing),
-            child: HolyCowMuhuratPlaceholder(cardColor: cardColor),
+            child: BabaMuhuratPlaceholder(cardColor: cardColor),
           );
         }
         return const SizedBox.shrink();

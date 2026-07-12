@@ -138,7 +138,7 @@ class _AddedToGramTileState extends State<AddedToGramTile> {
                             Text(
                               '$inviterName added you to $space',
                               style: TextStyle(
-                                fontSize: AppTheme.holyCowTextSize,
+                                fontSize: AppTheme.babaTextSize,
                                 fontWeight: FontWeight.w600,
                                 color: AppTheme.textColor,
                                 height: 1.3,
@@ -148,7 +148,7 @@ class _AddedToGramTileState extends State<AddedToGramTile> {
                             Text(
                               date,
                               style: TextStyle(
-                                fontSize: AppTheme.holyCowTextSize,
+                                fontSize: AppTheme.babaTextSize,
                                 color: AppTheme.textSecondaryColor,
                               ),
                             ),

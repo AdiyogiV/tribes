@@ -94,7 +94,7 @@ class ChatMessageWidgets {
                             child: Text(
                               message.content,
                               style: const TextStyle(
-                                fontSize: AppTheme.holyCowTextSize,
+                                fontSize: AppTheme.babaTextSize,
                                 color: Colors.white,
                                 height: 1.45,
                               ),
@@ -160,7 +160,7 @@ class ChatMessageWidgets {
                     ? '${(message.audioDuration! ~/ 60).toString().padLeft(1, '0')}:${(message.audioDuration! % 60).toString().padLeft(2, '0')}'
                     : '0:00',
                 style: TextStyle(
-                  fontSize: AppTheme.holyCowTextSize,
+                  fontSize: AppTheme.babaTextSize,
                   color: Colors.white.withValues(alpha: 0.7),
                 ),
               ),
@@ -227,7 +227,7 @@ class ChatMessageWidgets {
                     ? '${(message.audioDuration! ~/ 60).toString().padLeft(1, '0')}:${(message.audioDuration! % 60).toString().padLeft(2, '0')}'
                     : '0:00',
                 style: TextStyle(
-                  fontSize: AppTheme.holyCowTextSize,
+                  fontSize: AppTheme.babaTextSize,
                   color: Colors.white.withValues(alpha: 0.7),
                 ),
               ),

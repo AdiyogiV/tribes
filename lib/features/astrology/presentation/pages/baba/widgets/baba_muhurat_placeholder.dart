@@ -6,15 +6,15 @@ import 'package:aurogram/shared/presentation/widgets/media/common_widgets.dart';
 /// Muhurat ("time guidance") loading placeholder card.
 ///
 /// Shown only for the today-window while the muhurat is still loading for a
-/// signed-in user — see `HolyCowCosmicContent._buildMuhuratCard`.
-class HolyCowMuhuratPlaceholder extends StatelessWidget {
+/// signed-in user — see `BabaCosmicContent._buildMuhuratCard`.
+class BabaMuhuratPlaceholder extends StatelessWidget {
   final Color cardColor;
 
   /// When true, skip the outer [Material] card surface so a parent can host
   /// this inside a SHARED card. Defaults to false — standalone card.
   final bool embedded;
 
-  const HolyCowMuhuratPlaceholder({
+  const BabaMuhuratPlaceholder({
     super.key,
     required this.cardColor,
     this.embedded = false,
@@ -36,7 +36,7 @@ class HolyCowMuhuratPlaceholder extends StatelessWidget {
           Text(
             'Loading time guidance...',
             style: TextStyle(
-              fontSize: AppTheme.holyCowTextSize,
+              fontSize: AppTheme.babaTextSize,
               fontWeight: FontWeight.w500,
               color: c.withValues(alpha: 0.7),
             ),

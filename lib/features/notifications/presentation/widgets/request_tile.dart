@@ -149,7 +149,7 @@ class _RequestTileState extends State<RequestTile> {
                             Text(
                               '$requestorName requested to join $space',
                               style: TextStyle(
-                                fontSize: AppTheme.holyCowTextSize,
+                                fontSize: AppTheme.babaTextSize,
                                 fontWeight: FontWeight.w600,
                                 color: AppTheme.textColor,
                                 height: 1.3,
@@ -159,7 +159,7 @@ class _RequestTileState extends State<RequestTile> {
                             Text(
                               date,
                               style: TextStyle(
-                                fontSize: AppTheme.holyCowTextSize,
+                                fontSize: AppTheme.babaTextSize,
                                 color: AppTheme.textSecondaryColor,
                               ),
                             ),

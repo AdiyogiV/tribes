@@ -6,7 +6,7 @@ import 'package:aurogram/features/astrology/domain/astro_calendar_service.dart';
 ///
 /// Single source of truth for the (otherwise duplicated) merge + nakshatra
 /// precedence logic that both `build()` and the wheel builder need.
-class HolyCowPanchang {
+class BabaPanchang {
   /// Fully merged samvat map (todaySamvat -> insightPanchang -> globalPanchang).
   /// Empty when no source carried data.
   final Map<String, dynamic> mergedSamvat;
@@ -14,7 +14,7 @@ class HolyCowPanchang {
   /// Resolved nakshatra name for today, or null if every source missed.
   final String? todayNakshatra;
 
-  const HolyCowPanchang(this.mergedSamvat, this.todayNakshatra);
+  const BabaPanchang(this.mergedSamvat, this.todayNakshatra);
 
   /// Convenience: the merged map, or null when empty. Mirrors the old
   /// `nakshatraSamvat = mergedSamvat.isNotEmpty ? mergedSamvat : null`.
@@ -22,11 +22,11 @@ class HolyCowPanchang {
       mergedSamvat.isNotEmpty ? mergedSamvat : null;
 }
 
-/// Pure resolver for the holycow dashboard's merged panchang + today's
+/// Pure resolver for the baba dashboard's merged panchang + today's
 /// nakshatra. Extracted to kill the verbatim duplication that previously
-/// lived in both `HolyCowCosmicContent.build` and `_buildWheelWidget`.
-class HolyCowPanchangResolver {
-  const HolyCowPanchangResolver._();
+/// lived in both `BabaCosmicContent.build` and `_buildWheelWidget`.
+class BabaPanchangResolver {
+  const BabaPanchangResolver._();
 
   /// Merge the panchang sources by priority (richest first) and resolve
   /// today's nakshatra through the full precedence chain:
@@ -35,7 +35,7 @@ class HolyCowPanchangResolver {
   ///   3. any nakshatra-shaped key in the merged samvat
   ///   4. Moon-longitude derived nakshatra from the astro calendar
   ///      (works for all users, no auth required)
-  static HolyCowPanchang resolve({
+  static BabaPanchang resolve({
     required DailyInsight? insight,
     required SkyPositionsService skyService,
     required AstroCalendarService? calendarService,
@@ -89,7 +89,7 @@ class HolyCowPanchangResolver {
       todayNakshatra = calendarService?.getDay(DateTime.now())?.nakshatraName;
     }
 
-    return HolyCowPanchang(mergedSamvat, todayNakshatra);
+    return BabaPanchang(mergedSamvat, todayNakshatra);
   }
 
   /// Extract a nakshatra name from panchang data which may be a plain

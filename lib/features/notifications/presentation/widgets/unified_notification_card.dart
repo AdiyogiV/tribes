@@ -63,7 +63,7 @@ class NotificationTileCard extends StatelessWidget {
                           Text(
                             timestamp,
                             style: TextStyle(
-                              fontSize: AppTheme.holyCowTextSize,
+                              fontSize: AppTheme.babaTextSize,
                               color: primaryColor.withValues(alpha: 0.5),
                             ),
                           ),
@@ -129,7 +129,7 @@ class UnifiedNotificationCard extends StatelessWidget {
             Text(
               title,
               style: TextStyle(
-                fontSize: AppTheme.holyCowTextSize,
+                fontSize: AppTheme.babaTextSize,
                 fontWeight: FontWeight.w600,
                 color: textColor,
                 height: 1.3,
@@ -142,7 +142,7 @@ class UnifiedNotificationCard extends StatelessWidget {
               Text(
                 subtitle!,
                 style: TextStyle(
-                  fontSize: AppTheme.holyCowTextSize,
+                  fontSize: AppTheme.babaTextSize,
                   color: secondaryColor,
                   height: 1.3,
                 ),

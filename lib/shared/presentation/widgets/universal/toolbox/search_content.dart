@@ -70,7 +70,7 @@ class SearchContentState extends State<SearchContent> {
               hintText: widget.hintText,
               hintStyle: TextStyle(
                 color: AppTheme.primaryColor.withValues(alpha: 0.6),
-                fontSize: AppTheme.holyCowTextSize,
+                fontSize: AppTheme.babaTextSize,
                 fontWeight: FontWeight.w500,
               ),
               border: InputBorder.none,
@@ -86,7 +86,7 @@ class SearchContentState extends State<SearchContent> {
             ),
             style: TextStyle(
               color: AppTheme.primaryColor.withValues(alpha: 0.85),
-              fontSize: AppTheme.holyCowTextSize,
+              fontSize: AppTheme.babaTextSize,
               fontWeight: FontWeight.w500,
             ),
             textInputAction: TextInputAction.search,
@@ -103,7 +103,7 @@ class SearchContentState extends State<SearchContent> {
           ),
         ),
         const SizedBox(width: AppDimensions.spacingSm),
-        // Search/Close icon button (like HolyCow's send button)
+        // Search/Close icon button (like Baba's send button)
         SizedBox(
           width: 64,
           height: 70,

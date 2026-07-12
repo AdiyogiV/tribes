@@ -251,7 +251,7 @@ class _ChatMessageTileState extends State<ChatMessageTile> {
                             child: Text(
                               _isDM ? _senderName : _spaceName,
                               style: TextStyle(
-                                fontSize: AppTheme.holyCowTextSize,
+                                fontSize: AppTheme.babaTextSize,
                                 fontWeight:
                                     _isRead ? FontWeight.w600 : FontWeight.w700,
                                 color: AppTheme.textColor,
@@ -279,7 +279,7 @@ class _ChatMessageTileState extends State<ChatMessageTile> {
                             ? _displayMessage
                             : '$_senderName: $_displayMessage',
                         style: TextStyle(
-                          fontSize: AppTheme.holyCowTextSize,
+                          fontSize: AppTheme.babaTextSize,
                           color: _isRead ? AppTheme.textSecondaryColor : AppTheme.textColor,
                           fontWeight:
                               _isRead ? FontWeight.normal : FontWeight.w500,
@@ -302,7 +302,7 @@ class _ChatMessageTileState extends State<ChatMessageTile> {
                           Text(
                             _isDM ? 'Direct Message' : 'Gram Chat',
                             style: TextStyle(
-                              fontSize: AppTheme.holyCowTextSize,
+                              fontSize: AppTheme.babaTextSize,
                               color: AppTheme.textSecondaryColor,
                             ),
                           ),
@@ -310,7 +310,7 @@ class _ChatMessageTileState extends State<ChatMessageTile> {
                           Text(
                             '•',
                             style: TextStyle(
-                              fontSize: AppTheme.holyCowTextSize,
+                              fontSize: AppTheme.babaTextSize,
                               color: AppTheme.textSecondaryColor,
                             ),
                           ),
@@ -318,7 +318,7 @@ class _ChatMessageTileState extends State<ChatMessageTile> {
                           Text(
                             _date,
                             style: TextStyle(
-                              fontSize: AppTheme.holyCowTextSize,
+                              fontSize: AppTheme.babaTextSize,
                               color: AppTheme.textSecondaryColor,
                             ),
                           ),

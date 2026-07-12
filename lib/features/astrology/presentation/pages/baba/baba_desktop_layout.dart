@@ -7,7 +7,7 @@ import 'package:aurogram/core/theme/header_style.dart';
 import 'package:aurogram/features/chat/domain/chat_dialogs.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/features/ai_chat/presentation/pages/ai_chat_page.dart';
-import 'package:aurogram/features/astrology/presentation/pages/holycow/holycow_empty_states.dart';
+import 'package:aurogram/features/astrology/presentation/pages/baba/baba_empty_states.dart';
 import 'package:aurogram/shared/services/media/audio_input_models.dart';
 import 'package:intl/intl.dart';
 import 'package:aurogram/features/ai_chat/domain/ai_chat_provider.dart';
@@ -19,23 +19,23 @@ import 'package:aurogram/features/ai_chat/domain/ai_chat_provider.dart';
 /// 1. Cosmic dashboard with floating input (default / after "+")
 /// 2. Inline AiChatPage for a selected conversation
 /// 3. Inline AiChatPage for a new chat (from floating input send)
-class HolyCowDesktopLayout extends StatefulWidget {
+class BabaDesktopLayout extends StatefulWidget {
   final Widget Function() cosmicDashboardBuilder;
 
   /// Builder for the floating chat input bar (same as mobile dashboard input)
   final Widget Function()? dashboardInputBuilder;
 
-  const HolyCowDesktopLayout({
+  const BabaDesktopLayout({
     super.key,
     required this.cosmicDashboardBuilder,
     this.dashboardInputBuilder,
   });
 
   @override
-  HolyCowDesktopLayoutState createState() => HolyCowDesktopLayoutState();
+  BabaDesktopLayoutState createState() => BabaDesktopLayoutState();
 }
 
-class HolyCowDesktopLayoutState extends State<HolyCowDesktopLayout> {
+class BabaDesktopLayoutState extends State<BabaDesktopLayout> {
   String? _selectedConversationId;
 
   // New chat state — when user sends from floating input
@@ -137,7 +137,7 @@ class HolyCowDesktopLayoutState extends State<HolyCowDesktopLayout> {
                         onSelectConversation: _selectConversation,
                       ),
                     )
-                  : _CollapsedHolyCowRail(
+                  : _CollapsedBabaRail(
                       isDark: isDark,
                       onNewChat: showDashboard,
                     ),
@@ -199,15 +199,15 @@ class HolyCowDesktopLayoutState extends State<HolyCowDesktopLayout> {
 // Collapsed rail (signed-out state)
 //
 // Replaces the empty 340px chat panel with a 64px vertical rail
-// that still shows the HolyCow icon + a + button so the affordance
+// that still shows the Baba icon + a + button so the affordance
 // to start a chat is never hidden.
 // ─────────────────────────────────────────────────────────────
 
-class _CollapsedHolyCowRail extends StatelessWidget {
+class _CollapsedBabaRail extends StatelessWidget {
   final bool isDark;
   final VoidCallback onNewChat;
 
-  const _CollapsedHolyCowRail({
+  const _CollapsedBabaRail({
     required this.isDark,
     required this.onNewChat,
   });
@@ -275,14 +275,14 @@ class _ConversationHistoryList extends StatelessWidget {
     return Consumer<AiChatProvider>(
       builder: (context, provider, _) {
         if (!provider.isUserAuthenticated) {
-          return HolyCowSignInPrompt(isDark: isDark);
+          return BabaSignInPrompt(isDark: isDark);
         }
 
         return StreamBuilder<List<DmConversation>>(
           stream: provider.getRecentAiConversations(limit: 20),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const HolyCowHistorySkeleton();
+              return const BabaHistorySkeleton();
             }
 
             if (snapshot.hasError) {
@@ -296,7 +296,7 @@ class _ConversationHistoryList extends StatelessWidget {
 
             final conversations = snapshot.data ?? [];
             if (conversations.isEmpty) {
-              return HolyCowEmptyHistory(isDark: isDark);
+              return BabaEmptyHistory(isDark: isDark);
             }
 
             return Column(
@@ -409,7 +409,7 @@ class _ConversationHistoryItem extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: AppTheme.holyCowTextSize,
+                        fontSize: AppTheme.babaTextSize,
                         color: isDark ? Colors.white : Colors.black87,
                       ),
                     ),
@@ -417,7 +417,7 @@ class _ConversationHistoryItem extends StatelessWidget {
                     Text(
                       timeAgo,
                       style: TextStyle(
-                        fontSize: AppTheme.holyCowTextSize - 2,
+                        fontSize: AppTheme.babaTextSize - 2,
                         color: isDark ? Colors.white38 : Colors.black38,
                       ),
                     ),
@@ -468,7 +468,7 @@ class _ClearAllHistoryButton extends StatelessWidget {
         label: Text(
           'Clear All History',
           style: TextStyle(
-            fontSize: AppTheme.holyCowTextSize,
+            fontSize: AppTheme.babaTextSize,
             color: isDark ? Colors.white38 : Colors.black38,
           ),
         ),

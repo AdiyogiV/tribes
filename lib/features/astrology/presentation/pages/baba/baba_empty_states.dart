@@ -5,10 +5,10 @@ import 'package:aurogram/core/theme/header_style.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 
 /// Sign-in prompt displayed when the user is not authenticated.
-class HolyCowSignInPrompt extends StatelessWidget {
+class BabaSignInPrompt extends StatelessWidget {
   final bool isDark;
 
-  const HolyCowSignInPrompt({super.key, required this.isDark});
+  const BabaSignInPrompt({super.key, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +28,7 @@ class HolyCowSignInPrompt extends StatelessWidget {
               'Sign in to see\nyour chat history',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: AppTheme.holyCowTextSize,
+                fontSize: AppTheme.babaTextSize,
                 color: isDark ? Colors.white54 : Colors.black54,
               ),
             ),
@@ -40,10 +40,10 @@ class HolyCowSignInPrompt extends StatelessWidget {
 }
 
 /// Placeholder shown when the conversation history is empty.
-class HolyCowEmptyHistory extends StatelessWidget {
+class BabaEmptyHistory extends StatelessWidget {
   final bool isDark;
 
-  const HolyCowEmptyHistory({super.key, required this.isDark});
+  const BabaEmptyHistory({super.key, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +63,7 @@ class HolyCowEmptyHistory extends StatelessWidget {
               'No conversations yet',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: AppTheme.holyCowTextSize,
+                fontSize: AppTheme.babaTextSize,
                 color: isDark ? Colors.white54 : Colors.black54,
               ),
             ),
@@ -72,7 +72,7 @@ class HolyCowEmptyHistory extends StatelessWidget {
               'Start chatting to see\nyour history here',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: AppTheme.holyCowTextSize,
+                fontSize: AppTheme.babaTextSize,
                 color: isDark ? Colors.white38 : Colors.black38,
               ),
             ),
@@ -84,8 +84,8 @@ class HolyCowEmptyHistory extends StatelessWidget {
 }
 
 /// Skeleton loader for the conversation history list.
-class HolyCowHistorySkeleton extends StatelessWidget {
-  const HolyCowHistorySkeleton({super.key});
+class BabaHistorySkeleton extends StatelessWidget {
+  const BabaHistorySkeleton({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -139,11 +139,11 @@ class HolyCowHistorySkeleton extends StatelessWidget {
 }
 
 /// Skeleton loader for the full cosmic dashboard while profile data is loading.
-class HolyCowCosmicSkeleton extends StatelessWidget {
+class BabaCosmicSkeleton extends StatelessWidget {
   final bool isDark;
   final Color brown;
 
-  const HolyCowCosmicSkeleton({
+  const BabaCosmicSkeleton({
     super.key,
     required this.isDark,
     required this.brown,
@@ -193,12 +193,12 @@ class HolyCowCosmicSkeleton extends StatelessWidget {
 }
 
 /// Muhurat loading placeholder card.
-class HolyCowMuhuratPlaceholder extends StatelessWidget {
+class BabaMuhuratPlaceholder extends StatelessWidget {
   final bool isDark;
   final Color brown;
   final Color cardColor;
 
-  const HolyCowMuhuratPlaceholder({
+  const BabaMuhuratPlaceholder({
     super.key,
     required this.isDark,
     required this.brown,
@@ -226,7 +226,7 @@ class HolyCowMuhuratPlaceholder extends StatelessWidget {
             Text(
               'Loading time guidance...',
               style: TextStyle(
-                fontSize: AppTheme.holyCowTextSize,
+                fontSize: AppTheme.babaTextSize,
                 fontWeight: FontWeight.w500,
                 color: c.withValues(alpha: 0.7),
               ),

@@ -131,7 +131,7 @@ class AiChatProvider extends ChangeNotifier
   // =========================================================================
 
   /// Add a welcome greeting message from the AI
-  /// Called when user opens HolyCow with no active conversation
+  /// Called when user opens Baba with no active conversation
   /// [userName] is optional - if null, generic greetings are used
   void addWelcomeGreeting(String? userName) {
     // Only add greeting if there are no messages

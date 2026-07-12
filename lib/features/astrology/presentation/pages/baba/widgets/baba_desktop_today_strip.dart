@@ -14,7 +14,7 @@ import 'package:aurogram/features/astrology/presentation/widgets/cards/vedic_tim
 /// TITHI, MASA, NAKSHATRA), skipping any without data. Date-derived cells
 /// (VAAR, MOON, weekday) always render so even signed-out users get a rich
 /// strip. The live VEDIC clock ticks every 15s and only shows for "now".
-class HolyCowDesktopTodayStrip extends StatefulWidget {
+class BabaDesktopTodayStrip extends StatefulWidget {
   final Map<String, dynamic>? samvat;
   final Map<String, dynamic>? todayPanchang;
   final Color brown;
@@ -33,7 +33,7 @@ class HolyCowDesktopTodayStrip extends StatefulWidget {
   /// Used for TITHI, NAKSHATRA cells when showing a non-today date.
   final Map<String, dynamic>? selectedDatePanchang;
 
-  const HolyCowDesktopTodayStrip({
+  const BabaDesktopTodayStrip({
     super.key,
     required this.samvat,
     required this.todayPanchang,
@@ -44,11 +44,11 @@ class HolyCowDesktopTodayStrip extends StatefulWidget {
   });
 
   @override
-  State<HolyCowDesktopTodayStrip> createState() =>
-      _HolyCowDesktopTodayStripState();
+  State<BabaDesktopTodayStrip> createState() =>
+      _BabaDesktopTodayStripState();
 }
 
-class _HolyCowDesktopTodayStripState extends State<HolyCowDesktopTodayStrip> {
+class _BabaDesktopTodayStripState extends State<BabaDesktopTodayStrip> {
   Timer? _timer;
   DateTime _now = DateTime.now();
 
@@ -322,7 +322,7 @@ class _HolyCowDesktopTodayStripState extends State<HolyCowDesktopTodayStrip> {
   }
 }
 
-/// Small two-line cell used inside [HolyCowDesktopTodayStrip]. Upper line is
+/// Small two-line cell used inside [BabaDesktopTodayStrip]. Upper line is
 /// the label (small, low-opacity, letter-spaced); lower line is the value
 /// (regular weight, full opacity, single-line ellipsised).
 class _StripCell extends StatelessWidget {
@@ -340,7 +340,7 @@ class _StripCell extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            fontSize: AppTheme.holyCowTextSize - 4,
+            fontSize: AppTheme.babaTextSize - 4,
             fontWeight: FontWeight.w600,
             color: c.withValues(alpha: 0.45),
             letterSpacing: 0.8,
@@ -353,7 +353,7 @@ class _StripCell extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            fontSize: AppTheme.holyCowTextSize,
+            fontSize: AppTheme.babaTextSize,
             fontWeight: FontWeight.w600,
             color: c,
             height: 1.2,

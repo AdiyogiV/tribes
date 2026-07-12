@@ -90,7 +90,7 @@ class _ChatMessageTileState extends State<ChatMessageTile> {
       widget.onScrollToMessage;
   bool get isDMConversation => widget.isDMConversation;
 
-  // Light = Instagram-style (light gray + dark text). Dark = holycow-style (cardDarkColor + white text)
+  // Light = Instagram-style (light gray + dark text). Dark = baba-style (cardDarkColor + white text)
   Color _receivedBubbleColor(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark
           ? AppTheme.cardDarkColor.withValues(alpha: 0.85)

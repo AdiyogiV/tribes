@@ -150,7 +150,7 @@ class _SpaceInviteTileState extends State<SpaceInviteTile> {
                     "$username invited you to join $name",
                     style: TextStyle(
                       fontWeight: FontWeight.w400,
-                      fontSize: AppTheme.holyCowTextSize,
+                      fontSize: AppTheme.babaTextSize,
                       color: AppTheme.textLightColor,
                     ),
                     textAlign: TextAlign.center,

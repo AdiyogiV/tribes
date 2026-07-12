@@ -119,7 +119,7 @@ class _SourcesSectionState extends State<SourcesSection>
                       child: Text(
                         'Sources (${referencedSources.length})',
                         style: TextStyle(
-                          fontSize: AppTheme.holyCowTextSize,
+                          fontSize: AppTheme.babaTextSize,
                           color: AppTheme.primaryColor,
                           fontWeight: FontWeight.w600,
                         ),
@@ -216,7 +216,7 @@ class _SourcesSectionState extends State<SourcesSection>
                       child: Text(
                         source.displayLink,
                         style: TextStyle(
-                          fontSize: AppTheme.holyCowTextSize,
+                          fontSize: AppTheme.babaTextSize,
                           color: Colors.grey[600],
                           fontWeight: FontWeight.w500,
                         ),
@@ -242,7 +242,7 @@ class _SourcesSectionState extends State<SourcesSection>
                 Text(
                   source.title,
                   style: const TextStyle(
-                    fontSize: AppTheme.holyCowTextSize,
+                    fontSize: AppTheme.babaTextSize,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF111827),
                     height: 1.3,
@@ -255,7 +255,7 @@ class _SourcesSectionState extends State<SourcesSection>
                 Text(
                   source.snippet,
                   style: TextStyle(
-                    fontSize: AppTheme.holyCowTextSize,
+                    fontSize: AppTheme.babaTextSize,
                     color: Colors.grey[700],
                     height: 1.4,
                   ),
@@ -276,7 +276,7 @@ class _SourcesSectionState extends State<SourcesSection>
                       Text(
                         'Referenced in response',
                         style: TextStyle(
-                          fontSize: AppTheme.holyCowTextSize,
+                          fontSize: AppTheme.babaTextSize,
                           color: Colors.green[600],
                           fontWeight: FontWeight.w500,
                         ),

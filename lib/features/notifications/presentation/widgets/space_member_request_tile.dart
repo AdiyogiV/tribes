@@ -167,7 +167,7 @@ class _SpaceMemberRequestTileState extends State<SpaceMemberRequestTile> {
                     Text(
                       _userName,
                       style: TextStyle(
-                        fontSize: AppTheme.holyCowTextSize,
+                        fontSize: AppTheme.babaTextSize,
                         fontWeight: FontWeight.w600,
                         color: primaryColor,
                       ),
@@ -177,7 +177,7 @@ class _SpaceMemberRequestTileState extends State<SpaceMemberRequestTile> {
                       Text(
                         '@$_username',
                         style: TextStyle(
-                          fontSize: AppTheme.holyCowTextSize,
+                          fontSize: AppTheme.babaTextSize,
                           color: primaryColor.withValues(alpha: 0.6),
                         ),
                       ),
@@ -186,7 +186,7 @@ class _SpaceMemberRequestTileState extends State<SpaceMemberRequestTile> {
                     Text(
                       'Wants to join this space',
                       style: TextStyle(
-                        fontSize: AppTheme.holyCowTextSize,
+                        fontSize: AppTheme.babaTextSize,
                         color: primaryColor.withValues(alpha: 0.5),
                       ),
                     ),
@@ -218,7 +218,7 @@ class _SpaceMemberRequestTileState extends State<SpaceMemberRequestTile> {
                                         'Approve',
                                         textAlign: TextAlign.center,
                                         style: TextStyle(
-                                          fontSize: AppTheme.holyCowTextSize,
+                                          fontSize: AppTheme.babaTextSize,
                                           fontWeight: FontWeight.w600,
                                           color: Colors.white,
                                         ),
@@ -242,7 +242,7 @@ class _SpaceMemberRequestTileState extends State<SpaceMemberRequestTile> {
                                   'Decline',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
-                                    fontSize: AppTheme.holyCowTextSize,
+                                    fontSize: AppTheme.babaTextSize,
                                     fontWeight: FontWeight.w600,
                                     color: primaryColor,
                                   ),
@@ -257,7 +257,7 @@ class _SpaceMemberRequestTileState extends State<SpaceMemberRequestTile> {
                       Text(
                         _isApproved ? 'Request approved' : 'Request declined',
                         style: TextStyle(
-                          fontSize: AppTheme.holyCowTextSize,
+                          fontSize: AppTheme.babaTextSize,
                           fontWeight: FontWeight.w500,
                           color: _isApproved
                               ? AppTheme.successColor

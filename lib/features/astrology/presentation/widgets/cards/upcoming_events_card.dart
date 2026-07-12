@@ -60,7 +60,7 @@ class UpcomingEventsCard extends StatelessWidget {
               'Upcoming Transits',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: AppTheme.holyCowTextSize,
+                fontSize: AppTheme.babaTextSize,
                 fontWeight: FontWeight.w700,
                 color: c,
               ),
@@ -85,7 +85,7 @@ class UpcomingEventsCard extends StatelessWidget {
                     'Retrograde Motion',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: AppTheme.holyCowTextSize,
+                      fontSize: AppTheme.babaTextSize,
                       fontWeight: FontWeight.w600,
                       color: c.withValues(alpha: 0.5),
                     ),
@@ -119,7 +119,7 @@ class UpcomingEventsCard extends StatelessWidget {
               event.planet,
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: AppTheme.holyCowTextSize,
+                fontSize: AppTheme.babaTextSize,
                 fontWeight: FontWeight.w700,
                 color: c,
               ),
@@ -132,7 +132,7 @@ class UpcomingEventsCard extends StatelessWidget {
               action,
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: AppTheme.holyCowTextSize,
+                fontSize: AppTheme.babaTextSize,
                 fontWeight: FontWeight.w500,
                 color: isRetrograde
                     ? (event.type == 'retrograde_end'
@@ -148,7 +148,7 @@ class UpcomingEventsCard extends StatelessWidget {
             event.formattedDate,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: AppTheme.holyCowTextSize,
+              fontSize: AppTheme.babaTextSize,
               fontWeight: FontWeight.w600,
               color: c.withValues(alpha: 0.6),
             ),

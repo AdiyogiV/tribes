@@ -16,8 +16,8 @@ import 'package:aurogram/features/ai_chat/voice/voice_session_controller.dart';
 ///   * my turn   → interrupt Aryabhatt + reopen the mic (only while speaking)
 ///   * keyboard  → drop the call and switch to the typed input bar
 ///   * end       → hang up (destructive, faint red tint)
-class HolyCowVoiceControls extends StatefulWidget {
-  const HolyCowVoiceControls({
+class BabaVoiceControls extends StatefulWidget {
+  const BabaVoiceControls({
     super.key,
     required this.state,
     required this.onEndCall,
@@ -42,10 +42,10 @@ class HolyCowVoiceControls extends StatefulWidget {
   final VoidCallback onInterrupt;
 
   @override
-  State<HolyCowVoiceControls> createState() => _HolyCowVoiceControlsState();
+  State<BabaVoiceControls> createState() => _BabaVoiceControlsState();
 }
 
-class _HolyCowVoiceControlsState extends State<HolyCowVoiceControls>
+class _BabaVoiceControlsState extends State<BabaVoiceControls>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 

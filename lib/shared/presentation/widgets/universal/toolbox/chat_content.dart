@@ -82,7 +82,7 @@ class ChatContentState extends State<ChatContent> {
               hintText: widget.hintText,
               hintStyle: TextStyle(
                 color: AppTheme.primaryColor.withValues(alpha: 0.6),
-                fontSize: AppTheme.holyCowTextSize,
+                fontSize: AppTheme.babaTextSize,
                 fontWeight: FontWeight.w500,
               ),
               border: InputBorder.none,
@@ -97,7 +97,7 @@ class ChatContentState extends State<ChatContent> {
             ),
             style: TextStyle(
               color: AppTheme.primaryColor.withValues(alpha: 0.85),
-              fontSize: AppTheme.holyCowTextSize,
+              fontSize: AppTheme.babaTextSize,
               fontWeight: FontWeight.w500,
             ),
             maxLines: null,

@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-/// Owns the state of the HolyCow dashboard's collapsible AI input bar.
+/// Owns the state of the Baba dashboard's collapsible AI input bar.
 ///
 /// This consolidates what used to be four scattered `setState` mutations on the
 /// page into one place, with a single intent per gesture:
@@ -13,8 +13,8 @@ import 'package:flutter/widgets.dart';
 /// listen to it. Collapsing the bar mid-scroll therefore rebuilds just those
 /// two small subtrees instead of the entire 1000+ line dashboard — which is
 /// what used to stall the very first frame of a downward scroll.
-class HolyCowInputBarController extends ChangeNotifier {
-  HolyCowInputBarController({bool expanded = true}) : _expanded = expanded {
+class BabaInputBarController extends ChangeNotifier {
+  BabaInputBarController({bool expanded = true}) : _expanded = expanded {
     focusNode.addListener(_onFocusChanged);
   }
 

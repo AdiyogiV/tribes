@@ -114,7 +114,7 @@ class _SidebarNavigationState extends State<SidebarNavigation>
                     horizontal: widget.isCollapsed ? 12 : 16),
                 children: [
                   // Tab order must match tab_handler.dart:
-                  // 0=HolyCow, 1=Grams, 2=Messages, 3=Profile
+                  // 0=Baba, 1=Grams, 2=Messages, 3=Profile
                   _buildNavItem(
                     index: 0,
                     icon: Icons.chat_bubble_outline,

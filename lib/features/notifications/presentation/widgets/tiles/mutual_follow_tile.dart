@@ -133,14 +133,14 @@ class _MutualFollowTileState extends State<MutualFollowTile> {
                           child: RichText(
                             text: TextSpan(
                               style: TextStyle(
-                                fontSize: AppTheme.holyCowTextSize,
+                                fontSize: AppTheme.babaTextSize,
                                 color: primaryColor,
                                 height: 1.3,
                               ),
                               children: [
                                 const TextSpan(
                                   text: '🎉 ',
-                                  style: TextStyle(fontSize: AppTheme.holyCowTextSize),
+                                  style: TextStyle(fontSize: AppTheme.babaTextSize),
                                 ),
                                 const TextSpan(
                                   text: 'You and ',
@@ -182,7 +182,7 @@ class _MutualFollowTileState extends State<MutualFollowTile> {
                           Text(
                             'Check compatibility',
                             style: TextStyle(
-                              fontSize: AppTheme.holyCowTextSize,
+                              fontSize: AppTheme.babaTextSize,
                               color: AppTheme.honeyAmber,
                               fontWeight: FontWeight.w600,
                               letterSpacing: -0.2,
@@ -195,7 +195,7 @@ class _MutualFollowTileState extends State<MutualFollowTile> {
                     Text(
                       _date,
                       style: TextStyle(
-                        fontSize: AppTheme.holyCowTextSize,
+                        fontSize: AppTheme.babaTextSize,
                         color: primaryColor.withValues(alpha: 0.4),
                       ),
                     ),

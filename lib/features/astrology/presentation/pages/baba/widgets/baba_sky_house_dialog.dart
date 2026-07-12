@@ -8,7 +8,7 @@ import 'package:aurogram/shared/models/astrology_profile.dart';
 /// with the user's natal interpretation and the biweekly sky reading
 /// stored on [profile].
 ///
-/// Pure presentation helper extracted from HolyCowCosmicContent — it touches
+/// Pure presentation helper extracted from BabaCosmicContent — it touches
 /// no widget state, only its arguments.
 void showSkyHouseDialog(
   BuildContext context,

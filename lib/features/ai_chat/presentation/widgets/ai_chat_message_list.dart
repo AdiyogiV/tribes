@@ -7,7 +7,7 @@ import 'package:aurogram/features/ai_chat/domain/ai_chat_provider.dart';
 
 /// Renders AI chat messages inside a [CustomScrollView] sliver.
 ///
-/// Extracted from the old inline `_buildChatContent()` in HolyCowPage.
+/// Extracted from the old inline `_buildChatContent()` in BabaPage.
 /// Uses [SliverList.builder] for efficient virtualization of long conversations.
 class AiChatMessageList extends StatefulWidget {
   const AiChatMessageList({super.key});

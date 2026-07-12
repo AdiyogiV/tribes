@@ -19,12 +19,12 @@ import 'package:aurogram/features/astrology/domain/sky_positions_service.dart';
 import 'package:aurogram/features/astrology/domain/astro_calendar_service.dart';
 import 'package:aurogram/shared/services/media/audio_input_service.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/cosmic_dashboard_data.dart';
-import 'package:aurogram/features/astrology/presentation/pages/holycow/holycow_desktop_layout.dart';
-import 'package:aurogram/features/astrology/presentation/pages/holycow/holycow_empty_states.dart';
-import 'package:aurogram/features/astrology/presentation/pages/holycow/holycow_cosmic_content.dart';
-import 'package:aurogram/features/astrology/presentation/pages/holycow/holycow_input_bar_controller.dart';
-import 'package:aurogram/features/astrology/presentation/pages/holycow/holycow_input_bar.dart';
-import 'package:aurogram/features/ai_chat/voice/holycow_voice_cow.dart';
+import 'package:aurogram/features/astrology/presentation/pages/baba/baba_desktop_layout.dart';
+import 'package:aurogram/features/astrology/presentation/pages/baba/baba_empty_states.dart';
+import 'package:aurogram/features/astrology/presentation/pages/baba/baba_cosmic_content.dart';
+import 'package:aurogram/features/astrology/presentation/pages/baba/baba_input_bar_controller.dart';
+import 'package:aurogram/features/astrology/presentation/pages/baba/baba_input_bar.dart';
+import 'package:aurogram/features/ai_chat/voice/baba_voice_cow.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/nakshatra_ring_widget.dart';
 import 'package:aurogram/shared/presentation/widgets/universal/dark_mode_toggle.dart';
 import 'package:aurogram/shared/providers/theme_provider.dart';
@@ -62,8 +62,8 @@ class DashboardPageState extends State<DashboardPage>
   // input). All of its state (expanded flag + text + focus) lives in this
   // controller so toggling the bar rebuilds ONLY the bar + spacer, never the
   // whole dashboard.
-  final HolyCowInputBarController _inputBar =
-      HolyCowInputBarController(expanded: false);
+  final BabaInputBarController _inputBar =
+      BabaInputBarController(expanded: false);
 
   // ── Input-bar layout + motion constants (single source of truth) ──
   // Tail spacer reserved at the bottom of the scroll content so the floating
@@ -110,7 +110,7 @@ class DashboardPageState extends State<DashboardPage>
   DashboardLoadingState _loadingState = const DashboardLoadingState();
 
   // Key for desktop layout — allows parent to trigger inline chat
-  final _desktopLayoutKey = GlobalKey<HolyCowDesktopLayoutState>();
+  final _desktopLayoutKey = GlobalKey<BabaDesktopLayoutState>();
 
   bool _didPrecache = false;
 
@@ -188,7 +188,7 @@ class DashboardPageState extends State<DashboardPage>
   }
 
   // ─────────────────────────────────────────────────
-  // Input bar → chat navigation (callbacks for HolyCowInputBar).
+  // Input bar → chat navigation (callbacks for BabaInputBar).
   // Desktop shows chat inline; mobile pushes the chat route.
   // ─────────────────────────────────────────────────
 
@@ -440,7 +440,7 @@ class DashboardPageState extends State<DashboardPage>
   /// swap rebuilds on toggle.
   Widget _collapsedCowOrBar() => _inputBar.expanded
       ? _buildInputBar()
-      : HolyCowVoiceCow(
+      : BabaVoiceCow(
           onShowKeyboard: _toggleInputBar,
           onShowRecent: _showRecentConversations,
           onActiveChanged: _handleVoiceActiveChanged,
@@ -456,7 +456,7 @@ class DashboardPageState extends State<DashboardPage>
       return Scaffold(
         extendBody: true,
         backgroundColor: Colors.transparent,
-        body: HolyCowDesktopLayout(
+        body: BabaDesktopLayout(
           key: _desktopLayoutKey,
           cosmicDashboardBuilder: _buildCosmicDashboardContent,
           // Wide/web layout gets the same cow<->bar swap as mobile so the
@@ -581,13 +581,13 @@ class DashboardPageState extends State<DashboardPage>
   }
 
   // ─────────────────────────────────────────────────────────────
-  // Dashboard input — the bar's UI lives in HolyCowInputBar; the page just
+  // Dashboard input — the bar's UI lives in BabaInputBar; the page just
   // wires its controller + navigation callbacks. Shared by mobile (overlay)
   // and desktop (floating) layouts.
   // ─────────────────────────────────────────────────────────────
 
   Widget _buildInputBar() {
-    return HolyCowInputBar(
+    return BabaInputBar(
       controller: _inputBar,
       onSendText: _handleSendText,
       onVoiceResult: _handleVoiceResult,
@@ -604,7 +604,7 @@ class DashboardPageState extends State<DashboardPage>
     // events) with null profile/insight/ayurveda — the content widget's
     // existing `if` guards naturally hide personal sections.
     if (_user == null) {
-      return HolyCowCosmicContent(
+      return BabaCosmicContent(
         profile: null,
         insight: null,
         ayurvedaProfile: null,
@@ -642,11 +642,11 @@ class DashboardPageState extends State<DashboardPage>
                 if (isLoading) {
                   final isDark =
                       Theme.of(context).brightness == Brightness.dark;
-                  return HolyCowCosmicSkeleton(
+                  return BabaCosmicSkeleton(
                       isDark: isDark, brown: AppTheme.primaryColor);
                 }
 
-                return HolyCowCosmicContent(
+                return BabaCosmicContent(
                   profile: profile,
                   insight: insight,
                   ayurvedaProfile: ayurvedaSnapshot.data,

@@ -28,7 +28,7 @@ mixin AiChatContextMixin on ChangeNotifier {
   // =========================================================================
 
   /// Get astrology context (kept for dedicated astro/wellness pages that pass
-  /// context explicitly; the unified HolyCow chat loads it server-side).
+  /// context explicitly; the unified Baba chat loads it server-side).
   Map<String, dynamic>? get astrologyContext => _astrologyContext;
 
   /// Get chat source

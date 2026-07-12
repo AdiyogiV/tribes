@@ -138,7 +138,7 @@ class _AddedToGroupTileState extends State<AddedToGroupTile> {
                             Text(
                               '$inviterName added you to $space',
                               style: TextStyle(
-                                fontSize: AppTheme.holyCowTextSize,
+                                fontSize: AppTheme.babaTextSize,
                                 fontWeight: FontWeight.w600,
                                 color: Colors.grey[900],
                                 height: 1.3,
@@ -148,7 +148,7 @@ class _AddedToGroupTileState extends State<AddedToGroupTile> {
                             Text(
                               date,
                               style: TextStyle(
-                                fontSize: AppTheme.holyCowTextSize,
+                                fontSize: AppTheme.babaTextSize,
                                 color: Colors.grey[500],
                               ),
                             ),

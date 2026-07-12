@@ -267,7 +267,7 @@ class _ReplyTileState extends State<ReplyTile> {
                                 Text(
                                   '$author replied to your post',
                                   style: TextStyle(
-                                    fontSize: AppTheme.holyCowTextSize,
+                                    fontSize: AppTheme.babaTextSize,
                                     fontWeight: FontWeight.w600,
                                     color: AppTheme.textColor,
                                     height: 1.3,
@@ -280,7 +280,7 @@ class _ReplyTileState extends State<ReplyTile> {
                                       Text(
                                         space,
                                         style: TextStyle(
-                                          fontSize: AppTheme.holyCowTextSize,
+                                          fontSize: AppTheme.babaTextSize,
                                           color: AppTheme.textSecondaryColor,
                                           fontWeight: FontWeight.w500,
                                         ),
@@ -288,7 +288,7 @@ class _ReplyTileState extends State<ReplyTile> {
                                       Text(
                                         ' • ',
                                         style: TextStyle(
-                                          fontSize: AppTheme.holyCowTextSize,
+                                          fontSize: AppTheme.babaTextSize,
                                           color: AppTheme.textSecondaryColor,
                                         ),
                                       ),
@@ -300,7 +300,7 @@ class _ReplyTileState extends State<ReplyTile> {
                                                   .toDate())
                                           : date,
                                       style: TextStyle(
-                                        fontSize: AppTheme.holyCowTextSize,
+                                        fontSize: AppTheme.babaTextSize,
                                         color: AppTheme.textSecondaryColor,
                                       ),
                                     ),
@@ -381,7 +381,7 @@ class _ReplyTileState extends State<ReplyTile> {
                                     child: Text(
                                       'YOUR POST',
                                       style: TextStyle(
-                                        fontSize: AppTheme.holyCowTextSize,
+                                        fontSize: AppTheme.babaTextSize,
                                         fontWeight: FontWeight.w600,
                                         color: AppTheme.textSecondaryColor,
                                         letterSpacing: 0.3,
@@ -490,7 +490,7 @@ class _ReplyTileState extends State<ReplyTile> {
                                     child: Text(
                                       'THEIR REPLY',
                                       style: TextStyle(
-                                        fontSize: AppTheme.holyCowTextSize,
+                                        fontSize: AppTheme.babaTextSize,
                                         fontWeight: FontWeight.w600,
                                         color: Colors.white,
                                         letterSpacing: 0.3,

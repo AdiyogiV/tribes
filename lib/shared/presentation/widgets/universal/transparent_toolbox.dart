@@ -153,7 +153,7 @@ class TransparentToolbox extends StatelessWidget {
                   text,
                   style: TextStyle(
                     color: AppTheme.primaryColor.withValues(alpha: 0.85),
-                    fontSize: AppTheme.holyCowTextSize,
+                    fontSize: AppTheme.babaTextSize,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -203,7 +203,7 @@ class TransparentToolbox extends StatelessWidget {
                   color: isEnabled
                       ? AppTheme.primaryColor.withValues(alpha: 0.85)
                       : AppTheme.primaryColor.withValues(alpha: 0.4),
-                  fontSize: AppTheme.holyCowTextSize,
+                  fontSize: AppTheme.babaTextSize,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -324,13 +324,13 @@ class TransparentToolbox extends StatelessWidget {
   /// Consistent text style constants for all transparent toolbox inputs
   static TextStyle get inputTextStyle => TextStyle(
         color: AppTheme.primaryColor.withValues(alpha: 0.85),
-        fontSize: AppTheme.holyCowTextSize,
+        fontSize: AppTheme.babaTextSize,
         fontWeight: FontWeight.w500,
       );
 
   static TextStyle get hintTextStyle => TextStyle(
         color: AppTheme.primaryColor.withValues(alpha: 0.6),
-        fontSize: AppTheme.holyCowTextSize,
+        fontSize: AppTheme.babaTextSize,
         fontWeight: FontWeight.w500,
       );
 

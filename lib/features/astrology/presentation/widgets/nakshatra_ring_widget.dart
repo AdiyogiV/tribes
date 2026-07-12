@@ -846,7 +846,7 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
             maxLines: 4,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: AppTheme.holyCowTextSize,
+              fontSize: AppTheme.babaTextSize,
               fontWeight: FontWeight.w400,
               color: c.withValues(alpha: 0.75),
               height: 1.5,
@@ -878,7 +878,7 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
                       ? 'Today\'s Moon is in ${todayInfo.name}'
                       : 'Today\'s Sky',
                   style: TextStyle(
-                    fontSize: AppTheme.holyCowTextSize + 2,
+                    fontSize: AppTheme.babaTextSize + 2,
                     fontWeight: FontWeight.w700,
                     color: c,
                   ),
@@ -891,7 +891,7 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
             'Add your birth date & time to unlock a personalised daily '
             'energy reading — how today\'s sky interacts with your birth star.',
             style: TextStyle(
-              fontSize: AppTheme.holyCowTextSize,
+              fontSize: AppTheme.babaTextSize,
               color: c.withValues(alpha: 0.7),
               height: 1.4,
             ),

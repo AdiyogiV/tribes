@@ -15,12 +15,12 @@ import 'package:aurogram/core/routing/route_names.dart';
 ///     in a single row — fills the dashboard width like a footer banner.
 ///   * vertical   (mobile):  icon + headline + benefits stacked + full-width
 ///     button — a closing prompt at the bottom of the scroll.
-class HolyCowSignInCtaBanner extends StatelessWidget {
+class BabaSignInCtaBanner extends StatelessWidget {
   final Color brown;
   final bool isDark;
   final bool horizontal;
 
-  const HolyCowSignInCtaBanner({
+  const BabaSignInCtaBanner({
     super.key,
     required this.brown,
     required this.isDark,
@@ -106,7 +106,7 @@ class HolyCowSignInCtaBanner extends StatelessWidget {
               Text(
                 'Unlock your cosmic blueprint',
                 style: TextStyle(
-                  fontSize: AppTheme.holyCowTextSize + 4,
+                  fontSize: AppTheme.babaTextSize + 4,
                   fontWeight: FontWeight.w700,
                   color: c,
                   height: 1.2,
@@ -116,7 +116,7 @@ class HolyCowSignInCtaBanner extends StatelessWidget {
               Text(
                 'Sign in to add your birth details and see how today\'s sky speaks to you.',
                 style: TextStyle(
-                  fontSize: AppTheme.holyCowTextSize,
+                  fontSize: AppTheme.babaTextSize,
                   fontWeight: FontWeight.w500,
                   color: c.withValues(alpha: 0.7),
                   height: 1.3,
@@ -194,7 +194,7 @@ class HolyCowSignInCtaBanner extends StatelessWidget {
                   Text(
                     'Unlock your cosmic blueprint',
                     style: TextStyle(
-                      fontSize: AppTheme.holyCowTextSize + 2,
+                      fontSize: AppTheme.babaTextSize + 2,
                       fontWeight: FontWeight.w700,
                       color: c,
                       height: 1.2,
@@ -204,7 +204,7 @@ class HolyCowSignInCtaBanner extends StatelessWidget {
                   Text(
                     'Sign in to see how today\'s sky speaks to you.',
                     style: TextStyle(
-                      fontSize: AppTheme.holyCowTextSize - 1,
+                      fontSize: AppTheme.babaTextSize - 1,
                       fontWeight: FontWeight.w500,
                       color: c.withValues(alpha: 0.7),
                       height: 1.3,
@@ -253,7 +253,7 @@ class HolyCowSignInCtaBanner extends StatelessWidget {
   }
 }
 
-/// Small pill used inside [HolyCowSignInCtaBanner] benefits row.
+/// Small pill used inside [BabaSignInCtaBanner] benefits row.
 class _CtaBenefitChip extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -281,7 +281,7 @@ class _CtaBenefitChip extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              fontSize: AppTheme.holyCowTextSize - 1,
+              fontSize: AppTheme.babaTextSize - 1,
               fontWeight: FontWeight.w600,
               color: color.withValues(alpha: 0.85),
               height: 1.2,

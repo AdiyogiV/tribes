@@ -76,7 +76,7 @@ mixin AiChatPersistenceMixin on ChangeNotifier {
     }
   }
 
-  /// Get recent AI conversations (DM conversations with HolyCow)
+  /// Get recent AI conversations (DM conversations with Baba)
   Stream<List<DmConversation>> getRecentAiConversations({int limit = 10}) {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) {
@@ -94,12 +94,12 @@ mixin AiChatPersistenceMixin on ChangeNotifier {
         final data = doc.data();
         final participants = List<String>.from(data['participants'] ?? []);
         final isAiConversation = data['isAiConversation'] == true;
-        final containsHolyCow = participants.contains(HOLYCOW_USER_ID);
+        final containsBaba = participants.contains(HOLYCOW_USER_ID);
 
         // Check for both new AI conversations and legacy ones
         final isValidAiChat = isAiConversation ||
-            (containsHolyCow && doc.id.startsWith('ai_chat_')) ||
-            (containsHolyCow &&
+            (containsBaba && doc.id.startsWith('ai_chat_')) ||
+            (containsBaba &&
                 doc.id.startsWith('dm_') &&
                 doc.id.contains('holycow_system_user'));
 
@@ -246,12 +246,12 @@ mixin AiChatPersistenceMixin on ChangeNotifier {
         final data = doc.data();
         final participants = List<String>.from(data['participants'] ?? []);
         final isAiConversation = data['isAiConversation'] == true;
-        final containsHolyCow = participants.contains(HOLYCOW_USER_ID);
+        final containsBaba = participants.contains(HOLYCOW_USER_ID);
 
         // Check if this is an AI conversation
         final isValidAiChat = isAiConversation ||
-            (containsHolyCow && doc.id.startsWith('ai_chat_')) ||
-            (containsHolyCow &&
+            (containsBaba && doc.id.startsWith('ai_chat_')) ||
+            (containsBaba &&
                 doc.id.startsWith('dm_') &&
                 doc.id.contains('holycow_system_user'));
 

@@ -21,7 +21,7 @@ class TabBottomNav extends StatelessWidget {
   });
 
   // ── Layout constants (single source of truth) ──
-  // Also consumed by HolyCow's collapsed cow button so it can align itself
+  // Also consumed by Baba's collapsed cow button so it can align itself
   // with the profile (rightmost) tab. Keep these in sync with the build()
   // below: Padding(horizontal: horizontalPadding) → Row(spaceEvenly) of
   // [itemCount] items, each SizedBox(width: itemWidth).
@@ -65,7 +65,7 @@ indexFromRight * (gap + itemWidth);
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              // New Feed (HolyCow AI) - Default tab
+              // New Feed (Baba AI) - Default tab
               _NavItemWithLottie(
                 assetPath: 'assets/animations/globe.json',
                 isSelected: selectedIndex == 0,

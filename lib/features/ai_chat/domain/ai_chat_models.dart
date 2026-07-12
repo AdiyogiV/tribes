@@ -276,5 +276,5 @@ class ChatSessionState {
   }
 }
 
-/// HolyCow system user ID - this should be a consistent system user
+/// Baba system user ID - this should be a consistent system user
 const String HOLYCOW_USER_ID = 'holycow_system_user';

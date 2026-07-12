@@ -95,7 +95,7 @@ class AstroChatContentState extends State<AstroChatContent>
         // Text input - expanded to fill available space
         Expanded(child: _buildTextField()),
         const SizedBox(width: AppDimensions.spacingSm),
-        // Send button - HolyCow icon
+        // Send button - Baba icon
         _buildCowSendButton(),
       ],
     );
@@ -173,7 +173,7 @@ class AstroChatContentState extends State<AstroChatContent>
             color: AppTheme.astroBrown(
                     Theme.of(context).brightness == Brightness.dark)
                 .withValues(alpha: 0.5),
-            fontSize: AppTheme.holyCowTextSize,
+            fontSize: AppTheme.babaTextSize,
           ),
         ),
       ],
@@ -192,7 +192,7 @@ class AstroChatContentState extends State<AstroChatContent>
           'Recording...',
           style: TextStyle(
             color: Colors.red[400],
-            fontSize: AppTheme.holyCowTextSize,
+            fontSize: AppTheme.babaTextSize,
             fontWeight: FontWeight.w500,
             letterSpacing: 0.5,
           ),
@@ -239,7 +239,7 @@ class AstroChatContentState extends State<AstroChatContent>
         hintText: widget.hintText,
         hintStyle: TextStyle(
           color: AppTheme.primaryColor.withValues(alpha: 0.6),
-          fontSize: AppTheme.holyCowTextSize,
+          fontSize: AppTheme.babaTextSize,
           fontWeight: FontWeight.w500,
         ),
         border: InputBorder.none,
@@ -254,7 +254,7 @@ class AstroChatContentState extends State<AstroChatContent>
       ),
       style: TextStyle(
         color: AppTheme.primaryColor.withValues(alpha: 0.85),
-        fontSize: AppTheme.holyCowTextSize,
+        fontSize: AppTheme.babaTextSize,
         fontWeight: FontWeight.w500,
       ),
       maxLines: 1,

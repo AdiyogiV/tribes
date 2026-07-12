@@ -218,7 +218,7 @@ class _FollowRequestTileState extends State<FollowRequestTile> {
                     RichText(
                       text: TextSpan(
                         style: TextStyle(
-                          fontSize: AppTheme.holyCowTextSize,
+                          fontSize: AppTheme.babaTextSize,
                           color: primaryColor,
                           height: 1.3,
                         ),
@@ -235,7 +235,7 @@ class _FollowRequestTileState extends State<FollowRequestTile> {
                     Text(
                       _date,
                       style: TextStyle(
-                        fontSize: AppTheme.holyCowTextSize,
+                        fontSize: AppTheme.babaTextSize,
                         color: primaryColor.withValues(alpha: 0.5),
                       ),
                     ),
@@ -283,7 +283,7 @@ class _FollowRequestTileState extends State<FollowRequestTile> {
                                             const Text(
                                               'Accept',
                                               style: TextStyle(
-                                                fontSize: AppTheme.holyCowTextSize,
+                                                fontSize: AppTheme.babaTextSize,
                                                 fontWeight: FontWeight.w600,
                                                 color: Colors.white,
                                                 letterSpacing: -0.2,
@@ -315,7 +315,7 @@ class _FollowRequestTileState extends State<FollowRequestTile> {
                                   child: Text(
                                     'Decline',
                                     style: TextStyle(
-                                      fontSize: AppTheme.holyCowTextSize,
+                                      fontSize: AppTheme.babaTextSize,
                                       fontWeight: FontWeight.w600,
                                       color: primaryColor.withValues(alpha: 0.7),
                                       letterSpacing: -0.2,
@@ -354,7 +354,7 @@ class _FollowRequestTileState extends State<FollowRequestTile> {
                             Text(
                               _isAccepted ? 'Accepted' : 'Declined',
                               style: TextStyle(
-                                fontSize: AppTheme.holyCowTextSize,
+                                fontSize: AppTheme.babaTextSize,
                                 fontWeight: FontWeight.w600,
                                 color: _isAccepted
                                     ? AppTheme.successColor

@@ -8,20 +8,20 @@ import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/shared/presentation/widgets/media/glass_container.dart';
 import 'package:aurogram/shared/services/media/audio_input_service.dart';
 import 'package:aurogram/features/ai_chat/domain/ai_chat_provider.dart';
-import 'package:aurogram/features/astrology/presentation/pages/holycow/holycow_input_bar_controller.dart';
+import 'package:aurogram/features/astrology/presentation/pages/baba/baba_input_bar_controller.dart';
 
-/// The expanded HolyCow AI input toolbar: history button, center text field
+/// The expanded Baba AI input toolbar: history button, center text field
 /// (with cycling typewriter hint), and a send/mic button that flips to
 /// cancel/send while recording.
 ///
-/// This is the *view* half of [HolyCowInputBarController] — the page owns the
+/// This is the *view* half of [BabaInputBarController] — the page owns the
 /// controller (so it can collapse the bar on scroll) while this widget owns
 /// the purely-presentational bits: hint cycling, mic pulse animation, and the
 /// voice-recording lifecycle. Navigation is delegated to the page via the
 /// [onSendText] / [onVoiceResult] / [onShowRecent] callbacks so this widget
 /// stays unaware of routing vs. inline-desktop concerns.
-class HolyCowInputBar extends StatefulWidget {
-  const HolyCowInputBar({
+class BabaInputBar extends StatefulWidget {
+  const BabaInputBar({
     super.key,
     required this.controller,
     required this.onSendText,
@@ -29,7 +29,7 @@ class HolyCowInputBar extends StatefulWidget {
     required this.onShowRecent,
   });
 
-  final HolyCowInputBarController controller;
+  final BabaInputBarController controller;
 
   /// Called with the trimmed message after the field is cleared & unfocused.
   final ValueChanged<String> onSendText;
@@ -50,10 +50,10 @@ class HolyCowInputBar extends StatefulWidget {
   ];
 
   @override
-  State<HolyCowInputBar> createState() => _HolyCowInputBarState();
+  State<BabaInputBar> createState() => _BabaInputBarState();
 }
 
-class _HolyCowInputBarState extends State<HolyCowInputBar>
+class _BabaInputBarState extends State<BabaInputBar>
     with SingleTickerProviderStateMixin {
   Timer? _hintTimer;
   final ValueNotifier<int> _hintIndexNotifier = ValueNotifier<int>(0);
@@ -71,7 +71,7 @@ class _HolyCowInputBarState extends State<HolyCowInputBar>
     _hintTimer = Timer.periodic(const Duration(seconds: 2), (_) {
       if (!mounted) return;
       _hintIndexNotifier.value =
-          (_hintIndexNotifier.value + 1) % HolyCowInputBar._hintPhrases.length;
+          (_hintIndexNotifier.value + 1) % BabaInputBar._hintPhrases.length;
     });
 
     _micAnimationController = AnimationController(
@@ -247,7 +247,7 @@ class _HolyCowInputBarState extends State<HolyCowInputBar>
                       );
                     },
                     child: Text(
-                      HolyCowInputBar._hintPhrases[hintIndex],
+                      BabaInputBar._hintPhrases[hintIndex],
                       key: ValueKey<int>(hintIndex),
                       style: TextStyle(
                         color: AppTheme.primaryColor.withValues(alpha: 0.4),

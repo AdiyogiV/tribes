@@ -56,7 +56,7 @@ class TabHandlerState extends State<TabHandler>
   PageController? _pageController;
 
   /// Bar visibility: ValueNotifier so we don't setState during scroll (avoids scroll jank).
-  /// Used by HolyCow (tab 0) to hide the bottom bar when scrolling down.
+  /// Used by Baba (tab 0) to hide the bottom bar when scrolling down.
   final ValueNotifier<bool> _scrollHidesBottomBarNotifier =
       ValueNotifier<bool>(false);
 
@@ -97,7 +97,7 @@ class TabHandlerState extends State<TabHandler>
     WidgetsBinding.instance.addObserver(this);
 
     // Initialize PageController for mobile swipe navigation
-    // PageView indices match tab indices directly (0=HolyCow, 1=Grams, etc.)
+    // PageView indices match tab indices directly (0=Baba, 1=Grams, etc.)
     if (!kIsWeb) {
       _pageController = PageController(initialPage: _selectedIndex);
     }
@@ -243,12 +243,12 @@ class TabHandlerState extends State<TabHandler>
     }
 
     // Create tab based on index
-    // Tab order: 0=HolyCow, 1=Grams, 2=Messages, 3=Profile
+    // Tab order: 0=Baba, 1=Grams, 2=Messages, 3=Profile
     Widget tab;
     switch (index) {
       case 0:
         tab = DashboardPage(
-          key: const PageStorageKey('holycow_auth'),
+          key: const PageStorageKey('baba_auth'),
           onScrollHidesBottomBar: (hide) =>
               _scrollHidesBottomBarNotifier.value = hide,
         );
@@ -264,7 +264,7 @@ class TabHandlerState extends State<TabHandler>
         break;
       default:
         tab = DashboardPage(
-          key: const PageStorageKey('holycow_auth'),
+          key: const PageStorageKey('baba_auth'),
           onScrollHidesBottomBar: (hide) =>
               _scrollHidesBottomBarNotifier.value = hide,
         );
@@ -283,12 +283,12 @@ class TabHandlerState extends State<TabHandler>
     }
 
     // Create tab based on index
-    // Tab order: 0=HolyCow, 1=Grams, 2=Login, 3=Settings
+    // Tab order: 0=Baba, 1=Grams, 2=Login, 3=Settings
     Widget tab;
     switch (index) {
       case 0:
         tab = DashboardPage(
-          key: const PageStorageKey('holycow_unauth'),
+          key: const PageStorageKey('baba_unauth'),
           onScrollHidesBottomBar: (hide) =>
               _scrollHidesBottomBarNotifier.value = hide,
         );
@@ -304,7 +304,7 @@ class TabHandlerState extends State<TabHandler>
         break;
       default:
         tab = DashboardPage(
-          key: const PageStorageKey('holycow_unauth'),
+          key: const PageStorageKey('baba_unauth'),
           onScrollHidesBottomBar: (hide) =>
               _scrollHidesBottomBarNotifier.value = hide,
         );
@@ -318,7 +318,7 @@ class TabHandlerState extends State<TabHandler>
   // Reset caches when user auth state changes
   void _resetTabCaches() {
     // Clear caches except for non-auth related tabs
-    // Keep holycow as it's not auth-dependent
+    // Keep baba as it's not auth-dependent
     final keysToKeep = [0];
 
     _cachedAuthenticatedTabs.removeWhere((key, _) => !keysToKeep.contains(key));
@@ -366,7 +366,7 @@ class TabHandlerState extends State<TabHandler>
   void _onItemTapped(int index, bool isAuthenticated) {
     // When logged out, last two tabs are Login and Settings (both tappable)
     if (mounted && _selectedIndex != index) {
-      // Reset bottom bar visibility when leaving HolyCow tab
+      // Reset bottom bar visibility when leaving Baba tab
       if (_selectedIndex == 0) {
         _scrollHidesBottomBarNotifier.value = false;
       }
@@ -433,7 +433,7 @@ class TabHandlerState extends State<TabHandler>
               _previousStatus = newStatus;
               // Reset initial tab consumption flag when status changes
               _hasConsumedInitialTab = false;
-              // When switching to unauthenticated, show HolyCow (not Login/Settings)
+              // When switching to unauthenticated, show Baba (not Login/Settings)
               if (newStatus == Status.Unauthenticated && _selectedIndex > 1) {
                 _selectedIndex = 0;
               }
@@ -531,11 +531,11 @@ class TabHandlerState extends State<TabHandler>
     } else {
       // Mobile: Use PageView for swipe navigation between tabs
       // PageView automatically handles gesture conflicts with vertical scrolling
-      // Tab indices match directly: 0=HolyCow, 1=Grams, 2=Messages, 3=Profile
+      // Tab indices match directly: 0=Baba, 1=Grams, 2=Messages, 3=Profile
       // CreationHubPage temporarily removed — will be re-added later
       final tabs = isAuthenticated
           ? <Widget>[
-              // Index 0: HolyCow (tab index 0)
+              // Index 0: Baba (tab index 0)
               _getAuthenticatedTab(0, auth.userId),
               // Index 1: Grams (tab index 1)
               _getAuthenticatedTab(1, auth.userId),
@@ -545,7 +545,7 @@ class TabHandlerState extends State<TabHandler>
               _getAuthenticatedTab(3, auth.userId),
             ]
           : <Widget>[
-              // Index 0: HolyCow (tab index 0)
+              // Index 0: Baba (tab index 0)
               _getUnauthenticatedTab(0),
               // Index 1: Grams (tab index 1)
               _getUnauthenticatedTab(1),
@@ -556,7 +556,7 @@ class TabHandlerState extends State<TabHandler>
             ];
 
       // Ensure PageController is initialized
-      // PageView indices match tab indices directly (0=HolyCow, 1=Grams, etc.)
+      // PageView indices match tab indices directly (0=Baba, 1=Grams, etc.)
       if (_pageController == null) {
         _pageController = PageController(initialPage: _selectedIndex);
       } else if (_pageController!.hasClients) {

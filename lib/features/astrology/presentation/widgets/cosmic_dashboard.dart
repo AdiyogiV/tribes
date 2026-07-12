@@ -70,7 +70,7 @@ class CosmicDashboard extends StatefulWidget {
             Text(
               'Unlock Your Cosmic View',
               style: TextStyle(
-                fontSize: AppTheme.holyCowTextSize,
+                fontSize: AppTheme.babaTextSize,
                 fontWeight: FontWeight.w700,
                 color: brown,
               ),
@@ -80,7 +80,7 @@ class CosmicDashboard extends StatefulWidget {
               'Sign in to see your birth chart, current planetary positions, and personalized insights.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: AppTheme.holyCowTextSize,
+                fontSize: AppTheme.babaTextSize,
                 height: 1.5,
                 color: brown.withValues(alpha: 0.7),
               ),
@@ -93,7 +93,7 @@ class CosmicDashboard extends StatefulWidget {
                 child: Text(
                   'Got it',
                   style: TextStyle(
-                    fontSize: AppTheme.holyCowTextSize,
+                    fontSize: AppTheme.babaTextSize,
                     fontWeight: FontWeight.w600,
                     color: brown,
                   ),
@@ -764,7 +764,7 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
         Text(
           'Cosmic Today',
           style: TextStyle(
-            fontSize: AppTheme.holyCowTextSize,
+            fontSize: AppTheme.babaTextSize,
             fontWeight: FontWeight.w600,
             color: brown,
           ),
@@ -793,7 +793,7 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
             Text(
               'Loading time guidance...',
               style: TextStyle(
-                fontSize: AppTheme.holyCowTextSize,
+                fontSize: AppTheme.babaTextSize,
                 fontWeight: FontWeight.w500,
                 color: c.withValues(alpha: 0.7),
               ),
@@ -914,7 +914,7 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
             Text(
               'Take a Mindful Moment',
               style: TextStyle(
-                fontSize: AppTheme.holyCowTextSize,
+                fontSize: AppTheme.babaTextSize,
                 fontWeight: FontWeight.w700,
                 color: brown,
               ),
@@ -924,7 +924,7 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
               'Pause. Take three deep breaths.\nNotice how you feel right now.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: AppTheme.holyCowTextSize,
+                fontSize: AppTheme.babaTextSize,
                 height: 1.5,
                 color: brown.withValues(alpha: 0.7),
               ),
@@ -937,7 +937,7 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
                 child: const Text(
                   'I\'m Present',
                   style: TextStyle(
-                    fontSize: AppTheme.holyCowTextSize,
+                    fontSize: AppTheme.babaTextSize,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF5C6BC0),
                   ),

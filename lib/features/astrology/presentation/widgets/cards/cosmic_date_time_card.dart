@@ -337,7 +337,7 @@ class VedicTimeInfoSheet extends StatelessWidget {
               'Vedic Time & Calendar',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: AppTheme.holyCowTextSize,
+                fontSize: AppTheme.babaTextSize,
                 fontWeight: FontWeight.w700,
                 color: c,
               ),
@@ -436,7 +436,7 @@ class VedicTimeInfoSheet extends StatelessWidget {
                 child: Text(
                   'Got it',
                   style: TextStyle(
-                    fontSize: AppTheme.holyCowTextSize,
+                    fontSize: AppTheme.babaTextSize,
                     fontWeight: FontWeight.w600,
                     color: c,
                   ),
@@ -456,7 +456,7 @@ class VedicTimeInfoSheet extends StatelessWidget {
         title,
         textAlign: TextAlign.center,
         style: TextStyle(
-          fontSize: AppTheme.holyCowTextSize + 1,
+          fontSize: AppTheme.babaTextSize + 1,
           fontWeight: FontWeight.w700,
           color: c.withValues(alpha: 0.5),
           letterSpacing: 0.5,
@@ -481,7 +481,7 @@ class VedicTimeInfoSheet extends StatelessWidget {
             title,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: AppTheme.holyCowTextSize,
+              fontSize: AppTheme.babaTextSize,
               fontWeight: FontWeight.w600,
               color: c,
             ),
@@ -491,7 +491,7 @@ class VedicTimeInfoSheet extends StatelessWidget {
             description,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: AppTheme.holyCowTextSize,
+              fontSize: AppTheme.babaTextSize,
               fontWeight: FontWeight.w400,
               color: c.withValues(alpha: 0.7),
               height: 1.4,
@@ -641,7 +641,7 @@ String _extractPaksha(Map<String, dynamic>? samvat) {
 
 // ─────────────────────────────────────────────────────────────────────────
 // Split cards — VedicTimeCard (clock + Pr·Gh·Pa) and VedicDateCard
-// (month, paksha, tithi, numeric date).  Used on the HolyCow mobile
+// (month, paksha, tithi, numeric date).  Used on the Baba mobile
 // layout to give each section its own card.
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -651,9 +651,9 @@ String _extractPaksha(Map<String, dynamic>? samvat) {
 // mobile to save vertical space.
 // ─────────────────────────────────────────────────────────────────────────
 
-/// Single card combining clock, date, and time for the HolyCow mobile layout.
+/// Single card combining clock, date, and time for the Baba mobile layout.
 ///
-/// Combined Vedic date+time card for the HolyCow mobile layout.
+/// Combined Vedic date+time card for the Baba mobile layout.
 ///
 /// Today layout:   [ Clock | Date | ⓘ + Time ]
 /// Other date:     [ ±N days | Date | Today ↩ ]
@@ -924,7 +924,7 @@ class _VedicTimeCardState extends State<VedicTimeCard> {
     final pala = (secondsFromSunrise - (ghati * 1440)) ~/ 24;
 
     final textStyle = TextStyle(
-      fontSize: AppTheme.holyCowTextSize,
+      fontSize: AppTheme.babaTextSize,
       fontWeight: FontWeight.w500,
       color: c,
       height: 1.4,
@@ -1091,7 +1091,7 @@ class VedicDateCard extends StatelessWidget {
                 Text(
                   monthLine,
                   style: TextStyle(
-                    fontSize: AppTheme.holyCowTextSize,
+                    fontSize: AppTheme.babaTextSize,
                     fontWeight: FontWeight.w500,
                     color: c,
                     height: 1.4,
@@ -1101,7 +1101,7 @@ class VedicDateCard extends StatelessWidget {
                 Text(
                   pakshaLine,
                   style: TextStyle(
-                    fontSize: AppTheme.holyCowTextSize,
+                    fontSize: AppTheme.babaTextSize,
                     fontWeight: FontWeight.w500,
                     color: c,
                     height: 1.4,
@@ -1111,7 +1111,7 @@ class VedicDateCard extends StatelessWidget {
                 Text(
                   tithiNameOnly,
                   style: TextStyle(
-                    fontSize: AppTheme.holyCowTextSize,
+                    fontSize: AppTheme.babaTextSize,
                     fontWeight: FontWeight.w500,
                     color: c,
                     height: 1.4,
@@ -1121,7 +1121,7 @@ class VedicDateCard extends StatelessWidget {
                 Text(
                   vedicNumericDate,
                   style: TextStyle(
-                    fontSize: AppTheme.holyCowTextSize,
+                    fontSize: AppTheme.babaTextSize,
                     fontWeight: FontWeight.w500,
                     color: c.withValues(alpha: 0.5),
                     height: 1.4,
