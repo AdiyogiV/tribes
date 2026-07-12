@@ -15,6 +15,7 @@ import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/features/ai_chat/voice/voice_relay_config.dart';
 import 'package:aurogram/features/ai_chat/voice/voice_engine_pref.dart';
 import 'package:aurogram/features/ai_chat/voice/voice_mic_mode_pref.dart';
+import 'package:aurogram/features/ai_chat/voice/baba_tool_registry.dart';
 
 /// High-level state of a live voice conversation with Aryabhatt.
 enum VoiceCallState {
@@ -291,11 +292,15 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
     // relay falls back to its own default if we send nothing.
     final sessionId = const Uuid().v4();
     final engine = _engine;
+    // Hand Baba the WHITELISTED tools registered for the current surface, so he
+    // can act (not just talk). Empty list => a plain conversational session.
+    final tools = BabaToolRegistry.instance.declarations;
     _channel!.sink.add(jsonEncode({
       'type': 'start',
       'token': token,
       'sessionId': sessionId,
       'engine': VoiceEnginePref.wireValue(engine),
+      if (tools.isNotEmpty) 'tools': tools,
     }));
     AppLogger.i('Voice start frame sent',
         category: LogCategory.voice,
@@ -303,6 +308,7 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
           'sessionId': sessionId,
           'engine': engine.name,
           'micMode': _micMode.name,
+          'tools': tools.length,
         });
   }
 
@@ -449,7 +455,32 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
       case 'session_closed':
         _setState(VoiceCallState.ended);
         break;
+      case 'tool_call':
+        // Baba wants to DO something (navigate, set a field, etc). Dispatch to
+        // the whitelisted registry and send the result back so he can react.
+        unawaited(_handleToolCall(msg));
+        break;
     }
+  }
+
+  /// Execute a tool Baba requested and return the result to the relay.
+  Future<void> _handleToolCall(Map<String, dynamic> msg) async {
+    final id = msg['id'] as String?;
+    final name = (msg['name'] as String?) ?? '';
+    final args = (msg['args'] as Map?)?.cast<String, dynamic>() ??
+        const <String, dynamic>{};
+    AppLogger.i('Baba tool_call',
+        category: LogCategory.voice, data: {'id': id, 'name': name});
+    final result = await BabaToolRegistry.instance.dispatch(name, args);
+    _channel?.sink.add(jsonEncode({
+      'type': 'tool_response',
+      'id': id,
+      'name': name,
+      'response': result,
+    }));
+    AppLogger.i('Baba tool_response',
+        category: LogCategory.voice,
+        data: {'id': id, 'name': name, 'ok': result['ok']});
   }
 
   void _playAudio(Uint8List bytes) {

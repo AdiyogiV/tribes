@@ -26,11 +26,15 @@ import { GoogleGenAI, Modality, StartSensitivity, ActivityHandling } from "@goog
 import { CONFIG } from "./config.js";
 
 export class LiveVoiceSession extends EventEmitter {
-    constructor(sessionId, uid, idToken) {
+    constructor(sessionId, uid, idToken, tools) {
         super();
         this.sessionId = sessionId;
         this.uid = uid;
         this.idToken = idToken;
+        // Whitelisted functionDeclarations the CLIENT registered for the current
+        // surface. The client owns the tool set (per-screen); we just declare
+        // them to Gemini and relay the calls/responses back and forth.
+        this._tools = Array.isArray(tools) ? tools : [];
         this._session = null;
         this._connected = false;
         this._closed = false;
@@ -108,6 +112,11 @@ export class LiveVoiceSession extends EventEmitter {
                     // (see _buildRealtimeInputConfig). Omitted entirely if it
                     // resolves to defaults so we never send an empty object.
                     ...(realtimeInputConfig ? { realtimeInputConfig } : {}),
+                    // Tools Baba may call this session (client-registered,
+                    // whitelisted). Omitted when there are none.
+                    ...(this._tools.length
+                        ? { tools: [{ functionDeclarations: this._tools }] }
+                        : {}),
                 },
                 callbacks: {
                     onopen: () => {
@@ -175,6 +184,20 @@ export class LiveVoiceSession extends EventEmitter {
 
     /** Translate a Live API server message into our event vocabulary. */
     _onMessage(msg) {
+        // Tool calls arrive at the top level, not inside serverContent. Forward
+        // each functionCall to the client, which runs it and sends a
+        // tool_response back (see sendToolResponse).
+        const calls = msg?.toolCall?.functionCalls;
+        if (Array.isArray(calls)) {
+            for (const call of calls) {
+                this.emit("tool_call", {
+                    id: call.id,
+                    name: call.name,
+                    args: call.args || {},
+                });
+            }
+        }
+
         const sc = msg?.serverContent;
         if (!sc) return;
 
@@ -208,6 +231,16 @@ export class LiveVoiceSession extends EventEmitter {
                     mimeType: `audio/pcm;rate=${CONFIG.inputSampleRateHertz}`,
                 },
             });
+        } catch (err) {
+            this.emit("error", err instanceof Error ? err : new Error(String(err)));
+        }
+    }
+
+    /** Send the client's tool result(s) back to Gemini. */
+    sendToolResponse(functionResponses) {
+        if (this._closed || !this._session) return;
+        try {
+            this._session.sendToolResponse({ functionResponses });
         } catch (err) {
             this.emit("error", err instanceof Error ? err : new Error(String(err)));
         }

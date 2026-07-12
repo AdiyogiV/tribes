@@ -22,11 +22,11 @@ import { LiveVoiceSession } from "./live_session.js";
 // Default comes from VOICE_ENGINE; the client may override PER SESSION by
 // sending `engine` in its start frame (used by the in-app Live<->CX toggle).
 const ALLOWED_ENGINES = new Set(["live", "multilingual", "cx"]);
-const makeSession = (sessionId, uid, idToken, engine) => {
+const makeSession = (sessionId, uid, idToken, engine, tools) => {
     const eng = ALLOWED_ENGINES.has(engine) ? engine : CONFIG.voiceEngine;
     switch (eng) {
         case "live":
-            return new LiveVoiceSession(sessionId, uid, idToken);
+            return new LiveVoiceSession(sessionId, uid, idToken, tools);
         case "cx":
             return new CxVoiceSession(sessionId);
         case "multilingual":
@@ -78,8 +78,8 @@ wss.on("connection", (ws) => {
         if (ws.readyState === ws.OPEN) ws.send(JSON.stringify(obj));
     };
 
-    const openSession = (sessionId, uid, idToken, engine) => {
-        session = makeSession(sessionId || randomUUID(), uid, idToken, engine);
+    const openSession = (sessionId, uid, idToken, engine, tools) => {
+        session = makeSession(sessionId || randomUUID(), uid, idToken, engine, tools);
 
         session.on("transcript", (t) => sendJson({ type: "transcript", ...t }));
         session.on("reply", (r) => sendJson({ type: "reply", text: r.text }));
@@ -87,6 +87,8 @@ wss.on("connection", (ws) => {
             if (ws.readyState === ws.OPEN) ws.send(buf); // binary TTS chunk
         });
         session.on("turn_end", () => sendJson({ type: "speaking_done" }));
+        // Baba wants to act: forward the tool call so the client can run it.
+        session.on("tool_call", (call) => sendJson({ type: "tool_call", ...call }));
         // Barge-in: user cut in while Aryabhatt was speaking. Tell the client to
         // flush whatever it has buffered and stop playing immediately.
         session.on("interrupt", () => sendJson({ type: "interrupt" }));
@@ -129,8 +131,15 @@ wss.on("connection", (ws) => {
                 // Bind the session to the user and forward their ID token so
                 // the brain (aiChat) can load their full chart from Firestore.
                 // `engine` (optional) lets the app pick Live vs CX per session.
-                openSession(msg.sessionId || uid, uid, msg.token, msg.engine);
+                openSession(msg.sessionId || uid, uid, msg.token, msg.engine, msg.tools);
             });
+        } else if (msg.type === "tool_response") {
+            // Client ran a tool Baba requested; hand the result back to Gemini.
+            if (session && typeof session.sendToolResponse === "function") {
+                session.sendToolResponse([
+                    { id: msg.id, name: msg.name, response: msg.response || {} },
+                ]);
+            }
         } else if (msg.type === "stop") {
             session?.end();
             session = null;
