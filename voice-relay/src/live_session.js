@@ -26,7 +26,7 @@ import { GoogleGenAI, Modality, StartSensitivity, ActivityHandling } from "@goog
 import { CONFIG } from "./config.js";
 
 export class LiveVoiceSession extends EventEmitter {
-    constructor(sessionId, uid, idToken, tools) {
+    constructor(sessionId, uid, idToken, tools, directive) {
         super();
         this.sessionId = sessionId;
         this.uid = uid;
@@ -35,6 +35,9 @@ export class LiveVoiceSession extends EventEmitter {
         // surface. The client owns the tool set (per-screen); we just declare
         // them to Gemini and relay the calls/responses back and forth.
         this._tools = Array.isArray(tools) ? tools : [];
+        // Optional per-session task appended to the persona (e.g. "guide
+        // onboarding"). Keeps ONE persona; this is just his job right now.
+        this._directive = typeof directive === "string" ? directive : "";
         this._session = null;
         this._connected = false;
         this._closed = false;
@@ -74,6 +77,10 @@ export class LiveVoiceSession extends EventEmitter {
         try {
             systemInstruction = await this._fetchSystemPrompt();
             if (this._closed) return; // client hung up while we were fetching
+            // Append the per-session task, if any (e.g. onboarding guide).
+            if (this._directive) {
+                systemInstruction = `${systemInstruction}\n\n${this._directive}`;
+            }
 
             const ai = new GoogleGenAI({
                 vertexai: true,

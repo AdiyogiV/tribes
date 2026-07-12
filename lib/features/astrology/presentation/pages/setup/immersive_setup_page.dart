@@ -1,13 +1,20 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
+import 'package:aurogram/core/config/api_endpoints.dart';
 import 'package:aurogram/shared/models/astrology_profile.dart';
 import 'package:aurogram/features/astrology/domain/astrology_service.dart';
 import 'package:aurogram/features/onboarding/presentation/widgets/star_field_painter.dart';
+import 'package:aurogram/features/onboarding/domain/baba_onboarding_tools.dart';
+import 'package:aurogram/features/ai_chat/voice/baba_tool_registry.dart';
+import 'package:aurogram/features/ai_chat/voice/voice_session_controller.dart';
+import 'package:aurogram/features/ai_chat/voice/voice_engine_pref.dart';
 import 'package:aurogram/features/astrology/presentation/pages/setup/date_picker_section.dart';
 import 'package:aurogram/features/astrology/presentation/pages/setup/time_picker_section.dart';
 import 'package:aurogram/features/astrology/presentation/pages/setup/location_search_section.dart';
@@ -25,6 +32,7 @@ class ImmersiveSetupPage extends StatefulWidget {
 class _ImmersiveSetupPageState extends State<ImmersiveSetupPage> with TickerProviderStateMixin {
   final _service = AstrologyService();
   final _scrollController = ScrollController();
+  final _voice = VoiceSessionController();
   
   _ChatStep _step = _ChatStep.welcome;
   final List<_ChatMessage> _messages = [];
@@ -63,6 +71,143 @@ class _ImmersiveSetupPageState extends State<ImmersiveSetupPage> with TickerProv
 
     _loadExisting();
     _startSequence();
+
+    // Baba drives THIS screen: force the Live engine (tools only flow over
+    // Live) and bind the onboarding tools to real behavior on this page.
+    _voice.engineOverride = VoiceEngine.live;
+    _voice.directiveOverride =
+        'You are guiding this person through setting up their birth chart. Warmly '
+        'collect their birth DATE, then TIME, then PLACE — one at a time. When '
+        'you hear each, call the matching tool (setBirthDate / setBirthTime / '
+        'setBirthPlace) and read the value back to confirm it. Birth time changes '
+        'the rising sign, so gently confirm it. If they do not know the time, '
+        'reassure them and use their best estimate. Once date, time and place are '
+        'all set, call submitBirthDetails to reveal their chart. Keep it short '
+        'and warm.';
+    _voice.addListener(_onVoiceChanged);
+    _bindBabaTools();
+  }
+
+  void _onVoiceChanged() {
+    if (mounted) setState(() {}); // reflect mic state in the input bar
+  }
+
+  bool get _voiceActive =>
+      _voice.state == VoiceCallState.connecting ||
+      _voice.state == VoiceCallState.listening ||
+      _voice.state == VoiceCallState.thinking ||
+      _voice.state == VoiceCallState.speaking;
+
+  Future<void> _toggleVoice() async {
+    HapticFeedback.mediumImpact();
+    if (_voiceActive) {
+      await _voice.hangUp();
+    } else {
+      await _voice.start();
+    }
+  }
+
+  /// Bind Baba's onboarding tools to fill THIS form. Both voice and the pickers
+  /// write the same state — the co-authored draft. Unbound on dispose.
+  void _bindBabaTools() {
+    final reg = BabaToolRegistry.instance;
+
+    reg.bindHandler(BabaOnboardingTools.setBirthDate, (args) async {
+      final y = (args['year'] as num?)?.toInt();
+      final mo = (args['month'] as num?)?.toInt();
+      final d = (args['day'] as num?)?.toInt();
+      if (y == null || mo == null || d == null) {
+        return {'set': false, 'reason': 'need year, month and day'};
+      }
+      setState(() { _year = y; _month = mo; _day = d; });
+      _dayController.jumpToItem(_day - 1);
+      _monthController.jumpToItem(_month - 1);
+      _yearController.jumpToItem(DateTime.now().year - _year);
+      _confirmDate();
+      return {'set': true, 'date': '$_year-$_month-$_day'};
+    });
+
+    reg.bindHandler(BabaOnboardingTools.setBirthTime, (args) async {
+      final h24 = (args['hour24'] as num?)?.toInt();
+      final min = (args['minute'] as num?)?.toInt() ?? 0;
+      if (h24 == null || h24 < 0 || h24 > 23) {
+        return {'set': false, 'reason': 'need hour24 (0-23)'};
+      }
+      setState(() {
+        _isAM = h24 < 12;
+        _hour = h24 == 0 ? 12 : (h24 > 12 ? h24 - 12 : h24);
+        _minute = min;
+      });
+      _hourController.jumpToItem(_hour - 1);
+      _minuteController.jumpToItem(_minute);
+      _ampmController.jumpToItem(_isAM ? 0 : 1);
+      _confirmTime();
+      return {'set': true, 'time': '${h24.toString().padLeft(2, '0')}:${min.toString().padLeft(2, '0')}'};
+    });
+
+    reg.bindHandler(BabaOnboardingTools.setBirthPlace, (args) async {
+      final city = (args['city'] as String?)?.trim();
+      if (city == null || city.isEmpty) {
+        return {'set': false, 'reason': 'need a city name'};
+      }
+      final geo = await _geocode(city);
+      if (geo == null) {
+        return {'set': false, 'reason': 'could not find "$city"'};
+      }
+      setState(() {
+        _place = geo['label'] as String?;
+        _lat = geo['lat'] as double?;
+        _lng = geo['lng'] as double?;
+        _tz = geo['tz'] as String?;
+      });
+      _confirmLocation();
+      return {'set': true, 'resolved': _place};
+    });
+
+    reg.bindHandler(BabaOnboardingTools.setGender, (args) async {
+      final g = (args['gender'] as String?)?.toUpperCase();
+      if (g == null || !['MALE', 'FEMALE', 'OTHER'].contains(g)) {
+        return {'set': false, 'reason': 'gender must be MALE, FEMALE or OTHER'};
+      }
+      final label = g == 'MALE' ? 'Male' : (g == 'FEMALE' ? 'Female' : 'Non-binary');
+      _confirmGender(label);
+      return {'set': true, 'gender': label};
+    });
+
+    reg.bindHandler(BabaOnboardingTools.submitBirthDetails, (args) async {
+      if (_place == null) {
+        return {'submitted': false, 'reason': 'birth place not set yet'};
+      }
+      await _saveProfile();
+      return {'submitted': true};
+    });
+  }
+
+  /// Resolve a city to coordinates + IANA timezone (open-meteo, same source the
+  /// manual search uses). Returns null if nothing matches.
+  Future<Map<String, dynamic>?> _geocode(String query) async {
+    try {
+      final uri = Uri.parse(ApiEndpoints.geocodingSearch).replace(
+        queryParameters: {'name': query, 'count': '1', 'language': 'en', 'format': 'json'},
+      );
+      final res = await http.get(uri).timeout(const Duration(seconds: 5));
+      final data = jsonDecode(res.body) as Map<String, dynamic>;
+      final items = data['results'] as List? ?? [];
+      if (items.isEmpty) return null;
+      final r = items.first as Map<String, dynamic>;
+      final name = (r['name'] as String?) ?? query;
+      final admin1 = (r['admin1'] as String?) ?? '';
+      final country = (r['country'] as String?) ?? '';
+      return {
+        'label': [name, admin1, country].where((s) => s.isNotEmpty).join(', '),
+        'lat': (r['latitude'] as num?)?.toDouble(),
+        'lng': (r['longitude'] as num?)?.toDouble(),
+        'tz': r['timezone'] as String?,
+      };
+    } catch (e) {
+      AppLogger.w('Baba geocode failed: $e');
+      return null;
+    }
   }
 
   Future<void> _loadExisting() async {
@@ -405,7 +550,14 @@ class _ImmersiveSetupPageState extends State<ImmersiveSetupPage> with TickerProv
   }
 
   Widget _buildInputBar(Color primary) {
-    // A fake disabled voice/text input to maintain the chat illusion
+    final active = _voiceActive;
+    final hint = active
+        ? (_voice.state == VoiceCallState.listening
+            ? 'Listening…'
+            : _voice.state == VoiceCallState.speaking
+                ? 'Baba is speaking…'
+                : 'Connecting…')
+        : 'Tap the mic and tell Baba, or use the cards…';
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -423,14 +575,21 @@ class _ImmersiveSetupPageState extends State<ImmersiveSetupPage> with TickerProv
                 borderRadius: BorderRadius.circular(24),
               ),
               alignment: Alignment.centerLeft,
-              child: Text("Use the cards above to answer...", style: TextStyle(color: Colors.white.withValues(alpha: 0.4))),
+              child: Text(hint, style: TextStyle(color: Colors.white.withValues(alpha: 0.4))),
             ),
           ),
           const SizedBox(width: 8),
-          Container(
-            height: 48, width: 48,
-            decoration: BoxDecoration(shape: BoxShape.circle, color: primary.withValues(alpha: 0.2)),
-            child: Icon(Icons.mic, color: primary),
+          GestureDetector(
+            onTap: _toggleVoice,
+            child: Container(
+              height: 48, width: 48,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: active ? primary : primary.withValues(alpha: 0.2),
+              ),
+              child: Icon(active ? Icons.stop_rounded : Icons.mic,
+                  color: active ? Colors.white : primary),
+            ),
           ),
         ],
       ),
@@ -439,6 +598,17 @@ class _ImmersiveSetupPageState extends State<ImmersiveSetupPage> with TickerProv
 
   @override
   void dispose() {
+    // Release Baba's onboarding tools + engine override, but NEVER dispose the
+    // shared voice singleton. End any call started from this screen.
+    BabaToolRegistry.instance.unbindHandler(BabaOnboardingTools.setBirthDate);
+    BabaToolRegistry.instance.unbindHandler(BabaOnboardingTools.setBirthTime);
+    BabaToolRegistry.instance.unbindHandler(BabaOnboardingTools.setBirthPlace);
+    BabaToolRegistry.instance.unbindHandler(BabaOnboardingTools.setGender);
+    BabaToolRegistry.instance.unbindHandler(BabaOnboardingTools.submitBirthDetails);
+    _voice.removeListener(_onVoiceChanged);
+    _voice.engineOverride = null;
+    _voice.directiveOverride = null;
+    if (_voiceActive) _voice.hangUp();
     _scrollController.dispose();
     _dayController.dispose(); _monthController.dispose(); _yearController.dispose();
     _hourController.dispose(); _minuteController.dispose(); _ampmController.dispose();

@@ -22,11 +22,11 @@ import { LiveVoiceSession } from "./live_session.js";
 // Default comes from VOICE_ENGINE; the client may override PER SESSION by
 // sending `engine` in its start frame (used by the in-app Live<->CX toggle).
 const ALLOWED_ENGINES = new Set(["live", "multilingual", "cx"]);
-const makeSession = (sessionId, uid, idToken, engine, tools) => {
+const makeSession = (sessionId, uid, idToken, engine, tools, directive) => {
     const eng = ALLOWED_ENGINES.has(engine) ? engine : CONFIG.voiceEngine;
     switch (eng) {
         case "live":
-            return new LiveVoiceSession(sessionId, uid, idToken, tools);
+            return new LiveVoiceSession(sessionId, uid, idToken, tools, directive);
         case "cx":
             return new CxVoiceSession(sessionId);
         case "multilingual":
@@ -78,8 +78,8 @@ wss.on("connection", (ws) => {
         if (ws.readyState === ws.OPEN) ws.send(JSON.stringify(obj));
     };
 
-    const openSession = (sessionId, uid, idToken, engine, tools) => {
-        session = makeSession(sessionId || randomUUID(), uid, idToken, engine, tools);
+    const openSession = (sessionId, uid, idToken, engine, tools, directive) => {
+        session = makeSession(sessionId || randomUUID(), uid, idToken, engine, tools, directive);
 
         session.on("transcript", (t) => sendJson({ type: "transcript", ...t }));
         session.on("reply", (r) => sendJson({ type: "reply", text: r.text }));
@@ -131,7 +131,7 @@ wss.on("connection", (ws) => {
                 // Bind the session to the user and forward their ID token so
                 // the brain (aiChat) can load their full chart from Firestore.
                 // `engine` (optional) lets the app pick Live vs CX per session.
-                openSession(msg.sessionId || uid, uid, msg.token, msg.engine, msg.tools);
+                openSession(msg.sessionId || uid, uid, msg.token, msg.engine, msg.tools, msg.directive);
             });
         } else if (msg.type === "tool_response") {
             // Client ran a tool Baba requested; hand the result back to Gemini.

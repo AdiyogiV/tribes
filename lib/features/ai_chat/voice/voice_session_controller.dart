@@ -125,6 +125,17 @@ class VoiceSessionController extends ChangeNotifier {
   String _aryabhattReply = '';
   String? _errorMessage;
 
+  /// When set, forces the voice engine for the NEXT call regardless of the
+  /// user's saved preference. Onboarding sets this to [VoiceEngine.live] because
+  /// tool-calling only flows over the Live engine (CX can't). Cleared by the
+  /// screen on exit.
+  VoiceEngine? engineOverride;
+
+  /// When set, appended to Baba's system prompt for the NEXT call to give him a
+  /// task for the current screen (e.g. "guide onboarding"). Keeps ONE persona;
+  /// this is just his job right now. Cleared by the screen on exit.
+  String? directiveOverride;
+
   VoiceCallState get state => _state;
   String get userTranscript => _userTranscript;
   String get aryabhattReply => _aryabhattReply;
@@ -149,7 +160,7 @@ class VoiceSessionController extends ChangeNotifier {
   Future<void> start() async {
     if (_state != VoiceCallState.idle && _state != VoiceCallState.ended) return;
     _micStarted = _relayReady = false;
-    _engine = await VoiceEnginePref.read();
+    _engine = engineOverride ?? await VoiceEnginePref.read();
     _micMode = await VoiceMicModePref.effectiveFor(_engine);
     // Clear last call's transcript + reply so a fresh tap never flashes stale
     // text in the caption before the first reply.
@@ -301,6 +312,8 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
       'sessionId': sessionId,
       'engine': VoiceEnginePref.wireValue(engine),
       if (tools.isNotEmpty) 'tools': tools,
+      if (directiveOverride != null && directiveOverride!.isNotEmpty)
+        'directive': directiveOverride,
     }));
     AppLogger.i('Voice start frame sent',
         category: LogCategory.voice,

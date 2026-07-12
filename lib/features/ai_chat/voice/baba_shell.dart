@@ -10,6 +10,7 @@ import 'package:aurogram/core/routing/app_router.dart';
 import 'package:aurogram/features/ai_chat/voice/baba_presence.dart';
 import 'package:aurogram/features/ai_chat/voice/baba_tool_registry.dart';
 import 'package:aurogram/features/ai_chat/voice/voice_session_controller.dart';
+import 'package:aurogram/features/onboarding/domain/baba_onboarding_tools.dart';
 
 /// The app-wide Baba presence.
 ///
@@ -87,6 +88,9 @@ class _BabaShellState extends State<BabaShell>
         return {'navigated': true, 'destination': dest};
       },
     ));
+
+    // Onboarding declarations (behavior bound by the birth-details screen).
+    BabaToolRegistry.instance.registerAll(BabaOnboardingTools.declarations());
   }
 
   @override
