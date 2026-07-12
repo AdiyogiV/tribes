@@ -105,6 +105,76 @@
   <!-- Agora SDK: lazy-loaded on demand, no need to preconnect -->
 
   <script>
+    // ── Firestore Web SDK crash guard (ca9 / b815) ────────────────────────
+    // The firebase-js-sdk Firestore client has a fatal bug (firebase-js-sdk
+    // #9267 / #9968 / #10008): a stray watch-target ack drives
+    // `pendingResponses` below zero → hardAssert throws
+    //   "INTERNAL ASSERTION FAILED: Unexpected state (ID: ca9)"
+    // that throw poisons Firestore's AsyncQueue, which then PERMANENTLY fails,
+    // so every later read/listen/write throws "(ID: b815)" — hundreds of
+    // repeats — while the PWA shell still renders from cache (looks "loaded"
+    // but Firestore is dead → blank/stale app, calls + data all fail).
+    //
+    // The client is unrecoverable in place (even terminate() enqueues on the
+    // dead queue). These are raw JS throws in a microtask, so Dart's
+    // runZonedGuarded / FlutterError.onError never see them. The only fix is a
+    // fresh client → a page reload. We cap reloads per session so a persistent
+    // boot-time crash can never become an infinite reload loop.
+    (function () {
+      var KEY = 'aurogram_fs_assert_reloads';
+      var MAX_RELOADS = 2;
+      var handled = false;
+
+      function isFatalAssertion(msg) {
+        return typeof msg === 'string'
+          && msg.indexOf('INTERNAL ASSERTION FAILED') !== -1
+          && (msg.indexOf('ca9') !== -1 || msg.indexOf('b815') !== -1);
+      }
+
+      function stringify(v) {
+        if (!v) return '';
+        if (typeof v === 'string') return v;
+        return String(v.stack || v.message || v);
+      }
+
+      function recover(msg) {
+        if (handled) return;
+        handled = true;
+        var count = 0;
+        try { count = parseInt(sessionStorage.getItem(KEY) || '0', 10) || 0; } catch (e) {}
+        console.warn('[fs-guard] Firestore ca9/b815 assertion — client bricked; reloadCount=' + count);
+        if (count >= MAX_RELOADS) {
+          console.warn('[fs-guard] reload cap reached — not reloading (avoiding loop)');
+          return;
+        }
+        try { sessionStorage.setItem(KEY, String(count + 1)); } catch (e) {}
+        // Let the current microtask unwind before swapping in a fresh client.
+        setTimeout(function () { try { location.reload(); } catch (e) {} }, 150);
+      }
+
+      window.addEventListener('unhandledrejection', function (ev) {
+        var msg = stringify(ev && ev.reason);
+        if (isFatalAssertion(msg)) {
+          try { ev.preventDefault(); } catch (e) {} // silence the console spam
+          recover(msg);
+        }
+      });
+
+      window.addEventListener('error', function (ev) {
+        var msg = stringify(ev && ev.error) + ' ' + ((ev && ev.message) || '');
+        if (isFatalAssertion(msg)) recover(msg);
+      });
+
+      // Survived a clearly-healthy window with no assertion → reset the reload
+      // budget so each independent future incident gets its own retries while a
+      // boot loop stays capped.
+      setTimeout(function () {
+        if (!handled) { try { sessionStorage.removeItem(KEY); } catch (e) {} }
+      }, 20000);
+    })();
+  </script>
+
+  <script>
     // Agora SDK lazy loader — only fetches when user enters a call
     var agoraLoaded = false, agoraLoadCallbacks = [], agoraLoadAttempted = false;
     window.loadAgoraSDK = function (cb) {
