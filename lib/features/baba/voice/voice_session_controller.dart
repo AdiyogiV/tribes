@@ -488,7 +488,8 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
     final args = (msg['args'] as Map?)?.cast<String, dynamic>() ??
         const <String, dynamic>{};
     AppLogger.i('Baba tool_call',
-        category: LogCategory.voice, data: {'id': id, 'name': name});
+        category: LogCategory.voice,
+        data: {'id': id, 'name': name, 'args': args});
     final result = await BabaToolRegistry.instance.dispatch(name, args);
     _channel?.sink.add(jsonEncode({
       'type': 'tool_response',
@@ -498,7 +499,7 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
     }));
     AppLogger.i('Baba tool_response',
         category: LogCategory.voice,
-        data: {'id': id, 'name': name, 'ok': result['ok']});
+        data: {'id': id, 'name': name, 'result': result});
   }
 
   void _playAudio(Uint8List bytes) {

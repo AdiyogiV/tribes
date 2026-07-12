@@ -26,6 +26,32 @@ import { randomUUID } from "node:crypto";
 import dialogflow from "@google-cloud/dialogflow-cx";
 import { CONFIG, cxApiEndpoint } from "./config.js";
 
+// ── protobuf Struct <-> plain JS ─────────────────────────────────────────
+// CX streaming responses hand back ToolCall.input_parameters as a RAW
+// google.protobuf.Struct ({ fields: { k: { kind, stringValue, ... } } })
+// rather than an auto-decoded plain object (unlike unary calls). If we forward
+// that wrapper as-is the client sees no `destination` and every navigate is a
+// silent no-op. So decode it here.
+function valueToJs(v) {
+    if (v == null) return null;
+    // gax exposes whichever field of the Value oneof is set; check by presence
+    // so we don't depend on the `kind` discriminator being populated.
+    if (v.stringValue !== undefined && v.stringValue !== null) return v.stringValue;
+    if (v.numberValue !== undefined && v.numberValue !== null) return v.numberValue;
+    if (v.boolValue !== undefined && v.boolValue !== null) return v.boolValue;
+    if (v.structValue !== undefined && v.structValue !== null) return structToJs(v.structValue);
+    if (v.listValue !== undefined && v.listValue !== null)
+        return (v.listValue.values || []).map(valueToJs);
+    return null; // nullValue or empty
+}
+function structToJs(s) {
+    if (s == null) return {};
+    if (!s.fields) return s; // already a plain object (auto-decoded)
+    const out = {};
+    for (const [k, val] of Object.entries(s.fields)) out[k] = valueToJs(val);
+    return out;
+}
+
 // Reuse one v3beta1 gRPC client across sessions (channels are pooled).
 const client = new dialogflow.v3beta1.SessionsClient({
     apiEndpoint: cxApiEndpoint(CONFIG.location),
@@ -256,11 +282,11 @@ export class CxVoiceSession extends EventEmitter {
                 const id = randomUUID();
                 this._pending.set(id, { tool: tc.tool, action: tc.action });
                 const name = await toolNameFor(tc.tool, tc.action);
-                this.emit("tool_call", {
-                    id,
-                    name,
-                    args: tc.inputParameters || {},
-                });
+                const args = structToJs(tc.inputParameters);
+                console.log(
+                    `[cx ${this.sessionId}] tool_call ${name} args=${JSON.stringify(args)}`,
+                );
+                this.emit("tool_call", { id, name, args });
             }
             this.awaitingTool = true;
             this._retireStream(); // hold here; sendToolResponse() resumes us
