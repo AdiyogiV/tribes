@@ -1,3 +1,5 @@
+import 'package:firebase_auth/firebase_auth.dart';
+
 import 'package:aurogram/core/routing/app_router.dart';
 import 'package:aurogram/core/routing/route_names.dart';
 import 'package:aurogram/features/baba/domain/baba_tool_registry.dart';
@@ -46,7 +48,12 @@ class BabaToolCatalog {
       if (path == null) {
         return {'navigated': false, 'reason': 'unknown destination: $dest'};
       }
-      appRouter.go(path);
+      // The daily-insight page needs the signed-in uid to stream the profile;
+      // without it Firestore throws "document path must be a non-empty string".
+      final extra = dest == 'dailyInsight'
+          ? {'uid': FirebaseAuth.instance.currentUser?.uid ?? ''}
+          : null;
+      appRouter.go(path, extra: extra);
       return {'navigated': true, 'destination': dest};
     },
   );

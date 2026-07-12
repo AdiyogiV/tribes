@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:aurogram/shared/models/daily_insight.dart';
 import 'package:aurogram/shared/models/astrology_profile.dart';
 import 'package:aurogram/features/astrology/domain/astrology_service.dart';
@@ -39,6 +40,12 @@ class DailyInsightPage extends StatefulWidget {
 class _DailyInsightPageState extends State<DailyInsightPage> {
   final _astrologyService = AstrologyService();
   bool _isGeneratingInsight = false;
+
+  /// The uid to stream against. Falls back to the signed-in user when a caller
+  /// (e.g. Baba's navigateTo) opens this page without passing one — an empty
+  /// uid makes Firestore throw "document path must be a non-empty string".
+  String get _uid =>
+      widget.uid.isNotEmpty ? widget.uid : (FirebaseAuth.instance.currentUser?.uid ?? '');
 
   // AI Chat input controllers
   final TextEditingController _messageController = TextEditingController();
@@ -213,7 +220,7 @@ class _DailyInsightPageState extends State<DailyInsightPage> {
 
   void _openSavedInsights() {
     HapticFeedback.lightImpact();
-    context.push('/astrology/saved/${widget.uid}');
+    context.push('/astrology/saved/${_uid}');
   }
 
   @override
@@ -279,7 +286,7 @@ class _DailyInsightPageState extends State<DailyInsightPage> {
                 // Content
                 SliverToBoxAdapter(
                   child: StreamBuilder<AstrologyProfile?>(
-                    stream: _astrologyService.streamProfile(widget.uid),
+                    stream: _astrologyService.streamProfile(_uid),
                     builder: (context, profileSnapshot) {
                       if (profileSnapshot.data != null) {
                         _lastProfile = profileSnapshot.data;
@@ -288,8 +295,8 @@ class _DailyInsightPageState extends State<DailyInsightPage> {
                       return StreamBuilder<DailyInsight?>(
                         stream: widget.insightDate != null
                             ? _astrologyService.streamInsightForDate(
-                                widget.uid, widget.insightDate!)
-                            : _astrologyService.streamTodayInsight(widget.uid),
+                                _uid, widget.insightDate!)
+                            : _astrologyService.streamTodayInsight(_uid),
                         builder: (context, insightSnapshot) {
                           final insight = insightSnapshot.data;
                           final isLoading = insightSnapshot.connectionState ==
@@ -366,7 +373,7 @@ class _DailyInsightPageState extends State<DailyInsightPage> {
                                                   cardIndex: index,
                                                   insightDate:
                                                       insight.dateString,
-                                                  uid: widget.uid,
+                                                  uid: _uid,
                                                 ),
                                               ),
                                             ),

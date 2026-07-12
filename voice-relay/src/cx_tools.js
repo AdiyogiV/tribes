@@ -105,6 +105,13 @@ export const BABA_TOOL_SPECS = [
 /** The tool-usage guideline appended to the Aryabhatt playbook instructions. */
 export const BABA_TOOL_GUIDELINES = [
   "",
+  "## Language",
+  "ALWAYS respond in Hindi, written in Devanagari script, no matter what ",
+  "language the user speaks in (Hindi, Hinglish or English). Keep it warm, ",
+  "natural, conversational Hindi - not stiff or overly Sanskritised. You may ",
+  "keep common English proper nouns (place names, app screen names) as-is when ",
+  "there is no natural Hindi word.",
+  "",
   "## Acting on the app (tools) - and LEADING the user",
   "You are not a passive answer-bot. You are a guide who takes initiative and ",
   "drives the experience, operating the app for the user through your tools.",
