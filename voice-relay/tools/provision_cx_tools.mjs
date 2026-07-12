@@ -92,10 +92,14 @@ async function main() {
   if (!pb) throw new Error(`Playbook "${PLAYBOOK_NAME}" not found`);
 
   const currentGuidelines = pb.instruction?.guidelines || "";
+  // Everything from the marker onward is OUR managed tool section. Strip it and
+  // re-append so re-runs pick up guideline changes (idempotent AND updatable).
   const marker = "## Acting on the app (tools)";
-  const guidelines = currentGuidelines.includes(marker)
-    ? currentGuidelines
-    : currentGuidelines + "\n" + BABA_TOOL_GUIDELINES;
+  const idx = currentGuidelines.indexOf(marker);
+  const base = (idx >= 0
+    ? currentGuidelines.slice(0, idx)
+    : currentGuidelines).trimEnd();
+  const guidelines = base + "\n" + BABA_TOOL_GUIDELINES;
 
   const updated = await api(
     "PATCH",

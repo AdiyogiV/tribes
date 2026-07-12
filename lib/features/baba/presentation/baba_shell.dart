@@ -91,6 +91,17 @@ class _BabaShellState extends State<BabaShell>
     if (_inCall) {
       await _voice.hangUp();
     } else {
+      // Baba LEADS: open the call with a directive so he greets + takes the
+      // initiative instead of waiting to be asked. (On CX this becomes the
+      // kickoff turn; on Live it's appended to his task for this call.)
+      _voice.directiveOverride =
+          'The user just opened you by tapping your orb. Greet them warmly in '
+          'one short breath, then TAKE THE LEAD - do not wait to be asked. If '
+          'they have not set up their birth details yet, offer to do it now and '
+          'take them to the birth-details screen to collect date, time and '
+          'place; otherwise offer a useful next step such as their daily '
+          'insight. Keep it to one or two sentences and end by moving them '
+          'forward.';
       await _voice.start();
     }
   }

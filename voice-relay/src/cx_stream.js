@@ -98,12 +98,15 @@ export class CxVoiceSession extends EventEmitter {
      * @param {string} sessionId stable id per user/device for context
      * @param {Array}  [_tools]  streamed client declarations — IGNORED for CX
      *   (its tools live on the agent). Kept for a uniform makeSession signature.
-     * @param {string} [_directive] per-session task — not applied on CX (the
-     *   playbook's instructions own the persona/behaviour).
+     * @param {string} [directive] optional KICKOFF cue. When set, we open the
+     *   call with a text turn carrying this cue so Baba speaks/acts FIRST and
+     *   leads, instead of waiting for the user. The playbook still owns the
+     *   persona; this is just his opening move.
      */
-    constructor(sessionId, _tools, _directive) {
+    constructor(sessionId, _tools, directive) {
         super();
         this.sessionId = sessionId;
+        this.directive = (directive || "").trim();
         this.stream = null;
         this.configSent = false;
         this.ended = false;         // true only after a real hang-up / fatal error
@@ -171,10 +174,31 @@ export class CxVoiceSession extends EventEmitter {
         }));
     }
 
-    /** Begin the session: open the first audio turn. */
+    /** First request of a KICKOFF turn: a text cue so Baba leads (speaks first). */
+    _kickoffRequest() {
+        return {
+            session: this._sessionPath(),
+            queryInput: {
+                text: { text: this.directive },
+                languageCode: CONFIG.languageCode,
+            },
+            outputAudioConfig: this._outputAudioConfig(),
+        };
+    }
+
+    /**
+     * Begin the session. With a directive, Baba OPENS the call and leads;
+     * otherwise we just open the mic and wait for the user to speak.
+     */
     start() {
         this.ended = false;
-        this._openTurn([this._configRequest()], /* audio */ true);
+        if (this.directive) {
+            // Kickoff is a text turn (not audio): Baba responds/acts first, then
+            // the normal turn cycle re-arms an audio turn to listen.
+            this._openTurn([this._kickoffRequest()], /* audio */ false);
+        } else {
+            this._openTurn([this._configRequest()], /* audio */ true);
+        }
     }
 
     /**

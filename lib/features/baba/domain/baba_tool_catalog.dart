@@ -19,14 +19,15 @@ class BabaToolCatalog {
   static final BabaTool _navigateTo = BabaTool(
     name: 'navigateTo',
     description: 'Take the user to one of the app\'s main screens. Use when '
-        'they ask to go somewhere, or when guiding them there yourself.',
+        'they ask to go somewhere, or when leading them there yourself.',
     parameters: const {
       'type': 'object',
       'properties': {
         'destination': {
           'type': 'string',
-          'enum': ['home', 'dailyInsight', 'chat'],
-          'description': 'Which screen to open.',
+          'enum': ['home', 'dailyInsight', 'chat', 'birthDetails'],
+          'description': 'Which screen to open. Use "birthDetails" to open the '
+              'birth-details setup so you can collect date, time and place.',
         },
       },
       'required': ['destination'],
@@ -38,6 +39,7 @@ class BabaToolCatalog {
         'home': RouteNames.home,
         'dailyInsight': RouteNames.dailyInsight,
         'chat': RouteNames.aiChat,
+        'birthDetails': RouteNames.astrologySetup,
       };
       final dest = args['destination'] as String?;
       final path = routes[dest];
