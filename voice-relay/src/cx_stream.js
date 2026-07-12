@@ -1,39 +1,88 @@
 /**
- * Dialogflow CX bidirectional streaming wrapper.
+ * Dialogflow CX bidirectional streaming wrapper (v3beta1 — needed for tools).
  *
  * Owns ONE live conversation turn-loop with CX: push user audio in, get
- * interim transcripts + Aryabhatt's reply + synthesized TTS audio out.
+ * interim transcripts + Aryabhatt's reply + synthesized TTS audio out, AND
+ * handle client-side FUNCTION TOOL calls so Baba can act, not just talk.
+ *
+ * Tool loop (differs from the Live engine):
+ *   1. User audio -> CX. CX may reply with a `tool_call` inside the turn's
+ *      response_messages (ToolCall{tool, action, input_parameters}).
+ *   2. We emit "tool_call" {id, name, args} — same shape the client already
+ *      handles for Live — and STOP (don't cycle to a new audio turn yet).
+ *   3. Client runs the tool, sends its result back; server calls
+ *      sendToolResponse(). We open a FRESH turn whose first query_input is a
+ *      ToolCallResult, and CX continues — producing the spoken reply (or, if it
+ *      wants, another tool_call, which loops).
+ *   4. When a turn finishes with no tool_call, we emit turn_end and re-arm a
+ *      normal audio turn for the next utterance.
  *
  * Deliberately dumb about transport — it just emits events. server.js wires
  * those events to the browser/Flutter WebSocket. Keeps each file cohesive.
  */
 
 import { EventEmitter } from "node:events";
-import { SessionsClient } from "@google-cloud/dialogflow-cx";
+import { randomUUID } from "node:crypto";
+import dialogflow from "@google-cloud/dialogflow-cx";
 import { CONFIG, cxApiEndpoint } from "./config.js";
 
-// Reuse one gRPC client across sessions (channels are pooled internally).
-const client = new SessionsClient({
+// Reuse one v3beta1 gRPC client across sessions (channels are pooled).
+const client = new dialogflow.v3beta1.SessionsClient({
     apiEndpoint: cxApiEndpoint(CONFIG.location),
 });
+
+// CX ToolCall carries the tool RESOURCE + action; the client keys tools by
+// NAME. We provisioned each tool with displayName == the client's tool name, so
+// action == name. As a safety net we also map resource -> displayName, fetched
+// once and cached process-wide.
+let _toolNameByResource = null;
+async function toolNameFor(resource, action) {
+    if (action) return action; // fast path: action IS the function name
+    if (!_toolNameByResource) {
+        try {
+            const toolsClient = new dialogflow.v3beta1.ToolsClient({
+                apiEndpoint: cxApiEndpoint(CONFIG.location),
+            });
+            const parent = client.projectLocationAgentPath(
+                CONFIG.project, CONFIG.location, CONFIG.agentId,
+            );
+            const [tools] = await toolsClient.listTools({ parent });
+            _toolNameByResource = new Map(
+                (tools || []).map((t) => [t.name, t.displayName]),
+            );
+        } catch {
+            _toolNameByResource = new Map();
+        }
+    }
+    return _toolNameByResource.get(resource) || resource;
+}
 
 /**
  * A single voice session. Emits:
  *   'transcript' ({ text, final })  — live STT of the user
  *   'reply'      ({ text })         — Aryabhatt's text (captions)
  *   'audio'      (Buffer)           — TTS PCM chunk to play
+ *   'tool_call'  ({ id, name, args })— Baba wants the client to run a tool
  *   'turn_end'   ()                 — CX finished a response turn
  *   'error'      (Error)
  *   'close'      ()
  */
 export class CxVoiceSession extends EventEmitter {
-    /** @param {string} sessionId stable id per user/device for context */
-    constructor(sessionId) {
+    /**
+     * @param {string} sessionId stable id per user/device for context
+     * @param {Array}  [_tools]  streamed client declarations — IGNORED for CX
+     *   (its tools live on the agent). Kept for a uniform makeSession signature.
+     * @param {string} [_directive] per-session task — not applied on CX (the
+     *   playbook's instructions own the persona/behaviour).
+     */
+    constructor(sessionId, _tools, _directive) {
         super();
         this.sessionId = sessionId;
         this.stream = null;
         this.configSent = false;
-        this.ended = false; // true only after a real hang-up / fatal error
+        this.ended = false;         // true only after a real hang-up / fatal error
+        this.awaitingTool = false;  // true between emitting a tool_call and its result
+        this._pending = new Map();  // callId -> { tool, action }
     }
 
     /** Build the CX session resource path (env-scoped if not draft). */
@@ -49,17 +98,19 @@ export class CxVoiceSession extends EventEmitter {
         );
     }
 
-    /** The first request configures audio + language for the whole stream. */
-    _configRequest() {
-        const outputAudioConfig = {
+    _outputAudioConfig() {
+        const cfg = {
             audioEncoding: "OUTPUT_AUDIO_ENCODING_LINEAR_16",
             sampleRateHertz: CONFIG.outputSampleRateHertz,
         };
         if (CONFIG.voiceName) {
-            outputAudioConfig.synthesizeSpeechConfig = {
-                voice: { name: CONFIG.voiceName },
-            };
+            cfg.synthesizeSpeechConfig = { voice: { name: CONFIG.voiceName } };
         }
+        return cfg;
+    }
+
+    /** First request of an AUDIO turn: configures audio + language. */
+    _configRequest() {
         return {
             session: this._sessionPath(),
             queryInput: {
@@ -67,29 +118,45 @@ export class CxVoiceSession extends EventEmitter {
                     config: {
                         audioEncoding: "AUDIO_ENCODING_LINEAR_16",
                         sampleRateHertz: CONFIG.inputSampleRateHertz,
-                        // Let CX auto-detect end-of-speech and close the turn.
-                        // We reopen a fresh stream for the next utterance.
                         singleUtterance: true,
                     },
                 },
                 languageCode: CONFIG.languageCode,
             },
-            outputAudioConfig,
+            outputAudioConfig: this._outputAudioConfig(),
         };
     }
 
-    /** Begin the session: open the first turn's stream. */
+    /** First request(s) of a TOOL-RESULT turn: feed CX the tool outputs. */
+    _toolResultRequests(results) {
+        return results.map((r, i) => ({
+            // Only the first request needs the session + output audio config.
+            ...(i === 0
+                ? { session: this._sessionPath(), outputAudioConfig: this._outputAudioConfig() }
+                : {}),
+            queryInput: {
+                languageCode: CONFIG.languageCode,
+                toolCallResult: {
+                    tool: r.tool,
+                    action: r.action,
+                    outputParameters: r.response || {},
+                },
+            },
+        }));
+    }
+
+    /** Begin the session: open the first audio turn. */
     start() {
         this.ended = false;
-        this._openTurn();
+        this._openTurn([this._configRequest()], /* audio */ true);
     }
 
     /**
-     * Open ONE turn's bidi stream. With singleUtterance the server ends the
-     * stream after it replies; we transparently reopen for the next utterance
-     * so the caller sees one continuous conversation (no 'close' per turn).
+     * Open ONE turn's bidi stream and write its initial request(s).
+     * @param {Array}   firstRequests requests to write immediately.
+     * @param {boolean} audioTurn     true => keep forwarding mic (configSent).
      */
-    _openTurn() {
+    _openTurn(firstRequests, audioTurn) {
         if (this.ended) return;
         this.configSent = false;
         this.stream = client.streamingDetectIntent();
@@ -99,51 +166,69 @@ export class CxVoiceSession extends EventEmitter {
             if (!this.ended) this.emit("error", err);
         });
         this.stream.on("end", () => {
-            // Safety net: if CX closes the stream on its own (rare), reopen for
-            // the next utterance unless we're shutting down. Normal turns are
-            // cycled proactively in _onData (CX does NOT auto-close the stream
-            // after returning its single detectIntentResponse).
-            if (!this.ended) this._openTurn();
-            else this.emit("close");
+            // We proactively retire streams in _onData; only reach here on an
+            // unsolicited close. Re-arm an audio turn unless shutting down or
+            // mid tool-call (waiting on the client).
+            if (this.ended) this.emit("close");
+            else if (!this.awaitingTool) this._openTurn([this._configRequest()], true);
         });
 
-        // First write = the config turn. Audio chunks follow.
-        this.stream.write(this._configRequest());
-        this.configSent = true;
+        for (const req of firstRequests) this.stream.write(req);
+        this.configSent = audioTurn; // only audio turns accept mic frames
     }
 
     /**
-     * Retire a spent stream WITHOUT triggering the auto-reopen path. CX leaves
-     * the bidi stream open and idle after it returns a turn's response, so we
-     * tear it down ourselves and immediately open a fresh one for the next
-     * utterance. Strip listeners first so the old stream's eventual end/error
-     * can't double-open or surface a spurious error.
+     * Retire a spent stream WITHOUT auto-reopening. Strip listeners so the old
+     * stream's eventual end/error can't double-open or surface a spurious error.
      */
-    _cycleTurn() {
-        if (this.ended) return;
+    _retireStream() {
         const spent = this.stream;
         this.stream = null;
-        this.configSent = false; // stop forwarding audio to the dying stream
+        this.configSent = false;
         if (spent) {
             spent.removeAllListeners();
             spent.on("error", () => {}); // swallow post-close cancels
-            try {
-                spent.end();
-            } catch {
-                // already closed; nothing to do
-            }
+            try { spent.end(); } catch { /* already closed */ }
         }
-        this._openTurn();
     }
 
-    /** Forward a raw PCM16 chunk from the client into CX. */
+    /** Retire the current stream and open a fresh AUDIO turn for next utterance. */
+    _cycleTurn() {
+        if (this.ended) return;
+        this._retireStream();
+        this._openTurn([this._configRequest()], true);
+    }
+
+    /** Forward a raw PCM16 chunk from the client into CX (audio turns only). */
     sendAudio(chunk) {
         if (!this.stream || !this.configSent) return;
         this.stream.write({ queryInput: { audio: { audio: chunk } } });
     }
 
+    /**
+     * Client ran the tool(s) Baba requested; feed the result(s) back and let CX
+     * continue the turn. `functionResponses` matches the Live interface:
+     *   [{ id, name, response }]
+     */
+    async sendToolResponse(functionResponses) {
+        if (this.ended) return;
+        const results = [];
+        for (const fr of functionResponses || []) {
+            const p = this._pending.get(fr.id);
+            if (!p) continue; // unknown/expired call id
+            this._pending.delete(fr.id);
+            results.push({ tool: p.tool, action: p.action, response: fr.response || {} });
+        }
+        if (!results.length) return;
+        // Retire the (idle) tool-call stream, then open a fresh turn that
+        // carries the tool results so CX can finish speaking.
+        this.awaitingTool = false;
+        this._retireStream();
+        this._openTurn(this._toolResultRequests(results), /* audio */ false);
+    }
+
     /** Translate one CX streaming response into our events. */
-    _onData(res) {
+    async _onData(res) {
         // Interim / final speech recognition of what the USER said.
         const rr = res.recognitionResult;
         if (rr && rr.transcript) {
@@ -154,31 +239,47 @@ export class CxVoiceSession extends EventEmitter {
             });
         }
 
-        // The full detect-intent response: Aryabhatt's reply + TTS audio.
         const dir = res.detectIntentResponse;
-        if (dir) {
-            const messages = dir.queryResult?.responseMessages || [];
-            for (const m of messages) {
-                const t = m.text?.text?.join(" ").trim();
-                if (t) this.emit("reply", { text: t });
-            }
-            if (dir.outputAudio && dir.outputAudio.length) {
-                this.emit("audio", Buffer.from(dir.outputAudio));
-            }
-            this.emit("turn_end");
-            // CX won't end the stream itself, so re-arm for the next utterance.
-            this._cycleTurn();
+        if (!dir) return;
+
+        const messages = dir.queryResult?.responseMessages || [];
+        const toolCalls = [];
+        for (const m of messages) {
+            const t = m.text?.text?.join(" ").trim();
+            if (t) this.emit("reply", { text: t });
+            if (m.toolCall) toolCalls.push(m.toolCall);
         }
+
+        // Baba wants to act: emit each call, remember it, and WAIT for results.
+        if (toolCalls.length) {
+            for (const tc of toolCalls) {
+                const id = randomUUID();
+                this._pending.set(id, { tool: tc.tool, action: tc.action });
+                const name = await toolNameFor(tc.tool, tc.action);
+                this.emit("tool_call", {
+                    id,
+                    name,
+                    args: tc.inputParameters || {},
+                });
+            }
+            this.awaitingTool = true;
+            this._retireStream(); // hold here; sendToolResponse() resumes us
+            return;
+        }
+
+        // Normal turn: play any audio, close the turn, re-arm for next utterance.
+        if (dir.outputAudio && dir.outputAudio.length) {
+            this.emit("audio", Buffer.from(dir.outputAudio));
+        }
+        this.emit("turn_end");
+        this._cycleTurn();
     }
 
     /** Close the session for good (user hung up). Stops the reopen loop. */
     end() {
         this.ended = true;
-        try {
-            this.stream?.end();
-        } catch {
-            // already closed; nothing to do
-        }
+        this._pending.clear();
+        try { this.stream?.end(); } catch { /* already closed */ }
         this.stream = null;
     }
 }

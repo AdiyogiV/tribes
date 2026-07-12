@@ -28,7 +28,7 @@ const makeSession = (sessionId, uid, idToken, engine, tools, directive) => {
         case "live":
             return new LiveVoiceSession(sessionId, uid, idToken, tools, directive);
         case "cx":
-            return new CxVoiceSession(sessionId);
+            return new CxVoiceSession(sessionId, tools, directive);
         case "multilingual":
         default:
             return new MultilingualVoiceSession(sessionId, uid, idToken);
