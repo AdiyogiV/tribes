@@ -12,16 +12,15 @@ import { normalizeDasha } from "./astro_helpers.js";
 // NAKSHATRA DATA
 // =============================================================================
 
-/**
- * All 27 Nakshatras in order (0-indexed)
- */
-export const NAKSHATRAS = [
-    "Ashwini", "Bharani", "Krittika", "Rohini", "Mrigashira", "Ardra",
-    "Punarvasu", "Pushya", "Ashlesha", "Magha", "Purva Phalguni", "Uttara Phalguni",
-    "Hasta", "Chitra", "Swati", "Vishakha", "Anuradha", "Jyeshtha",
-    "Moola", "Purva Ashadha", "Uttara Ashadha", "Shravana", "Dhanishta", "Shatabhisha",
-    "Purva Bhadrapada", "Uttara Bhadrapada", "Revati",
-];
+// Canonical nakshatra names + spelling/index/degree helpers live in ONE place.
+// Imported for internal use AND re-exported so existing importers
+// (compatibility.js, scripts) keep working unchanged.
+import {
+    NAKSHATRAS,
+    normalizeNakshatra,
+    getNakshatraFromDegree,
+} from "./nakshatras.js";
+export { NAKSHATRAS, normalizeNakshatra, getNakshatraFromDegree };
 
 /**
  * Yoni (Animal Symbol) for each Nakshatra - used for physical/instinctual compatibility
@@ -1148,10 +1147,6 @@ export function calculateCosmicMatch(person1, person2) {
  * @param {number} moonDegree - Moon's longitude in degrees (0-360)
  * @returns {string} Nakshatra name
  */
-export function getNakshatraFromDegree(moonDegree) {
-    const nakshatraIndex = Math.floor(moonDegree / (360 / 27)) % 27;
-    return NAKSHATRAS[nakshatraIndex];
-}
 
 /**
  * Get zodiac sign from degree
@@ -1161,170 +1156,6 @@ export function getNakshatraFromDegree(moonDegree) {
 export function getSignFromDegree(degree) {
     const signIndex = Math.floor(degree / 30) % 12;
     return ZODIAC_SIGNS[signIndex];
-}
-
-/**
- * Normalize nakshatra name to match our constants
- * Handles variations from different astrology APIs and transliterations
- * Our standard: NAKSHATRAS array in this file
- */
-export function normalizeNakshatra(name) {
-    if (!name) return null;
-    
-    // Clean up: remove parenthetical alternatives like "Poorva Phalguni(Pubba)"
-    let normalized = name.trim().replace(/\s*\([^)]*\)\s*/g, "").trim();
-    
-    // Direct match
-    if (NAKSHATRAS.includes(normalized)) return normalized;
-    
-    // Comprehensive variations mapping (lowercase key → standard name)
-    // Based on actual API responses from Free Astrology API
-    const variations = {
-        // Ashwini variations
-        "aswini": "Ashwini",
-        "ashvini": "Ashwini",
-        "asvini": "Ashwini",
-        
-        // Bharani - usually consistent
-        
-        // Krittika variations
-        "krithika": "Krittika",
-        "kritika": "Krittika",
-        
-        // Rohini - usually consistent
-        
-        // Mrigashira variations
-        "mrigasira": "Mrigashira",
-        "mrigashirsha": "Mrigashira",
-        "mrugasira": "Mrigashira",
-        
-        // Ardra variations
-        "aardra": "Ardra",
-        "arudra": "Ardra",
-        "thiruvathira": "Ardra",
-        
-        // Punarvasu variations
-        "punarpoosam": "Punarvasu",
-        "punartham": "Punarvasu",
-        
-        // Pushya variations
-        "pushyami": "Pushya",
-        "poosam": "Pushya",
-        "pooyam": "Pushya",
-        
-        // Ashlesha variations
-        "aaslesha": "Ashlesha",
-        "aslesha": "Ashlesha",
-        "ayilyam": "Ashlesha",
-        
-        // Magha variations
-        "makha": "Magha",
-        "makam": "Magha",
-        
-        // Purva Phalguni variations
-        "poorva phalguni": "Purva Phalguni",
-        "poorvaphalguni": "Purva Phalguni",
-        "pubba": "Purva Phalguni",
-        "pooram": "Purva Phalguni",
-        "purva phalguni pubba": "Purva Phalguni",
-        
-        // Uttara Phalguni variations
-        "uttaraphalguni": "Uttara Phalguni",
-        "uttaram": "Uttara Phalguni",
-        "uthram": "Uttara Phalguni",
-        
-        // Hasta - usually consistent
-        
-        // Chitra variations
-        "chithra": "Chitra",
-        "chithira": "Chitra",
-        
-        // Swati variations
-        "swathi": "Swati",
-        "chothi": "Swati",
-        
-        // Vishakha variations
-        "visakha": "Vishakha",
-        "visaka": "Vishakha",
-        "visakam": "Vishakha",
-        
-        // Anuradha variations
-        "anusham": "Anuradha",
-        "anizham": "Anuradha",
-        
-        // Jyeshtha variations
-        "jyeshta": "Jyeshtha",
-        "jyesta": "Jyeshtha",
-        "kettai": "Jyeshtha",
-        "thrikketta": "Jyeshtha",
-        
-        // Moola variations
-        "mool": "Moola",
-        "mula": "Moola",
-        "moolam": "Moola",
-        
-        // Purva Ashadha variations
-        "poorva ashadha": "Purva Ashadha",
-        "poorvaashadha": "Purva Ashadha",
-        "poorvaashaada": "Purva Ashadha",
-        "purvashadha": "Purva Ashadha",
-        "pooradam": "Purva Ashadha",
-        
-        // Uttara Ashadha variations
-        "uttaraashadha": "Uttara Ashadha",
-        "uttarashadha": "Uttara Ashadha",
-        "uthradam": "Uttara Ashadha",
-        
-        // Shravana variations
-        "sravanam": "Shravana",
-        "shravanam": "Shravana",
-        "shravana": "Shravana",
-        "shravan": "Shravana",
-        "sravana": "Shravana",
-        "thiruvonam": "Shravana",
-        "onam": "Shravana",
-        
-        // Dhanishta variations
-        "dhanistha": "Dhanishta",
-        "dhanishtha": "Dhanishta",
-        "avittam": "Dhanishta",
-        
-        // Shatabhisha variations
-        "shatabhishak": "Shatabhisha",
-        "shatabhishaj": "Shatabhisha",
-        "satabisha": "Shatabhisha",
-        "satabhisha": "Shatabhisha",
-        "chathayam": "Shatabhisha",
-        "sadayam": "Shatabhisha",
-        
-        // Purva Bhadrapada variations
-        "poorva bhadrapada": "Purva Bhadrapada",
-        "poorvabhadrapada": "Purva Bhadrapada",
-        "poorvaabhadra": "Purva Bhadrapada",
-        "purvabhadra": "Purva Bhadrapada",
-        "poorattathi": "Purva Bhadrapada",
-        
-        // Uttara Bhadrapada variations
-        "uttarabhadrapada": "Uttara Bhadrapada",
-        "uttarabhadra": "Uttara Bhadrapada",
-        "uttaraabhadra": "Uttara Bhadrapada",
-        "uthratadhi": "Uttara Bhadrapada",
-        
-        // Revati - usually consistent
-        "revathi": "Revati",
-    };
-    
-    const lower = normalized.toLowerCase();
-    if (variations[lower]) return variations[lower];
-    
-    // Try partial match
-    for (const nak of NAKSHATRAS) {
-        if (nak.toLowerCase().includes(lower) || lower.includes(nak.toLowerCase())) {
-            return nak;
-        }
-    }
-    
-    return normalized; // Return as-is if no match
 }
 
 /**
