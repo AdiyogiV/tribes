@@ -607,16 +607,15 @@ class _AstrologySetupPageState extends State<AstrologySetupPage> {
               padding: EdgeInsets.zero,
             ),
           ),
-          // Centered title - matching app header style
           Expanded(
             child: Center(
               child: Text(
-                'birth details',
+                'Birth Details',
                 style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
                   color: c,
-                  letterSpacing: 1.2,
+                  letterSpacing: -0.3,
                 ),
               ),
             ),

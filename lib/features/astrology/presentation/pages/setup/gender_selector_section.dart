@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:aurogram/core/theme/app_dimensions.dart';
 
-/// Gender selector with tappable chips.
+/// Gender selector with text buttons.
 class GenderSelectorSection extends StatelessWidget {
   final String? selectedGender;
   final Color primaryColor;
@@ -19,50 +18,50 @@ class GenderSelectorSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        _buildChip('Male', 'Male'),
-        const SizedBox(width: AppDimensions.spacingMdSm),
-        _buildChip('Female', 'Female'),
-        const SizedBox(width: AppDimensions.spacingMdSm),
-        _buildChip('Non-binary', 'Other'),
-      ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _buildChip('Male', 'MALE'),
+          _buildChip('Female', 'FEMALE'),
+          _buildChip('Non-binary', 'OTHER'),
+        ],
+      ),
     );
   }
 
   Widget _buildChip(String value, String label) {
     final c = primaryColor;
     final isSelected = selectedGender == value;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          HapticFeedback.selectionClick();
-          onGenderChanged(value);
-        },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? c.withValues(alpha: 0.15)
-                : c.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-            border: Border.all(
-              color:
-                  isSelected ? c.withValues(alpha: 0.3) : Colors.transparent,
-              width: 1.5,
-            ),
-          ),
-          child: Text(
+    
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onGenderChanged(value);
+      },
+      child: Column(
+        children: [
+          Text(
             label,
-            textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 14,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-              color: isSelected ? c : c.withValues(alpha: 0.5),
+              fontSize: 12,
+              fontFamily: isSelected ? 'serif' : null,
+              fontStyle: isSelected ? FontStyle.italic : FontStyle.normal,
+              fontWeight: isSelected ? FontWeight.w400 : FontWeight.w600,
+              letterSpacing: isSelected ? 1.0 : 3.0,
+              color: isSelected ? c : c.withValues(alpha: 0.3),
             ),
           ),
-        ),
+          const SizedBox(height: 4),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            height: 1,
+            width: isSelected ? 24 : 0,
+            color: c,
+          ),
+        ],
       ),
     );
   }

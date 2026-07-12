@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/shared/presentation/responsive/responsive.dart';
 import 'package:aurogram/shared/models/astrology_profile.dart';
-import 'package:aurogram/shared/presentation/widgets/universal/transparent_toolbox.dart';
 import 'package:aurogram/features/onboarding/domain/onboarding_constants.dart';
 import 'package:aurogram/features/onboarding/domain/onboarding_sign_data.dart';
 import 'package:aurogram/features/onboarding/presentation/widgets/onboarding_dialogs.dart';
 import 'package:aurogram/features/onboarding/presentation/steps/shared_widgets.dart';
-import 'package:aurogram/core/theme/app_dimensions.dart';
 
 class SignRevealPhase extends StatelessWidget {
   final AstrologyProfile profile;
@@ -44,103 +42,13 @@ class SignRevealPhase extends StatelessWidget {
           child: Scrollbar(
             thumbVisibility: true,
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(vertical: 32),
+              padding: const EdgeInsets.symmetric(vertical: 80),
               child: Center(
                 child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: isDesktop ? 500 : 480),
+                  constraints: const BoxConstraints(maxWidth: 480),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingXxl),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Clean header
-                        Text(
-                          'Your Cosmic Blueprint',
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.primaryColor,
-                            letterSpacing: -0.3,
-                          ),
-                        ),
-                        const SizedBox(height: AppDimensions.spacingSm),
-                        Text(
-                          'The three pillars of who you are',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: OnboardingColors.textSecondary(context),
-                          ),
-                        ),
-                        const SizedBox(height: AppDimensions.spacingSection),
-                        // Cards stacked vertically (same as mobile)
-                        // Rising first - your outer mask
-                        _buildSignCard(
-                          context: context,
-                          icon: Icons.arrow_upward_rounded,
-                          color: OnboardingColors.risingGreen,
-                          label: 'Rising Sign',
-                          value: profile.ascendant ?? '—',
-                          description: OnboardingSignData.getSignDescription(
-                              profile.ascendant, 'rising'),
-                          revealed: signRevealStep >= 1,
-                          signType: 'rising',
-                        ),
-                        const SizedBox(height: AppDimensions.spacingLg),
-                        // Sun second - your core identity
-                        _buildSignCard(
-                          context: context,
-                          icon: Icons.wb_sunny_rounded,
-                          color: OnboardingColors.sunGold,
-                          label: 'Sun Sign',
-                          value: profile.sunSign ?? '—',
-                          description: OnboardingSignData.getSignDescription(
-                              profile.sunSign, 'sun'),
-                          revealed: signRevealStep >= 2,
-                          signType: 'sun',
-                        ),
-                        const SizedBox(height: AppDimensions.spacingLg),
-                        // Moon third - your emotional self
-                        _buildSignCard(
-                          context: context,
-                          icon: Icons.nights_stay_rounded,
-                          color: OnboardingColors.moonPurple,
-                          label: 'Moon Sign',
-                          value: profile.moonSign ?? '—',
-                          description: OnboardingSignData.getSignDescription(
-                              profile.moonSign, 'moon'),
-                          revealed: signRevealStep >= 3,
-                          signType: 'moon',
-                        ),
-                        // Tap to read more hint
-                        if (signRevealStep >= 1)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 16),
-                            child: Text(
-                              'Tap any card to read more',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: OnboardingColors.textSecondary(context),
-                                fontStyle: FontStyle.italic,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        // Small share link below cards
-                        if (signRevealStep >= 3)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 16),
-                            child: ShareLink(onTap: onShare),
-                          ),
-                        const SizedBox(height: AppDimensions.spacingSection),
-                        // Continue button in flow
-                        if (signRevealStep >= 3)
-                          ContinueButton(
-                            label: 'Continue',
-                            onTap: onContinue,
-                          ),
-                        const SizedBox(height: AppDimensions.spacingXxl),
-                      ],
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 40),
+                    child: _buildContent(context),
                   ),
                 ),
               ),
@@ -154,92 +62,14 @@ class SignRevealPhase extends StatelessWidget {
   Widget _buildMobileLayout(BuildContext context) {
     return Stack(
       children: [
-        // Main scrollable content
         SafeArea(
           child: Center(
             child: SingleChildScrollView(
-              padding:
-                  const EdgeInsets.only(left: 0, right: 0, top: 32, bottom: 120),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Clean header
-                  Text(
-                    'Your Cosmic Blueprint',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.primaryColor,
-                      letterSpacing: -0.3,
-                    ),
-                  ),
-                  const SizedBox(height: AppDimensions.spacingSmMd),
-                  Text(
-                    'The three pillars of who you are',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: OnboardingColors.textSecondary(context),
-                    ),
-                  ),
-                  const SizedBox(height: AppDimensions.spacingXxl),
-                  // Rising first - your outer mask
-                  _buildSignCard(
-                    context: context,
-                    icon: Icons.arrow_upward_rounded,
-                    color: OnboardingColors.risingGreen,
-                    label: 'Rising Sign',
-                    value: profile.ascendant ?? '—',
-                    description: OnboardingSignData.getSignDescription(
-                        profile.ascendant, 'rising'),
-                    revealed: signRevealStep >= 1,
-                    signType: 'rising',
-                  ),
-                  // Sun second - your core identity
-                  _buildSignCard(
-                    context: context,
-                    icon: Icons.wb_sunny_rounded,
-                    color: OnboardingColors.sunGold,
-                    label: 'Sun Sign',
-                    value: profile.sunSign ?? '—',
-                    description: OnboardingSignData.getSignDescription(
-                        profile.sunSign, 'sun'),
-                    revealed: signRevealStep >= 2,
-                    signType: 'sun',
-                  ),
-                  // Moon third - your emotional self
-                  _buildSignCard(
-                    context: context,
-                    icon: Icons.nights_stay_rounded,
-                    color: OnboardingColors.moonPurple,
-                    label: 'Moon Sign',
-                    value: profile.moonSign ?? '—',
-                    description: OnboardingSignData.getSignDescription(
-                        profile.moonSign, 'moon'),
-                    revealed: signRevealStep >= 3,
-                    signType: 'moon',
-                  ),
-                  // Tap to read more hint
-                  if (signRevealStep >= 1)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Text(
-                        'Tap any card to read more',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: OnboardingColors.textSecondary(context),
-                          fontStyle: FontStyle.italic,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  // Small share link below cards
-                  if (signRevealStep >= 3) ShareLink(onTap: onShare),
-                ],
-              ),
+              padding: const EdgeInsets.only(left: 32, right: 32, top: 64, bottom: 120),
+              child: _buildContent(context),
             ),
           ),
         ),
-        // Continue button positioned at bottom (show when all signs revealed)
         if (signRevealStep >= 3)
           Positioned(
             bottom: 0,
@@ -256,154 +86,166 @@ class SignRevealPhase extends StatelessWidget {
     );
   }
 
-  Widget _buildSignCard({
+  Widget _buildContent(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'THE BLUEPRINT',
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 2.0,
+            color: OnboardingColors.textSecondary(context),
+          ),
+        ),
+        const SizedBox(height: 48),
+
+        // Rising
+        _buildSignRow(
+          context: context,
+          label: 'Rising',
+          value: profile.ascendant ?? '—',
+          description: OnboardingSignData.getSignDescription(profile.ascendant, 'rising'),
+          revealed: signRevealStep >= 1,
+          signType: 'rising',
+        ),
+
+        // Sun
+        _buildSignRow(
+          context: context,
+          label: 'Sun',
+          value: profile.sunSign ?? '—',
+          description: OnboardingSignData.getSignDescription(profile.sunSign, 'sun'),
+          revealed: signRevealStep >= 2,
+          signType: 'sun',
+        ),
+
+        // Moon
+        _buildSignRow(
+          context: context,
+          label: 'Moon',
+          value: profile.moonSign ?? '—',
+          description: OnboardingSignData.getSignDescription(profile.moonSign, 'moon'),
+          revealed: signRevealStep >= 3,
+          signType: 'moon',
+          isLast: true,
+        ),
+
+        if (signRevealStep >= 3)
+          Padding(
+            padding: const EdgeInsets.only(top: 40),
+            child: ShareLink(onTap: onShare),
+          ),
+          
+        if (signRevealStep >= 3 && MediaQuery.of(context).size.width >= 600)
+          Padding(
+            padding: const EdgeInsets.only(top: 64),
+            child: ContinueButton(
+              label: 'Continue',
+              onTap: onContinue,
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildSignRow({
     required BuildContext context,
-    required IconData icon,
-    required Color color,
     required String label,
     required String value,
     required String description,
     required bool revealed,
     required String signType,
+    bool isLast = false,
   }) {
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.0, end: revealed ? 1.0 : 0.0),
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 800),
       curve: Curves.easeOutCubic,
       builder: (context, anim, child) {
-        final clampedOpacity = anim.clamp(0.0, 1.0);
-        return Transform.translate(
-          offset: Offset(0, 20 * (1 - anim)),
-          child: Opacity(
-            opacity: clampedOpacity,
+        return Opacity(
+          opacity: anim.clamp(0.0, 1.0),
+          child: Transform.translate(
+            offset: Offset(0, 10 * (1 - anim)),
             child: child,
           ),
         );
       },
       child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: revealed
             ? () => _showSignDetails(
                   context: context,
-                  icon: icon,
-                  color: color,
                   label: label,
                   value: value,
                   description: description,
                   signType: signType,
                 )
             : null,
-        child: TransparentToolbox(
-          height: 130,
-          content: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
-                    // Label and Icon - left aligned
-                    Row(
-                      children: [
-                        Text(
-                          label,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: color,
-                          ),
-                        ),
-                        const SizedBox(width: AppDimensions.spacingSm),
-                        Icon(icon, color: color, size: 20),
-                      ],
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 32),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: isLast ? Colors.transparent : AppTheme.primaryColor.withValues(alpha: 0.1),
+                width: 1,
+              ),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text(
+                    label.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 2.0,
+                      color: AppTheme.primaryColor.withValues(alpha: 0.5),
                     ),
-                    // Placement meaning (explaining phrase) - right aligned
-                    if (OnboardingSignData.getPlacementMeaning(signType)
-                            .isNotEmpty &&
-                        revealed)
-                      Expanded(
-                        child: Text(
-                          OnboardingSignData.getPlacementMeaning(signType),
-                          textAlign: TextAlign.right,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            color: OnboardingColors.textSecondary(context),
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                // Sign name and tags on same line
-                if (revealed) ...[
-                  const SizedBox(height: AppDimensions.spacingSmMd),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      // Sign name - left aligned
-                      Text(
-                        value,
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.primaryColor,
-                        ),
-                      ),
-                      // Sign traits (tags) - right aligned
-                      if (OnboardingSignData.getSignTraits(
-                              value == '—' ? null : value)
-                          .isNotEmpty)
-                        Wrap(
-                          spacing: 5,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: OnboardingSignData.getSignTraits(
-                                  value == '—' ? null : value)
-                              .map((trait) => Material(
-                                    elevation: 1,
-                                    borderRadius: BorderRadius.circular(AppDimensions.radiusSmMd),
-                                    color: color,
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 5, vertical: 1),
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(AppDimensions.radiusSmMd),
-                                      ),
-                                      child: Text(
-                                        trait,
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                  ))
-                              .toList(),
-                        ),
-                    ],
                   ),
+                  if (revealed && OnboardingSignData.getPlacementMeaning(signType).isNotEmpty)
+                    Text(
+                      OnboardingSignData.getPlacementMeaning(signType),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontStyle: FontStyle.italic,
+                        color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                      ),
+                    ),
                 ],
+              ),
+              const SizedBox(height: 12),
+              if (revealed) ...[
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontFamily: 'serif',
+                    fontSize: 28,
+                    fontWeight: FontWeight.w400,
+                    color: AppTheme.primaryColor,
+                  ),
+                ),
                 if (description.isNotEmpty) ...[
-                  const SizedBox(height: AppDimensions.spacingSmMd),
+                  const SizedBox(height: 16),
                   Text(
                     description,
                     style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: OnboardingColors.textSecondary(context),
-                      height: 1.3,
+                      fontSize: 14,
+                      height: 1.6,
+                      fontWeight: FontWeight.w300,
+                      color: AppTheme.primaryColor.withValues(alpha: 0.8),
                     ),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ],
-            ),
+            ],
           ),
         ),
       ),
@@ -412,8 +254,6 @@ class SignRevealPhase extends StatelessWidget {
 
   void _showSignDetails({
     required BuildContext context,
-    required IconData icon,
-    required Color color,
     required String label,
     required String value,
     required String description,
@@ -424,8 +264,8 @@ class SignRevealPhase extends StatelessWidget {
 
     CardDetailsDialog.show(
       context,
-      icon: icon,
-      color: color,
+      icon: Icons.auto_awesome,
+      color: AppTheme.primaryColor,
       title: value,
       subtitle: label,
       description: description,

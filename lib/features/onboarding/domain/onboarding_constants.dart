@@ -23,14 +23,14 @@ class AnimationTiming {
 }
 
 // ============================================================================
-// ONBOARDING PHASE CONSTANTS (sequential: main flow 0-4, alternate 5-6)
+// ONBOARDING PHASE CONSTANTS (sequential: main flow 0-3, alternate 5-6)
 // ============================================================================
 class OnboardingPhase {
   static const int loading = 0;
   static const int signReveal = 1;
   static const int birthReading = 2;
   static const int currentTimes = 3;
-  static const int pathChoice = 4;
+  // 4 (pathChoice) removed — users now land on the home dashboard directly.
   static const int skip = 5;
   static const int retry = 6;
 }

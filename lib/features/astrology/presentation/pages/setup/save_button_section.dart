@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
-import 'package:aurogram/core/theme/app_dimensions.dart';
 
 /// Positioned save button for mobile layout.
 class SetupSaveButton extends StatelessWidget {
@@ -23,8 +22,6 @@ class SetupSaveButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cardColor =
-        dark ? Theme.of(context).colorScheme.surface : Colors.white;
     final c = primaryColor;
 
     return Positioned(
@@ -33,10 +30,10 @@ class SetupSaveButton extends StatelessWidget {
       right: 0,
       child: Container(
         padding: EdgeInsets.fromLTRB(
-          20,
+          32,
           16,
-          20,
-          MediaQuery.of(context).padding.bottom + 16,
+          32,
+          MediaQuery.of(context).padding.bottom + 24,
         ),
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -46,50 +43,33 @@ class SetupSaveButton extends StatelessWidget {
               Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0),
               Theme.of(context).scaffoldBackgroundColor,
             ],
+            stops: const [0.0, 0.3],
           ),
         ),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          child: Material(
-            color: cardColor,
-            elevation: canSave ? 2 : 0,
-            shadowColor: Colors.black.withValues(alpha: 0.2),
-            borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-            child: InkWell(
-              onTap: canSave && !saving ? onSave : null,
-              borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 200),
-                  child: saving
-                      ? PulsingDots(color: c, size: 6)
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              hasExisting
-                                  ? Icons.save_rounded
-                                  : Icons.auto_awesome_rounded,
-                              size: 20,
-                              color: canSave ? c : c.withValues(alpha: 0.4),
-                            ),
-                            const SizedBox(width: AppDimensions.spacingMdSm),
-                            Text(
-                              hasExisting
-                                  ? 'Save Changes'
-                                  : 'Calculate Birth Chart',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: canSave ? c : c.withValues(alpha: 0.4),
-                              ),
-                            ),
-                          ],
-                        ),
-                ),
-              ),
-            ),
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: canSave && !saving ? onSave : null,
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            child: saving
+                ? PulsingDots(color: c, size: 6)
+                : Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    decoration: BoxDecoration(
+                      color: canSave ? c : c.withValues(alpha: 0.1),
+                    ),
+                    child: Text(
+                      (hasExisting ? 'SAVE CHANGES' : 'CALCULATE').toUpperCase(),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: canSave ? (dark ? Colors.black : Colors.white) : c.withValues(alpha: 0.3),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 2.0,
+                      ),
+                    ),
+                  ),
           ),
         ),
       ),
@@ -118,48 +98,34 @@ class SetupSaveButtonWide extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cardColor =
-        dark ? Theme.of(context).colorScheme.surface : Colors.white;
     final c = primaryColor;
 
-    return Material(
-      color: cardColor,
-      elevation: canSave ? 2 : 0,
-      shadowColor: Colors.black.withValues(alpha: 0.2),
-      borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-      child: InkWell(
-        onTap: canSave && !saving ? onSave : null,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 18),
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            child: saving
-                ? PulsingDots(color: c, size: 6)
-                : Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        hasExisting
-                            ? Icons.save_rounded
-                            : Icons.auto_awesome_rounded,
-                        size: 22,
-                        color: canSave ? c : c.withValues(alpha: 0.4),
-                      ),
-                      const SizedBox(width: AppDimensions.spacingMd),
-                      Text(
-                        hasExisting
-                            ? 'Save Changes'
-                            : 'Calculate Birth Chart',
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w600,
-                          color: canSave ? c : c.withValues(alpha: 0.4),
-                        ),
-                      ),
-                    ],
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: canSave && !saving ? onSave : null,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 40),
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          child: saving
+              ? PulsingDots(color: c, size: 6)
+              : Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  decoration: BoxDecoration(
+                    color: canSave ? c : c.withValues(alpha: 0.1),
                   ),
-          ),
+                  child: Text(
+                    (hasExisting ? 'SAVE CHANGES' : 'CALCULATE').toUpperCase(),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: canSave ? (dark ? Colors.black : Colors.white) : c.withValues(alpha: 0.3),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 2.0,
+                    ),
+                  ),
+                ),
         ),
       ),
     );

@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
-import 'package:aurogram/core/theme/app_dimensions.dart';
 
 /// Reusable Cupertino-style picker used in date/time sections.
 class SetupPicker extends StatelessWidget {
@@ -32,25 +31,27 @@ class SetupPicker extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(top: 8, bottom: 4),
             child: Text(
-              label,
+              label.toUpperCase(),
               style: TextStyle(
-                fontSize: 10,
+                fontSize: 9,
                 fontWeight: FontWeight.w600,
-                color: c.withValues(alpha: 0.4),
-                letterSpacing: 0.5,
+                color: c.withValues(alpha: 0.3),
+                letterSpacing: 2.0,
               ),
             ),
           ),
         Expanded(
           child: CupertinoPicker(
             scrollController: controller,
-            itemExtent: 36,
-            diameterRatio: 1.1,
-            squeeze: 1.0,
+            itemExtent: 44,
+            diameterRatio: 1.5,
+            squeeze: 1.1,
             selectionOverlay: Container(
               decoration: BoxDecoration(
-                color: c.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm),
+                border: Border(
+                  top: BorderSide(color: c.withValues(alpha: 0.1), width: 1),
+                  bottom: BorderSide(color: c.withValues(alpha: 0.1), width: 1),
+                ),
               ),
             ),
             onSelectedItemChanged: (i) {
@@ -62,9 +63,11 @@ class SetupPicker extends StatelessWidget {
                       child: Text(
                         s,
                         style: TextStyle(
-                          fontSize: isMeridiem ? 14 : 18,
-                          fontWeight: FontWeight.w600,
+                          fontFamily: 'serif',
+                          fontSize: isMeridiem ? 16 : 28,
+                          fontWeight: FontWeight.w400,
                           color: c,
+                          letterSpacing: isMeridiem ? 2.0 : 0.0,
                         ),
                       ),
                     ))
@@ -86,9 +89,9 @@ class PickerDivider extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 1,
-      height: 60,
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      color: primaryColor.withValues(alpha: 0.08),
+      height: 80,
+      margin: const EdgeInsets.symmetric(horizontal: 8),
+      color: primaryColor.withValues(alpha: 0.1),
     );
   }
 }

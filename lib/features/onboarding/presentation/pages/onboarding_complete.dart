@@ -255,10 +255,17 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
     pollForCurrentTimesReading();
   }
 
-  void _goToPathChoice() {
+    /// Ends the reading flow. First-time users land straight on the home
+  /// dashboard (tab 0); the update flow simply pops back to its caller.
+  void _finishOnboarding() {
     if (!mounted) return;
     HapticFeedback.mediumImpact();
-    setState(() => _phase = OnboardingPhase.pathChoice);
+    if (widget.isUpdate) {
+      Navigator.of(context).pop();
+      Navigator.of(context).pop(true);
+      return;
+    }
+    navigateToHome(targetTab: 0);
   }
 
   void _retryAstroLoad() async {
@@ -301,11 +308,11 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
         }
         break;
       case OnboardingPhase.currentTimes:
-        if (!_isGeneratingCurrentTimesReading &&
+                if (!_isGeneratingCurrentTimesReading &&
             _currentTimesReadingContent != null &&
             _currentTimesReadingContent!.isNotEmpty) {
           canContinue = true;
-          continueAction = _goToPathChoice;
+          continueAction = _finishOnboarding;
         }
         break;
     }
@@ -442,14 +449,7 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
         return CurrentTimesReadingPhase(
           readingContent: _currentTimesReadingContent,
           isGenerating: _isGeneratingCurrentTimesReading,
-          onContinue: _goToPathChoice,
-        );
-      case OnboardingPhase.pathChoice:
-        return PathChoicePhase(
-          onAstroDetails: navigateToAstroDetails,
-          onAyurveda: navigateToAyurveda,
-          onDailyInsight: navigateToDailyInsight,
-          onChat: () => navigateToHome(targetTab: 0),
+          onContinue: _finishOnboarding,
         );
       case OnboardingPhase.skip:
         return SkipPhase(

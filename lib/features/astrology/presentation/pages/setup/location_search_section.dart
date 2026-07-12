@@ -33,20 +33,20 @@ class LocationSearchButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: c.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMdLg),
-          border: Border.all(color: c.withValues(alpha: 0.1)),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: c.withValues(alpha: 0.08)),
         ),
         child: Row(
           children: [
-            Icon(Icons.search_rounded, color: c.withValues(alpha: 0.4), size: 20),
-            const SizedBox(width: AppDimensions.spacingMd),
+            Icon(Icons.search_rounded, color: c.withValues(alpha: 0.5), size: 20),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
                 place ?? 'Tap to search city...',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: place != null ? FontWeight.w500 : FontWeight.w400,
-                  color: place != null ? c : c.withValues(alpha: 0.35),
+                  color: place != null ? c : c.withValues(alpha: 0.5),
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -58,7 +58,14 @@ class LocationSearchButton extends StatelessWidget {
                   HapticFeedback.selectionClick();
                   onClear();
                 },
-                child: Icon(Icons.clear_rounded, size: 18, color: c.withValues(alpha: 0.4)),
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: c.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.close_rounded, size: 14, color: c.withValues(alpha: 0.7)),
+                ),
               ),
           ],
         ),

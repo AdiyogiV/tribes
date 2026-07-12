@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
-import 'package:aurogram/shared/presentation/widgets/universal/transparent_toolbox.dart';
-import 'package:aurogram/core/theme/app_dimensions.dart';
 
-/// Continue button used across onboarding phases
+/// Ultra-minimalist, sharp editorial continue button
 class ContinueButton extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
@@ -17,6 +15,10 @@ class ContinueButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = AppTheme.primaryColor;
+    final textColor = isDark ? Colors.black : Colors.white;
+
     return Focus(
       autofocus: false,
       onKeyEvent: (node, event) {
@@ -30,36 +32,27 @@ class ContinueButton extends StatelessWidget {
         return KeyEventResult.ignored;
       },
       child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: () {
           HapticFeedback.lightImpact();
           onTap();
         },
-        child: TransparentToolbox(
-          content: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Icon(
-                Icons.auto_awesome_rounded,
-                color: AppTheme.primaryColor,
-                size: 20,
-              ),
-              const SizedBox(width: AppDimensions.spacingMd),
-              Expanded(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.85),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Icon(
-                Icons.arrow_forward_rounded,
-                color: AppTheme.primaryColor,
-                size: 22,
-              ),
-            ],
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.zero, // Sharp, brutalist edge
+          ),
+          child: Text(
+            label.toUpperCase(),
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: textColor,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 2.0,
+            ),
           ),
         ),
       ),
@@ -67,7 +60,41 @@ class ContinueButton extends StatelessWidget {
   }
 }
 
-/// Path button for navigation choices
+/// Minimalist text-only share link
+class ShareLink extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const ShareLink({
+    super.key,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Text(
+          'SHARE BLUEPRINT',
+          style: TextStyle(
+            color: AppTheme.primaryColor,
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 1.5,
+            decoration: TextDecoration.underline,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Stark, minimal path button
 class PathButton extends StatelessWidget {
   final IconData icon;
   final Color color;
@@ -87,96 +114,54 @@ class PathButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: () {
         HapticFeedback.lightImpact();
         onTap();
       },
-      child: TransparentToolbox(
-        content: Row(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: AppTheme.primaryColor.withValues(alpha: 0.1),
+              width: 1,
+            ),
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Icon
-            Icon(icon, color: color, size: 20),
-            const SizedBox(width: AppDimensions.spacingMd),
-            // Text content
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
                     title,
                     style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.primaryColor.withValues(alpha: 0.85),
+                      fontFamily: 'serif',
+                      fontSize: 20,
+                      color: AppTheme.primaryColor,
                     ),
                   ),
+                  const SizedBox(height: 8),
                   Text(
                     subtitle,
                     style: TextStyle(
                       fontSize: 13,
-                      color: AppTheme.primaryColor.withValues(alpha: 0.55),
+                      height: 1.4,
+                      color: AppTheme.primaryColor.withValues(alpha: 0.6),
                     ),
                   ),
                 ],
               ),
             ),
-            // Chevron
             Icon(
-              Icons.chevron_right_rounded,
-              color: color.withValues(alpha: 0.6),
-              size: 22,
+              Icons.arrow_forward_rounded,
+              color: AppTheme.primaryColor.withValues(alpha: 0.3),
+              size: 20,
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Share link widget
-class ShareLink extends StatelessWidget {
-  final VoidCallback onTap;
-
-  const ShareLink({
-    super.key,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 12, bottom: 12),
-      child: GestureDetector(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          onTap();
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-          decoration: BoxDecoration(
-            color: AppTheme.primaryColor.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.open_in_new_rounded,
-                color: AppTheme.primaryColor,
-                size: 18,
-              ),
-              const SizedBox(width: AppDimensions.spacingSm),
-              Text(
-                'Share your blueprint',
-                style: TextStyle(
-                  color: AppTheme.primaryColor,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );
