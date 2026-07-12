@@ -153,6 +153,9 @@ backend/*.log
 backend/*_report.json
 backend/firebase-debug.log
 backend/serviceAccountKey.json
+# Orphaned build artifacts (hosting serves from build/web, not here) + archived dead code
+backend/public/
+backend/_archive/
 
 # Test artifacts
 *_report.json
