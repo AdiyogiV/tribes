@@ -1315,7 +1315,7 @@ export const onHealthSnapshotWrite = onDocumentWritten({
         }
 
         // ── Compute Vikriti (current balance) ───────────────────────────
-        // Keeps ayurvedaData.vikriti fresh so the HolyCow dashboard card
+        // Keeps ayurvedaData.vikriti fresh so the Baba dashboard card
         // always has up-to-date balance data without requiring the user
         // to visit the Ayurveda Details page.
         const astroData = userData.astrologyData;

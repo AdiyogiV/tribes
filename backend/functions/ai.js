@@ -180,7 +180,7 @@ async function fetchUserContext(uid) {
     }
 
     // Attach durable memory (cross-session life threads) when present. This is
-    // what lets HolyCow open with continuity instead of amnesia. Best-effort —
+    // what lets Baba open with continuity instead of amnesia. Best-effort —
     // a missing/failed memory never blocks the chat.
     // Await the memory lookup we kicked off at the top (overlapped with reads).
     const memory = await memoryPromise;
@@ -271,7 +271,7 @@ export const aiChat = onRequest(
             // but still want the spoken-length style. This flag forces it.
             const voiceStyle = body.voice === true;
             // Preserve explicit chatSource from dedicated pages (astrology/wellness).
-            // null = unified HolyCow mode (main chat with auto-loaded context).
+            // null = unified Baba mode (main chat with auto-loaded context).
             const chatSource = body.chatSource || null;
 
             // ── Context resolution ──────────────────────────────────────────

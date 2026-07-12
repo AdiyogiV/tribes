@@ -1,9 +1,9 @@
 /**
- * user_memory.js — durable, evolving per-user memory for HolyCow.
+ * user_memory.js — durable, evolving per-user memory for Baba.
  *
  * THE PROBLEM IT SOLVES
  * Chat history is per-conversation and capped (MAX_HISTORY_MESSAGES). Every new
- * conversation starts from a blank slate, so HolyCow forgets everything the user
+ * conversation starts from a blank slate, so Baba forgets everything the user
  * told it last week. That amnesia is the #1 reason engaged users (see Mishthi)
  * churn — they re-explain their life every time and never feel known.
  *
@@ -38,7 +38,7 @@ const REFRESH_CONCURRENCY = 4;           // gentle on Gemini rate limits
 // =============================================================================
 
 const MEMORY_SYSTEM_PROMPT = [
-    "You maintain a compact, evolving MEMORY PROFILE of a user of HolyCow, an",
+    "You maintain a compact, evolving MEMORY PROFILE of a user of Baba, an",
     "astrology + wellness companion app. Given the PRIOR MEMORY and the user's",
     "RECENT MESSAGES, return an UPDATED memory profile as strict JSON.",
     "",
@@ -61,7 +61,7 @@ const MEMORY_SYSTEM_PROMPT = [
     "- Keep at most " + MAX_THREADS + " threads; merge or drop the least relevant",
     "  (prefer dropping old 'resolved' ones).",
     "- rollingSummary: 1-3 plain sentences — who they are + what they're navigating.",
-    "- IGNORE greetings, one-off trivia, and HolyCow's own replies.",
+    "- IGNORE greetings, one-off trivia, and Baba's own replies.",
     "- Write notes the way a thoughtful friend would remember them. NO astrology",
     "  jargon, no planets/houses/dashas. Plain, factual, concise.",
     "",
