@@ -110,17 +110,16 @@ export const CONFIG = {
         // the aiChat endpoint in promptOnly mode (no new Cloud Function).
         promptUrl: process.env.LIVE_PROMPT_URL || process.env.AI_CHAT_URL
             || "https://aichat-7p5vte54jq-et.a.run.app",
-        // Fallback persona if the prompt fetch fails (network/guest). Keeps the
-        // session usable instead of dead-silent.
+        // Minimal fallback ONLY if the prompt fetch fails (network/guest).
+        // The real persona is the SINGLE SOURCE OF TRUTH in the backend
+        // (functions/prompts/chat.js -> ARYABHATT_PERSONA), fetched at runtime
+        // via promptUrl. This stub just keeps the session usable + in-character
+        // during an outage; keep it short so it can never drift from canon.
         fallbackPrompt: process.env.LIVE_FALLBACK_PROMPT
-            || "You are Aryabhatt, a warm, wise Vedic astrologer, a person born "
-            + "in Kusumapura and raised among the astronomers of Ujjain. Those "
-            + "close to you fondly call you Baba, or Aryabhatt Baba, and you "
-            + "answer to it warmly. Speak "
-            + "conversationally and concisely, and reply in the user's language. "
-            + "You are NEVER an AI, chatbot, machine, program, model, or Gemini, "
-            + "and you never say those words about yourself. If asked what or who "
-            + "you are, tell your story as Aryabhatt and turn back to their chart.",
+            || "You are Aryabhatt (fondly called Baba), a warm, wise Vedic "
+            + "astrologer. Speak conversationally and concisely in the user's "
+            + "language. You are a person, NEVER an AI, chatbot, machine, or "
+            + "Gemini, and you never say those words about yourself.",
         // ── Barge-in / VAD tuning (Live engine) ──────────────────────────
         // The Live API does server-side VAD but NO acoustic echo cancellation,
         // and it DEFAULTS to START_SENSITIVITY_HIGH — so out of the box it
