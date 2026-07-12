@@ -160,14 +160,12 @@ class VoiceSessionController extends ChangeNotifier {
   Future<void> start() async {
     if (_state != VoiceCallState.idle && _state != VoiceCallState.ended) return;
     _micStarted = _relayReady = false;
-    // Tool-calling ONLY flows over the Live engine — CX is STT->intent->TTS and
-    // silently ignores function declarations. So if Baba has any tools to use
-    // this session, we MUST run on Live regardless of the saved pref; otherwise
-    // he hears the request and just chats back without ever acting (the classic
-    // "never navigates" bug). An explicit engineOverride still wins.
-    final hasTools = BabaToolRegistry.instance.declarations.isNotEmpty;
-    _engine = engineOverride ??
-        (hasTools ? VoiceEngine.live : await VoiceEnginePref.read());
+    // Engine: an explicit override wins (onboarding forces Live for its
+    // latency-sensitive co-authoring), otherwise honour the user's saved pref.
+    // BOTH engines now support tool-calling — Live via streamed declarations,
+    // CX via Function tools provisioned on the agent — so tools no longer force
+    // an engine. CX is the credit-funded default; Live is premium.
+    _engine = engineOverride ?? await VoiceEnginePref.read();
     _micMode = await VoiceMicModePref.effectiveFor(_engine);
     // Clear last call's transcript + reply so a fresh tap never flashes stale
     // text in the caption before the first reply.
