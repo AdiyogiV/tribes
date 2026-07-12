@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
-import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/shared/models/astrology_profile.dart';
 import 'package:aurogram/features/astrology/domain/astrology_service.dart';
 import 'package:aurogram/features/onboarding/presentation/widgets/star_field_painter.dart';
@@ -13,9 +12,8 @@ import 'package:aurogram/features/astrology/presentation/pages/setup/date_picker
 import 'package:aurogram/features/astrology/presentation/pages/setup/time_picker_section.dart';
 import 'package:aurogram/features/astrology/presentation/pages/setup/location_search_section.dart';
 import 'package:aurogram/features/astrology/presentation/pages/setup/gender_selector_section.dart';
-import 'package:aurogram/shared/presentation/widgets/universal/toolbox/astro_chat_content.dart';
 
-enum _ChatStep { welcome, date, time, location, gender, saving, complete }
+enum _ChatStep { welcome, date, time, location, gender, saving }
 
 class ImmersiveSetupPage extends StatefulWidget {
   const ImmersiveSetupPage({super.key});
@@ -182,10 +180,13 @@ class _ImmersiveSetupPageState extends State<ImmersiveSetupPage> with TickerProv
 
     try {
       final hour24 = _isAM ? (_hour == 12 ? 0 : _hour) : (_hour == 12 ? 12 : _hour + 12);
+      // Note: timeZoneOffset is derived server-side (astro_sync computeOffsetHours)
+      // from the IANA timeZone name at the birth date, so DST is handled correctly.
       final p = AstrologyProfile(
-        id: _existing?.id ?? uid,
-        uid: uid,
         birthDate: DateTime(_year, _month, _day),
+        birthYear: _year,
+        birthMonth: _month,
+        birthDay: _day,
         birthTime: '${hour24.toString().padLeft(2, '0')}:${_minute.toString().padLeft(2, '0')}',
         birthPlace: _place!,
         birthLatitude: _lat,
@@ -193,11 +194,17 @@ class _ImmersiveSetupPageState extends State<ImmersiveSetupPage> with TickerProv
         timeZone: _tz,
         timeZoneOffset: _tzOffset,
         gender: _gender,
+        isEnabled: true,
+        visibility: AstroVisibility.public,
+        createdAt: _existing?.createdAt ?? DateTime.now(),
       );
       await _service.saveProfile(p);
+      // Kick off backend chart calculation in the background.
+      _service.calculateAndSaveAll(uid);
       HapticFeedback.heavyImpact();
       if (mounted) {
-        context.pushReplacement('/onboarding-complete?hasBirthDetails=true');
+        context.pushReplacement('/onboarding/complete',
+            extra: {'hasBirthDetails': true, 'isUpdate': false});
       }
     } catch (e) {
       AppLogger.e('Save error: $e');
@@ -215,7 +222,7 @@ class _ImmersiveSetupPageState extends State<ImmersiveSetupPage> with TickerProv
       body: Stack(
         children: [
           Positioned.fill(
-            child: CustomPaint(painter: StarFieldPainter(animationValue: 1.0, isDark: true)),
+            child: CustomPaint(painter: StarFieldPainter(rotation: 0.0, color: Colors.white.withValues(alpha: 0.15))),
           ),
           Positioned.fill(
             child: SafeArea(
@@ -323,33 +330,52 @@ class _ImmersiveSetupPageState extends State<ImmersiveSetupPage> with TickerProv
           hour: _hour, minute: _minute, isAM: _isAM,
           primaryColor: primary, dark: true,
           hourController: _hourController, minuteController: _minuteController, ampmController: _ampmController,
+          timeZone: _tz,
           onHourChanged: (v) => _hour = v + 1,
           onMinuteChanged: (v) => _minute = v,
-          onAMPMChanged: (v) => _isAM = v == 0,
+          onAmPmChanged: (v) => _isAM = v == 0,
         );
         onNext = _confirmTime;
         btnText = "Confirm Time";
         break;
       case _ChatStep.location:
-        content = LocationSearchSection(
-          initialPlace: _place, primaryColor: primary, dark: true,
-          onLocationSelected: (place, lat, lng, tz, tzOffset) {
-            setState(() {
-              _place = place; _lat = lat; _lng = lng; _tz = tz; _tzOffset = tzOffset;
-            });
-            _confirmLocation();
-          },
-        );
         return Padding(
           padding: const EdgeInsets.only(bottom: 24.0, top: 12.0),
-          child: content,
+          child: LocationSearchButton(
+            place: _place,
+            primaryColor: primary,
+            dark: true,
+            onClear: () => setState(() {
+              _place = null; _lat = null; _lng = null; _tz = null; _tzOffset = null;
+            }),
+            onTap: () => openLocationSearchOverlay(
+              context: context,
+              primaryColor: primary,
+              dark: true,
+              cardColor: Colors.black,
+              onSelect: (r) {
+                final name = (r['name'] as String?) ?? '';
+                final admin1 = (r['admin1'] as String?) ?? '';
+                final country = (r['country'] as String?) ?? '';
+                final label =
+                    [name, admin1, country].where((s) => s.isNotEmpty).join(', ');
+                setState(() {
+                  _place = label;
+                  _lat = (r['latitude'] as num?)?.toDouble();
+                  _lng = (r['longitude'] as num?)?.toDouble();
+                  _tz = r['timezone'] as String?;
+                });
+                _confirmLocation();
+              },
+            ),
+          ),
         );
       case _ChatStep.gender:
         return Padding(
           padding: const EdgeInsets.only(bottom: 24.0, top: 12.0),
           child: GenderSelectorSection(
-            selected: _gender, primaryColor: primary, dark: true,
-            onChanged: (g) => _confirmGender(g),
+            selectedGender: _gender, primaryColor: primary, dark: true,
+            onGenderChanged: (g) => _confirmGender(g),
           ),
         );
       default:
