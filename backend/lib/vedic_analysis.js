@@ -17,6 +17,10 @@
 
 import { logger } from "firebase-functions";
 import { normalizeDasha } from "./astro_helpers.js";
+// Canonical nakshatra helpers live in one place. Re-exported so the two
+// vedic test suites that import getNakshatraFromDegree from here keep working.
+import { getNakshatraFromDegree } from "./nakshatras.js";
+export { getNakshatraFromDegree };
 
 // ============================================================================
 // FOUNDATIONAL VEDIC CONSTANTS
@@ -140,17 +144,6 @@ const DIGNITY_SCORES = {
 };
 
 /**
- * Nakshatra list for reference (27 nakshatras)
- */
-const NAKSHATRAS = [
-    "Ashwini", "Bharani", "Krittika", "Rohini", "Mrigashira", "Ardra",
-    "Punarvasu", "Pushya", "Ashlesha", "Magha", "Purva Phalguni", "Uttara Phalguni",
-    "Hasta", "Chitra", "Swati", "Vishakha", "Anuradha", "Jyeshtha",
-    "Moola", "Purva Ashadha", "Uttara Ashadha", "Shravana", "Dhanishta", "Shatabhisha",
-    "Purva Bhadrapada", "Uttara Bhadrapada", "Revati",
-];
-
-/**
  * Calculate house number from degree (1-12)
  * Houses are 30° each, starting from Ascendant
  * 
@@ -168,17 +161,6 @@ export function calculateHouseFromDegree(degree, ascendantDegree) {
     const houseNumber = Math.floor(normalizedDegree / 30) + 1;
     // Ensure result is 1-12 (defensive check)
     return Math.min(Math.max(houseNumber, 1), 12);
-}
-
-/**
- * Get nakshatra from absolute degree (0-360)
- * Each nakshatra spans 13°20' (13.333...°)
- */
-export function getNakshatraFromDegree(degree) {
-    if (degree == null) return null;
-    const normalizedDegree = ((degree % 360) + 360) % 360;
-    const nakshatraIndex = Math.floor(normalizedDegree / (360 / 27));
-    return NAKSHATRAS[nakshatraIndex] || null;
 }
 
 /**
