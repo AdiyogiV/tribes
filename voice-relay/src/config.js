@@ -35,9 +35,10 @@ export const CONFIG = {
     agentId,
     environment: process.env.CX_ENVIRONMENT || "draft",
 
-    // Conversation + audio.
-    languageCode: process.env.CX_LANGUAGE || "en-IN",
-    voiceName: process.env.CX_VOICE || "", // "" => CX picks the default voice
+    // Conversation + audio. Hindi (hi-IN) is the preferred language for STT
+    // recognition AND Aryabhatt's spoken/text reply. Override per-deploy via env.
+    languageCode: process.env.CX_LANGUAGE || "hi-IN",
+    voiceName: process.env.CX_VOICE || "hi-IN-Chirp3-HD-Charon", // male, warm
 
     // ── Multilingual pipeline (STT v2 auto-detect + our own TTS) ──────────
     // When true, the relay does its own Speech-to-Text (auto language detect)
@@ -75,7 +76,7 @@ export const CONFIG = {
     // stops him cutting himself off.
     bargeInGraceMs: parseInt(process.env.BARGE_IN_GRACE_MS || "600", 10),
     // Language CX is asked to detect intent in (its only supported language).
-    cxTextLanguage: process.env.CX_TEXT_LANGUAGE || "en-IN",
+    cxTextLanguage: process.env.CX_TEXT_LANGUAGE || "hi-IN",
 
     // Audio formats on the wire. Keep in sync with the Flutter client + README.
     inputSampleRateHertz: parseInt(process.env.IN_SAMPLE_RATE || "16000", 10),
@@ -98,9 +99,9 @@ export const CONFIG = {
         location: process.env.LIVE_LOCATION || "us-central1",
         // Aryabhatt is male & warm. Charon/Fenrir read deeper than the default.
         voice: process.env.LIVE_VOICE || "Charon",
-        // Leave empty so native audio auto-detects & answers in ANY language
-        // (the whole reason we left single-language CX). Set e.g. "hi-IN" to pin.
-        languageCode: process.env.LIVE_LANGUAGE || "",
+        // Hindi (hi-IN) preferred so Aryabhatt speaks Hindi on the Live engine
+        // too (onboarding). Set LIVE_LANGUAGE="" to restore free auto-detect.
+        languageCode: process.env.LIVE_LANGUAGE || "hi-IN",
         // Sampling temperature for the Live model. Native audio defaults to ~1.0
         // (already lively). Only sent to the API when explicitly set, so we can
         // tune fun-vs-focus from the env without a redeploy. e.g. 1.1 = wilder.
