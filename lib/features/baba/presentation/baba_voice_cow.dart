@@ -109,8 +109,12 @@ class _BabaVoiceCowState extends State<BabaVoiceCow>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     // This cow is Baba's on-dashboard presence — tell the shell to stand down
-    // so we never render two Babas at once.
-    BabaPresence.instance.dashboardActive = true;
+    // so we never render two Babas at once. Deferred to post-frame: this
+    // initState runs mid-build of the shell's AnimatedBuilder, so notifying its
+    // listeners synchronously here throws "setState() called during build".
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) BabaPresence.instance.dashboardActive = true;
+    });
     _voice.addListener(_onVoiceChanged);
     _pulse = AnimationController(
       vsync: this,
