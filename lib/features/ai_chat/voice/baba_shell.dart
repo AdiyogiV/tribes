@@ -3,11 +3,10 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:go_router/go_router.dart';
 
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/routing/route_names.dart';
-import 'package:aurogram/core/routing/dynamic_link_navigator.dart';
+import 'package:aurogram/core/routing/app_router.dart';
 import 'package:aurogram/features/ai_chat/voice/baba_presence.dart';
 import 'package:aurogram/features/ai_chat/voice/baba_tool_registry.dart';
 import 'package:aurogram/features/ai_chat/voice/voice_session_controller.dart';
@@ -64,29 +63,27 @@ class _BabaShellState extends State<BabaShell>
         'properties': {
           'destination': {
             'type': 'string',
-            'enum': ['home', 'dailyInsight', 'chat', 'profile'],
+            'enum': ['home', 'dailyInsight', 'chat'],
             'description': 'Which screen to open.',
           },
         },
         'required': ['destination'],
       },
       defaultHandler: (args) async {
+        // Only whitelisted, confirmed-registered routes. (No /profile etc. -
+        // those are tabs, not routes, and would throw.)
         const routes = {
           'home': RouteNames.home,
           'dailyInsight': RouteNames.dailyInsight,
           'chat': RouteNames.aiChat,
-          'profile': RouteNames.profile,
         };
         final dest = args['destination'] as String?;
         final path = routes[dest];
         if (path == null) {
           return {'navigated': false, 'reason': 'unknown destination: $dest'};
         }
-        final ctx = DynamicLinkNavigator.navigatorKey.currentContext;
-        if (ctx == null) {
-          return {'navigated': false, 'reason': 'navigator not ready'};
-        }
-        ctx.go(path);
+        // Use the app's global GoRouter (same pattern as DynamicLinkNavigator).
+        appRouter.go(path);
         return {'navigated': true, 'destination': dest};
       },
     ));
