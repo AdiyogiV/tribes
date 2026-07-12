@@ -11,6 +11,9 @@
  * - Manas Prakriti: Mental constitution (Sattva/Rajas/Tamas)
  */
 
+// Canonical nakshatra names + spelling/index helpers live in one place.
+import { NAKSHATRAS, normalizeNakshatra, nakshatraIndex } from "./nakshatras.js";
+
 // ============================================================================
 // PLANET-DOSHA MAPPINGS
 // Based on classical Jyotish-Ayurveda texts
@@ -331,39 +334,6 @@ export const PLANET_GUNA = {
 // ============================================================================
 // PRAKRITI CALCULATION
 // ============================================================================
-
-/**
- * Normalize nakshatra name for lookup
- */
-function normalizeNakshatra(nakshatra) {
-    if (!nakshatra) return null;
-    
-    // Handle common variations
-    const normalized = nakshatra
-        .trim()
-        .replace(/\s+/g, " ")
-        .split(" ")
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-        .join(" ");
-    
-    // Handle specific variations
-    const variations = {
-        "Purva Phalguni": ["Purva Phalguni", "Poorva Phalguni", "P.Phalguni"],
-        "Uttara Phalguni": ["Uttara Phalguni", "Uttara Phalguni", "U.Phalguni"],
-        "Purva Ashadha": ["Purva Ashadha", "Poorva Ashadha", "P.Ashadha"],
-        "Uttara Ashadha": ["Uttara Ashadha", "Uttara Ashadha", "U.Ashadha"],
-        "Purva Bhadrapada": ["Purva Bhadrapada", "Poorva Bhadrapada", "P.Bhadrapada"],
-        "Uttara Bhadrapada": ["Uttara Bhadrapada", "Uttara Bhadrapada", "U.Bhadrapada"],
-    };
-    
-    for (const [standard, variants] of Object.entries(variations)) {
-        if (variants.some(v => normalized.includes(v.replace(".", "")))) {
-            return standard;
-        }
-    }
-    
-    return normalized;
-}
 
 /**
  * Normalize sign name for lookup
@@ -1044,17 +1014,6 @@ export function getCurrentDoshaPeriod(hour) {
 // ============================================================================
 
 /**
- * 27 Nakshatras in order
- */
-const NAKSHATRAS = [
-    "Ashwini", "Bharani", "Krittika", "Rohini", "Mrigashira", "Ardra",
-    "Punarvasu", "Pushya", "Ashlesha", "Magha", "Purva Phalguni", "Uttara Phalguni",
-    "Hasta", "Chitra", "Swati", "Vishakha", "Anuradha", "Jyeshtha",
-    "Moola", "Purva Ashadha", "Uttara Ashadha", "Shravana", "Dhanishta", "Shatabhisha",
-    "Purva Bhadrapada", "Uttara Bhadrapada", "Revati",
-];
-
-/**
  * 12 Zodiac signs in order
  */
 const SIGNS = [
@@ -1079,51 +1038,6 @@ const TARA_TYPES = {
 };
 
 /**
- * Normalize nakshatra name for lookup
- */
-function normalizeNakshatraName(nakshatra) {
-    if (!nakshatra) return null;
-    
-    // Common variations mapping
-    const variations = {
-        "poorva phalguni": "Purva Phalguni",
-        "uttara phalguni": "Uttara Phalguni", 
-        "poorva ashadha": "Purva Ashadha",
-        "uttara ashadha": "Uttara Ashadha",
-        "poorva bhadrapada": "Purva Bhadrapada",
-        "uttara bhadrapada": "Uttara Bhadrapada",
-        "krittika": "Krittika",
-        "kritika": "Krittika",
-        "mrigasira": "Mrigashira",
-        "mrigashirsha": "Mrigashira",
-        "punarvasu": "Punarvasu",
-        "purnavasu": "Punarvasu",
-    };
-    
-    const lower = nakshatra.toLowerCase().trim();
-    if (variations[lower]) return variations[lower];
-    
-    // Try to find exact match
-    const found = NAKSHATRAS.find(n => n.toLowerCase() === lower);
-    if (found) return found;
-    
-    // Try partial match
-    const partial = NAKSHATRAS.find(n => 
-        n.toLowerCase().includes(lower) || lower.includes(n.toLowerCase())
-    );
-    return partial || nakshatra;
-}
-
-/**
- * Get nakshatra index (0-26) from name
- */
-function getNakshatraIndex(nakshatra) {
-    if (!nakshatra) return -1;
-    const normalized = normalizeNakshatraName(nakshatra);
-    return NAKSHATRAS.findIndex(n => n.toLowerCase() === normalized.toLowerCase());
-}
-
-/**
  * Get sign index (0-11) from name
  */
 function getSignIndex(sign) {
@@ -1140,8 +1054,8 @@ function getSignIndex(sign) {
  * @returns {Object} Tarabala result with type, favorability, and dosha effect
  */
 export function calculateTarabala(birthNakshatra, currentMoonNakshatra) {
-    const birthIdx = getNakshatraIndex(birthNakshatra);
-    const currentIdx = getNakshatraIndex(currentMoonNakshatra);
+    const birthIdx = nakshatraIndex(birthNakshatra);
+    const currentIdx = nakshatraIndex(currentMoonNakshatra);
     
     if (birthIdx < 0 || currentIdx < 0) {
         return {
