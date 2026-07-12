@@ -30,13 +30,29 @@ class FirestoreRecovery {
         category: LogCategory.database, data: {'context': context});
 
     try {
-      // Ensure network is enabled (no-op if already enabled).
-      await FirebaseFirestore.instance
-          .enableNetwork()
-          .timeout(const Duration(seconds: 5));
+      final fs = FirebaseFirestore.instance;
+
+      // Full network reset: disableNetwork() BEFORE enableNetwork().
+      //
+      // A naked, repeated enableNetwork() (which is what this used to do) is a
+      // documented reproducer of the firebase-js-sdk crash
+      // 'INTERNAL ASSERTION FAILED (ID: ca9) {pendingResponses:-1}' → the
+      // AsyncQueue then permanently fails and every later op throws 'ID: b815'
+      // (firebase/firebase-js-sdk#9968). Pairing disable→enable both avoids
+      // that trigger and actually tears down and re-establishes a stuck Listen
+      // stream, which is the real goal of "recovery".
+      try {
+        await fs.disableNetwork().timeout(const Duration(seconds: 5));
+      } catch (e) {
+        // Non-fatal: proceed to re-enable regardless.
+        AppLogger.d('Firestore disableNetwork during recovery failed',
+            category: LogCategory.database, data: {'error': e.toString()});
+      }
+
+      await fs.enableNetwork().timeout(const Duration(seconds: 5));
 
       // Quick server probe to verify Firestore responsiveness.
-      await FirebaseFirestore.instance
+      await fs
           .collection('globalFeed')
           .limit(1)
           .get(const GetOptions(source: Source.server))
