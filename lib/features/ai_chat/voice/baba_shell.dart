@@ -70,7 +70,7 @@ class _BabaShellState extends State<BabaShell>
         },
         'required': ['destination'],
       },
-      handler: (args) async {
+      defaultHandler: (args) async {
         const routes = {
           'home': RouteNames.home,
           'dailyInsight': RouteNames.dailyInsight,

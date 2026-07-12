@@ -1,22 +1,27 @@
 import 'package:flutter/foundation.dart';
 
+/// Result a tool handler returns to Baba.
+typedef BabaToolHandler = Future<Map<String, dynamic>> Function(
+    Map<String, dynamic> args);
+
 /// A single action Baba is allowed to perform on the app.
 ///
 /// [parameters] is a JSON-Schema object (the Gemini functionDeclaration
-/// `parameters` shape). [handler] runs the action and returns a small result
-/// map that is sent back to Baba so he knows it worked (or why it didn't).
+/// `parameters` shape). [defaultHandler] runs the action; a screen may override
+/// it at runtime with [BabaToolRegistry.bindHandler] WITHOUT changing the
+/// declaration (see the registry docs for why that matters).
 class BabaTool {
   const BabaTool({
     required this.name,
     required this.description,
     required this.parameters,
-    required this.handler,
+    required this.defaultHandler,
   });
 
   final String name;
   final String description;
   final Map<String, dynamic> parameters;
-  final Future<Map<String, dynamic>> Function(Map<String, dynamic> args) handler;
+  final BabaToolHandler defaultHandler;
 
   /// The functionDeclaration handed to Gemini at session start.
   Map<String, dynamic> get declaration => {
@@ -26,30 +31,32 @@ class BabaTool {
       };
 }
 
-/// App-scoped, **whitelisted** registry of what Baba may do right now.
+/// App-scoped, **whitelisted** catalog of what Baba may do.
 ///
-/// This is the guardrail that turns "voice chat" into a safe agent: Baba can
-/// ONLY ever call actions that a live surface has registered. Screens register
-/// their tools on entry and remove them on exit (see [register]/[unregister]),
-/// so onboarding tools aren't callable from the feed, etc.
+/// ## Why a stable global catalog (not per-screen declarations)
+/// Baba is a companion that WRAPS the whole app, so his tools must be available
+/// across every screen and every call. But the Gemini Live session fixes its
+/// tool list at connect time — you can't add/remove declarations mid-call
+/// without reconnecting (which drops the audio). So:
 ///
-/// NOTE (Rung 2a): the Live session declares its tool set once at connect time,
-/// so the tools available for a given call are whatever's registered when
-/// [VoiceSessionController.start] runs. Dynamic mid-session tool updates are a
-/// later refinement; for onboarding the session starts on the onboarding
-/// screen with its tools already registered.
+///   * **Declarations are global + stable** — registered once at app start via
+///     [register]. Every voice session is told the full set, so Baba can call
+///     any tool from anywhere. Tools are "there across."
+///   * **Behavior is per-screen** — a screen that owns a tool's action binds a
+///     live handler with [bindHandler] on entry and [unbindHandler] on exit.
+///     The DECLARATION never changes (Gemini's view is stable, no reconnect);
+///     only the handler swaps. When no screen has bound it, the tool's
+///     [BabaTool.defaultHandler] runs — which can simply report it isn't
+///     available on the current screen.
 class BabaToolRegistry extends ChangeNotifier {
   BabaToolRegistry._();
   static final BabaToolRegistry instance = BabaToolRegistry._();
 
   final Map<String, BabaTool> _tools = {};
+  final Map<String, BabaToolHandler> _boundHandlers = {};
 
-  /// Function declarations to hand Gemini at session start (empty => no tools).
-  List<Map<String, dynamic>> get declarations =>
-      _tools.values.map((t) => t.declaration).toList(growable: false);
-
-  bool get isEmpty => _tools.isEmpty;
-
+  /// Register a global tool declaration (idempotent by name). Call once at app
+  /// start so the tool is available across every screen/session.
   void register(BabaTool tool) {
     _tools[tool.name] = tool;
     notifyListeners();
@@ -62,28 +69,36 @@ class BabaToolRegistry extends ChangeNotifier {
     notifyListeners();
   }
 
-  void unregister(String name) {
-    if (_tools.remove(name) != null) notifyListeners();
+  /// A screen attaches live behavior to an already-declared tool. Does NOT
+  /// change the declaration, so no session reconnect is needed.
+  void bindHandler(String toolName, BabaToolHandler handler) {
+    _boundHandlers[toolName] = handler;
   }
 
-  void unregisterAll(Iterable<String> names) {
-    var changed = false;
-    for (final n in names) {
-      if (_tools.remove(n) != null) changed = true;
-    }
-    if (changed) notifyListeners();
+  /// A screen detaches its behavior (on dispose) — the tool falls back to its
+  /// [BabaTool.defaultHandler].
+  void unbindHandler(String toolName) {
+    _boundHandlers.remove(toolName);
   }
 
-  /// Dispatch a tool call from Baba. Always returns a result map (an error map
-  /// for unknown/failed tools) so the model is never left hanging on a call.
+  /// Function declarations to hand Gemini at session start (the stable catalog).
+  List<Map<String, dynamic>> get declarations =>
+      _tools.values.map((t) => t.declaration).toList(growable: false);
+
+  bool get isEmpty => _tools.isEmpty;
+
+  /// Dispatch a tool call from Baba. Prefers a screen-bound handler, else the
+  /// tool's default. Always returns a result map (an error map for
+  /// unknown/failed tools) so the model is never left hanging on a call.
   Future<Map<String, dynamic>> dispatch(
       String name, Map<String, dynamic> args) async {
     final tool = _tools[name];
     if (tool == null) {
       return {'ok': false, 'error': 'unknown_tool', 'tool': name};
     }
+    final handler = _boundHandlers[name] ?? tool.defaultHandler;
     try {
-      final result = await tool.handler(args);
+      final result = await handler(args);
       return {'ok': true, ...result};
     } catch (e) {
       return {'ok': false, 'error': e.toString(), 'tool': name};
