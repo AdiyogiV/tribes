@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Cloud Run relay bridging Flutter audio to Dialogflow CX streaming voice (Aryabhatt).",
+  "description": "Cloud Run relay bridging Flutter audio to Dialogflow CX streaming voice (Aurobhatt).",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
@@ -14,8 +14,6 @@
   },
   "dependencies": {
     "@google-cloud/dialogflow-cx": "^4.9.0",
-    "@google-cloud/speech": "^6.7.0",
-    "@google-cloud/text-to-speech": "^5.4.0",
     "@google/genai": "^2.10.0",
     "firebase-admin": "^12.7.0",
     "ws": "^8.18.0"

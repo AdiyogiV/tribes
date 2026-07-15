@@ -99,7 +99,16 @@ class BabaToolRegistry extends ChangeNotifier {
     final handler = _boundHandlers[name] ?? tool.defaultHandler;
     try {
       final result = await handler(args);
-      return {'ok': true, ...result};
+      // `ok` is the ONE field the model reflexively trusts to decide whether an
+      // action worked (and whether to tell the user it's done). So it must be
+      // truthful: a handler that couldn't perform the action MUST return
+      // ok:false (e.g. the owning screen isn't open, or args were invalid).
+      // We default to true only when the handler stays silent on `ok`; an
+      // explicit handler value always wins. Do NOT reduce this to
+      // `{'ok': true, ...result}` — that once masked failures as success and
+      // made Baba claim the chart was ready when nothing had been saved.
+      final ok = result['ok'] as bool? ?? true;
+      return {...result, 'ok': ok};
     } catch (e) {
       return {'ok': false, 'error': e.toString(), 'tool': name};
     }

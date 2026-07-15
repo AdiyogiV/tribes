@@ -19,6 +19,7 @@ import 'package:aurogram/features/notifications/domain/notification_service.dart
 import 'package:aurogram/features/onboarding/domain/onboarding_service.dart';
 import 'package:aurogram/app/tabs/widgets/notification_permission_sheet.dart';
 import 'package:aurogram/app/tabs/widgets/tab_bottom_nav.dart';
+import 'package:aurogram/features/baba/domain/baba_insets.dart';
 import 'package:aurogram/core/di/injection.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/core/storage/memory_manager.dart';
@@ -337,6 +338,8 @@ class TabHandlerState extends State<TabHandler>
     _scrollHidesBottomBarNotifier.dispose();
     _uploadProgressSubscription?.cancel();
     _pageController?.dispose();
+    // Stop lifting Baba for a tab bar that no longer exists.
+    BabaInsets.instance.clear('tabBar');
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -455,25 +458,24 @@ class TabHandlerState extends State<TabHandler>
             // Handle auth status
             switch (newStatus) {
               case Status.Unauthenticated:
-                // First-time, logged-out users go straight to login
-                // (poem/FTUE welcome removed). Returning guests whose FTUE is
-                // already marked shown still get the guest tabs.
-                final onboardingService = OnboardingService();
-                if (onboardingService.shouldShowFtue()) {
-                  return const LoginPage(showBackButton: false);
-                }
-                // Notification prompt now triggered via status change above
-                return _buildTabsContainer(context, auth, false);
+                // Value-first model: there is no login wall. A signed-out user
+                // is only transiently here while AuthService provisions a fresh
+                // anonymous guest, so show loading (not LoginPage). Login now
+                // happens on demand (Baba offers it; guest tab has it too).
+                return _buildLoadingScreen();
               case Status.Undetermined:
               case Status.Authenticating:
                 // Return simple loading indicator instead of a separate FlashScreen
                 return _buildLoadingScreen();
               case Status.Uninitialized:
-                // New user needs to complete registration
+                // New REGISTERED user (linked a phone but no nickname yet)
+                // needs to finish their profile.
                 return InitUser();
               case Status.Authenticated:
-                // Notification prompt now triggered via status change above
-                return _buildTabsContainer(context, auth, true);
+                // Registered users get the full tabs; anonymous GUESTS get the
+                // value-first guest tabs (Dashboard/Baba + Login), never the
+                // registered-only surfaces.
+                return _buildTabsContainer(context, auth, !auth.isGuest);
             }
           },
         );
@@ -620,6 +622,12 @@ class TabHandlerState extends State<TabHandler>
                   valueListenable: barNotifier,
                   builder: (context, scrollHidesBar, _) {
                     final barHidden = scrollHidesBar && _selectedIndex == 0;
+                    // Tell Baba how tall the tab bar is (70 + 10, excluding the
+                    // safe area the overlay already adds) so he floats ABOVE it
+                    // — and drops to 0 while the bar is hidden on scroll.
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      BabaInsets.instance.set('tabBar', barHidden ? 0 : 80);
+                    });
                     return AnimatedSlide(
                       duration: const Duration(milliseconds: 600),
                       curve: Curves.easeInOut,

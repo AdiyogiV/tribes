@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -247,6 +248,76 @@ extension UserRegistration on UserService {
           data: {'totalMs': overallStopwatch.elapsedMilliseconds});
       return false; // false = existing user (safer default on error)
     }
+  }
+
+  /// Lightweight name capture for the value-first flow. Baba asks a GUEST
+  /// (anonymous) their name early, before any login. We save it — plus a
+  /// generated nickname — under their anon uid so:
+  ///   * Baba can address them by name for the rest of the session, and
+  ///   * once they link a phone to register, [checkRegistration] already sees
+  ///     a nickname and sends them straight into the app (no InitUser step).
+  /// Idempotent-ish: re-calling updates the name; the nickname is only
+  /// generated once (kept if already present).
+  Future<bool> saveGuestName(String name) async {
+    final trimmed = name.trim();
+    final uid = user?.uid;
+    if (trimmed.isEmpty || uid == null) return false;
+    try {
+      final docRef = userCollection.doc(uid);
+      final existing = await docRef.get();
+      final data = existing.data() as Map<String, dynamic>?;
+      final existingNick = data?['nickname']?.toString();
+      final nickname = (existingNick != null && existingNick.trim().isNotEmpty)
+          ? existingNick
+          : await _generateNickname(trimmed);
+
+      await docRef.set({
+        'name': trimmed,
+        'nickname': nickname,
+        'followerCount': data?['followerCount'] ?? 0,
+        'followingCount': data?['followingCount'] ?? 0,
+        'auraScore': data?['auraScore'] ?? 0,
+        'timestamp': Timestamp.fromDate(DateTime.now()),
+      }, SetOptions(merge: true));
+
+      // Reserve the nickname pair (best-effort; don't fail name-save on this).
+      try {
+        await nicknameCollection.doc('pairs').set({
+          nickname: {'name': trimmed, 'uid': uid},
+        }, SetOptions(merge: true));
+      } catch (e) {
+        AppLogger.w('saveGuestName: nickname pair reserve failed',
+            category: LogCategory.auth, data: {'error': e.toString()});
+      }
+      AppLogger.i(' saveGuestName: saved',
+          category: LogCategory.auth, data: {'uid': uid, 'nickname': nickname});
+      return true;
+    } catch (e) {
+      AppLogger.e('saveGuestName failed', category: LogCategory.auth, error: e);
+      return false;
+    }
+  }
+
+  /// Generate a unique-ish nickname from a name: firstname + 4 random digits,
+  /// checked against the nicknames/pairs map. Falls back to a timestamp suffix.
+  Future<String> _generateNickname(String name) async {
+    final base = name.split(' ').first.toLowerCase().replaceAll(
+        RegExp(r'[^a-z0-9]'), '');
+    final safeBase = base.isEmpty ? 'seeker' : base;
+    final random = Random();
+    try {
+      final doc = await nicknameCollection.doc('pairs').get();
+      final existing = doc.exists
+          ? (doc.data() as Map<String, dynamic>? ?? {})
+          : <String, dynamic>{};
+      for (int i = 0; i < 50; i++) {
+        final candidate = '$safeBase${random.nextInt(9000) + 1000}';
+        if (!existing.containsKey(candidate)) return candidate;
+      }
+    } catch (_) {
+      // Firestore unavailable — fall through to timestamp fallback.
+    }
+    return '$safeBase${DateTime.now().millisecondsSinceEpoch % 10000}';
   }
 
   Future<bool> registerNewUser(

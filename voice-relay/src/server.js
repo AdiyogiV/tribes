@@ -1,5 +1,5 @@
 /**
- * Aryabhatt Voice Relay — Cloud Run entrypoint.
+ * Aurobhatt Voice Relay — Cloud Run entrypoint.
  *
  * HTTP for health checks; a WebSocket at /voice for the live audio loop.
  * Each socket gets its own CxVoiceSession. We stay transport-thin: binary
@@ -12,26 +12,23 @@ import { WebSocketServer } from "ws";
 import admin from "firebase-admin";
 import { CONFIG } from "./config.js";
 import { CxVoiceSession } from "./cx_stream.js";
-import { MultilingualVoiceSession } from "./voice_pipeline.js";
 import { LiveVoiceSession } from "./live_session.js";
 
 // Pick the engine:
-//   "live"         -> Gemini Live API (native barge-in; one model does it all)
-//   "multilingual" -> legacy Chirp STT + aiChat + our TTS
-//   "cx"           -> original single-language Dialogflow CX stream
+//   "cx"   -> Dialogflow CX streaming (production default; tool-calling +
+//             trial-credit funded)
+//   "live" -> Gemini Live API (native barge-in; PARKED until Vertex quota)
 // Default comes from VOICE_ENGINE; the client may override PER SESSION by
 // sending `engine` in its start frame (used by the in-app Live<->CX toggle).
-const ALLOWED_ENGINES = new Set(["live", "multilingual", "cx"]);
+const ALLOWED_ENGINES = new Set(["cx", "live"]);
 const makeSession = (sessionId, uid, idToken, engine, tools, directive) => {
     const eng = ALLOWED_ENGINES.has(engine) ? engine : CONFIG.voiceEngine;
     switch (eng) {
         case "live":
             return new LiveVoiceSession(sessionId, uid, idToken, tools, directive);
         case "cx":
-            return new CxVoiceSession(sessionId, tools, directive);
-        case "multilingual":
         default:
-            return new MultilingualVoiceSession(sessionId, uid, idToken);
+            return new CxVoiceSession(sessionId, tools, directive);
     }
 };
 
@@ -89,7 +86,7 @@ wss.on("connection", (ws) => {
         session.on("turn_end", () => sendJson({ type: "speaking_done" }));
         // Baba wants to act: forward the tool call so the client can run it.
         session.on("tool_call", (call) => sendJson({ type: "tool_call", ...call }));
-        // Barge-in: user cut in while Aryabhatt was speaking. Tell the client to
+        // Barge-in: user cut in while Aurobhatt was speaking. Tell the client to
         // flush whatever it has buffered and stop playing immediately.
         session.on("interrupt", () => sendJson({ type: "interrupt" }));
         session.on("error", (err) => {
@@ -140,6 +137,14 @@ wss.on("connection", (ws) => {
                     { id: msg.id, name: msg.name, response: msg.response || {} },
                 ]);
             }
+        } else if (msg.type === "context") {
+            // The client's UI changed under a LIVE call (e.g. onboarding walked
+            // the user onto the chart reveal). Inject what's on screen so Baba
+            // can react to it. `speak` (default true) => he narrates now; false
+            // => silent awareness (Live only; CX always answers a text turn).
+            if (session && typeof session.injectContext === "function") {
+                session.injectContext(msg.text, msg.speak !== false);
+            }
         } else if (msg.type === "stop") {
             session?.end();
             session = null;
@@ -159,10 +164,7 @@ server.listen(CONFIG.port, () => {
         + (CONFIG.voiceEngine === "live"
             ? `-> Gemini Live API ${CONFIG.live.model}@${CONFIG.live.location} `
               + `(voice ${CONFIG.live.voice}, ${CONFIG.live.languageCode || "auto-lang"}, native barge-in)`
-            : CONFIG.voiceEngine === "multilingual"
-                ? `-> CX brain ${CONFIG.agentId} [STT ${CONFIG.sttModel}@${CONFIG.sttLocation} `
-                  + `auto-detect, TTS ${CONFIG.ttsGender}]`
-                : `-> CX agent ${CONFIG.agentId} (${CONFIG.location}/${CONFIG.environment}) `
-                  + `[single-language ${CONFIG.languageCode}]`),
+            : `-> CX agent ${CONFIG.agentId} (${CONFIG.location}/${CONFIG.environment}) `
+              + `[${CONFIG.languageCode}, voice ${CONFIG.voiceName}]`),
     );
 });

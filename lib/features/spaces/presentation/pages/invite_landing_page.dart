@@ -212,8 +212,9 @@ class InviteLandingPageState extends State<InviteLandingPage> {
   Future<void> _joinGram() async {
     final authService = Provider.of<AuthService>(context, listen: false);
     
-    // If not logged in, go to login first
-    if (authService.status != Status.Authenticated) {
+    // If not a registered account (logged out or anonymous guest), go to
+    // login first — joining a gram needs a real account.
+    if (!authService.isRegistered) {
       Navigator.of(context).pushReplacement(
         CupertinoPageRoute(
           builder: (context) => HandleLogin(

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Start the Aryabhatt voice relay. Usage: ./run.sh
+# Start the Aurobhatt voice relay. Usage: ./run.sh
 set -euo pipefail
 cd "$(dirname "$0")"
 export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/sa-key.json"

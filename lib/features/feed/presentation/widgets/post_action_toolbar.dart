@@ -111,7 +111,7 @@ class _PostActionToolbarState extends State<PostActionToolbar> {
 
   void _toggleLike() {
     final auth = Provider.of<AuthService>(context, listen: false);
-    if (auth.status != Status.Authenticated) {
+    if (!auth.isRegistered) {
       showLoginBottomSheet(context);
       return;
     }
@@ -126,7 +126,7 @@ class _PostActionToolbarState extends State<PostActionToolbar> {
 
   void _openReply() async {
     final auth = Provider.of<AuthService>(context, listen: false);
-    if (auth.status != Status.Authenticated) {
+    if (!auth.isRegistered) {
       showLoginBottomSheet(context);
       return;
     }
@@ -162,7 +162,7 @@ class _PostActionToolbarState extends State<PostActionToolbar> {
 
   void _repostPost() async {
     final auth = Provider.of<AuthService>(context, listen: false);
-    if (auth.status != Status.Authenticated) {
+    if (!auth.isRegistered) {
       showLoginBottomSheet(context);
       return;
     }

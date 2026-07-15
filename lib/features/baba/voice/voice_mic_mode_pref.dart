@@ -7,13 +7,13 @@ import 'package:aurogram/features/baba/voice/voice_engine_pref.dart';
 /// How the microphone behaves during a voice call.
 ///
 /// * [waitTurn] — HALF-DUPLEX. The mic only streams while it's the user's turn
-///   (the `listening` state). While Aryabhatt is thinking or speaking the mic
+///   (the `listening` state). While Aurobhatt is thinking or speaking the mic
 ///   is muted, so his own voice / room noise can never leak in and trigger a
 ///   false "interrupt" or garble the next turn. Simplest and most robust.
 /// * [openMic] — FULL-DUPLEX. The mic streams for the whole call, so the user
-///   can talk over Aryabhatt to cut him off (barge-in). More natural, but only
+///   can talk over Aurobhatt to cut him off (barge-in). More natural, but only
 ///   the Live engine actually acts on barge-in, and CX (with no echo guard)
-///   would transcribe Aryabhatt's own voice if it streamed during playback.
+///   would transcribe Aurobhatt's own voice if it streamed during playback.
 enum VoiceMicMode { waitTurn, openMic }
 
 /// Persisted, app-wide microphone behaviour. Read at the start of each call, so
@@ -26,7 +26,7 @@ enum VoiceMicMode { waitTurn, openMic }
 ///   * Live's headline feature is native VAD barge-in, which only fires if the
 ///     mic streams DURING playback → it wants [openMic].
 ///   * CX has no interrupt handling and no echo guard, so streaming during
-///     playback makes it transcribe Aryabhatt's own echo → it needs [waitTurn].
+///     playback makes it transcribe Aurobhatt's own echo → it needs [waitTurn].
 ///
 /// A user can still override the smart default via [set]; once they do, that
 /// explicit choice sticks for both engines until cleared.
@@ -42,7 +42,7 @@ class VoiceMicModePref {
   /// EXCEPTION: on web we always force [waitTurn], even for Live. The Live
   /// API does VAD but NO acoustic echo cancellation, and the browser can't
   /// cancel flutter_sound's Web Audio output from the mic either — so an open
-  /// mic on web just feeds Aryabhatt's own voice back into the VAD and he
+  /// mic on web just feeds Aurobhatt's own voice back into the VAD and he
   /// talks to himself. [waitTurn] (mic muted while he speaks) is the only
   /// reliable guard there; barge-in never worked on web anyway.
   static VoiceMicMode defaultFor(VoiceEngine engine) {
@@ -68,7 +68,7 @@ class VoiceMicModePref {
   ///
   /// [openMic] (full-duplex) is only safe where BOTH true barge-in and echo
   /// cancellation exist: the Live engine on a real device (native VAD +
-  /// hardware AEC). Everywhere else an open mic just feeds Aryabhatt's own
+  /// hardware AEC). Everywhere else an open mic just feeds Aurobhatt's own
   /// voice back into STT and he talks to himself:
   ///   * web — no working AEC for flutter_sound's output;
   ///   * CX — no server-side echo guard AND no interrupt handling.

@@ -15,7 +15,7 @@ class AuthActionWrapper extends StatelessWidget {
       builder: (context, auth, _) {
         return GestureDetector(
           onTap: () async {
-            if (auth.status == Status.Authenticated) {
+            if (auth.isRegistered) {
               await onAction();
             } else {
               showLoginBottomSheet(context);

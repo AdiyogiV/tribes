@@ -1,4 +1,4 @@
-# Aryabhatt Voice Relay
+# Aurobhatt Voice Relay
 
 A tiny Cloud Run service that bridges the Flutter app to **Dialogflow CX**
 (Conversational Agents) **bidirectional streaming voice**.
@@ -19,13 +19,12 @@ This rides the **Vertex AI Agent Builder / "GenAI App Builder"** credit family
 
 ## Engines (`VOICE_ENGINE`)
 
-The relay can drive three back-ends. Pick with `VOICE_ENGINE`:
+The relay can drive two back-ends. Pick with `VOICE_ENGINE` (default `cx`):
 
 | Value | What it does |
 |-------|--------------|
-| `live` | **Gemini Live API** — ONE model does STT + brain + TTS **and native barge-in** (built-in Voice Activity Detection). No custom interrupt thresholds, no echo hacks. The persona + chart/ayurveda/memory context is fetched from `aiChat` (`promptOnly` mode) and passed as the systemInstruction. **Recommended.** |
-| `multilingual` | Legacy: Chirp STT (auto-detect) + `aiChat` brain + our TTS, with hand-rolled barge-in thresholds. |
-| `cx` | Original single-language Dialogflow CX bidi stream. |
+| `cx` | **Dialogflow CX** bidi stream — ONE agent does STT + brain (generative playbook with **tool-calling**, v3beta1) + TTS. Funded by the Dialogflow CX trial credit. **Production default.** Half-duplex (`waitTurn`): the recognizer opens lazily per utterance so it never starves on Cloud Speech's audio timeout. |
+| `live` | **Gemini Live API** — ONE model does STT + brain + TTS **and native barge-in** (built-in VAD). Persona/context fetched from `aiChat` (`promptOnly`). **Currently PARKED** — needs Vertex AI Live quota + billing; unprovisioned sessions fail to start. |
 
 The wire protocol to the Flutter client is **identical** across engines, so
 swapping engines needs no app rebuild.
@@ -43,13 +42,15 @@ swapping engines needs no app rebuild.
 - Binary frame = raw audio chunk: **PCM 16-bit, 16 kHz, mono** (LINEAR16).
 - JSON control:
   - `{"type":"start","sessionId":"<uid-or-random>"}` — open the CX stream.
+  - `{"type":"tool_response","id":"...","name":"...","response":{...}}` — result of a tool Baba called.
+  - `{"type":"context","text":"...","speak":true}` — tell Baba what the user is now looking at, mid-call (e.g. the onboarding chart reveal). `speak:true` (default) => he narrates it now; `speak:false` => silent awareness, he only mentions it if asked (**Live only** — CX is turn-based so it always answers). Injected as a tagged `[SCREEN CONTEXT]` user turn, not as spoken user input.
   - `{"type":"stop"}` — end the current turn / close.
 
 **Relay -> client**
 - Binary frame = TTS audio chunk: **PCM 16-bit, 24 kHz, mono**. Play as it arrives.
 - JSON events:
   - `{"type":"transcript","text":"...","final":false}` — live STT of the user.
-  - `{"type":"reply","text":"..."}` — Aryabhatt's text (for captions).
+  - `{"type":"reply","text":"..."}` — Aurobhatt's text (for captions).
   - `{"type":"speaking_done"}` — turn finished, mic can resume.
   - `{"type":"error","message":"..."}`.
 
@@ -59,10 +60,10 @@ swapping engines needs no app rebuild.
 
 | Var | Example | Notes |
 |-----|---------|-------|
-| `VOICE_ENGINE` | `live` | `live` (Gemini Live API, recommended) / `multilingual` / `cx`. |
+| `VOICE_ENGINE` | `cx` | `cx` (Dialogflow CX, production default) / `live` (Gemini Live API, parked). |
 | `LIVE_MODEL` | `gemini-live-2.5-flash-preview-native-audio-09-2025` | Live API model. Native-audio = best multilingual voice + VAD. |
 | `LIVE_LOCATION` | `us-central1` | Vertex region for the Live API. |
-| `LIVE_VOICE` | `Charon` | Aryabhatt's prebuilt voice (deeper/male). |
+| `LIVE_VOICE` | `Charon` | Aurobhatt's prebuilt voice (deeper/male). |
 | `LIVE_LANGUAGE` | _(empty)_ | Empty = native multilingual auto-detect. Set e.g. `hi-IN` to pin. |
 | `LIVE_PROMPT_URL` | `https://aichat-...run.app` | `aiChat` endpoint; called in `promptOnly` mode for the systemInstruction. Defaults to `AI_CHAT_URL`. |
 | `GCP_PROJECT` | `ty-dev-516d7` | |
@@ -70,11 +71,11 @@ swapping engines needs no app rebuild.
 | `CX_AGENT_ID` | `xxxxxxxx-xxxx-...` | From the Console after creating the agent. |
 | `CX_ENVIRONMENT` | `draft` | Or a published environment id. |
 | `CX_LANGUAGE` | `en-IN` | Hinglish-friendly. |
-| `CX_VOICE` | `en-IN-Chirp3-HD-...` | Pick Aryabhatt's TTS voice. |
-| `BARGE_IN` | `true` | Interrupt-to-talk: user can cut in while Aryabhatt speaks and he stops to listen. Set `false` to fall back to half-duplex (no rebuild) if a device's echo cancellation causes false interrupts. |
+| `CX_VOICE` | `en-IN-Chirp3-HD-...` | Pick Aurobhatt's TTS voice. |
+| `BARGE_IN` | `true` | Interrupt-to-talk: user can cut in while Aurobhatt speaks and he stops to listen. Set `false` to fall back to half-duplex (no rebuild) if a device's echo cancellation causes false interrupts. |
 | `BARGE_IN_MIN_CHARS` | `6` | Min transcribed chars during playback before it counts as an interruption (filters echo/cough fragments). |
 | `BARGE_IN_MIN_WORDS` | `2` | Min word count too — echo usually transcribes as one garbled token, so ≥2 words kills most false interrupts. |
-| `BARGE_IN_GRACE_MS` | `600` | Deaf window (ms) after Aryabhatt STARTS speaking, where his own onset echoes hardest — no barge-in during it. |
+| `BARGE_IN_GRACE_MS` | `600` | Deaf window (ms) after Aurobhatt STARTS speaking, where his own onset echoes hardest — no barge-in during it. |
 | `PORT` | `8080` | Cloud Run sets this. |
 
 Service account needs `roles/dialogflow.client` (legacy engines) and, for the
@@ -105,7 +106,7 @@ npm start
    npm run test:client -- input.wav
    # or: node tools/test_client.js input.wav ws://localhost:8080/voice
    ```
-3. The client prints your live transcript + Aryabhatt's reply text and saves his
+3. The client prints your live transcript + Aurobhatt's reply text and saves his
    spoken answer to `out.wav`. Play it: `open out.wav`.
 
 If `out.wav` is empty, the agent's voice config or the credit scope is off.
@@ -146,7 +147,7 @@ perimeter (that only bites local testing). The persona/context comes from the
 `aiChat` backend in `promptOnly` mode — redeploy that backend too (it gained the
 `promptOnly` short-circuit).
 
-### Legacy engines (multilingual / cx)
+### CX engine (production default)
 
 ```bash
 cd voice-relay
@@ -155,7 +156,7 @@ gcloud run deploy aryabhatt-voice-relay \
   --project ty-dev-516d7 \
   --region us-central1 \
   --allow-unauthenticated \
-  --set-env-vars GCP_PROJECT=ty-dev-516d7,CX_LOCATION=global,CX_AGENT_ID=...,CX_ENVIRONMENT=draft,CX_LANGUAGE=en-IN,CX_VOICE=en-IN-Chirp3-HD-Achernar
+  --set-env-vars GCP_PROJECT=ty-dev-516d7,VOICE_ENGINE=cx,CX_LOCATION=global,CX_AGENT_ID=...,CX_ENVIRONMENT=draft,CX_LANGUAGE=hi-IN,CX_VOICE=hi-IN-Chirp3-HD-Charon
 ```
 
 > The service lives in **us-central1**. From a Walmart machine the source
@@ -171,7 +172,7 @@ gcloud run deploy aryabhatt-voice-relay \
 ---
 
 ## Prereqs you still owe me
-1. Create the Conversational Agent (CX) + Generative Playbook with the Aryabhatt
+1. Create the Conversational Agent (CX) + Generative Playbook with the Aurobhatt
    persona, enable a voice, and paste the **agent ID** into `CX_AGENT_ID`.
 2. Confirm the credit's scope includes **Dialogflow CX** SKUs
    (Console -> Billing -> Credits).

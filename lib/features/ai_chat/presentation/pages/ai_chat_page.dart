@@ -432,14 +432,14 @@ class AiChatPageState extends State<AiChatPage> with WidgetsBindingObserver {
                           ),
                           const SizedBox(width: 4),
                           Image.asset(
-                            'assets/images/aryabhatt.png',
+                            'assets/images/aurobhatt.png',
                             width: 28,
                             height: 28,
                             fit: BoxFit.contain,
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Aryabhatt',
+                            'Aurobhatt',
                             style: TextStyle(
                               color: AppTheme.primaryColor,
                               fontSize: 18,
@@ -512,14 +512,14 @@ class AiChatPageState extends State<AiChatPage> with WidgetsBindingObserver {
                     children: [
                       const SizedBox(width: 16),
                       Image.asset(
-                        'assets/images/aryabhatt.png',
+                        'assets/images/aurobhatt.png',
                         width: 28,
                         height: 28,
                         fit: BoxFit.contain,
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'Aryabhatt',
+                        'Aurobhatt',
                         style: TextStyle(
                           color: AppTheme.primaryColor,
                           fontSize: 18,

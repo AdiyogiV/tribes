@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:aurogram/shared/presentation/widgets/universal/transparent_toolbox.dart';
 import 'package:aurogram/shared/services/media/audio_input_service.dart';
 import 'package:aurogram/features/astrology/presentation/pages/astro_chat_page.dart';
+import 'package:aurogram/features/baba/domain/baba_insets.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 
 /// Chat input widget for astrology pages with voice support.
@@ -60,8 +61,28 @@ class AstroChatInput extends StatefulWidget {
 class _AstroChatInputState extends State<AstroChatInput> {
   bool _isRecordingForNavigation = false;
 
+  // Tell Baba how tall this input bar is so his floating presence sits ABOVE
+  // it instead of overlapping. Unique id so multiple bars never clobber.
+  late final String _insetId = 'astroInput-${identityHashCode(this)}';
+
+  void _reportHeight() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final h = context.size?.height ?? 0;
+      BabaInsets.instance.set(_insetId, h);
+    });
+  }
+
+  @override
+  void dispose() {
+    BabaInsets.instance.clear(_insetId);
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Re-measure each build; BabaInsets.set no-ops when the height is unchanged.
+    _reportHeight();
     // If this is an entry page with voice enabled, we need to handle recording ourselves
     // because we want to navigate after recording, not process in place
     if (widget.enableVoice &&
@@ -195,7 +216,7 @@ class _AstroChatInputState extends State<AstroChatInput> {
                 child: Opacity(
                   opacity: hasText ? 1.0 : 0.4,
                   child: Image.asset(
-                    'assets/images/aryabhatt.png',
+                    'assets/images/aurobhatt.png',
                     width: 32,
                     height: 32,
                     errorBuilder: (_, __, ___) => Icon(

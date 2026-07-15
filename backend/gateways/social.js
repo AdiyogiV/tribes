@@ -16,7 +16,7 @@
  *   - createRepost             [auth]     Create a repost of a post
  *   - deleteRepost             [auth]     Delete a repost
  *   - awardAuraAction          [auth]     Award aura for a profile/engagement action
- *   - clearAiMemory            [auth]     Wipe the user's durable Aryabhatt memory
+ *   - clearAiMemory            [auth]     Wipe the user's durable Aurobhatt memory
  */
 
 import { onCall, HttpsError } from "firebase-functions/v2/https";

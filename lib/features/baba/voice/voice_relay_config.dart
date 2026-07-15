@@ -21,7 +21,7 @@ class VoiceRelayConfig {
   /// TTS playback rate the relay sends back: PCM16, 24 kHz, mono.
   static const int ttsSampleRate = 24000;
 
-  /// Playback speed multiplier for Aryabhatt's replies. The Live API gives no
+  /// Playback speed multiplier for Aurobhatt's replies. The Live API gives no
   /// server-side speaking-rate knob on native audio, so we speed playback up by
   /// handing the player a slightly higher sample rate. 1.0 = original pace,
   /// 1.12 = ~12% snappier. Side effect: pitch rises by the same factor, barely

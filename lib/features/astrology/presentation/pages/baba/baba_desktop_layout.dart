@@ -119,7 +119,7 @@ class BabaDesktopLayoutState extends State<BabaDesktopLayout> {
                       headerSliverBuilder: (context, innerBoxIsScrolled) => [
                         AppHeaderStyle.buildWideLayoutHeaderSliver(
                           context,
-                          title: 'Aryabhatt',
+                          title: 'Aurobhatt',
                           trailing: IconButton(
                             onPressed: showDashboard,
                             icon: Icon(
@@ -220,7 +220,7 @@ class _CollapsedBabaRail extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Tooltip(
-            message: 'Aryabhatt',
+            message: 'Aurobhatt',
             child: Container(
               width: 36,
               height: 36,

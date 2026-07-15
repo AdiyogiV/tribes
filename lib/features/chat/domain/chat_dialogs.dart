@@ -63,7 +63,7 @@ class ChatDialogs {
         return AlertDialog(
           title: const Text('Clear All Conversations'),
           content: const Text(
-            'Are you sure you want to delete all your Aryabhatt conversation history? This will permanently remove all past conversations and cannot be undone.',
+            'Are you sure you want to delete all your Aurobhatt conversation history? This will permanently remove all past conversations and cannot be undone.',
           ),
           actions: <Widget>[
             TextButton(

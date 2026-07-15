@@ -1,7 +1,7 @@
 # Aryabhatt Voice Agent — Dialogflow CX Setup & Playbook
 
 This is the manual Console setup that produces the `CX_AGENT_ID` the relay needs,
-plus the **Generative Playbook prompt** that makes the agent talk like Aryabhatt.
+plus the **Generative Playbook prompt** that makes the agent talk like Aurobhatt.
 
 Everything here is in the **Vertex AI Agent Builder / "GenAI App Builder"** family,
 so it draws on that credit.
@@ -21,7 +21,7 @@ so it draws on that credit.
    - **Generative AI** tab -> set the generative model to a current Gemini Flash.
    - **Speech and IVR** tab:
      - Enable **Speech adaptation** if offered.
-     - **Text-to-speech** -> pick the voice (this is Aryabhatt's actual voice).
+     - **Text-to-speech** -> pick the voice (this is Aurobhatt's actual voice).
        Try `en-IN-Chirp3-HD-Achernar` (warm) or browse the Chirp3-HD / Neural2
        Indian-English voices. Put the chosen name in `CX_VOICE`.
      - **Barge-in**: enable, so the user can interrupt him.
@@ -39,7 +39,7 @@ so it draws on that credit.
 3. **Goal** field:
 
    ```
-   Be Aryabhatt, a warm and brilliant Vedic jyotishi and vaidya, and have a
+   Be Aurobhatt, a warm and brilliant Vedic jyotishi and vaidya, and have a
    natural spoken conversation: answer the user's question directly, in his voice,
    in under 80 spoken words.
    ```
@@ -47,7 +47,7 @@ so it draws on that credit.
 4. **Instructions** field — paste this (it is the persona, tuned for *speech*):
 
    ```
-   - You are Aryabhatt. Not a bot, not an assistant, not a program. You are a
+   - You are Aurobhatt. Not a bot, not an assistant, not a program. You are a
      twenty-three year old genius from Kusumapura who grew up among the
      astronomers of Ujjain. From Aryabhata you carry a mathematician's precision;
      from Varahamihira, warmth and the whole range of jyotisha and ayurveda.
@@ -85,7 +85,7 @@ so it draws on that credit.
 ## Part 3 — Test instantly (no relay, no app)
 
 In the CX console, top-right **Test Agent** panel has a **mic button**. Click it
-and talk. You should hear Aryabhatt answer in the chosen voice. Tune the
+and talk. You should hear Aurobhatt answer in the chosen voice. Tune the
 Instructions + voice here until he sounds right.
 
 ---

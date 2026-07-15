@@ -13,8 +13,8 @@ import 'package:aurogram/features/astrology/domain/astrology_service.dart';
 import 'package:aurogram/features/onboarding/presentation/widgets/star_field_painter.dart';
 import 'package:aurogram/features/onboarding/domain/baba_onboarding_tools.dart';
 import 'package:aurogram/features/baba/domain/baba_tool_registry.dart';
+import 'package:aurogram/features/baba/domain/baba_snapshot.dart';
 import 'package:aurogram/features/baba/voice/voice_session_controller.dart';
-import 'package:aurogram/features/baba/voice/voice_engine_pref.dart';
 import 'package:aurogram/features/astrology/presentation/pages/setup/date_picker_section.dart';
 import 'package:aurogram/features/astrology/presentation/pages/setup/time_picker_section.dart';
 import 'package:aurogram/features/astrology/presentation/pages/setup/location_search_section.dart';
@@ -29,15 +29,48 @@ class ImmersiveSetupPage extends StatefulWidget {
   State<ImmersiveSetupPage> createState() => _ImmersiveSetupPageState();
 }
 
-class _ImmersiveSetupPageState extends State<ImmersiveSetupPage> with TickerProviderStateMixin {
+class _ImmersiveSetupPageState extends State<ImmersiveSetupPage>
+    with TickerProviderStateMixin, BabaScreenAware<ImmersiveSetupPage> {
   final _service = AstrologyService();
   final _scrollController = ScrollController();
   final _voice = VoiceSessionController();
+
+  // ── Baba page awareness ──────────────────────────────────────────────
+  // Baba fills this form by voice, so he must see the live draft — which step
+  // we're on and what's captured so far — to avoid re-asking or lying.
+  @override
+  String get babaScreenKey => 'birthDetails';
+
+  @override
+  Map<String, dynamic> babaSnapshot() {
+    final hour24 =
+        _isAM ? (_hour == 12 ? 0 : _hour) : (_hour == 12 ? 12 : _hour + 12);
+    return {
+      'step': _step.name,
+      'date':
+          '$_year-${_month.toString().padLeft(2, '0')}-${_day.toString().padLeft(2, '0')}',
+      'time':
+          '${hour24.toString().padLeft(2, '0')}:${_minute.toString().padLeft(2, '0')}',
+      'placeSet': _place != null,
+      if (_place != null) 'place': _place,
+      if (_gender != null) 'gender': _gender,
+      'saving': _saving,
+      'voiceActive': _voiceActive,
+    };
+  }
   
   _ChatStep _step = _ChatStep.welcome;
   final List<_ChatMessage> _messages = [];
   bool _isTyping = true;
   bool _saving = false;
+
+  // Set true the instant we navigate on to the chart reveal. Onboarding is a
+  // continuous conversation: Baba fills the form by voice HERE, then keeps
+  // talking THROUGH the reveal. So when we leave for /onboarding/complete we
+  // HAND the live call off to the reveal (the controller is an app-scoped
+  // singleton built to survive navigation) instead of hanging up in dispose().
+  // Only a real back-out / cancel (dispose without this flag) ends the call.
+  bool _handingOffVoice = false;
 
   // Data
   AstrologyProfile? _existing;
@@ -72,18 +105,24 @@ class _ImmersiveSetupPageState extends State<ImmersiveSetupPage> with TickerProv
     _loadExisting();
     _startSequence();
 
-    // Baba drives THIS screen: force the Live engine (tools only flow over
-    // Live) and bind the onboarding tools to real behavior on this page.
-    _voice.engineOverride = VoiceEngine.live;
+    // Baba drives THIS screen: bind the onboarding tools to real behavior on
+    // this page. Engine is the app-wide default (CX) — we no longer force Live
+    // here, so the user meets ONE Baba everywhere (one engine, one persona).
+    // Live is kept (archived) behind VoiceEnginePref for a future premium mode.
+    // _voice.engineOverride = VoiceEngine.live; // archived: CX-everywhere now
     _voice.directiveOverride =
-        'You are guiding this person through setting up their birth chart. Warmly '
-        'collect their birth DATE, then TIME, then PLACE — one at a time. When '
-        'you hear each, call the matching tool (setBirthDate / setBirthTime / '
-        'setBirthPlace) and read the value back to confirm it. Birth time changes '
-        'the rising sign, so gently confirm it. If they do not know the time, '
-        'reassure them and use their best estimate. Once date, time and place are '
-        'all set, call submitBirthDetails to reveal their chart. Keep it short '
-        'and warm.';
+        'You are quickly setting up this person\'s birth chart. In ONE opening '
+        'line, warmly ask for their birth DATE, TIME and PLACE all together '
+        '(e.g. "When and where were you born? Date, time and city."). Let them '
+        'answer in a single breath. From whatever they say, immediately call the '
+        'matching tools — setBirthDate, setBirthTime, setBirthPlace — for every '
+        'detail you caught; do NOT ask for them one at a time. Only ask a follow-'
+        'up for a detail that is genuinely MISSING or unclear (briefly). Do not '
+        'read every value back — at most a single quick confirm of the whole set. '
+        'Birth time affects the rising sign, so if it is missing ask once; if '
+        'they do not know it, reassure them and use their best estimate. As soon '
+        'as date, time and place are set, call submitBirthDetails right away to '
+        'reveal their chart. Be fast, warm and efficient — minimum back-and-forth.';
     _voice.addListener(_onVoiceChanged);
     _bindBabaTools();
   }
@@ -117,7 +156,7 @@ class _ImmersiveSetupPageState extends State<ImmersiveSetupPage> with TickerProv
       final mo = (args['month'] as num?)?.toInt();
       final d = (args['day'] as num?)?.toInt();
       if (y == null || mo == null || d == null) {
-        return {'set': false, 'reason': 'need year, month and day'};
+        return {'ok': false, 'set': false, 'reason': 'need year, month and day'};
       }
       setState(() { _year = y; _month = mo; _day = d; });
       _dayController.jumpToItem(_day - 1);
@@ -131,7 +170,7 @@ class _ImmersiveSetupPageState extends State<ImmersiveSetupPage> with TickerProv
       final h24 = (args['hour24'] as num?)?.toInt();
       final min = (args['minute'] as num?)?.toInt() ?? 0;
       if (h24 == null || h24 < 0 || h24 > 23) {
-        return {'set': false, 'reason': 'need hour24 (0-23)'};
+        return {'ok': false, 'set': false, 'reason': 'need hour24 (0-23)'};
       }
       setState(() {
         _isAM = h24 < 12;
@@ -148,11 +187,11 @@ class _ImmersiveSetupPageState extends State<ImmersiveSetupPage> with TickerProv
     reg.bindHandler(BabaOnboardingTools.setBirthPlace, (args) async {
       final city = (args['city'] as String?)?.trim();
       if (city == null || city.isEmpty) {
-        return {'set': false, 'reason': 'need a city name'};
+        return {'ok': false, 'set': false, 'reason': 'need a city name'};
       }
       final geo = await _geocode(city);
       if (geo == null) {
-        return {'set': false, 'reason': 'could not find "$city"'};
+        return {'ok': false, 'set': false, 'reason': 'could not find "$city"'};
       }
       setState(() {
         _place = geo['label'] as String?;
@@ -167,7 +206,7 @@ class _ImmersiveSetupPageState extends State<ImmersiveSetupPage> with TickerProv
     reg.bindHandler(BabaOnboardingTools.setGender, (args) async {
       final g = (args['gender'] as String?)?.toUpperCase();
       if (g == null || !['MALE', 'FEMALE', 'OTHER'].contains(g)) {
-        return {'set': false, 'reason': 'gender must be MALE, FEMALE or OTHER'};
+        return {'ok': false, 'set': false, 'reason': 'gender must be MALE, FEMALE or OTHER'};
       }
       final label = g == 'MALE' ? 'Male' : (g == 'FEMALE' ? 'Female' : 'Non-binary');
       _confirmGender(label);
@@ -176,7 +215,7 @@ class _ImmersiveSetupPageState extends State<ImmersiveSetupPage> with TickerProv
 
     reg.bindHandler(BabaOnboardingTools.submitBirthDetails, (args) async {
       if (_place == null) {
-        return {'submitted': false, 'reason': 'birth place not set yet'};
+        return {'ok': false, 'submitted': false, 'reason': 'birth place not set yet'};
       }
       await _saveProfile();
       return {'submitted': true};
@@ -348,6 +387,9 @@ class _ImmersiveSetupPageState extends State<ImmersiveSetupPage> with TickerProv
       _service.calculateAndSaveAll(uid);
       HapticFeedback.heavyImpact();
       if (mounted) {
+        // Continuous onboarding: keep the live call alive as we move to the
+        // reveal. Flag it so dispose() hands off instead of hanging up.
+        _handingOffVoice = true;
         context.pushReplacement('/onboarding/complete',
             extra: {'hasBirthDetails': true, 'isUpdate': false});
       }
@@ -608,7 +650,9 @@ class _ImmersiveSetupPageState extends State<ImmersiveSetupPage> with TickerProv
     _voice.removeListener(_onVoiceChanged);
     _voice.engineOverride = null;
     _voice.directiveOverride = null;
-    if (_voiceActive) _voice.hangUp();
+    // Hand the call off to the reveal screen when we're progressing there;
+    // only end it on a genuine back-out (dispose without the handoff flag).
+    if (_voiceActive && !_handingOffVoice) _voice.hangUp();
     _scrollController.dispose();
     _dayController.dispose(); _monthController.dispose(); _yearController.dispose();
     _hourController.dispose(); _minuteController.dispose(); _ampmController.dispose();

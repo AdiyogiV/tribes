@@ -17,8 +17,11 @@ class AnimationTiming {
   static const loadingMessageCycle = Duration(seconds: 2);
   static const pollingInterval = Duration(seconds: 2);
   static const maxPollingWait = Duration(seconds: 60);
-  // Increased wait time - backend sync can take 10-20 seconds
-  static const maxAstroWait = Duration(seconds: 25);
+  // Backend sync usually lands in 10-20s, but App Check throttling ("Too many
+  // attempts") can delay the sync Cloud Function by 10-15s, pushing the real
+  // wait past 45s. Give it generous headroom so the chart reveal doesn't fail
+  // ("No profile found") while the calculation is still finishing.
+  static const maxAstroWait = Duration(seconds: 75);
   static const astroRetryInterval = Duration(milliseconds: 800);
 }
 

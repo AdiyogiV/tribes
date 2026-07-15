@@ -141,12 +141,20 @@ class LoginPageState extends State<LoginPage> {
     }
   }
 
-  /// Web-specific phone verification using reCAPTCHA
+  /// Web-specific phone verification using reCAPTCHA.
+  ///
+  /// If the current user is an anonymous GUEST, LINK the phone to that account
+  /// (preserves uid + data). Otherwise sign in normally.
   Future<void> _verifyPhoneWeb(String phoneNumber) async {
     try {
-      _confirmationResult = await FirebaseAuth.instance.signInWithPhoneNumber(
-        phoneNumber,
-      );
+      final current = FirebaseAuth.instance.currentUser;
+      if (current != null && current.isAnonymous) {
+        _confirmationResult = await current.linkWithPhoneNumber(phoneNumber);
+      } else {
+        _confirmationResult = await FirebaseAuth.instance.signInWithPhoneNumber(
+          phoneNumber,
+        );
+      }
 
       if (!mounted) return;
       setState(() {

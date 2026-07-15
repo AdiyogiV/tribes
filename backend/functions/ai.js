@@ -273,6 +273,10 @@ export const aiChat = onRequest(
             // Preserve explicit chatSource from dedicated pages (astrology/wellness).
             // null = unified Baba mode (main chat with auto-loaded context).
             const chatSource = body.chatSource || null;
+            // Baba's live page snapshot (from BabaContext.snapshot() on the
+            // client). Gives the TEXT brain the same screen awareness the voice
+            // brain gets from whereAmI — one Baba on context.
+            const screenContext = body.screen || null;
 
             // ── Context resolution ──────────────────────────────────────────
             // Prefer server-fetched context (from Firestore) when a valid Firebase
@@ -343,7 +347,7 @@ export const aiChat = onRequest(
             // whole auth + context-fetch path above with zero new Cloud Functions.
             if (body.promptOnly === true) {
                 const systemPrompt = getChatSystemPrompt(
-                    astrologyContext, userLocation, /* isVoice */ true);
+                    astrologyContext, userLocation, /* isVoice */ true, screenContext);
                 logger.info("Voice prompt-only request served", {
                     structuredData: true, chatId, contextSource,
                     promptChars: systemPrompt.length,
@@ -526,6 +530,7 @@ export const aiChat = onRequest(
                 astrologyContext,
                 userLocation,
                 voiceStyle,
+                screenContext,
                 onFirstToken: () => {
                     if (!performanceMetrics.firstTokenTime) {
                         performanceMetrics.firstTokenTime = Date.now();
@@ -601,7 +606,7 @@ export const aiChat = onRequest(
                         lastMessage: {
                             content: accumulated,
                             senderId: HOLYCOW_USER_ID,
-                            senderName: "Aryabhatt",
+                            senderName: "Aurobhatt",
                             timestamp: FieldValue.serverTimestamp(),
                         },
                     }, { merge: true });

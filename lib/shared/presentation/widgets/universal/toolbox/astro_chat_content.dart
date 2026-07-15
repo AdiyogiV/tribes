@@ -405,7 +405,7 @@ class AstroChatContentState extends State<AstroChatContent>
             child: Opacity(
               opacity: _hasText ? 1.0 : 0.4,
               child: Image.asset(
-                'assets/images/aryabhatt.png',
+                'assets/images/aurobhatt.png',
                 width: 32,
                 height: 32,
                 errorBuilder: (_, __, ___) => Icon(

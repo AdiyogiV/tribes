@@ -112,7 +112,7 @@ class RecentConversationsEmpty extends StatelessWidget {
           ),
           const SizedBox(height: AppDimensions.spacingSm),
           Text(
-            'Start a new chat from Aryabhatt to see it here.',
+            'Start a new chat from Aurobhatt to see it here.',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13,

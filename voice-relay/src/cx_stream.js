@@ -2,7 +2,7 @@
  * Dialogflow CX bidirectional streaming wrapper (v3beta1 — needed for tools).
  *
  * Owns ONE live conversation turn-loop with CX: push user audio in, get
- * interim transcripts + Aryabhatt's reply + synthesized TTS audio out, AND
+ * interim transcripts + Aurobhatt's reply + synthesized TTS audio out, AND
  * handle client-side FUNCTION TOOL calls so Baba can act, not just talk.
  *
  * Tool loop (differs from the Live engine):
@@ -86,7 +86,7 @@ async function toolNameFor(resource, action) {
 /**
  * A single voice session. Emits:
  *   'transcript' ({ text, final })  — live STT of the user
- *   'reply'      ({ text })         — Aryabhatt's text (captions)
+ *   'reply'      ({ text })         — Aurobhatt's text (captions)
  *   'audio'      (Buffer)           — TTS PCM chunk to play
  *   'tool_call'  ({ id, name, args })— Baba wants the client to run a tool
  *   'turn_end'   ()                 — CX finished a response turn
@@ -111,6 +111,17 @@ export class CxVoiceSession extends EventEmitter {
         this.configSent = false;
         this.ended = false;         // true only after a real hang-up / fatal error
         this.awaitingTool = false;  // true between emitting a tool_call and its result
+        // Armed = ready to open an AUDIO recognizer turn, but we hold off until
+        // the first mic chunk actually arrives (lazy-open). This is what stops
+        // Cloud Speech's OUT_OF_RANGE "audio timeout" from killing the call: in
+        // half-duplex (waitTurn) the client mutes the mic while Baba speaks, so
+        // an eagerly-opened recognizer would sit starving and die. No stream
+        // exists until there's audio to feed it => it can't starve.
+        this._armed = false;
+        // Set once we've half-closed the write side of an audio turn (see
+        // _onData). Guards sendAudio from writing after end() and stops us
+        // half-closing the same turn twice.
+        this._audioClosed = false;
         this._pending = new Map();  // callId -> { tool, action }
     }
 
@@ -148,6 +159,10 @@ export class CxVoiceSession extends EventEmitter {
                         audioEncoding: "AUDIO_ENCODING_LINEAR_16",
                         sampleRateHertz: CONFIG.inputSampleRateHertz,
                         singleUtterance: true,
+                        // A stronger recognizer than the CX default — much better
+                        // on English + Hindi/English code-switching. Omitted when
+                        // CX_STT_MODEL="" so we cleanly fall back to the default.
+                        ...(CONFIG.sttModel ? { model: CONFIG.sttModel } : {}),
                     },
                 },
                 languageCode: CONFIG.languageCode,
@@ -197,7 +212,9 @@ export class CxVoiceSession extends EventEmitter {
             // the normal turn cycle re-arms an audio turn to listen.
             this._openTurn([this._kickoffRequest()], /* audio */ false);
         } else {
-            this._openTurn([this._configRequest()], /* audio */ true);
+            // No opener: just arm. The recognizer opens lazily on the user's
+            // first mic chunk (see sendAudio) so it never starves waiting.
+            this._armed = true;
         }
     }
 
@@ -208,7 +225,9 @@ export class CxVoiceSession extends EventEmitter {
      */
     _openTurn(firstRequests, audioTurn) {
         if (this.ended) return;
+        this._armed = false; // a turn is now live; lazy-open no longer pending
         this.configSent = false;
+        this._audioClosed = false; // fresh turn: write side is open again
         this.stream = client.streamingDetectIntent();
 
         this.stream.on("data", (res) => this._onData(res));
@@ -217,10 +236,11 @@ export class CxVoiceSession extends EventEmitter {
         });
         this.stream.on("end", () => {
             // We proactively retire streams in _onData; only reach here on an
-            // unsolicited close. Re-arm an audio turn unless shutting down or
-            // mid tool-call (waiting on the client).
+            // unsolicited close. Re-ARM (don't eagerly reopen) unless shutting
+            // down or mid tool-call — the fresh audio turn opens lazily on the
+            // next mic chunk, so an idle recognizer can never starve out.
             if (this.ended) this.emit("close");
-            else if (!this.awaitingTool) this._openTurn([this._configRequest()], true);
+            else if (!this.awaitingTool) { this._retireStream(); this._armed = true; }
         });
 
         for (const req of firstRequests) this.stream.write(req);
@@ -242,16 +262,26 @@ export class CxVoiceSession extends EventEmitter {
         }
     }
 
-    /** Retire the current stream and open a fresh AUDIO turn for next utterance. */
+    /** Retire the current stream and ARM a fresh AUDIO turn for next utterance. */
     _cycleTurn() {
         if (this.ended) return;
         this._retireStream();
-        this._openTurn([this._configRequest()], true);
+        // Lazy: the new recognizer opens when the next mic chunk arrives, not
+        // now — so it can't sit idle and hit Cloud Speech's audio timeout.
+        this._armed = true;
     }
 
     /** Forward a raw PCM16 chunk from the client into CX (audio turns only). */
     sendAudio(chunk) {
-        if (!this.stream || !this.configSent) return;
+        if (this.ended || this.awaitingTool) return;
+        // Lazy-open the recognizer on the first chunk of a new utterance. This
+        // is the anti-starvation core: the CX audio stream only exists while
+        // the user is actually speaking, so it never waits (and times out).
+        if (this._armed && !this.stream) {
+            this._armed = false;
+            this._openTurn([this._configRequest()], /* audio */ true);
+        }
+        if (!this.stream || !this.configSent || this._audioClosed) return;
         this.stream.write({ queryInput: { audio: { audio: chunk } } });
     }
 
@@ -277,16 +307,49 @@ export class CxVoiceSession extends EventEmitter {
         this._openTurn(this._toolResultRequests(results), /* audio */ false);
     }
 
+    /**
+     * Inject what the user is now looking at as a TEXT turn so Baba reacts to
+     * the screen (e.g. narrate the chart reveal). CX is turn-based, so a text
+     * turn always produces a spoken reply — `speak` is accepted for a uniform
+     * signature with the Live engine but CX effectively always narrates. No-op
+     * while a tool call is in flight (don't disturb that loop).
+     */
+    injectContext(text, _speak = true) {
+        if (this.ended || this.awaitingTool) return;
+        const ctx = typeof text === "string" ? text.trim() : "";
+        if (!ctx) return;
+        this._retireStream();
+        this._openTurn([{
+            session: this._sessionPath(),
+            queryInput: {
+                text: { text: `[SCREEN CONTEXT] ${ctx}` },
+                languageCode: CONFIG.languageCode,
+            },
+            outputAudioConfig: this._outputAudioConfig(),
+        }], /* audio */ false);
+    }
+
     /** Translate one CX streaming response into our events. */
     async _onData(res) {
         // Interim / final speech recognition of what the USER said.
         const rr = res.recognitionResult;
         if (rr && rr.transcript) {
-            this.emit("transcript", {
-                text: rr.transcript,
-                final: rr.messageType === "END_OF_SINGLE_UTTERANCE"
-                    || rr.isFinal === true,
-            });
+            const isFinal = rr.messageType === "END_OF_SINGLE_UTTERANCE"
+                || rr.isFinal === true;
+            this.emit("transcript", { text: rr.transcript, final: isFinal });
+            // Chirp/USM recognizers (chirp_2) do NOT honor `singleUtterance`
+            // endpointing, so CX never auto-closes the recognizer when the user
+            // stops. The client mutes its mic in half-duplex (waitTurn), so no
+            // more audio arrives and Cloud Speech ABORTs with "Stream timed out
+            // after receiving no more client requests" ~10s later. On a FINAL
+            // recognition result we half-close the write side ourselves — this
+            // tells CX "utterance complete, go think" and it proceeds to the
+            // reply. Harmless for endpointing models (latest_long); essential
+            // for chirp. We keep the READ side open to receive the response.
+            if (isFinal && this.configSent && this.stream && !this._audioClosed) {
+                this._audioClosed = true;
+                try { this.stream.end(); } catch { /* already half-closed */ }
+            }
         }
 
         const dir = res.detectIntentResponse;
@@ -328,6 +391,7 @@ export class CxVoiceSession extends EventEmitter {
     /** Close the session for good (user hung up). Stops the reopen loop. */
     end() {
         this.ended = true;
+        this._armed = false;
         this._pending.clear();
         try { this.stream?.end(); } catch { /* already closed */ }
         this.stream = null;

@@ -8,7 +8,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:logger/logger.dart' show Level;
 import 'package:record/record.dart';
-import 'package:uuid/uuid.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'package:aurogram/core/logging/app_logger.dart';
@@ -17,15 +16,26 @@ import 'package:aurogram/features/baba/voice/voice_engine_pref.dart';
 import 'package:aurogram/features/baba/voice/voice_mic_mode_pref.dart';
 import 'package:aurogram/features/baba/domain/baba_tool_registry.dart';
 
-/// High-level state of a live voice conversation with Aryabhatt.
+/// High-level state of a live voice conversation with Aurobhatt.
 enum VoiceCallState {
   idle,
   connecting,
   listening, // mic open, waiting for / hearing the user
-  thinking, // user finished, awaiting Aryabhatt
-  speaking, // playing Aryabhatt's TTS audio
+  thinking, // user finished, awaiting Aurobhatt
+  speaking, // playing Aurobhatt's TTS audio
   error,
   ended,
+}
+
+extension VoiceCallStateX on VoiceCallState {
+  /// True only when the mic/speaker is genuinely live — i.e. tearing down now
+  /// would cut real audio. Deliberately EXCLUDES `connecting`: the first-ever
+  /// call raises the OS mic-permission dialog which backgrounds the app
+  /// mid-connect, and hanging up there left a zombie socket (double greeting).
+  bool get isLiveAudio =>
+      this == VoiceCallState.listening ||
+      this == VoiceCallState.thinking ||
+      this == VoiceCallState.speaking;
 }
 
 /// Drives one live voice session end-to-end:
@@ -36,9 +46,9 @@ enum VoiceCallState {
 /// instant the relay is ready.
 class VoiceSessionController extends ChangeNotifier {
   // App-scoped singleton. Baba's voice session must OUTLIVE any single widget
-  // (the dashboard cow, the shell orb, a chat page) so a live call survives
-  // navigation and hands off between presences. Every `VoiceSessionController()`
-  // returns this one instance; it is never disposed for the app's lifetime.
+  // (the app-wide BabaOverlay, a chat page) so a live call survives navigation
+  // and hands off between screens. Every `VoiceSessionController()` returns this
+  // one instance; it is never disposed for the app's lifetime.
   VoiceSessionController._();
   static final VoiceSessionController _instance = VoiceSessionController._();
   factory VoiceSessionController() => _instance;
@@ -55,13 +65,13 @@ class VoiceSessionController extends ChangeNotifier {
   bool _disposed = false;
 
   // The mic opens once, as soon as the relay is ready. No greeting any more:
-  // the user simply starts talking and Aryabhatt (Gemini Live API) replies.
+  // the user simply starts talking and Aurobhatt (Gemini Live API) replies.
   bool _micStarted = false;
   bool _relayReady = false;
 
   // How the mic behaves this call (read once at start, see [VoiceMicModePref]).
   // waitTurn (default): only forward mic audio while it's the user's turn
-  // (listening) so Aryabhatt's voice / room noise can't leak in. openMic:
+  // (listening) so Aurobhatt's voice / room noise can't leak in. openMic:
   // stream the whole call so the user can talk over him (barge-in, Live only).
   VoiceMicMode _micMode = VoiceMicMode.waitTurn;
 
@@ -70,7 +80,7 @@ class VoiceSessionController extends ChangeNotifier {
   VoiceEngine _engine = VoiceEngine.live;
 
   // Native player ring-buffer size = ~1s of 24kHz PCM16 (48000 B/s). The Live
-  // API streams Aryabhatt's voice in fast BURSTS (often a whole sentence at
+  // API streams Aurobhatt's voice in fast BURSTS (often a whole sentence at
   // once), so a small buffer underruns the moment the event loop is busy with
   // the mic stream / websocket / logging => audible stutter. ~1s of headroom
   // rides those bursts smoothly. It's also the per-feed coalesce cap: barge-in
@@ -92,14 +102,14 @@ class VoiceSessionController extends ChangeNotifier {
   // TTS playback is fed to flutter_sound ONE buffer at a time, awaited, so the
   // native player can apply backpressure. The relay bursts a whole reply at
   // once; without this queue the overlapping un-awaited feeds overflow the
-  // player buffer and most of Aryabhatt's audio is silently dropped (he'd
+  // player buffer and most of Aurobhatt's audio is silently dropped (he'd
   // "speak only a few words"). flutter_sound forbids two simultaneous feeds.
   final Queue<Uint8List> _ttsQueue = Queue<Uint8List>();
   bool _draining = false;
   bool _turnEndPending = false;
 
   // Wall-clock playback tracking. The native player buffers up to ~1s of audio
-  // (_playerBufferBytes), so "the TTS queue is empty" does NOT mean Aryabhatt
+  // (_playerBufferBytes), so "the TTS queue is empty" does NOT mean Aurobhatt
   // has stopped coming out of the speaker — up to a second of his voice is
   // still playing out. We record when playback began and how many bytes we've
   // fed this turn, then re-arm the mic only once that audio has actually played
@@ -136,15 +146,44 @@ class VoiceSessionController extends ChangeNotifier {
   /// this is just his job right now. Cleared by the screen on exit.
   String? directiveOverride;
 
+  // What the user is currently looking at. Pushed to the relay mid-call so Baba
+  // can react to the screen (see [updateScreenContext]). Kept so it can be
+  // (re)sent the moment the relay is ready if it's set before then.
+  String? _screenContext;
+  bool _screenContextSpeak = true;
+  bool _screenContextSent = false;
+
+  // ── Continuity (Baba is ambient presence, not a series of cold calls) ──
+  // When the last call ended. A re-dial soon after is a "warm resume": we reuse
+  // the same session and DON'T replay the greeting, so a dropped/backgrounded
+  // call (or a quick re-tap) continues the conversation instead of restarting
+  // it. A cold open (first call, or after the window) greets normally.
+  DateTime? _lastEndedAt;
+  static const Duration _warmResumeWindow = Duration(minutes: 3);
+  bool _warmResume = false; // computed once per start()
+
   VoiceCallState get state => _state;
   String get userTranscript => _userTranscript;
   String get aryabhattReply => _aryabhattReply;
   String? get errorMessage => _errorMessage;
 
+  /// True while a call is live (from dialling through to the last word) — i.e.
+  /// not idle/ended/error. Screens use this to decide whether to feed Baba
+  /// screen context (no point narrating to a call that isn't happening).
+  bool get isCallLive =>
+      _state == VoiceCallState.connecting ||
+      _state == VoiceCallState.listening ||
+      _state == VoiceCallState.thinking ||
+      _state == VoiceCallState.speaking;
+
   void _setState(VoiceCallState s) {
     if (_disposed || _state == s) return;
     final from = _state;
     _state = s;
+    // Remember when a call ends so the next dial can decide cold-vs-warm.
+    if (s == VoiceCallState.ended || s == VoiceCallState.error) {
+      _lastEndedAt = DateTime.now();
+    }
     AppLogger.i('Voice state',
         category: LogCategory.voice,
         data: {'from': from.name, 'to': s.name});
@@ -160,6 +199,11 @@ class VoiceSessionController extends ChangeNotifier {
   Future<void> start() async {
     if (_state != VoiceCallState.idle && _state != VoiceCallState.ended) return;
     _micStarted = _relayReady = false;
+    // Warm resume? A dial soon after the last end reuses the session and skips
+    // the greeting (see _connect) so Baba continues instead of re-introducing
+    // himself. Cold open (first call / long gap) greets normally.
+    _warmResume = _lastEndedAt != null &&
+        DateTime.now().difference(_lastEndedAt!) <= _warmResumeWindow;
     // Engine: an explicit override wins (onboarding forces Live for its
     // latency-sensitive co-authoring), otherwise honour the user's saved pref.
     // BOTH engines now support tool-calling — Live via streamed declarations,
@@ -175,6 +219,9 @@ class VoiceSessionController extends ChangeNotifier {
     _finishTurnTimer?.cancel();
     _playbackStartedAt = null;
     _playbackBytesFed = 0;
+    // A fresh call: if a screen already set context, (re)send it once the relay
+    // is ready. The value itself is kept — the current screen is still current.
+    _screenContextSent = false;
     _setState(VoiceCallState.connecting);
     _ttsChunks = _ttsBytes = _micChunks = _micBytes = 0;
     AppLogger.i('Voice call starting',
@@ -188,7 +235,7 @@ class VoiceSessionController extends ChangeNotifier {
       }
 
       if (FirebaseAuth.instance.currentUser == null) {
-        _fail('Please sign in to talk to Aryabhatt');
+        _fail('Please sign in to talk to Aurobhatt');
         return;
       }
 
@@ -227,7 +274,7 @@ class VoiceSessionController extends ChangeNotifier {
     // not the earpiece) and allowBluetooth so headphones/AirPods just work.
     //
     // mode = videoChat: this engages iOS hardware echo cancellation, which
-    // ERASES Aryabhatt's own voice from the mic. That's what lets talk-to-
+    // ERASES Aurobhatt's own voice from the mic. That's what lets talk-to-
     // interrupt (barge-in) work WITHOUT the speaker echo false-triggering it.
     // videoChat (not voiceChat) keeps the loud speakerphone route. There's a
     // mild volume dip vs defaultMode — the trade for echo-free full-duplex.
@@ -269,7 +316,7 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
     await _player.setVolume(1.0); // play replies at full volume
   }
 
-  /// Barge-in: the user cut in while Aryabhatt was speaking. We DON'T stop the
+  /// Barge-in: the user cut in while Aurobhatt was speaking. We DON'T stop the
   /// native player (stopPlayer() tears down the iOS audio unit and drops the
   /// route, which spawned a whole chain of bugs). Instead we just drop
   /// everything not yet played — clear the queue, and [_suppressAudio] (set by
@@ -306,29 +353,37 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
       onDone: () => _setState(VoiceCallState.ended),
     );
 
-    // Open the CX session on the relay. Fresh session id per call => each tap
-    // starts a brand-new conversation (no carryover). Auth is the token.
-    // `engine` lets the user pick Live (premium) vs CX (credit-funded) — the
-    // relay falls back to its own default if we send nothing.
-    final sessionId = const Uuid().v4();
+    // Open the session on the relay. The session id is STABLE per user
+    // (`baba-<uid>`), not random-per-tap: within the backend's session window a
+    // re-dial resumes the SAME conversation (CX keeps its context; memory is
+    // durable), so Baba doesn't reset into a stranger every time. Auth is the
+    // token. `engine` picks CX (credit-funded default) vs Live (premium).
+    final sessionId = 'baba-${user.uid}';
     final engine = _engine;
     // Hand Baba the WHITELISTED tools registered for the current surface, so he
     // can act (not just talk). Empty list => a plain conversational session.
     final tools = BabaToolRegistry.instance.declarations;
+    // Greet only on a COLD open. On a warm resume (recent drop / re-tap) we send
+    // no directive so the relay doesn't kick off a fresh greeting turn — Baba
+    // just keeps listening where the conversation left off.
+    final sendDirective = !_warmResume &&
+        directiveOverride != null &&
+        directiveOverride!.isNotEmpty;
     _channel!.sink.add(jsonEncode({
       'type': 'start',
       'token': token,
       'sessionId': sessionId,
       'engine': VoiceEnginePref.wireValue(engine),
       if (tools.isNotEmpty) 'tools': tools,
-      if (directiveOverride != null && directiveOverride!.isNotEmpty)
-        'directive': directiveOverride,
+      if (sendDirective) 'directive': directiveOverride,
     }));
     AppLogger.i('Voice start frame sent',
         category: LogCategory.voice,
         data: {
           'sessionId': sessionId,
           'engine': engine.name,
+          'warmResume': _warmResume,
+          'greeted': sendDirective,
           'micMode': _micMode.name,
           'tools': tools.length,
         });
@@ -346,7 +401,7 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
     );
     _micSub = stream.listen((chunk) {
       // Half-duplex (waitTurn): hold the mic shut unless it's the user's turn,
-      // so Aryabhatt's own voice / room noise never reaches the relay. The mic
+      // so Aurobhatt's own voice / room noise never reaches the relay. The mic
       // stream itself stays open (no start/stop churn) — we just don't forward.
       if (_micMode == VoiceMicMode.waitTurn &&
           _state != VoiceCallState.listening) {
@@ -403,6 +458,10 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
         data: {
           'type': type,
           if (msg['final'] != null) 'final': msg['final'],
+          // Surface the relay's error detail — otherwise a failed turn shows up
+          // as an opaque {type: error} and we can't diagnose without the
+          // (VPC-blocked) Cloud Run logs.
+          if (msg['message'] != null) 'message': msg['message'],
           if (msg['text'] != null)
             'text': (msg['text'] as String?)?.substring(
                 0,
@@ -413,6 +472,8 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
         // Relay is live — open the mic right away so the user can talk.
         _relayReady = true;
         _maybeStartMic();
+        // If a screen set context before we connected, tell Baba now.
+        _maybeSendScreenContext();
         break;
       case 'transcript':
         _userTranscript = (msg['text'] as String?) ?? '';
@@ -436,7 +497,7 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
         _setState(VoiceCallState.speaking);
         break;
       case 'interrupt':
-        // Barge-in: user started talking over Aryabhatt. Kill playback now and
+        // Barge-in: user started talking over Aurobhatt. Kill playback now and
         // give them the floor. STT keeps running on the relay, so their actual
         // utterance will come back as the next transcript/reply.
         AppLogger.i('Barge-in: user interrupted',
@@ -453,7 +514,7 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
       case 'speaking_done':
         // Turn complete on the relay — but locally we may still be draining the
         // TTS queue. Only reopen the mic once the audio has actually finished
-        // playing, otherwise we'd cut Aryabhatt off mid-sentence.
+        // playing, otherwise we'd cut Aurobhatt off mid-sentence.
         AppLogger.i('Turn done',
             category: LogCategory.voice,
             data: {
@@ -586,7 +647,7 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
     }
   }
 
-  /// Re-arm the mic only AFTER Aryabhatt's audio has actually played out of the
+  /// Re-arm the mic only AFTER Aurobhatt's audio has actually played out of the
   /// speaker. The relay's `speaking_done` (and an emptied queue) only mean we've
   /// FED every byte to the native player — up to ~1s is still buffered and
   /// audibly playing. Re-arming the mic then makes it capture his own tail,
@@ -613,7 +674,7 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
     _finishTurnTimer = Timer(delay, _finishTurn);
   }
 
-  /// Reopen the floor to the user after Aryabhatt finishes speaking.
+  /// Reopen the floor to the user after Aurobhatt finishes speaking.
   void _finishTurn() {
     _finishTurnTimer?.cancel();
     _turnEndPending = false;
@@ -636,7 +697,7 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
     unawaited(_cleanup());
   }
 
-  /// User tapped "my turn": cut Aryabhatt off mid-sentence and hand the floor
+  /// User tapped "my turn": cut Aurobhatt off mid-sentence and hand the floor
   /// back to the mic. This is the CLIENT-initiated twin of the server-driven
   /// `interrupt` control frame — needed because in waitTurn (half-duplex) mode
   /// the mic is muted while he speaks, so the user has no voice-only way to
@@ -665,6 +726,49 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
       // socket already closing — local suppression still handles it
     }
     _setState(VoiceCallState.listening);
+  }
+
+  /// Tell Baba what the user is now looking at, mid-call, so he can react to the
+  /// screen (e.g. narrate the chart reveal). Transport-thin: we send a `context`
+  /// control frame; the relay injects it into the live conversation. Safe if the
+  /// relay is older and ignores it (no-op). Set [speak] false for silent
+  /// awareness (he only mentions it if asked); true (default) => he narrates.
+  ///
+  /// The value is remembered so a call that starts / reconnects while this
+  /// screen is up still gets it (sent the moment the relay is ready). Screens
+  /// should clear it (pass null) on exit if the context no longer applies.
+  void updateScreenContext(String? context, {bool speak = true}) {
+    final trimmed = context?.trim();
+    if (trimmed == null || trimmed.isEmpty) {
+      _screenContext = null;
+      return;
+    }
+    _screenContext = trimmed;
+    _screenContextSpeak = speak;
+    _screenContextSent = false;
+    _maybeSendScreenContext();
+  }
+
+  /// Push the pending screen context to the relay once, if the socket is ready.
+  void _maybeSendScreenContext() {
+    if (_disposed || _screenContextSent) return;
+    final ctx = _screenContext;
+    if (ctx == null || ctx.isEmpty) return;
+    if (!_relayReady || _channel == null) return; // resent from the 'ready' hook
+    try {
+      _channel!.sink.add(jsonEncode({
+        'type': 'context',
+        'text': ctx,
+        'speak': _screenContextSpeak,
+      }));
+      _screenContextSent = true;
+      AppLogger.i('Screen context -> relay',
+          category: LogCategory.voice,
+          data: {'speak': _screenContextSpeak, 'chars': ctx.length});
+    } catch (e) {
+      AppLogger.w('Voice: screen context send failed',
+          category: LogCategory.voice, data: {'error': e.toString()});
+    }
   }
 
   /// User tapped hang up.

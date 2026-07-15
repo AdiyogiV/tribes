@@ -3,7 +3,7 @@
  *
  * Streams a WAV file (must be PCM16, 16 kHz, mono) into the relay over the
  * same WebSocket protocol the Flutter app uses, prints the live transcript and
- * Aryabhatt's reply, and saves the returned TTS audio as a playable WAV.
+ * Aurobhatt's reply, and saves the returned TTS audio as a playable WAV.
  *
  * Usage:
  *   node tools/test_client.js path/to/input.wav [ws://localhost:8080/voice]
@@ -115,7 +115,7 @@ async function main() {
         if (msg.type === "transcript") {
             console.log(`  [you${msg.final ? ", final" : ""}] ${msg.text}`);
         } else if (msg.type === "reply") {
-            console.log(`  [Aryabhatt] ${msg.text}`);
+            console.log(`  [Aurobhatt] ${msg.text}`);
         } else if (msg.type === "speaking_done") {
             finish(ws, audioChunks);
         } else if (msg.type === "error") {

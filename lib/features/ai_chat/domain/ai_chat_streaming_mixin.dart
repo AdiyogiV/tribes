@@ -5,6 +5,7 @@ import 'package:aurogram/shared/models/search_result.dart';
 import 'package:aurogram/features/ai_chat/domain/ai_chat_service.dart';
 import 'package:aurogram/shared/services/location_service.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
+import 'package:aurogram/features/baba/domain/baba_context.dart';
 
 import 'ai_chat_models.dart';
 import 'ai_chat_context_mixin.dart';
@@ -189,6 +190,11 @@ mixin AiChatStreamingMixin on ChangeNotifier, AiChatContextMixin {
         context: {
           if (location != null) 'location': location,
           'chatId': sessionId,
+          // Baba's page awareness for TEXT: the same live screen snapshot the
+          // voice brain pulls via whereAmI. This is what makes text and voice
+          // ONE Baba on context — text can now answer "what's on my screen?"
+          // and reason about where the user is, in real time.
+          'screen': BabaContext.instance.snapshot(),
           // astrologyContext is now fetched server-side from Firestore
           // using the Firebase ID token sent in the Authorization header.
           // Kept here only as backwards-compat fallback for old/guest sessions.

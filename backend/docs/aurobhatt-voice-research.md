@@ -1,4 +1,4 @@
-# Aryabhatt → Voice: Research & Roadmap
+# Aurobhatt → Voice: Research & Roadmap
 
 *Status: research / decision doc. No code changed yet.*
 *Author: Jo (code-puppy), for Abhinav.*
@@ -7,18 +7,18 @@
 
 ## TL;DR
 
-"Aryabhatt" is **not a model**. It is `gemini-2.5-flash` (Vertex AI, `asia-southeast1`)
-plus a system-prompt persona (`ARYABHATT_PERSONA` in `functions/prompts/chat.js`).
+"Aurobhatt" is **not a model**. It is `gemini-2.5-flash` (Vertex AI, `asia-southeast1`)
+plus a system-prompt persona (`AUROBHATT_PERSONA` in `functions/prompts/chat.js`).
 There is nothing to "convert" — there are no weights we own.
 
-So "make Aryabhatt a voice model" really means: **wrap the existing brain in a voice
+So "make Aurobhatt a voice model" really means: **wrap the existing brain in a voice
 I/O layer.** And the good news is you already built ~half of it.
 
 | Stage | Today | Gap |
 |-------|-------|-----|
 | **Voice IN** |  Done | Flutter records + transcribes (`speech_to_text`, `en_IN`), uploads audio; backend feeds raw audio to Gemini as `inlineData` (`ai_gemini.js > buildAudioParts`). Gemini understands the audio natively. |
 | **Brain** |  Done | Gemini 2.5-flash, persona prompt, streaming, `isVoice` style rules (40–80 word spoken replies) already exist. |
-| **Voice OUT** |  Missing | Aryabhatt never literally *speaks*. The reply is streamed **text**. The `isVoice` flag only shortens the text; nothing synthesizes audio. |
+| **Voice OUT** |  Missing | Aurobhatt never literally *speaks*. The reply is streamed **text**. The `isVoice` flag only shortens the text; nothing synthesizes audio. |
 
 **The whole job = add Text-To-Speech (voice OUT), and optionally upgrade to a
 real-time full-duplex voice loop.**
@@ -38,14 +38,14 @@ user voice ──► Gemini (unchanged) ──► text stream ──► sentence
 
 - **Effort:** small. One new backend endpoint + one Flutter audio player.
 - **Latency trick:** chunk the streamed text by sentence and TTS each sentence as it
-  lands, so Aryabhatt starts speaking before the full reply is done.
-- **Voice engine options** (this is where Aryabhatt's actual *voice* is chosen):
+  lands, so Aurobhatt starts speaking before the full reply is done.
+- **Voice engine options** (this is where Aurobhatt's actual *voice* is chosen):
   - **Google Cloud TTS — Chirp 3 HD** voices. Same GCP project (`ty-dev-516d7`), same
     ADC auth you already use for Vertex. Cleanest fit. Supports Indian English + Hindi.
   - **Gemini TTS** (`gemini-2.5-flash-preview-tts`) — controllable, expressive,
     prompt-steerable ("speak warmly, like a 23-year-old scholar"). Stays in-family.
   - **ElevenLabs** — best raw voice quality + voice cloning (you could craft a
-    *bespoke* Aryabhatt voice). External vendor, extra cost, data leaves GCP.
+    *bespoke* Aurobhatt voice). External vendor, extra cost, data leaves GCP.
   - **Sarvam AI / Bhashini** — built for **Indian languages & accents**. Strong pick
     given the Hinglish/Hindi audience. Sarvam is a paid API; Bhashini is govt-backed.
 - **Cost:** TTS is ~$4–16 per 1M chars (Google) — at 40–80 word replies this is
@@ -53,7 +53,7 @@ user voice ──► Gemini (unchanged) ──► text stream ──► sentence
 
 **Recommended starting voice engine: Google Cloud TTS Chirp 3 HD** (zero new auth,
 same project, low latency from your Singapore region) — then A/B against ElevenLabs /
-Sarvam for "does it actually *sound* like Aryabhatt."
+Sarvam for "does it actually *sound* like Aurobhatt."
 
 ---
 
@@ -87,11 +87,11 @@ user mic ──(WebSocket, live)──► Gemini Live ──► native audio out
 
 You already integrate **Agora** for video/voice calls (`functions/agora_token.js`,
 `triggers/on_call_write.js`). Agora's Conversational AI Engine can host an LLM voice
-agent inside an Agora channel — so "call Aryabhatt" becomes a literal phone-style call
+agent inside an Agora channel — so "call Aurobhatt" becomes a literal phone-style call
 with echo cancellation, noise suppression, and global low-latency transport built in.
 
 - **Effort:** medium–high, but reuses Agora infra/tokens you already have.
-- **Best if:** you want a " Talk to Aryabhatt" call experience, not just voice replies
+- **Best if:** you want a " Talk to Aurobhatt" call experience, not just voice replies
   in chat.
 - **Trade-off:** ties the voice product to Agora; more moving parts than Tier 1.
 
@@ -100,13 +100,13 @@ with echo cancellation, noise suppression, and global low-latency transport buil
 ## Recommendation
 
 1. **Ship Tier 1 first.** It reuses 100% of the current brain, is a few days of work,
-   and immediately makes Aryabhatt *audible*. Use it to nail the **voice identity**
+   and immediately makes Aurobhatt *audible*. Use it to nail the **voice identity**
    (warm, ~23, classical-but-not-archaic — matches the persona bible) before investing
    in real-time plumbing.
 2. **Then evaluate Tier 2 (Gemini Live)** for the flagship "talk to him live"
    experience once the voice itself is validated.
 3. **Reach for Tier 3 (Agora)** only if the product direction is literally *calling*
-   Aryabhatt, since you already own that infra.
+   Aurobhatt, since you already own that infra.
 
 Do **not** try to fine-tune or "train a voice model" from scratch — there's no upside.
 The persona lives in the prompt; the voice lives in the TTS engine. Swap engines freely.
@@ -121,7 +121,7 @@ The persona lives in the prompt; the voice lives in the TTS engine. Swap engines
 2. **Chunking:** split the streamed reply on sentence boundaries; TTS per sentence for
    early playback (first audio out before full text is done).
 3. **Flutter:** audio playback service (you already have `audio_input_service.dart` for
-   record/transcribe — add a player) + a play button / auto-play toggle on Aryabhatt's
+   record/transcribe — add a player) + a play button / auto-play toggle on Aurobhatt's
    bubbles.
 4. **Voice tuning:** pick voice + rate + pitch to match the persona; A/B Chirp 3 HD vs
    ElevenLabs vs Sarvam on real replies.

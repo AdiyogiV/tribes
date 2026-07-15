@@ -10,11 +10,11 @@
  * It is a drop-in for MultilingualVoiceSession: same constructor shape, same
  * emitted events, so server.js wiring is unchanged.
  *
- *   emits "audio"      (Buffer)  -> 24kHz PCM16 chunk of Aryabhatt's voice
+ *   emits "audio"      (Buffer)  -> 24kHz PCM16 chunk of Aurobhatt's voice
  *   emits "interrupt"  ()        -> user barged in; client should flush+stop
  *   emits "transcript" ({text})  -> what the user said (final-ish)
- *   emits "reply"      ({text})  -> what Aryabhatt said (text form)
- *   emits "turn_end"   ()        -> Aryabhatt finished this turn
+ *   emits "reply"      ({text})  -> what Aurobhatt said (text form)
+ *   emits "turn_end"   ()        -> Aurobhatt finished this turn
  *   emits "error"      (Error)
  *   emits "close"      ()
  *
@@ -96,7 +96,7 @@ export class LiveVoiceSession extends EventEmitter {
             if (languageCode) speechConfig.languageCode = languageCode;
 
             // VAD tuning: the Live API has NO echo cancellation and defaults to
-            // a hair-trigger (START_SENSITIVITY_HIGH), so Aryabhatt's own
+            // a hair-trigger (START_SENSITIVITY_HIGH), so Aurobhatt's own
             // speaker echo gets mistaken for the user and he answers himself.
             // Default start sensitivity to LOW so only deliberate speech (with
             // the device's hardware AEC behind it) interrupts; real barge-in
@@ -151,7 +151,7 @@ export class LiveVoiceSession extends EventEmitter {
     /**
      * Build the Live API realtimeInputConfig from CONFIG.live VAD knobs. Returns
      * null when everything is at the API default (so we don't send an empty
-     * object). Defaults start-of-speech sensitivity to LOW to stop Aryabhatt's
+     * object). Defaults start-of-speech sensitivity to LOW to stop Aurobhatt's
      * own speaker echo from false-triggering a "user is talking" interrupt.
      */
     _buildRealtimeInputConfig() {
@@ -208,19 +208,19 @@ export class LiveVoiceSession extends EventEmitter {
         const sc = msg?.serverContent;
         if (!sc) return;
 
-        // Native barge-in: Google detected the user talking over Aryabhatt.
+        // Native barge-in: Google detected the user talking over Aurobhatt.
         if (sc.interrupted) this.emit("interrupt");
 
         // User speech transcript.
         if (sc.inputTranscription?.text) {
             this.emit("transcript", { text: sc.inputTranscription.text });
         }
-        // Aryabhatt's words (text form, for the chat bubble).
+        // Aurobhatt's words (text form, for the chat bubble).
         if (sc.outputTranscription?.text) {
             this.emit("reply", { text: sc.outputTranscription.text });
         }
 
-        // Aryabhatt's voice audio (base64 PCM16 24kHz).
+        // Aurobhatt's voice audio (base64 PCM16 24kHz).
         for (const part of sc.modelTurn?.parts || []) {
             const data = part.inlineData?.data;
             if (data) this.emit("audio", Buffer.from(data, "base64"));
@@ -237,6 +237,33 @@ export class LiveVoiceSession extends EventEmitter {
                     data: Buffer.isBuffer(buf) ? buf.toString("base64") : Buffer.from(buf).toString("base64"),
                     mimeType: `audio/pcm;rate=${CONFIG.inputSampleRateHertz}`,
                 },
+            });
+        } catch (err) {
+            this.emit("error", err instanceof Error ? err : new Error(String(err)));
+        }
+    }
+
+    /**
+     * Inject what the user is now looking at into the live conversation. Framed
+     * as a user turn tagged so the model treats it as CONTEXT, not something the
+     * user said aloud. `speak=true` completes the turn so Baba narrates the
+     * screen now; `speak=false` adds it to context without forcing a reply
+     * (silent awareness — he'll reference it only if asked).
+     */
+    injectContext(text, speak = true) {
+        if (this._closed || !this._session) return;
+        const ctx = typeof text === "string" ? text.trim() : "";
+        if (!ctx) return;
+        try {
+            this._session.sendClientContent({
+                turns: [{
+                    role: "user",
+                    parts: [{
+                        text: `[SCREEN CONTEXT — the user did not say this aloud; `
+                            + `this describes what is now on their screen] ${ctx}`,
+                    }],
+                }],
+                turnComplete: speak === true,
             });
         } catch (err) {
             this.emit("error", err instanceof Error ? err : new Error(String(err)));

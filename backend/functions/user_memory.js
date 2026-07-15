@@ -42,7 +42,7 @@ const MEMORY_SYSTEM_PROMPT = [
     "astrology + wellness companion app. Given the PRIOR MEMORY and the user's",
     "RECENT MESSAGES, return an UPDATED memory profile as strict JSON.",
     "",
-    "The RECENT MESSAGES are the USER'S OWN words only (Aryabhatt's replies are",
+    "The RECENT MESSAGES are the USER'S OWN words only (Aurobhatt's replies are",
     "deliberately excluded). Treat every line as something the USER said about",
     "themselves. NEVER record astrological claims, predictions, or advice as facts",
     "about the user — only what they actually told you about their own life.",
@@ -74,7 +74,7 @@ function buildMemoryUserPrompt(priorMemory, messages) {
         ? JSON.stringify({ rollingSummary: priorMemory.rollingSummary || "", threads: priorMemory.threads || [] }, null, 2)
         : "(none yet — this is the first memory for this user)";
 
-    // Provenance: feed the USER'S OWN messages only. Including Aryabhatt's
+    // Provenance: feed the USER'S OWN messages only. Including Aurobhatt's
     // replies here let his astrological speculation leak in as "user facts" —
     // the root of the "misunderstands context" bug. The model can't absorb
     // what it never sees.

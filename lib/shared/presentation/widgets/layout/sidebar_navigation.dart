@@ -119,7 +119,7 @@ class _SidebarNavigationState extends State<SidebarNavigation>
                     index: 0,
                     icon: Icons.chat_bubble_outline,
                     selectedIcon: Icons.chat_bubble,
-                    label: 'Aryabhatt',
+                    label: 'Aurobhatt',
                     isDark: isDark,
                     useCustomIcon: true,
                   ),
@@ -310,7 +310,7 @@ class _SidebarNavigationState extends State<SidebarNavigation>
       width: size,
       height: size,
       child: Image.asset(
-        'assets/images/aryabhatt.png',
+        'assets/images/aurobhatt.png',
         width: size,
         height: size,
         fit: BoxFit.contain,

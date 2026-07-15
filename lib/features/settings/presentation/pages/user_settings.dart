@@ -22,7 +22,7 @@ import 'package:aurogram/features/settings/presentation/widgets/settings_dialogs
 import 'package:aurogram/features/settings/presentation/widgets/settings_tiles.dart';
 import 'package:aurogram/features/baba/voice/voice_engine_pref.dart';
 import 'package:aurogram/features/baba/voice/voice_mic_mode_pref.dart';
-import 'package:aurogram/features/ai_chat/domain/aryabhatt_memory_service.dart';
+import 'package:aurogram/features/ai_chat/domain/aurobhatt_memory_service.dart';
 
 // Re-export sub-widgets so existing imports continue to work
 export 'package:aurogram/features/settings/presentation/widgets/settings_exports.dart';
@@ -46,11 +46,11 @@ class UserSettingsPageState extends State<UserSettingsPage> {
   // Voice engine: true = Live (premium, Vertex — best voice), false = CX
   // (Dialogflow CX, paid by trial credits = free to us).
   bool _useLiveVoice = true;
-  // Mic behaviour: true = wait your turn (half-duplex, mic muted while Aryabhatt
+  // Mic behaviour: true = wait your turn (half-duplex, mic muted while Aurobhatt
   // speaks), false = open mic (full-duplex, talk over him to interrupt).
   bool _waitTurnMic = true;
-  // Aryabhatt durable-memory "forget me" control.
-  final AryabhattMemoryService _memory = AryabhattMemoryService();
+  // Aurobhatt durable-memory "forget me" control.
+  final AurobhattMemoryService _memory = AurobhattMemoryService();
   bool _clearingMemory = false;
 
   @override
@@ -226,9 +226,10 @@ class UserSettingsPageState extends State<UserSettingsPage> {
                   Expanded(
                     child: Consumer<AuthService>(
                       builder: (context, authService, _) {
-                        final isLoggedIn =
-                            authService.status == Status.Authenticated &&
-                                authService.user != null;
+                        // Anonymous guests are NOT logged in for settings
+                        // purposes — they see the register/login prompt.
+                        final isLoggedIn = authService.isRegistered &&
+                            authService.user != null;
 
                         return ListView(
                           padding: EdgeInsets.only(
@@ -273,12 +274,12 @@ class UserSettingsPageState extends State<UserSettingsPage> {
                             ),
                             SizedBox(height: sectionSpacing),
 
-                            // Aryabhatt Section - Only for logged in users
+                            // Aurobhatt Section - Only for logged in users
                             // (voice + memory both require auth). Groups every
-                            // Aryabhatt control in one home.
+                            // Aurobhatt control in one home.
                             if (isLoggedIn) ...[
                               _buildSectionHeader(
-                                  context, 'Aryabhatt', isDesktop),
+                                  context, 'Aurobhatt', isDesktop),
                               SizedBox(height: isDesktop ? 12 : 8),
                               // Voice engine + mic-mode switches are internal-only
                               // controls. Prod ships with the safe defaults
@@ -443,7 +444,7 @@ class UserSettingsPageState extends State<UserSettingsPage> {
       iconColor: primaryColor,
       title: _waitTurnMic ? 'Wait your turn' : 'Always listening',
       subtitle: _waitTurnMic
-          ? 'Mic listens only after Aryabhatt finishes — no echo'
+          ? 'Mic listens only after Aurobhatt finishes — no echo'
           : 'Talk over him any time to interrupt',
       value: _waitTurnMic,
       onChanged: _toggleVoiceMicMode,
@@ -458,7 +459,7 @@ class UserSettingsPageState extends State<UserSettingsPage> {
       title: 'Clear memory',
       subtitle: _clearingMemory
           ? 'Clearing\u2026'
-          : 'Make Aryabhatt forget what he knows about you',
+          : 'Make Aurobhatt forget what he knows about you',
       isDesktop: isDesktop,
       onTap: _clearingMemory ? () {} : _confirmAndClearMemory,
     );
@@ -470,7 +471,7 @@ class UserSettingsPageState extends State<UserSettingsPage> {
       builder: (ctx) => AlertDialog(
         title: const Text('Clear memory?'),
         content: const Text(
-          'Aryabhatt will forget everything he remembers about you from past '
+          'Aurobhatt will forget everything he remembers about you from past '
           'chats \u2014 your ongoing concerns, goals, and life details. Your '
           'conversations stay; only the long-term memory is wiped.\n\n'
           'This cannot be undone.',
@@ -495,7 +496,7 @@ class UserSettingsPageState extends State<UserSettingsPage> {
     try {
       await _memory.clearMemory();
       if (!mounted) return;
-      _showMemoryToast("Aryabhatt's memory has been cleared.");
+      _showMemoryToast("Aurobhatt's memory has been cleared.");
     } catch (_) {
       if (!mounted) return;
       _showMemoryToast("Couldn't clear memory. Please try again.",

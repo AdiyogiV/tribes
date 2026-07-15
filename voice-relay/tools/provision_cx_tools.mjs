@@ -94,7 +94,7 @@ async function main() {
   const currentGuidelines = pb.instruction?.guidelines || "";
   // Everything from the marker onward is OUR managed tool section. Strip it and
   // re-append so re-runs pick up guideline changes (idempotent AND updatable).
-  const marker = "## Acting on the app (tools)";
+  const marker = "## Language";
   const idx = currentGuidelines.indexOf(marker);
   const base = (idx >= 0
     ? currentGuidelines.slice(0, idx)
@@ -103,10 +103,18 @@ async function main() {
 
   const updated = await api(
     "PATCH",
-    `${HOST}/v3beta1/${pb.name}?updateMask=referencedTools,instruction`,
+    // CRITICAL: use the PRECISE sub-field mask `instruction.guidelines`, NOT
+    // `instruction`. A mask of `instruction` makes proto3 APPEND the repeated
+    // `instruction.steps` array on every run (merge semantics), silently
+    // duplicating the whole persona until CX's 8192-token playbook limit blows
+    // and EVERY voice call dies instantly with {type:error}. This bit us twice
+    // (2026-07-13 and 2026-07-14). We only manage guidelines + referencedTools
+    // here; steps are authored elsewhere and must be left alone. Do NOT spread
+    // pb.instruction into the body either — that re-sends steps into the merge.
+    `${HOST}/v3beta1/${pb.name}?updateMask=referencedTools,instruction.guidelines`,
     {
       referencedTools: names,
-      instruction: { ...(pb.instruction || {}), guidelines },
+      instruction: { guidelines },
     },
   );
   console.log(

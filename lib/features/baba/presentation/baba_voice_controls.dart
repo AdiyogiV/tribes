@@ -12,8 +12,8 @@ import 'package:aurogram/features/baba/voice/voice_session_controller.dart';
 /// cow's glass aesthetic. All voice logic stays in the controller / cow.
 ///
 /// Buttons (left → right):
-///   * history   → open recent Aryabhatt chats
-///   * my turn   → interrupt Aryabhatt + reopen the mic (only while speaking)
+///   * history   → open recent Aurobhatt chats
+///   * my turn   → interrupt Aurobhatt + reopen the mic (only while speaking)
 ///   * keyboard  → drop the call and switch to the typed input bar
 ///   * end       → hang up (destructive, faint red tint)
 class BabaVoiceControls extends StatefulWidget {
@@ -38,7 +38,7 @@ class BabaVoiceControls extends StatefulWidget {
   /// Open the recent-conversations list.
   final VoidCallback onShowRecent;
 
-  /// Cut Aryabhatt off and hand the mic back to the user.
+  /// Cut Aurobhatt off and hand the mic back to the user.
   final VoidCallback onInterrupt;
 
   @override
@@ -102,7 +102,7 @@ class _BabaVoiceControlsState extends State<BabaVoiceControls>
       if (_isSpeaking)
         _GlassIconButton(
           icon: Icons.mic_rounded,
-          semanticLabel: 'Stop Aryabhatt and speak',
+          semanticLabel: 'Stop Aurobhatt and speak',
           onTap: widget.onInterrupt,
         ),
       _GlassIconButton(

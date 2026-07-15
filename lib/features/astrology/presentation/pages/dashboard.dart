@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
@@ -17,15 +16,12 @@ import 'package:aurogram/features/astrology/domain/astrology_service.dart';
 import 'package:aurogram/features/ayurveda/domain/ayurveda_service.dart';
 import 'package:aurogram/features/astrology/domain/sky_positions_service.dart';
 import 'package:aurogram/features/astrology/domain/astro_calendar_service.dart';
-import 'package:aurogram/shared/services/media/audio_input_service.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/cosmic_dashboard_data.dart';
 import 'package:aurogram/features/astrology/presentation/pages/baba/baba_desktop_layout.dart';
 import 'package:aurogram/features/astrology/presentation/pages/baba/baba_empty_states.dart';
 import 'package:aurogram/features/astrology/presentation/pages/baba/baba_cosmic_content.dart';
-import 'package:aurogram/features/astrology/presentation/pages/baba/baba_input_bar_controller.dart';
-import 'package:aurogram/features/astrology/presentation/pages/baba/baba_input_bar.dart';
-import 'package:aurogram/features/baba/presentation/baba_voice_cow.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/nakshatra_ring_widget.dart';
+import 'package:aurogram/features/baba/domain/baba_snapshot.dart';
 import 'package:aurogram/shared/presentation/widgets/universal/dark_mode_toggle.dart';
 import 'package:aurogram/shared/providers/theme_provider.dart';
 
@@ -44,11 +40,41 @@ class DashboardPage extends StatefulWidget {
 }
 
 class DashboardPageState extends State<DashboardPage>
-    with AutomaticKeepAliveClientMixin, TickerProviderStateMixin {
+    with
+        AutomaticKeepAliveClientMixin,
+        TickerProviderStateMixin,
+        BabaScreenAware<DashboardPage> {
   @override
   bool get wantKeepAlive => true;
 
-  // Scroll-to-hide bottom bar + input — mirrors Feed's approach
+  // ── Baba page awareness ──────────────────────────────────────────────
+  // The home dashboard tells Baba what the user is actually looking at right
+  // now (real-time), so `whereAmI` returns live data, not just "Home".
+  @override
+  String get babaScreenKey => 'home';
+
+  @override
+  Map<String, dynamic> babaSnapshot() {
+    final selected = _sliderDateNotifier.value;
+    final today = DateTime.now();
+    final isToday = selected.year == today.year &&
+        selected.month == today.month &&
+        selected.day == today.day;
+    return {
+      'loggedIn': _user != null,
+      // The sky-chart / nakshatra wheel date the user has scrubbed to.
+      'skyDate':
+          '${selected.year}-${selected.month.toString().padLeft(2, '0')}-${selected.day.toString().padLeft(2, '0')}',
+      'viewingToday': isToday,
+      'skyLoaded': _loadingState.sky == DashboardLoadState.loaded,
+      'eventsLoaded': _loadingState.events == DashboardLoadState.loaded,
+      'muhuratLoaded': _loadingState.muhurat == DashboardLoadState.loaded,
+    };
+  }
+
+  // Scroll-to-hide bottom nav bar — mirrors Feed's approach. Baba himself is a
+  // separate app-wide overlay (see BabaOverlay); the dashboard only owns the
+  // tab-bar hide-on-scroll behaviour.
   final ScrollController _scrollController = ScrollController();
   static const double _hideBarScrollThreshold = 50;
   static const Duration _scrollLogicThrottle = Duration(milliseconds: 100);
@@ -56,25 +82,6 @@ class DashboardPageState extends State<DashboardPage>
   DateTime _lastScrollLogicTime = DateTime(2000);
   bool _lastReportedHideBar = false;
   bool _wheelInteracting = false;
-
-  // Collapsible AI input — COLLAPSED on first load so the dashboard greets the
-  // user with just the Aryabhatt cow icon (tap = voice chat, long-press = text
-  // input). All of its state (expanded flag + text + focus) lives in this
-  // controller so toggling the bar rebuilds ONLY the bar + spacer, never the
-  // whole dashboard.
-  final BabaInputBarController _inputBar =
-      BabaInputBarController(expanded: false);
-
-  // ── Input-bar layout + motion constants (single source of truth) ──
-  // Tail spacer reserved at the bottom of the scroll content so the floating
-  // bar never covers the last card. NOTE: these intentionally do NOT include a
-  // "collapsed" variant — see the spacer in build() for why.
-  static const double _spacerExpandedFocused = 85.0;
-  static const double _spacerExpanded = 45.0;
-  // One coordinated duration/curve for every part of the collapse/expand
-  // transition (slide + fade + spacer) so the motion reads as a single gesture.
-  static const Duration _inputMotion = Duration(milliseconds: 260);
-  static const Curve _inputCurve = Curves.easeOutCubic;
 
   // Cosmic Dashboard services (singletons with caching)
   final _astrologyService = AstrologyService();
@@ -123,11 +130,10 @@ class DashboardPageState extends State<DashboardPage>
         const AssetImage('assets/images/nakshatra_wheel.jpeg'),
         context,
       );
-      // Decode the collapsed-cow asset NOW, while the page is idle, so its
-      // first paint doesn't pay a cold-decode cost. The bar is collapsed by
-      // default, so the cow is the very first thing shown — precaching keeps
-      // that initial paint smooth.
-      precacheImage(const AssetImage('assets/images/aryabhatt.png'), context);
+      // Decode the Aurobhatt asset NOW, while the page is idle, so its first
+      // paint doesn't pay a cold-decode cost. Baba's blob (app-wide overlay)
+      // shows it immediately, so precaching keeps that initial paint smooth.
+      precacheImage(const AssetImage('assets/images/aurobhatt.png'), context);
     }
   }
 
@@ -180,46 +186,15 @@ class DashboardPageState extends State<DashboardPage>
     _scrollController.dispose();
     _nakshatraController.removeListener(_onWheelControllerChanged);
     _nakshatraController.dispose();
-    _inputBar.dispose();
     _sliderValueNotifier.dispose();
     _sliderDateNotifier.dispose();
     _wheelResetNotifier.dispose();
     super.dispose();
   }
 
-  // ─────────────────────────────────────────────────
-  // Input bar → chat navigation (callbacks for BabaInputBar).
-  // Desktop shows chat inline; mobile pushes the chat route.
-  // ─────────────────────────────────────────────────
-
-  void _handleSendText(String text) {
-    if (Responsive.isWideLayout(context)) {
-      _desktopLayoutKey.currentState?.startChatWithMessage(text);
-      return;
-    }
-    context.push('/ai/chat', extra: {'initialMessage': text});
-  }
-
-  void _handleVoiceResult(AudioInputResult result) {
-    if (Responsive.isWideLayout(context)) {
-      _desktopLayoutKey.currentState?.startChatWithVoice(result);
-      return;
-    }
-    context.push('/ai/chat', extra: {'initialVoiceResult': result});
-  }
-
-  void _showRecentConversations() {
-    HapticFeedback.lightImpact();
-    context.push('/ai/conversations', extra: {
-      'onConversationSelected': (String conversationId) {
-        context.push('/ai/chat', extra: {'conversationId': conversationId});
-      },
-    });
-  }
-
-  // ───────────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────────────────
   // Data loading (same as before — services cache aggressively)
-  // ─────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────
 
   Future<void> _loadUpcomingEvents() async {
     if (_loadingState.events == DashboardLoadState.loading) return;
@@ -390,61 +365,20 @@ class DashboardPageState extends State<DashboardPage>
 
     if (shouldHideBar && !_lastReportedHideBar) {
       _lastReportedHideBar = true;
-      // Slide the bar off-screen + collapse it (both local rebuilds only).
-      _inputBar.setHidden(true);
-      _inputBar.collapseIfUnfocused();
       SchedulerBinding.instance.addPostFrameCallback((_) {
         if (mounted) widget.onScrollHidesBottomBar?.call(true);
       });
     } else if (!shouldHideBar && _lastReportedHideBar) {
       _lastReportedHideBar = false;
-      _inputBar.setHidden(false);
       SchedulerBinding.instance.addPostFrameCallback((_) {
         if (mounted) widget.onScrollHidesBottomBar?.call(false);
       });
     }
   }
 
-  // ─────────────────────────────────────────────────
-  // Collapsible input — all state lives in _inputBar; these just add haptics.
-  // ─────────────────────────────────────────────────
-
-  void _toggleInputBar() {
-    HapticFeedback.lightImpact();
-    _inputBar.toggle();
-  }
-
-  // When a call starts we hide the bottom tab bar once (just like a
-  // scroll-down); normal scroll behaviour then takes over — scroll up brings
-  // it back, scroll down hides it again.
-  void _handleVoiceActiveChanged(bool active) {
-    // Keep the scroll tracker in sync so the very next scroll gesture reports
-    // the correct transition (otherwise scroll-up wouldn't restore the bar).
-    _lastReportedHideBar = active;
-    // Slide the cow down with the tab bar (same motion as a scroll-down) so it
-    // drops to fill the space instead of floating awkwardly high.
-    _inputBar.setHidden(active);
-    // Reuse the existing hide-on-scroll plumbing to hide/show the bar.
-    widget.onScrollHidesBottomBar?.call(active);
-  }
-
-  // ─────────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────────────────
   // Build
-  // ─────────────────────────────────────────────────────────────
-
-  /// The floating input's inner content: the collapsed cow (tap = voice call,
-  /// keyboard icon = switch to typing) OR the expanded text bar. Shared by the
-  /// mobile Positioned overlay AND the desktop/web layout so wide layouts get
-  /// the SAME voice-call affordance instead of a permanently-expanded text
-  /// field. Caller wraps this in a [ListenableBuilder] on [_inputBar] so the
-  /// swap rebuilds on toggle.
-  Widget _collapsedCowOrBar() => _inputBar.expanded
-      ? _buildInputBar()
-      : BabaVoiceCow(
-          onShowKeyboard: _toggleInputBar,
-          onShowRecent: _showRecentConversations,
-          onActiveChanged: _handleVoiceActiveChanged,
-        );
+  // ──────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -459,106 +393,52 @@ class DashboardPageState extends State<DashboardPage>
         body: BabaDesktopLayout(
           key: _desktopLayoutKey,
           cosmicDashboardBuilder: _buildCosmicDashboardContent,
-          // Wide/web layout gets the same cow<->bar swap as mobile so the
-          // tap-to-call cow is available (was hard-wired to the expanded bar).
-          dashboardInputBuilder: () => ListenableBuilder(
-            listenable: _inputBar,
-            builder: (context, _) => _collapsedCowOrBar(),
-          ),
+          // No inline input builder: Baba is now the one app-wide overlay
+          // (voice blob + floating chat) and floats over desktop too.
         ),
       );
     }
 
-    // Mobile layout — dashboard + input
+    // Mobile layout — just the dashboard content. Baba (BabaOverlay) floats on
+    // top app-wide, so there's no per-page input bar to manage here anymore.
     return Scaffold(
       extendBody: true,
       backgroundColor: Colors.transparent,
-      body: Stack(
-        children: [
-          // Listener uses raw pointer events — not blocked by child GestureDetectors
-          // (e.g. the nakshatra wheel), so tapping anywhere collapses the input.
-          Listener(
-            onPointerDown: (_) {
-              _inputBar.collapseIfUnfocused();
-              FocusScope.of(context).unfocus();
-            },
-            behavior: HitTestBehavior.translucent,
-            child: RefreshIndicator(
-              onRefresh: _onRefresh,
-              displacement: 50,
-              edgeOffset: MediaQuery.of(context).padding.top + 5,
-              color: Theme.of(context).colorScheme.primary,
-              backgroundColor: Theme.of(context).colorScheme.surface,
-              child: CustomScrollView(
-                controller: _scrollController,
-                physics: _wheelInteracting
-                    ? const NeverScrollableScrollPhysics()
-                    : const BouncingScrollPhysics(
-                        parent: AlwaysScrollableScrollPhysics(),
-                      ),
-                slivers: [
-                  _buildSliverHeader(),
-                  SliverToBoxAdapter(
-                    child: Column(
-                      children: [
-                        _LocalOverlayScope(
-                          child: _buildCosmicDashboardContent(),
-                        ),
-                        // Fixed tail so the floating bar never covers the last
-                        // card. CRITICAL: height must NOT depend on
-                        // expanded/collapsed. The bar floats in a Positioned
-                        // overlay (sibling of this scroll view), so resizing
-                        // this mid-scroll would relayout the scrollable and
-                        // fight the gesture — that was the "collapse first,
-                        // then scroll" hitch. It only grows for the keyboard,
-                        // which never appears during a scroll.
-                        ListenableBuilder(
-                          listenable: _inputBar,
-                          builder: (context, _) => AnimatedContainer(
-                            duration: _inputMotion,
-                            curve: _inputCurve,
-                            height: _inputBar.hasFocus
-                                ? _spacerExpandedFocused
-                                : _spacerExpanded,
-                          ),
-                        ),
-                      ],
+      body: Listener(
+        // Raw pointer events — not blocked by child GestureDetectors (e.g. the
+        // nakshatra wheel) — so tapping anywhere dismisses the keyboard.
+        onPointerDown: (_) => FocusScope.of(context).unfocus(),
+        behavior: HitTestBehavior.translucent,
+        child: RefreshIndicator(
+          onRefresh: _onRefresh,
+          displacement: 50,
+          edgeOffset: MediaQuery.of(context).padding.top + 5,
+          color: Theme.of(context).colorScheme.primary,
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          child: CustomScrollView(
+            controller: _scrollController,
+            physics: _wheelInteracting
+                ? const NeverScrollableScrollPhysics()
+                : const BouncingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics(),
+                  ),
+            slivers: [
+              _buildSliverHeader(),
+              SliverToBoxAdapter(
+                child: Column(
+                  children: [
+                    _LocalOverlayScope(
+                      child: _buildCosmicDashboardContent(),
                     ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Floating AI input. We show EITHER the expanded glass bar OR the
-          // collapsed cow — never both stacked. The glass surface is
-          // translucent, so painting the cow behind it would ghost through;
-          // swapping instead means there is literally nothing behind the glass.
-          // Hide-on-scroll is the outer 80px slide (timed with the tab bar),
-          // which also masks the bar→cow swap while you're scrolling.
-          // No opacity anywhere → no offscreen saveLayer → no first-scroll hitch.
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: SafeArea(
-              top: false,
-              child: ListenableBuilder(
-                listenable: _inputBar,
-                builder: (context, _) => TweenAnimationBuilder<double>(
-                  tween: Tween<double>(end: _inputBar.hidden ? 80.0 : 0.0),
-                  duration: const Duration(milliseconds: 600),
-                  curve: Curves.easeInOut,
-                  builder: (context, dy, child) => Transform.translate(
-                    offset: Offset(0, dy),
-                    child: child,
-                  ),
-                  child: _collapsedCowOrBar(),
+                    // Fixed tail so the last card clears the bottom nav bar and
+                    // Baba's floating blob.
+                    const SizedBox(height: 90),
+                  ],
                 ),
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -577,21 +457,6 @@ class DashboardPageState extends State<DashboardPage>
         onChanged: (_) => context.read<ThemeProvider>().temporaryToggle(),
       ),
       showSearchField: false,
-    );
-  }
-
-  // ─────────────────────────────────────────────────────────────
-  // Dashboard input — the bar's UI lives in BabaInputBar; the page just
-  // wires its controller + navigation callbacks. Shared by mobile (overlay)
-  // and desktop (floating) layouts.
-  // ─────────────────────────────────────────────────────────────
-
-  Widget _buildInputBar() {
-    return BabaInputBar(
-      controller: _inputBar,
-      onSendText: _handleSendText,
-      onVoiceResult: _handleVoiceResult,
-      onShowRecent: _showRecentConversations,
     );
   }
 

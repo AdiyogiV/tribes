@@ -60,7 +60,7 @@ class SkipPhase extends StatelessWidget {
             PathButton(
               icon: Icons.smart_toy_rounded,
               color: OnboardingColors.warmAmber,
-              title: 'Meet Aryabhatt',
+              title: 'Meet Aurobhatt',
               subtitle: 'Your AI companion',
               onTap: onChat,
             ),

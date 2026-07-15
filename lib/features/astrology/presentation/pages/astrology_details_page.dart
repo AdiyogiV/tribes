@@ -13,6 +13,7 @@ import 'package:aurogram/features/astrology/presentation/widgets/dialogs/astrolo
 import 'package:aurogram/features/astrology/presentation/widgets/common/astrology_common.dart';
 import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
+import 'package:aurogram/features/baba/domain/baba_snapshot.dart';
 
 /// Minimal astrology details - clean, fast, focused
 class AstrologyDetailsPage extends StatefulWidget {
@@ -24,9 +25,28 @@ class AstrologyDetailsPage extends StatefulWidget {
   State<AstrologyDetailsPage> createState() => _AstrologyDetailsPageState();
 }
 
-class _AstrologyDetailsPageState extends State<AstrologyDetailsPage> {
+class _AstrologyDetailsPageState extends State<AstrologyDetailsPage>
+    with BabaScreenAware<AstrologyDetailsPage> {
   final _service = AstrologyService();
   AstrologyProfile? _profile;
+
+  // ── Baba page awareness ──────────────────────────────────────────────
+  // Lets Baba answer "what's my rising sign?" from the chart actually on screen.
+  @override
+  String get babaScreenKey => 'chart';
+
+  @override
+  Map<String, dynamic> babaSnapshot() {
+    final p = _profile;
+    return {
+      'hasChart': p?.hasCalculatedData ?? false,
+      if (p?.sunSign != null) 'sunSign': p!.sunSign,
+      if (p?.moonSign != null) 'moonSign': p!.moonSign,
+      if (p?.ascendant != null) 'rising': p!.ascendant,
+      if (p?.nakshatra != null) 'nakshatra': p!.nakshatra,
+      if (p?.doshas != null) 'hasDoshas': true,
+    };
+  }
 
   final _msgController = TextEditingController();
   final _focusNode = FocusNode();

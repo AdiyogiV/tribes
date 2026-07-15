@@ -7,7 +7,7 @@
  *
  * What it does:
  *   1. Connects to the Live API (audio out).
- *   2. Asks Aryabhatt for a LONG answer so there's plenty to interrupt.
+ *   2. Asks Aurobhatt for a LONG answer so there's plenty to interrupt.
  *   3. Saves his speech to out.pcm (24kHz PCM16 mono — play to verify voice).
  *   4. If you pass a PCM16 16kHz mono file of YOU talking, it streams that in
  *      ~1.2s after he starts, and PRINTS the moment the server fires its
@@ -62,7 +62,7 @@ const session = await ai.live.connect({
         // ayurveda + memory here (or via tools), replacing the relay's
         // server-side ID-token context load.
         systemInstruction:
-            "You are Aryabhatt, a warm Vedic astrologer. Answer at length.",
+            "You are Aurobhatt, a warm Vedic astrologer. Answer at length.",
         // Built-in VAD is ON by default. This is the knob that replaces ALL of
         // our custom barge-in thresholds (BARGE_IN_MIN_CHARS/WORDS/GRACE):
         // realtimeInputConfig: { automaticActivityDetection: { ... } },

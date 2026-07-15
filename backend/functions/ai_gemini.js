@@ -85,6 +85,7 @@ async function buildAudioParts(audioUrl, chatId) {
 async function streamFromGemini({
     chatId, messages, write, userMessage = null, audioUrl = null,
     astrologyContext = null, userLocation = null, voiceStyle = false,
+    screenContext = null,
     onFirstToken = null,
 }) {
     const isAudio = !!audioUrl;
@@ -114,7 +115,7 @@ async function streamFromGemini({
 
     // Spoken-length style when the turn is audio OR a voice-relay text turn.
     const systemPrompt = getChatSystemPrompt(
-        astrologyContext, userLocation, isAudio || voiceStyle);
+        astrologyContext, userLocation, isAudio || voiceStyle, screenContext);
 
     // History = everything but the current (last) user message.
     const contents = buildGeminiContents(messages.slice(0, -1));

@@ -16,6 +16,7 @@ import 'package:aurogram/features/astrology/presentation/widgets/timeline/muhura
 import 'package:aurogram/features/astrology/presentation/pages/insight/insight_widgets.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/shared/presentation/widgets/feedback/snack_bar_service.dart';
+import 'package:aurogram/features/baba/domain/baba_snapshot.dart';
 
 class DailyInsightPage extends StatefulWidget {
   final String uid;
@@ -37,9 +38,28 @@ class DailyInsightPage extends StatefulWidget {
   State<DailyInsightPage> createState() => _DailyInsightPageState();
 }
 
-class _DailyInsightPageState extends State<DailyInsightPage> {
+class _DailyInsightPageState extends State<DailyInsightPage>
+    with BabaScreenAware<DailyInsightPage> {
   final _astrologyService = AstrologyService();
   bool _isGeneratingInsight = false;
+
+  // ── Baba page awareness ──────────────────────────────────────────────
+  // So Baba can answer "what does today's reading say?" from what's actually
+  // rendered — the theme + the section headings currently on screen.
+  @override
+  String get babaScreenKey => 'dailyInsight';
+
+  @override
+  Map<String, dynamic> babaSnapshot() => {
+        'date': _lastInsight?.dateString ?? widget.insightDate ?? 'today',
+        'viewingHistory': widget.insightDate != null,
+        'hasInsight': _lastInsight != null,
+        if (_lastInsight != null) 'theme': _lastInsight!.displayTheme,
+        if (_lastInsight != null)
+          'sections':
+              _lastInsight!.sections.map((s) => s.title).toList(growable: false),
+        'generating': _isGeneratingInsight,
+      };
 
   /// The uid to stream against. Falls back to the signed-in user when a caller
   /// (e.g. Baba's navigateTo) opens this page without passing one — an empty

@@ -13,16 +13,17 @@ function required(name) {
 }
 
 // Resolve the engine first — it decides which env vars are mandatory.
-//   "live"         -> Gemini Live API: ONE model does STT + brain + TTS +
-//                     native barge-in (automatic VAD). No custom thresholds.
-//   "multilingual" -> legacy: Chirp STT + aiChat brain + our TTS.
-//   "cx"           -> original single-language Dialogflow CX stream.
-const VOICE_ENGINE = process.env.VOICE_ENGINE
-    || ((process.env.MULTILINGUAL || "true") !== "false" ? "multilingual" : "cx");
+//   "cx"   -> Dialogflow CX streaming: ONE agent does STT + brain (playbook,
+//             with tool-calling via v3beta1) + TTS. Funded by trial credits;
+//             this is the production default.
+//   "live" -> Gemini Live API: ONE model does STT + brain + TTS + native
+//             barge-in. Currently PARKED (needs Vertex AI Live quota/billing).
+const VOICE_ENGINE = process.env.VOICE_ENGINE || "cx";
 
-// CX_AGENT_ID is only needed by the CX-backed engines, not the Live API engine.
-const usesCx = VOICE_ENGINE === "cx" || VOICE_ENGINE === "multilingual";
-const agentId = usesCx ? required("CX_AGENT_ID") : (process.env.CX_AGENT_ID || "");
+// CX_AGENT_ID is required by the CX engine, optional for the Live API engine.
+const agentId = VOICE_ENGINE === "cx"
+    ? required("CX_AGENT_ID")
+    : (process.env.CX_AGENT_ID || "");
 
 export const CONFIG = {
     port: parseInt(process.env.PORT || "8080", 10),
@@ -36,58 +37,22 @@ export const CONFIG = {
     environment: process.env.CX_ENVIRONMENT || "draft",
 
     // Conversation + audio. Hindi (hi-IN) is the preferred language for STT
-    // recognition AND Aryabhatt's spoken/text reply. Override per-deploy via env.
+    // recognition AND Aurobhatt's spoken/text reply. Override per-deploy via env.
     languageCode: process.env.CX_LANGUAGE || "hi-IN",
     voiceName: process.env.CX_VOICE || "hi-IN-Chirp3-HD-Charon", // male, warm
 
-    // ── Multilingual pipeline (STT v2 auto-detect + our own TTS) ──────────
-    // When true, the relay does its own Speech-to-Text (auto language detect)
-    // and Text-to-Speech, using CX only as the text brain. This is what lets
-    // Aryabhatt understand & reply in ANY language with a male voice.
-    multilingual: (process.env.MULTILINGUAL || "true") !== "false",
-    // Speech-to-Text v2 must run in a real region (not "global"). Chirp_2 in
-    // us-central1 supports automatic language detection.
-    sttLocation: process.env.STT_LOCATION || "us-central1",
-    sttModel: process.env.STT_MODEL || "chirp_2",
-    // Candidate languages for auto-detect. "auto" lets Chirp pick freely.
-    sttLanguages: (process.env.STT_LANGUAGES || "auto")
-        .split(",").map((s) => s.trim()).filter(Boolean),
-    // TTS voice gender (Aryabhatt is male). Per-language voice is auto-picked.
-    ttsGender: process.env.TTS_GENDER || "MALE",
-    // Playback speed for Aryabhatt's replies. >1 = faster, snappier dictation.
-    ttsSpeakingRate: parseFloat(process.env.TTS_SPEAKING_RATE || "1.15"),
-
-    // ── Barge-in (interrupt-to-talk) ──────────────────────────────────────
-    // When true, the relay keeps feeding the mic to STT WHILE Aryabhatt is
-    // speaking, so the user can cut in and he stops to listen — like a real
-    // conversation. Relies on the client's echo cancellation to reject his own
-    // voice; if a device's AEC is weak (e.g. iOS not in voiceChat mode), echo
-    // can cause false interrupts — set BARGE_IN=false to fall back to the old
-    // half-duplex behavior WITHOUT a rebuild.
-    bargeIn: (process.env.BARGE_IN || "true") !== "false",
-    // Minimum transcribed characters during playback before we treat it as a
-    // real interruption (filters short echo/cough fragments). Tune per device.
-    bargeInMinChars: parseInt(process.env.BARGE_IN_MIN_CHARS || "6", 10),
-    // Minimum WORD count too — echo/noise usually transcribes as a single
-    // garbled token, so requiring ≥2 words kills most false interrupts.
-    bargeInMinWords: parseInt(process.env.BARGE_IN_MIN_WORDS || "2", 10),
-    // Ignore barge-in for this long (ms) after Aryabhatt STARTS speaking — his
-    // own onset echoes hardest right at the start; a short deaf window there
-    // stops him cutting himself off.
-    bargeInGraceMs: parseInt(process.env.BARGE_IN_GRACE_MS || "600", 10),
-    // Language CX is asked to detect intent in (its only supported language).
-    cxTextLanguage: process.env.CX_TEXT_LANGUAGE || "hi-IN",
+    // STT recognizer model for CX's built-in speech recognition. The default
+    // (unspecified) recognizer is weak on English + code-switching, so English
+    // spoken to a hi-IN session comes back as Devanagari gibberish. "latest_long"
+    // is Google's newest general model and handles accents + mixed Hindi/English
+    // far better, still on CX pricing (NO Live premium). Env-tunable without a
+    // rebuild: try CX_STT_MODEL=chirp_2 for the strongest multilingual model,
+    // or CX_STT_MODEL="" to fall back to the CX default recognizer.
+    sttModel: process.env.CX_STT_MODEL ?? "latest_long",
 
     // Audio formats on the wire. Keep in sync with the Flutter client + README.
     inputSampleRateHertz: parseInt(process.env.IN_SAMPLE_RATE || "16000", 10),
     outputSampleRateHertz: parseInt(process.env.OUT_SAMPLE_RATE || "24000", 10),
-
-    // The text brain. Voice now reuses the SAME Gemini chat endpoint the app
-    // uses, so persona + full chart/ayurveda/memory context are identical to
-    // text chat (no more drifted CX playbook). Server-fetched via the caller's
-    // ID token, so we just forward it.
-    aiChatUrl: process.env.AI_CHAT_URL
-        || "https://aichat-7p5vte54jq-et.a.run.app",
 
     // ── Gemini Live API (voiceEngine = "live") ───────────────────────
     live: {
@@ -97,9 +62,9 @@ export const CONFIG = {
             || "gemini-live-2.5-flash-preview-native-audio-09-2025",
         // Runs on Vertex AI. Live API regions are limited; us-central1 is safe.
         location: process.env.LIVE_LOCATION || "us-central1",
-        // Aryabhatt is male & warm. Charon/Fenrir read deeper than the default.
+        // Aurobhatt is male & warm. Charon/Fenrir read deeper than the default.
         voice: process.env.LIVE_VOICE || "Charon",
-        // Hindi (hi-IN) preferred so Aryabhatt speaks Hindi on the Live engine
+        // Hindi (hi-IN) preferred so Aurobhatt speaks Hindi on the Live engine
         // too (onboarding). Set LIVE_LANGUAGE="" to restore free auto-detect.
         languageCode: process.env.LIVE_LANGUAGE || "hi-IN",
         // Sampling temperature for the Live model. Native audio defaults to ~1.0
@@ -113,18 +78,18 @@ export const CONFIG = {
             || "https://aichat-7p5vte54jq-et.a.run.app",
         // Minimal fallback ONLY if the prompt fetch fails (network/guest).
         // The real persona is the SINGLE SOURCE OF TRUTH in the backend
-        // (functions/prompts/chat.js -> ARYABHATT_PERSONA), fetched at runtime
+        // (functions/prompts/chat.js -> AUROBHATT_PERSONA), fetched at runtime
         // via promptUrl. This stub just keeps the session usable + in-character
         // during an outage; keep it short so it can never drift from canon.
         fallbackPrompt: process.env.LIVE_FALLBACK_PROMPT
-            || "You are Aryabhatt (fondly called Baba), a warm, wise Vedic "
+            || "You are Aurobhatt (fondly called Baba), a warm, wise Vedic "
             + "astrologer. Speak conversationally and concisely in the user's "
             + "language. You are a person, NEVER an AI, chatbot, machine, or "
             + "Gemini, and you never say those words about yourself.",
         // ── Barge-in / VAD tuning (Live engine) ──────────────────────────
         // The Live API does server-side VAD but NO acoustic echo cancellation,
         // and it DEFAULTS to START_SENSITIVITY_HIGH — so out of the box it
-        // mistakes Aryabhatt's own speaker echo for the user starting to talk
+        // mistakes Aurobhatt's own speaker echo for the user starting to talk
         // and he interrupts / answers himself. We default the start-of-speech
         // sensitivity to LOW so only clear, deliberate speech (riding on the
         // device's hardware AEC) crosses the bar; real barge-in still works,

@@ -46,7 +46,7 @@ class _CurrentSkyPageState extends State<CurrentSkyPage> {
       final msg = ok
           ? (r['alreadyFresh'] == true
               ? '✅ Already fresh — ${r['houseCount'] ?? 12} houses cached.'
-              : '✅ Generated ${r['houseCount'] ?? 12} houses. Tap a house on Aryabhatt.')
+              : '✅ Generated ${r['houseCount'] ?? 12} houses. Tap a house on Aurobhatt.')
           : '❌ [${r['code']}] ${r['message']}';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

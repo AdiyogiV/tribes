@@ -1,3 +1,6 @@
+import 'package:aurogram/core/routing/app_router.dart';
+import 'package:aurogram/features/baba/domain/baba_app_map.dart';
+import 'package:aurogram/features/baba/domain/baba_context.dart';
 import 'package:aurogram/features/baba/domain/baba_tool_registry.dart';
 
 /// Baba's onboarding tools — the actions he uses to co-author the birth-details
@@ -27,12 +30,32 @@ class BabaOnboardingTools {
   ];
 
   static Future<Map<String, dynamic>> _unavailable(
-          Map<String, dynamic> args) async =>
-      {
-        'available': false,
-        'message': 'The birth-details screen is not open. Take the user there '
-            'first (navigateTo), then set the value.',
-      };
+          Map<String, dynamic> args) async {
+    // The set/submit tools only work while the birth-details screen is mounted
+    // (that's where their real handlers bind). If Baba (or the user) tries to
+    // record a detail from anywhere else, DON'T just fail — open the screen for
+    // them so the immediate retry succeeds. This makes "note my details" work
+    // even when the user never explicitly says "take me there".
+    final path = BabaAppMap.pathFor('birthDetails');
+    final alreadyThere = BabaContext.instance.screen?.key == 'birthDetails';
+    if (path != null && !alreadyThere) {
+      appRouter.go(path);
+    }
+    return {
+      // ok:false is critical — the model reflexively trusts `ok` and will
+      // tell the user the action worked if it's true. Nothing was recorded
+      // here, so this MUST report failure and point at the fix.
+      'ok': false,
+      'available': false,
+      'navigated': path != null && !alreadyThere,
+      'message': alreadyThere
+          ? 'The screen is open but this value could not be recorded yet. '
+              'Try the tool again in a moment.'
+          : 'Nothing was saved yet — I have just opened the birth-details '
+              'screen for you. Call the same tool again now to record the '
+              'value. Never tell the user it is done until a tool returns ok.',
+    };
+  }
 
   /// The global declarations to register once at app start.
   static List<BabaTool> declarations() => [

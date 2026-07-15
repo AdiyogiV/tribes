@@ -68,7 +68,7 @@ class FeatureFlags {
   /// Supported on all platforms (web via Geolocation API)
   static bool get isLocationSupported => true;
   
-  // ============ Aryabhatt / Voice Features ============
+  // ============ Aurobhatt / Voice Features ============
 
   /// Whether the experimental voice controls are shown in Settings:
   ///   * the voice-engine switch (Premium/Live vs Standard/CX), and

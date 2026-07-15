@@ -3,6 +3,8 @@ import 'package:aurogram/firebase_options.dart';
 import 'package:aurogram/core/startup/startup_service.dart';
 import 'package:aurogram/features/onboarding/domain/onboarding_service.dart';
 import 'package:aurogram/features/onboarding/domain/baba_onboarding_tools.dart';
+import 'package:aurogram/features/onboarding/domain/baba_identity_tools.dart';
+import 'package:aurogram/features/astrology/domain/baba_astrology_tools.dart';
 import 'package:aurogram/features/baba/domain/baba_tool_registry.dart';
 import 'package:aurogram/features/baba/domain/baba_tool_catalog.dart';
 import 'package:aurogram/core/di/injection.dart';
@@ -146,27 +148,43 @@ class AppBootstrap {
 
     // App Check.
     //
-    // DEBUG: handled NATIVELY in ios/Runner/AppDelegate.swift
-    //   (AppCheckDebugProviderFactory installed before FirebaseApp.configure()).
-    //   We must NOT also activate from Dart in debug — Dart runs after
-    //   configure(), so it would double-activate and lose the startup race.
+    // DEBUG:
+    //   • Apple (iOS/macOS) — handled NATIVELY in ios/Runner/AppDelegate.swift
+    //     (AppCheckDebugProviderFactory installed BEFORE FirebaseApp.configure()).
+    //     We must NOT also activate from Dart there — Dart runs after
+    //     configure(), so it would double-activate and lose the startup race.
+    //   • Android — NOT handled natively. Firebase auto-inits via its
+    //     ContentProvider with no provider installed, so we activate the Debug
+    //     provider here from Dart. Without this, Android debug builds log
+    //     "No AppCheckProvider installed" and every token exchange starves
+    //     Firestore listeners (→ userStream / dailyInsightStream timed out).
     // RELEASE: activate here with App Attest (iOS 14+) + DeviceCheck fallback
-    //   / Play Integrity (Android).
+    //   (Apple) / Play Integrity (Android).
     //
     // PREREQ either way: the app MUST be registered under App Check in the
     // Firebase Console with a provider configured, otherwise every token
     // exchange returns 400 "App not registered" and starves Firestore
     // listeners (→ dailyInsightStream timed out).
-    if (!kIsWeb && !kDebugMode) {
+    final isAndroid = defaultTargetPlatform == TargetPlatform.android;
+    // Skip Dart activation only on Apple debug builds (handled natively).
+    final skipAppCheck = kIsWeb || (kDebugMode && !isAndroid);
+    if (!skipAppCheck) {
       try {
         await FirebaseAppCheck.instance.activate(
-          providerAndroid: const AndroidPlayIntegrityProvider(),
+          providerAndroid: kDebugMode
+              ? const AndroidDebugProvider()
+              : const AndroidPlayIntegrityProvider(),
           providerApple: const AppleAppAttestWithDeviceCheckFallbackProvider(),
         );
-        unawaited(FirebaseAppCheck.instance.getToken(true).then((token) {
+        // Use the CACHED token (getToken() — NOT getToken(true)). A forced
+        // refresh on every cold start hammers the Play Integrity / App Check
+        // backoff and can trigger a persistent "Too many attempts" throttle
+        // that then starves Firestore listeners. Let Firestore/Functions fetch
+        // (and refresh) tokens lazily on demand instead.
+        unawaited(FirebaseAppCheck.instance.getToken().then((token) {
           AppLogger.i('App Check activated',
               category: LogCategory.general,
-              data: {'hasToken': token != null});
+              data: {'hasToken': token != null, 'debug': kDebugMode});
         }).catchError((e) {
           AppLogger.w('App Check token fetch failed',
               category: LogCategory.general,
@@ -177,7 +195,7 @@ class AppBootstrap {
             category: LogCategory.general);
       }
     } else {
-      AppLogger.i('App Check: Dart activation skipped (debug handled natively, or web)',
+      AppLogger.i('App Check: Dart activation skipped (Apple debug handled natively, or web)',
           category: LogCategory.general);
     }
 
@@ -198,6 +216,9 @@ class AppBootstrap {
       // baba/ never depends on a feature. Idempotent.
       BabaToolCatalog.registerCore();
       BabaToolRegistry.instance.registerAll(BabaOnboardingTools.declarations());
+      BabaToolRegistry.instance.registerAll(BabaIdentityTools.declarations());
+      // Baba's on-demand chart-facts tool (compact, avoids CX token bloat).
+      BabaToolRegistry.instance.register(BabaAstrologyTools.declaration());
 
       await OnboardingService().initialize();
 

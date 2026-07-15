@@ -12,6 +12,7 @@ import 'package:aurogram/shared/services/local_store.dart';
 import 'package:aurogram/shared/providers/watch_health_provider.dart';
 import 'package:aurogram/core/routing/app_router.dart';
 import 'package:aurogram/core/routing/route_names.dart';
+import 'package:aurogram/features/baba/domain/baba_context.dart';
 import 'package:go_router/go_router.dart';
 import 'package:aurogram/core/startup/startup_service.dart';
 import 'package:aurogram/shared/services/cache_service.dart';
@@ -19,7 +20,7 @@ import 'package:aurogram/shared/providers/theme_provider.dart';
 import 'package:aurogram/shared/presentation/widgets/flash.dart';
 import 'package:aurogram/features/notifications/domain/notification_service.dart';
 import 'package:aurogram/features/calling/domain/call_service.dart';
-import 'package:aurogram/features/baba/presentation/baba_shell.dart';
+import 'package:aurogram/features/baba/presentation/baba_overlay.dart';
 import 'package:aurogram/platform/platform.dart';
 import 'package:aurogram/app/app_bootstrap.dart' show initialDependenciesLoaded;
 
@@ -48,6 +49,9 @@ class AppRootState extends State<AppRoot> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     _router = createAppRouter(widget.navigatorKey);
+    // Baba starts watching the router so he always knows where the user is
+    // (ambient awareness; see BabaContext). Must be after the router exists.
+    BabaContext.instance.attach();
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) => _initializeApp());
   }
@@ -233,10 +237,10 @@ class AppRootState extends State<AppRoot> with WidgetsBindingObserver {
       theme: AppTheme.getMaterialTheme(isDarkMode: isDark),
       builder: (context, child) {
         // Show splash screen until deferred init completes (typically one frame).
-        // Once ready, wrap every route in BabaShell so Baba floats over the
+        // Once ready, wrap every route in BabaOverlay so Baba floats over the
         // whole app and survives navigation.
         final content =
-            _appInitialized ? BabaShell(child: child!) : const FlashScreen();
+            _appInitialized ? BabaOverlay(child: child!) : const FlashScreen();
         return CupertinoTheme(
           data: AppTheme.getCupertinoTheme(isDarkMode: isDark),
           child: MediaQuery(

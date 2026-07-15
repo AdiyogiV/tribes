@@ -114,7 +114,7 @@ class AiChatInputState extends State<AiChatInput>
             height: 44,
             child: Center(
               child: Image.asset(
-                'assets/images/aryabhatt.png',
+                'assets/images/aurobhatt.png',
                 width: 36,
                 height: 36,
                 fit: BoxFit.contain,
@@ -152,7 +152,7 @@ class AiChatInputState extends State<AiChatInput>
         controller: widget.messageController,
         focusNode: widget.focusNode,
         decoration: InputDecoration(
-          hintText: kIsWeb ? 'Ask Aryabhatt... (Shift+Enter for new line)' : 'Ask Aryabhatt...',
+          hintText: kIsWeb ? 'Ask Aurobhatt... (Shift+Enter for new line)' : 'Ask Aurobhatt...',
           hintStyle: TextStyle(
             color: AppTheme.primaryColor.withValues(alpha: 0.6),
             fontSize: 16,

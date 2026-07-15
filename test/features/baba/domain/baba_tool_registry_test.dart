@@ -44,6 +44,31 @@ void main() {
     expect(res['echo'], 'y');
   });
 
+  test('a handler that reports non-performance surfaces ok:false (not masked)',
+      () async {
+    // Regression: the dispatcher used to force `ok:true` onto every result, so
+    // a "screen not open" / bad-args handler still looked like success and Baba
+    // told the user the action worked when nothing had been saved.
+    registry.register(BabaTool(
+      name: 't_unavailable',
+      description: 'test',
+      parameters: const {'type': 'object', 'properties': {}},
+      defaultHandler: (_) async =>
+          {'ok': false, 'available': false, 'message': 'screen not open'},
+    ));
+    final res = await registry.dispatch('t_unavailable', {});
+    expect(res['ok'], false);
+    expect(res['available'], false);
+    expect(res['message'], 'screen not open');
+  });
+
+  test('a silent handler still defaults to ok:true', () async {
+    registry.register(echoTool('t_silent'));
+    final res = await registry.dispatch('t_silent', {'x': 1});
+    expect(res['ok'], true);
+    expect(res['echo'], 1);
+  });
+
   test('a throwing handler is caught and reported, never left hanging',
       () async {
     registry.register(BabaTool(

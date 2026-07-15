@@ -15,6 +15,7 @@ import 'package:aurogram/features/onboarding/presentation/steps/sign_reveal_phas
 import 'package:aurogram/features/onboarding/presentation/steps/reading_phases.dart';
 import 'package:aurogram/features/onboarding/presentation/steps/path_choice_phase.dart';
 import 'package:aurogram/features/astrology/domain/sky_positions_service.dart';
+import 'package:aurogram/features/baba/domain/baba_context.dart';
 import 'package:aurogram/shared/presentation/responsive/responsive.dart';
 
 /// Beautiful multi-phase onboarding experience
@@ -126,7 +127,17 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
     _rotateController.dispose();
     _fadeController.dispose();
     _messageTimer?.cancel();
+    // Stop feeding Baba this screen's content (the call itself keeps going;
+    // ambient location tracking continues via the router).
+    BabaContext.instance.clearDetail();
     super.dispose();
+  }
+
+  /// Announce this reveal step to Baba through the shared context spine so he
+  /// can narrate it. If a call is live he reacts now; if one starts here he
+  /// picks it up on connect. (Where the user is is already tracked for free.)
+  void _narrateScreen(String detail) {
+    BabaContext.instance.publish(detail, speak: true);
   }
 
   // ===========================================================================
@@ -226,6 +237,18 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
       setState(() => _signRevealStep = step);
       if (step < 3) await Future.delayed(AnimationTiming.cardRevealDelay);
     }
+
+    // All three placements are on screen — let Baba react to the reveal.
+    final p = _profile;
+    if (p != null) {
+      _narrateScreen(
+        'The user is now looking at their birth-chart reveal on screen: '
+        'Sun in ${p.sunSign ?? 'unknown'}, Moon in ${p.moonSign ?? 'unknown'}, '
+        'Rising/Ascendant ${p.ascendant ?? 'unknown'}. Warmly congratulate them '
+        'and, in one or two short sentences, say what this combination reveals '
+        'about them. Keep it brief — they are taking in the cards.',
+      );
+    }
   }
 
   void _goToReadingPhase() {
@@ -242,6 +265,11 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
       _phase = OnboardingPhase.birthReading;
       _isGeneratingReading = !hasReading;
     });
+    _narrateScreen(
+      'The user has moved on to their first birth reading on screen. Invite them '
+      'to read it, and offer to talk through anything that resonates. One or two '
+      'short sentences.',
+    );
   }
 
   void _goToCurrentTimesPhase() {
@@ -253,6 +281,11 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
       _isGeneratingCurrentTimesReading = !hasContent;
     });
     pollForCurrentTimesReading();
+    _narrateScreen(
+      'The user is now seeing their "current times" reading — the astrology of '
+      'this present period of their life. Briefly orient them to it and offer to '
+      'go deeper. One or two short sentences.',
+    );
   }
 
     /// Ends the reading flow. First-time users land straight on the home
