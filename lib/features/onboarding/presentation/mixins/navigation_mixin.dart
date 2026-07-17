@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:aurogram/core/routing/route_names.dart';
 import 'package:aurogram/features/auth/auth_service.dart';
 import 'package:aurogram/features/onboarding/domain/onboarding_service.dart';
 
@@ -34,6 +36,15 @@ mixin NavigationMixin<T extends StatefulWidget> on State<T> {
     final authService = context.read<AuthService>();
     authService.updateStatusBasedOnNewUserFlag(false,
         initialTabIndex: targetTab);
-    Navigator.of(context).popUntil((route) => route.isFirst);
+
+    // Reset the whole stack to the home shell the GoRouter way. This app is
+    // fully GoRouter-driven, so the old imperative
+    // `Navigator.of(context).popUntil((route) => route.isFirst)` popped pages
+    // straight off GoRouter's page stack - popping the LAST one tripped
+    // `currentConfiguration.isNotEmpty` (go_router delegate) and left a BLANK
+    // screen plus a NavigatorState.dispose crash. `context.go` replaces the
+    // stack cleanly; TabHandler then reads `initialTabIndex` to land on the
+    // requested tab.
+    context.go(RouteNames.home);
   }
 }
