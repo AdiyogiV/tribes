@@ -15,7 +15,12 @@
  *     CX_AGENT_ID=<id> node tools/provision_cx_tools.mjs
  */
 
-import { BABA_TOOL_SPECS, BABA_TOOL_GUIDELINES, BABA_STEPS } from "../src/cx_tools.js";
+import {
+  BABA_TOOL_SPECS,
+  BABA_TOOL_GUIDELINES,
+  BABA_STEPS,
+  MANAGED_MARKER,
+} from "../src/cx_tools.js";
 
 const PROJECT = process.env.GCP_PROJECT || "ty-dev-516d7";
 const LOCATION = process.env.CX_LOCATION || "global";
@@ -100,15 +105,21 @@ async function main() {
   const pb = (pbList.playbooks || []).find((p) => p.displayName === PLAYBOOK_NAME);
   if (!pb) throw new Error(`Playbook "${PLAYBOOK_NAME}" not found`);
 
+  // We fully own instruction.guidelines now, so REPLACE it wholesale with our
+  // managed string (which begins with MANAGED_MARKER). This is the fix for the
+  // doubling bug: the old code appended BABA_TOOL_GUIDELINES onto whatever was
+  // already there via a marker ("## Language") that no longer existed in the
+  // guidelines, so every run tacked on another full copy until the guidelines
+  // hit ~28k chars and the playbook blew CX's 8192-token limit (2026-07-18).
+  //
+  // Self-healing: if any stray console text somehow precedes our marker, keep
+  // only what's before it (there is none in practice) and drop everything from
+  // the marker onward, then re-append our fresh copy - so re-runs stay 1x.
   const currentGuidelines = pb.instruction?.guidelines || "";
-  // Everything from the marker onward is OUR managed tool section. Strip it and
-  // re-append so re-runs pick up guideline changes (idempotent AND updatable).
-  const marker = "## Language";
-  const idx = currentGuidelines.indexOf(marker);
-  const base = (idx >= 0
-    ? currentGuidelines.slice(0, idx)
-    : currentGuidelines).trimEnd();
-  const guidelines = base + "\n" + BABA_TOOL_GUIDELINES;
+  const markerIdx = currentGuidelines.indexOf(MANAGED_MARKER);
+  const preamble =
+    markerIdx > 0 ? currentGuidelines.slice(0, markerIdx).trimEnd() + "\n" : "";
+  const guidelines = preamble + BABA_TOOL_GUIDELINES;
   // We now ALSO own the STEPS (persona + top-priority laws) - they are the
   // model-primary instruction, so keeping them in code is the only way to stop
   // the console copy drifting and contradicting the guidelines (which is how
