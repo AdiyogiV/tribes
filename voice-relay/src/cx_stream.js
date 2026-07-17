@@ -111,6 +111,21 @@ export class CxVoiceSession extends EventEmitter {
         this.configSent = false;
         this.ended = false;         // true only after a real hang-up / fatal error
         this.awaitingTool = false;  // true between emitting a tool_call and its result
+        // Duplicate-reprompt guard. In half-duplex, a listening turn can open on
+        // silence/ambient noise and yield no real input; CX then re-emits its
+        // PREVIOUS reply verbatim (with audio) as a no-input reprompt, so Baba
+        // repeats himself in a loop. We remember the last reply we forwarded and
+        // whether the user has actually spoken since; an identical, tool-less
+        // reply with no user speech in between is swallowed whole (no text, no
+        // audio). Real repeats (the user asked twice) always have a final
+        // transcript in between, so they are never suppressed.
+        this._lastReplyText = null;
+        this._userSpokeSinceReply = false;
+        // True only while the live turn is an AUDIO (listening) turn. The
+        // duplicate-reprompt guard applies ONLY to these — text turns (kickoff
+        // greeting, tool-result continuations, screen narration) are always
+        // intentional and must never be swallowed even if identical.
+        this._audioTurn = false;
         // Armed = ready to open an AUDIO recognizer turn, but we hold off until
         // the first mic chunk actually arrives (lazy-open). This is what stops
         // Cloud Speech's OUT_OF_RANGE "audio timeout" from killing the call: in
@@ -232,7 +247,22 @@ export class CxVoiceSession extends EventEmitter {
 
         this.stream.on("data", (res) => this._onData(res));
         this.stream.on("error", (err) => {
-            if (!this.ended) this.emit("error", err);
+            if (this.ended) return;
+            // Cloud Speech kills an audio recognizer that sits without incoming
+            // audio: code 11 OUT_OF_RANGE ("Audio Timeout ... Long duration
+            // elapsed without audio") or code 10 ABORTED ("Stream timed out
+            // after receiving no more client requests"). In half-duplex
+            // (waitTurn) the mic is muted while Baba speaks, so a recognizer
+            // that opened but got no/partial audio WILL hit this — it is NOT
+            // fatal to the call. Silently retire the dead recognizer and re-arm
+            // so the NEXT mic chunk lazily opens a fresh turn. Only surface
+            // genuinely unexpected errors to the client.
+            if (this._isRecoverableSttTimeout(err) && !this.awaitingTool) {
+                this._retireStream();
+                this._armed = true;
+                return;
+            }
+            this.emit("error", err);
         });
         this.stream.on("end", () => {
             // We proactively retire streams in _onData; only reach here on an
@@ -245,6 +275,26 @@ export class CxVoiceSession extends EventEmitter {
 
         for (const req of firstRequests) this.stream.write(req);
         this.configSent = audioTurn; // only audio turns accept mic frames
+        this._audioTurn = audioTurn;
+    }
+
+    /**
+     * True for Cloud Speech recognizer timeouts that are safe to recover from by
+     * retiring + re-arming (rather than failing the whole call). These happen
+     * whenever a recognizer opens but doesn't get a steady real-time audio feed
+     * — expected in half-duplex when the mic is muted during Baba's speech.
+     */
+    _isRecoverableSttTimeout(err) {
+        const code = err?.code;
+        const msg = `${err?.message || err?.details || ""}`.toLowerCase();
+        // 11 = OUT_OF_RANGE (audio timeout), 10 = ABORTED (stream timed out).
+        if (code !== 10 && code !== 11) return false;
+        return (
+            msg.includes("audio timeout") ||
+            msg.includes("long duration elapsed without audio") ||
+            msg.includes("timed out") ||
+            msg.includes("no more client requests")
+        );
     }
 
     /**
@@ -337,6 +387,9 @@ export class CxVoiceSession extends EventEmitter {
             const isFinal = rr.messageType === "END_OF_SINGLE_UTTERANCE"
                 || rr.isFinal === true;
             this.emit("transcript", { text: rr.transcript, final: isFinal });
+            // The user has genuinely spoken this turn — clears the duplicate
+            // reprompt guard so Baba's NEXT reply is allowed even if identical.
+            if (isFinal && rr.transcript.trim()) this._userSpokeSinceReply = true;
             // Chirp/USM recognizers (chirp_2) do NOT honor `singleUtterance`
             // endpointing, so CX never auto-closes the recognizer when the user
             // stops. The client mutes its mic in half-duplex (waitTurn), so no
@@ -357,10 +410,32 @@ export class CxVoiceSession extends EventEmitter {
 
         const messages = dir.queryResult?.responseMessages || [];
         const toolCalls = [];
+        const replyTexts = [];
         for (const m of messages) {
             const t = m.text?.text?.join(" ").trim();
-            if (t) this.emit("reply", { text: t });
+            if (t) replyTexts.push(t);
             if (m.toolCall) toolCalls.push(m.toolCall);
+        }
+
+        // Swallow a duplicate no-input reprompt: same text as last time, no tool
+        // call, and the user hasn't spoken since. Drop the whole turn (no reply,
+        // no audio) so Baba never loops on his own words. Then just re-arm.
+        const combined = replyTexts.join(" ").trim();
+        const isDuplicateReprompt = combined.length > 0 &&
+            this._audioTurn &&
+            toolCalls.length === 0 &&
+            combined === this._lastReplyText &&
+            !this._userSpokeSinceReply;
+        if (isDuplicateReprompt) {
+            console.log(`[cx ${this.sessionId}] swallowed duplicate reprompt`);
+            this._cycleTurn();
+            return;
+        }
+
+        for (const t of replyTexts) this.emit("reply", { text: t });
+        if (combined) {
+            this._lastReplyText = combined;
+            this._userSpokeSinceReply = false;
         }
 
         // Baba wants to act: emit each call, remember it, and WAIT for results.

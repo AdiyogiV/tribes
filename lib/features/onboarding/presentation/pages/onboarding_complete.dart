@@ -16,6 +16,8 @@ import 'package:aurogram/features/onboarding/presentation/steps/reading_phases.d
 import 'package:aurogram/features/onboarding/presentation/steps/path_choice_phase.dart';
 import 'package:aurogram/features/astrology/domain/sky_positions_service.dart';
 import 'package:aurogram/features/baba/domain/baba_context.dart';
+import 'package:aurogram/features/baba/domain/baba_tool_registry.dart';
+import 'package:aurogram/features/onboarding/domain/baba_onboarding_tools.dart';
 import 'package:aurogram/shared/presentation/responsive/responsive.dart';
 
 /// Beautiful multi-phase onboarding experience
@@ -119,6 +121,7 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
     _initAnimations();
     _loadSkyPositions();
     _startJourney();
+    _bindAdvanceTool();
   }
 
   @override
@@ -127,6 +130,8 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
     _rotateController.dispose();
     _fadeController.dispose();
     _messageTimer?.cancel();
+    // Release the advance tool so it falls back to its "not on reveal" default.
+    BabaToolRegistry.instance.unbindHandler(BabaOnboardingTools.advanceOnboarding);
     // Stop feeding Baba this screen's content (the call itself keeps going;
     // ambient location tracking continues via the router).
     BabaContext.instance.clearDetail();
@@ -138,6 +143,80 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
   /// picks it up on connect. (Where the user is is already tracked for free.)
   void _narrateScreen(String detail) {
     BabaContext.instance.publish(detail, speak: true);
+  }
+
+  /// Compact account fact for reveal cues: guest vs secured. Behaviour (the
+  /// login nudge) is the playbook's job; we only report the state.
+  String _accountFact() {
+    final user = FirebaseAuth.instance.currentUser;
+    return (user == null || user.isAnonymous) ? 'guest' : 'secured';
+  }
+
+  /// Trim a reading to a cue-sized snippet. The full reading is on screen for
+  /// the user to read; Baba only needs enough to narrate faithfully without
+  /// blowing the CX input token budget (whole call must stay under limit).
+  String _cueText(String? content, {int max = 300}) {
+    final t = (content ?? '').replaceAll(RegExp(r'\s+'), ' ').trim();
+    if (t.isEmpty) return '(still being written — say it is loading)';
+    return t.length <= max ? t : '${t.substring(0, max)}…';
+  }
+
+  /// Let Baba drive the reveal flow hands-free: bind [advanceOnboarding] to the
+  /// same transitions the on-screen Continue button triggers, gated by the
+  /// exact same readiness checks so he can never skip a still-loading step.
+  void _bindAdvanceTool() {
+    BabaToolRegistry.instance.bindHandler(
+      BabaOnboardingTools.advanceOnboarding,
+      (args) async => _babaAdvanceOnboarding(),
+    );
+  }
+
+  Future<Map<String, dynamic>> _babaAdvanceOnboarding() async {
+    if (!mounted) {
+      return {'ok': false, 'advanced': false, 'reason': 'screen gone'};
+    }
+    switch (_phase) {
+      case OnboardingPhase.signReveal:
+        if (_signRevealStep >= 3) {
+          _goToReadingPhase();
+          return {'ok': true, 'advanced': true, 'now': 'birthReading'};
+        }
+        return {
+          'ok': false,
+          'advanced': false,
+          'reason': 'the sun/moon/rising cards are still revealing',
+        };
+      case OnboardingPhase.birthReading:
+        final ready =
+            !_isGeneratingReading && (_firstReadingContent?.isNotEmpty ?? false);
+        if (ready) {
+          _goToCurrentTimesPhase();
+          return {'ok': true, 'advanced': true, 'now': 'currentTimes'};
+        }
+        return {
+          'ok': false,
+          'advanced': false,
+          'reason': 'their birth reading is still being written',
+        };
+      case OnboardingPhase.currentTimes:
+        final ready = !_isGeneratingCurrentTimesReading &&
+            (_currentTimesReadingContent?.isNotEmpty ?? false);
+        if (ready) {
+          _finishOnboarding();
+          return {'ok': true, 'advanced': true, 'now': 'home'};
+        }
+        return {
+          'ok': false,
+          'advanced': false,
+          'reason': 'their current-times reading is still being written',
+        };
+      default:
+        return {
+          'ok': false,
+          'advanced': false,
+          'reason': 'nothing to advance from here',
+        };
+    }
   }
 
   // ===========================================================================
@@ -208,6 +287,14 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
     if (_profile == null) {
       AppLogger.w('No profile found after waiting - showing retry/skip option',
           category: LogCategory.general);
+      // Tell Baba the calculation did NOT complete, so he says it's taking
+      // longer / didn't go through and offers a retry - instead of filling the
+      // silence with invented signs (he has NO chart data at this point).
+      _narrateScreen(
+        '[REVEAL] step=failed; reason=calculation_timeout; account=${_accountFact()}. '
+        'The chart did NOT finish calculating - no signs are available. '
+        'Do NOT state any sign or placement.',
+      );
       if (mounted) {
         setState(() => _phase = OnboardingPhase.retry);
       }
@@ -238,15 +325,15 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
       if (step < 3) await Future.delayed(AnimationTiming.cardRevealDelay);
     }
 
-    // All three placements are on screen — let Baba react to the reveal.
+    // All three placements are on screen — feed Baba the FACTS (reveal step +
+    // real placements). HOW he reacts (congratulate, insight, advance, nudge)
+    // is owned by the CX playbook.
     final p = _profile;
     if (p != null) {
       _narrateScreen(
-        'The user is now looking at their birth-chart reveal on screen: '
-        'Sun in ${p.sunSign ?? 'unknown'}, Moon in ${p.moonSign ?? 'unknown'}, '
-        'Rising/Ascendant ${p.ascendant ?? 'unknown'}. Warmly congratulate them '
-        'and, in one or two short sentences, say what this combination reveals '
-        'about them. Keep it brief — they are taking in the cards.',
+        '[REVEAL] step=signReveal; account=${_accountFact()}; '
+        'sun=${p.sunSign ?? 'unknown'}; moon=${p.moonSign ?? 'unknown'}; '
+        'rising=${p.ascendant ?? 'unknown'}.',
       );
     }
   }
@@ -266,9 +353,9 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
       _isGeneratingReading = !hasReading;
     });
     _narrateScreen(
-      'The user has moved on to their first birth reading on screen. Invite them '
-      'to read it, and offer to talk through anything that resonates. One or two '
-      'short sentences.',
+      '[REVEAL] step=birthReading; account=${_accountFact()}. '
+      'Their birth reading is now on screen; narrate FROM this text, do not '
+      'invent: "${_cueText(_firstReadingContent)}"',
     );
   }
 
@@ -281,10 +368,14 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
       _isGeneratingCurrentTimesReading = !hasContent;
     });
     pollForCurrentTimesReading();
+
+    // Facts only: the current-times reading is up, plus whether they're still a
+    // guest. The playbook owns the behaviour (orient them, then — if guest —
+    // the benefits-led login nudge; else advance to home when ready).
     _narrateScreen(
-      'The user is now seeing their "current times" reading — the astrology of '
-      'this present period of their life. Briefly orient them to it and offer to '
-      'go deeper. One or two short sentences.',
+      '[REVEAL] step=currentTimes; account=${_accountFact()}. '
+      'Final reveal step; their current-times reading is on screen. Narrate '
+      'FROM this text, do not invent: "${_cueText(_currentTimesReadingContent)}"',
     );
   }
 
@@ -299,6 +390,13 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
       return;
     }
     navigateToHome(targetTab: 0);
+    // Tell Baba he has landed on the dashboard so he announces it and gives a
+    // short tour - instead of falling silent and making the user ask.
+    _narrateScreen(
+      '[REVEAL] step=home; account=${_accountFact()}. '
+      'Onboarding is complete and the user is now on the home dashboard. '
+      'Warmly say you have brought them here and give a one-line tour.',
+    );
   }
 
   void _retryAstroLoad() async {

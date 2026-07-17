@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,7 +9,6 @@ import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/config/api_endpoints.dart';
 import 'package:aurogram/shared/models/astrology_profile.dart';
 import 'package:aurogram/features/astrology/domain/astrology_service.dart';
-import 'package:aurogram/features/onboarding/presentation/widgets/star_field_painter.dart';
 import 'package:aurogram/features/onboarding/domain/baba_onboarding_tools.dart';
 import 'package:aurogram/features/baba/domain/baba_tool_registry.dart';
 import 'package:aurogram/features/baba/domain/baba_snapshot.dart';
@@ -18,10 +16,17 @@ import 'package:aurogram/features/baba/voice/voice_session_controller.dart';
 import 'package:aurogram/features/astrology/presentation/pages/setup/date_picker_section.dart';
 import 'package:aurogram/features/astrology/presentation/pages/setup/time_picker_section.dart';
 import 'package:aurogram/features/astrology/presentation/pages/setup/location_search_section.dart';
-import 'package:aurogram/features/astrology/presentation/pages/setup/gender_selector_section.dart';
+import 'package:aurogram/features/astrology/presentation/pages/setup/birth_detail_normalizer.dart';
+import 'package:aurogram/features/astrology/presentation/pages/setup/birth_form_widgets.dart';
 
-enum _ChatStep { welcome, date, time, location, gender, saving }
-
+/// Minimal, modern birth-details form.
+///
+/// Replaces the old chat-style step machine (welcome -> date -> time -> ...):
+/// every field is visible at once so the user (or Baba) can fill them in ANY
+/// order and review before submitting. Baba can co-fill by voice via the same
+/// tool handlers, but he no longer drives a forced one-question-at-a-time
+/// conversation and no longer auto-submits — after he fills, he and the form
+/// "part ways": the user reviews and taps Reveal themselves.
 class ImmersiveSetupPage extends StatefulWidget {
   const ImmersiveSetupPage({super.key});
 
@@ -30,105 +35,68 @@ class ImmersiveSetupPage extends StatefulWidget {
 }
 
 class _ImmersiveSetupPageState extends State<ImmersiveSetupPage>
-    with TickerProviderStateMixin, BabaScreenAware<ImmersiveSetupPage> {
+    with BabaScreenAware<ImmersiveSetupPage> {
   final _service = AstrologyService();
-  final _scrollController = ScrollController();
   final _voice = VoiceSessionController();
 
-  // ── Baba page awareness ──────────────────────────────────────────────
-  // Baba fills this form by voice, so he must see the live draft — which step
-  // we're on and what's captured so far — to avoid re-asking or lying.
+  // ── Draft state (co-authored by the pickers AND Baba's voice tools) ──────
+  AstrologyProfile? _existing;
+  int _day = 15, _month = 6, _year = 1995;
+  int _hour = 6, _minute = 0;
+  bool _isAM = true;
+  bool _dateSet = false, _timeSet = false;
+  String? _place;
+  double? _lat, _lng, _tzOffset;
+  String? _tz, _gender;
+  bool _saving = false;
+  bool _handingOffVoice = false;
+
+  int get _hour24 =>
+      _isAM ? (_hour == 12 ? 0 : _hour) : (_hour == 12 ? 12 : _hour + 12);
+
+  bool get _canSubmit => _dateSet && _timeSet && _place != null;
+
+  // ── Baba page awareness ──────────────────────────────────────────────────
   @override
   String get babaScreenKey => 'birthDetails';
 
   @override
-  Map<String, dynamic> babaSnapshot() {
-    final hour24 =
-        _isAM ? (_hour == 12 ? 0 : _hour) : (_hour == 12 ? 12 : _hour + 12);
-    return {
-      'step': _step.name,
-      'date':
-          '$_year-${_month.toString().padLeft(2, '0')}-${_day.toString().padLeft(2, '0')}',
-      'time':
-          '${hour24.toString().padLeft(2, '0')}:${_minute.toString().padLeft(2, '0')}',
-      'placeSet': _place != null,
-      if (_place != null) 'place': _place,
-      if (_gender != null) 'gender': _gender,
-      'saving': _saving,
-      'voiceActive': _voiceActive,
-    };
-  }
-  
-  _ChatStep _step = _ChatStep.welcome;
-  final List<_ChatMessage> _messages = [];
-  bool _isTyping = true;
-  bool _saving = false;
-
-  // Set true the instant we navigate on to the chart reveal. Onboarding is a
-  // continuous conversation: Baba fills the form by voice HERE, then keeps
-  // talking THROUGH the reveal. So when we leave for /onboarding/complete we
-  // HAND the live call off to the reveal (the controller is an app-scoped
-  // singleton built to survive navigation) instead of hanging up in dispose().
-  // Only a real back-out / cancel (dispose without this flag) ends the call.
-  bool _handingOffVoice = false;
-
-  // Data
-  AstrologyProfile? _existing;
-  late int _day, _month, _year;
-  late int _hour, _minute;
-  bool _isAM = true;
-  String? _place;
-  double? _lat, _lng, _tzOffset;
-  String? _tz, _gender;
-
-  // Pickers controllers
-  late FixedExtentScrollController _dayController;
-  late FixedExtentScrollController _monthController;
-  late FixedExtentScrollController _yearController;
-  late FixedExtentScrollController _hourController;
-  late FixedExtentScrollController _minuteController;
-  late FixedExtentScrollController _ampmController;
+  Map<String, dynamic> babaSnapshot() => {
+        'dateSet': _dateSet,
+        if (_dateSet)
+          'date':
+              '$_year-${_month.toString().padLeft(2, '0')}-${_day.toString().padLeft(2, '0')}',
+        'timeSet': _timeSet,
+        if (_timeSet)
+          'time':
+              '${_hour24.toString().padLeft(2, '0')}:${_minute.toString().padLeft(2, '0')}',
+        'placeSet': _place != null,
+        if (_place != null) 'place': _place,
+        if (_gender != null) 'gender': _gender,
+        'canSubmit': _canSubmit,
+        'saving': _saving,
+        'voiceActive': _voiceActive,
+      };
 
   @override
   void initState() {
     super.initState();
-    _day = 15; _month = 6; _year = 1995;
-    _hour = 6; _minute = 0;
-    
-    _dayController = FixedExtentScrollController(initialItem: _day - 1);
-    _monthController = FixedExtentScrollController(initialItem: _month - 1);
-    _yearController = FixedExtentScrollController(initialItem: DateTime.now().year - _year);
-    _hourController = FixedExtentScrollController(initialItem: _hour - 1);
-    _minuteController = FixedExtentScrollController(initialItem: _minute);
-    _ampmController = FixedExtentScrollController(initialItem: _isAM ? 0 : 1);
-
     _loadExisting();
-    _startSequence();
 
-    // Baba drives THIS screen: bind the onboarding tools to real behavior on
-    // this page. Engine is the app-wide default (CX) — we no longer force Live
-    // here, so the user meets ONE Baba everywhere (one engine, one persona).
-    // Live is kept (archived) behind VoiceEnginePref for a future premium mode.
-    // _voice.engineOverride = VoiceEngine.live; // archived: CX-everywhere now
+    // FACTS ONLY. HOW Baba co-fills, confirms and submits is owned by the CX
+    // playbook's Onboarding section (voice-relay/src/cx_tools.js) - the single
+    // source of truth. Here we just tell him WHICH screen is now open and what
+    // it contains, so he can act on it per the playbook.
     _voice.directiveOverride =
-        'You are quickly setting up this person\'s birth chart. In ONE opening '
-        'line, warmly ask for their birth DATE, TIME and PLACE all together '
-        '(e.g. "When and where were you born? Date, time and city."). Let them '
-        'answer in a single breath. From whatever they say, immediately call the '
-        'matching tools — setBirthDate, setBirthTime, setBirthPlace — for every '
-        'detail you caught; do NOT ask for them one at a time. Only ask a follow-'
-        'up for a detail that is genuinely MISSING or unclear (briefly). Do not '
-        'read every value back — at most a single quick confirm of the whole set. '
-        'Birth time affects the rising sign, so if it is missing ask once; if '
-        'they do not know it, reassure them and use their best estimate. As soon '
-        'as date, time and place are set, call submitBirthDetails right away to '
-        'reveal their chart. Be fast, warm and efficient — minimum back-and-forth.';
+        '[SCREEN CONTEXT] screen=birthDetails (the birth-details setup form is '
+        'now open, with fields for date, time, place and gender all visible). '
+        'Lead per your playbook.';
     _voice.addListener(_onVoiceChanged);
     _bindBabaTools();
   }
 
   void _onVoiceChanged() {
-    if (mounted) setState(() {}); // reflect mic state in the input bar
+    if (mounted) setState(() {});
   }
 
   bool get _voiceActive =>
@@ -146,8 +114,7 @@ class _ImmersiveSetupPageState extends State<ImmersiveSetupPage>
     }
   }
 
-  /// Bind Baba's onboarding tools to fill THIS form. Both voice and the pickers
-  /// write the same state — the co-authored draft. Unbound on dispose.
+  // ── Baba tool handlers (fill the same draft; tolerant of natural input) ───
   void _bindBabaTools() {
     final reg = BabaToolRegistry.instance;
 
@@ -158,12 +125,13 @@ class _ImmersiveSetupPageState extends State<ImmersiveSetupPage>
       if (y == null || mo == null || d == null) {
         return {'ok': false, 'set': false, 'reason': 'need year, month and day'};
       }
-      setState(() { _year = y; _month = mo; _day = d; });
-      _dayController.jumpToItem(_day - 1);
-      _monthController.jumpToItem(_month - 1);
-      _yearController.jumpToItem(DateTime.now().year - _year);
-      _confirmDate();
-      return {'set': true, 'date': '$_year-$_month-$_day'};
+      setState(() {
+        _year = y;
+        _month = mo;
+        _day = d;
+        _dateSet = true;
+      });
+      return {'ok': true, 'set': true, 'date': '$y-$mo-$d'};
     });
 
     reg.bindHandler(BabaOnboardingTools.setBirthTime, (args) async {
@@ -176,12 +144,14 @@ class _ImmersiveSetupPageState extends State<ImmersiveSetupPage>
         _isAM = h24 < 12;
         _hour = h24 == 0 ? 12 : (h24 > 12 ? h24 - 12 : h24);
         _minute = min;
+        _timeSet = true;
       });
-      _hourController.jumpToItem(_hour - 1);
-      _minuteController.jumpToItem(_minute);
-      _ampmController.jumpToItem(_isAM ? 0 : 1);
-      _confirmTime();
-      return {'set': true, 'time': '${h24.toString().padLeft(2, '0')}:${min.toString().padLeft(2, '0')}'};
+      return {
+        'ok': true,
+        'set': true,
+        'time':
+            '${h24.toString().padLeft(2, '0')}:${min.toString().padLeft(2, '0')}',
+      };
     });
 
     reg.bindHandler(BabaOnboardingTools.setBirthPlace, (args) async {
@@ -191,7 +161,12 @@ class _ImmersiveSetupPageState extends State<ImmersiveSetupPage>
       }
       final geo = await _geocode(city);
       if (geo == null) {
-        return {'ok': false, 'set': false, 'reason': 'could not find "$city"'};
+        return {
+          'ok': false,
+          'set': false,
+          'reason':
+              'could not find "$city" - ask them to say the city in English',
+        };
       }
       setState(() {
         _place = geo['label'] as String?;
@@ -199,35 +174,45 @@ class _ImmersiveSetupPageState extends State<ImmersiveSetupPage>
         _lng = geo['lng'] as double?;
         _tz = geo['tz'] as String?;
       });
-      _confirmLocation();
-      return {'set': true, 'resolved': _place};
+      return {'ok': true, 'set': true, 'resolved': _place};
     });
 
     reg.bindHandler(BabaOnboardingTools.setGender, (args) async {
-      final g = (args['gender'] as String?)?.toUpperCase();
-      if (g == null || !['MALE', 'FEMALE', 'OTHER'].contains(g)) {
-        return {'ok': false, 'set': false, 'reason': 'gender must be MALE, FEMALE or OTHER'};
+      final code = BirthDetailNormalizer.gender(args['gender'] as String?);
+      if (code == null) {
+        return {
+          'ok': false,
+          'set': false,
+          'reason': 'gender must be male, female or other',
+        };
       }
-      final label = g == 'MALE' ? 'Male' : (g == 'FEMALE' ? 'Female' : 'Non-binary');
-      _confirmGender(label);
-      return {'set': true, 'gender': label};
+      setState(() => _gender = BirthDetailNormalizer.genderLabel(code));
+      return {'ok': true, 'set': true, 'gender': _gender};
     });
 
     reg.bindHandler(BabaOnboardingTools.submitBirthDetails, (args) async {
-      if (_place == null) {
-        return {'ok': false, 'submitted': false, 'reason': 'birth place not set yet'};
+      if (!_canSubmit) {
+        return {
+          'ok': false,
+          'submitted': false,
+          'reason': 'need date, time and place first',
+        };
       }
       await _saveProfile();
-      return {'submitted': true};
+      return {'ok': true, 'submitted': true};
     });
   }
 
-  /// Resolve a city to coordinates + IANA timezone (open-meteo, same source the
-  /// manual search uses). Returns null if nothing matches.
+  /// Resolve a city to coordinates + IANA timezone (open-meteo).
   Future<Map<String, dynamic>?> _geocode(String query) async {
     try {
       final uri = Uri.parse(ApiEndpoints.geocodingSearch).replace(
-        queryParameters: {'name': query, 'count': '1', 'language': 'en', 'format': 'json'},
+        queryParameters: {
+          'name': query,
+          'count': '1',
+          'language': 'en',
+          'format': 'json',
+        },
       );
       final res = await http.get(uri).timeout(const Duration(seconds: 5));
       final data = jsonDecode(res.body) as Map<String, dynamic>;
@@ -254,124 +239,46 @@ class _ImmersiveSetupPageState extends State<ImmersiveSetupPage>
     if (uid == null) return;
     final p = await _service.getProfile(uid);
     if (p != null && mounted) {
-      _existing = p;
-      if (p.birthDate != null) {
-        _day = p.birthDate!.day; _month = p.birthDate!.month; _year = p.birthDate!.year;
-      }
-      if (p.birthTime != null) {
-        final parts = p.birthTime!.split(':');
-        if (parts.length >= 2) {
-          final h = int.tryParse(parts[0]) ?? 6;
-          _minute = int.tryParse(parts[1]) ?? 0;
-          _isAM = h < 12;
-          _hour = h == 0 ? 12 : (h > 12 ? h - 12 : h);
+      setState(() {
+        _existing = p;
+        if (p.birthDate != null) {
+          _day = p.birthDate!.day;
+          _month = p.birthDate!.month;
+          _year = p.birthDate!.year;
+          _dateSet = true;
         }
-      }
-      _place = p.birthPlace; _lat = p.birthLatitude; _lng = p.birthLongitude;
-      _tz = p.timeZone; _tzOffset = p.timeZoneOffset; _gender = p.gender;
-      
-      _dayController.jumpToItem(_day - 1);
-      _monthController.jumpToItem(_month - 1);
-      _yearController.jumpToItem(DateTime.now().year - _year);
-      _hourController.jumpToItem(_hour - 1);
-      _minuteController.jumpToItem(_minute);
-      _ampmController.jumpToItem(_isAM ? 0 : 1);
+        if (p.birthTime != null) {
+          final parts = p.birthTime!.split(':');
+          if (parts.length >= 2) {
+            final h = int.tryParse(parts[0]) ?? 6;
+            _minute = int.tryParse(parts[1]) ?? 0;
+            _isAM = h < 12;
+            _hour = h == 0 ? 12 : (h > 12 ? h - 12 : h);
+            _timeSet = true;
+          }
+        }
+        _place = p.birthPlace;
+        _lat = p.birthLatitude;
+        _lng = p.birthLongitude;
+        _tz = p.timeZone;
+        _tzOffset = p.timeZoneOffset;
+        _gender = p.gender;
+      });
     }
-  }
-
-  Future<void> _startSequence() async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    _addSystemMessage("Welcome. To read your stars, I need to know when you entered the world.");
-    await Future.delayed(const Duration(milliseconds: 1500));
-    _addSystemMessage("What is your birth date?");
-    setState(() { _isTyping = false; _step = _ChatStep.date; });
-    _scrollToBottom();
-  }
-
-  void _addSystemMessage(String text, {Widget? widgetContent}) {
-    setState(() {
-      _messages.add(_ChatMessage(isSystem: true, text: text, widget: widgetContent));
-    });
-    _scrollToBottom();
-  }
-
-  void _addUserMessage(String text) {
-    setState(() {
-      _messages.add(_ChatMessage(isSystem: false, text: text));
-    });
-    _scrollToBottom();
-  }
-
-  void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent + 200,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-    });
-  }
-
-  void _confirmDate() {
-    _addUserMessage("$_month/$_day/$_year");
-    setState(() { _isTyping = true; _step = _ChatStep.time; });
-    Future.delayed(const Duration(milliseconds: 1200), () {
-      _addSystemMessage("And the exact time? (Even an estimate helps)");
-      setState(() => _isTyping = false);
-      _scrollToBottom();
-    });
-  }
-
-  void _confirmTime() {
-    final ampm = _isAM ? "AM" : "PM";
-    final m = _minute.toString().padLeft(2, '0');
-    _addUserMessage("$_hour:$m $ampm");
-    setState(() { _isTyping = true; _step = _ChatStep.location; });
-    Future.delayed(const Duration(milliseconds: 1200), () {
-      _addSystemMessage("Lastly, where were you born?");
-      setState(() => _isTyping = false);
-      _scrollToBottom();
-    });
-  }
-
-  void _confirmLocation() {
-    if (_place == null) return;
-    _addUserMessage(_place!);
-    setState(() { _isTyping = true; _step = _ChatStep.gender; });
-    Future.delayed(const Duration(milliseconds: 1200), () {
-      _addSystemMessage("Almost done. How do you identify? (This helps with traditional chart reading)");
-      setState(() => _isTyping = false);
-      _scrollToBottom();
-    });
-  }
-
-  void _confirmGender(String g) {
-    _gender = g;
-    _addUserMessage(g);
-    setState(() { _isTyping = true; _step = _ChatStep.saving; });
-    Future.delayed(const Duration(milliseconds: 1500), () {
-      _addSystemMessage("Reading your cosmic blueprint...");
-      _saveProfile();
-    });
   }
 
   Future<void> _saveProfile() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
+    if (uid == null || !_canSubmit) return;
     setState(() => _saving = true);
-
     try {
-      final hour24 = _isAM ? (_hour == 12 ? 0 : _hour) : (_hour == 12 ? 12 : _hour + 12);
-      // Note: timeZoneOffset is derived server-side (astro_sync computeOffsetHours)
-      // from the IANA timeZone name at the birth date, so DST is handled correctly.
       final p = AstrologyProfile(
         birthDate: DateTime(_year, _month, _day),
         birthYear: _year,
         birthMonth: _month,
         birthDay: _day,
-        birthTime: '${hour24.toString().padLeft(2, '0')}:${_minute.toString().padLeft(2, '0')}',
+        birthTime:
+            '${_hour24.toString().padLeft(2, '0')}:${_minute.toString().padLeft(2, '0')}',
         birthPlace: _place!,
         birthLatitude: _lat,
         birthLongitude: _lng,
@@ -383,67 +290,130 @@ class _ImmersiveSetupPageState extends State<ImmersiveSetupPage>
         createdAt: _existing?.createdAt ?? DateTime.now(),
       );
       await _service.saveProfile(p);
-      // Kick off backend chart calculation in the background.
       _service.calculateAndSaveAll(uid);
       HapticFeedback.heavyImpact();
       if (mounted) {
-        // Continuous onboarding: keep the live call alive as we move to the
-        // reveal. Flag it so dispose() hands off instead of hanging up.
         _handingOffVoice = true;
         context.pushReplacement('/onboarding/complete',
-            extra: {'hasBirthDetails': true, 'isUpdate': false});
+            extra: {'hasBirthDetails': true, 'isUpdate': _existing != null});
       }
     } catch (e) {
       AppLogger.e('Save error: $e');
-      setState(() { _saving = false; _step = _ChatStep.gender; });
+      if (mounted) setState(() => _saving = false);
     }
   }
 
+  // ── UI ────────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
     final primary = AppTheme.primaryColor;
+    final dateLabel = _dateSet
+        ? '${_day.toString().padLeft(2, '0')} ${_monthName(_month)} $_year'
+        : null;
+    final timeLabel = _timeSet
+        ? '${_hour.toString().padLeft(2, '0')}:${_minute.toString().padLeft(2, '0')} ${_isAM ? 'AM' : 'PM'}'
+        : null;
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Colors.black, // Immersive dark background
+      appBar: AppBar(
+        title: const Text(''),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      extendBodyBehindAppBar: true,
       body: Stack(
         children: [
-          Positioned.fill(
-            child: CustomPaint(painter: StarFieldPainter(rotation: 0.0, color: Colors.white.withValues(alpha: 0.15))),
+          // Ambient generative AI glow based on voice state
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 700),
+            curve: Curves.easeInOut,
+            top: _voiceActive ? 100 : -200,
+            left: 0, right: 0,
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 700),
+              opacity: _voiceActive ? 0.2 : 0.0,
+              child: Container(
+                height: 400,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(color: primary, blurRadius: 150, spreadRadius: 100)
+                  ]
+                )
+              )
+            )
           ),
-          Positioned.fill(
-            child: SafeArea(
-              child: Column(
-                children: [
-                  Expanded(
-                    child: ListView.builder(
-                      controller: _scrollController,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-                      itemCount: _messages.length + (_isTyping ? 1 : 0) + 1, // +1 for the active input widget
-                      itemBuilder: (context, index) {
-                        if (index < _messages.length) {
-                          return _buildChatBubble(_messages[index], primary);
-                        }
-                        if (index == _messages.length && _isTyping) {
-                          return _buildTypingIndicator(primary);
-                        }
-                        if (index == _messages.length + (_isTyping ? 1 : 0)) {
-                          return _buildActivePicker(primary, isDark);
-                        }
-                        return const SizedBox.shrink();
-                      },
+
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 40, 24, 400), // Massive bottom padding so user can always scroll up
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header
+                    Text(
+                      "Cosmic Origin",
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.5,
+                      ),
                     ),
-                  ),
-                  _buildInputBar(primary),
-                ],
+                    const SizedBox(height: 8),
+                    Text(
+                      "Dictate to Aurobhatt, or tap a field to enter manually.",
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: Colors.white54,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Compact "Cosmic Passport" Card
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.03),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Row 1: Date & Time
+                          Row(
+                            children: [
+                              Expanded(child: _buildCompactField(icon: Icons.calendar_today_rounded, title: "DATE", value: dateLabel, placeholder: "DD MM YYYY", isFilled: _dateSet, onTap: _openDatePicker)),
+                              Container(width: 1, height: 70, color: Colors.white.withValues(alpha: 0.08)),
+                              Expanded(child: _buildCompactField(icon: Icons.access_time_rounded, title: "TIME", value: timeLabel, placeholder: "HH:MM", isFilled: _timeSet, onTap: _openTimePicker)),
+                            ],
+                          ),
+                          Divider(height: 1, color: Colors.white.withValues(alpha: 0.08)),
+                          // Row 2: Place
+                          _buildCompactField(icon: Icons.place_rounded, title: "PLACE", value: _place, placeholder: "City, Country", isFilled: _place != null, onTap: _openPlaceSearch),
+                          Divider(height: 1, color: Colors.white.withValues(alpha: 0.08)),
+                          // Row 3: Gender
+                          _buildCompactField(icon: Icons.person_outline_rounded, title: "GENDER", value: _gender, placeholder: "Optional", isFilled: _gender != null, onTap: _openGenderSheet),
+                        ],
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 32),
+                    // Action Area (Voice / Submit)
+                    _buildActionArea(primary),
+                  ],
+                ),
               ),
             ),
           ),
           if (_saving)
-            Positioned.fill(
-              child: Container(
-                color: Colors.black54,
-                child: const Center(child: CircularProgressIndicator()),
+            const Positioned.fill(
+              child: ColoredBox(
+                color: Color(0x99000000),
+                child: Center(child: CircularProgressIndicator()),
               ),
             ),
         ],
@@ -451,218 +421,228 @@ class _ImmersiveSetupPageState extends State<ImmersiveSetupPage>
     );
   }
 
-  Widget _buildChatBubble(_ChatMessage msg, Color primary) {
-    return Align(
-      alignment: msg.isSystem ? Alignment.centerLeft : Alignment.centerRight,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: msg.isSystem ? Colors.white.withValues(alpha: 0.1) : primary.withValues(alpha: 0.8),
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(16),
-            topRight: const Radius.circular(16),
-            bottomLeft: Radius.circular(msg.isSystem ? 0 : 16),
-            bottomRight: Radius.circular(msg.isSystem ? 16 : 0),
-          ),
-        ),
-        child: Text(msg.text, style: const TextStyle(color: Colors.white, fontSize: 16)),
-      ),
-    );
-  }
-
-  Widget _buildTypingIndicator(Color primary) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.1),
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(16), topRight: Radius.circular(16),
-            bottomLeft: Radius.circular(0), bottomRight: Radius.circular(16),
-          ),
-        ),
-        child: const SizedBox(
-          width: 40, height: 10,
-          child: Center(child: Text("...", style: TextStyle(color: Colors.white, letterSpacing: 2))),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActivePicker(Color primary, bool isDark) {
-    if (_isTyping || _saving) return const SizedBox.shrink();
-
-    Widget content;
-    VoidCallback onNext;
-    String btnText;
-
-    switch (_step) {
-      case _ChatStep.date:
-        content = DatePickerSection(
-          day: _day, month: _month, year: _year,
-          primaryColor: primary, dark: true,
-          dayController: _dayController, monthController: _monthController, yearController: _yearController,
-          onDayChanged: (v) => _day = v + 1,
-          onMonthChanged: (v) => _month = v + 1,
-          onYearChanged: (v) => _year = DateTime.now().year - v,
-        );
-        onNext = _confirmDate;
-        btnText = "Confirm Date";
-        break;
-      case _ChatStep.time:
-        content = TimePickerSection(
-          hour: _hour, minute: _minute, isAM: _isAM,
-          primaryColor: primary, dark: true,
-          hourController: _hourController, minuteController: _minuteController, ampmController: _ampmController,
-          timeZone: _tz,
-          onHourChanged: (v) => _hour = v + 1,
-          onMinuteChanged: (v) => _minute = v,
-          onAmPmChanged: (v) => _isAM = v == 0,
-        );
-        onNext = _confirmTime;
-        btnText = "Confirm Time";
-        break;
-      case _ChatStep.location:
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 24.0, top: 12.0),
-          child: LocationSearchButton(
-            place: _place,
-            primaryColor: primary,
-            dark: true,
-            onClear: () => setState(() {
-              _place = null; _lat = null; _lng = null; _tz = null; _tzOffset = null;
-            }),
-            onTap: () => openLocationSearchOverlay(
-              context: context,
-              primaryColor: primary,
-              dark: true,
-              cardColor: Colors.black,
-              onSelect: (r) {
-                final name = (r['name'] as String?) ?? '';
-                final admin1 = (r['admin1'] as String?) ?? '';
-                final country = (r['country'] as String?) ?? '';
-                final label =
-                    [name, admin1, country].where((s) => s.isNotEmpty).join(', ');
-                setState(() {
-                  _place = label;
-                  _lat = (r['latitude'] as num?)?.toDouble();
-                  _lng = (r['longitude'] as num?)?.toDouble();
-                  _tz = r['timezone'] as String?;
-                });
-                _confirmLocation();
-              },
+  Widget _buildCompactField({
+    required IconData icon,
+    required String title,
+    required String? value,
+    required String placeholder,
+    required bool isFilled,
+    required VoidCallback onTap,
+  }) {
+    final primary = AppTheme.primaryColor;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(24),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, size: 14, color: isFilled ? primary : Colors.white38),
+                const SizedBox(width: 6),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: isFilled ? primary : Colors.white38,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+              ],
             ),
+            const SizedBox(height: 6),
+            Text(
+              isFilled ? value! : placeholder,
+              style: TextStyle(
+                fontSize: 16,
+                color: isFilled ? Colors.white : Colors.white24,
+                fontWeight: isFilled ? FontWeight.w600 : FontWeight.w400,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionArea(Color primary) {
+    // Submit always wins: once the chart is fillable, show it even mid-call so
+    // the user can reveal the moment Baba finishes dictating.
+    if (_canSubmit) {
+      return SizedBox(
+        height: 60,
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: _saving ? null : _saveProfile,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: primary,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           ),
-        );
-      case _ChatStep.gender:
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 24.0, top: 12.0),
-          child: GenderSelectorSection(
-            selectedGender: _gender, primaryColor: primary, dark: true,
-            onGenderChanged: (g) => _confirmGender(g),
-          ),
-        );
-      default:
-        return const SizedBox.shrink();
+          child: const Text('Reveal My Chart', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+        ),
+      );
     }
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 24.0, top: 12.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          content,
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: onNext,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: primary,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    // A call is live but not yet fillable: say NOTHING here. Aurobhatt's global
+    // overlay (status pill + controls) already shows he's listening/speaking,
+    // so a second "processing" bar is just redundant clutter that crowds the
+    // form. Keeping this empty is what frees the vertical space.
+    if (_voiceActive) {
+      return const SizedBox.shrink();
+    }
+
+    return GestureDetector(
+      onTap: _toggleVoice,
+      child: Container(
+        height: 60,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.mic_rounded, color: primary),
+            const SizedBox(width: 12),
+            const Text(
+              "Tap to dictate all details",
+              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
             ),
-            child: Text(btnText, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildInputBar(Color primary) {
-    final active = _voiceActive;
-    final hint = active
-        ? (_voice.state == VoiceCallState.listening
-            ? 'Listening…'
-            : _voice.state == VoiceCallState.speaking
-                ? 'Baba is speaking…'
-                : 'Connecting…')
-        : 'Tap the mic and tell Baba, or use the cards…';
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.black,
-        border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
+  Future<void> _openGenderSheet() async {
+    String? selected = _gender;
+    await BirthFormWidgets.pickerSheet(
+      context: context,
+      title: 'Gender (Optional)',
+      child: StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          return Column(
+            children: ['MALE', 'FEMALE', 'OTHER'].map((code) {
+              final label = BirthDetailNormalizer.genderLabel(code);
+              final isSelected = selected == label;
+              return ListTile(
+                title: Text(label, style: const TextStyle(color: Colors.white)),
+                trailing: isSelected ? Icon(Icons.check, color: AppTheme.primaryColor) : null,
+                onTap: () => setSheetState(() => selected = label),
+              );
+            }).toList(),
+          );
+        }
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              height: 48,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(24),
-              ),
-              alignment: Alignment.centerLeft,
-              child: Text(hint, style: TextStyle(color: Colors.white.withValues(alpha: 0.4))),
-            ),
-          ),
-          const SizedBox(width: 8),
-          GestureDetector(
-            onTap: _toggleVoice,
-            child: Container(
-              height: 48, width: 48,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: active ? primary : primary.withValues(alpha: 0.2),
-              ),
-              child: Icon(active ? Icons.stop_rounded : Icons.mic,
-                  color: active ? Colors.white : primary),
-            ),
-          ),
-        ],
+      onDone: () {
+         if (selected != null) setState(() => _gender = selected);
+      },
+    );
+  }
+
+  String _monthName(int m) => const [
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      ][(m - 1).clamp(0, 11)];
+
+  // ── Pickers (tap-to-open bottom sheets, reusing the wheel sections) ────────
+  Future<void> _openDatePicker() async {
+    final dayC = FixedExtentScrollController(initialItem: _day - 1);
+    final monC = FixedExtentScrollController(initialItem: _month - 1);
+    final yearC =
+        FixedExtentScrollController(initialItem: DateTime.now().year - _year);
+    var d = _day, mo = _month, y = _year;
+    await BirthFormWidgets.pickerSheet(
+      context: context,
+      title: 'Birth date',
+      child: DatePickerSection(
+        day: _day, month: _month, year: _year,
+        primaryColor: AppTheme.primaryColor, dark: false,
+        dayController: dayC, monthController: monC, yearController: yearC,
+        onDayChanged: (v) => d = v + 1,
+        onMonthChanged: (v) => mo = v + 1,
+        onYearChanged: (v) => y = DateTime.now().year - v,
       ),
+      onDone: () => setState(() {
+        _day = d;
+        _month = mo;
+        _year = y;
+        _dateSet = true;
+      }),
+    );
+    dayC.dispose();
+    monC.dispose();
+    yearC.dispose();
+  }
+
+  Future<void> _openTimePicker() async {
+    final hourC = FixedExtentScrollController(initialItem: _hour - 1);
+    final minC = FixedExtentScrollController(initialItem: _minute);
+    final ampmC = FixedExtentScrollController(initialItem: _isAM ? 0 : 1);
+    var h = _hour, mi = _minute, am = _isAM;
+    await BirthFormWidgets.pickerSheet(
+      context: context,
+      title: 'Birth time',
+      child: TimePickerSection(
+        hour: _hour, minute: _minute, isAM: _isAM,
+        primaryColor: AppTheme.primaryColor, dark: false,
+        hourController: hourC, minuteController: minC, ampmController: ampmC,
+        timeZone: _tz,
+        onHourChanged: (v) => h = v + 1,
+        onMinuteChanged: (v) => mi = v,
+        onAmPmChanged: (v) => am = v == 0,
+      ),
+      onDone: () => setState(() {
+        _hour = h;
+        _minute = mi;
+        _isAM = am;
+        _timeSet = true;
+      }),
+    );
+    hourC.dispose();
+    minC.dispose();
+    ampmC.dispose();
+  }
+
+  void _openPlaceSearch() {
+    openLocationSearchOverlay(
+      context: context,
+      primaryColor: AppTheme.primaryColor,
+      dark: Theme.of(context).brightness == Brightness.dark,
+      cardColor: Theme.of(context).colorScheme.surface,
+      onSelect: (r) {
+        final name = (r['name'] as String?) ?? '';
+        final admin1 = (r['admin1'] as String?) ?? '';
+        final country = (r['country'] as String?) ?? '';
+        setState(() {
+          _place = [name, admin1, country].where((s) => s.isNotEmpty).join(', ');
+          _lat = (r['latitude'] as num?)?.toDouble();
+          _lng = (r['longitude'] as num?)?.toDouble();
+          _tz = r['timezone'] as String?;
+        });
+      },
     );
   }
 
   @override
   void dispose() {
-    // Release Baba's onboarding tools + engine override, but NEVER dispose the
-    // shared voice singleton. End any call started from this screen.
-    BabaToolRegistry.instance.unbindHandler(BabaOnboardingTools.setBirthDate);
-    BabaToolRegistry.instance.unbindHandler(BabaOnboardingTools.setBirthTime);
-    BabaToolRegistry.instance.unbindHandler(BabaOnboardingTools.setBirthPlace);
-    BabaToolRegistry.instance.unbindHandler(BabaOnboardingTools.setGender);
-    BabaToolRegistry.instance.unbindHandler(BabaOnboardingTools.submitBirthDetails);
+    final reg = BabaToolRegistry.instance;
+    reg.unbindHandler(BabaOnboardingTools.setBirthDate);
+    reg.unbindHandler(BabaOnboardingTools.setBirthTime);
+    reg.unbindHandler(BabaOnboardingTools.setBirthPlace);
+    reg.unbindHandler(BabaOnboardingTools.setGender);
+    reg.unbindHandler(BabaOnboardingTools.submitBirthDetails);
     _voice.removeListener(_onVoiceChanged);
     _voice.engineOverride = null;
     _voice.directiveOverride = null;
-    // Hand the call off to the reveal screen when we're progressing there;
-    // only end it on a genuine back-out (dispose without the handoff flag).
     if (_voiceActive && !_handingOffVoice) _voice.hangUp();
-    _scrollController.dispose();
-    _dayController.dispose(); _monthController.dispose(); _yearController.dispose();
-    _hourController.dispose(); _minuteController.dispose(); _ampmController.dispose();
     super.dispose();
   }
-}
-
-class _ChatMessage {
-  final bool isSystem;
-  final String text;
-  final Widget? widget;
-  _ChatMessage({required this.isSystem, required this.text, this.widget});
 }

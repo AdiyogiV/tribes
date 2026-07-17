@@ -19,6 +19,7 @@ class BabaOnboardingTools {
   static const setBirthPlace = 'setBirthPlace';
   static const setGender = 'setGender';
   static const submitBirthDetails = 'submitBirthDetails';
+  static const advanceOnboarding = 'advanceOnboarding';
 
   /// All onboarding tool names — used by the screen to unbind on dispose.
   static const names = [
@@ -27,6 +28,7 @@ class BabaOnboardingTools {
     setBirthPlace,
     setGender,
     submitBirthDetails,
+    advanceOnboarding,
   ];
 
   static Future<Map<String, dynamic>> _unavailable(
@@ -56,6 +58,19 @@ class BabaOnboardingTools {
               'value. Never tell the user it is done until a tool returns ok.',
     };
   }
+
+  /// Default for [advanceOnboarding] when the reveal screen isn't mounted:
+  /// there's nothing to advance, so report that honestly (no navigation — the
+  /// reveal flow only exists right after a chart is created).
+  static Future<Map<String, dynamic>> _advanceUnavailable(
+          Map<String, dynamic> args) async =>
+      {
+        'ok': false,
+        'advanced': false,
+        'available': false,
+        'message': 'Not on the chart-reveal flow, so there is nothing to '
+            'advance right now.',
+      };
 
   /// The global declarations to register once at app start.
   static List<BabaTool> declarations() => [
@@ -126,6 +141,18 @@ class BabaOnboardingTools {
               'once date, time and place are all set and confirmed.',
           parameters: {'type': 'object', 'properties': {}},
           defaultHandler: _unavailable,
+        ),
+        BabaTool(
+          name: advanceOnboarding,
+          description: 'During the post-chart REVEAL flow, move the user to the '
+              'next step on screen (sign reveal -> birth reading -> current '
+              'times -> done). Call this to LEAD them forward once you have '
+              'narrated the current step and they are ready to continue (e.g. '
+              'they say "next", "continue", "aage", "haan"). Returns the step '
+              'now shown, or ok:false with a reason if the next step is not '
+              'ready yet.',
+          parameters: {'type': 'object', 'properties': {}},
+          defaultHandler: _advanceUnavailable,
         ),
       ];
 }

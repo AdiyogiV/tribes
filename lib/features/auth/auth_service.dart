@@ -180,7 +180,17 @@ class AuthService extends ChangeNotifier {
           AppLogger.i(' Linking phone credential to anonymous guest',
               category: LogCategory.auth, data: {'uid': current.uid});
           await current.linkWithCredential(authCreds);
-          // Linked: same uid, data preserved. Listener updates status.
+          // linkWithCredential keeps the SAME uid, so Firebase does NOT emit an
+          // authStateChanges event - our listener never runs and status would
+          // stay stuck at Authenticating (blank/splash screen forever). Unlike
+          // the account-SWITCH path below (signInWithCredential fires the
+          // listener), we must drive completion OURSELVES here. reload() picks
+          // up the now-non-anonymous user; then run the normal handler which
+          // (status is Authenticating) runs checkRegistration -> Authenticated.
+          try {
+            await current.reload();
+          } catch (_) {/* token refresh best-effort; proceed regardless */}
+          await _handleAuthStateChanges(_auth.currentUser);
           return;
         } on FirebaseAuthException catch (e) {
           if (e.code == 'credential-already-in-use' ||

@@ -64,6 +64,13 @@ class VoiceSessionController extends ChangeNotifier {
   bool _playerOpen = false;
   bool _disposed = false;
 
+  // Baba asked to end the call (the endCall tool). We defer the real hangUp
+  // until his farewell line has finished playing (see _finishTurn) so the
+  // goodbye is never clipped. A safety timer ends the call anyway if no turn
+  // boundary ever arrives.
+  bool _endAfterFarewell = false;
+  Timer? _endAfterFarewellTimer;
+
   // The mic opens once, as soon as the relay is ready. No greeting any more:
   // the user simply starts talking and Aurobhatt (Gemini Live API) replies.
   bool _micStarted = false;
@@ -161,6 +168,20 @@ class VoiceSessionController extends ChangeNotifier {
   DateTime? _lastEndedAt;
   static const Duration _warmResumeWindow = Duration(minutes: 3);
   bool _warmResume = false; // computed once per start()
+  // Whether the LAST call ended cleanly (user hang-up / natural end). Only a
+  // clean end is eligible for a warm resume — a call that died with an ERROR
+  // may have left the CX session stuck (e.g. awaiting a tool-call result that
+  // never came), so we must NOT resume it or every future call inherits the
+  // poison. Errors force the next call to be cold with a fresh session id.
+  bool _lastEndedCleanly = false;
+  // The CX/Live session id in play. Minted fresh on a cold open (and after any
+  // error), reused verbatim on a warm resume so the conversation continues.
+  // A stuck/dropped session can therefore never brick future calls: the next
+  // cold open simply mints a new id and gets a guaranteed clean slate.
+  String? _sessionId;
+  // One-shot guard: prevents an infinite reconnect loop if a fresh session is
+  // ALSO somehow rejected. Reset on every user-initiated start().
+  bool _autoHealedStuckSession = false;
 
   VoiceCallState get state => _state;
   String get userTranscript => _userTranscript;
@@ -183,6 +204,12 @@ class VoiceSessionController extends ChangeNotifier {
     // Remember when a call ends so the next dial can decide cold-vs-warm.
     if (s == VoiceCallState.ended || s == VoiceCallState.error) {
       _lastEndedAt = DateTime.now();
+      // Only a clean end is warm-resume eligible. An error may have left the
+      // backend session wedged (e.g. CX still awaiting a tool-call result), so
+      // we drop the session id to force the NEXT call to mint a fresh one and
+      // start from a guaranteed-clean slate.
+      _lastEndedCleanly = s == VoiceCallState.ended;
+      if (s == VoiceCallState.error) _sessionId = null;
     }
     AppLogger.i('Voice state',
         category: LogCategory.voice,
@@ -198,11 +225,26 @@ class VoiceSessionController extends ChangeNotifier {
   /// relay is ready.
   Future<void> start() async {
     if (_state != VoiceCallState.idle && _state != VoiceCallState.ended) return;
+    // If a teardown from the previous call is still in flight, let it finish
+    // FIRST. This matters after the app was backgrounded (e.g. the OTP/
+    // reCAPTCHA activity), which fires hangUp() -> _cleanup() (async
+    // closePlayer + audio-session deactivate). Without this await, start()
+    // races that cleanup: it can openPlayer() while closePlayer() is still
+    // running, leaving flutter_sound's PCM stream dead - TTS then feeds into
+    // the void and the reply plays as silence (AudioTrack: 0 frames).
+    final pendingCleanup = _cleanupFuture;
+    if (pendingCleanup != null) {
+      try {
+        await pendingCleanup;
+      } catch (_) {/* a failed teardown must not block the next call */}
+    }
     _micStarted = _relayReady = false;
     // Warm resume? A dial soon after the last end reuses the session and skips
     // the greeting (see _connect) so Baba continues instead of re-introducing
     // himself. Cold open (first call / long gap) greets normally.
     _warmResume = _lastEndedAt != null &&
+        _lastEndedCleanly &&
+        _sessionId != null &&
         DateTime.now().difference(_lastEndedAt!) <= _warmResumeWindow;
     // Engine: an explicit override wins (onboarding forces Live for its
     // latency-sensitive co-authoring), otherwise honour the user's saved pref.
@@ -240,14 +282,14 @@ class VoiceSessionController extends ChangeNotifier {
       }
 
       await _configureAudioSession();
-      await _openPlayer();
-      // If we were torn down during the permission prompt / audio setup (e.g.
-      // the app was backgrounded), abort instead of connecting a zombie socket
-      // that would fire its own kickoff turn.
+      // Open the player and connect to the relay CONCURRENTLY. Audio init is a
+      // native call and the socket handshake (token fetch + WS ready) is
+      // network - overlapping them shaves the fixed startup latency before the
+      // user hears Baba. Safe ordering: the player is open long before CX's
+      // first TTS arrives (CX takes seconds to generate the greeting), and the
+      // mic/start-frame don't depend on the player.
       if (_state != VoiceCallState.connecting) return;
-      // Connect to the relay; the mic opens the moment it's ready (see
-      // [_maybeStartMic]). No greeting — the user speaks first.
-      await _connect();
+      await Future.wait([_openPlayer(), _connect()]);
     } catch (e, st) {
       AppLogger.e('Voice session start failed',
           category: LogCategory.voice, error: e, stackTrace: st);
@@ -353,12 +395,19 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
       onDone: () => _setState(VoiceCallState.ended),
     );
 
-    // Open the session on the relay. The session id is STABLE per user
-    // (`baba-<uid>`), not random-per-tap: within the backend's session window a
-    // re-dial resumes the SAME conversation (CX keeps its context; memory is
-    // durable), so Baba doesn't reset into a stranger every time. Auth is the
-    // token. `engine` picks CX (credit-funded default) vs Live (premium).
-    final sessionId = 'baba-${user.uid}';
+    // Open the session on the relay. `engine` picks CX (credit-funded default)
+    // vs Live (premium); auth is the token.
+    // Session id lifecycle. A WARM resume reuses the existing id so CX/Live
+    // keeps its context and Baba continues the conversation. A COLD open (first
+    // call, long gap, or right after ANY error) mints a FRESH id: this is what
+    // guarantees a stuck/dropped session — e.g. one wedged awaiting a
+    // `navigateTo` tool-call result that a previous dropped call never returned
+    // — can NEVER brick future calls. The uid keeps it namespaced/attributable;
+    // the epoch suffix makes each cold conversation distinct.
+    if (!_warmResume || _sessionId == null) {
+      _sessionId = 'baba-${user.uid}-${DateTime.now().millisecondsSinceEpoch}';
+    }
+    final sessionId = _sessionId!;
     final engine = _engine;
     // Hand Baba the WHITELISTED tools registered for the current surface, so he
     // can act (not just talk). Empty list => a plain conversational session.
@@ -471,6 +520,9 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
       case 'ready':
         // Relay is live — open the mic right away so the user can talk.
         _relayReady = true;
+        // The session connected cleanly: re-arm the one-shot auto-heal so a
+        // future wedge (in a later call) is allowed its own single retry.
+        _autoHealedStuckSession = false;
         _maybeStartMic();
         // If a screen set context before we connected, tell Baba now.
         _maybeSendScreenContext();
@@ -531,6 +583,28 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
         break;
       case 'error':
         final m = (msg['message'] as String?) ?? 'Something went wrong';
+        // Self-heal a wedged backend session. This happens when a PREVIOUS call
+        // dropped after Baba emitted a tool_call (e.g. navigateTo) but before
+        // the client returned its result: CX resumes stuck, awaiting a result
+        // that will never come, and rejects the new turn. We can't answer the
+        // ghost tool call, but we CAN abandon the poisoned session: drop the id
+        // (=> next start mints a fresh one), then transparently reconnect ONCE
+        // so the user never even sees the error.
+        final isStuckSession = m.contains('waiting for tool call result') ||
+            m.contains('INVALID_ARGUMENT');
+        if (isStuckSession && !_autoHealedStuckSession) {
+          _autoHealedStuckSession = true;
+          _sessionId = null; // force a fresh, clean-slate session
+          _lastEndedCleanly = false; // and a cold open (no warm resume)
+          AppLogger.i('Voice auto-heal: abandoning wedged session, reconnecting',
+              category: LogCategory.voice, data: {'reason': m});
+          unawaited(_cleanup().then((_) {
+            if (_disposed) return;
+            _setState(VoiceCallState.idle); // allow start() to run again
+            unawaited(start());
+          }));
+          break;
+        }
         _fail(m == 'unauthorized'
             ? 'Session expired — please sign in again'
             : m);
@@ -681,6 +755,14 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
     _userTranscript = '';
     _playbackStartedAt = null;
     _playbackBytesFed = 0;
+    // Baba said his goodbye (endCall) and it has now played out - end the call
+    // for real instead of reopening the mic.
+    if (_endAfterFarewell) {
+      _endAfterFarewell = false;
+      _endAfterFarewellTimer?.cancel();
+      unawaited(hangUp());
+      return;
+    }
     if (_state == VoiceCallState.speaking ||
         _state == VoiceCallState.thinking) {
       _setState(VoiceCallState.listening);
@@ -772,6 +854,20 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
   }
 
   /// User tapped hang up.
+  /// Baba is saying goodbye and wants to end the call (endCall tool). Let his
+  /// farewell finish playing, THEN hang up - hanging up immediately would clip
+  /// the last words. [_finishTurn] performs the actual hangUp once the fed
+  /// audio has played out; this safety timer guarantees we still end even if no
+  /// turn boundary arrives (e.g. no farewell audio was produced).
+  void endAfterFarewell() {
+    if (_endAfterFarewell) return;
+    _endAfterFarewell = true;
+    _endAfterFarewellTimer?.cancel();
+    _endAfterFarewellTimer = Timer(const Duration(seconds: 20), () {
+      if (_endAfterFarewell) unawaited(hangUp());
+    });
+  }
+
   Future<void> hangUp() async {
     try {
       _channel?.sink.add(jsonEncode({'type': 'stop'}));
@@ -795,6 +891,8 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
 
   Future<void> _cleanupOnce() async {
     _ttsQueue.clear();
+    _endAfterFarewell = false;
+    _endAfterFarewellTimer?.cancel();
     _turnEndPending = false;
     _finishTurnTimer?.cancel();
     _playbackStartedAt = null;

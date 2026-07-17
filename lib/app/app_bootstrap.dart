@@ -3,6 +3,7 @@ import 'package:aurogram/firebase_options.dart';
 import 'package:aurogram/core/startup/startup_service.dart';
 import 'package:aurogram/features/onboarding/domain/onboarding_service.dart';
 import 'package:aurogram/features/onboarding/domain/baba_onboarding_tools.dart';
+import 'package:aurogram/features/auth/baba_login_tools.dart';
 import 'package:aurogram/features/onboarding/domain/baba_identity_tools.dart';
 import 'package:aurogram/features/astrology/domain/baba_astrology_tools.dart';
 import 'package:aurogram/features/baba/domain/baba_tool_registry.dart';
@@ -217,6 +218,9 @@ class AppBootstrap {
       BabaToolCatalog.registerCore();
       BabaToolRegistry.instance.registerAll(BabaOnboardingTools.declarations());
       BabaToolRegistry.instance.registerAll(BabaIdentityTools.declarations());
+      // Baba can fill a guest's phone number into the login screen (declaration
+      // global + stable; LoginPage binds the live handler while mounted).
+      BabaToolRegistry.instance.registerAll(BabaLoginTools.declarations());
       // Baba's on-demand chart-facts tool (compact, avoids CX token bloat).
       BabaToolRegistry.instance.register(BabaAstrologyTools.declaration());
 
