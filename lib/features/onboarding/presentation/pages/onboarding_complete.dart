@@ -178,7 +178,7 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
     switch (_phase) {
       case OnboardingPhase.signReveal:
         if (_signRevealStep >= 3) {
-          _goToReadingPhase();
+          _goToReadingPhase(viaVoiceResult: true);
           // Hand Baba the ACTUAL birth-reading text in the tool result he is
           // responding to - not a separate screen-context message he ignores.
           // This is why the reading was never spoken: the model reacts to the
@@ -199,7 +199,7 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
         final ready =
             !_isGeneratingReading && (_firstReadingContent?.isNotEmpty ?? false);
         if (ready) {
-          _goToCurrentTimesPhase();
+          _goToCurrentTimesPhase(viaVoiceResult: true);
           return {
             'ok': true,
             'advanced': true,
@@ -216,7 +216,7 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
         final ready = !_isGeneratingCurrentTimesReading &&
             (_currentTimesReadingContent?.isNotEmpty ?? false);
         if (ready) {
-          _finishOnboarding();
+          _finishOnboarding(viaVoiceResult: true);
           return {
             'ok': true,
             'advanced': true,
@@ -360,7 +360,15 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
     }
   }
 
-  void _goToReadingPhase() {
+  /// Advance to the birth-reading phase.
+  ///
+  /// [viaVoiceResult] = triggered by Baba's advanceOnboarding tool, which
+  /// ALREADY returns the reading text in its result for him to narrate - so we
+  /// SKIP the screen-context publish to avoid sending the same reading twice on
+  /// two channels (the model acts on the tool result and ignores publish). The
+  /// on-screen Continue button path leaves it false, so publish IS the channel
+  /// that reaches him then (no tool result exists).
+  void _goToReadingPhase({bool viaVoiceResult = false}) {
     if (!mounted) return;
     final hasReading =
         _firstReadingContent != null && _firstReadingContent!.isNotEmpty;
@@ -370,7 +378,7 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
     }
     AppLogger.i('Moving to reading phase. Has reading: $hasReading',
         category: LogCategory.general);
-setState(() {
+    setState(() {
       _phase = OnboardingPhase.birthReading;
       _isGeneratingReading = !hasReading;
     });
@@ -378,14 +386,16 @@ setState(() {
     // advanceOnboarding result when Baba moves on (otherwise current-times
     // would still be loading at the moment he needs to narrate it).
     pollForCurrentTimesReading();
-    _narrateScreen(
-      '[REVEAL] step=birthReading; account=${_accountFact()}. '
-      'Their birth reading is now on screen; narrate FROM this text, do not '
-      'invent: "${_cueText(_firstReadingContent)}"',
-    );
+    if (!viaVoiceResult) {
+      _narrateScreen(
+        '[REVEAL] step=birthReading; account=${_accountFact()}. '
+        'Their birth reading is now on screen; narrate FROM this text, do not '
+        'invent: "${_cueText(_firstReadingContent)}"',
+      );
+    }
   }
 
-  void _goToCurrentTimesPhase() {
+  void _goToCurrentTimesPhase({bool viaVoiceResult = false}) {
     if (!mounted) return;
     setState(() {
       _phase = OnboardingPhase.currentTimes;
@@ -398,16 +408,18 @@ setState(() {
     // Facts only: the current-times reading is up, plus whether they're still a
     // guest. The playbook owns the behaviour (orient them, then — if guest —
     // the benefits-led login nudge; else advance to home when ready).
-    _narrateScreen(
-      '[REVEAL] step=currentTimes; account=${_accountFact()}. '
-      'Final reveal step; their current-times reading is on screen. Narrate '
-      'FROM this text, do not invent: "${_cueText(_currentTimesReadingContent)}"',
-    );
+    if (!viaVoiceResult) {
+      _narrateScreen(
+        '[REVEAL] step=currentTimes; account=${_accountFact()}. '
+        'Final reveal step; their current-times reading is on screen. Narrate '
+        'FROM this text, do not invent: "${_cueText(_currentTimesReadingContent)}"',
+      );
+    }
   }
 
     /// Ends the reading flow. First-time users land straight on the home
   /// dashboard (tab 0); the update flow simply pops back to its caller.
-  void _finishOnboarding() {
+  void _finishOnboarding({bool viaVoiceResult = false}) {
     if (!mounted) return;
     HapticFeedback.mediumImpact();
     if (widget.isUpdate) {
@@ -418,11 +430,13 @@ setState(() {
     navigateToHome(targetTab: 0);
     // Tell Baba he has landed on the dashboard so he announces it and gives a
     // short tour - instead of falling silent and making the user ask.
-    _narrateScreen(
-      '[REVEAL] step=home; account=${_accountFact()}. '
-      'Onboarding is complete and the user is now on the home dashboard. '
-      'Warmly say you have brought them here and give a one-line tour.',
-    );
+    if (!viaVoiceResult) {
+      _narrateScreen(
+        '[REVEAL] step=home; account=${_accountFact()}. '
+        'Onboarding is complete and the user is now on the home dashboard. '
+        'Warmly say you have brought them here and give a one-line tour.',
+      );
+    }
   }
 
   void _retryAstroLoad() async {
