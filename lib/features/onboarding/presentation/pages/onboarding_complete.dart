@@ -179,7 +179,16 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
       case OnboardingPhase.signReveal:
         if (_signRevealStep >= 3) {
           _goToReadingPhase();
-          return {'ok': true, 'advanced': true, 'now': 'birthReading'};
+          // Hand Baba the ACTUAL birth-reading text in the tool result he is
+          // responding to - not a separate screen-context message he ignores.
+          // This is why the reading was never spoken: the model reacts to the
+          // tool result (which had no story), so the story must live HERE.
+          return {
+            'ok': true,
+            'advanced': true,
+            'now': 'birthReading',
+            'narrate': _cueText(_firstReadingContent, max: 600),
+          };
         }
         return {
           'ok': false,
@@ -191,7 +200,12 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
             !_isGeneratingReading && (_firstReadingContent?.isNotEmpty ?? false);
         if (ready) {
           _goToCurrentTimesPhase();
-          return {'ok': true, 'advanced': true, 'now': 'currentTimes'};
+          return {
+            'ok': true,
+            'advanced': true,
+            'now': 'currentTimes',
+            'narrate': _cueText(_currentTimesReadingContent, max: 600),
+          };
         }
         return {
           'ok': false,
@@ -203,7 +217,15 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
             (_currentTimesReadingContent?.isNotEmpty ?? false);
         if (ready) {
           _finishOnboarding();
-          return {'ok': true, 'advanced': true, 'now': 'home'};
+          return {
+            'ok': true,
+            'advanced': true,
+            'now': 'home',
+            'narrate': 'They are now on the home dashboard. Warmly say you have '
+                'brought them here and give a one-line tour of what lives here '
+                '(their daily sky/nakshatra wheel, upcoming events, and that '
+                'their daily insight lives here).',
+          };
         }
         return {
           'ok': false,
@@ -348,10 +370,14 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
     }
     AppLogger.i('Moving to reading phase. Has reading: $hasReading',
         category: LogCategory.general);
-    setState(() {
+setState(() {
       _phase = OnboardingPhase.birthReading;
       _isGeneratingReading = !hasReading;
     });
+    // Pre-warm the NEXT reading now so its text is ready to hand back in the
+    // advanceOnboarding result when Baba moves on (otherwise current-times
+    // would still be loading at the moment he needs to narrate it).
+    pollForCurrentTimesReading();
     _narrateScreen(
       '[REVEAL] step=birthReading; account=${_accountFact()}. '
       'Their birth reading is now on screen; narrate FROM this text, do not '
