@@ -192,3 +192,11 @@ backend/analysis/
 
 # Gradle local build cache
 .gradle-local/
+
+# Scratch/patch artifacts (never commit)
+*.rej
+*.orig
+*.patch
+fix_*.py
+rewrite_*.py
+Oops.rej
