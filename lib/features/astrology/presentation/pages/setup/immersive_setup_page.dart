@@ -120,6 +120,29 @@ class _ImmersiveSetupPageState extends State<ImmersiveSetupPage>
   }
 
   // ── Baba tool handlers (fill the same draft; tolerant of natural input) ───
+
+  /// The GROUND TRUTH of the form after any action, so Baba can never drift
+  /// from reality: what is captured, what is still missing, can we submit.
+  /// Every set*/submit handler returns this so the model reads the real state
+  /// instead of assuming its last action worked.
+  Map<String, dynamic> _babaFormState() {
+    final missing = <String>[
+      if (!_dateSet) 'date',
+      if (!_timeSet) 'time',
+      if (_place == null) 'place',
+    ];
+    return {
+      'captured': {
+        'date': _dateSet,
+        'time': _timeSet,
+        'place': _place != null,
+        'gender': _gender != null,
+      },
+      'missing': missing,
+      'canSubmit': _canSubmit,
+    };
+  }
+
   void _bindBabaTools() {
     final reg = BabaToolRegistry.instance;
 
@@ -128,7 +151,7 @@ class _ImmersiveSetupPageState extends State<ImmersiveSetupPage>
       final mo = (args['month'] as num?)?.toInt();
       final d = (args['day'] as num?)?.toInt();
       if (y == null || mo == null || d == null) {
-        return {'ok': false, 'set': false, 'reason': 'need year, month and day'};
+        return {'ok': false, 'set': false, 'reason': 'need year, month and day', ..._babaFormState()};
       }
       setState(() {
         _year = y;
@@ -136,14 +159,14 @@ class _ImmersiveSetupPageState extends State<ImmersiveSetupPage>
         _day = d;
         _dateSet = true;
       });
-      return {'ok': true, 'set': true, 'date': '$y-$mo-$d'};
+      return {'ok': true, 'set': true, 'date': '$y-$mo-$d', ..._babaFormState()};
     });
 
     reg.bindHandler(BabaOnboardingTools.setBirthTime, (args) async {
       final h24 = (args['hour24'] as num?)?.toInt();
       final min = (args['minute'] as num?)?.toInt() ?? 0;
       if (h24 == null || h24 < 0 || h24 > 23) {
-        return {'ok': false, 'set': false, 'reason': 'need hour24 (0-23)'};
+        return {'ok': false, 'set': false, 'reason': 'need hour24 (0-23)', ..._babaFormState()};
       }
       setState(() {
         _isAM = h24 < 12;
@@ -156,13 +179,14 @@ class _ImmersiveSetupPageState extends State<ImmersiveSetupPage>
         'set': true,
         'time':
             '${h24.toString().padLeft(2, '0')}:${min.toString().padLeft(2, '0')}',
+        ..._babaFormState(),
       };
     });
 
     reg.bindHandler(BabaOnboardingTools.setBirthPlace, (args) async {
       final city = (args['city'] as String?)?.trim();
       if (city == null || city.isEmpty) {
-        return {'ok': false, 'set': false, 'reason': 'need a city name'};
+        return {'ok': false, 'set': false, 'reason': 'need a city name', ..._babaFormState()};
       }
       final geo = await _geocode(city);
       if (geo == null) {
@@ -171,6 +195,7 @@ class _ImmersiveSetupPageState extends State<ImmersiveSetupPage>
           'set': false,
           'reason':
               'could not find "$city" - ask them to say the city in English',
+          ..._babaFormState(),
         };
       }
       setState(() {
@@ -179,7 +204,7 @@ class _ImmersiveSetupPageState extends State<ImmersiveSetupPage>
         _lng = geo['lng'] as double?;
         _tz = geo['tz'] as String?;
       });
-      return {'ok': true, 'set': true, 'resolved': _place};
+      return {'ok': true, 'set': true, 'resolved': _place, ..._babaFormState()};
     });
 
     reg.bindHandler(BabaOnboardingTools.setGender, (args) async {
@@ -189,22 +214,28 @@ class _ImmersiveSetupPageState extends State<ImmersiveSetupPage>
           'ok': false,
           'set': false,
           'reason': 'gender must be male, female or other',
+          ..._babaFormState(),
         };
       }
       setState(() => _gender = BirthDetailNormalizer.genderLabel(code));
-      return {'ok': true, 'set': true, 'gender': _gender};
+      return {'ok': true, 'set': true, 'gender': _gender, ..._babaFormState()};
     });
 
     reg.bindHandler(BabaOnboardingTools.submitBirthDetails, (args) async {
+      // Un-fakeable gate: refuse (with the exact missing fields) unless the
+      // form is genuinely complete. This is what stops Baba claiming the chart
+      // is being calculated when a field was silently dropped.
       if (!_canSubmit) {
         return {
           'ok': false,
           'submitted': false,
-          'reason': 'need date, time and place first',
+          'reason': 'CANNOT submit - still missing these fields; collect them '
+              'first, do NOT say the chart is being prepared',
+          ..._babaFormState(),
         };
       }
       await _saveProfile();
-      return {'ok': true, 'submitted': true};
+      return {'ok': true, 'submitted': true, ..._babaFormState()};
     });
   }
 

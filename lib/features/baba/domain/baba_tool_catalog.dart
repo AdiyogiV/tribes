@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/widgets.dart';
 
 import 'package:aurogram/core/routing/app_router.dart';
 import 'package:aurogram/core/routing/route_names.dart';
@@ -69,11 +70,11 @@ class BabaToolCatalog {
       // an in-place floating sheet, not a separate page. Open it right here.
       if (dest == 'chat') {
         BabaChatController.instance.open();
-        return {'navigated': true, 'destination': 'chat'};
+        return _navResult('chat');
       }
       final path = dest == null ? null : BabaAppMap.pathFor(dest);
       if (path == null) {
-        return {'navigated': false, 'reason': 'unknown destination: $dest'};
+        return {'ok': false, 'navigated': false, 'reason': 'unknown destination: $dest'};
       }
       final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
       // The birth CHART route is parameterised (`/astrology/details/:uid`), so
@@ -83,20 +84,41 @@ class BabaToolCatalog {
       if (dest == 'chart') {
         if (uid.isEmpty) {
           return {
+            'ok': false,
             'navigated': false,
             'reason': 'not signed in - cannot open chart',
           };
         }
         appRouter.go('${RouteNames.astrologyDetails}/$uid');
-        return {'navigated': true, 'destination': 'chart'};
+        return _navResult('chart');
       }
       // The daily-insight page needs the signed-in uid to stream the profile;
       // without it Firestore throws "document path must be a non-empty string".
       final extra = dest == 'dailyInsight' ? {'uid': uid} : null;
       appRouter.go(path, extra: extra);
-      return {'navigated': true, 'destination': dest};
+      return _navResult(dest!);
     },
   );
+
+  /// After navigating, wait for the new screen to build + register its live
+  /// snapshot, then return the REAL post-navigation state. This is what lets
+  /// Baba describe the ACTUAL new page and its status instead of assuming the
+  /// navigation did what he expected.
+  static Future<Map<String, dynamic>> _navResult(String dest) async {
+    // Two frames: one for the route swap, one for the new page's initState to
+    // register its snapshot provider.
+    await WidgetsBinding.instance.endOfFrame;
+    await WidgetsBinding.instance.endOfFrame;
+    final snap = BabaContext.instance.snapshot();
+    final arrived = dest == 'chat' || snap['screen'] == dest;
+    return {
+      'ok': true,
+      'navigated': true,
+      'destination': dest,
+      'arrived': arrived,
+      'nowOn': snap,
+    };
+  }
 
   /// His "back": return to the previous screen (or home if nothing to pop).
   static final BabaTool _goBack = BabaTool(
