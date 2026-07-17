@@ -6,6 +6,8 @@ import 'package:aurogram/features/onboarding/domain/baba_onboarding_tools.dart';
 import 'package:aurogram/features/auth/baba_login_tools.dart';
 import 'package:aurogram/features/onboarding/domain/baba_identity_tools.dart';
 import 'package:aurogram/features/astrology/domain/baba_astrology_tools.dart';
+import 'package:aurogram/features/baba/domain/baba_knowledge_service.dart';
+import 'package:aurogram/features/baba/domain/baba_knowledge_tools.dart';
 import 'package:aurogram/features/baba/domain/baba_tool_registry.dart';
 import 'package:aurogram/features/baba/domain/baba_tool_catalog.dart';
 import 'package:aurogram/core/di/injection.dart';
@@ -223,6 +225,10 @@ class AppBootstrap {
       BabaToolRegistry.instance.registerAll(BabaLoginTools.declarations());
       // Baba's on-demand chart-facts tool (compact, avoids CX token bloat).
       BabaToolRegistry.instance.register(BabaAstrologyTools.declaration());
+      // Baba's grounded knowledge lookup (curated astro/ayurveda canon, bundled
+      // asset - zero cloud cost). Warm the cache off the critical path.
+      BabaToolRegistry.instance.register(BabaKnowledgeTools.declaration());
+      unawaited(BabaKnowledgeService.instance.ensureLoaded());
 
       await OnboardingService().initialize();
 
