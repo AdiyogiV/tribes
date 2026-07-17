@@ -15,7 +15,7 @@
  *     CX_AGENT_ID=<id> node tools/provision_cx_tools.mjs
  */
 
-import { BABA_TOOL_SPECS, BABA_TOOL_GUIDELINES } from "../src/cx_tools.js";
+import { BABA_TOOL_SPECS, BABA_TOOL_GUIDELINES, BABA_STEPS } from "../src/cx_tools.js";
 
 const PROJECT = process.env.GCP_PROJECT || "ty-dev-516d7";
 const LOCATION = process.env.CX_LOCATION || "global";
@@ -109,21 +109,25 @@ async function main() {
     ? currentGuidelines.slice(0, idx)
     : currentGuidelines).trimEnd();
   const guidelines = base + "\n" + BABA_TOOL_GUIDELINES;
+  // We now ALSO own the STEPS (persona + top-priority laws) - they are the
+  // model-primary instruction, so keeping them in code is the only way to stop
+  // the console copy drifting and contradicting the guidelines (which is how
+  // Baba ended up with 'always give a reading / confident answer without birth
+  // details' fighting the truth rules and fabricating charts, 2026-07-18).
+  const steps = BABA_STEPS.map((text) => ({ text }));
 
   const updated = await api(
     "PATCH",
-    // CRITICAL: use the PRECISE sub-field mask `instruction.guidelines`, NOT
-    // `instruction`. A mask of `instruction` makes proto3 APPEND the repeated
-    // `instruction.steps` array on every run (merge semantics), silently
-    // duplicating the whole persona until CX's 8192-token playbook limit blows
-    // and EVERY voice call dies instantly with {type:error}. This bit us twice
-    // (2026-07-13 and 2026-07-14). We only manage guidelines + referencedTools
-    // here; steps are authored elsewhere and must be left alone. Do NOT spread
-    // pb.instruction into the body either — that re-sends steps into the merge.
-    `${HOST}/v3beta1/${pb.name}?updateMask=referencedTools,instruction.guidelines`,
+    // Use PRECISE sub-field masks. NEVER mask the bare `instruction` parent: a
+    // parent mask makes proto3 APPEND the repeated `instruction.steps` on every
+    // run (merge semantics), duplicating the persona until CX's 8192-token
+    // playbook limit blows and every call dies with {type:error} (bit us twice,
+    // 2026-07-13/14). Masking `instruction.steps` DIRECTLY (a leaf repeated
+    // field) REPLACES it wholesale - which is exactly what we want.
+    `${HOST}/v3beta1/${pb.name}?updateMask=referencedTools,instruction.guidelines,instruction.steps`,
     {
       referencedTools: names,
-      instruction: { guidelines },
+      instruction: { guidelines, steps },
     },
   );
   console.log(
