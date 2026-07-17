@@ -35,12 +35,13 @@ class BabaToolCatalog {
     description:
         'Check where the user currently is in the app and what is on their '
         'screen right now. Returns route, screen, label and description plus, '
-        'when the screen supports it, an "onScreen" object with the ACTUAL '
-        'live data being displayed (e.g. the insight theme and section titles, '
-        "the chart's sun/moon/rising, the birth-setup step and captured "
-        'values). Read "onScreen" and answer from it — do not guess. Call this '
-        'whenever you need context before helping, explaining, reading the '
-        'screen aloud, or leading them somewhere.',
+        'when the screen supports it, an "onScreen" object: status '
+        '(loading/ready/empty/error), a one-line "headline" you can read almost '
+        'verbatim, "facts" (key->value you can cite), and "items" (visible item '
+        'labels). Read "onScreen" and answer from it — do not guess; if status is '
+        'loading/empty, say so instead of inventing. Call this whenever you '
+        'need context before helping, explaining, reading the screen aloud, or '
+        'leading them somewhere.',
     parameters: const {'type': 'object', 'properties': {}},
     defaultHandler: (args) async => BabaContext.instance.snapshot(),
   );

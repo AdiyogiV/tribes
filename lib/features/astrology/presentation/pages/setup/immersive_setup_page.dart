@@ -61,22 +61,27 @@ class _ImmersiveSetupPageState extends State<ImmersiveSetupPage>
   String get babaScreenKey => 'birthDetails';
 
   @override
-  Map<String, dynamic> babaSnapshot() => {
-        'dateSet': _dateSet,
-        if (_dateSet)
-          'date':
-              '$_year-${_month.toString().padLeft(2, '0')}-${_day.toString().padLeft(2, '0')}',
-        'timeSet': _timeSet,
-        if (_timeSet)
-          'time':
-              '${_hour24.toString().padLeft(2, '0')}:${_minute.toString().padLeft(2, '0')}',
-        'placeSet': _place != null,
-        if (_place != null) 'place': _place,
-        if (_gender != null) 'gender': _gender,
-        'canSubmit': _canSubmit,
-        'saving': _saving,
-        'voiceActive': _voiceActive,
-      };
+  BabaSnapshot babaSnapshot() => BabaSnapshot(
+        status: _saving ? BabaScreenStatus.loading : BabaScreenStatus.ready,
+        headline: _saving
+            ? 'Saving birth details and building the chart'
+            : 'The birth-details setup form (date, time, place, gender)',
+        facts: {
+          'dateSet': _dateSet,
+          if (_dateSet)
+            'date':
+                '$_year-${_month.toString().padLeft(2, '0')}-${_day.toString().padLeft(2, '0')}',
+          'timeSet': _timeSet,
+          if (_timeSet)
+            'time':
+                '${_hour24.toString().padLeft(2, '0')}:${_minute.toString().padLeft(2, '0')}',
+          'placeSet': _place != null,
+          if (_place != null) 'place': _place,
+          if (_gender != null) 'gender': _gender,
+          'canSubmit': _canSubmit,
+          'voiceActive': _voiceActive,
+        },
+      );
 
   @override
   void initState() {

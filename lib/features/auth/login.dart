@@ -10,6 +10,7 @@ import 'package:aurogram/features/auth/login_widgets.dart';
 import 'package:aurogram/features/auth/baba_login_tools.dart';
 import 'package:aurogram/features/baba/domain/baba_tool_registry.dart';
 import 'package:aurogram/features/baba/domain/baba_context.dart';
+import 'package:aurogram/features/baba/domain/baba_snapshot.dart';
 import 'package:aurogram/features/baba/voice/voice_session_controller.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/rotating_nakshatra_wheel.dart';
@@ -61,14 +62,18 @@ class LoginPageState extends State<LoginPage> {
   }
 
   /// Live state of the login screen for Baba's whereAmI.
-  Map<String, dynamic> _babaSnapshot() => {
-        'step': _codeSent ? 'otpEntry' : 'phoneEntry',
-        'awaiting': _codeSent ? 'the 6-digit OTP from SMS' : 'the phone number',
-        'phoneFilled': _phoneController.text.isNotEmpty,
-        'countryCode': _countryCode.text,
-        'codeSent': _codeSent,
-        'otpFilled': _otpController.text.isNotEmpty,
-      };
+  BabaSnapshot _babaSnapshot() => BabaSnapshot.ready(
+        headline: _codeSent
+            ? 'The login screen, awaiting the 6-digit OTP from SMS'
+            : 'The login screen, awaiting the phone number',
+        facts: {
+          'step': _codeSent ? 'otpEntry' : 'phoneEntry',
+          'phoneFilled': _phoneController.text.isNotEmpty,
+          'countryCode': _countryCode.text,
+          'codeSent': _codeSent,
+          'otpFilled': _otpController.text.isNotEmpty,
+        },
+      );
 
   // ── Baba tool handler: fill the phone number for a hands-free guest login ──
   // Declaration is global (registered at startup); we bind the live behaviour

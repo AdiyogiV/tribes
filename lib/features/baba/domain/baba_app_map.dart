@@ -24,11 +24,12 @@ class BabaScreen {
 
 /// The app landscape — the ONE place that knows what Aurogram's screens are.
 ///
-/// This is Baba's map. It drives three things so they can never drift apart:
+/// This is Baba's map. It drives two things so they can never drift apart:
 ///   * the `navigateTo` tool's destination enum + path resolution,
-///   * `whereAmI` / [describe] — turning the current route into a human label,
-///   * [promptSummary] — the "here's the app and what you can do" briefing
-///     baked into Baba's persona (client copy; the CX playbook mirrors it).
+///   * `whereAmI` / [describe] — turning the current route into a human label.
+///
+/// Persona/behaviour lives ONLY in the CX playbook
+/// (voice-relay/src/cx_tools.js), never here — this file is facts about screens.
 ///
 /// Add a screen here once and Baba can name it, describe it, and take the user
 /// there — no per-screen wiring. Keep it curated (the places worth leading a
@@ -170,19 +171,5 @@ class BabaAppMap {
     final s = match(location);
     if (s == null) return 'The user is on a screen ($location).';
     return 'The user is on the ${s.label} screen. ${s.description}';
-  }
-
-  /// Compact briefing of the app + Baba's powers, for his persona/prompt.
-  /// The CX playbook mirrors this (see voice-relay/src/cx_tools.js).
-  static String get promptSummary {
-    final list = screens
-        .map((s) => '- ${s.label}: ${s.description}')
-        .join('\n');
-    return 'You live inside Aurogram, a Vedic astrology + wellness companion '
-        'app. You are not a passive chatbot — you can see where the user is and '
-        'operate the app for them. The main screens are:\n$list\n\n'
-        'Your powers: whereAmI (check what screen the user is on and what is '
-        'shown), navigateTo (open a screen), goBack (return to the previous '
-        'screen). Use them to LEAD the user, not just answer.';
   }
 }

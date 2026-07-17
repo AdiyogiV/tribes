@@ -36,16 +36,22 @@ class _AstrologyDetailsPageState extends State<AstrologyDetailsPage>
   String get babaScreenKey => 'chart';
 
   @override
-  Map<String, dynamic> babaSnapshot() {
+  BabaSnapshot babaSnapshot() {
     final p = _profile;
-    return {
-      'hasChart': p?.hasCalculatedData ?? false,
-      if (p?.sunSign != null) 'sunSign': p!.sunSign,
-      if (p?.moonSign != null) 'moonSign': p!.moonSign,
-      if (p?.ascendant != null) 'rising': p!.ascendant,
-      if (p?.nakshatra != null) 'nakshatra': p!.nakshatra,
-      if (p?.doshas != null) 'hasDoshas': true,
-    };
+    if (p == null || !p.hasCalculatedData) {
+      return const BabaSnapshot.empty(
+          headline: 'The chart screen, but no chart is calculated yet');
+    }
+    return BabaSnapshot.ready(
+      headline: 'The birth chart, showing houses and placements',
+      facts: {
+        if (p.sunSign != null) 'sunSign': p.sunSign,
+        if (p.moonSign != null) 'moonSign': p.moonSign,
+        if (p.ascendant != null) 'rising': p.ascendant,
+        if (p.nakshatra != null) 'nakshatra': p.nakshatra,
+        if (p.doshas != null) 'hasDoshas': true,
+      },
+    );
   }
 
   final _msgController = TextEditingController();

@@ -54,22 +54,28 @@ class DashboardPageState extends State<DashboardPage>
   String get babaScreenKey => 'home';
 
   @override
-  Map<String, dynamic> babaSnapshot() {
+  BabaSnapshot babaSnapshot() {
     final selected = _sliderDateNotifier.value;
     final today = DateTime.now();
     final isToday = selected.year == today.year &&
         selected.month == today.month &&
         selected.day == today.day;
-    return {
-      'loggedIn': _user != null,
-      // The sky-chart / nakshatra wheel date the user has scrubbed to.
-      'skyDate':
-          '${selected.year}-${selected.month.toString().padLeft(2, '0')}-${selected.day.toString().padLeft(2, '0')}',
-      'viewingToday': isToday,
-      'skyLoaded': _loadingState.sky == DashboardLoadState.loaded,
-      'eventsLoaded': _loadingState.events == DashboardLoadState.loaded,
-      'muhuratLoaded': _loadingState.muhurat == DashboardLoadState.loaded,
-    };
+    final skyDate =
+        '${selected.year}-${selected.month.toString().padLeft(2, '0')}-${selected.day.toString().padLeft(2, '0')}';
+    final loaded = _loadingState.sky == DashboardLoadState.loaded &&
+        _loadingState.events == DashboardLoadState.loaded &&
+        _loadingState.muhurat == DashboardLoadState.loaded;
+    return BabaSnapshot(
+      status: loaded ? BabaScreenStatus.ready : BabaScreenStatus.loading,
+      headline: isToday
+          ? "The home dashboard, showing today's sky wheel, panchang and feed"
+          : 'The home dashboard, scrubbed to $skyDate',
+      facts: {
+        'loggedIn': _user != null,
+        'skyDate': skyDate,
+        'viewingToday': isToday,
+      },
+    );
   }
 
   // Scroll-to-hide bottom nav bar — mirrors Feed's approach. Baba himself is a

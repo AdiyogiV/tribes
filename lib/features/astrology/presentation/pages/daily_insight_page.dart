@@ -50,16 +50,26 @@ class _DailyInsightPageState extends State<DailyInsightPage>
   String get babaScreenKey => 'dailyInsight';
 
   @override
-  Map<String, dynamic> babaSnapshot() => {
-        'date': _lastInsight?.dateString ?? widget.insightDate ?? 'today',
+  BabaSnapshot babaSnapshot() {
+    final insight = _lastInsight;
+    if (_isGeneratingInsight) {
+      return const BabaSnapshot.loading(
+          headline: "Today's insight is being generated");
+    }
+    if (insight == null) {
+      return const BabaSnapshot.empty(
+          headline: 'No insight on screen yet');
+    }
+    return BabaSnapshot.ready(
+      headline: "Today's insight: ${insight.displayTheme}",
+      facts: {
+        'date': insight.dateString,
+        'theme': insight.displayTheme,
         'viewingHistory': widget.insightDate != null,
-        'hasInsight': _lastInsight != null,
-        if (_lastInsight != null) 'theme': _lastInsight!.displayTheme,
-        if (_lastInsight != null)
-          'sections':
-              _lastInsight!.sections.map((s) => s.title).toList(growable: false),
-        'generating': _isGeneratingInsight,
-      };
+      },
+      items: insight.sections.map((s) => s.title).toList(growable: false),
+    );
+  }
 
   /// The uid to stream against. Falls back to the signed-in user when a caller
   /// (e.g. Baba's navigateTo) opens this page without passing one — an empty

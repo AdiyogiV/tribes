@@ -7,6 +7,7 @@ import 'package:aurogram/shared/models/ayurveda_profile.dart';
 import 'package:aurogram/shared/models/astrology_profile.dart';
 import 'package:aurogram/features/ayurveda/domain/ayurveda_service.dart';
 import 'package:aurogram/features/astrology/domain/astrology_service.dart';
+import 'package:aurogram/features/baba/domain/baba_snapshot.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/features/astrology/data/utils/astrology_context_builder.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/astro_chat_input.dart';
@@ -32,9 +33,44 @@ class AyurvedaDetailsPage extends StatefulWidget {
   State<AyurvedaDetailsPage> createState() => _AyurvedaDetailsPageState();
 }
 
-class _AyurvedaDetailsPageState extends State<AyurvedaDetailsPage> {
+class _AyurvedaDetailsPageState extends State<AyurvedaDetailsPage>
+    with BabaScreenAware<AyurvedaDetailsPage> {
   final _ayurvedaService = AyurvedaService();
   final _astrologyService = AstrologyService();
+
+  // Baba page awareness: astrology and Ayurveda are ONE science here, both from
+  // the same chart. Baba reads the user's live constitution off this screen.
+  @override
+  String get babaScreenKey => 'ayurveda';
+
+  @override
+  BabaSnapshot babaSnapshot() {
+    final p = _profile;
+    if (_isCalculatingVikriti) {
+      return const BabaSnapshot.loading(
+          headline: 'Calculating the current dosha balance (vikriti)');
+    }
+    if (p == null || !p.hasData) {
+      return const BabaSnapshot.empty(
+          headline: 'The Ayurveda screen, but no constitution is set up yet');
+    }
+    final pk = p.prakriti;
+    final vk = _vikriti;
+    return BabaSnapshot.ready(
+      headline:
+          "The Ayurveda screen: constitution ${p.prakritiType ?? p.dominantDosha}",
+      facts: {
+        if (p.prakritiType != null) 'prakriti': p.prakritiType,
+        if (p.dominantDosha != null) 'dominantDosha': p.dominantDosha,
+        if (pk != null) 'balance': 'vata ${pk.vata}, pitta ${pk.pitta}, kapha ${pk.kapha}',
+        if (p.agniType != null) 'agni': p.agniType,
+        if (vk != null)
+          'currentBalance': vk.isBalanced
+              ? 'balanced'
+              : 'imbalanced (vata ${vk.vata}, pitta ${vk.pitta}, kapha ${vk.kapha})',
+      },
+    );
+  }
 
   AyurvedaProfile? _profile;
   AstrologyProfile? _astroProfile;

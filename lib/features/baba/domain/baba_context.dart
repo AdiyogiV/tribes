@@ -104,7 +104,7 @@ class BabaContext extends ChangeNotifier {
   /// The live data for the CURRENT screen, if it registered a provider.
   /// Pulled fresh every call. Failures are swallowed — an aware screen must
   /// never break `whereAmI`.
-  Map<String, dynamic>? _currentSnapshot() {
+  BabaSnapshot? _currentSnapshot() {
     final key = screen?.key;
     if (key == null) return null;
     final provider = _snapshots[key];
@@ -131,7 +131,7 @@ class BabaContext extends ChangeNotifier {
       if (_detail != null && _detail!.isNotEmpty) 'visible': _detail,
       // The real, live rendered data for this screen — the heart of Baba's
       // page awareness. Absent when the screen hasn't registered a provider.
-      if (live != null) 'onScreen': live,
+      if (live != null) 'onScreen': live.toJson(),
     };
   }
 
@@ -142,23 +142,13 @@ class BabaContext extends ChangeNotifier {
     if (_detail != null && _detail!.isNotEmpty) {
       parts.add('On screen now: $_detail');
     }
-    // Fold in the live snapshot as a compact key=value line so proactive
-    // narration (publish) carries the real data, matching what whereAmI pulls.
+    // Fold in the typed live snapshot as a compact line so proactive narration
+    // (publish) carries the real data, matching what whereAmI pulls.
     final live = _currentSnapshot();
     if (live != null) {
-      final flat = live.entries
-          .map((e) => '${e.key}=${_compact(e.value)}')
-          .join(', ');
-      if (flat.isNotEmpty) parts.add('Showing: $flat');
+      final line = live.toContextLine();
+      if (line.isNotEmpty) parts.add('Showing: $line');
     }
     return parts.join(' ');
-  }
-
-  /// Stringify a snapshot value compactly for the one-line voice context.
-  static String _compact(dynamic v) {
-    if (v is Map) return '{${v.length} fields}';
-    if (v is List) return '[${v.length}]';
-    final s = v.toString();
-    return s.length > 80 ? '${s.substring(0, 80)}…' : s;
   }
 }
