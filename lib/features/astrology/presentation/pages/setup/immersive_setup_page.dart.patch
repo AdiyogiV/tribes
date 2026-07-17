@@ -1,0 +1,200 @@
+--- lib/features/astrology/presentation/pages/setup/immersive_setup_page.dart
++++ lib/features/astrology/presentation/pages/setup/immersive_setup_page.dart
+@@ -280,105 +280,72 @@
+           ),
+ 
+           SafeArea(
+-            child: Padding(
+-              padding: const EdgeInsets.symmetric(horizontal: 24),
+-              child: Column(
+-                crossAxisAlignment: CrossAxisAlignment.start,
+-                children: [
+-                  const SizedBox(height: 80), // Push down to clear orb safely
+-                  
+-                  // Header
+-                  Text(
+-                    "Cosmic Origin",
+-                    style: theme.textTheme.headlineMedium?.copyWith(
+-                      color: Colors.white,
+-                      fontWeight: FontWeight.w700,
+-                      letterSpacing: -0.5,
++            child: Align(
++              alignment: Alignment.topCenter,
++              child: SingleChildScrollView(
++                padding: const EdgeInsets.fromLTRB(24, 40, 24, 400), // Massive bottom padding so user can always scroll up
++                child: Column(
++                  crossAxisAlignment: CrossAxisAlignment.start,
++                  children: [
++                    // Header
++                    Text(
++                      "Cosmic Origin",
++                      style: theme.textTheme.headlineMedium?.copyWith(
++                        color: Colors.white,
++                        fontWeight: FontWeight.w700,
++                        letterSpacing: -0.5,
++                      ),
+                     ),
+-                  ),
+-                  const SizedBox(height: 8),
+-                  Text(
+-                    "Dictate to Aurobhatt, or tap a field to enter manually.",
+-                    style: theme.textTheme.bodyMedium?.copyWith(
+-                      color: Colors.white54,
++                    const SizedBox(height: 8),
++                    Text(
++                      "Dictate to Aurobhatt, or tap a field to enter manually.",
++                      style: theme.textTheme.bodyMedium?.copyWith(
++                        color: Colors.white54,
++                      ),
+                     ),
+-                  ),
+-                  const SizedBox(height: 32),
+-
+-                  // 2x2 Glassmorphic Dashboard Grid
+-                  Row(
+-                    children: [
+-                      Expanded(
+-                        child: _buildTile(
+-                          icon: Icons.calendar_today_rounded,
+-                          title: "DATE",
+-                          value: dateLabel,
+-                          placeholder: "DD MM YYYY",
+-                          isFilled: _dateSet,
+-                          onTap: _openDatePicker,
+-                        ),
++                    const SizedBox(height: 24),
++
++                    // Compact "Cosmic Passport" Card
++                    Container(
++                      decoration: BoxDecoration(
++                        color: Colors.white.withValues(alpha: 0.03),
++                        borderRadius: BorderRadius.circular(24),
++                        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                       ),
+-                      const SizedBox(width: 16),
+-                      Expanded(
+-                        child: _buildTile(
+-                          icon: Icons.access_time_rounded,
+-                          title: "TIME",
+-                          value: timeLabel,
+-                          placeholder: "HH:MM",
+-                          isFilled: _timeSet,
+-                          onTap: _openTimePicker,
+-                        ),
++                      child: Column(
++                        mainAxisSize: MainAxisSize.min,
++                        children: [
++                          // Row 1: Date & Time
++                          Row(
++                            children: [
++                              Expanded(child: _buildCompactField(icon: Icons.calendar_today_rounded, title: "DATE", value: dateLabel, placeholder: "DD MM YYYY", isFilled: _dateSet, onTap: _openDatePicker)),
++                              Container(width: 1, height: 70, color: Colors.white.withValues(alpha: 0.08)),
++                              Expanded(child: _buildCompactField(icon: Icons.access_time_rounded, title: "TIME", value: timeLabel, placeholder: "HH:MM", isFilled: _timeSet, onTap: _openTimePicker)),
++                            ],
++                          ),
++                          Divider(height: 1, color: Colors.white.withValues(alpha: 0.08)),
++                          // Row 2: Place
++                          _buildCompactField(icon: Icons.place_rounded, title: "PLACE", value: _place, placeholder: "City, Country", isFilled: _place != null, onTap: _openPlaceSearch),
++                          Divider(height: 1, color: Colors.white.withValues(alpha: 0.08)),
++                          // Row 3: Gender
++                          _buildCompactField(icon: Icons.person_outline_rounded, title: "GENDER", value: _gender, placeholder: "Optional", isFilled: _gender != null, onTap: _openGenderSheet),
++                        ],
+                       ),
+-                    ],
+-                  ),
+-                  const SizedBox(height: 16),
+-                  _buildTile(
+-                    icon: Icons.place_rounded,
+-                    title: "PLACE",
+-                    value: _place,
+-                    placeholder: "City, Country",
+-                    isFilled: _place != null,
+-                    onTap: _openPlaceSearch,
+-                  ),
+-                  const SizedBox(height: 16),
+-                  _buildTile(
+-                    icon: Icons.person_outline_rounded,
+-                    title: "GENDER",
+-                    value: _gender,
+-                    placeholder: "Optional",
+-                    isFilled: _gender != null,
+-                    onTap: _openGenderSheet,
+-                  ),
+-                  
+-                  const Spacer(),
+-
+-                  // Action Area (Voice / Submit)
+-                  _buildActionArea(primary),
+-                  const SizedBox(height: 40),
+-                ],
++                    ),
++                    
++                    const SizedBox(height: 32),
++                    // Action Area (Voice / Submit)
++                    _buildActionArea(primary),
++                  ],
++                ),
+               ),
+             ),
+           ),
+@@ -395,7 +362,7 @@
+     );
+   }
+ 
+-  Widget _buildTile({
++  Widget _buildCompactField({
+     required IconData icon,
+     required String title,
+     required String? value,
+@@ -406,17 +373,9 @@
+     final theme = Theme.of(context);
+     final primary = AppTheme.primaryColor;
+-    return GestureDetector(
++    return InkWell(
+       onTap: onTap,
+-      child: AnimatedContainer(
+-        duration: const Duration(milliseconds: 300),
+-        padding: const EdgeInsets.all(16),
+-        decoration: BoxDecoration(
+-          color: isFilled ? primary.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.03),
+-          borderRadius: BorderRadius.circular(20),
+-          border: Border.all(
+-            color: isFilled ? primary.withValues(alpha: 0.3) : Colors.white.withValues(alpha: 0.08),
+-            width: 1,
+-          ),
+-        ),
++      borderRadius: BorderRadius.circular(24),
++      child: Padding(
++        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+         child: Column(
+           crossAxisAlignment: CrossAxisAlignment.start,
+@@ -424,19 +383,18 @@
+             Row(
+               children: [
+-                Icon(icon, size: 16, color: isFilled ? primary : Colors.white54),
+-                const SizedBox(width: 8),
++                Icon(icon, size: 14, color: isFilled ? primary : Colors.white38),
++                const SizedBox(width: 6),
+                 Text(
+                   title,
+-                  style: theme.textTheme.labelSmall?.copyWith(
+-                    color: isFilled ? primary : Colors.white54,
++                  style: TextStyle(
++                    fontSize: 10,
++                    fontWeight: FontWeight.bold,
++                    color: isFilled ? primary : Colors.white38,
+                     letterSpacing: 1.0,
+-                    fontWeight: FontWeight.w600,
+                   ),
+                 ),
+               ],
+             ),
+-            const SizedBox(height: 12),
++            const SizedBox(height: 6),
+             Text(
+               isFilled ? value! : placeholder,
+-              style: theme.textTheme.titleMedium?.copyWith(
++              style: TextStyle(
++                fontSize: 16,
+                 color: isFilled ? Colors.white : Colors.white24,
+                 fontWeight: isFilled ? FontWeight.w600 : FontWeight.w400,

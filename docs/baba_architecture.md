@@ -70,13 +70,16 @@ On call end, persist a 2–3 line summary + preferences to
 `[SESSION FACTS]` directive ("last time: discussed Saturn dasha; prefers short
 answers"). ~50 tokens, big continuity/engagement win.
 
-### Phase 5 — Knowledge base / RAG (next, biggest quality jump)
-Astrology + Ayurveda canon (dasha/yoga/nakshatra/dosha meanings) must be
-QUERYABLE, not in the prompt. Two options:
-- **CX Data Store (Vertex AI Search)** grounding, or
-- App-side `lookupKnowledge(topic)` tool backed by Firestore/Vertex returning
-  1–2 curated snippets.
-This is why readings feel generic today; fixes depth without bloating the prompt.
+### Phase 5 — Knowledge base / RAG (DONE — native CX)
+Astrology + Ayurveda canon is QUERYABLE via the NATIVE CX path: a Vertex AI
+Search data store `baba-canon` (Discovery Engine) holds the canon as documents,
+and a CX Data Store Tool `vedicCanon` attached to the playbook retrieves + cites
+grounded passages server-side. No app-side tool, no bundled asset. Source of
+truth: `assets/baba/knowledge.json`; provision/re-import via
+`voice-relay/tools/provision_cx_datastore.sh` then `provision_cx_tools.mjs`.
+NOTE: Discovery Engine is behind Walmart's VPC Service Controls perimeter — all
+provisioning goes through the corporate proxy; it is a billable service
+(indexing + per-query).
 
 ### Phase 6 — Character depth
 Compact persona doc + 2–3 few-shot exchanges in the playbook (tone is taught

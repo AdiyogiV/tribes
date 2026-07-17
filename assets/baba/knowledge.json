@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "purpose": "Curated Vedic astrology + Ayurveda canon Baba retrieves at runtime via the lookupKnowledge tool. Ground his answers in THIS, not the model's parametric memory. Bundled asset = zero recurring cost, no cloud RAG bill.",
+    "purpose": "Curated Vedic astrology + Ayurveda canon. SOURCE OF TRUTH imported into the CX 'baba-canon' Vertex AI Search data store (native RAG) via voice-relay/tools/provision_cx_datastore.sh. Baba retrieves + cites it server-side through the 'vedicCanon' Data Store Tool. Edit here, then re-run the provision script to re-import.",
     "voice": "Each summary is written to be spoken almost verbatim: one or two short, warm, concrete sentences.",
     "version": 1
   },

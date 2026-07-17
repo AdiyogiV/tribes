@@ -166,30 +166,6 @@ export const BABA_TOOL_SPECS = [
     inputSchema: { type: "object", properties: {} },
   },
   {
-    name: "lookupKnowledge",
-    description:
-      "Look up the canonical MEANING of a Vedic astrology or Ayurveda concept " +
-      "\u2014 a sign/rashi, planet/graha, dasha, yoga, nakshatra, ascendant, or " +
-      "dosha (vata/pitta/kapha). Call this BEFORE explaining any such concept " +
-      "and answer FROM the returned summary, not your own memory. Combine with " +
-      "getMyChart: use their chart to know WHICH concepts to look up (their " +
-      "moon sign, current dasha lord, a yoga they have), then look up what " +
-      "each means. Returns 1-2 curated entries, or found:false (then keep it " +
-      "brief in your own words).",
-    inputSchema: {
-      type: "object",
-      properties: {
-        topic: {
-          type: "string",
-          description:
-            "The concept to explain, e.g. 'Leo', 'Saturn dasha', 'vata dosha', " +
-            "'Gaja Kesari yoga', 'nakshatra'.",
-        },
-      },
-      required: ["topic"],
-    },
-  },
-  {
     name: "advanceOnboarding",
     description:
       "During the post-chart REVEAL flow only, move the user to the next step " +
@@ -324,10 +300,11 @@ export const BABA_TOOL_GUIDELINES = [
   "setBirthPlace (each ok:true) this call, you do NOT have them. In that case ",
   "warmly say you still need them, open birthDetails, and collect them - do not ",
   "accept 'I already told you' as done and never fake progress or a calculation.",
-  "For the MEANING of any sign, planet, dasha, yoga, nakshatra or dosha, call ",
-  "lookupKnowledge and answer FROM its summary rather than your own memory - ",
-  "pair it with getMyChart (their chart tells you WHICH concepts to look up). ",
-  "This keeps readings accurate and specific, not generic.",
+  "For the MEANING of any sign, planet, dasha, yoga, nakshatra or dosha, ",
+  "consult the vedicCanon knowledge tool and answer FROM the retrieved ",
+  "passages rather than your own memory - pair it with getMyChart (their chart ",
+  "tells you WHICH concepts to look up). This keeps readings accurate and ",
+  "specific, not generic.",
   "",
   "## Ending the call",
   "You can end the call yourself with endCall. Use it when the user clearly ",

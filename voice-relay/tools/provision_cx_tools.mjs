@@ -86,6 +86,15 @@ async function main() {
   const names = [];
   for (const spec of BABA_TOOL_SPECS) names.push(await upsertTool(spec, existing));
 
+  // Also keep any DATA STORE tools (native CX RAG, e.g. vedicCanon) attached.
+  // They aren't function specs, so they're managed outside BABA_TOOL_SPECS -
+  // but they MUST stay in referencedTools or the playbook loses grounding.
+  const dataStoreTools = existing.filter((t) => t.dataStoreSpec);
+  for (const t of dataStoreTools) {
+    names.push(t.name);
+    console.log(`  keeping  ${t.displayName} (data store)`);
+  }
+
   console.log(`Attaching to playbook "${PLAYBOOK_NAME}"...`);
   const pbList = await api("GET", `${BASE}/playbooks`);
   const pb = (pbList.playbooks || []).find((p) => p.displayName === PLAYBOOK_NAME);

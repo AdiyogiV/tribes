@@ -1,0 +1,62 @@
+--- lib/features/baba/presentation/baba_overlay.dart
++++ lib/features/baba/presentation/baba_overlay.dart
+@@ -385,55 +385,2 @@
+ 
+-  Widget _buildCaption(String reply, bool isDark, double screenWidth) {
+-    return Padding(
+-      padding: const EdgeInsets.only(bottom: 12),
+-      child: ClipRRect(
+-        borderRadius: BorderRadius.circular(16),
+-        child: BackdropFilter(
+-          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+-          child: Container(
+-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+-            constraints: BoxConstraints(
+-              maxWidth: screenWidth * 0.72,
+-              // Cap the caption so a long spoken reply scrolls INSIDE the
+-              // bubble instead of ballooning up the screen and burying the
+-              // page content beneath it. ~3 lines of the compact font.
+-              maxHeight: 78,
+-            ),
+-            decoration: BoxDecoration(
+-              color: isDark
+-                  ? Colors.white.withValues(alpha: 0.08)
+-                  : Colors.black.withValues(alpha: 0.05),
+-              borderRadius: BorderRadius.circular(16),
+-            ),
+-            child: SingleChildScrollView(
+-              reverse: true, // keep the latest words in view as he speaks
+-              child: Text(
+-                reply,
+-                textAlign: TextAlign.center,
+-                style: TextStyle(
+-                  color: isDark ? Colors.white : Colors.black87,
+-                  fontSize: 13,
+-                  height: 1.3,
+-                  fontWeight: FontWeight.w500,
+-                ),
+-              ),
+-            ),
+-          ),
+-        ),
+-      ),
+-    );
+-  }
+-
+-  Widget _buildLiveControls(VoiceCallState state, double pulse, bool isDark) {
+-    return Column(
+-      mainAxisSize: MainAxisSize.min,
+-      children: [
+-        const SizedBox(height: 6),
+-        BabaStatusPill(state: state, pulse: pulse, isDark: isDark),
+-        BabaVoiceControls(
+-          state: state,
+-          onEndCall: _voice.hangUp,
+-          onSwitchToText: _openChat,
+-          onShowRecent: _showRecent,
+-          onInterrupt: _voice.interruptAndListen,
+-        ),
+-      ],
+-    );
+-  }
+ }
