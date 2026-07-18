@@ -20,6 +20,7 @@ import 'package:aurogram/shared/presentation/widgets/universal/transparent_toolb
 import 'package:aurogram/features/anonymous_messages/anonymous_message_settings_service.dart';
 import 'package:aurogram/features/settings/presentation/widgets/settings_dialogs.dart';
 import 'package:aurogram/features/settings/presentation/widgets/settings_tiles.dart';
+import 'package:aurogram/features/baba/voice/baba_greet_on_open_pref.dart';
 import 'package:aurogram/features/baba/voice/voice_engine_pref.dart';
 import 'package:aurogram/features/baba/voice/voice_mic_mode_pref.dart';
 import 'package:aurogram/features/ai_chat/domain/aurobhatt_memory_service.dart';
@@ -66,6 +67,9 @@ class UserSettingsPageState extends State<UserSettingsPage>
   // Mic behaviour: true = wait your turn (half-duplex, mic muted while Aurobhatt
   // speaks), false = open mic (full-duplex, talk over him to interrupt).
   bool _waitTurnMic = true;
+  // "Greet me on open": auto-activate Aurobhatt on the home screen when the app
+  // opens (opt-in, default off). On web he goes live on the first tap.
+  bool _greetOnOpen = false;
   // Aurobhatt durable-memory "forget me" control.
   final AurobhattMemoryService _memory = AurobhattMemoryService();
   bool _clearingMemory = false;
@@ -77,6 +81,18 @@ class UserSettingsPageState extends State<UserSettingsPage>
     _loadAnonymousMessagesSetting();
     _loadVoiceEngineSetting();
     _loadVoiceMicModeSetting();
+    _loadGreetOnOpenSetting();
+  }
+
+  Future<void> _loadGreetOnOpenSetting() async {
+    final on = await BabaGreetOnOpenPref.read();
+    if (mounted) setState(() => _greetOnOpen = on);
+  }
+
+  Future<void> _toggleGreetOnOpen(bool value) async {
+    if (!kIsWeb) HapticFeedback.lightImpact();
+    setState(() => _greetOnOpen = value);
+    await BabaGreetOnOpenPref.set(value);
   }
 
   Future<void> _loadVoiceEngineSetting() async {
@@ -308,6 +324,8 @@ class UserSettingsPageState extends State<UserSettingsPage>
                                 _buildVoiceMicModeToggle(context, isDesktop),
                                 const SizedBox(height: AppDimensions.spacingMd),
                               ],
+                              _buildGreetOnOpenToggle(context, isDesktop),
+                              const SizedBox(height: AppDimensions.spacingMd),
                               _buildClearMemoryTile(context, isDesktop),
                               SizedBox(height: sectionSpacing),
                             ],
@@ -465,6 +483,26 @@ class UserSettingsPageState extends State<UserSettingsPage>
           : 'Talk over him any time to interrupt',
       value: _waitTurnMic,
       onChanged: _toggleVoiceMicMode,
+    );
+  }
+
+  Widget _buildGreetOnOpenToggle(BuildContext context, bool isDesktop) {
+    final primaryColor = AppTheme.primaryColor;
+    return SettingsTiles.buildToggleCard(
+      context: context,
+      isDesktop: isDesktop,
+      icon: _greetOnOpen
+          ? Icons.record_voice_over_rounded
+          : Icons.voice_over_off_rounded,
+      iconColor: primaryColor,
+      title: 'Greet me on open',
+      subtitle: _greetOnOpen
+          ? (kIsWeb
+              ? 'Aurobhatt greets you on your first tap at home'
+              : 'Aurobhatt greets you when you open the home screen')
+          : 'Aurobhatt waits for you to tap him',
+      value: _greetOnOpen,
+      onChanged: _toggleGreetOnOpen,
     );
   }
 

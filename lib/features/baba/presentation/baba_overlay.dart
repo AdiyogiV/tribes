@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
@@ -8,12 +10,14 @@ import 'package:aurogram/core/theme/app_theme.dart';
 
 
 import 'package:aurogram/features/baba/domain/baba_chat_controller.dart';
+import 'package:aurogram/features/baba/domain/baba_context.dart';
 import 'package:aurogram/features/baba/domain/baba_insets.dart';
 import 'package:aurogram/features/baba/domain/baba_position.dart';
 import 'package:aurogram/features/baba/domain/baba_lead.dart';
 import 'package:aurogram/features/baba/presentation/baba_blob.dart';
 import 'package:aurogram/features/baba/presentation/baba_chat_panel.dart';
 
+import 'package:aurogram/features/baba/voice/baba_greet_on_open_pref.dart';
 import 'package:aurogram/features/baba/voice/voice_session_controller.dart';
 
 /// The ONE Baba — an app-wrapping agent that floats over every route and
@@ -41,10 +45,21 @@ class _BabaOverlayState extends State<BabaOverlay>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   final VoiceSessionController _voice = VoiceSessionController();
   final BabaChatController _chat = BabaChatController.instance;
+  final BabaContext _context = BabaContext.instance;
   final BabaInsets _insets = BabaInsets.instance;
   final BabaPosition _position = BabaPosition.instance;
   late final AnimationController _pulse;
   String? _shownError;
+
+  // Auto-activation (opt-in "greet me on open"). We fire it at most ONCE per
+  // app launch and only on the home screen. On web a browser gesture is
+  // mandatory, so instead of starting audio directly we ARM a one-shot listener
+  // that goes live on the user's first tap. [_autoStartEvaluating] guards the
+  // async pref read against the many context notifications that arrive at once.
+  bool _autoStartDone = false;
+  bool _autoStartEvaluating = false;
+  bool _armWebAutoStart = false;
+  static const String _homeScreenKey = 'home';
 
   // Drag state. Screen metrics are cached each build so the pan gesture
   // callbacks can clamp Baba within the visible area without a MediaQuery.
@@ -66,9 +81,16 @@ class _BabaOverlayState extends State<BabaOverlay>
       duration: const Duration(milliseconds: 1300),
     )..repeat(reverse: true);
     _voice.addListener(_onVoiceChanged);
+    // Auto-activation is HOME-scoped, and the app rarely opens straight onto
+    // home (splash/onboarding come first), so we re-evaluate on every route
+    // change until it fires once. Cheap: guarded by [_autoStartDone].
+    _context.addListener(_maybeAutoStart);
     // Pre-warm the call in the background so the FIRST tap is instant (no
     // "connecting…" wait). Best-effort; re-warmed on resume below.
-    WidgetsBinding.instance.addPostFrameCallback((_) => _warmUp());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _warmUp();
+      _maybeAutoStart();
+    });
   }
 
   /// Build Baba's opening cue and pre-warm a call so the next tap is instant.
@@ -85,6 +107,7 @@ class _BabaOverlayState extends State<BabaOverlay>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _voice.removeListener(_onVoiceChanged);
+    _context.removeListener(_maybeAutoStart);
     _pulse.dispose();
     // NOTE: never dispose _voice — it's the app-scoped singleton.
     super.dispose();
@@ -141,7 +164,18 @@ class _BabaOverlayState extends State<BabaOverlay>
       // Explicit close: pre-warm a fresh greeting so the NEXT tap opens warmly
       // and instantly, just like the first one.
       unawaited(_warmUp());
-    } else if (_voice.hasWarmSession) {
+      return;
+    }
+    await _beginCall();
+  }
+
+  /// Go live. The ONE path that both the tap and the opt-in auto-activation use
+  /// (so they can never drift): adopt a pre-warmed session instantly if one is
+  /// ready, otherwise cold-build the opening directive first so Baba still
+  /// greets and leads.
+  Future<void> _beginCall() async {
+    if (_inCall) return;
+    if (_voice.hasWarmSession) {
       // A pre-warmed session is ready: adopt it instantly. The opening directive
       // was already built during warmUp, so DON'T rebuild it here (that read can
       // take up to ~3s and would defeat the whole point).
@@ -152,6 +186,44 @@ class _BabaOverlayState extends State<BabaOverlay>
       _voice.directiveOverride = await BabaLead.directive();
       await _voice.start();
     }
+  }
+
+  /// Opt-in "greet me on open": go live automatically when the app lands on the
+  /// HOME screen, at most once per launch. On web, browsers forbid starting
+  /// audio/mic without a user gesture, so we cannot start here — instead we ARM
+  /// a one-shot listener that begins the call on the user's first tap.
+  Future<void> _maybeAutoStart() async {
+    if (_autoStartDone || _autoStartEvaluating || _armWebAutoStart) return;
+    if (_inCall) return;
+    if (_context.screen?.key != _homeScreenKey) return; // HOME scope only
+    // The relay needs a Firebase identity; skip silently until one exists.
+    if (FirebaseAuth.instance.currentUser == null) return;
+    _autoStartEvaluating = true;
+    try {
+      if (!await BabaGreetOnOpenPref.read()) return; // opt-in, default off
+      // Re-check after the async gap: state may have moved under us.
+      if (!mounted || _autoStartDone || _inCall) return;
+      if (_context.screen?.key != _homeScreenKey) return;
+      if (kIsWeb) {
+        // Arm the first-tap path (see [_onFirstWebGesture]).
+        setState(() => _armWebAutoStart = true);
+      } else {
+        _autoStartDone = true;
+        await _beginCall();
+      }
+    } finally {
+      _autoStartEvaluating = false;
+    }
+  }
+
+  /// Web only: the user's first tap satisfies the browser's gesture gate, so
+  /// disarm and go live. Wired via a translucent [Listener] so this tap still
+  /// passes through to whatever the user actually touched.
+  void _onFirstWebGesture(PointerDownEvent _) {
+    if (!_armWebAutoStart || _autoStartDone) return;
+    _autoStartDone = true;
+    setState(() => _armWebAutoStart = false);
+    unawaited(_beginCall());
   }
 
   /// Switch from voice to typing: end any live call, then slide up the chat
@@ -165,7 +237,7 @@ class _BabaOverlayState extends State<BabaOverlay>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Stack(
+    final stack = Stack(
       children: [
         widget.child,
         // The floating presence — bound to the voice session + pulse so it
@@ -183,6 +255,15 @@ class _BabaOverlayState extends State<BabaOverlay>
               : const SizedBox.shrink(),
         ),
       ],
+    );
+    // Web-only auto-activation: capture the FIRST tap anywhere to satisfy the
+    // browser's audio/mic gesture gate, WITHOUT consuming it (translucent) so
+    // the underlying UI still reacts to that same tap.
+    if (!_armWebAutoStart) return stack;
+    return Listener(
+      behavior: HitTestBehavior.translucent,
+      onPointerDown: _onFirstWebGesture,
+      child: stack,
     );
   }
 
