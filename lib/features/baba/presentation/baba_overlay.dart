@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -65,6 +66,19 @@ class _BabaOverlayState extends State<BabaOverlay>
       duration: const Duration(milliseconds: 1300),
     )..repeat(reverse: true);
     _voice.addListener(_onVoiceChanged);
+    // Pre-warm the call in the background so the FIRST tap is instant (no
+    // "connecting…" wait). Best-effort; re-warmed on resume below.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _warmUp());
+  }
+
+  /// Build Baba's opening cue and pre-warm a call so the next tap is instant.
+  /// Cheap-guarded first (via [canWarmUp]) so we never do the directive's
+  /// Firestore read when warming would just no-op (not signed in, already warm,
+  /// mid-call, or inside the warm-resume window).
+  Future<void> _warmUp() async {
+    if (!_voice.canWarmUp) return;
+    _voice.directiveOverride = await BabaLead.directive();
+    await _voice.warmUp();
   }
 
   @override
@@ -84,8 +98,14 @@ class _BabaOverlayState extends State<BabaOverlay>
   @override
   void didChangeAppLifecycleState(AppLifecycleState lifecycle) {
     super.didChangeAppLifecycleState(lifecycle);
-    if (lifecycle == AppLifecycleState.resumed) return;
-    if (_voice.state.isLiveAudio) _voice.hangUp();
+    if (lifecycle == AppLifecycleState.resumed) {
+      // Back in the foreground and idle: pre-warm so the next tap is instant.
+      _warmUp();
+      return;
+    }
+    // Backgrounding is INVOLUNTARY — mark it so a quick return still resumes the
+    // conversation (not a fresh greeting).
+    if (_voice.state.isLiveAudio) _voice.hangUp(byUser: false);
   }
 
   bool get _inCall =>
@@ -118,9 +138,17 @@ class _BabaOverlayState extends State<BabaOverlay>
     HapticFeedback.mediumImpact();
     if (_inCall) {
       await _voice.hangUp();
+      // Explicit close: pre-warm a fresh greeting so the NEXT tap opens warmly
+      // and instantly, just like the first one.
+      unawaited(_warmUp());
+    } else if (_voice.hasWarmSession) {
+      // A pre-warmed session is ready: adopt it instantly. The opening directive
+      // was already built during warmUp, so DON'T rebuild it here (that read can
+      // take up to ~3s and would defeat the whole point).
+      await _voice.start();
     } else {
-      // Baba LEADS: open the call with a directive so he greets + takes the
-      // initiative instead of waiting (see BabaLead).
+      // Cold path: Baba LEADS — build the directive so he greets + takes the
+      // initiative instead of waiting (see BabaLead), then connect.
       _voice.directiveOverride = await BabaLead.directive();
       await _voice.start();
     }

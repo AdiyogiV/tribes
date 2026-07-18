@@ -68,6 +68,7 @@ class BabaOnboardingTools {
         'ok': false,
         'advanced': false,
         'available': false,
+        'blocked': true,
         'message': 'Not on the chart-reveal flow, so there is nothing to '
             'advance right now.',
       };
@@ -146,11 +147,14 @@ class BabaOnboardingTools {
           name: advanceOnboarding,
           description: 'During the post-chart REVEAL flow, move the user to the '
               'next step on screen (sign reveal -> birth reading -> current '
-              'times -> done). Call this to LEAD them forward once you have '
-              'narrated the current step and they are ready to continue (e.g. '
-              'they say "next", "continue", "aage", "haan"). Returns the step '
-              'now shown, or ok:false with a reason if the next step is not '
-              'ready yet.',
+              'times -> done). Call this to LEAD them forward ONLY after you '
+              'have finished narrating the current step and they are ready to '
+              'continue (e.g. they say "next", "continue", "aage", "haan"). The '
+              'result carries the freshly-settled `state` (the new step and its '
+              'on-screen text) — narrate FROM that, never from memory. If it '
+              'returns advanced:false with blocked:true, the step is not ready '
+              'or you are still speaking: honour the reason, finish presenting, '
+              'and try again — do NOT tell the user you moved on.',
           parameters: {'type': 'object', 'properties': {}},
           defaultHandler: _advanceUnavailable,
         ),

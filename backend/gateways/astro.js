@@ -15,6 +15,7 @@
  *   - calculateCompatibility  [auth]     Kundli matching between two users
  *   - searchGeoLocation       [public]   Location autocomplete
  *   - syncAstroProfile        [auth]     Sync/upgrade astro data
+ *   - computeMyForecast       [auth]     On-demand forecast signal recompute (no AI)
  *   - invalidateCompCache     [internal] Clear compatibility cache for a user
  */
 
@@ -43,6 +44,8 @@ import {
     handleSyncAstroProfile,
 } from "../functions/astro_sync.js";
 
+import { handleComputeMyForecast } from "../functions/forecast/sense.js";
+
 // Method registry — maps method name to handler + auth requirement
 const methods = {
     // Public methods (no auth required)
@@ -56,6 +59,7 @@ const methods = {
     freeAstroCalculate:     { handler: (req) => handleFreeAstroCalculate(req), auth: true },
     calculateCompatibility: { handler: (req) => handleCalculateCompatibility(req), auth: true },
     syncAstroProfile:       { handler: (req) => handleSyncAstroProfile(req), auth: true },
+    computeMyForecast:      { handler: (req) => handleComputeMyForecast(req), auth: true },
     invalidateCompCache:    { handler: (req, data) => invalidateCompatibilityCache(data.userId), auth: true },
 };
 

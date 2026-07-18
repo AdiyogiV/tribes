@@ -63,16 +63,19 @@ class LoginPageState extends State<LoginPage> {
 
   /// Live state of the login screen for Baba's whereAmI.
   BabaSnapshot _babaSnapshot() => BabaSnapshot.ready(
+        step: _codeSent ? 'otpEntry' : 'phoneEntry',
         headline: _codeSent
             ? 'The login screen, awaiting the 6-digit OTP from SMS'
             : 'The login screen, awaiting the phone number',
         facts: {
-          'step': _codeSent ? 'otpEntry' : 'phoneEntry',
           'phoneFilled': _phoneController.text.isNotEmpty,
           'countryCode': _countryCode.text,
           'codeSent': _codeSent,
           'otpFilled': _otpController.text.isNotEmpty,
         },
+        availableActions: _codeSent
+            ? const [BabaLoginTools.setOtp]
+            : const [BabaLoginTools.setPhoneNumber],
       );
 
   // ── Baba tool handler: fill the phone number for a hands-free guest login ──
@@ -206,13 +209,23 @@ class LoginPageState extends State<LoginPage> {
   /// we go home. There is no auth-redirect in the router, so this explicit hop
   /// is what actually gets the user off the login screen.
   void _dismissAfterAuth() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final nav = Navigator.of(context);
-      if (nav.canPop()) {
-        nav.pop();
-      } else {
-        appRouter.go(RouteNames.home);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (mounted) {
+        final nav = Navigator.of(context);
+        if (nav.canPop()) {
+          nav.pop();
+        } else {
+          appRouter.go(RouteNames.home);
+        }
+      }
+      // If Baba did NOT drive this sign-in (the user tapped Verify, or Android
+      // auto-retrieved the code), his mental model is now stale — he still
+      // thinks we're on the OTP step. Proactively tell him we're signed in and
+      // moved once the navigation settles. When HE drove it via setOtp, the
+      // tool result already carries the settled state, so we skip the double.
+      if (!BabaToolRegistry.instance.isDispatching) {
+        await BabaContext.instance.settle();
+        BabaContext.instance.announceStateChange();
       }
     });
   }

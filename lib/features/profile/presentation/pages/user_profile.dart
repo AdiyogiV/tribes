@@ -30,6 +30,7 @@ import 'package:aurogram/features/profile/presentation/pages/profile/profile_fol
 import 'package:aurogram/features/profile/presentation/pages/profile/profile_navigation.dart';
 import 'package:aurogram/features/profile/presentation/pages/profile/profile_content_body.dart';
 import 'package:aurogram/features/profile/presentation/pages/profile/profile_astrology_logic.dart';
+import 'package:aurogram/features/baba/domain/baba_snapshot.dart';
 
 class UserProfilePage extends StatefulWidget {
   final String? uid;
@@ -40,7 +41,13 @@ class UserProfilePage extends StatefulWidget {
 }
 
 class UserProfilePageState extends State<UserProfilePage>
-    with SingleTickerProviderStateMixin, ProfileUserInteractions, ProfileFollowLogic, ProfileNavigation, ProfileAstrologyLogic {
+    with
+        SingleTickerProviderStateMixin,
+        ProfileUserInteractions,
+        ProfileFollowLogic,
+        ProfileNavigation,
+        ProfileAstrologyLogic,
+        BabaScreenAware<UserProfilePage> {
   final _user = FirebaseAuth.instance.currentUser;
   final UserRepository _userRepo = locator<UserRepository>();
   bool _isRefreshing = false;
@@ -175,6 +182,29 @@ class UserProfilePageState extends State<UserProfilePage>
   // Cached once in initState — never recreated in build()
   Stream<DocumentSnapshot?>? _userStream;
   bool _profileTimedOut = false;
+
+  // ── Baba page awareness ──────────────────────────────────────────────────
+  // Registers this screen so whereAmI always resolves an onScreen (own vs
+  // other profile, follow state) instead of Baba being blind here.
+  @override
+  String get babaScreenKey => 'profile';
+
+  @override
+  BabaSnapshot babaSnapshot() {
+    final isSelf = widget.uid == null || widget.uid == _user?.uid;
+    return BabaSnapshot.ready(
+      headline: isSelf
+          ? "The user's own profile page."
+          : "Another user's profile page.",
+      facts: {
+        'isOwnProfile': isSelf,
+        if (!isSelf && followStatus != null) 'followStatus': followStatus,
+        'followers': followerCount,
+        'following': followingCount,
+        'private': isPrivateProfile,
+      },
+    );
+  }
 
   @override
   void initState() {

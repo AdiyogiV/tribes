@@ -23,6 +23,7 @@ import 'package:aurogram/features/settings/presentation/widgets/settings_tiles.d
 import 'package:aurogram/features/baba/voice/voice_engine_pref.dart';
 import 'package:aurogram/features/baba/voice/voice_mic_mode_pref.dart';
 import 'package:aurogram/features/ai_chat/domain/aurobhatt_memory_service.dart';
+import 'package:aurogram/features/baba/domain/baba_snapshot.dart';
 
 // Re-export sub-widgets so existing imports continue to work
 export 'package:aurogram/features/settings/presentation/widgets/settings_exports.dart';
@@ -38,7 +39,23 @@ class UserSettingsPage extends StatefulWidget {
   UserSettingsPageState createState() => UserSettingsPageState();
 }
 
-class UserSettingsPageState extends State<UserSettingsPage> {
+class UserSettingsPageState extends State<UserSettingsPage>
+    with BabaScreenAware<UserSettingsPage> {
+  @override
+  String get babaScreenKey => 'settings';
+
+  // So Baba can answer "what can I change here / what are my settings?" from the
+  // real toggle state instead of guessing.
+  @override
+  BabaSnapshot babaSnapshot() => BabaSnapshot.ready(
+        headline: 'App settings and preferences.',
+        facts: {
+          'profile': _isPrivateProfile ? 'private' : 'public',
+          'voice': _useLiveVoice ? 'Live (premium)' : 'CX',
+          'mic': _waitTurnMic ? 'wait your turn' : 'open mic',
+        },
+      );
+
   bool _isPrivateProfile = false;
   bool _isLoadingPrivacy = true;
   bool _isAnonymousMessagesEnabled = true; // ignore: unused_field

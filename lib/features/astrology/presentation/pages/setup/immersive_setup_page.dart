@@ -61,27 +61,55 @@ class _ImmersiveSetupPageState extends State<ImmersiveSetupPage>
   String get babaScreenKey => 'birthDetails';
 
   @override
-  BabaSnapshot babaSnapshot() => BabaSnapshot(
-        status: _saving ? BabaScreenStatus.loading : BabaScreenStatus.ready,
-        headline: _saving
-            ? 'Saving birth details and building the chart'
-            : 'The birth-details setup form (date, time, place, gender)',
-        facts: {
-          'dateSet': _dateSet,
-          if (_dateSet)
-            'date':
-                '$_year-${_month.toString().padLeft(2, '0')}-${_day.toString().padLeft(2, '0')}',
-          'timeSet': _timeSet,
-          if (_timeSet)
-            'time':
-                '${_hour24.toString().padLeft(2, '0')}:${_minute.toString().padLeft(2, '0')}',
-          'placeSet': _place != null,
-          if (_place != null) 'place': _place,
-          if (_gender != null) 'gender': _gender,
-          'canSubmit': _canSubmit,
-          'voiceActive': _voiceActive,
-        },
-      );
+  BabaSnapshot babaSnapshot() {
+    // What is still needed drives BOTH the sub-step Baba is on and the actions
+    // he can meaningfully take next — so he always knows the one right move
+    // instead of guessing which field to ask for.
+    final actions = <String>[];
+    if (!_dateSet) actions.add(BabaOnboardingTools.setBirthDate);
+    if (!_timeSet) actions.add(BabaOnboardingTools.setBirthTime);
+    if (_place == null) actions.add(BabaOnboardingTools.setBirthPlace);
+    if (_gender == null) actions.add(BabaOnboardingTools.setGender);
+    if (_canSubmit) actions.add(BabaOnboardingTools.submitBirthDetails);
+    final step = _saving
+        ? 'saving'
+        : !_dateSet
+            ? 'collectDate'
+            : !_timeSet
+                ? 'collectTime'
+                : _place == null
+                    ? 'collectPlace'
+                    : 'readyToSubmit';
+    return BabaSnapshot(
+      status: _saving ? BabaScreenStatus.loading : BabaScreenStatus.ready,
+      step: step,
+      headline: _saving
+          ? 'Saving birth details and building the chart'
+          : 'The birth-details setup form (date, time, place, gender)',
+      facts: {
+        'dateSet': _dateSet,
+        if (_dateSet)
+          'date':
+              '$_year-${_month.toString().padLeft(2, '0')}-${_day.toString().padLeft(2, '0')}',
+        'timeSet': _timeSet,
+        if (_timeSet)
+          'time':
+              '${_hour24.toString().padLeft(2, '0')}:${_minute.toString().padLeft(2, '0')}',
+        'placeSet': _place != null,
+        if (_place != null) 'place': _place,
+        if (_gender != null) 'gender': _gender,
+        'canSubmit': _canSubmit,
+        'voiceActive': _voiceActive,
+      },
+      canProceed: _canSubmit && !_saving,
+      blockedReason: _saving
+          ? 'the chart is being built'
+          : _canSubmit
+              ? null
+              : 'still need ${actions.contains(BabaOnboardingTools.setBirthDate) ? 'date' : actions.contains(BabaOnboardingTools.setBirthTime) ? 'time' : 'place'}',
+      availableActions: actions,
+    );
+  }
 
   @override
   void initState() {
@@ -196,6 +224,16 @@ class _ImmersiveSetupPageState extends State<ImmersiveSetupPage>
           'reason':
               'could not find "$city" - ask them to say the city in English',
           ..._babaFormState(),
+        };
+      }
+      // The geocode is async — the user may have left the setup screen while it
+      // was in flight. Touching setState after dispose throws; bail cleanly and
+      // tell Baba the action didn't land instead of crashing.
+      if (!mounted) {
+        return {
+          'ok': false,
+          'set': false,
+          'reason': 'the setup screen is no longer open',
         };
       }
       setState(() {
@@ -676,7 +714,6 @@ class _ImmersiveSetupPageState extends State<ImmersiveSetupPage>
     reg.unbindHandler(BabaOnboardingTools.setGender);
     reg.unbindHandler(BabaOnboardingTools.submitBirthDetails);
     _voice.removeListener(_onVoiceChanged);
-    _voice.engineOverride = null;
     _voice.directiveOverride = null;
     if (_voiceActive && !_handingOffVoice) _voice.hangUp();
     super.dispose();

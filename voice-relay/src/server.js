@@ -40,6 +40,32 @@ admin.initializeApp({
 });
 const REQUIRE_AUTH = (process.env.REQUIRE_AUTH || "true") !== "false";
 
+// Never let an unhandled async error silently wedge or crash the process
+// without a log line. Cloud Run restarts on a hard crash, but a swallowed
+// rejection can leave the process limping — surface both.
+process.on("unhandledRejection", (reason) => {
+    // eslint-disable-next-line no-console
+    console.error("[relay] unhandledRejection:", reason?.stack || reason);
+});
+process.on("uncaughtException", (err) => {
+    // eslint-disable-next-line no-console
+    console.error("[relay] uncaughtException:", err?.stack || err);
+});
+
+/**
+ * Reduce an internal error to something safe to hand an untrusted client.
+ * We keep the ONE signal the Flutter client self-heals on (a wedged CX session
+ * awaiting a tool result) so its auto-heal still fires; everything else becomes
+ * a generic message — the full detail stays in the server logs.
+ */
+function clientSafeError(err) {
+    const raw = String(err?.message || err || "");
+    if (raw.includes("waiting for tool call result") || raw.includes("INVALID_ARGUMENT")) {
+        return raw.slice(0, 300);
+    }
+    return "voice service error";
+}
+
 /**
  * Verify a Firebase ID token. Returns the decoded uid, or null if the token is
  * missing/invalid. When REQUIRE_AUTH is off (local dev) we skip verification.
@@ -66,10 +92,57 @@ const server = http.createServer((req, res) => {
     res.end();
 });
 
-const wss = new WebSocketServer({ server, path: "/voice" });
+const wss = new WebSocketServer({
+    server,
+    path: "/voice",
+    maxPayload: CONFIG.maxPayloadBytes, // reject oversized frames outright
+});
+
+// Count of live sockets, for the connection cap. A hard ceiling stops a flood
+// from exhausting memory or spinning up unbounded paid CX/Live streams.
+let liveConnections = 0;
+
+// Heartbeat: ping every client on an interval and terminate any that missed
+// the previous pong. This reaps dead TCP peers (mobile network drops) whose
+// `close` never fires, so their session + CX gRPC stream can't leak forever.
+const heartbeat = setInterval(() => {
+    for (const ws of wss.clients) {
+        if (ws.isAlive === false) {
+            try { ws.terminate(); } catch { /* already gone */ }
+            continue;
+        }
+        ws.isAlive = false;
+        try { ws.ping(); } catch { /* closing */ }
+    }
+}, CONFIG.heartbeatMs);
+wss.on("close", () => clearInterval(heartbeat));
 
 wss.on("connection", (ws) => {
+    // Enforce the connection cap before doing any work.
+    if (liveConnections >= CONFIG.maxConnections) {
+        try { ws.close(1013, "server busy"); } catch { /* closing */ }
+        return;
+    }
+    liveConnections += 1;
+
     let session = null;
+    let starting = false;  // synchronous guard against the double-start race
+    let closed = false;
+    // Per-connection throttle for billed `context` turns.
+    let contextCount = 0;
+    let contextWindowStart = Date.now();
+
+    ws.isAlive = true;
+    ws.on("pong", () => { ws.isAlive = true; });
+    // A socket that never authenticates just consumes a slot — close it.
+    let authTimer = setTimeout(() => {
+        if (!session && !starting) {
+            try { ws.close(4408, "no start"); } catch { /* closing */ }
+        }
+    }, CONFIG.authTimeoutMs);
+    const clearAuthTimer = () => {
+        if (authTimer) { clearTimeout(authTimer); authTimer = null; }
+    };
 
     const sendJson = (obj) => {
         if (ws.readyState === ws.OPEN) ws.send(JSON.stringify(obj));
@@ -81,7 +154,11 @@ wss.on("connection", (ws) => {
         session.on("transcript", (t) => sendJson({ type: "transcript", ...t }));
         session.on("reply", (r) => sendJson({ type: "reply", text: r.text }));
         session.on("audio", (buf) => {
-            if (ws.readyState === ws.OPEN) ws.send(buf); // binary TTS chunk
+            if (ws.readyState !== ws.OPEN) return;
+            // Backpressure: a slow client can't keep up — drop this chunk rather
+            // than buffer unbounded audio in the server's memory.
+            if (ws.bufferedAmount > CONFIG.outboundBufferLimitBytes) return;
+            ws.send(buf); // binary TTS chunk
         });
         session.on("turn_end", () => sendJson({ type: "speaking_done" }));
         // Baba wants to act: forward the tool call so the client can run it.
@@ -90,11 +167,10 @@ wss.on("connection", (ws) => {
         // flush whatever it has buffered and stop playing immediately.
         session.on("interrupt", () => sendJson({ type: "interrupt" }));
         session.on("error", (err) => {
-            // Log server-side so failures show up in Cloud Run logs, not just
-            // as an opaque {type:"error"} on the client.
+            // Full detail server-side; only a safe summary to the untrusted client.
             // eslint-disable-next-line no-console
             console.error(`[session ${sessionId}] error:`, err?.stack || err);
-            sendJson({ type: "error", message: String(err?.message || err) });
+            sendJson({ type: "error", message: clientSafeError(err) });
         });
         session.on("close", () => sendJson({ type: "session_closed" }));
 
@@ -116,22 +192,35 @@ wss.on("connection", (ws) => {
             sendJson({ type: "error", message: "bad json control frame" });
             return;
         }
+        if (!msg || typeof msg.type !== "string") return;
         if (msg.type === "start") {
-            if (session) return; // already started
+            if (session || starting) return; // already started / starting
+            starting = true;                 // set SYNCHRONOUSLY (race guard)
+            clearAuthTimer();
             // Verify the caller before spending any Gen AI credits.
             verifyCaller(msg.token).then((uid) => {
+                if (closed) { starting = false; return; }
                 if (!uid) {
                     sendJson({ type: "error", message: "unauthorized" });
                     try { ws.close(4401, "unauthorized"); } catch { /* closing */ }
+                    starting = false;
                     return;
                 }
                 // Bind the session to the user and forward their ID token so
                 // the brain (aiChat) can load their full chart from Firestore.
                 // `engine` (optional) lets the app pick Live vs CX per session.
                 openSession(msg.sessionId || uid, uid, msg.token, msg.engine, msg.tools, msg.directive);
+                starting = false;
+            }).catch((e) => {
+                // eslint-disable-next-line no-console
+                console.error("[relay] start failed:", e?.stack || e);
+                sendJson({ type: "error", message: "voice service error" });
+                starting = false;
+                try { ws.close(1011, "start failed"); } catch { /* closing */ }
             });
         } else if (msg.type === "tool_response") {
             // Client ran a tool Baba requested; hand the result back to Gemini.
+            if (typeof msg.id !== "string") return;
             if (session && typeof session.sendToolResponse === "function") {
                 session.sendToolResponse([
                     { id: msg.id, name: msg.name, response: msg.response || {} },
@@ -142,6 +231,12 @@ wss.on("connection", (ws) => {
             // the user onto the chart reveal). Inject what's on screen so Baba
             // can react to it. `speak` (default true) => he narrates now; false
             // => silent awareness (Live only; CX always answers a text turn).
+            if (typeof msg.text !== "string" || !msg.text.trim()) return;
+            // Throttle: each context opens a billed CX turn — ignore floods.
+            const now = Date.now();
+            if (now - contextWindowStart > 60_000) { contextWindowStart = now; contextCount = 0; }
+            contextCount += 1;
+            if (contextCount > CONFIG.maxContextPerMinute) return;
             if (session && typeof session.injectContext === "function") {
                 session.injectContext(msg.text, msg.speak !== false);
             }
@@ -151,7 +246,17 @@ wss.on("connection", (ws) => {
         }
     });
 
+    // A socket-level error (e.g. abrupt reset) must not become an uncaught
+    // exception; log and let the close handler clean up.
+    ws.on("error", (err) => {
+        // eslint-disable-next-line no-console
+        console.error("[relay] socket error:", err?.message || err);
+    });
+
     ws.on("close", () => {
+        closed = true;
+        clearAuthTimer();
+        liveConnections = Math.max(0, liveConnections - 1);
         session?.end();
         session = null;
     });

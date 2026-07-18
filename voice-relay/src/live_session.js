@@ -7,8 +7,8 @@
  * natively via built-in Voice Activity Detection. No BARGE_IN_MIN_CHARS, no
  * grace windows, no echo hacks.
  *
- * It is a drop-in for MultilingualVoiceSession: same constructor shape, same
- * emitted events, so server.js wiring is unchanged.
+ * Shares the CxVoiceSession event vocabulary (same emitted events + a uniform
+ * makeSession signature), so server.js wiring is identical for both engines.
  *
  *   emits "audio"      (Buffer)  -> 24kHz PCM16 chunk of Aurobhatt's voice
  *   emits "interrupt"  ()        -> user barged in; client should flush+stop
@@ -24,6 +24,11 @@
 import { EventEmitter } from "node:events";
 import { GoogleGenAI, Modality, StartSensitivity, ActivityHandling } from "@google/genai";
 import { CONFIG } from "./config.js";
+
+// Cap the pre-connect mic buffer. At 16 kHz PCM16, frames arrive frequently;
+// ~150 frames is roughly the most recent few seconds. Bounds memory when the
+// Live session never finishes connecting (parked/unprovisioned engine, hang).
+const _MAX_PENDING_AUDIO_FRAMES = 150;
 
 export class LiveVoiceSession extends EventEmitter {
     constructor(sessionId, uid, idToken, tools, directive) {
@@ -144,6 +149,12 @@ export class LiveVoiceSession extends EventEmitter {
             // onopen already fired (session still null then), flush here.
             this._flushPending();
         } catch (err) {
+            // Start failed: mark closed and release the mic buffer so a socket
+            // that keeps sending audio can't grow _pendingAudio forever waiting
+            // for a connect that will never happen.
+            this._closed = true;
+            this._pendingAudio = [];
+            try { this._session?.close(); } catch { /* not open */ }
             this.emit("error", err instanceof Error ? err : new Error(String(err)));
         }
     }
@@ -283,8 +294,18 @@ export class LiveVoiceSession extends EventEmitter {
     /** Raw PCM16 mic frame from the client. */
     sendAudio(buf) {
         if (this._closed) return;
-        if (this._connected && this._session) this._forwardAudio(buf);
-        else this._pendingAudio.push(buf); // queue until the session opens
+        if (this._connected && this._session) {
+            this._forwardAudio(buf);
+            return;
+        }
+        // Queue until the session opens — but BOUND it. If connect never
+        // finishes (Live parked/unprovisioned, network hang), an unbounded
+        // queue would grow for the life of the socket. Keep only the most
+        // recent ~5s of 16 kHz PCM16 (~160 KB) and drop the oldest.
+        this._pendingAudio.push(buf);
+        if (this._pendingAudio.length > _MAX_PENDING_AUDIO_FRAMES) {
+            this._pendingAudio.shift();
+        }
     }
 
     end() {

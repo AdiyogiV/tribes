@@ -179,10 +179,34 @@ class NakshatraData {
   ];
   // @formatter:on
 
+  /// Spelling aliases → the canonical name used in [all] (lowercased).
+  ///
+  /// The backend normalizes every nakshatra to its canonical set
+  /// (backend/lib/nakshatras.js). The one name that historically differed from
+  /// our list is "Moola" (backend) vs "Mula" (here) — that mismatch made
+  /// findIndex("Moola") return -1 and silently fall back to the WRONG star for
+  /// anyone born under it. This table closes that gap (plus common regional
+  /// transliterations) so a real match is found and the fallbacks never fire in
+  /// production. Keep in sync with backend NAKSHATRA_ALIASES.
+  static const Map<String, String> _aliases = {
+    'moola': 'mula', 'mool': 'mula', 'moolam': 'mula',
+    'thiruvathira': 'ardra', 'arudra': 'ardra', 'aardra': 'ardra',
+    'jyeshta': 'jyeshtha', 'kettai': 'jyeshtha',
+    'dhanistha': 'dhanishta', 'avittam': 'dhanishta',
+    'shatabhishak': 'shatabhisha', 'satabisha': 'shatabhisha',
+    'shravanam': 'shravana', 'thiruvonam': 'shravana',
+    'revathi': 'revati', 'visakha': 'vishakha',
+    'krithika': 'krittika', 'mrigasira': 'mrigashira',
+  };
+
   /// Fuzzy match — handles spelling variations between backend and our list.
   static int findIndex(String? name) {
     if (name == null || name.isEmpty) return -1;
-    final lower = name.toLowerCase().trim();
+    var lower = name.toLowerCase().trim();
+    // Strip parenthetical alternatives like "Poorva Phalguni(Pubba)".
+    lower = lower.replaceAll(RegExp(r'\s*\([^)]*\)\s*'), ' ').trim();
+    // Resolve known aliases to the canonical spelling first.
+    lower = _aliases[lower] ?? lower;
     for (int i = 0; i < all.length; i++) {
       if (all[i].name.toLowerCase() == lower) return i;
     }

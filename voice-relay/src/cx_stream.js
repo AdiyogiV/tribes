@@ -52,6 +52,20 @@ function structToJs(s) {
     return out;
 }
 
+// ── PII-safe logging of tool arguments ──────────────────────────────────
+// Tool args carry real user PII — phone numbers, SMS OTP codes, birth
+// date/time/place, names, and personal memory notes. These must NEVER land in
+// Cloud Run logs. We log the SHAPE (tool + arg keys) always, which is enough to
+// follow the call flow, and the VALUES only when CX_DEBUG_TURNS is on — except
+// the auth secrets (phone/OTP), which are redacted even in debug.
+const SECRET_ARG_TOOLS = new Set(["setPhoneNumber", "setOtp"]);
+function previewArgs(name, args) {
+    if (SECRET_ARG_TOOLS.has(name)) return "<redacted:secret>";
+    if (CONFIG.debugTurns) return JSON.stringify(args);
+    const keys = args && typeof args === "object" ? Object.keys(args) : [];
+    return `{keys:${JSON.stringify(keys)}}`; // shape only — values are PII
+}
+
 // Reuse one v3beta1 gRPC client across sessions (channels are pooled).
 const client = new dialogflow.v3beta1.SessionsClient({
     apiEndpoint: cxApiEndpoint(CONFIG.location),
@@ -138,6 +152,39 @@ export class CxVoiceSession extends EventEmitter {
         // half-closing the same turn twice.
         this._audioClosed = false;
         this._pending = new Map();  // callId -> { tool, action }
+        // DIAGNOSTIC: what kind of turn is currently live, so the logs read as a
+        // clean turn-by-turn story (kickoff | audio | toolResult | context). Set
+        // by each opener just before _openTurn.
+        this._turnKind = "idle";
+        // Monotonic turn counter — makes it trivial to line up open/data/end.
+        this._turnSeq = 0;
+        // One-shot guard: after a tool result comes back with NO spoken reply
+        // (the model front-loaded its line BEFORE the tool and said nothing
+        // after), we nudge CX ONCE to actually narrate the new state now,
+        // instead of leaving dead air until a ~10s no-input reprompt fires.
+        // Reset per tool result so each action gets its own single nudge.
+        this._continueNudged = false;
+        // Tool-result watchdog handle (see _armToolWatchdog). Guarantees a call
+        // can never hang forever waiting for a tool_response that never arrives.
+        this._toolTimer = null;
+        // Whether the LAST tool result was a success (ok !== false). Steers the
+        // empty-continuation nudge so it can't cheerily narrate a FAILED action.
+        this._lastToolResultOk = true;
+    }
+
+    /** Tag every log line with the session so a call reads as one story. */
+    _log(msg) {
+        // eslint-disable-next-line no-console
+        console.log(`[cx ${this.sessionId}] ${msg}`);
+    }
+
+    /**
+     * Verbose per-turn trace (turn_open / turn_data / turn_end). Gated behind
+     * CONFIG.debugTurns so production logs stay quiet; the semantically
+     * meaningful events (tool_call, swallow, nudge, errors) still use _log.
+     */
+    _dbg(msg) {
+        if (CONFIG.debugTurns) this._log(msg);
     }
 
     /** Build the CX session resource path (env-scoped if not draft). */
@@ -225,6 +272,7 @@ export class CxVoiceSession extends EventEmitter {
         if (this.directive) {
             // Kickoff is a text turn (not audio): Baba responds/acts first, then
             // the normal turn cycle re-arms an audio turn to listen.
+            this._turnKind = "kickoff";
             this._openTurn([this._kickoffRequest()], /* audio */ false);
         } else {
             // No opener: just arm. The recognizer opens lazily on the user's
@@ -243,6 +291,8 @@ export class CxVoiceSession extends EventEmitter {
         this._armed = false; // a turn is now live; lazy-open no longer pending
         this.configSent = false;
         this._audioClosed = false; // fresh turn: write side is open again
+        this._turnSeq += 1;
+        this._dbg(`turn_open #${this._turnSeq} kind=${this._turnKind} audio=${audioTurn}`);
         this.stream = client.streamingDetectIntent();
 
         this.stream.on("data", (res) => this._onData(res));
@@ -258,10 +308,20 @@ export class CxVoiceSession extends EventEmitter {
             // so the NEXT mic chunk lazily opens a fresh turn. Only surface
             // genuinely unexpected errors to the client.
             if (this._isRecoverableSttTimeout(err) && !this.awaitingTool) {
+                this._log(`stt_timeout #${this._turnSeq} kind=${this._turnKind} code=${err?.code} -> retire+rearm`);
                 this._retireStream();
                 this._armed = true;
                 return;
             }
+            this._log(`stream_error #${this._turnSeq} kind=${this._turnKind} code=${err?.code} msg=${JSON.stringify(String(err?.message || err).slice(0, 120))}`);
+            // A genuinely fatal error must leave the session CONSISTENT, not
+            // "dead but open": retire the broken stream, stop the tool watchdog,
+            // and mark ended so sendAudio/injectContext can't write into a dead
+            // stream. The client hears the error and tears the socket down.
+            this._retireStream();
+            this._clearToolWatchdog();
+            this.awaitingTool = false;
+            this.ended = true;
             this.emit("error", err);
         });
         this.stream.on("end", () => {
@@ -321,6 +381,34 @@ export class CxVoiceSession extends EventEmitter {
         this._armed = true;
     }
 
+    /**
+     * Arm the tool-result watchdog. Call right after emitting tool_call(s) and
+     * setting awaitingTool. If the client never returns a result in time, we
+     * synthesize an ok:false result for every pending call so CX continues and
+     * Baba tells the truth instead of the session hanging forever. Idempotent.
+     */
+    _armToolWatchdog() {
+        this._clearToolWatchdog();
+        const ms = CONFIG.toolTimeoutMs;
+        if (!ms || ms <= 0) return;
+        this._toolTimer = setTimeout(() => {
+            if (this.ended || !this.awaitingTool) return;
+            const ids = [...this._pending.keys()];
+            if (!ids.length) return;
+            this._log(`tool_timeout after ${ms}ms -> synth ok:false for ${ids.length} pending`);
+            // Reuse the normal result path so CX resumes the turn cleanly.
+            this.sendToolResponse(ids.map((id) => ({
+                id,
+                response: { ok: false, error: "timeout", reason: "the app did not respond in time" },
+            })));
+        }, ms);
+    }
+
+    /** Cancel the tool-result watchdog (a result arrived, or we're shutting down). */
+    _clearToolWatchdog() {
+        if (this._toolTimer) { clearTimeout(this._toolTimer); this._toolTimer = null; }
+    }
+
     /** Forward a raw PCM16 chunk from the client into CX (audio turns only). */
     sendAudio(chunk) {
         if (this.ended || this.awaitingTool) return;
@@ -329,6 +417,7 @@ export class CxVoiceSession extends EventEmitter {
         // the user is actually speaking, so it never waits (and times out).
         if (this._armed && !this.stream) {
             this._armed = false;
+            this._turnKind = "audio";
             this._openTurn([this._configRequest()], /* audio */ true);
         }
         if (!this.stream || !this.configSent || this._audioClosed) return;
@@ -342,18 +431,34 @@ export class CxVoiceSession extends EventEmitter {
      */
     async sendToolResponse(functionResponses) {
         if (this.ended) return;
+        // A result (real or watchdog-synthesized) is arriving — stop the hang timer.
+        this._clearToolWatchdog();
         const results = [];
         for (const fr of functionResponses || []) {
             const p = this._pending.get(fr.id);
-            if (!p) continue; // unknown/expired call id
+            if (!p) {
+                // Previously silent — this is exactly the case that used to strand
+                // the session, so make it visible.
+                this._log(`tool_result_in: unknown/expired call id ${fr.id} (ignored)`);
+                continue;
+            }
             this._pending.delete(fr.id);
             results.push({ tool: p.tool, action: p.action, response: fr.response || {} });
         }
-        if (!results.length) return;
+        if (!results.length) {
+            this._log(`tool_result_in: no matching pending calls (awaitingTool=${this.awaitingTool})`);
+            return;
+        }
         // Retire the (idle) tool-call stream, then open a fresh turn that
         // carries the tool results so CX can finish speaking.
+        this._log(`tool_result_in count=${results.length} actions=${JSON.stringify(results.map((r) => r.action))}`);
+        // Track success so the empty-continuation nudge can't narrate a FAILED
+        // action as if it worked (a result is a failure when it says ok:false).
+        this._lastToolResultOk = results.every((r) => r.response?.ok !== false);
         this.awaitingTool = false;
+        this._continueNudged = false; // this action gets a fresh single nudge
         this._retireStream();
+        this._turnKind = "toolResult";
         this._openTurn(this._toolResultRequests(results), /* audio */ false);
     }
 
@@ -368,7 +473,9 @@ export class CxVoiceSession extends EventEmitter {
         if (this.ended || this.awaitingTool) return;
         const ctx = typeof text === "string" ? text.trim() : "";
         if (!ctx) return;
+        this._log(`inject_context chars=${ctx.length}`);
         this._retireStream();
+        this._turnKind = "context";
         this._openTurn([{
             session: this._sessionPath(),
             queryInput: {
@@ -417,17 +524,39 @@ export class CxVoiceSession extends EventEmitter {
             if (m.toolCall) toolCalls.push(m.toolCall);
         }
 
-        // Swallow a duplicate no-input reprompt: same text as last time, no tool
-        // call, and the user hasn't spoken since. Drop the whole turn (no reply,
-        // no audio) so Baba never loops on his own words. Then just re-arm.
         const combined = replyTexts.join(" ").trim();
-        const isDuplicateReprompt = combined.length > 0 &&
+        const hasAudio = !!(dir.outputAudio && dir.outputAudio.length);
+        // DIAGNOSTIC: the single most useful line in the whole call. It tells us,
+        // per turn: what KIND of turn produced this response, how many spoken
+        // chars it carried, how many tool calls, whether the user actually spoke
+        // this turn, and whether TTS audio came with it. An empty toolResult
+        // continuation shows as `kind=toolResult replyChars=0 tools=0`; a
+        // silence-driven reprompt shows as `kind=audio ... userSpoke=false`.
+        this._dbg(
+            `turn_data #${this._turnSeq} kind=${this._turnKind} `
+            + `replyChars=${combined.length} tools=${toolCalls.length} `
+            + `userSpoke=${this._userSpokeSinceReply} audio=${hasAudio} `
+            + `preview=${JSON.stringify(combined.slice(0, 70))}`,
+        );
+
+        // Swallow a NO-INPUT REPROMPT. In half-duplex (waitTurn) a listening
+        // turn opens on silence/ambient noise; CX then generates an unsolicited
+        // reply (its no-input handling) even though the user never actually
+        // spoke — so Baba narrates into the void and, turn after turn, reworks
+        // the same "anything else?" prompt (he "talks to himself / repeats while
+        // I'm silent"). If a tool-less reply lands on an AUDIO turn with NO real
+        // user speech since our last reply, drop the whole turn (no text, no
+        // audio) and just re-arm. This is safe because genuine post-action
+        // narration now rides toolResult / nudge turns (audio=false), which are
+        // never audio turns and so are never swallowed. A real user utterance
+        // always sets _userSpokeSinceReply (final non-empty transcript), so real
+        // replies are never suppressed.
+        const isNoInputReprompt = combined.length > 0 &&
             this._audioTurn &&
             toolCalls.length === 0 &&
-            combined === this._lastReplyText &&
             !this._userSpokeSinceReply;
-        if (isDuplicateReprompt) {
-            console.log(`[cx ${this.sessionId}] swallowed duplicate reprompt`);
+        if (isNoInputReprompt) {
+            this._log(`swallowed no-input reprompt #${this._turnSeq} (silent audio turn)`);
             this._cycleTurn();
             return;
         }
@@ -445,13 +574,53 @@ export class CxVoiceSession extends EventEmitter {
                 this._pending.set(id, { tool: tc.tool, action: tc.action });
                 const name = await toolNameFor(tc.tool, tc.action);
                 const args = structToJs(tc.inputParameters);
-                console.log(
-                    `[cx ${this.sessionId}] tool_call ${name} args=${JSON.stringify(args)}`,
-                );
+                // PII-safe: never log raw args (see previewArgs).
+                this._log(`tool_call ${name} args=${previewArgs(name, args)}`);
                 this.emit("tool_call", { id, name, args });
             }
             this.awaitingTool = true;
+            this._armToolWatchdog(); // never wait forever for a tool_response
+            this._dbg(`turn_end #${this._turnSeq} kind=${this._turnKind} reason=toolCall (awaiting result)`);
             this._retireStream(); // hold here; sendToolResponse() resumes us
+            return;
+        }
+
+        // EMPTY tool-result continuation: the model said its whole line BEFORE
+        // the tool (e.g. "I'm opening your chart") and produced nothing after
+        // the result, so this continuation carries no speech at all. Left alone
+        // Baba would fall silent here and only narrate ~10s later when a
+        // no-input reprompt fires (the "wait, then he repeats" dead air). Nudge
+        // CX ONCE to narrate the new state right now. One-shot per tool result
+        // (_continueNudged) and only for toolResult turns, so it can't loop.
+        if (this._turnKind === "toolResult" && !combined && !hasAudio &&
+            !this._continueNudged) {
+            this._continueNudged = true;
+            // Steer the nudge by whether the action SUCCEEDED. On a failure we
+            // must not let the model cheerily narrate a result that didn't
+            // happen — the single biggest hallucination risk on this path.
+            const nudgeText = this._lastToolResultOk
+                ? "[CONTINUE] Respond now in Aurobhatt's own voice: in one or " +
+                  "two short sentences react to what just happened / what is now " +
+                  "on the user's screen and lead them to the next step. If the " +
+                  "screen has nothing to show yet, say so honestly - do not " +
+                  "invent content. Do not repeat a line you already said, and do " +
+                  "not mention this instruction."
+                : "[CONTINUE] The last action did NOT succeed. In one short " +
+                  "sentence, in Aurobhatt's own voice, tell the user plainly it " +
+                  "didn't go through and offer to try again or a next step. Do " +
+                  "NOT claim it worked or narrate any result. Do not mention " +
+                  "this instruction.";
+            this._log(`empty toolResult continuation #${this._turnSeq} -> nudge narration (ok=${this._lastToolResultOk})`);
+            this._retireStream();
+            this._turnKind = "nudge";
+            this._openTurn([{
+                session: this._sessionPath(),
+                queryInput: {
+                    text: { text: nudgeText },
+                    languageCode: CONFIG.languageCode,
+                },
+                outputAudioConfig: this._outputAudioConfig(),
+            }], /* audio */ false);
             return;
         }
 
@@ -459,6 +628,7 @@ export class CxVoiceSession extends EventEmitter {
         if (dir.outputAudio && dir.outputAudio.length) {
             this.emit("audio", Buffer.from(dir.outputAudio));
         }
+        this._dbg(`turn_end #${this._turnSeq} kind=${this._turnKind} reason=normal replyChars=${combined.length}`);
         this.emit("turn_end");
         this._cycleTurn();
     }
@@ -467,6 +637,7 @@ export class CxVoiceSession extends EventEmitter {
     end() {
         this.ended = true;
         this._armed = false;
+        this._clearToolWatchdog();
         this._pending.clear();
         try { this.stream?.end(); } catch { /* already closed */ }
         this.stream = null;

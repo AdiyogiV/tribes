@@ -29,6 +29,33 @@ service cloud.firestore {
       return isPublicSpace(spaceId) || isSpaceMember(spaceId);
     }
 
+    // ── Conversation membership ────────────────────────────────────────────
+    // DM and AI-chat conversation ids DETERMINISTICALLY embed their members:
+    //   * human DM  -> "dm_{uidA}_{uidB}" (the two uids, sorted)
+    //   * Baba/AI   -> "ai_chat_{uid}_{millis}"  (and legacy "dm_{uid}_{holycow}")
+    // so we can authorise straight from the id string — no parent-doc get(),
+    // which is what keeps this cheap AND avoids breaking first-contact messages
+    // or orphaned metadata (a message can exist before/without a parent doc).
+    // Firebase uids are alphanumeric, so they are regex-safe to interpolate.
+    function convIsDmFamily(convId) {
+      return convId.matches('dm_.*') || convId.matches('ai_chat_.*');
+    }
+    function isConvMemberById(convId) {
+      return isSignedIn() && (
+        convId.matches('dm_' + request.auth.uid + '_.*') ||
+        convId.matches('dm_.*_' + request.auth.uid) ||
+        convId.matches('ai_chat_' + request.auth.uid + '_.*')
+      );
+    }
+    // Space conversations have no member-bearing id, so fall back to spaceRoles.
+    // Reads honour public spaces; writes require true membership.
+    function canReadConversation(convId) {
+      return convIsDmFamily(convId) ? isConvMemberById(convId) : canReadSpace(convId);
+    }
+    function canWriteConversation(convId) {
+      return convIsDmFamily(convId) ? isConvMemberById(convId) : isSpaceMember(convId);
+    }
+
     function isUserFollower(userId) {
       return isSignedIn() &&
              exists(/databases/$(database)/documents/userFollowers/$(userId)/followers/$(request.auth.uid));
@@ -113,6 +140,16 @@ service cloud.firestore {
         allow read: if request.auth != null && request.auth.uid == userId;
         allow write: if false; // Only backend can write via Cloud Functions
       }
+
+      // Unified forecast (users/{uid}/forecast/{yyyy-MM}) — the single read-model
+      // for the nakshatra wheel + getMyForecast. SENSE/NARRATE Cloud Functions
+      // write here via the Admin SDK (bypasses rules); the client only reads.
+      // Owner-only. Subcollections do NOT inherit the parent users/{userId}
+      // rule, so without this match the wheel's reads are default-denied.
+      match /forecast/{period} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if false; // Only backend can write via Cloud Functions
+      }
       
       // Favorite Insights - users can read/write their own favorites
       match /favoriteInsights/{insightId} {
@@ -130,6 +167,16 @@ service cloud.firestore {
       match /savedInsights/{insightId} {
         allow read: if request.auth != null && request.auth.uid == userId;
         allow write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // Baba durable memory (rolling summary, threads, live voice notes).
+      // The nightly Cloud Function writes here via the Admin SDK (bypasses
+      // rules); the client (rememberThis tool + BabaLead recall) reads and
+      // appends voice notes. Owner-only. Without this explicit match the
+      // subcollection is default-denied — subcollections do NOT inherit the
+      // parent users/{userId} rule — so Baba's memory silently never persists.
+      match /memory/{docId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
       }
       
       // Stories - 24h ephemeral; any authenticated user can read, only owner can write
@@ -190,8 +237,12 @@ service cloud.firestore {
     // DM Conversations - participants only
     // Note: conversationId format is "dm_{userId1}_{userId2}" (sorted alphabetically)
     match /dmConversations/{conversationId} {
-      // Read: only participants (ID contains user's uid due to deterministic naming)
-      allow read: if request.auth != null;
+      // Read: only participants. Clients list conversations with
+      // where('participants', arrayContains: uid), so per-doc evaluation passes
+      // for their own conversations and denies everyone else's (previously any
+      // signed-in user could read a conversation's metadata + lastMessage
+      // preview, which leaks message content).
+      allow read: if isSignedIn() && request.auth.uid in resource.data.participants;
       // Create: user must be in participants array
       allow create: if request.auth != null && 
                       request.auth.uid in request.resource.data.participants;
@@ -201,16 +252,30 @@ service cloud.firestore {
       // Delete: not allowed from client
       allow delete: if false;
       
+      // AI/Baba message docs (and backend namaste) live here. The conversation
+      // id embeds the member uid, so authorise from it — no parent get(), and
+      // it still works for orphaned subcollections (namaste writes a message
+      // without a parent doc). Backend writers use the Admin SDK (bypass rules).
       match /messages/{messageId} {
-        allow read: if request.auth != null;
-        allow write: if request.auth != null;
+        allow read, write: if isSignedIn() && isConvMemberById(conversationId);
       }
     }
     
-    // Space Chats
+    // Space Chats — the FLAT top-level store for ALL human messages (both DMs
+    // and space/group chats), one doc per message, tagged with a `spaceId`
+    // field that is either a DM id ("dm_..."/"ai_chat_...") or a space id.
+    // Authorise against that referenced conversation: any signed-in user could
+    // previously read or inject ANY message.
     match /spaceChats/{chatId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow read: if isSignedIn() && canReadConversation(resource.data.spaceId);
+      // A sender can only post AS themselves, into a conversation they belong to.
+      allow create: if isSignedIn()
+        && request.resource.data.senderId == request.auth.uid
+        && canWriteConversation(request.resource.data.spaceId);
+      // readBy / reactions / edit / soft-delete: any conversation member.
+      // (sender-only edit/delete is enforced in-app; distinguishing an edit
+      // from a reaction at the rules layer would break reactions.)
+      allow update, delete: if isSignedIn() && canWriteConversation(resource.data.spaceId);
     }
     
     // Typing Indicators
@@ -253,12 +318,11 @@ service cloud.firestore {
         allow write: if request.auth != null;
       }
       
-      // Space messages (chat messages including call history)
+      // Space messages (group-call history/summaries written by the client).
+      // Read honours public spaces; write requires membership.
       match /messages/{messageId} {
-        // Any authenticated user can read space messages
-        allow read: if request.auth != null;
-        // Any authenticated user can write (add messages, call history, etc.)
-        allow write: if request.auth != null;
+        allow read: if isSignedIn() && canReadSpace(spaceId);
+        allow write: if isSignedIn() && isSpaceMember(spaceId);
       }
     }
     

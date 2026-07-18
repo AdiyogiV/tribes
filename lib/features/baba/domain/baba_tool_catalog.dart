@@ -1,8 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/widgets.dart';
 
 import 'package:aurogram/core/routing/app_router.dart';
 import 'package:aurogram/core/routing/route_names.dart';
+import 'package:aurogram/features/astrology/domain/astrology_service.dart';
 import 'package:aurogram/features/baba/domain/baba_app_map.dart';
 import 'package:aurogram/features/baba/domain/baba_chat_controller.dart';
 import 'package:aurogram/features/baba/domain/baba_context.dart';
@@ -74,21 +74,69 @@ class BabaToolCatalog {
       }
       final path = dest == null ? null : BabaAppMap.pathFor(dest);
       if (path == null) {
-        return {'ok': false, 'navigated': false, 'reason': 'unknown destination: $dest'};
+        return {
+          'ok': false,
+          'navigated': false,
+          'blocked': true,
+          'reason': 'unknown destination: $dest',
+        };
       }
-      final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
-      // The birth CHART route is parameterised (`/astrology/details/:uid`), so
-      // it MUST carry the uid in the PATH - navigating to the bare path throws
-      // "Route not found". Guard the uid too: without a chart there's nothing
-      // to show, so send them to set up birth details instead of a broken page.
-      if (dest == 'chart') {
+      final user = FirebaseAuth.instance.currentUser;
+      final uid = user?.uid ?? '';
+      // GATE the login screen for already-secured users. A signed-in, real
+      // (non-anonymous) account IS logged in already, so sending them to /login
+      // strands them on a dead page they cannot act on. Refuse and hand back a
+      // reason so Baba reassures them they're secure and leads elsewhere instead
+      // of navigating. (login exists to UPGRADE a guest; it's a no-op otherwise.)
+      if (dest == 'login' && user != null && !user.isAnonymous) {
+        return {
+          'ok': false,
+          'navigated': false,
+          'blocked': true,
+          'reason': 'already logged in: the user is signed in to a secured '
+              'account, so there is nothing to log in to. Do NOT open the login '
+              'screen or claim to. Reassure them their account is already secure '
+              'and offer a useful next step (their chart, daily insight, or a '
+              'reading).',
+          'alreadySecured': true,
+        };
+      }
+      // GATE chart-dependent screens (Daily Insight, Chart, Ayurveda). Without a
+      // computed birth chart these can only ever render empty, so opening one
+      // strands the user on a dead page — and tempts Baba into narrating a
+      // reading that isn't there. Refuse and hand back a reason that tells him
+      // to collect birth details first, so he leads to onboarding instead of a
+      // blank screen. (This is enforced in code, not left to the playbook.)
+      final screen = BabaAppMap.screenFor(dest!);
+      if (screen?.requiresChart ?? false) {
         if (uid.isEmpty) {
           return {
             'ok': false,
             'navigated': false,
-            'reason': 'not signed in - cannot open chart',
+            'blocked': true,
+            'reason': 'not signed in - cannot open ${screen!.label}',
           };
         }
+        final profile = await AstrologyService().getProfile(uid);
+        final hasChart = profile?.isComplete ?? false;
+        if (!hasChart) {
+          return {
+            'ok': false,
+            'navigated': false,
+            'blocked': true,
+            'reason': 'no birth chart yet: the user has not set up their birth '
+                'details, so ${screen!.label} would be empty. Do NOT claim to '
+                'have opened it. Offer to set up birth details, and on yes open '
+                '"birthDetails".',
+            'needsBirthDetails': true,
+            'suggestion': 'birthDetails',
+          };
+        }
+      }
+      // The birth CHART route is parameterised (`/astrology/details/:uid`), so
+      // it MUST carry the uid in the PATH - navigating to the bare path throws
+      // "Route not found".
+      if (dest == 'chart') {
         appRouter.go('${RouteNames.astrologyDetails}/$uid');
         return _navResult('chart');
       }
@@ -96,7 +144,7 @@ class BabaToolCatalog {
       // without it Firestore throws "document path must be a non-empty string".
       final extra = dest == 'dailyInsight' ? {'uid': uid} : null;
       appRouter.go(path, extra: extra);
-      return _navResult(dest!);
+      return _navResult(dest);
     },
   );
 
@@ -105,10 +153,9 @@ class BabaToolCatalog {
   /// Baba describe the ACTUAL new page and its status instead of assuming the
   /// navigation did what he expected.
   static Future<Map<String, dynamic>> _navResult(String dest) async {
-    // Two frames: one for the route swap, one for the new page's initState to
-    // register its snapshot provider.
-    await WidgetsBinding.instance.endOfFrame;
-    await WidgetsBinding.instance.endOfFrame;
+    // Wait for the navigation to actually land + the new page to register its
+    // snapshot (handles deferred/multi-frame transitions, not a fixed guess).
+    await BabaContext.instance.settle();
     final snap = BabaContext.instance.snapshot();
     final arrived = dest == 'chat' || snap['screen'] == dest;
     return {

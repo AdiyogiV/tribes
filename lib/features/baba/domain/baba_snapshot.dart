@@ -18,8 +18,17 @@ enum BabaScreenStatus { loading, ready, empty, error }
 ///                  this almost verbatim).
 ///   * [facts]    — a few citable key -> value pairs (e.g. sunSign: Leo).
 ///   * [items]    — visible item labels, e.g. the section titles on screen.
+///   * [step]     — stable id of the sub-step WITHIN this screen (e.g.
+///                  'birthReading', 'phoneEntry'), so Baba's awareness is finer
+///                  than route-level. Null when the screen has no sub-steps.
+///   * [canProceed] / [blockedReason] — whether Baba can move forward from here
+///                  right now, and if not, the human reason (he can say it).
+///                  This is what lets a guided step honestly report "not yet".
+///   * [availableActions] — the tool names / verbs Baba can meaningfully use on
+///                  this screen right now, so he knows his options, not guesses.
 ///
-/// Baba reads this via `whereAmI`, pulled ON DEMAND, so it is always current.
+/// Baba reads this via `whereAmI` and on EVERY tool result, so it is always
+/// current — the authoritative "what is true on screen right now."
 @immutable
 class BabaSnapshot {
   const BabaSnapshot({
@@ -27,31 +36,71 @@ class BabaSnapshot {
     this.headline,
     this.facts = const {},
     this.items = const [],
+    this.step,
+    this.canProceed,
+    this.blockedReason,
+    this.availableActions = const [],
   });
 
   /// Convenience: the screen's content is ready.
-  const BabaSnapshot.ready({String? headline, Map<String, Object?> facts = const {}, List<String> items = const []})
-      : this(status: BabaScreenStatus.ready, headline: headline, facts: facts, items: items);
+  const BabaSnapshot.ready({
+    String? headline,
+    Map<String, Object?> facts = const {},
+    List<String> items = const [],
+    String? step,
+    bool? canProceed,
+    String? blockedReason,
+    List<String> availableActions = const [],
+  }) : this(
+          status: BabaScreenStatus.ready,
+          headline: headline,
+          facts: facts,
+          items: items,
+          step: step,
+          canProceed: canProceed,
+          blockedReason: blockedReason,
+          availableActions: availableActions,
+        );
 
   /// Convenience: the screen is still loading its content.
-  const BabaSnapshot.loading({String? headline})
-      : this(status: BabaScreenStatus.loading, headline: headline);
+  const BabaSnapshot.loading({String? headline, String? step, String? blockedReason})
+      : this(
+          status: BabaScreenStatus.loading,
+          headline: headline,
+          step: step,
+          canProceed: false,
+          blockedReason: blockedReason,
+        );
 
   /// Convenience: the screen has nothing to show.
-  const BabaSnapshot.empty({String? headline})
-      : this(status: BabaScreenStatus.empty, headline: headline);
+  const BabaSnapshot.empty({String? headline, String? step})
+      : this(status: BabaScreenStatus.empty, headline: headline, step: step);
 
   /// Convenience: the screen failed to load its content.
-  const BabaSnapshot.error({String? headline})
-      : this(status: BabaScreenStatus.error, headline: headline);
+  const BabaSnapshot.error({String? headline, String? step, String? blockedReason})
+      : this(
+          status: BabaScreenStatus.error,
+          headline: headline,
+          step: step,
+          canProceed: false,
+          blockedReason: blockedReason,
+        );
 
   final BabaScreenStatus status;
   final String? headline;
   final Map<String, Object?> facts;
   final List<String> items;
+  final String? step;
+  final bool? canProceed;
+  final String? blockedReason;
+  final List<String> availableActions;
 
   bool get isEmpty =>
-      headline == null && facts.isEmpty && items.isEmpty;
+      headline == null &&
+      facts.isEmpty &&
+      items.isEmpty &&
+      step == null &&
+      availableActions.isEmpty;
 
   /// Structured form for the `whereAmI` tool result (`onScreen`).
   Map<String, dynamic> toJson() => {
@@ -59,17 +108,26 @@ class BabaSnapshot {
         if (headline != null && headline!.isNotEmpty) 'headline': headline,
         if (facts.isNotEmpty) 'facts': facts,
         if (items.isNotEmpty) 'items': items,
+        if (step != null) 'step': step,
+        if (canProceed != null) 'canProceed': canProceed,
+        if (blockedReason != null && blockedReason!.isNotEmpty)
+          'blockedReason': blockedReason,
+        if (availableActions.isNotEmpty) 'availableActions': availableActions,
       };
 
   /// Compact one-line form for the spoken voice context (proactive narration).
   String toContextLine() {
     final parts = <String>[];
     if (status != BabaScreenStatus.ready) parts.add('(${status.name})');
+    if (step != null) parts.add('step=$step');
     if (headline != null && headline!.isNotEmpty) parts.add(headline!);
     if (facts.isNotEmpty) {
       parts.add(facts.entries.map((e) => '${e.key}=${e.value}').join(', '));
     }
     if (items.isNotEmpty) parts.add('items: ${items.join(', ')}');
+    if (canProceed == false && (blockedReason?.isNotEmpty ?? false)) {
+      parts.add('blocked: $blockedReason');
+    }
     return parts.join(' | ');
   }
 }

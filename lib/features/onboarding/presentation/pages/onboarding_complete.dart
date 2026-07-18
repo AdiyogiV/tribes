@@ -16,7 +16,9 @@ import 'package:aurogram/features/onboarding/presentation/steps/reading_phases.d
 import 'package:aurogram/features/onboarding/presentation/steps/path_choice_phase.dart';
 import 'package:aurogram/features/astrology/domain/sky_positions_service.dart';
 import 'package:aurogram/features/baba/domain/baba_context.dart';
+import 'package:aurogram/features/baba/domain/baba_snapshot.dart';
 import 'package:aurogram/features/baba/domain/baba_tool_registry.dart';
+import 'package:aurogram/features/baba/voice/voice_session_controller.dart';
 import 'package:aurogram/features/onboarding/domain/baba_onboarding_tools.dart';
 import 'package:aurogram/shared/presentation/responsive/responsive.dart';
 
@@ -44,7 +46,8 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
     with
         TickerProviderStateMixin,
         DataPollingMixin<OnboardingComplete>,
-        NavigationMixin<OnboardingComplete> {
+        NavigationMixin<OnboardingComplete>,
+        BabaScreenAware<OnboardingComplete> {
   // Animation controllers
   late AnimationController _pulseController;
   late AnimationController _rotateController;
@@ -161,6 +164,108 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
     return t.length <= max ? t : '${t.substring(0, max)}…';
   }
 
+  // ===========================================================================
+  // Baba awareness — the reveal is now a first-class, step-aware screen. Baba
+  // PERCEIVES this live snapshot (via whereAmI and on every tool result) and
+  // narrates FROM it, so his voice can never describe a step the UI has moved
+  // past. This is the perceive half of the loop; _babaAdvanceOnboarding is the
+  // act half — both read the exact same state.
+  // ===========================================================================
+
+  @override
+  String get babaScreenKey => 'onboardingReveal';
+
+  @override
+  BabaSnapshot babaSnapshot() {
+    final account = _accountFact();
+    switch (_phase) {
+      case OnboardingPhase.loading:
+        return const BabaSnapshot.loading(
+          headline: 'Reading the stars and calculating their birth chart',
+          step: 'loading',
+          blockedReason: 'the chart is still being calculated',
+        );
+      case OnboardingPhase.signReveal:
+        final p = _profile;
+        if (p == null) {
+          return const BabaSnapshot.loading(
+            headline: 'Calculating their birth chart',
+            step: 'signReveal',
+            blockedReason: 'the chart is still being calculated',
+          );
+        }
+        final revealed = _signRevealStep >= 3;
+        return BabaSnapshot.ready(
+          headline: revealed
+              ? 'Their Sun, Moon and Rising signs are all revealed on screen'
+              : 'Revealing their Sun, Moon and Rising signs one by one',
+          step: 'signReveal',
+          facts: {
+            'account': account,
+            'sun': p.sunSign ?? 'unknown',
+            'moon': p.moonSign ?? 'unknown',
+            'rising': p.ascendant ?? 'unknown',
+            'cardsRevealed': _signRevealStep,
+          },
+          canProceed: revealed,
+          blockedReason:
+              revealed ? null : 'the sun/moon/rising cards are still revealing',
+          availableActions: revealed ? const ['advanceOnboarding'] : const [],
+        );
+      case OnboardingPhase.birthReading:
+        final ready = !_isGeneratingReading &&
+            (_firstReadingContent?.isNotEmpty ?? false);
+        return BabaSnapshot(
+          status: ready ? BabaScreenStatus.ready : BabaScreenStatus.loading,
+          step: 'birthReading',
+          headline: ready
+              ? 'Their birth reading is on screen'
+              : 'Their birth reading is still being written',
+          facts: {
+            'account': account,
+            if (ready) 'reading': _cueText(_firstReadingContent, max: 600),
+          },
+          canProceed: ready,
+          blockedReason:
+              ready ? null : 'their birth reading is still being written',
+          availableActions: ready ? const ['advanceOnboarding'] : const [],
+        );
+      case OnboardingPhase.currentTimes:
+        final ready = !_isGeneratingCurrentTimesReading &&
+            (_currentTimesReadingContent?.isNotEmpty ?? false);
+        return BabaSnapshot(
+          status: ready ? BabaScreenStatus.ready : BabaScreenStatus.loading,
+          step: 'currentTimes',
+          headline: ready
+              ? 'Their current-times reading is on screen (the final reveal step)'
+              : 'Their current-times reading is still being written',
+          facts: {
+            'account': account,
+            if (ready) 'reading': _cueText(_currentTimesReadingContent, max: 600),
+          },
+          canProceed: ready,
+          blockedReason:
+              ready ? null : 'their current-times reading is still being written',
+          availableActions: ready ? const ['advanceOnboarding'] : const [],
+        );
+      case OnboardingPhase.retry:
+        return const BabaSnapshot.error(
+          headline: 'The chart did not finish calculating — no signs are available',
+          step: 'failed',
+          blockedReason:
+              'the birth chart calculation timed out; do NOT state any sign or placement',
+        );
+      case OnboardingPhase.skip:
+        return const BabaSnapshot.empty(
+          headline: 'No birth details yet — offering to add them or explore',
+          step: 'skip',
+        );
+      default:
+        return const BabaSnapshot.loading(
+            headline: 'Preparing the reveal', step: 'loading');
+    }
+  }
+
   /// Let Baba drive the reveal flow hands-free: bind [advanceOnboarding] to the
   /// same transitions the on-screen Continue button triggers, gated by the
   /// exact same readiness checks so he can never skip a still-loading step.
@@ -171,28 +276,42 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
     );
   }
 
+  /// Baba's "advance the reveal" action. Reframed to be honest and state-driven:
+  ///
+  ///   * It embeds NO narration script. The content Baba should speak lives in
+  ///     the world state (his babaSnapshot above), which the tool-dispatch
+  ///     envelope re-reads and appends AFTER this returns — so he always
+  ///     narrates from the freshly-settled screen, not a baked line.
+  ///   * It refuses (blocked, without moving the UI) while he is still
+  ///     PRESENTING this step (isNarrating) or the step isn't ready. This is
+  ///     the root fix for "UI ahead of voice": advancing can no longer outrun
+  ///     his own sentence. He finishes, then advances — still the driver, just
+  ///     no longer blind to his own voice.
   Future<Map<String, dynamic>> _babaAdvanceOnboarding() async {
     if (!mounted) {
       return {'ok': false, 'advanced': false, 'reason': 'screen gone'};
+    }
+    // Never advance mid-sentence: if his voice is still presenting this step,
+    // hold the UI and tell him to finish first.
+    if (VoiceSessionController().isNarrating) {
+      return {
+        'ok': true,
+        'advanced': false,
+        'blocked': true,
+        'reason': 'You are still presenting this step out loud. Finish '
+            'narrating what is on screen now, then advance.',
+      };
     }
     switch (_phase) {
       case OnboardingPhase.signReveal:
         if (_signRevealStep >= 3) {
           _goToReadingPhase(viaVoiceResult: true);
-          // Hand Baba the ACTUAL birth-reading text in the tool result he is
-          // responding to - not a separate screen-context message he ignores.
-          // This is why the reading was never spoken: the model reacts to the
-          // tool result (which had no story), so the story must live HERE.
-          return {
-            'ok': true,
-            'advanced': true,
-            'now': 'birthReading',
-            'narrate': _cueText(_firstReadingContent, max: 600),
-          };
+          return {'ok': true, 'advanced': true, 'now': 'birthReading'};
         }
         return {
-          'ok': false,
+          'ok': true,
           'advanced': false,
+          'blocked': true,
           'reason': 'the sun/moon/rising cards are still revealing',
         };
       case OnboardingPhase.birthReading:
@@ -200,16 +319,12 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
             !_isGeneratingReading && (_firstReadingContent?.isNotEmpty ?? false);
         if (ready) {
           _goToCurrentTimesPhase(viaVoiceResult: true);
-          return {
-            'ok': true,
-            'advanced': true,
-            'now': 'currentTimes',
-            'narrate': _cueText(_currentTimesReadingContent, max: 600),
-          };
+          return {'ok': true, 'advanced': true, 'now': 'currentTimes'};
         }
         return {
-          'ok': false,
+          'ok': true,
           'advanced': false,
+          'blocked': true,
           'reason': 'their birth reading is still being written',
         };
       case OnboardingPhase.currentTimes:
@@ -217,25 +332,19 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
             (_currentTimesReadingContent?.isNotEmpty ?? false);
         if (ready) {
           _finishOnboarding(viaVoiceResult: true);
-          return {
-            'ok': true,
-            'advanced': true,
-            'now': 'home',
-            'narrate': 'They are now on the home dashboard. Warmly say you have '
-                'brought them here and give a one-line tour of what lives here '
-                '(their daily sky/nakshatra wheel, upcoming events, and that '
-                'their daily insight lives here).',
-          };
+          return {'ok': true, 'advanced': true, 'now': 'home'};
         }
         return {
-          'ok': false,
+          'ok': true,
           'advanced': false,
+          'blocked': true,
           'reason': 'their current-times reading is still being written',
         };
       default:
         return {
-          'ok': false,
+          'ok': true,
           'advanced': false,
+          'blocked': true,
           'reason': 'nothing to advance from here',
         };
     }
@@ -344,6 +453,9 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
       if (!mounted) return;
       HapticFeedback.lightImpact();
       setState(() => _signRevealStep = step);
+      // Signal the World Model that a sub-step moved so Baba's awareness (and,
+      // on Live, a silent delta) tracks each card as it lands.
+      BabaContext.instance.markStateChanged('onboardingReveal');
       if (step < 3) await Future.delayed(AnimationTiming.cardRevealDelay);
     }
 

@@ -19,6 +19,7 @@ import {
   BABA_TOOL_SPECS,
   BABA_TOOL_GUIDELINES,
   BABA_STEPS,
+  BABA_GOAL,
   MANAGED_MARKER,
 } from "../src/cx_tools.js";
 
@@ -100,6 +101,25 @@ async function main() {
     console.log(`  keeping  ${t.displayName} (data store)`);
   }
 
+  // Grounding assertion. The playbook now HARD-depends on the vedicCanon data
+  // store for every interpretive meaning (see BABA_STEPS reading law). If it
+  // isn't attached, Baba silently falls back to memory and hallucinates - so
+  // fail loudly here rather than shipping a subtly-ungrounded agent. Set
+  // ALLOW_MISSING_CANON=true to override (e.g. first-time bring-up before the
+  // datastore is provisioned via provision_cx_datastore.sh).
+  const hasCanon = dataStoreTools.some((t) => /canon/i.test(t.displayName || ""));
+  if (!hasCanon) {
+    const msg =
+      "vedicCanon data store tool is NOT attached to this agent. The playbook " +
+      "requires it for interpretive meanings; without it Baba hallucinates. " +
+      "Provision it (provision_cx_datastore.sh) or set ALLOW_MISSING_CANON=true.";
+    if (process.env.ALLOW_MISSING_CANON === "true") {
+      console.warn(`  WARNING: ${msg}`);
+    } else {
+      throw new Error(msg);
+    }
+  }
+
   console.log(`Attaching to playbook "${PLAYBOOK_NAME}"...`);
   const pbList = await api("GET", `${BASE}/playbooks`);
   const pb = (pbList.playbooks || []).find((p) => p.displayName === PLAYBOOK_NAME);
@@ -134,9 +154,12 @@ async function main() {
     // run (merge semantics), duplicating the persona until CX's 8192-token
     // playbook limit blows and every call dies with {type:error} (bit us twice,
     // 2026-07-13/14). Masking `instruction.steps` DIRECTLY (a leaf repeated
-    // field) REPLACES it wholesale - which is exactly what we want.
-    `${HOST}/v3beta1/${pb.name}?updateMask=referencedTools,instruction.guidelines,instruction.steps`,
+    // field) REPLACES it wholesale - which is exactly what we want. `goal` is a
+    // scalar, so masking it just overwrites - we own it here now that the old
+    // set_playbook.mjs (which carried a stale steps copy) is gone (2026-07-18).
+    `${HOST}/v3beta1/${pb.name}?updateMask=goal,referencedTools,instruction.guidelines,instruction.steps`,
     {
+      goal: BABA_GOAL,
       referencedTools: names,
       instruction: { guidelines, steps },
     },

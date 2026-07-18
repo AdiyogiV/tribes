@@ -54,6 +54,44 @@ export const CONFIG = {
     inputSampleRateHertz: parseInt(process.env.IN_SAMPLE_RATE || "16000", 10),
     outputSampleRateHertz: parseInt(process.env.OUT_SAMPLE_RATE || "24000", 10),
 
+    // ── Public-endpoint hardening (server.js) ────────────────────────────
+    // Max concurrent WebSocket connections. Past this we refuse new sockets so
+    // a flood can't exhaust memory or spin up unbounded paid CX/Live streams.
+    maxConnections: parseInt(process.env.MAX_CONNECTIONS || "200", 10),
+    // Max inbound frame size. Mic PCM chunks are a few KB and the start frame
+    // (tools + directive) is a few KB; 128 KB is a generous ceiling that still
+    // stops a single oversized frame from burning CPU/memory in JSON.parse.
+    maxPayloadBytes: parseInt(process.env.MAX_PAYLOAD_BYTES || "131072", 10),
+    // Heartbeat ping interval. Sockets that miss a pong (dead mobile peers) are
+    // terminated so their session + CX gRPC stream can't leak forever.
+    heartbeatMs: parseInt(process.env.WS_HEARTBEAT_MS || "30000", 10),
+    // A socket that never sends a valid `start` within this window is closed —
+    // otherwise idle/abandoned connections pile up against maxConnections.
+    authTimeoutMs: parseInt(process.env.WS_AUTH_TIMEOUT_MS || "15000", 10),
+    // Outbound backpressure: if a slow client's send buffer exceeds this, drop
+    // further TTS chunks instead of buffering unbounded audio in the server.
+    outboundBufferLimitBytes: parseInt(process.env.WS_OUTBOUND_BUFFER_LIMIT || "5242880", 10),
+    // Per-connection cap on billed `context` turns per minute (each opens a CX
+    // turn); floods past this are ignored.
+    maxContextPerMinute: parseInt(process.env.MAX_CONTEXT_PER_MINUTE || "30", 10),
+
+    // Tool-result watchdog. After Baba emits a tool_call we retire the stream
+    // and wait for the client's tool_response. If it NEVER comes (client crash,
+    // a dropped WS frame, a wedged handler, a mismatched id) the session would
+    // otherwise sit in awaitingTool=true FOREVER — sendAudio and injectContext
+    // both no-op, so the call is silently, unrecoverably dead. This bounds that
+    // wait: on expiry we synthesize an ok:false result for every pending call
+    // so CX continues and Baba can react truthfully ("that didn't come
+    // through") instead of hanging. 0 disables the watchdog.
+    toolTimeoutMs: parseInt(process.env.CX_TOOL_TIMEOUT_MS || "12000", 10),
+
+    // Verbose per-turn lifecycle logging (turn_open / turn_data / turn_end). The
+    // high-signal events (tool_call, tool_result_in, swallowed reprompt, nudge,
+    // stt_timeout, stream_error, inject_context) are ALWAYS logged; this flag
+    // only toggles the noisy per-turn trace used to debug turn flow. Off by
+    // default so production logs stay readable; set CX_DEBUG_TURNS=true to trace.
+    debugTurns: (process.env.CX_DEBUG_TURNS || "false") === "true",
+
     // ── Gemini Live API (voiceEngine = "live") ───────────────────────
     live: {
         // Native-audio model = best multilingual voice + built-in VAD barge-in.

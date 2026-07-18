@@ -13,6 +13,7 @@ class BabaScreen {
     required this.label,
     required this.description,
     this.navigable = true,
+    this.requiresChart = false,
   });
 
   final String key;
@@ -20,6 +21,13 @@ class BabaScreen {
   final String label;
   final String description;
   final bool navigable;
+
+  /// True for screens that are meaningless without a computed birth chart
+  /// (personalised readings). `navigateTo` refuses these when the user has no
+  /// chart yet and steers them to birth-details setup instead — so Baba can
+  /// never strand a chart-less user on a permanently-empty page (and then be
+  /// tempted to narrate an insight that isn't there).
+  final bool requiresChart;
 }
 
 /// The app landscape — the ONE place that knows what Aurogram's screens are.
@@ -51,6 +59,7 @@ class BabaAppMap {
       path: RouteNames.dailyInsight,
       label: 'Daily Insight',
       description: "The user's personalised astrological insight for today.",
+      requiresChart: true,
     ),
     BabaScreen(
       key: 'chat',
@@ -70,6 +79,7 @@ class BabaAppMap {
       path: RouteNames.astrologyDetails,
       label: 'Birth Chart',
       description: "The user's full birth chart, houses and placements.",
+      requiresChart: true,
     ),
     BabaScreen(
       key: 'savedInsights',
@@ -82,6 +92,7 @@ class BabaAppMap {
       path: RouteNames.ayurvedaDetails,
       label: 'Ayurveda',
       description: "The user's Ayurvedic constitution and wellness guidance.",
+      requiresChart: true,
     ),
     BabaScreen(
       key: 'notifications',
@@ -138,6 +149,14 @@ class BabaAppMap {
   static String? pathFor(String key) {
     for (final s in screens) {
       if (s.key == key) return s.path;
+    }
+    return null;
+  }
+
+  /// Resolve a destination key to its full [BabaScreen] (null if unknown).
+  static BabaScreen? screenFor(String key) {
+    for (final s in screens) {
+      if (s.key == key) return s;
     }
     return null;
   }

@@ -10,6 +10,7 @@ import 'package:aurogram/shared/models/daily_insight.dart';
 import 'package:aurogram/shared/models/ayurveda_profile.dart';
 import 'package:aurogram/features/astrology/domain/sky_positions_service.dart';
 import 'package:aurogram/features/astrology/domain/astro_calendar_service.dart';
+import 'package:aurogram/features/astrology/domain/forecast_service.dart';
 import 'package:aurogram/shared/services/widget_data_service.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/nakshatra_ring_widget.dart';
 import 'package:aurogram/features/astrology/presentation/pages/baba/widgets/baba_panchang_resolver.dart';
@@ -47,6 +48,10 @@ class BabaCosmicContent extends StatelessWidget {
   /// Optional calendar service for extended-range position lookups.
   final AstroCalendarService? calendarService;
 
+  /// The unified forecast (date → computed day) driving the wheel's real
+  /// alignment % and woven narrative.
+  final Map<String, ForecastDay>? forecast;
+
   const BabaCosmicContent({
     super.key,
     required this.profile,
@@ -64,6 +69,7 @@ class BabaCosmicContent extends StatelessWidget {
     this.nakshatraController,
     this.sliderRangeDays = 180,
     this.calendarService,
+    this.forecast,
   });
 
   @override
@@ -400,6 +406,7 @@ class BabaCosmicContent extends StatelessWidget {
         wheelResetSignal: wheelResetSignal,
         controller: nakshatraController,
         insight: insight,
+        forecast: forecast,
         wheelFirst: wheelFirst,
         onDateChanged: (date) {
           // Sync both notifiers so the sky-chart slider stays in

@@ -402,15 +402,25 @@ class AyurvedaService {
     if (user == null) return false;
 
     try {
-      await _firestore.collection('users').doc(user.uid).update({
-        'ayurvedaData.lastCheckIn': FieldValue.serverTimestamp(),
-        'ayurvedaData.lastSymptoms': checkInData,
-        'ayurvedaData.checkInHistory': FieldValue.arrayUnion([
-          {
-            ...checkInData,
-            'timestamp': Timestamp.now(),
-          }
-        ]),
+      final docRef = _firestore.collection('users').doc(user.uid);
+      final entry = {...checkInData, 'timestamp': Timestamp.now()};
+      // Read-modify-write so the history stays BOUNDED. arrayUnion can only
+      // grow — with a daily check-in this array trends toward the 1 MiB doc
+      // ceiling and bloats every profile read. Keep only the most recent N.
+      const maxHistory = 60;
+      await _firestore.runTransaction((txn) async {
+        final snap = await txn.get(docRef);
+        final ayur = (snap.data()?['ayurvedaData'] as Map?) ?? const {};
+        final existing = (ayur['checkInHistory'] as List?) ?? const [];
+        final history = [...existing, entry];
+        final trimmed = history.length > maxHistory
+            ? history.sublist(history.length - maxHistory)
+            : history;
+        txn.update(docRef, {
+          'ayurvedaData.lastCheckIn': FieldValue.serverTimestamp(),
+          'ayurvedaData.lastSymptoms': checkInData,
+          'ayurvedaData.checkInHistory': trimmed,
+        });
       });
 
       clearCache(user.uid);

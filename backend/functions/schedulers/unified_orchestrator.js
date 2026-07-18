@@ -26,12 +26,16 @@
  * Phase 2: Data Refresh (sequential — Phase 3 needs this)
  *   - refreshSkyPositionsDaily (positions + panchang + muhurat, single source)
  *
+ * Phase 2b: Forecast SENSE (sequential — needs Phase 2 sky doc)
+ *   - computeDaySignals (pure-math per-user day-alignment horizon; no AI)
+ *
  * Phase 3: (removed) Mundane/world content generation was archived —
  *   see backend/_archive/. Personal insights no longer depend on it.
  *
- * Phase 4: User Insights (sequential — depends on Phase 2)
+ * Phase 4: User Insights (sequential — depends on Phase 2 / 2b)
  *   - generateDailyAstroInsights (enqueues per-user Cloud Tasks)
  *   - enqueuePerHouseReadings    (enqueues per-house Cloud Tasks)
+ *   - enqueueMonthlyNarrate      (enqueues forecast-narration Cloud Tasks)
  *
  * Phase 5: Health (independent — runs last)
  *   - nightlyHealthAnalysis      (always)
@@ -51,11 +55,15 @@ import { runRefreshUserMemories } from "../user_memory.js";
 // Phase 2: Data refresh runners
 import { runRefreshSkyPositionsDaily } from "../sky_positions.js";
 
+// Phase 2b: Forecast SENSE — pure-math per-user day signals (depends on Phase 2).
+import { runComputeDaySignals } from "../forecast/sense.js";
+
 // Phase 3 (mundane/world content) archived — see backend/_archive/.
 
 // Phase 4: User insight runners
 import { runGenerateDailyAstroInsights } from "../daily_astro_insights.js";
 import { runEnqueuePerHouseReadings } from "../per_house.js";
+import { runEnqueueMonthlyNarrate } from "../forecast/narrate.js";
 
 // Phase 5: Health runners
 import { runNightlyHealthAnalysis, runWeeklyHealthAggregation } from "../ayurveda.js";
@@ -134,6 +142,13 @@ export const unifiedOrchestrator = onSchedule({
 
     // (muhurat is now part of the sky_positions smartPrefetch — single source)
 
+    // ── Phase 2b: Forecast SENSE (depends on Phase 2 sky refresh) ──────
+    // Pure-math: recompute each active user's 0-100 day-alignment horizon into
+    // users/{uid}/forecast/{yyyy-MM}. No AI. Makes the wheel % real; NARRATE
+    // (Phase 4) later enriches the same days with heading + narrative.
+    logger.info("Phase 2b: Forecast SENSE (day signals)");
+    results.push(await runTask("computeDaySignals", runComputeDaySignals));
+
     // ── Phase 3: (archived) mundane/world content generation ───────────
     // Removed — personal insights don't depend on it. See backend/_archive/.
 
@@ -141,6 +156,9 @@ export const unifiedOrchestrator = onSchedule({
     logger.info("Phase 4: User Insights");
     results.push(await runTask("generateDailyAstroInsights", runGenerateDailyAstroInsights));
     results.push(await runTask("enqueuePerHouseReadings", runEnqueuePerHouseReadings));
+    // Forecast NARRATE — enqueues ~1 Gemini call/user/month for users whose
+    // narrated window is running low (depends on Phase 2b signals existing).
+    results.push(await runTask("enqueueMonthlyNarrate", runEnqueueMonthlyNarrate));
 
     // ── Phase 5: Health (independent — runs last) ─────────────────────
     logger.info("Phase 5: Health");

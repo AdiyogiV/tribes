@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -10,6 +11,8 @@ import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/features/astrology/data/utils/nakshatra_data.dart';
 import 'package:aurogram/features/astrology/data/utils/daily_vibe.dart';
+import 'package:aurogram/features/astrology/domain/forecast_service.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/shared/models/daily_insight.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/common/pulsing_dot.dart';
 
@@ -174,6 +177,13 @@ class NakshatraRingWidget extends StatefulWidget {
   /// card falls back to [DailyVibe.narrative].
   final DailyInsight? insight;
 
+  /// The unified forecast: date (yyyy-MM-dd) → computed day. This is the SINGLE
+  /// source of the headline alignment % and the woven narrative — real,
+  /// server-computed Vedic day-signals (not the old on-phone `50 + quality×47`).
+  /// When a day is present its values win; when absent the wheel shows no
+  /// fabricated number.
+  final Map<String, ForecastDay>? forecast;
+
   /// When true, renders the wheel ABOVE the Daily Vibe card (desktop layouts
   /// where the wheel is the visual hero).  Default (false) keeps mobile-style
   /// vibe-first order: read the narrative, then look at the wheel beneath.
@@ -190,6 +200,7 @@ class NakshatraRingWidget extends StatefulWidget {
     this.wheelResetSignal,
     this.controller,
     this.insight,
+    this.forecast,
     this.wheelFirst = false,
   });
 
@@ -257,15 +268,21 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
   static const double _ringGap = 2.0;
 
   // ─── Derived ───────────────────────────────────────────────────────────────
-  // TODO: remove fallbacks once backend wiring is complete
+  // These indices now position only the DECORATIVE markers (moon/birth stars,
+  // aura ring). The headline alignment % and narrative come from the unified
+  // forecast (date-keyed, server-computed) — NOT from these indices — so a bad
+  // index can no longer produce a wrong reading. The canonical-alias fix in
+  // NakshatraData.findIndex means real charts resolve; the constants below are
+  // last-resort UI-preview positions only (e.g. a signed-out visitor with no
+  // chart) so the wheel still renders something sensible.
   int get _todayIndex {
     final idx = NakshatraData.findIndex(widget.todayNakshatra);
-    return idx >= 0 ? idx : 4; // fallback: Mrigashira (for UI preview)
+    return idx >= 0 ? idx : 4; // preview only: Mrigashira
   }
 
   int get _birthIndex {
     final idx = NakshatraData.findIndex(widget.birthNakshatra);
-    return idx >= 0 ? idx : 16; // fallback: Anuradha (for UI preview)
+    return idx >= 0 ? idx : 16; // preview only: Anuradha
   }
 
   int get _sunIndex {
@@ -294,6 +311,19 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
   /// nakshatra boundary crossing.
   int _cumulativeOffset = 0;
 
+  /// Scrub window (in cumulative day-offsets from today) the wheel is allowed
+  /// to rotate across: the contiguous run of days that have BOTH a real
+  /// alignment percentage AND a woven narrative. Defaults to [0, 0] (locked to
+  /// today) until the forecast loads. Recomputed whenever [widget.forecast]
+  /// changes. Rotation is hard-stopped at these edges — the wheel never spins
+  /// onto a day we can't fully describe.
+  int _minOffset = 0;
+  int _maxOffset = 0;
+
+  /// Reentrancy guard: true while [_clampToEdge] snaps the controller back, so
+  /// the resulting synchronous [_onRotation] callback is ignored.
+  bool _isClamping = false;
+
   /// True while animating back to today — suppresses cumulative offset
   /// tracking in [_onRotation] so intermediate boundary crossings don't
   /// overwrite the reset.
@@ -308,6 +338,89 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
 
   /// True when the wheel is at today's position (default state).
   bool get _isAtToday => _cumulativeOffset == 0;
+
+  /// The unified-forecast day for whatever date the wheel is currently showing,
+  /// or null if the forecast hasn't been computed for that date yet.
+  String? _lastLoggedFcKey; // [forecast] TEMP diagnostic dedupe
+  ForecastDay? get _activeForecastDay {
+    final key = ForecastService.dateKey(_displayedDate);
+    final day = widget.forecast?[key];
+    // [forecast] TEMP diagnostic — logs once per displayed date. Remove later.
+    if (key != _lastLoggedFcKey) {
+      _lastLoggedFcKey = key;
+      AppLogger.i('[forecast] wheel day', category: LogCategory.ui, data: {
+        'key': key,
+        'found': day != null,
+        'alignment': day?.alignment,
+        'heading': day?.heading,
+        'hasNarrative': day?.narrative?.isNotEmpty ?? false,
+        'forecastSize': widget.forecast?.length ?? 0,
+      });
+    }
+    return day;
+  }
+
+  /// Recompute the scrub window: the contiguous run of days, starting from
+  /// today, that have BOTH a real alignment percentage AND a woven narrative.
+  /// The wheel may only rotate within [_minOffset, _maxOffset]. If today's
+  /// story isn't ready yet, the window collapses to [0, 0] (locked to today)
+  /// so the wheel never scrubs onto a day we can't fully describe.
+  void _recomputeForecastBounds() {
+    final f = widget.forecast;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    bool complete(int d) {
+      final day = f?[ForecastService.dateKey(today.add(Duration(days: d)))];
+      return day != null &&
+          day.alignment != null &&
+          (day.narrative?.isNotEmpty ?? false);
+    }
+
+    if (!complete(0)) {
+      _minOffset = 0;
+      _maxOffset = 0;
+      return;
+    }
+    var maxOff = 0;
+    while (maxOff < 366 && complete(maxOff + 1)) {
+      maxOff++;
+    }
+    var minOff = 0;
+    while (minOff > -366 && complete(minOff - 1)) {
+      minOff--;
+    }
+    _minOffset = minOff;
+    _maxOffset = maxOff;
+  }
+
+  /// Per-nakshatra wave weights (−1..+1) for the aura, derived from the REAL
+  /// alignment % of the day each nakshatra maps to (the day nearest the shown
+  /// date whose Moon sits in that nakshatra). This is what drives the wave's
+  /// in/out shape — replacing the old fixed Tara landscape. The bulge at the
+  /// TOP is always the shown day's real %, neighbours show the days around it,
+  /// so the wave rolls in and out with the true numbers while the orb's overall
+  /// size stays constant. A null entry → no forecast for that day (drawn flat).
+  List<double?> _alignmentWave() {
+    final out = List<double?>.filled(_count, null);
+    final f = widget.forecast;
+    if (f == null || f.isEmpty) return out;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final todayIdx = _todayIndex;
+    for (int i = 0; i < _count; i++) {
+      // Day-offset whose Moon sits in nakshatra i, nearest the displayed offset.
+      final base = ((i - todayIdx) % _count + _count) % _count;
+      final k = ((_cumulativeOffset - base) / _count).round();
+      final offset = base + _count * k;
+      final a = f[ForecastService.dateKey(today.add(Duration(days: offset)))]
+          ?.alignment;
+      if (a != null) {
+        // 50% = neutral; ±30 pts spans the full swell so the wave reads clearly.
+        out[i] = ((a - 50) / 30.0).clamp(-1.0, 1.0);
+      }
+    }
+    return out;
+  }
 
   /// "May 17"-style short date.
   String _formatDate(DateTime d) {
@@ -392,14 +505,16 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
   /// Jump the wheel to a specific day offset from today.
   /// Used by the sky chart slider to sync the wheel to an arbitrary date.
   void _jumpToOffset(int dayOffset) {
+    // Keep external jumps (e.g. the sky-chart slider) inside the scrub window.
+    final target = dayOffset.clamp(_minOffset, _maxOffset);
     // Compute the target nakshatra index for this offset.
-    final targetIdx = (_todayIndex + dayOffset % _count + _count) % _count;
+    final targetIdx = (_todayIndex + target % _count + _count) % _count;
     if (targetIdx < 0 || targetIdx >= _count) return;
     HapticFeedback.selectionClick();
     _stopAll();
 
     // Set cumulative offset directly — we know exactly where we're going.
-    _cumulativeOffset = dayOffset;
+    _cumulativeOffset = target;
 
     final targetAngle = -_ashwiniOffset + targetIdx * _seg;
     final current = _controller.value;
@@ -428,6 +543,7 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
     _controller = AnimationController.unbounded(vsync: this, value: target);
     _controller.addListener(_onRotation);
     _currentBottomIndex = _nakshatraAtTop();
+    _recomputeForecastBounds();
 
     // Listen for external "return to today" signals (e.g. sky-chart Today button).
     widget.wheelResetSignal?.addListener(_onExternalResetToToday);
@@ -465,6 +581,17 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
     if (old.wheelResetSignal != widget.wheelResetSignal) {
       old.wheelResetSignal?.removeListener(_onExternalResetToToday);
       widget.wheelResetSignal?.addListener(_onExternalResetToToday);
+    }
+    // Recompute the scrub window whenever the forecast stream emits. If the
+    // window shrank below the wheel's current position, pull it back to the
+    // nearest edge so it never sits on an undescribable day.
+    if (!identical(old.forecast, widget.forecast)) {
+      _recomputeForecastBounds();
+      if (_cumulativeOffset > _maxOffset) {
+        _jumpToOffset(_maxOffset);
+      } else if (_cumulativeOffset < _minOffset) {
+        _jumpToOffset(_minOffset);
+      }
     }
     // Re-center wheel when todayNakshatra arrives for the first time
     // (e.g. calendar data loads after initState positioned using the fallback).
@@ -520,6 +647,7 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
   /// Tracks cumulative boundary crossings for infinite date scrolling:
   /// each forward crossing increments _cumulativeOffset, backward decrements.
   void _onRotation() {
+    if (_isClamping) return;
     final seg = _nakshatraAtTop();
     if (seg != _currentBottomIndex && seg >= 0) {
       // Haptic on drag removed — felt like vibration during rotation.
@@ -532,13 +660,21 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
         // Detect forward vs backward crossing (handles the 26→0 / 0→26 wrap).
         final forwardDelta = (seg - prev + _count) % _count;
         final backwardDelta = (prev - seg + _count) % _count;
-        if (forwardDelta <= backwardDelta) {
-          // Forward crossing(s) — usually 1, but fling might skip segments.
-          _cumulativeOffset += forwardDelta;
-        } else {
-          // Backward crossing(s).
-          _cumulativeOffset -= backwardDelta;
+        // Signed day-delta for this crossing (fling can skip several segments).
+        final signed =
+            forwardDelta <= backwardDelta ? forwardDelta : -backwardDelta;
+        final proposed = _cumulativeOffset + signed;
+        // Hard-stop at the edges of the known forecast window: never scrub onto
+        // a day without both a percentage and story text.
+        if (proposed > _maxOffset) {
+          _clampToEdge(_maxOffset);
+          return;
         }
+        if (proposed < _minOffset) {
+          _clampToEdge(_minOffset);
+          return;
+        }
+        _cumulativeOffset = proposed;
       }
 
       setState(() => _currentBottomIndex = seg);
@@ -560,6 +696,38 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
     double imgAngle = (4 * pi - rotRad) % (2 * pi);
     double fromAsh = (_ashwiniOffset - imgAngle + 2 * pi) % (2 * pi);
     return (fromAsh / _seg).round() % _count;
+  }
+
+  /// Halt rotation at a scrub-window edge and hold the edge day centered at the
+  /// top. Kills all motion (drag chase + inertia) and snaps the controller to
+  /// the nearest angle whose top nakshatra is the edge day, so the wheel can't
+  /// spin past the last day we can fully describe.
+  void _clampToEdge(int edgeOffset) {
+    _isClamping = true;
+    // Kill both inertia phases so the coast/chase can't push past the edge.
+    _velocity = 0;
+    _spinDragging = false;
+    _spin?.stop();
+    _lastTickUs = null;
+
+    final edgeIdx = ((_todayIndex + edgeOffset) % _count + _count) % _count;
+    const twoPi = 2 * pi;
+    final targetAngle = -_ashwiniOffset + edgeIdx * _seg;
+    final current = _controller.value;
+    // Shortest-arc snap so we land on the edge day without a full spin.
+    final delta = ((targetAngle - current) % twoPi + twoPi + pi) % twoPi - pi;
+    _controller.value = current + delta;
+    _targetAngle = _controller.value;
+    _cumulativeOffset = edgeOffset;
+    setState(() => _currentBottomIndex = edgeIdx);
+    widget.controller?._update(
+      activeIndex: _activeIndex,
+      todayIndex: _todayIndex,
+      birthIndex: _birthIndex,
+      cumulativeOffset: _cumulativeOffset,
+    );
+    if (mounted) widget.onDateChanged?.call(_displayedDate);
+    _isClamping = false;
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -737,13 +905,25 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
     final vibeContent = _buildDailyVibeContent(c, isDark, cardColor);
     final wheel = _buildWheel(c, isDark);
 
-    // Header summary: energy label + alignment %, derived from today's Tara.
+    // Header summary: energy label + alignment %.
+    // The % is the REAL server-computed Vedic day-signal (Gochara + Ashtakavarga
+    // + Vedha + Tara/Chandra Bala + Panchang) for the shown date. The label
+    // prefers the AI-narrated heading; the static Tara vibe is a soft fallback
+    // for the label text only (never for the number).
+    final fday = _activeForecastDay;
     final headerVibe = DailyVibe.forUser(
       birthIndex: _birthIndex,
       todayIndex: _activeIndex,
     );
-    final headerTara = TaraBala.calculate(_birthIndex, _activeIndex);
-    final headerAlignment = _taraAlignmentPercent(headerTara.type);
+    final headerAlignment = fday?.alignment; // null → no % shown (no fake)
+    // Story still generating: real number present, woven text not yet. Show an
+    // honest loading label — never the static template dressed as the reading.
+    final headerStoryGenerating = _birthIndex >= 0 &&
+        headerAlignment != null &&
+        !(fday?.narrative?.isNotEmpty ?? false);
+    final headerLabel = (fday?.heading != null && fday!.heading!.isNotEmpty)
+        ? fday.heading!
+        : (headerStoryGenerating ? 'READING YOUR SKY' : headerVibe?.label);
 
     return Material(
       color: cardColor,
@@ -758,11 +938,9 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
               mainAxisSize: MainAxisSize.min,
               children: [
                 // Prominent: energy label + alignment %.
-                for (final line in [
-                  if (headerVibe != null) headerVibe.label.toUpperCase(),
-                ])
+                if (headerLabel != null && headerLabel.isNotEmpty)
                   Text(
-                    line,
+                    headerLabel.toUpperCase(),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 16,
@@ -772,7 +950,7 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
                       color: c,
                     ),
                   ),
-                if (headerVibe != null)
+                if (headerAlignment != null)
                   Text(
                     '$headerAlignment% ALIGNED',
                     textAlign: TextAlign.center,
@@ -828,10 +1006,30 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
     if (vibe == null) return _buildVibeEmptyContent(c, isDark, cardColor);
 
     final isAtToday = _isAtToday;
-    // Narrative: AI insight on today, static vibe template otherwise.
+    final fday = _activeForecastDay;
+    final forecastNarrative = fday?.narrative;
+    // Real number present for this day but the woven story hasn't landed yet →
+    // show an honest loading state (the ensure call is generating it), NOT the
+    // static template pretending to be the reading.
+    final storyGenerating =
+        fday?.alignment != null && !(forecastNarrative?.isNotEmpty ?? false);
+    if (storyGenerating) {
+      return _buildVibeLoadingContent(c);
+    }
+    // Narrative priority:
+    //   1. the unified forecast's woven narrative for this date (the story)
+    //   2. today's AI daily insight (when parked on today)
+    //   3. the static Tara vibe template (fallback only for dates outside the
+    //      computed forecast window — genuinely beyond the woven story)
     final aiMessage = widget.insight?.displayMessage ?? '';
-    final useInsight = isAtToday && aiMessage.isNotEmpty;
-    final narrativeText = useInsight ? aiMessage : vibe.narrative;
+    final String narrativeText;
+    if (forecastNarrative != null && forecastNarrative.isNotEmpty) {
+      narrativeText = forecastNarrative;
+    } else if (isAtToday && aiMessage.isNotEmpty) {
+      narrativeText = aiMessage;
+    } else {
+      narrativeText = vibe.narrative;
+    }
 
     return Container(
       width: double.infinity,
@@ -853,6 +1051,42 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
             ),
           ),
           const SizedBox(height: AppDimensions.spacingXs),
+        ],
+      ),
+    );
+  }
+
+  /// Shown when the day's real alignment exists but its woven story is still
+  /// being generated (the ensureForecast call is running). Honest "working"
+  /// state so we never present the static template as the real reading.
+  Widget _buildVibeLoadingContent(Color c) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppDimensions.paddingLg),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 14,
+            height: 14,
+            child: CircularProgressIndicator(
+              strokeWidth: 1.6,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                c.withValues(alpha: 0.55),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            'Reading your sky\u2026',
+            style: TextStyle(
+              fontSize: AppTheme.babaTextSize,
+              fontWeight: FontWeight.w400,
+              fontStyle: FontStyle.italic,
+              color: c.withValues(alpha: 0.7),
+              height: 1.5,
+            ),
+          ),
         ],
       ),
     );
@@ -969,6 +1203,9 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
                 isDark: isDark,
                 isJanmaDay: _isJanmaDay,
                 rotation: _controller,
+                // Real per-day alignment %, one weight per nakshatra → the wave
+                // rolls in/out with the true numbers (top = shown day's %).
+                wave: _alignmentWave(),
               ),
             ),
           ],
@@ -1849,28 +2086,12 @@ class _MoonPhasePainter extends CustomPainter {
 }
 
 // =============================================================================
-// Tara ring painter
+// Alignment orb painter
 // =============================================================================
 
-/// Quality weight per tara type: -1 pinches the aura inward (caution),
-/// +1 bulges it outward (most auspicious). Shared by the wave painter and the
-/// alignment-percentage readout so they never drift apart.
-const Map<TaraType, double> _taraQuality = {
-  TaraType.vadha: -1.0,
-  TaraType.pratyari: -0.7,
-  TaraType.vipat: -0.45,
-  TaraType.janma: 0.15,
-  TaraType.kshema: 0.5,
-  TaraType.mitra: 0.6,
-  TaraType.sampat: 0.75,
-  TaraType.sadhaka: 0.85,
-  TaraType.paramaMitra: 1.0,
-};
-
-/// Maps a tara quality (-1..+1) to a friendly 0..100 "alignment" percentage.
-int _taraAlignmentPercent(TaraType t) =>
-    (50 + (_taraQuality[t] ?? 0.0) * 47).round().clamp(0, 100);
-
+/// Paints the wheel's orb: a clean circle whose radius is driven purely by the
+/// displayed day's REAL alignment % (ForecastDay.alignment). No Tara Bala, no
+/// per-nakshatra shape — the orb and the headline number are the same signal.
 class _TaraRingPainter extends CustomPainter {
   final int birthIndex;
   final int todayIndex;
@@ -1878,6 +2099,11 @@ class _TaraRingPainter extends CustomPainter {
   final Color primaryColor;
   final bool isDark;
   final bool isJanmaDay;
+
+  /// Signed wave weight (−1..+1) per nakshatra, derived from the REAL alignment
+  /// % of the day each nakshatra maps to. Drives the aura's in/out shape so the
+  /// wave rolls with the true numbers (a null entry draws flat/neutral).
+  final List<double?> wave;
 
   /// Live wheel rotation. Used both to repaint each frame AND to fade the
   /// wave line toward the SCREEN bottom (so the dimming follows the line
@@ -1892,6 +2118,7 @@ class _TaraRingPainter extends CustomPainter {
     required this.isDark,
     required this.isJanmaDay,
     required this.rotation,
+    required this.wave,
   }) : super(repaint: rotation);
 
   static const int _n = 27;
@@ -1902,34 +2129,26 @@ class _TaraRingPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
 
-    // Per-nakshatra alignment quality relative to the birth star.
-    // Without birth data the aura is a calm, perfect circle.
-    final q = List<double>.filled(_n, 0.0);
-    if (birthIndex >= 0) {
-      for (int i = 0; i < _n; i++) {
-        final tara = TaraBala.calculate(birthIndex, i);
-        q[i] = _taraQuality[tara.type] ?? 0.0;
-      }
-    }
-
-    // Aura geometry. Bulges OUT past the artwork on auspicious nakshatras,
-    // pinches IN on cautionary ones. Sized to stay just inside the card.
-    // Dramatic amplitude that bulges OUT past the wheel (and the card edge
-    // if needed). The line self-fades toward the screen bottom, so even the
-    // outward bulges darken as they go down.
+    // Aura geometry. The overall orb size is CONSTANT (mean radius ≈ baseR);
+    // only the wave rolls in and out. Bulges OUT where the day's alignment % is
+    // strong, pinches IN where it's weak — the same real number as the header.
+    // Sized to stay just inside the card; the line self-fades toward the screen
+    // bottom, so even outward bulges darken as they go down.
     final baseR = size.width / 2 - 9.0;
     const amp = 18.0; // dramatic-ish, spills slightly outside
     final maxR = baseR + amp;
 
-    // Smooth radius at any angle by cosine-interpolating between the two
-    // nearest nakshatra centres → soft, continuous waviness.
+    // Smooth radius at any angle by cosine-interpolating between the two nearest
+    // nakshatra weights → soft, continuous waviness. Missing days read as flat.
     double radiusAt(double theta) {
       final f = ((_ashwiniOffset - theta) / _seg) % _n;
       final i0 = f.floor() % _n;
       final i1 = (i0 + 1) % _n;
       final t = f - f.floor();
       final w = (1 - cos(t * pi)) / 2;
-      final qv = q[i0] * (1 - w) + q[i1] * w;
+      final v0 = wave[i0] ?? 0.0;
+      final v1 = wave[i1] ?? 0.0;
+      final qv = v0 * (1 - w) + v1 * w;
       return baseR + amp * qv;
     }
 
@@ -1983,7 +2202,8 @@ class _TaraRingPainter extends CustomPainter {
       old.selectedIndex != selectedIndex ||
       old.primaryColor != primaryColor ||
       old.isDark != isDark ||
-      old.isJanmaDay != isJanmaDay;
+      old.isJanmaDay != isJanmaDay ||
+      !listEquals(old.wave, wave);
 }
 
 // =============================================================================

@@ -408,6 +408,37 @@ function buildMemoryContextString(memory) {
     return lines.join("\n");
 }
 
+/**
+ * The unified forecast, as grounding for the TEXT/Live brain. This is the SAME
+ * read-model that drives the nakshatra wheel and Aurobhatt's getMyForecast tool,
+ * so voice, text, and the wheel all tell ONE story. The alignment is computed
+ * (real Vedic math) and must never be contradicted; the narrative is the woven
+ * arc. Returns "" when there's no forecast.
+ * @param {Object} forecast - { today:{alignment,heading,narrative}, storyArc, currentChapter }
+ * @returns {string}
+ */
+function buildForecastContextString(forecast) {
+    if (!forecast || typeof forecast !== "object") return "";
+    const t = forecast.today || null;
+    const lines = [];
+    if (t && (t.alignment != null || t.narrative)) {
+        lines.push("\n\n═══ THEIR FORECAST TODAY (same as their wheel — treat as ground truth) ═══");
+        if (t.alignment != null) {
+            lines.push(`Today's alignment: ${t.alignment}/100${t.heading ? ` — ${t.heading}` : ""}. `
+                + "This number is computed from real transits; never contradict it or invent a different one.");
+        }
+        if (t.narrative) lines.push(`Today's reading: ${t.narrative}`);
+    }
+    if (forecast.storyArc) {
+        lines.push(`\nTheir ongoing story (the arc of this chapter): ${forecast.storyArc}`);
+        lines.push("Speak as a continuation of this story — reference where they are, don't restart from scratch.");
+    }
+    if (forecast.currentChapter) {
+        lines.push(`Current throughline: ${forecast.currentChapter}`);
+    }
+    return lines.join("\n");
+}
+
 // =============================================================================
 // ASSEMBLY
 // =============================================================================
@@ -476,6 +507,7 @@ function getChatSystemPrompt(astrologyContext = null, userLocation = null, isVoi
         buildScreenContextString(screenContext),
         buildAstrologyContextString(astrologyContext),
         astrologyContext?.ayurveda ? buildWellnessContextString(astrologyContext.ayurveda) : "",
+        buildForecastContextString(astrologyContext?.forecast),
         buildMemoryContextString(astrologyContext?.memory),
     ].filter(Boolean).join("\n");
 }

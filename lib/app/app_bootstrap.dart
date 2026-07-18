@@ -6,6 +6,10 @@ import 'package:aurogram/features/onboarding/domain/baba_onboarding_tools.dart';
 import 'package:aurogram/features/auth/baba_login_tools.dart';
 import 'package:aurogram/features/onboarding/domain/baba_identity_tools.dart';
 import 'package:aurogram/features/astrology/domain/baba_astrology_tools.dart';
+import 'package:aurogram/features/astrology/domain/baba_cosmic_tools.dart';
+import 'package:aurogram/features/astrology/domain/baba_forecast_tools.dart';
+import 'package:aurogram/features/ayurveda/domain/baba_ayurveda_tools.dart';
+import 'package:aurogram/features/baba/domain/baba_memory_tools.dart';
 import 'package:aurogram/features/baba/domain/baba_tool_registry.dart';
 import 'package:aurogram/features/baba/domain/baba_tool_catalog.dart';
 import 'package:aurogram/core/di/injection.dart';
@@ -223,6 +227,15 @@ class AppBootstrap {
       BabaToolRegistry.instance.registerAll(BabaLoginTools.declarations());
       // Baba's on-demand chart-facts tool (compact, avoids CX token bloat).
       BabaToolRegistry.instance.register(BabaAstrologyTools.declaration());
+      // Depth tools: today's shared sky + live gochar (no auth), personal
+      // Ayurveda, and cross-call memory. These give Baba fresh, varied material
+      // every call instead of looping on the daily insight.
+      BabaToolRegistry.instance.registerAll(BabaCosmicTools.declarations());
+      BabaToolRegistry.instance.register(BabaAyurvedaTools.declaration());
+      // Personal forecast: the SAME real day-alignments + woven story the wheel
+      // shows, so voice + wheel + card never contradict each other.
+      BabaToolRegistry.instance.register(BabaForecastTools.declaration());
+      BabaToolRegistry.instance.register(BabaMemoryTools.declaration());
       // NOTE: knowledge/RAG is now NATIVE in CX - the 'vedicCanon' Data Store
       // Tool grounds meanings server-side (see voice-relay/tools/
       // provision_cx_datastore). No app-side knowledge tool needed.

@@ -1,4 +1,8 @@
-import 'package:flutter/foundation.dart';
+import 'dart:async';
+
+import 'package:flutter/widgets.dart';
+
+import 'package:aurogram/features/baba/domain/baba_context.dart';
 
 /// Result a tool handler returns to Baba.
 typedef BabaToolHandler = Future<Map<String, dynamic>> Function(
@@ -16,12 +20,24 @@ class BabaTool {
     required this.description,
     required this.parameters,
     required this.defaultHandler,
+    this.appendsWorldState = true,
   });
 
   final String name;
   final String description;
   final Map<String, dynamic> parameters;
   final BabaToolHandler defaultHandler;
+
+  /// Whether the observe-on-every-action envelope (the fresh `state` +
+  /// `settled`) should ride this tool's result. TRUE for actions that CHANGE
+  /// the screen (navigate, the set* tools, advanceOnboarding) — Baba must see
+  /// where he landed. FALSE for pure DATA READS (getTransits, getMyChart,
+  /// getMyForecast, getToday, getMyWellness): they don't touch the screen, and
+  /// stapling the current screen's `onScreen` onto a data payload actively
+  /// backfires — the "narrate only what's on screen" law then makes Baba
+  /// distrust real data he just fetched (he'd fetch the live gochar, then
+  /// stall because the Home dashboard doesn't literally list those signs).
+  final bool appendsWorldState;
 
   /// The functionDeclaration handed to Gemini at session start.
   Map<String, dynamic> get declaration => {
@@ -54,6 +70,24 @@ class BabaToolRegistry extends ChangeNotifier {
 
   final Map<String, BabaTool> _tools = {};
   final Map<String, BabaToolHandler> _boundHandlers = {};
+
+  // How many tool dispatches are currently in flight (incl. their settle window).
+  // Lets other code tell whether a state change was Baba-driven: an action that
+  // navigates (e.g. sign-in) will find this > 0, so it can skip a redundant
+  // proactive announce — the tool result already carries the settled state.
+  int _dispatchDepth = 0;
+
+  /// True while a tool call is being dispatched (through to its settled result).
+  bool get isDispatching => _dispatchDepth > 0;
+
+  /// Upper bound on how long a single tool handler may run before dispatch
+  /// gives up and returns ok:false. A wedged handler (a hung network call, a
+  /// future that never completes) would otherwise leave the voice relay
+  /// waiting for a tool_response — dead air until the relay's own watchdog
+  /// fires. Kept just under the relay's CX_TOOL_TIMEOUT_MS (12s) so the client
+  /// returns a specific reason FIRST; every real handler here finishes in well
+  /// under a second (a geocode/profile save is a few seconds at most).
+  static const Duration _handlerTimeout = Duration(seconds: 10);
 
   /// Register a global tool declaration (idempotent by name). Call once at app
   /// start so the tool is available across every screen/session.
@@ -97,8 +131,9 @@ class BabaToolRegistry extends ChangeNotifier {
       return {'ok': false, 'error': 'unknown_tool', 'tool': name};
     }
     final handler = _boundHandlers[name] ?? tool.defaultHandler;
+    _dispatchDepth++;
     try {
-      final result = await handler(args);
+      final result = await handler(args).timeout(_handlerTimeout);
       // `ok` is the ONE field the model reflexively trusts to decide whether an
       // action worked (and whether to tell the user it's done). So it must be
       // truthful: a handler that couldn't perform the action MUST return
@@ -108,9 +143,50 @@ class BabaToolRegistry extends ChangeNotifier {
       // `{'ok': true, ...result}` — that once masked failures as success and
       // made Baba claim the chart was ready when nothing had been saved.
       final ok = result['ok'] as bool? ?? true;
-      return {...result, 'ok': ok};
+      final out = {...result, 'ok': ok};
+      // Data reads don't change the screen — narrate the payload straight, no
+      // world-state envelope (see [BabaTool.appendsWorldState]).
+      return tool.appendsWorldState ? await _withWorldState(out) : out;
+    } on TimeoutException {
+      return await _withWorldState({
+        'ok': false,
+        'error': 'timeout',
+        'tool': name,
+        'reason': 'the app took too long to respond',
+      });
     } catch (e) {
-      return {'ok': false, 'error': e.toString(), 'tool': name};
+      return await _withWorldState({'ok': false, 'error': e.toString(), 'tool': name});
+    } finally {
+      _dispatchDepth--;
     }
+  }
+
+  /// The observe-on-every-action envelope: after a handler runs, wait for the UI
+  /// it triggered to SETTLE (see [BabaContext.settle] — it waits out even a
+  /// deferred navigation instead of guessing a frame count), then re-ground Baba
+  /// by appending the FRESH world state + a `settled` flag to the result. This
+  /// is what makes every action self-correcting: Baba always sees the TRUE
+  /// resulting state, never his assumption of it, and can never outrun his own
+  /// effects. `settled` is false while the resulting screen is still loading —
+  /// a signal to guided flows (and the playbook) to wait, not to charge ahead.
+  ///
+  /// A handler that already computed the post-action state (rare) can set
+  /// `state`/`settled` itself; we never overwrite an explicit value.
+  Future<Map<String, dynamic>> _withWorldState(Map<String, dynamic> result) async {
+    await BabaContext.instance.settle();
+    final state = BabaContext.instance.worldState();
+    final onScreen = state['onScreen'];
+    final loading = onScreen is Map && onScreen['status'] == 'loading';
+    // Order matters for how the model READS this: lead with the RESULT
+    // (`ok`, `reason`, `missing`, ...) and trail with the bulky `state` blob.
+    // When an action FAILS (e.g. submitBirthDetails ok:false, missing:[place]),
+    // burying ok:false after ~500 chars of "everything's ready on screen" is
+    // exactly how the model glosses over it and falsely narrates success. The
+    // failure signal must come first.
+    return {
+      ...result,
+      if (!result.containsKey('state')) 'state': state,
+      if (!result.containsKey('settled')) 'settled': !loading,
+    };
   }
 }

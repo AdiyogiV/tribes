@@ -12,6 +12,7 @@
  * TASK PAYLOADS:
  *   taskType: "process_insight"    — { userId, astrologyData, date }
  *   taskType: "process_per_house"  — { uid }
+ *   taskType: "process_narrate"    — { uid }  (monthly forecast narration)
  *
  * BACKWARD-COMPAT: if `taskType` is missing (in-flight task enqueued before this
  * code deployed), the router infers from shape — `astrologyData` => process_insight,
@@ -27,6 +28,7 @@ import { geminiApiKey, freeAstrologyApiKey } from "../lib/secrets.js";
 // which doesn't need any of the AI/astrology heavy imports).
 let _processInsightHandler = null;
 let _processPerHouseHandler = null;
+let _processNarrateHandler = null;
 
 async function getProcessInsightHandler() {
     if (!_processInsightHandler) {
@@ -42,6 +44,14 @@ async function getProcessPerHouseHandler() {
         _processPerHouseHandler = mod.handleProcessPerHouse;
     }
     return _processPerHouseHandler;
+}
+
+async function getProcessNarrateHandler() {
+    if (!_processNarrateHandler) {
+        const mod = await import("./task_handlers/process_narrate_handler.js");
+        _processNarrateHandler = mod.handleProcessNarrate;
+    }
+    return _processNarrateHandler;
 }
 
 /**
@@ -97,6 +107,10 @@ export const taskRouter = onTaskDispatched({
     }
     case "process_per_house": {
         const handler = await getProcessPerHouseHandler();
+        return handler(payload, { db, FieldValue, logger });
+    }
+    case "process_narrate": {
+        const handler = await getProcessNarrateHandler();
         return handler(payload, { db, FieldValue, logger });
     }
     default:

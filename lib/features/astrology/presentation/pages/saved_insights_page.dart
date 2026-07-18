@@ -7,12 +7,29 @@ import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
 import 'package:intl/intl.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
+import 'package:aurogram/features/baba/domain/baba_snapshot.dart';
 
 /// Page to display user's saved insights
-class SavedInsightsPage extends StatelessWidget {
+class SavedInsightsPage extends StatefulWidget {
   final String uid;
 
   const SavedInsightsPage({super.key, required this.uid});
+
+  @override
+  State<SavedInsightsPage> createState() => _SavedInsightsPageState();
+}
+
+class _SavedInsightsPageState extends State<SavedInsightsPage>
+    with BabaScreenAware<SavedInsightsPage> {
+  // So whereAmI always resolves an onScreen for this page (no more "blind"
+  // screen); the list content itself streams in below.
+  @override
+  String get babaScreenKey => 'savedInsights';
+
+  @override
+  BabaSnapshot babaSnapshot() => const BabaSnapshot.ready(
+        headline: 'The saved insights the user bookmarked to revisit.',
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +85,7 @@ class SavedInsightsPage extends StatelessWidget {
           SliverToBoxAdapter(
             child: StreamBuilder<QuerySnapshot>(
               stream: locator<UserRepository>().collection
-                  .doc(uid)
+                  .doc(widget.uid)
                   .collection('savedInsights')
                   .orderBy('savedAt', descending: true)
                   .snapshots(),
@@ -324,7 +341,7 @@ class SavedInsightsPage extends StatelessWidget {
 
     if (confirmed == true) {
       await locator<UserRepository>().collection
-          .doc(uid)
+          .doc(widget.uid)
           .collection('savedInsights')
           .doc(docId)
           .delete();

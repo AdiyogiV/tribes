@@ -345,8 +345,15 @@ export async function getUserMemory(uid) {
         const snap = await db.doc(MEMORY_DOC_PATH(uid)).get();
         if (!snap.exists) return null;
         const d = snap.data();
-        if (!d.rollingSummary && !(d.threads || []).length) return null;
-        return { rollingSummary: d.rollingSummary || "", threads: d.threads || [] };
+        if (!d.rollingSummary && !(d.threads || []).length && !d.storyline) return null;
+        return {
+            rollingSummary: d.rollingSummary || "",
+            threads: d.threads || [],
+            // The evolving forecast storyline arc (written by the NARRATE job).
+            // Callers that only need life-threads ignore it; ai.js uses it to
+            // ground the chat in the same continuous story the wheel shows.
+            storyline: d.storyline || null,
+        };
     } catch (err) {
         logger.warn("getUserMemory failed (non-fatal)", {
             structuredData: true, uid, error: String(err?.message || err),

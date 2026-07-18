@@ -41,9 +41,13 @@ extension VoiceCallStateX on VoiceCallState {
 /// Drives one live voice session end-to-end:
 ///   mic (PCM16 16k) -> WebSocket relay -> Gemini brain -> TTS (PCM16 24k) -> speaker.
 ///
-/// Transport-thin and UI-agnostic: the page just listens and renders. A short
-/// filler clip plays on tap to cover the ~1-2s connect; the mic opens the
-/// instant the relay is ready.
+/// Transport-thin and UI-agnostic: the page just listens and renders.
+///
+/// COLD START is hidden by PRE-WARMING: [warmUp] opens the socket + session and
+/// lets CX generate its opening greeting AHEAD of the tap, buffering that audio
+/// without playing it or touching the UI. The tap ([start]) then plays the
+/// held greeting instantly and goes live — no connect wait, Baba speaks first.
+/// If nothing is warmed, [start] falls back to a normal cold connect.
 class VoiceSessionController extends ChangeNotifier {
   // App-scoped singleton. Baba's voice session must OUTLIVE any single widget
   // (the app-wide BabaOverlay, a chat page) so a live call survives navigation
@@ -142,12 +146,6 @@ class VoiceSessionController extends ChangeNotifier {
   String _aryabhattReply = '';
   String? _errorMessage;
 
-  /// When set, forces the voice engine for the NEXT call regardless of the
-  /// user's saved preference. Onboarding sets this to [VoiceEngine.live] because
-  /// tool-calling only flows over the Live engine (CX can't). Cleared by the
-  /// screen on exit.
-  VoiceEngine? engineOverride;
-
   /// When set, appended to Baba's system prompt for the NEXT call to give him a
   /// task for the current screen (e.g. "guide onboarding"). Keeps ONE persona;
   /// this is just his job right now. Cleared by the screen on exit.
@@ -174,6 +172,13 @@ class VoiceSessionController extends ChangeNotifier {
   // never came), so we must NOT resume it or every future call inherits the
   // poison. Errors force the next call to be cold with a fresh session id.
   bool _lastEndedCleanly = false;
+  // Distinguishes an EXPLICIT close (user tapped hang-up, or Baba's farewell)
+  // from an accidental drop (network blip, backgrounding). Only an accidental
+  // drop is warm-resume-eligible; an explicit close should GREET fresh on the
+  // next tap — so we also pre-warm a new greeting right after it. Set from
+  // [_pendingUserHangup] whenever a call transitions to ended/error.
+  bool _endedByUser = false;
+  bool _pendingUserHangup = false;
   // The CX/Live session id in play. Minted fresh on a cold open (and after any
   // error), reused verbatim on a warm resume so the conversation continues.
   // A stuck/dropped session can therefore never brick future calls: the next
@@ -183,10 +188,59 @@ class VoiceSessionController extends ChangeNotifier {
   // ALSO somehow rejected. Reset on every user-initiated start().
   bool _autoHealedStuckSession = false;
 
+  // ── Pre-warm (kill the cold start) ────────────────────────────────────
+  // [warmUp] opens the socket + session and lets CX generate its opening
+  // greeting BEFORE the user taps, buffering that audio (and caption) without
+  // playing it or touching the public state. The tap ([start]) then adopts this
+  // warm session: it plays the held greeting instantly and goes live, so there
+  // is no connect wait and Baba speaks first. If nothing is warmed (or it went
+  // stale), [start] falls back to a normal cold connect.
+  bool _warming = false; // a warm connect is in flight / a warm session is held
+  bool _warmReady = false; // the greeting turn finished; fully buffered & armed
+  bool _live = false; // the user has tapped: UI + mic are active for this call
+  final List<Uint8List> _warmGreetingAudio = <Uint8List>[]; // held TTS chunks
+  String _warmGreetingText = ''; // held caption for the greeting
+  DateTime? _warmedAt; // when the warm session's greeting was captured
+  // A warm greeting older than this is discarded on tap — its [SESSION FACTS]
+  // (today's alignment, current screen, prahar) go stale — and we cold-start.
+  static const Duration _warmStaleAfter = Duration(minutes: 8);
+
+  bool get _isWarmStale =>
+      _warmedAt != null && DateTime.now().difference(_warmedAt!) > _warmStaleAfter;
+
   VoiceCallState get state => _state;
   String get userTranscript => _userTranscript;
   String get aryabhattReply => _aryabhattReply;
   String? get errorMessage => _errorMessage;
+
+  /// True when a pre-warmed session is connected and fresh enough to adopt on
+  /// the next tap (so the caller can skip rebuilding the opening directive — it
+  /// was already built for [warmUp]).
+  bool get hasWarmSession =>
+      (_warming || _warmReady) && _channel != null && !_isWarmStale;
+
+  /// Cheap pre-check (no I/O) for whether [warmUp] would actually do anything.
+  /// The caller uses this to avoid building the opening directive (a Firestore
+  /// read) when warming would just no-op.
+  bool get canWarmUp {
+    if (_disposed || _live || _warming || _warmReady) return false;
+    if (_state != VoiceCallState.idle && _state != VoiceCallState.ended) {
+      return false;
+    }
+    if (_channel != null || _cleanupFuture != null) return false;
+    if (FirebaseAuth.instance.currentUser == null) return false;
+    // A recent ACCIDENTAL drop is warm-resume-eligible: a re-tap should continue
+    // it, so don't pre-warm a fresh greeting on top. An explicit close
+    // (_endedByUser) is NOT resume-eligible — we DO want to warm a new greeting.
+    if (_lastEndedAt != null &&
+        _lastEndedCleanly &&
+        !_endedByUser &&
+        _sessionId != null &&
+        DateTime.now().difference(_lastEndedAt!) <= _warmResumeWindow) {
+      return false;
+    }
+    return true;
+  }
 
   /// True while a call is live (from dialling through to the last word) — i.e.
   /// not idle/ended/error. Screens use this to decide whether to feed Baba
@@ -196,6 +250,17 @@ class VoiceSessionController extends ChangeNotifier {
       _state == VoiceCallState.listening ||
       _state == VoiceCallState.thinking ||
       _state == VoiceCallState.speaking;
+
+  /// True while Baba is still PRESENTING the current turn — he is actively
+  /// `speaking`, OR his TTS is still queued/draining, OR a turn-end is pending
+  /// (audio still playing out of the speaker). This is the honest "am I still
+  /// talking?" signal that guided flows gate on, so an "advance" can never fire
+  /// while he is mid-sentence — the root cause of the UI outrunning his voice.
+  bool get isNarrating =>
+      _state == VoiceCallState.speaking ||
+      _draining ||
+      _turnEndPending ||
+      _ttsQueue.isNotEmpty;
 
   void _setState(VoiceCallState s) {
     if (_disposed || _state == s) return;
@@ -209,6 +274,10 @@ class VoiceSessionController extends ChangeNotifier {
       // we drop the session id to force the NEXT call to mint a fresh one and
       // start from a guaranteed-clean slate.
       _lastEndedCleanly = s == VoiceCallState.ended;
+      // Was this end an explicit user close (vs an accidental drop)? Consumed by
+      // the warm-resume decision + post-close re-warm. Reset for the next end.
+      _endedByUser = _pendingUserHangup;
+      _pendingUserHangup = false;
       if (s == VoiceCallState.error) _sessionId = null;
     }
     AppLogger.i('Voice state',
@@ -224,7 +293,30 @@ class VoiceSessionController extends ChangeNotifier {
   /// Open audio devices, hook up the relay, then open the mic the moment the
   /// relay is ready.
   Future<void> start() async {
-    if (_state != VoiceCallState.idle && _state != VoiceCallState.ended) return;
+    if (_disposed) return;
+    // FAST PATH: a warmed (or still-warming) session is already connected and
+    // (usually) holding CX's greeting. Adopt it and go live instantly — play the
+    // buffered greeting, then open the mic — instead of a cold connect. This is
+    // what removes the "connecting…" wait the user hears on the first tap.
+    if ((_warmReady || _warming) && _channel != null && !_isWarmStale) {
+      await _goLiveFromWarm();
+      return;
+    }
+    // A warm session that went stale (or half-failed) is useless — tear it down
+    // so the cold start below mints a clean, fresh one.
+    if (_warmReady || _warming) {
+      await _discardWarm();
+    }
+    // idle/ended are the normal entry states. `error` is ALSO allowed: after a
+    // plain failure the state rests at `error` (only the auto-heal path reset
+    // it to idle), which previously made every future tap a silent no-op — the
+    // call could never be restarted. A fresh user-initiated start() from error
+    // is exactly the retry we want (a cold session was already forced on error).
+    if (_state != VoiceCallState.idle &&
+        _state != VoiceCallState.ended &&
+        _state != VoiceCallState.error) {
+      return;
+    }
     // If a teardown from the previous call is still in flight, let it finish
     // FIRST. This matters after the app was backgrounded (e.g. the OTP/
     // reCAPTCHA activity), which fires hangUp() -> _cleanup() (async
@@ -239,19 +331,21 @@ class VoiceSessionController extends ChangeNotifier {
       } catch (_) {/* a failed teardown must not block the next call */}
     }
     _micStarted = _relayReady = false;
-    // Warm resume? A dial soon after the last end reuses the session and skips
-    // the greeting (see _connect) so Baba continues instead of re-introducing
-    // himself. Cold open (first call / long gap) greets normally.
+    _live = true; // a user-initiated live call (gates _maybeStartMic)
+    // Warm resume? A re-dial soon after an ACCIDENTAL drop reuses the session
+    // and skips the greeting (see _connect) so Baba continues instead of
+    // re-introducing himself. An explicit close (_endedByUser) always greets
+    // fresh, as does a cold open (first call / long gap).
     _warmResume = _lastEndedAt != null &&
         _lastEndedCleanly &&
+        !_endedByUser &&
         _sessionId != null &&
         DateTime.now().difference(_lastEndedAt!) <= _warmResumeWindow;
-    // Engine: an explicit override wins (onboarding forces Live for its
-    // latency-sensitive co-authoring), otherwise honour the user's saved pref.
-    // BOTH engines now support tool-calling — Live via streamed declarations,
-    // CX via Function tools provisioned on the agent — so tools no longer force
-    // an engine. CX is the credit-funded default; Live is premium.
-    _engine = engineOverride ?? await VoiceEnginePref.read();
+    // Honour the user's saved engine preference. BOTH engines now support
+    // tool-calling — Live via streamed declarations, CX via Function tools
+    // provisioned on the agent — so tools no longer force an engine. CX is the
+    // credit-funded default; Live is premium.
+    _engine = await VoiceEnginePref.read();
     _micMode = await VoiceMicModePref.effectiveFor(_engine);
     // Clear last call's transcript + reply so a fresh tap never flashes stale
     // text in the caption before the first reply.
@@ -300,9 +394,132 @@ class VoiceSessionController extends ChangeNotifier {
     }
   }
 
-  /// Open the mic exactly once, as soon as the relay is ready.
+  /// Pre-warm a call in the background so the next tap is instant. Opens the
+  /// socket + session and lets CX generate its opening greeting AHEAD of time,
+  /// buffering that audio WITHOUT playing it or changing the public state (the
+  /// UI still shows "not in a call"). The tap then adopts this via [start].
+  ///
+  /// The caller must set [directiveOverride] to Baba's opening cue FIRST (same
+  /// cue the cold tap builds) — that's what makes CX greet, which is what we
+  /// buffer. Check [canWarmUp] before doing that build to avoid wasted I/O.
+  ///
+  /// Deliberately does NOT touch the audio hardware (no player, no audio-session
+  /// activation) — warming is network-only, so it never grabs audio focus or
+  /// interrupts the user's music while they haven't actually called Baba.
+  ///
+  /// Best-effort and cheap to call repeatedly: it no-ops if a call is live, a
+  /// warm session already exists, the user isn't signed in, or a recent call is
+  /// still inside the warm-resume window (a quick re-tap should CONTINUE that
+  /// conversation, not open a fresh greeting).
+  Future<void> warmUp() async {
+    if (!canWarmUp) return;
+
+    _warming = true;
+    _warmReady = false;
+    _live = false;
+    _warmGreetingAudio.clear();
+    _warmGreetingText = '';
+    _warmedAt = null;
+    _micStarted = _relayReady = false;
+    _warmResume = false; // a pre-warm is always a cold open (fresh greeting)
+    _screenContextSent = false;
+    _ttsChunks = _ttsBytes = _micChunks = _micBytes = 0;
+
+    try {
+      _engine = await VoiceEnginePref.read();
+      _micMode = await VoiceMicModePref.effectiveFor(_engine);
+      if (!_warming) return; // adopted/cancelled while we were reading prefs
+      AppLogger.i('Voice warm-up starting',
+          category: LogCategory.voice,
+          data: {'relay': VoiceRelayConfig.relayUrl});
+      await _connect(); // socket + start frame (with directive) → CX greets
+    } catch (e) {
+      AppLogger.w('Voice warm-up failed (will cold-start on tap)',
+          category: LogCategory.voice, data: {'error': '$e'});
+      _warming = false;
+      await _cleanup();
+    }
+  }
+
+  /// The user tapped while a warm (or warming) session is held: flip it live.
+  /// Play whatever greeting audio is already buffered and let the rest stream in
+  /// live, open the player/audio-session now (cheap vs a full cold connect), and
+  /// arm the mic. Reuses the SAME socket — no reconnect.
+  Future<void> _goLiveFromWarm() async {
+    final wasReady = _warmReady; // greeting turn already finished during warm?
+    _warming = false;
+    _warmReady = false;
+    _live = true;
+    _autoHealedStuckSession = false;
+    final buffered = List<Uint8List>.of(_warmGreetingAudio);
+    final greeting = _warmGreetingText;
+    _warmGreetingAudio.clear();
+    _userTranscript = '';
+    _suppressAudio = false;
+    _finishTurnTimer?.cancel();
+    _playbackStartedAt = null;
+    _playbackBytesFed = 0;
+    _setState(VoiceCallState.connecting);
+    AppLogger.i('Voice going live from warm session',
+        category: LogCategory.voice,
+        data: {'bufferedChunks': buffered.length, 'ready': greeting.isNotEmpty});
+    try {
+      if (!await _recorder.hasPermission()) {
+        _fail('Microphone permission denied');
+        return;
+      }
+      await _configureAudioSession();
+      await _openPlayer();
+    } catch (e, st) {
+      AppLogger.e('Voice go-live failed', category: LogCategory.voice, error: e, stackTrace: st);
+      _fail('Could not start the call: $e');
+      return;
+    }
+    if (_state != VoiceCallState.connecting) return; // hung up mid-open
+
+    if (greeting.isNotEmpty) _aryabhattReply = greeting;
+    // We already have (at least the start of) the greeting: show him speaking
+    // now so the UI never sits on "connecting" while he talks.
+    if (greeting.isNotEmpty || buffered.isNotEmpty) {
+      _setState(VoiceCallState.speaking);
+      for (final chunk in buffered) {
+        _playAudio(chunk);
+      }
+      // If the greeting turn finished during warm, its 'speaking_done' won't
+      // fire again — mark the turn end now so the mic re-arms once it plays out.
+      // (Any audio still streaming keeps the live speaking_done path in charge.)
+      if (wasReady) _turnEndPending = true;
+    }
+    // else: nothing buffered yet (very fast tap) — stay 'connecting'; the live
+    // handlers flip to 'speaking' on the first reply/chunk as in a cold start.
+
+    // Open the mic (recorder) now; forwarding stays gated to the user's turn, so
+    // it can never capture the greeting playing out.
+    _maybeStartMic();
+    _maybeSendScreenContext();
+    if (_turnEndPending && _ttsQueue.isEmpty && !_draining) {
+      _scheduleFinishTurn();
+    }
+  }
+
+  /// Drop a stale/half-failed warm session so a clean cold start can follow.
+  Future<void> _discardWarm() async {
+    AppLogger.i('Discarding warm session (stale/unusable)',
+        category: LogCategory.voice);
+    _warming = false;
+    _warmReady = false;
+    _live = false;
+    _warmGreetingAudio.clear();
+    _warmGreetingText = '';
+    _warmedAt = null;
+    await _cleanup();
+  }
+
+  /// Open the mic exactly once, as soon as the relay is ready — but only once
+  /// the call is actually LIVE. While merely pre-warming ([warmUp]) the relay
+  /// goes ready too, and we must NOT open the mic then (no call yet).
   void _maybeStartMic() {
-    if (_disposed || _micStarted) return;
+    if (_disposed || _micStarted || !_live) return;
     if (!_relayReady) return;
     if (_state == VoiceCallState.error || _state == VoiceCallState.ended) return;
     _micStarted = true;
@@ -390,9 +607,23 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
       onError: (e) {
         AppLogger.e('Voice socket error',
             category: LogCategory.voice, error: e);
+        // A warm-only socket (pre-tap) failing must stay invisible — drop it
+        // silently so the next tap just cold-starts, no error UI.
+        if (!_live) {
+          unawaited(_discardWarm());
+          return;
+        }
         _fail('Connection lost');
       },
-      onDone: () => _setState(VoiceCallState.ended),
+      // Remote close (server hung up / dropped): tear down the mic + audio
+      // session too. Setting `ended` alone left the recorder and audio session
+      // live and the mic listener writing into a closed sink.
+      onDone: () {
+        final warmOnly = !_live; // a warm socket dropping is NOT a call ending
+        unawaited(_cleanup());
+        if (warmOnly) return;
+        _setState(VoiceCallState.ended);
+      },
     );
 
     // Open the session on the relay. `engine` picks CX (credit-funded default)
@@ -466,7 +697,13 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
       }
       _channel?.sink.add(chunk);
     });
-    _setState(VoiceCallState.listening);
+    // Only claim the floor if we're not mid-greeting. When adopting a warm
+    // session the mic opens WHILE the greeting is still playing (state ==
+    // speaking); flipping to listening there would capture his own voice. The
+    // greeting's turn-end (_finishTurn) hands the floor over cleanly instead.
+    if (_state == VoiceCallState.connecting) {
+      _setState(VoiceCallState.listening);
+    }
   }
 
   // ───────────────────────────────────────────────────────────────
@@ -477,12 +714,18 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
     if (message is String) {
       _onControl(message);
     } else {
-      // Binary = a TTS audio chunk to play.
+      // Binary = a TTS audio chunk.
       final bytes = message is Uint8List
           ? message
           : Uint8List.fromList(List<int>.from(message as List));
       _ttsChunks++;
       _ttsBytes += bytes.length;
+      // Pre-warm (pre-tap): buffer the greeting audio; the player isn't open and
+      // we must not make a sound until the user actually taps.
+      if (!_live) {
+        _warmGreetingAudio.add(bytes);
+        return;
+      }
       if (_ttsChunks == 1 || _ttsChunks % 25 == 0) {
         AppLogger.i('Relay -> TTS audio',
             category: LogCategory.voice,
@@ -518,16 +761,19 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
         });
     switch (type) {
       case 'ready':
-        // Relay is live — open the mic right away so the user can talk.
+        // Relay is live. When actually in a call this opens the mic; while
+        // merely pre-warming, _maybeStartMic no-ops (gated on _live) and we
+        // don't push screen context — there's no live conversation yet.
         _relayReady = true;
         // The session connected cleanly: re-arm the one-shot auto-heal so a
         // future wedge (in a later call) is allowed its own single retry.
         _autoHealedStuckSession = false;
         _maybeStartMic();
-        // If a screen set context before we connected, tell Baba now.
-        _maybeSendScreenContext();
+        if (_live) _maybeSendScreenContext();
         break;
       case 'transcript':
+        // No mic during warm, so a transcript can't be ours — ignore it.
+        if (!_live) break;
         _userTranscript = (msg['text'] as String?) ?? '';
         if ((msg['final'] as bool?) ?? false) {
           _setState(VoiceCallState.thinking);
@@ -535,6 +781,13 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
         notifyListeners();
         break;
       case 'reply':
+        // Pre-warm: hold the greeting's caption; don't flip to speaking yet.
+        if (!_live) {
+          final t = (msg['text'] as String?) ?? '';
+          _warmGreetingText =
+              _warmGreetingText.isEmpty ? t : '$_warmGreetingText $t';
+          break;
+        }
         _aryabhattReply = (msg['text'] as String?) ?? '';
         _turnEndPending = false;
         // A fresh turn's audio is about to arrive — cancel any pending mic
@@ -549,6 +802,7 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
         _setState(VoiceCallState.speaking);
         break;
       case 'interrupt':
+        if (!_live) break; // no playback during warm — nothing to interrupt
         // Barge-in: user started talking over Aurobhatt. Kill playback now and
         // give them the floor. STT keeps running on the relay, so their actual
         // utterance will come back as the next transcript/reply.
@@ -564,6 +818,17 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
         }
         break;
       case 'speaking_done':
+        // Pre-warm: the greeting turn finished generating — it's fully buffered
+        // and the session is armed. Mark the warm session READY for an instant
+        // adopt on tap. (No mic re-arm here; that happens when we go live.)
+        if (!_live) {
+          _warmReady = true;
+          _warmedAt = DateTime.now();
+          AppLogger.i('Voice warm-up ready (greeting buffered)',
+              category: LogCategory.voice,
+              data: {'chunks': _ttsChunks, 'bytes': _ttsBytes});
+          break;
+        }
         // Turn complete on the relay — but locally we may still be draining the
         // TTS queue. Only reopen the mic once the audio has actually finished
         // playing, otherwise we'd cut Aurobhatt off mid-sentence.
@@ -582,6 +847,14 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
         }
         break;
       case 'error':
+        // A failure while merely pre-warming must stay INVISIBLE — silently drop
+        // the warm session so the tap just does a normal cold start.
+        if (!_live) {
+          AppLogger.w('Voice warm-up error (dropping warm session)',
+              category: LogCategory.voice, data: {'message': msg['message']});
+          unawaited(_discardWarm());
+          break;
+        }
         final m = (msg['message'] as String?) ?? 'Something went wrong';
         // Self-heal a wedged backend session. This happens when a PREVIOUS call
         // dropped after Baba emitted a tool_call (e.g. navigateTo) but before
@@ -610,6 +883,13 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
             : m);
         break;
       case 'session_closed':
+        if (!_live) {
+          // Warm session closed before use — just drop it, no UI change.
+          unawaited(_discardWarm());
+          break;
+        }
+        // Relay closed the session — release mic/audio like a hang-up would.
+        unawaited(_cleanup());
         _setState(VoiceCallState.ended);
         break;
       case 'tool_call':
@@ -630,12 +910,29 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
         category: LogCategory.voice,
         data: {'id': id, 'name': name, 'args': args});
     final result = await BabaToolRegistry.instance.dispatch(name, args);
-    _channel?.sink.add(jsonEncode({
-      'type': 'tool_response',
-      'id': id,
-      'name': name,
-      'response': result,
-    }));
+    // The socket may have closed between dispatch and now (call ended, network
+    // blip). Guard the send so a dropped result is LOGGED, not silently lost —
+    // a lost tool_response is what used to wedge the relay (now also covered by
+    // the relay-side watchdog).
+    final channel = _channel;
+    if (channel == null) {
+      AppLogger.w('Baba tool_response dropped: socket closed',
+          category: LogCategory.voice, data: {'id': id, 'name': name});
+      return;
+    }
+    try {
+      channel.sink.add(jsonEncode({
+        'type': 'tool_response',
+        'id': id,
+        'name': name,
+        'response': result,
+      }));
+    } catch (e) {
+      AppLogger.w('Baba tool_response send failed',
+          category: LogCategory.voice,
+          data: {'id': id, 'name': name, 'error': e.toString()});
+      return;
+    }
     AppLogger.i('Baba tool_response',
         category: LogCategory.voice,
         data: {'id': id, 'name': name, 'result': result});
@@ -658,7 +955,21 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
     if (aligned.isEmpty) return;
     _setState(VoiceCallState.speaking);
     // Enqueue and drain sequentially with backpressure (see _ttsQueue docs).
-    _ttsQueue.add(aligned);
+    // Slice large buffers into <=_playerBufferBytes pieces so the drain loop
+    // re-checks _suppressAudio BETWEEN feeds. This is what makes barge-in / the
+    // mic-tap actually cut Aurobhatt off: the CX engine ships a whole reply as
+    // ONE giant chunk (>1MB), and a single feedUint8FromStream() of that blocks
+    // uninterruptibly for the full ~40s — so without slicing, an interrupt only
+    // clears the (already-empty) queue and he keeps talking. Sample-aligned
+    // (_playerBufferBytes is even; slice boundaries stay on 2-byte samples).
+    if (aligned.length <= _playerBufferBytes) {
+      _ttsQueue.add(aligned);
+    } else {
+      for (var i = 0; i < aligned.length; i += _playerBufferBytes) {
+        final end = (i + _playerBufferBytes).clamp(0, aligned.length);
+        _ttsQueue.add(Uint8List.sublistView(aligned, i, end));
+      }
+    }
     unawaited(_drainTts());
   }
 
@@ -819,6 +1130,57 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
   /// The value is remembered so a call that starts / reconnects while this
   /// screen is up still gets it (sent the moment the relay is ready). Screens
   /// should clear it (pass null) on exit if the context no longer applies.
+  // Highest world-model version we've already pushed to the live brain, so
+  // repeated pushes for the same state coalesce into a no-op (the World Model
+  // bumps its version on every change; see BabaContext.stateVersion).
+  int _lastPushedStateVersion = -1;
+
+  /// Engine-agnostic world-state push (see [BabaContext.markStateChanged]).
+  ///
+  /// The design keeps the app identical across engines:
+  ///   * **CX (production, half-duplex):** there is NO silent channel — every
+  ///     injected context is a spoken, billed turn. So an ambient `silent` push
+  ///     is a deliberate NO-OP here; Baba re-grounds himself from the `state`
+  ///     that rides every tool result instead. An [important] push (or a
+  ///     non-silent one) DOES go through, as a spoken context nudge — reserved
+  ///     for high-value transitions worth a turn (e.g. sign-in succeeded).
+  ///   * **Live (full-duplex):** silent `speak:false` deltas are exactly what
+  ///     the transport supports, so awareness can stream continuously.
+  ///
+  /// Version-gated + coalesced so a burst of state changes sends at most once
+  /// per distinct version, and only while a call is actually live.
+  void pushWorldState(Map<String, dynamic> state,
+      {bool silent = true, bool important = false}) {
+    if (_disposed || !isCallLive) return;
+    // CX: ambient deltas ride tool results (no-op push). An important delta is
+    // worth one spoken turn on any engine, so it overrides that gate.
+    if (silent && !important && _engine != VoiceEngine.live) return;
+    final version = state['stateVersion'] as int? ?? 0;
+    if (version <= _lastPushedStateVersion) return; // already reflected
+    final line = _compactWorldState(state);
+    if (line.isEmpty) return;
+    _lastPushedStateVersion = version;
+    // Important transitions are spoken so Baba acknowledges them; ambient ones
+    // stay silent awareness.
+    updateScreenContext(line, speak: important || !silent);
+  }
+
+  /// A tight one-liner of the world state for the live context channel — screen,
+  /// sub-step, on-screen headline and any blocked reason. Kept short to respect
+  /// the input-token budget.
+  static String _compactWorldState(Map<String, dynamic> s) {
+    final parts = <String>[];
+    final label = s['label'] ?? s['screen'];
+    if (label != null) parts.add('Screen: $label');
+    if (s['step'] != null) parts.add('step=${s['step']}');
+    final onScreen = s['onScreen'];
+    if (onScreen is Map && (onScreen['headline']?.toString().isNotEmpty ?? false)) {
+      parts.add(onScreen['headline'].toString());
+    }
+    if (s['blockedReason'] != null) parts.add('blocked: ${s['blockedReason']}');
+    return parts.join(' | ');
+  }
+
   void updateScreenContext(String? context, {bool speak = true}) {
     final trimmed = context?.trim();
     if (trimmed == null || trimmed.isEmpty) {
@@ -868,7 +1230,12 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
     });
   }
 
-  Future<void> hangUp() async {
+  /// End the call. [byUser] true (the default) marks this as an EXPLICIT close
+  /// (tapped hang-up, or Baba's farewell) — the next tap greets fresh and we
+  /// pre-warm a new greeting. Pass false for an INVOLUNTARY end (e.g. the app
+  /// being backgrounded) so a quick return still warm-resumes the conversation.
+  Future<void> hangUp({bool byUser = true}) async {
+    _pendingUserHangup = byUser;
     try {
       _channel?.sink.add(jsonEncode({'type': 'stop'}));
     } catch (_) {
@@ -890,6 +1257,14 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
   }
 
   Future<void> _cleanupOnce() async {
+    // Any warm/live session is being torn down — clear its held state so the
+    // next warmUp()/start() begins from a clean slate.
+    _warming = false;
+    _warmReady = false;
+    _live = false;
+    _warmGreetingAudio.clear();
+    _warmGreetingText = '';
+    _warmedAt = null;
     _ttsQueue.clear();
     _endAfterFarewell = false;
     _endAfterFarewellTimer?.cancel();

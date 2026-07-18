@@ -72,11 +72,23 @@ swapping engines needs no app rebuild.
 | `CX_ENVIRONMENT` | `draft` | Or a published environment id. |
 | `CX_LANGUAGE` | `en-IN` | Hinglish-friendly. |
 | `CX_VOICE` | `en-IN-Chirp3-HD-...` | Pick Aurobhatt's TTS voice. |
-| `BARGE_IN` | `true` | Interrupt-to-talk: user can cut in while Aurobhatt speaks and he stops to listen. Set `false` to fall back to half-duplex (no rebuild) if a device's echo cancellation causes false interrupts. |
-| `BARGE_IN_MIN_CHARS` | `6` | Min transcribed chars during playback before it counts as an interruption (filters echo/cough fragments). |
-| `BARGE_IN_MIN_WORDS` | `2` | Min word count too — echo usually transcribes as one garbled token, so ≥2 words kills most false interrupts. |
-| `BARGE_IN_GRACE_MS` | `600` | Deaf window (ms) after Aurobhatt STARTS speaking, where his own onset echoes hardest — no barge-in during it. |
+| `CX_STT_MODEL` | `latest_long` | STT recognizer for CX. `""` = CX default; `chirp_2` = strongest multilingual. |
+| `CX_TOOL_TIMEOUT_MS` | `12000` | Watchdog: if the client never returns a tool result, synthesize `ok:false` after this so the call can't hang. `0` disables. |
+| `CX_DEBUG_TURNS` | `false` | `true` = verbose per-turn trace (also logs raw tool-arg values). |
+| `REQUIRE_AUTH` | `true` | Verify the Firebase ID token on every session. **Keep `true` in production**; `false` only for local dev (bypasses auth). |
+| `MAX_CONNECTIONS` | `200` | Hard cap on concurrent WebSocket sessions; new sockets past this get closed with 1013. |
+| `MAX_PAYLOAD_BYTES` | `131072` | Max inbound frame size; larger frames are rejected (DoS guard). |
+| `WS_HEARTBEAT_MS` | `30000` | Ping interval; sockets that miss a pong are terminated (reaps dead peers). |
+| `WS_AUTH_TIMEOUT_MS` | `15000` | Close a socket that never sends a valid `start` within this window. |
+| `WS_OUTBOUND_BUFFER_LIMIT` | `5242880` | Drop TTS chunks when a slow client's send buffer exceeds this (backpressure). |
+| `MAX_CONTEXT_PER_MINUTE` | `30` | Per-connection cap on billed `context` turns per minute. |
 | `PORT` | `8080` | Cloud Run sets this. |
+
+Barge-in is **server-native on the Live engine** (VAD, tuned via the
+`LIVE_VAD_*` / `LIVE_NO_INTERRUPTION` knobs in `config.js`). The old
+threshold-based `BARGE_IN*` env vars were removed — the CX engine is strictly
+half-duplex and the Live engine interrupts itself natively, so they no longer
+exist in code.
 
 Service account needs `roles/dialogflow.client` (legacy engines) and, for the
 Live API engine, `roles/aiplatform.user`.

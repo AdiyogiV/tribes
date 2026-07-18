@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart' show WidgetsBinding;
 
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/core/routing/app_router.dart';
@@ -37,6 +38,16 @@ class BabaContext extends ChangeNotifier {
   String? _detail; // optional visible-content line published by a screen
   bool _attached = false;
 
+  // Monotonic version of the world model. Bumped on EVERY change Baba should
+  // know about — route change, published detail, or a screen signalling its
+  // own state moved (markStateChanged). It lets consumers (and the Live push
+  // path) coalesce: "have I already reflected this state?" without diffing the
+  // whole model. Never resets for the app's lifetime.
+  int _stateVersion = 0;
+
+  /// Monotonic version of the world model (see [worldState]).
+  int get stateVersion => _stateVersion;
+
   // Live, structured snapshot providers keyed by BabaScreen.key. Pulled on
   // demand at snapshot() time, so what Baba reads is always current. This is
   // the "wrap the app" spine: screens register via [registerSnapshot] (usually
@@ -67,9 +78,11 @@ class BabaContext extends ChangeNotifier {
     _location = uri;
     // A new screen invalidates the previous screen's published detail.
     _detail = null;
-    AppLogger.d('BabaContext: location -> $uri',
+    _stateVersion++;
+    AppLogger.d('BabaContext: location -> $uri (v$_stateVersion)',
         category: LogCategory.voice);
     notifyListeners();
+    _maybePushSilentDelta();
   }
 
   /// A screen announces salient visible content. [speak] true asks Baba to
@@ -77,6 +90,7 @@ class BabaContext extends ChangeNotifier {
   /// (silent awareness). No-op narration unless a call is live.
   void publish(String detail, {bool speak = false}) {
     _detail = detail.trim();
+    _stateVersion++;
     notifyListeners();
     // Feed the live session: the controller stores it and (if connected) sends
     // it. speak=false => ambient; speak=true => Baba reacts now.
@@ -87,7 +101,81 @@ class BabaContext extends ChangeNotifier {
   void clearDetail() {
     if (_detail == null) return;
     _detail = null;
+    _stateVersion++;
     notifyListeners();
+  }
+
+  /// A screen signals that its OWN live state moved (a sub-step advanced, its
+  /// content finished loading, a field was filled) — something Baba should be
+  /// aware of even though the route did not change. Bumps the version and, on a
+  /// silent-capable engine (Live), streams a silent delta. Engine-agnostic: on
+  /// CX this is a no-op push (awareness rides tool results), so screens can call
+  /// it freely without worrying about the transport.
+  ///
+  /// [screenKey] guards against a stale, backgrounded screen: the signal only
+  /// counts when it is still the current screen.
+  void markStateChanged([String? screenKey]) {
+    if (screenKey != null && screen?.key != screenKey) return;
+    _stateVersion++;
+    notifyListeners();
+    _maybePushSilentDelta();
+  }
+
+  /// Like [markStateChanged], but flags the delta as IMPORTANT: worth a turn on
+  /// EVERY engine (including CX, where ambient deltas are otherwise a no-op),
+  /// and SPOKEN so Baba audibly acknowledges it. Reserve for high-value
+  /// transitions the user must feel Baba noticed — e.g. sign-in succeeded and we
+  /// moved to the dashboard. Keep it rare (each one costs a CX turn).
+  void announceStateChange([String? screenKey]) {
+    if (screenKey != null && screen?.key != screenKey) return;
+    _stateVersion++;
+    notifyListeners();
+    _maybePushSilentDelta(important: true);
+  }
+
+  /// Push the current world state to a LIVE call, without ever forcing the voice
+  /// singleton into existence (only if it already exists AND a call is live).
+  /// A normal (ambient) delta is a no-op on CX — awareness there rides tool
+  /// results — but an [important] one goes through on every engine and is spoken.
+  void _maybePushSilentDelta({bool important = false}) {
+    final v = _voiceRef;
+    if (v == null || !v.isCallLive) return;
+    v.pushWorldState(worldState(), silent: !important, important: important);
+  }
+
+  /// Wait for the world model to SETTLE after an action, so it is safe to read
+  /// [worldState]/[snapshot] and get the TRUE resulting state. "Settled" means
+  /// [stateVersion] has stopped moving for a few consecutive frames — which
+  /// uniformly covers a synchronous route swap, a DEFERRED (post-frame)
+  /// navigation like sign-in success, and the destination screen's initState
+  /// registering its snapshot provider.
+  ///
+  /// This is the ONE owner of "has the UI caught up?" — every tool result and
+  /// navigation awaits it instead of guessing a fixed frame count (which lost
+  /// the race against deferred navigation and read stale/blank state). Bounded
+  /// by [timeout] so a transition that never quiesces can't hang a tool result;
+  /// returns immediately when there's no binding (unit tests).
+  Future<void> settle({
+    Duration timeout = const Duration(milliseconds: 1500),
+    int quietFrames = 3,
+  }) async {
+    final deadline = DateTime.now().add(timeout);
+    var stable = 0;
+    var last = _stateVersion;
+    while (DateTime.now().isBefore(deadline)) {
+      try {
+        await WidgetsBinding.instance.endOfFrame;
+      } catch (_) {
+        return; // no binding (tests) — nothing to wait on
+      }
+      final v = _stateVersion;
+      if (v == last) {
+        if (++stable >= quietFrames) return;
+      } else {
+        stable = 0;
+        last = v;
+      }
+    }
   }
 
   /// Register a live snapshot provider for a screen (keyed by [BabaScreen.key]).
@@ -119,21 +207,41 @@ class BabaContext extends ChangeNotifier {
     }
   }
 
-  /// Structured snapshot for the `whereAmI` tool.
-  Map<String, dynamic> snapshot() {
+  /// The canonical, authoritative world state. This is what Baba perceives —
+  /// via `whereAmI` (pull) and appended to EVERY tool result (observe-on-act),
+  /// so he can never act on stale or blind assumptions. Carries the route, the
+  /// screen, the live sub-`step`, the version, whether he can proceed, the
+  /// actions available here, and the full structured `onScreen` content.
+  Map<String, dynamic> worldState() {
     final s = screen;
     final live = _currentSnapshot();
-    return {
+    final map = <String, dynamic>{
       'route': _location,
       'screen': s?.key ?? 'unknown',
       'label': s?.label ?? 'Unknown',
       'description': s?.description ?? '',
-      if (_detail != null && _detail!.isNotEmpty) 'visible': _detail,
+      'stateVersion': _stateVersion,
+    };
+    if (_detail != null && _detail!.isNotEmpty) map['visible'] = _detail;
+    if (live != null) {
       // The real, live rendered data for this screen — the heart of Baba's
       // page awareness. Absent when the screen hasn't registered a provider.
-      if (live != null) 'onScreen': live.toJson(),
-    };
+      map['onScreen'] = live.toJson();
+      if (live.step != null) map['step'] = live.step;
+      if (live.canProceed != null) map['canProceed'] = live.canProceed;
+      if (live.blockedReason != null && live.blockedReason!.isNotEmpty) {
+        map['blockedReason'] = live.blockedReason;
+      }
+      if (live.availableActions.isNotEmpty) {
+        map['availableActions'] = live.availableActions;
+      }
+    }
+    return map;
   }
+
+  /// Structured snapshot for the `whereAmI` tool. Alias of [worldState] so the
+  /// tool keeps working while `worldState` is the canonical name.
+  Map<String, dynamic> snapshot() => worldState();
 
   /// One-line context string suitable for injecting into the voice session.
   String describeForVoice() {

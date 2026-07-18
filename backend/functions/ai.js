@@ -107,9 +107,11 @@ async function fetchUserContext(uid) {
     // keeps it a non-throwing best-effort lookup (memory never blocks chat).
     const memoryPromise = getUserMemory(uid).catch(() => null);
 
-    const [userSnap, insightSnap] = await Promise.all([
+    const monthId = today.slice(0, 7); // yyyy-MM — the forecast doc id
+    const [userSnap, insightSnap, forecastSnap] = await Promise.all([
         db.doc(`users/${uid}`).get(),
         db.doc(`users/${uid}/dailyInsights/${today}`).get(),
+        db.doc(`users/${uid}/forecast/${monthId}`).get().catch(() => null),
     ]);
 
     if (!userSnap.exists) return null;
@@ -174,6 +176,31 @@ async function fetchUserContext(uid) {
         if (Array.isArray(insight.sections)) context.insightSections = insight.sections;
     }
 
+    // Fallback grounding for today's panchang. If the per-user daily insight
+    // didn't run (brand-new user, nightly-job starvation past its cap, or a job
+    // failure), context.todayPanchang would be absent and the confident persona
+    // could invent a tithi/nakshatra for "is today auspicious / muhurat"
+    // questions. Backfill it from the SHARED global_astro sky doc (same data the
+    // voice brain uses) so text and voice agree. Transits stay absent on purpose
+    // — they need per-user house math — so the prompt simply omits them rather
+    // than guessing. Best-effort: chat works fine if this read fails.
+    if (!context.todayPanchang) {
+        try {
+            const skyDoc = await db.collection("global_astro").doc("sky_positions").get();
+            const p = skyDoc.exists ? (skyDoc.data().panchang || {})[today] : null;
+            if (p) {
+                context.todayPanchang = {
+                    tithi: p.name || null,       // global doc stores tithi under `name`
+                    paksha: p.paksha || null,
+                    nakshatra: p.nakshatra || null,
+                    yoga: p.yoga || null,
+                    karana: p.karana || null,
+                    lunarMonth: p.lunar_month_full_name || p.lunar_month_name || null,
+                };
+            }
+        } catch (_) { /* best-effort: chat works without today's panchang */ }
+    }
+
     // Attach ayurveda context
     if (ayurvedaData?.prakriti) {
         context.ayurveda = buildAyurvedaContext(ayurvedaData);
@@ -185,6 +212,34 @@ async function fetchUserContext(uid) {
     // Await the memory lookup we kicked off at the top (overlapped with reads).
     const memory = await memoryPromise;
     if (memory) context.memory = memory;
+
+    // Attach the unified forecast — the SAME read-model driving the wheel and
+    // the getMyForecast voice tool — so text, voice, and the wheel tell one
+    // story. today = the computed alignment/heading/narrative for this date;
+    // storyArc/currentChapter come from the durable storyline. Best-effort.
+    try {
+        let forecastToday = null;
+        if (forecastSnap?.exists) {
+            const day = (forecastSnap.data().days || []).find((d) => d.date === today);
+            if (day) {
+                forecastToday = {
+                    alignment: day.alignment ?? null,
+                    heading: day.heading || null,
+                    narrative: day.narrative || null,
+                };
+            }
+        }
+        const storyline = memory?.storyline || null;
+        if (forecastToday || storyline) {
+            context.forecast = {
+                today: forecastToday,
+                storyArc: storyline?.arc || null,
+                currentChapter: storyline?.currentChapter?.throughline || null,
+            };
+        }
+    } catch (_) {
+        // best-effort: chat works fine without the forecast
+    }
 
     return context;
 }
@@ -211,15 +266,31 @@ export const aiChat = onRequest(
             return res.status(204).send("");
         }
 
-        // Rate limiting - use IP address as identifier (public endpoint)
+        // Identify the caller BEFORE rate limiting. A verified Firebase uid is
+        // non-spoofable and yields a fair per-user limit; the first hop of
+        // x-forwarded-for is client-controllable (trivially rotated to bypass an
+        // IP limit), so we only fall back to IP for genuine guests. The decoded
+        // uid is reused for context resolution below, so we verify exactly once.
+        const authHeader = req.headers["authorization"] || "";
+        const idToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
+        let authedUid = null;
+        if (idToken) {
+            try {
+                authedUid = (await getAuth().verifyIdToken(idToken)).uid;
+            } catch (_) {
+                // invalid/expired → treated as guest for limiting; the context
+                // path below logs the detail and falls back to guest mode.
+            }
+        }
         const clientIp = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
-            req.connection?.remoteAddress ||
+            req.socket?.remoteAddress ||
             "unknown";
+        const rateLimitIdentifier = authedUid ? `uid:${authedUid}` : `ip:${clientIp}`;
 
         // Use persistent rate limiter that survives cold starts
         const rateLimitResult = await checkPersistentRateLimit("ai_chat", {
             ...RATE_LIMIT_PRESETS.AI_CHAT,
-            identifier: clientIp,
+            identifier: rateLimitIdentifier,
         });
 
         if (!rateLimitResult.allowed) {
@@ -285,25 +356,25 @@ export const aiChat = onRequest(
             // Falls back to body.astrologyContext for old clients / guest sessions.
             let astrologyContext = null;
             let contextSource = "none";
-            let authedUid = null;
-
-            const authHeader = req.headers["authorization"] || "";
-            const idToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
-
-            if (idToken) {
+            // authedUid + idToken were resolved above (for rate limiting) — reuse
+            // them so the ID token is verified exactly once per request.
+            if (authedUid) {
                 try {
-                    const decoded = await getAuth().verifyIdToken(idToken);
-                    authedUid = decoded.uid;
-                    astrologyContext = await getUserContextCached(decoded.uid);
+                    astrologyContext = await getUserContextCached(authedUid);
                     contextSource = astrologyContext ? "server" : "server_no_data";
-                } catch (authErr) {
-                    // Invalid/expired token — treat as guest, don't 401
-                    logger.warn("ID token verification failed — falling back to guest mode", {
+                } catch (ctxErr) {
+                    logger.warn("User context fetch failed — falling back to guest mode", {
                         structuredData: true,
                         chatId,
-                        error: authErr.message,
+                        error: ctxErr.message,
                     });
                 }
+            } else if (idToken) {
+                // Token was present but failed verification above → guest mode.
+                logger.warn("ID token verification failed — guest mode", {
+                    structuredData: true,
+                    chatId,
+                });
             }
 
             // Backwards compat: old clients / guest users may send context in body

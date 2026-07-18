@@ -34,6 +34,7 @@ class BabaAstrologyTools {
             'personality and you need the facts. Returns a small summary, not '
             'the full chart; for deeper detail take them to the chart screen.',
         parameters: const {'type': 'object', 'properties': {}},
+        appendsWorldState: false,
         defaultHandler: (_) async => _fetch(),
       );
 

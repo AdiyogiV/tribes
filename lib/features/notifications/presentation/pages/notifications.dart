@@ -24,6 +24,7 @@ import 'package:aurogram/core/theme/header_style.dart';
 import 'package:aurogram/shared/presentation/responsive/responsive.dart';
 import 'package:aurogram/shared/models/notification.dart';
 import 'package:aurogram/features/notifications/domain/notification_service.dart';
+import 'package:aurogram/features/baba/domain/baba_snapshot.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/shared/presentation/widgets/feedback/snack_bar_service.dart';
 
@@ -60,7 +61,33 @@ class Notifications extends StatefulWidget {
   NotificationsState createState() => NotificationsState();
 }
 
-class NotificationsState extends State<Notifications> {
+class NotificationsState extends State<Notifications>
+    with BabaScreenAware<Notifications> {
+  @override
+  String get babaScreenKey => 'notifications';
+
+  // Lets Baba answer "what's here / any notifications?" without guessing. Only
+  // counts + filter — no per-item PII leaks into his context.
+  @override
+  BabaSnapshot babaSnapshot() {
+    if (_isLoading && _notifications.isEmpty) {
+      return const BabaSnapshot.loading(headline: 'Loading notifications…');
+    }
+    if (_notifications.isEmpty) {
+      return const BabaSnapshot.empty(headline: 'No notifications right now.');
+    }
+    return BabaSnapshot.ready(
+      headline: _unreadCount > 0
+          ? '$_unreadCount unread notification${_unreadCount == 1 ? '' : 's'}.'
+          : 'All notifications are read.',
+      facts: {
+        'unread': _unreadCount,
+        'loaded': _notifications.length,
+        'filter': _currentFilter.displayName,
+      },
+    );
+  }
+
   final NotificationRepository _notifRepo = locator<NotificationRepository>();
   final NotificationService _notificationService = NotificationService();
   final ScrollController _scrollController = ScrollController();
