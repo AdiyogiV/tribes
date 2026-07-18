@@ -16,6 +16,7 @@ import 'package:aurogram/features/astrology/domain/astrology_service.dart';
 import 'package:aurogram/features/ayurveda/domain/ayurveda_service.dart';
 import 'package:aurogram/features/astrology/domain/sky_positions_service.dart';
 import 'package:aurogram/features/astrology/domain/astro_calendar_service.dart';
+import 'package:aurogram/features/astrology/domain/forecast_service.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/cosmic_dashboard_data.dart';
 import 'package:aurogram/features/astrology/presentation/pages/baba/baba_desktop_layout.dart';
 import 'package:aurogram/features/astrology/presentation/pages/baba/baba_empty_states.dart';
@@ -71,7 +72,11 @@ class DashboardPageState extends State<DashboardPage>
           ? "The home dashboard, showing today's sky wheel, panchang and feed"
           : 'The home dashboard, scrubbed to $skyDate',
       facts: {
-        'loggedIn': _user != null,
+        // Mirror Baba's own model: a guest is anonymous-or-absent, a real
+        // logged-in user is 'secured'. The old 'loggedIn' bool was true for
+        // ANONYMOUS guests too (it only meant _user != null), which read as
+        // "logged in" when they were not - now it says exactly which.
+        'account': (_user == null || _user!.isAnonymous) ? 'guest' : 'secured',
         'skyDate': skyDate,
         'viewingToday': isToday,
       },
@@ -94,12 +99,20 @@ class DashboardPageState extends State<DashboardPage>
   final _ayurvedaService = AyurvedaService();
   final _skyService = SkyPositionsService();
   final _calendarService = AstroCalendarService();
+  final _forecastService = ForecastService();
   final _user = FirebaseAuth.instance.currentUser;
 
   // Streams cached once in initState — never recreated in build()
   Stream<AstrologyProfile?>? _profileStream;
   Stream<DailyInsight?>? _insightStream;
   Stream<AyurvedaProfile?>? _ayurvedaStream;
+  Stream<Map<String, ForecastDay>>? _forecastStream;
+
+  // One-shot guard: trigger the no-AI on-demand recompute at most once per
+  // session, and only when today's alignment is genuinely missing (e.g. the
+  // nightly batch hasn't reached this user yet). Avoids a Cloud Function call
+  // on every dashboard open.
+  bool _forecastEnsureRequested = false;
 
   // Sky slider state — extended range backed by AstroCalendarService.
   static const int _sliderRangeDays = 180;
@@ -159,6 +172,7 @@ class DashboardPageState extends State<DashboardPage>
       _profileStream = _astrologyService.streamProfile(_user!.uid);
       _insightStream = _astrologyService.streamTodayInsight(_user!.uid);
       _ayurvedaStream = _ayurvedaService.streamProfile(_user!.uid);
+      _forecastStream = _forecastService.streamForecast(_user!.uid);
     }
 
     // Global data — load for everyone (sky positions, events, muhurat are
@@ -184,6 +198,36 @@ class DashboardPageState extends State<DashboardPage>
     } else {
       _loadGlobalMuhurat();
     }
+  }
+
+  /// Trigger the on-demand, no-AI forecast recompute exactly once per session,
+  /// and only when the stream has resolved without today's alignment (nightly
+  /// batch hasn't reached this user yet). The service call is idempotent and
+  /// failure-safe; the guard keeps the dashboard from firing a Cloud Function
+  /// on every open or every stream rebuild.
+  void _maybeEnsureForecast(
+      AsyncSnapshot<Map<String, ForecastDay>> snapshot) {
+    if (_forecastEnsureRequested || _user == null) return;
+    if (snapshot.connectionState == ConnectionState.waiting) return;
+    final today = snapshot.data?[ForecastService.dateKey(DateTime.now())];
+    // Both layers must be present to skip: a real number AND a woven story.
+    // Trigger the self-healing ensure if either is missing — the server
+    // recomputes numbers (instant) and enqueues the story if its runway is
+    // short. The wheel picks up both via its live stream.
+    final ready = today != null &&
+        today.alignment != null &&
+        (today.narrative?.isNotEmpty ?? false);
+    // [forecast] TEMP diagnostic — remove after device verification.
+    AppLogger.i('[forecast] dashboard ensure-check', category: LogCategory.database, data: {
+      'connState': snapshot.connectionState.toString(),
+      'streamedDays': snapshot.data?.length ?? 0,
+      'hasNumber': today?.alignment != null,
+      'hasStory': today?.narrative?.isNotEmpty ?? false,
+      'willTrigger': !ready,
+    });
+    if (ready) return;
+    _forecastEnsureRequested = true;
+    _forecastService.ensureComputed();
   }
 
   @override
@@ -517,22 +561,30 @@ class DashboardPageState extends State<DashboardPage>
                       isDark: isDark, brown: AppTheme.primaryColor);
                 }
 
-                return BabaCosmicContent(
-                  profile: profile,
-                  insight: insight,
-                  ayurvedaProfile: ayurvedaSnapshot.data,
-                  loadingState: _loadingState,
-                  skyService: _skyService,
-                  calendarService: _calendarService,
-                  sliderRangeDays: _sliderRangeDays,
-                  sliderValueNotifier: _sliderValueNotifier,
-                  sliderDateNotifier: _sliderDateNotifier,
-                  onSliderChanged: _onSliderChanged,
-                  onResetToToday: _resetSliderToToday,
-                  onLoadSkyPositions: _loadSkyPositions,
-                  onTriggerCachePopulation: _triggerSkyPositionsCachePopulation,
-                  wheelResetSignal: _wheelResetNotifier,
-                  nakshatraController: _nakshatraController,
+                return StreamBuilder<Map<String, ForecastDay>>(
+                  stream: _forecastStream,
+                  builder: (context, forecastSnapshot) {
+                    _maybeEnsureForecast(forecastSnapshot);
+                    return BabaCosmicContent(
+                      profile: profile,
+                      insight: insight,
+                      ayurvedaProfile: ayurvedaSnapshot.data,
+                      forecast: forecastSnapshot.data,
+                      loadingState: _loadingState,
+                      skyService: _skyService,
+                      calendarService: _calendarService,
+                      sliderRangeDays: _sliderRangeDays,
+                      sliderValueNotifier: _sliderValueNotifier,
+                      sliderDateNotifier: _sliderDateNotifier,
+                      onSliderChanged: _onSliderChanged,
+                      onResetToToday: _resetSliderToToday,
+                      onLoadSkyPositions: _loadSkyPositions,
+                      onTriggerCachePopulation:
+                          _triggerSkyPositionsCachePopulation,
+                      wheelResetSignal: _wheelResetNotifier,
+                      nakshatraController: _nakshatraController,
+                    );
+                  },
                 );
               },
             );
