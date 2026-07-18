@@ -103,6 +103,11 @@ class BabaBlob extends StatelessWidget {
                   child: Image.asset(
                     'assets/images/aurobhatt.png',
                     fit: BoxFit.fitWidth,
+                    cacheWidth:
+                        (iconSize * MediaQuery.devicePixelRatioOf(context))
+                            .ceil()
+                            .clamp(64, 256)
+                            .toInt(),
                     alignment: Alignment.bottomCenter,
                     errorBuilder: (_, __, ___) => Icon(
                       Icons.auto_awesome,

@@ -55,12 +55,18 @@ class ForecastService {
 
   /// yyyy-MM-dd key (IST-agnostic local date; matches the backend's IST keys
   /// closely enough for day selection on the wheel).
-  static String dateKey(DateTime d) =>
-      '${d.year.toString().padLeft(4, '0')}-'
+  static String dateKey(DateTime d) => '${d.year.toString().padLeft(4, '0')}-'
       '${d.month.toString().padLeft(2, '0')}-'
       '${d.day.toString().padLeft(2, '0')}';
 
-  Map<String, ForecastDay> _flatten(Iterable<QueryDocumentSnapshot<Map<String, dynamic>>> docs) {
+  static const int _monthsEitherSide = 7;
+
+  static String monthKey(DateTime date) =>
+      '${date.year.toString().padLeft(4, '0')}-'
+      '${date.month.toString().padLeft(2, '0')}';
+
+  Map<String, ForecastDay> _flatten(
+      Iterable<QueryDocumentSnapshot<Map<String, dynamic>>> docs) {
     final out = <String, ForecastDay>{};
     for (final doc in docs) {
       final days = (doc.data()['days'] as List?) ?? const [];
@@ -77,29 +83,28 @@ class ForecastService {
   CollectionReference<Map<String, dynamic>> _col(String uid) =>
       _firestore.collection('users').doc(uid).collection('forecast');
 
-  /// Live map of date → forecast day, flattened across all month docs.
+  Query<Map<String, dynamic>> _relevantMonths(String uid) {
+    final now = DateTime.now();
+    final start = monthKey(DateTime(now.year, now.month - _monthsEitherSide));
+    final end = monthKey(DateTime(now.year, now.month + _monthsEitherSide));
+    return _col(uid)
+        .where(FieldPath.documentId, isGreaterThanOrEqualTo: start)
+        .where(FieldPath.documentId, isLessThanOrEqualTo: end)
+        .orderBy(FieldPath.documentId);
+  }
+
+  /// Live map of date → forecast day within the wheel's useful time window.
+  /// Historical month documents outside that window are never downloaded or
+  /// repeatedly flattened on each Firestore update.
   Stream<Map<String, ForecastDay>> streamForecast(String uid) =>
-      _col(uid).snapshots().map((snap) {
+      _relevantMonths(uid).snapshots().map((snap) {
         final map = _flatten(snap.docs);
-        // [forecast] TEMP diagnostic — remove after device verification.
-        final tKey = dateKey(DateTime.now());
-        final today = map[tKey];
-        AppLogger.i('[forecast] stream update', category: LogCategory.database, data: {
-          'uid': uid,
-          'monthDocs': snap.docs.length,
-          'totalDays': map.length,
-          'todayKey': tKey,
-          'hasToday': map.containsKey(tKey),
-          'todayAlignment': today?.alignment,
-          'todayHasNarrative': today?.narrative?.isNotEmpty ?? false,
-          'sampleKeys': (map.keys.toList()..sort()).take(6).toList(),
-        });
         return map;
       });
 
   /// One-shot read of the forecast (used by Aurobhatt's getMyForecast tool).
   Future<Map<String, ForecastDay>> fetchForecast(String uid) async {
-    final snap = await _col(uid).get();
+    final snap = await _relevantMonths(uid).get();
     return _flatten(snap.docs);
   }
 
@@ -128,13 +133,15 @@ class ForecastService {
     if (_computeInFlight) return;
     _computeInFlight = true;
     // [forecast] TEMP diagnostic — remove after device verification.
-    AppLogger.i('[forecast] computeMyForecast: calling', category: LogCategory.database);
+    AppLogger.i('[forecast] computeMyForecast: calling',
+        category: LogCategory.database);
     try {
       final res = await _functions
           .httpsCallable('astroGateway')
           .call({'method': 'computeMyForecast'});
       AppLogger.i('[forecast] computeMyForecast: ok',
-          category: LogCategory.database, data: {'result': res.data?.toString()});
+          category: LogCategory.database,
+          data: {'result': res.data?.toString()});
     } catch (e) {
       AppLogger.w('[forecast] computeMyForecast: FAILED (non-fatal)',
           category: LogCategory.database, data: {'error': e.toString()});

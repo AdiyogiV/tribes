@@ -142,24 +142,6 @@ class DashboardPageState extends State<DashboardPage>
   // Key for desktop layout — allows parent to trigger inline chat
   final _desktopLayoutKey = GlobalKey<BabaDesktopLayoutState>();
 
-  bool _didPrecache = false;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!_didPrecache) {
-      _didPrecache = true;
-      precacheImage(
-        const AssetImage('assets/images/nakshatra_wheel.jpeg'),
-        context,
-      );
-      // Decode the Aurobhatt asset NOW, while the page is idle, so its first
-      // paint doesn't pay a cold-decode cost. Baba's blob (app-wide overlay)
-      // shows it immediately, so precaching keeps that initial paint smooth.
-      precacheImage(const AssetImage('assets/images/aurobhatt.png'), context);
-    }
-  }
-
   @override
   void initState() {
     super.initState();
@@ -207,7 +189,8 @@ class DashboardPageState extends State<DashboardPage>
   void _bindUserStreams(User? user) {
     final uid = user?.uid;
     _profileStream = uid == null ? null : _astrologyService.streamProfile(uid);
-    _insightStream = uid == null ? null : _astrologyService.streamTodayInsight(uid);
+    _insightStream =
+        uid == null ? null : _astrologyService.streamTodayInsight(uid);
     _ayurvedaStream = uid == null ? null : _ayurvedaService.streamProfile(uid);
     _forecastStream = uid == null ? null : _forecastService.streamForecast(uid);
   }
@@ -230,8 +213,7 @@ class DashboardPageState extends State<DashboardPage>
   /// batch hasn't reached this user yet). The service call is idempotent and
   /// failure-safe; the guard keeps the dashboard from firing a Cloud Function
   /// on every open or every stream rebuild.
-  void _maybeEnsureForecast(
-      AsyncSnapshot<Map<String, ForecastDay>> snapshot) {
+  void _maybeEnsureForecast(AsyncSnapshot<Map<String, ForecastDay>> snapshot) {
     if (_forecastEnsureRequested || _user == null) return;
     if (snapshot.connectionState == ConnectionState.waiting) return;
     final today = snapshot.data?[ForecastService.dateKey(DateTime.now())];
@@ -242,14 +224,6 @@ class DashboardPageState extends State<DashboardPage>
     final ready = today != null &&
         today.alignment != null &&
         (today.narrative?.isNotEmpty ?? false);
-    // [forecast] TEMP diagnostic — remove after device verification.
-    AppLogger.i('[forecast] dashboard ensure-check', category: LogCategory.database, data: {
-      'connState': snapshot.connectionState.toString(),
-      'streamedDays': snapshot.data?.length ?? 0,
-      'hasNumber': today?.alignment != null,
-      'hasStory': today?.narrative?.isNotEmpty ?? false,
-      'willTrigger': !ready,
-    });
     if (ready) return;
     _forecastEnsureRequested = true;
     _forecastService.ensureComputed();

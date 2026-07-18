@@ -169,47 +169,55 @@ extension NotificationTokens on NotificationService {
   /// Start listening to unread notification count.
   ///
   /// Uses Firestore count() aggregation to avoid downloading full document
-  /// bodies. Polls every 30 seconds for a lightweight count update.
+  /// bodies. Failed authorization/App Check requests back off for five minutes
+  /// instead of hammering Firebase every 30 seconds.
   /// Safe to call multiple times — cancels any previous timer first.
   void startUnreadCountListener() {
     final uid = currentUser?.uid;
     if (uid == null) return;
 
-    // Cancel any existing timer to prevent duplicates on re-init
     unreadCountTimer?.cancel();
+    _scheduleUnreadCountFetch(uid, Duration.zero);
+  }
 
-    // Initial fetch + periodic polling via count() aggregation
-    _fetchAndEmitUnreadCount(uid);
-    unreadCountTimer = Timer.periodic(const Duration(seconds: 30), (_) {
-      _fetchAndEmitUnreadCount(uid);
+  void _scheduleUnreadCountFetch(String uid, Duration delay) {
+    unreadCountTimer = Timer(delay, () async {
+      final succeeded = await _fetchAndEmitUnreadCount(uid);
+      if (currentUser?.uid != uid) return;
+      _scheduleUnreadCountFetch(
+        uid,
+        succeeded ? const Duration(seconds: 30) : const Duration(minutes: 5),
+      );
     });
   }
 
   /// Fetch unread count via aggregation query (no document bodies downloaded).
-  void _fetchAndEmitUnreadCount(String uid) {
+  Future<bool> _fetchAndEmitUnreadCount(String uid) async {
     // Pollers can outlive logout/account switching. Never query a stale user's
     // path with the current token or emit their count into the new session.
     if (currentUser?.uid != uid) {
       unreadCountTimer?.cancel();
       unreadCountTimer = null;
-      return;
+      return false;
     }
-    firestore
-        .collection('notifications')
-        .doc(uid)
-        .collection('notifications')
-        .where('read', isEqualTo: false)
-        .count()
-        .get()
-        .then((snapshot) {
-      if (currentUser?.uid != uid) return;
+    try {
+      final snapshot = await firestore
+          .collection('notifications')
+          .doc(uid)
+          .collection('notifications')
+          .where('read', isEqualTo: false)
+          .count()
+          .get();
+      if (currentUser?.uid != uid) return false;
       final count = snapshot.count ?? 0;
       unreadCountValue = count;
       unreadCountController.add(count);
-    }).catchError((e) {
-      AppLogger.w('Unread count aggregation failed',
+      return true;
+    } catch (e) {
+      AppLogger.w('Unread count aggregation failed; backing off',
           category: LogCategory.general, data: {'error': e.toString()});
-    });
+      return false;
+    }
   }
 
   // ── Notification CRUD ──────────────────────────────────────────────────────

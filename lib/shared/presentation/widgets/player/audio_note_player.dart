@@ -90,23 +90,10 @@ class _AudioNotePlayerState extends State<AudioNotePlayer>
   void initState() {
     super.initState();
 
-    // Defer player initialization - will be triggered by VisibilityDetector
-    // This is the production-grade lazy initialization approach
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
     );
-
-    // Set up viewport-aware lazy initialization
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _setupLazyInitialization();
-    });
-  }
-
-  /// Setup lazy initialization - deferred until VisibilityDetector triggers
-  void _setupLazyInitialization() {
-    // Do nothing - VisibilityDetector in _handleVisibilityChanged will trigger init
-    // Simple pattern that works in production
   }
 
   @override
@@ -121,17 +108,34 @@ class _AudioNotePlayerState extends State<AudioNotePlayer>
       return;
     }
 
-    // Audio changed - need to reinitialize player
-    // (This should be rare in feed - mostly happens in thread view)
+    // Audio changed - detach from the old pooled player before reusing state.
+    _positionSub?.cancel();
+    _durationSub?.cancel();
+    _playerStateSub?.cancel();
     if (_isPlayerInitialized) {
-      try {
-        _audioPlayer.stop();
-      } catch (e) {
-        // Already stopped or error
+      final oldPostId = oldWidget.postId;
+      if (oldPostId != null && _pool.ownsPlayer(oldPostId, _audioPlayer)) {
+        _pool.removePlayer(oldPostId);
+      } else if (oldPostId == null) {
+        _audioPlayer.dispose();
       }
-      _hasAttemptedInit = false;
-      _isPlayerInitialized = false;
     }
+    _hasAttemptedInit = false;
+    _isPlayerInitialized = false;
+  }
+
+  Future<void> _ensurePlayerAvailable() async {
+    final postId = widget.postId;
+    if (_isPlayerInitialized &&
+        postId != null &&
+        !_pool.ownsPlayer(postId, _audioPlayer)) {
+      await _positionSub?.cancel();
+      await _durationSub?.cancel();
+      await _playerStateSub?.cancel();
+      _isPlayerInitialized = false;
+      _hasAttemptedInit = false;
+    }
+    if (!_isPlayerInitialized) await _initPlayer();
   }
 
   Future<void> _initPlayer() async {
@@ -192,6 +196,9 @@ class _AudioNotePlayerState extends State<AudioNotePlayer>
             data: {'postId': widget.postId ?? 'unknown'});
       }
     } catch (e) {
+      await _audioPlayer.dispose();
+      _hasAttemptedInit = false;
+      _isPlayerInitialized = false;
       AppLogger.e('Audio player init failed', error: e);
     }
   }
@@ -248,13 +255,13 @@ class _AudioNotePlayerState extends State<AudioNotePlayer>
     _playerStateSub?.cancel();
     _pulseController.dispose();
 
-    // DON'T dispose player - pool manages lifecycle
-    // Just stop and null reference
+    // Pooled players survive for quick resume. Unkeyed players have no pool
+    // owner and must be disposed with their widget.
     if (_isPlayerInitialized) {
-      try {
+      if (widget.postId == null) {
+        _audioPlayer.dispose();
+      } else if (_pool.ownsPlayer(widget.postId!, _audioPlayer)) {
         _audioPlayer.stop();
-      } catch (e) {
-        // Already stopped or error
       }
     }
 
@@ -264,34 +271,28 @@ class _AudioNotePlayerState extends State<AudioNotePlayer>
   void _handleVisibility(VisibilityInfo info) {
     if (!mounted) return;
 
-    // Lazy initialization trigger: Initialize when post enters viewport vicinity
-    if (!_hasAttemptedInit && info.visibleFraction > 0.1) {
-      _initPlayer();
-    }
+    // Merely scrolling past an audio post must not allocate a native decoder.
+    // Initialization happens only after the user taps playback.
 
     final nowVisible = info.visibleFraction > 0.7;
     if (_isVisible != nowVisible && mounted) {
       setState(() => _isVisible = nowVisible);
     }
 
-    // Handle playback when visibility changes
-    if (nowVisible && !_isPlayerInitialized) {
-      // Visible but player not initialized - might have been disposed by pool
-      if (_hasAttemptedInit) {
-        AppLogger.w('AudioNotePlayer: Player disposed, re-initializing', category: LogCategory.media);
-        _hasAttemptedInit = false;
-        _isPlayerInitialized = false;
-        _initPlayer();
-      }
-    }
-
     // Pause when not visible
-    if (!nowVisible && _isPlaying && _isPlayerInitialized && mounted) {
+    if (!nowVisible &&
+        _isPlaying &&
+        _isPlayerInitialized &&
+        (widget.postId == null ||
+            _pool.ownsPlayer(widget.postId!, _audioPlayer)) &&
+        mounted) {
       try {
         _audioPlayer.pause();
       } catch (e) {
         // Player might have been disposed by pool
-        AppLogger.w('AudioNotePlayer: Failed to pause (disposed), clearing state', category: LogCategory.media);
+        AppLogger.w(
+            'AudioNotePlayer: Failed to pause (disposed), clearing state',
+            category: LogCategory.media);
         _isPlayerInitialized = false;
         _hasAttemptedInit = false;
       }
@@ -299,11 +300,10 @@ class _AudioNotePlayerState extends State<AudioNotePlayer>
   }
 
   void _togglePlayback() async {
-    // Initialize player if not already done (user tapped play before lazy init)
-    if (!_isPlayerInitialized) {
-      await _initPlayer();
-      if (!_isPlayerInitialized) return; // Init failed
-    }
+    // Initialize on demand and recover if the LRU pool evicted this widget's
+    // previous player while the feed kept the widget state alive.
+    await _ensurePlayerAvailable();
+    if (!_isPlayerInitialized) return;
 
     try {
       if (_isPlaying) {
@@ -387,7 +387,8 @@ class _AudioNotePlayerState extends State<AudioNotePlayer>
                           horizontal: 6, vertical: 4),
                       decoration: BoxDecoration(
                         color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm),
+                        borderRadius:
+                            BorderRadius.circular(AppDimensions.radiusMdSm),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -453,7 +454,8 @@ class _AudioNotePlayerState extends State<AudioNotePlayer>
                               ),
                               child: _isLoading
                                   ? const Padding(
-                                      padding: EdgeInsets.all(AppDimensions.paddingXl),
+                                      padding: EdgeInsets.all(
+                                          AppDimensions.paddingXl),
                                       child: PulsingDots(
                                           color: Colors.white, size: 8),
                                     )
@@ -485,7 +487,8 @@ class _AudioNotePlayerState extends State<AudioNotePlayer>
                         ),
                         Expanded(
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: AppDimensions.paddingMd),
                             child: SliderTheme(
                               data: SliderThemeData(
                                 trackHeight: 4,

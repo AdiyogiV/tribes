@@ -76,33 +76,36 @@ class NotificationRepository {
   /// Stream the unread notification count for [uid].
   ///
   /// Uses Firestore count() aggregation to avoid downloading full documents.
-  /// Emits immediately, then refreshes every 30 seconds.
+  /// Authorization/App Check failures back off for five minutes.
   Stream<int> unreadCountStream(String uid) async* {
-    // Emit initial count immediately
-    yield await _fetchUnreadCount(uid);
-
-    // Then poll every 30 seconds (count() doesn't support real-time snapshots)
-    yield* Stream.periodic(const Duration(seconds: 30))
-        .asyncMap((_) => _fetchUnreadCount(uid));
+    while (true) {
+      final result = await _fetchUnreadCount(uid);
+      yield result.count;
+      await Future<void>.delayed(
+        result.succeeded
+            ? const Duration(seconds: 30)
+            : const Duration(minutes: 5),
+      );
+    }
   }
 
   /// Fetch unread count using Firestore count() aggregation.
   ///
   /// On failure, returns the last successfully fetched count rather than
   /// a misleading zero (avoids the badge disappearing on network errors).
-  Future<int> _fetchUnreadCount(String uid) async {
+  Future<({int count, bool succeeded})> _fetchUnreadCount(String uid) async {
     try {
-      final countQuery = _userNotifications(uid)
-          .where('read', isEqualTo: false)
-          .count();
+      final countQuery =
+          _userNotifications(uid).where('read', isEqualTo: false).count();
       final snapshot = await countQuery.get();
       _lastKnownUnreadCount = snapshot.count ?? 0;
-      return _lastKnownUnreadCount;
+      return (count: _lastKnownUnreadCount, succeeded: true);
     } catch (e) {
-      AppLogger.w('NotificationRepository: count aggregation failed, using last known count',
+      AppLogger.w(
+          'NotificationRepository: count aggregation failed; backing off',
           category: LogCategory.general,
           data: {'lastKnown': _lastKnownUnreadCount, 'error': e.toString()});
-      return _lastKnownUnreadCount;
+      return (count: _lastKnownUnreadCount, succeeded: false);
     }
   }
 
@@ -115,7 +118,11 @@ class NotificationRepository {
     } catch (e) {
       AppLogger.w('NotificationRepository: failed to mark as read',
           category: LogCategory.general,
-          data: {'uid': uid, 'notificationId': notificationId, 'error': e.toString()});
+          data: {
+            'uid': uid,
+            'notificationId': notificationId,
+            'error': e.toString()
+          });
     }
   }
 
@@ -124,9 +131,8 @@ class NotificationRepository {
   /// Processes in chunks of 500 to respect Firestore's WriteBatch limit.
   Future<void> markAllAsRead(String uid) async {
     try {
-      final unread = await _userNotifications(uid)
-          .where('read', isEqualTo: false)
-          .get();
+      final unread =
+          await _userNotifications(uid).where('read', isEqualTo: false).get();
 
       if (unread.docs.isEmpty) return;
 

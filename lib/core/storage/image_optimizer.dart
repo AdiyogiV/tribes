@@ -218,9 +218,11 @@ class ImageOptimizer {
     int? maxHeight,
     bool cacheResult = true,
   }) async {
-    // Check cache first for instant returns
-    if (cacheResult && _memoryCache.containsKey(url)) {
-      return _memoryCache[url]!;
+    // Decode bounds are part of the cache identity. Reusing a thumbnail-sized
+    // provider for a hero image (or vice versa) is both blurry and wasteful.
+    final cacheKey = '$url@${maxWidth ?? 0}x${maxHeight ?? 0}';
+    if (cacheResult && _memoryCache.containsKey(cacheKey)) {
+      return _memoryCache[cacheKey]!;
     }
 
     if (url.isEmpty) {
@@ -260,21 +262,29 @@ class ImageOptimizer {
             data: {'url': url, 'error': downloadError.toString()},
           );
           // Fallback to network image
-          final networkImage = NetworkImage(url);
+          final networkImage = ResizeImage.resizeIfNeeded(
+            maxWidth,
+            maxHeight,
+            NetworkImage(url),
+          );
           if (cacheResult) {
-            _memoryCache[url] = networkImage;
+            _memoryCache[cacheKey] = networkImage;
           }
           return networkImage;
         }
       }
 
-      // Simply use the file image directly with no resize processing
-      // This avoids the image decoder registry errors
-      final imageProvider = FileImage(file);
+      // Resize at decode time. This keeps a 300px tile from allocating the
+      // full multi-megapixel source in the engine image cache.
+      final imageProvider = ResizeImage.resizeIfNeeded(
+        maxWidth,
+        maxHeight,
+        FileImage(file),
+      );
 
-      // Cache the result for future fast access
+      // Cache the dimension-specific provider for future fast access.
       if (cacheResult) {
-        _memoryCache[url] = imageProvider;
+        _memoryCache[cacheKey] = imageProvider;
       }
 
       return imageProvider;

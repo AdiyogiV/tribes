@@ -55,13 +55,11 @@ mixin ChatStreamHandlers {
   }
 
   /// Get media-only messages for a space (for media gallery).
-  Stream<List<ChatMessage>> getMediaMessages(String spaceId,
-      {int limit = 50}) {
+  Stream<List<ChatMessage>> getMediaMessages(String spaceId, {int limit = 50}) {
     try {
       return messagesCollection
           .where('spaceId', isEqualTo: spaceId)
-          .where('messageType',
-              whereIn: ['image', 'video', 'audio', 'file'])
+          .where('messageType', whereIn: ['image', 'video', 'audio', 'file'])
           .orderBy('timestamp', descending: true)
           .limit(limit)
           .snapshots()
@@ -74,8 +72,7 @@ mixin ChatStreamHandlers {
                     'id': doc.id,
                     ...doc.data() as Map<String, dynamic>,
                   });
-                  if (message.deletedAt == null &&
-                      message.mediaUrl != null) {
+                  if (message.deletedAt == null && message.mediaUrl != null) {
                     messages.add(message);
                   }
                 } catch (e) {
@@ -106,37 +103,44 @@ mixin ChatStreamHandlers {
   // Unread count stream
   // ---------------------------------------------------------------------------
 
-  /// Stream of unread message count for the given [spaceId] and [userId].
-  /// ⚠️ PERF: This streams ALL messages in a space with NO .limit() — every
-  /// message document is downloaded on each update just to count unreads.
+  /// Stream a bounded unread badge count for [spaceId].
+  ///
+  /// Firestore cannot express "array does not contain this user", so the old
+  /// implementation downloaded the entire conversation on every update. Badge
+  /// UI only needs a capped count; inspecting the newest 100 candidates keeps
+  /// native CursorWindow and Dart allocations strictly bounded.
   Stream<int> getUnreadCount(String spaceId, String userId) {
     return messagesCollection
         .where('spaceId', isEqualTo: spaceId)
+        .orderBy('timestamp', descending: true)
+        .limit(unreadMessageScanLimit)
         .snapshots()
-        .map((snapshot) {
-      int unreadCount = 0;
-      for (var doc in snapshot.docs) {
-        final data = doc.data() as Map<String, dynamic>;
-        final deletedAt = data['deletedAt'];
-        final senderId = data['senderId'];
-        final readBy = List<String>.from(data['readBy'] ?? []);
-
-        if (deletedAt == null &&
-            senderId != userId &&
-            !readBy.contains(userId)) {
-          unreadCount++;
-        }
-      }
-      // Diagnostic: how many docs are we downloading just to count unreads?
-      AppLogger.w('⏱️ PERF getUnreadCount: processed ALL messages in space',
-          category: LogCategory.performance,
-          data: {
-            'spaceId': spaceId,
-            'totalDocsDownloaded': snapshot.docs.length,
-            'unreadCount': unreadCount,
-            'wastedDocs': snapshot.docs.length - unreadCount,
-          });
-      return unreadCount;
-    });
+        .map((snapshot) => countUnreadMessages(
+              snapshot.docs.map(
+                (doc) => doc.data() as Map<String, dynamic>,
+              ),
+              userId,
+            ));
   }
+}
+
+const int unreadMessageScanLimit = 100;
+const int unreadBadgeLimit = 99;
+
+/// Counts unread message maps without retaining parsed [ChatMessage] objects.
+/// The result saturates at 99 because badges render "99+" above that point.
+int countUnreadMessages(
+  Iterable<Map<String, dynamic>> messages,
+  String userId,
+) {
+  var count = 0;
+  for (final data in messages) {
+    final readBy = data['readBy'];
+    final wasRead = readBy is Iterable && readBy.contains(userId);
+    if (data['deletedAt'] == null && data['senderId'] != userId && !wasRead) {
+      count++;
+      if (count == unreadBadgeLimit) return unreadBadgeLimit;
+    }
+  }
+  return count;
 }
