@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:aurogram/features/baba/domain/baba_tool_registry.dart';
+import 'package:aurogram/features/onboarding/domain/baba_identity_tools.dart';
 
 /// Proves the tool-call machinery Baba relies on: registration, dispatch,
 /// per-screen handler binding/fallback, the whitelist, and error handling.
@@ -60,6 +61,15 @@ void main() {
     expect(res['ok'], false);
     expect(res['available'], false);
     expect(res['message'], 'screen not open');
+  });
+
+  test('setUserName rejects an empty name with explicit ok:false', () async {
+    registry.registerAll(BabaIdentityTools.declarations());
+
+    final res = await registry.dispatch(BabaIdentityTools.setUserName, {});
+
+    expect(res['ok'], false);
+    expect(res['saved'], false);
   });
 
   test('a silent handler still defaults to ok:true', () async {

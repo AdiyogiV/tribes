@@ -9,6 +9,7 @@ import 'package:aurogram/core/theme/app_theme.dart';
 
 
 
+import 'package:aurogram/features/baba/domain/baba_auth_identity.dart';
 import 'package:aurogram/features/baba/domain/baba_chat_controller.dart';
 import 'package:aurogram/features/baba/domain/baba_context.dart';
 import 'package:aurogram/features/baba/domain/baba_insets.dart';
@@ -50,6 +51,8 @@ class _BabaOverlayState extends State<BabaOverlay>
   final BabaPosition _position = BabaPosition.instance;
   late final AnimationController _pulse;
   String? _shownError;
+  late BabaAuthIdentity _authIdentity;
+  StreamSubscription<User?>? _authSubscription;
 
   // Auto-activation (opt-in "greet me on open"). We fire it at most ONCE per
   // app launch and only on the home screen. On web a browser gesture is
@@ -81,6 +84,9 @@ class _BabaOverlayState extends State<BabaOverlay>
       duration: const Duration(milliseconds: 1300),
     )..repeat(reverse: true);
     _voice.addListener(_onVoiceChanged);
+    _authIdentity = BabaAuthIdentity.fromUser(FirebaseAuth.instance.currentUser);
+    _authSubscription =
+        FirebaseAuth.instance.userChanges().listen(_onAuthChanged);
     // Auto-activation is HOME-scoped, and the app rarely opens straight onto
     // home (splash/onboarding come first), so we re-evaluate on every route
     // change until it fires once. Cheap: guarded by [_autoStartDone].
@@ -91,6 +97,22 @@ class _BabaOverlayState extends State<BabaOverlay>
       _warmUp();
       _maybeAutoStart();
     });
+  }
+
+  void _onAuthChanged(User? user) {
+    final next = BabaAuthIdentity.fromUser(user);
+    if (!_authIdentity.requiresSessionRefresh(next)) return;
+    _authIdentity = next;
+    unawaited(_refreshForAuthChange());
+  }
+
+  Future<void> _refreshForAuthChange() async {
+    // Warm greetings embed account=guest/secured. Never adopt one after that
+    // fact changes, even when Firebase linked the same uid in place.
+    await _voice.invalidateForAuthChange();
+    if (!mounted) return;
+    _context.markStateChanged();
+    await _warmUp();
   }
 
   /// Build Baba's opening cue and pre-warm a call so the next tap is instant.
@@ -107,6 +129,7 @@ class _BabaOverlayState extends State<BabaOverlay>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _voice.removeListener(_onVoiceChanged);
+    _authSubscription?.cancel();
     _context.removeListener(_maybeAutoStart);
     _pulse.dispose();
     // NOTE: never dispose _voice — it's the app-scoped singleton.

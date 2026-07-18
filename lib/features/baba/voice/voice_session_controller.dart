@@ -402,6 +402,25 @@ class VoiceSessionController extends ChangeNotifier {
     }
   }
 
+  /// Invalidate identity-dependent session state after Firebase auth changes.
+  ///
+  /// A guest can be upgraded in place (same uid, `isAnonymous` flips), so a
+  /// pre-warmed greeting may carry a stale `account=guest` directive even
+  /// though authentication succeeded. A live call is left connected—the tool
+  /// response/current world state re-grounds it—but it may not warm-resume into
+  /// that old CX session after ending.
+  Future<void> invalidateForAuthChange() async {
+    directiveOverride = null;
+    _sessionId = null;
+    _lastEndedAt = null;
+    _lastEndedCleanly = false;
+    _endedByUser = false;
+    if (_live) return;
+    if (_warming || _warmReady || _channel != null) {
+      await _discardWarm();
+    }
+  }
+
   /// Pre-warm a call in the background so the next tap is instant. Opens the
   /// socket + session and lets CX generate its opening greeting AHEAD of time,
   /// buffering that audio WITHOUT playing it or changing the public state (the
@@ -533,8 +552,9 @@ class VoiceSessionController extends ChangeNotifier {
   void _maybeStartMic() {
     if (_disposed || _micStarted || !_live) return;
     if (!_relayReady) return;
-    if (_state == VoiceCallState.error || _state == VoiceCallState.ended)
+    if (_state == VoiceCallState.error || _state == VoiceCallState.ended) {
       return;
+    }
     _micStarted = true;
     unawaited(_startMic());
   }
@@ -1216,8 +1236,9 @@ class VoiceSessionController extends ChangeNotifier {
     if (_disposed || _screenContextSent) return;
     final ctx = _screenContext;
     if (ctx == null || ctx.isEmpty) return;
-    if (!_relayReady || _channel == null)
+    if (!_relayReady || _channel == null) {
       return; // resent from the 'ready' hook
+    }
     try {
       _channel!.sink.add(jsonEncode({
         'type': 'context',

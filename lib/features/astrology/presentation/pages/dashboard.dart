@@ -22,6 +22,8 @@ import 'package:aurogram/features/astrology/presentation/pages/baba/baba_desktop
 import 'package:aurogram/features/astrology/presentation/pages/baba/baba_empty_states.dart';
 import 'package:aurogram/features/astrology/presentation/pages/baba/baba_cosmic_content.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/nakshatra_ring_widget.dart';
+import 'package:aurogram/features/baba/domain/baba_auth_identity.dart';
+import 'package:aurogram/features/baba/domain/baba_context.dart';
 import 'package:aurogram/features/baba/domain/baba_snapshot.dart';
 import 'package:aurogram/shared/presentation/widgets/universal/dark_mode_toggle.dart';
 import 'package:aurogram/shared/providers/theme_provider.dart';
@@ -76,7 +78,7 @@ class DashboardPageState extends State<DashboardPage>
         // logged-in user is 'secured'. The old 'loggedIn' bool was true for
         // ANONYMOUS guests too (it only meant _user != null), which read as
         // "logged in" when they were not - now it says exactly which.
-        'account': (_user == null || _user!.isAnonymous) ? 'guest' : 'secured',
+        'account': _authIdentity.account,
         'skyDate': skyDate,
         'viewingToday': isToday,
       },
@@ -100,9 +102,11 @@ class DashboardPageState extends State<DashboardPage>
   final _skyService = SkyPositionsService();
   final _calendarService = AstroCalendarService();
   final _forecastService = ForecastService();
-  final _user = FirebaseAuth.instance.currentUser;
+  User? _user = FirebaseAuth.instance.currentUser;
+  late BabaAuthIdentity _authIdentity;
+  StreamSubscription<User?>? _authSubscription;
 
-  // Streams cached once in initState — never recreated in build()
+  // Cached outside build, but rebound whenever Firebase identity changes.
   Stream<AstrologyProfile?>? _profileStream;
   Stream<DailyInsight?>? _insightStream;
   Stream<AyurvedaProfile?>? _ayurvedaStream;
@@ -167,13 +171,13 @@ class DashboardPageState extends State<DashboardPage>
     // boundary during drag the controller notifies and we update the sky slider.
     _nakshatraController.addListener(_onWheelControllerChanged);
 
-    // User-specific streams (only for logged-in users)
-    if (_user != null) {
-      _profileStream = _astrologyService.streamProfile(_user!.uid);
-      _insightStream = _astrologyService.streamTodayInsight(_user!.uid);
-      _ayurvedaStream = _ayurvedaService.streamProfile(_user!.uid);
-      _forecastStream = _forecastService.streamForecast(_user!.uid);
-    }
+    // Firebase may upgrade an anonymous account in place. Keep both Baba's
+    // account fact and every uid-backed stream reactive instead of pinning the
+    // identity that happened to exist when this keep-alive page was created.
+    _authIdentity = BabaAuthIdentity.fromUser(_user);
+    _bindUserStreams(_user);
+    _authSubscription =
+        FirebaseAuth.instance.userChanges().listen(_handleAuthChanged);
 
     // Global data — load for everyone (sky positions, events, muhurat are
     // not user-specific and make the page useful even for logged-out visitors)
@@ -198,6 +202,27 @@ class DashboardPageState extends State<DashboardPage>
     } else {
       _loadGlobalMuhurat();
     }
+  }
+
+  void _bindUserStreams(User? user) {
+    final uid = user?.uid;
+    _profileStream = uid == null ? null : _astrologyService.streamProfile(uid);
+    _insightStream = uid == null ? null : _astrologyService.streamTodayInsight(uid);
+    _ayurvedaStream = uid == null ? null : _ayurvedaService.streamProfile(uid);
+    _forecastStream = uid == null ? null : _forecastService.streamForecast(uid);
+  }
+
+  void _handleAuthChanged(User? user) {
+    final next = BabaAuthIdentity.fromUser(user);
+    if (!_authIdentity.requiresSessionRefresh(next) || !mounted) return;
+    final uidChanged = _authIdentity.uid != next.uid;
+    setState(() {
+      _user = user;
+      _authIdentity = next;
+      _bindUserStreams(user);
+      if (uidChanged) _forecastEnsureRequested = false;
+    });
+    BabaContext.instance.markStateChanged('home');
   }
 
   /// Trigger the on-demand, no-AI forecast recompute exactly once per session,
@@ -232,6 +257,7 @@ class DashboardPageState extends State<DashboardPage>
 
   @override
   void dispose() {
+    _authSubscription?.cancel();
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     _nakshatraController.removeListener(_onWheelControllerChanged);

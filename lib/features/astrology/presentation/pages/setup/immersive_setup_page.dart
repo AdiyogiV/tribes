@@ -272,8 +272,13 @@ class _ImmersiveSetupPageState extends State<ImmersiveSetupPage>
           ..._babaFormState(),
         };
       }
-      await _saveProfile();
-      return {'ok': true, 'submitted': true, ..._babaFormState()};
+      final saved = await _saveProfile();
+      return {
+        'ok': saved,
+        'submitted': saved,
+        if (!saved) 'reason': 'birth details were NOT saved; do not say the chart is being prepared',
+        ..._babaFormState(),
+      };
     });
   }
 
@@ -341,9 +346,9 @@ class _ImmersiveSetupPageState extends State<ImmersiveSetupPage>
     }
   }
 
-  Future<void> _saveProfile() async {
+  Future<bool> _saveProfile() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null || !_canSubmit) return;
+    if (uid == null || !_canSubmit) return false;
     setState(() => _saving = true);
     try {
       final p = AstrologyProfile(
@@ -363,7 +368,11 @@ class _ImmersiveSetupPageState extends State<ImmersiveSetupPage>
         visibility: AstroVisibility.public,
         createdAt: _existing?.createdAt ?? DateTime.now(),
       );
-      await _service.saveProfile(p);
+      final persisted = await _service.saveProfile(p);
+      if (!persisted) {
+        if (mounted) setState(() => _saving = false);
+        return false;
+      }
       _service.calculateAndSaveAll(uid);
       HapticFeedback.heavyImpact();
       if (mounted) {
@@ -371,9 +380,11 @@ class _ImmersiveSetupPageState extends State<ImmersiveSetupPage>
         context.pushReplacement('/onboarding/complete',
             extra: {'hasBirthDetails': true, 'isUpdate': _existing != null});
       }
+      return true;
     } catch (e) {
       AppLogger.e('Save error: $e');
       if (mounted) setState(() => _saving = false);
+      return false;
     }
   }
 

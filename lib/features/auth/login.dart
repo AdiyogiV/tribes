@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -107,18 +109,28 @@ class LoginPageState extends State<LoginPage> {
       });
       // Optionally kick off the OTP send. Baba can't read the SMS code, so the
       // user still enters the OTP themselves.
-      if (send && !_codeSent && !_isLoading) {
-        await _verifyPhone();
+      var requestAccepted = !send;
+      if (send) {
+        if (_codeSent) {
+          requestAccepted = true;
+        } else if (!_isLoading) {
+          requestAccepted = await _verifyPhone();
+        }
       }
+      final signedIn = FirebaseAuth.instance.currentUser?.isAnonymous == false;
       return {
-        'ok': true,
+        'ok': requestAccepted,
         'set': true,
         'phone': '${_countryCode.text}$digits',
-        'otpSent': send,
-        'note': send
-            ? 'OTP sent by SMS. Ask the user to read out or type the code — you '
-                'cannot see it.'
-            : 'Number filled. They can tap send, or ask you to send the OTP.',
+        'otpSent': _codeSent,
+        'signedIn': signedIn,
+        'note': !requestAccepted
+            ? 'The OTP request was NOT accepted. Do not claim a code was sent; ask the user to retry or use the on-screen error.'
+            : signedIn
+                ? 'Phone verification completed automatically; the account is secured.'
+                : send
+                    ? 'OTP sent by SMS. Ask the user to read out or type the code — you cannot see it.'
+                    : 'Number filled. They can tap send, or ask you to send the OTP.',
       };
     });
 
@@ -323,7 +335,7 @@ class LoginPageState extends State<LoginPage> {
   ///
   /// If the current user is an anonymous GUEST, LINK the phone to that account
   /// (preserves uid + data). Otherwise sign in normally.
-  Future<void> _verifyPhoneWeb(String phoneNumber) async {
+  Future<bool> _verifyPhoneWeb(String phoneNumber) async {
     try {
       final current = FirebaseAuth.instance.currentUser;
       if (current != null && current.isAnonymous) {
@@ -334,13 +346,14 @@ class LoginPageState extends State<LoginPage> {
         );
       }
 
-      if (!mounted) return;
+      if (!mounted) return false;
       setState(() {
         _codeSent = true;
         _isLoading = false;
       });
+      return true;
     } on FirebaseAuthException catch (e) {
-      if (!mounted) return;
+      if (!mounted) return false;
       setState(() {
         _isLoading = false;
       });
@@ -351,19 +364,21 @@ class LoginPageState extends State<LoginPage> {
         errorMessage = 'Invalid phone number format.';
       }
       _showErrorDialog(errorMessage);
+      return false;
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted) return false;
       setState(() {
         _isLoading = false;
       });
       _showErrorDialog('Verification failed. Please try again.');
+      return false;
     }
   }
 
-  Future<void> _verifyPhone() async {
+  Future<bool> _verifyPhone() async {
     if (_phoneController.text.isEmpty || _countryCode.text.isEmpty) {
       _showErrorDialog('Please enter a valid phone number');
-      return;
+      return false;
     }
 
     setState(() {
@@ -373,23 +388,29 @@ class LoginPageState extends State<LoginPage> {
     final phoneNumber = '${_countryCode.text}${_phoneController.text}';
 
     try {
-      if (kIsWeb) {
-        await _verifyPhoneWeb(phoneNumber);
-        return;
-      }
+      if (kIsWeb) return await _verifyPhoneWeb(phoneNumber);
 
+      final outcome = Completer<bool>();
+      void complete(bool accepted) {
+        if (!outcome.isCompleted) outcome.complete(accepted);
+      }
       await FirebaseAuth.instance.verifyPhoneNumber(
         phoneNumber: phoneNumber,
         verificationCompleted: (PhoneAuthCredential credential) async {
-          if (!mounted) return;
+          if (!mounted) {
+            complete(false);
+            return;
+          }
           setState(() {
             _isLoading = false;
           });
           try {
             await Provider.of<AuthService>(context, listen: false)
                 .signIn(credential);
+            complete(true);
             _dismissAfterAuth();
           } catch (e) {
+            complete(false);
             if (mounted) {
               _showErrorDialog(
                   'Auto-verification failed. Please enter the code manually.');
@@ -397,6 +418,7 @@ class LoginPageState extends State<LoginPage> {
           }
         },
         verificationFailed: (FirebaseAuthException e) {
+          complete(false);
           if (!mounted) return;
           setState(() {
             _isLoading = false;
@@ -404,6 +426,7 @@ class LoginPageState extends State<LoginPage> {
           _showErrorDialog(e.message ?? 'Verification failed');
         },
         codeSent: (String verificationId, int? resendToken) {
+          complete(true);
           if (!mounted) return;
           setState(() {
             _verificationId = verificationId;
@@ -412,6 +435,7 @@ class LoginPageState extends State<LoginPage> {
           });
         },
         codeAutoRetrievalTimeout: (String verificationId) {
+          complete(false);
           _verificationId = verificationId;
           if (!mounted) return;
           setState(() {
@@ -420,12 +444,19 @@ class LoginPageState extends State<LoginPage> {
         },
         timeout: const Duration(seconds: 120),
       );
+      // Wait for Firebase to actually accept/reject the request, but finish
+      // before BabaToolRegistry's 10-second watchdog.
+      return await outcome.future.timeout(
+        const Duration(seconds: 9),
+        onTimeout: () => _codeSent,
+      );
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted) return false;
       setState(() {
         _isLoading = false;
       });
       _showErrorDialog('Error: ${e.toString()}');
+      return false;
     }
   }
 

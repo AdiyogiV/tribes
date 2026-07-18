@@ -18,18 +18,23 @@ class BabaIdentityTools {
       Map<String, dynamic> args) async {
     final name = (args['name'] as String?)?.trim() ?? '';
     if (name.isEmpty) {
-      return {'saved': false, 'message': 'No name was provided.'};
+      return {
+        'ok': false,
+        'saved': false,
+        'message': 'No name was provided.',
+      };
     }
     final ok = await UserService().saveGuestName(name);
     if (!ok) {
       AppLogger.w('setUserName: saveGuestName returned false',
           category: LogCategory.auth);
       return {
+        'ok': false,
         'saved': false,
         'message': 'Could not save the name right now; you may proceed anyway.',
       };
     }
-    return {'saved': true, 'name': name};
+    return {'ok': true, 'saved': true, 'name': name};
   }
 
   /// The global declaration(s) to register once at app start.
