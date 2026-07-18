@@ -21,7 +21,8 @@ DATA SOURCE
 COMPUTE (pure math, no AI)         lib/vedic_analysis.js
       houses, aspects (drishti), dignities, combustion,
       raj yogas, ashtakavarga (BAV/SAV), transit scoring
-      lib/house_interpretations.js  -> natal house text
+      lib/vedic_day_signal.js       -> auditable 0-100 daily alignment
+      functions/forecast/sense.js   -> rolling forecast read-model
       lib/daily_insight_context.js  -> dasha phase, today's transits vs natal lagna
 
 GENERATE (AI)                      lib/gemini.js  (callGemini)
@@ -30,12 +31,15 @@ GENERATE (AI)                      lib/gemini.js  (callGemini)
       -> callGemini -> validate -> store. No engine, no flavor objects.
       functions/first_reading.js    one-time birth personality read
       functions/current_times_reading.js  "where you are now" read
+      functions/forecast/narrate.js rolling continuous forecast story
       functions/per_house.js        12-house Gochara, 14-day cycle (+ scheduler)
-      functions/daily_astro_insights.js   daily insight + one "ready" push
+      functions/daily_astro_insights.js   compatibility daily cards, anchored
+                                          to forecast alignment + one "ready" push
 
 ORCHESTRATE                        functions/schedulers/unified_orchestrator.js
-      one nightly cron (4:30 AM IST): refresh sky -> generate daily insights
-      -> enqueue per-house -> health. One "your daily reading is ready" push
+      one nightly cron (4:30 AM IST): refresh sky -> forecast SENSE -> enqueue
+      daily cards / per-house / forecast NARRATE -> health.
+      One "your daily reading is ready" push
       per user (functions/notifications.js FCM trigger).
 ```
 
@@ -53,9 +57,9 @@ ORCHESTRATE                        functions/schedulers/unified_orchestrator.js
 | Trigger | Is a transit activating it? | Gochara (Moon + Lagna) | flavors/per_house |
 | Strength| Strong enough to deliver? | Ashtakavarga + Shadbala | vedic_analysis -> wired into readings |
 
-> Strength IS wired: every transit in the daily insight and per-house reading
-> now carries its Ashtakavarga bindus (0-8) + quality, and prompts weigh
-> predictions by it. Shadbala (strong/weak planets) is in the daily too.
+> Strength is wired: forecast SENSE consumes BAV through a canonical
+> sign-index adapter; daily and per-house transit prompts carry Ashtakavarga
+> bindus (0-8) + quality. Shadbala (strong/weak planets) is in the daily too.
 >
 > D9 Navamsa is computed + stored (`astrologyData.navamsa`) but intentionally
 > NOT fed into daily/per-house prompts: D9 speaks to long-term *promise*, not

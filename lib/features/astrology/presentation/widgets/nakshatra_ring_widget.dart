@@ -1494,8 +1494,7 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
             // dark night sky, warm-gold-lit with a soft grey shadow on light.
             litColor:
                 isDark ? const Color(0xFFF3EFE6) : const Color(0xFFE3B24A),
-            darkColor:
-                isDark ? Colors.black : const Color(0xFFCFC7B6),
+            darkColor: isDark ? Colors.black : const Color(0xFFCFC7B6),
           ),
         ),
         const SizedBox(height: 14),
@@ -1643,6 +1642,7 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
 
 class NakshatraWeekForecastCard extends StatelessWidget {
   final NakshatraWheelController controller;
+  final Map<String, ForecastDay>? forecast;
 
   /// Today's merged panchang/samvat — used to derive today's tithi and
   /// project it ±7 days across the forecast strip.
@@ -1651,6 +1651,7 @@ class NakshatraWeekForecastCard extends StatelessWidget {
   const NakshatraWeekForecastCard({
     super.key,
     required this.controller,
+    this.forecast,
     this.todaySamvat,
   });
 
@@ -1789,12 +1790,32 @@ class NakshatraWeekForecastCard extends StatelessWidget {
                   todayIndex: nIdx,
                 );
                 if (vibe == null) return const SizedBox.shrink();
-                final accent = vibeAccent(vibe.tone, isDark: isDark);
+                final forecastDay = forecast?[ForecastService.dateKey(date)];
+                final alignment = forecastDay?.alignment;
+                final tone = alignment == null
+                    ? vibe.tone
+                    : alignment >= 75
+                        ? VibeTone.flow
+                        : alignment >= 55
+                            ? VibeTone.favorable
+                            : alignment < 45
+                                ? VibeTone.cautious
+                                : VibeTone.sacred;
+                final icon = alignment == null
+                    ? vibe.icon
+                    : alignment >= 65
+                        ? Icons.auto_awesome_rounded
+                        : alignment < 45
+                            ? Icons.shield_rounded
+                            : Icons.balance_rounded;
+                final accent = vibeAccent(tone, isDark: isDark);
                 final isFocused = nIdx == activeIdx;
                 final dayIdx = date.weekday % 7;
                 final dayLabel = dayLabels[dayIdx];
                 final dayGlyph = dayGlyphs[dayIdx];
-                final isBestDay = vibe.tone == VibeTone.flow;
+                final isBestDay = alignment == null
+                    ? vibe.tone == VibeTone.flow
+                    : alignment >= 65;
                 final String? chipTithi = todayTithi != null
                     ? _tithiLabel(((todayTithi - 1 + i) % 30) + 1)
                     : null;
@@ -1805,7 +1826,7 @@ class NakshatraWeekForecastCard extends StatelessWidget {
                     dayGlyph: dayGlyph,
                     dayNum: date.day.toString(),
                     tithiLabel: chipTithi,
-                    icon: vibe.icon,
+                    icon: icon,
                     accent: accent,
                     isFocused: isFocused,
                     isToday: i == 0,

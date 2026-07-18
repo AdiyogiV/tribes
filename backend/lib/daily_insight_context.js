@@ -120,7 +120,7 @@ export async function getTodayAstroData(userAstroData) {
         userAstroData.currentTimeZoneOffset :
         (typeof timeZoneOffset === "number" ? timeZoneOffset : 0);
 
-    if (!latitude || !longitude) {
+    if (latitude == null || longitude == null) {
         logger.warn("Missing location data for user");
         return { panchang: {}, transits: {}, shadBala: {}, todaySamvat: null };
     }
@@ -146,7 +146,8 @@ export async function getTodayAstroData(userAstroData) {
             timezone: currentTimeZone || "UTC",
             timezoneOffset: currentTimeZoneOffset,
             location: `${latitude}, ${longitude}`,
-            usingCurrentLocation: !!(userAstroData.currentLatitude && userAstroData.currentLongitude),
+            usingCurrentLocation:
+                userAstroData.currentLatitude != null && userAstroData.currentLongitude != null,
         });
 
         const result = await runEphemerisFlow({
@@ -207,7 +208,7 @@ export async function getTodayAstroData(userAstroData) {
 
         // Muhurat and Samvat (shadbala is natal, read from the user profile instead)
         const muhurat = {};
-        const muhuratSource = result.muhurat?.days?.[DateTime.now().toFormat("yyyy-MM-dd")] || {};
+        const muhuratSource = result.muhurat?.days?.[now.toFormat("yyyy-MM-dd")] || {};
         if (muhuratSource.rahuKala) muhurat.rahuKaal = muhuratSource.rahuKala;
         if (muhuratSource.yamaganda) muhurat.yamaganda = muhuratSource.yamaganda;
         if (muhuratSource.gulikaKala) muhurat.gulikaKala = muhuratSource.gulikaKala;

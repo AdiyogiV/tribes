@@ -44,6 +44,7 @@
 
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { logger } from "firebase-functions/v2";
+import { orchestratorCalendar } from "./orchestrator_clock.js";
 
 // Phase 1: Cleanup runners
 import { runCleanupTypingIndicators } from "../cleanup_typing.js";
@@ -99,18 +100,10 @@ export const unifiedOrchestrator = onSchedule({
     retryCount: 1,
 }, async () => {
     const orchestratorStart = Date.now();
-    const now = new Date();
-    const dayOfWeek = now.getUTCDay(); // 0 = Sunday, 1 = Monday
-    const dayOfMonth = now.getUTCDate();
+    const calendar = orchestratorCalendar();
     const results = [];
 
-    logger.info("unifiedOrchestrator started", {
-        dayOfWeek,
-        dayOfMonth,
-        isSunday: dayOfWeek === 0,
-        isMonday: dayOfWeek === 1,
-        isBimonthly: dayOfMonth === 1 || dayOfMonth === 15,
-    });
+    logger.info("unifiedOrchestrator started", calendar);
 
     // ── Phase 1: Cleanup (parallel — all independent) ──────────────────
     logger.info("Phase 1: Cleanup");
@@ -122,7 +115,7 @@ export const unifiedOrchestrator = onSchedule({
     ];
 
     // Conditional cleanup tasks
-    if (dayOfWeek === 0) {
+    if (calendar.isSunday) {
         cleanupTasks.push(
             runTask("cleanupOrphanedFeedEntries (Sunday)", runCleanupOrphanedFeedEntries),
         );
@@ -138,7 +131,8 @@ export const unifiedOrchestrator = onSchedule({
 
     // ── Phase 2: Data Refresh (sequential — Phase 3 needs this) ────────
     logger.info("Phase 2: Data Refresh");
-    results.push(await runTask("refreshSkyPositionsDaily", runRefreshSkyPositionsDaily));
+    const skyRefresh = await runTask("refreshSkyPositionsDaily", runRefreshSkyPositionsDaily);
+    results.push(skyRefresh);
 
     // (muhurat is now part of the sky_positions smartPrefetch — single source)
 
@@ -147,7 +141,15 @@ export const unifiedOrchestrator = onSchedule({
     // users/{uid}/forecast/{yyyy-MM}. No AI. Makes the wheel % real; NARRATE
     // (Phase 4) later enriches the same days with heading + narrative.
     logger.info("Phase 2b: Forecast SENSE (day signals)");
-    results.push(await runTask("computeDaySignals", runComputeDaySignals));
+    const signalResult = skyRefresh.ok ?
+        await runTask("computeDaySignals", runComputeDaySignals) :
+        {
+            name: "computeDaySignals",
+            ok: false,
+            ms: 0,
+            error: "Skipped because refreshSkyPositionsDaily failed",
+        };
+    results.push(signalResult);
 
     // ── Phase 3: (archived) mundane/world content generation ───────────
     // Removed — personal insights don't depend on it. See backend/_archive/.
@@ -158,12 +160,21 @@ export const unifiedOrchestrator = onSchedule({
     results.push(await runTask("enqueuePerHouseReadings", runEnqueuePerHouseReadings));
     // Forecast NARRATE — enqueues ~1 Gemini call/user/month for users whose
     // narrated window is running low (depends on Phase 2b signals existing).
-    results.push(await runTask("enqueueMonthlyNarrate", runEnqueueMonthlyNarrate));
+    if (signalResult.ok) {
+        results.push(await runTask("enqueueMonthlyNarrate", runEnqueueMonthlyNarrate));
+    } else {
+        results.push({
+            name: "enqueueMonthlyNarrate",
+            ok: false,
+            ms: 0,
+            error: "Skipped because computeDaySignals failed",
+        });
+    }
 
     // ── Phase 5: Health (independent — runs last) ─────────────────────
     logger.info("Phase 5: Health");
     results.push(await runTask("nightlyHealthAnalysis", runNightlyHealthAnalysis));
-    if (dayOfWeek === 1) {
+    if (calendar.isMonday) {
         results.push(await runTask("weeklyHealthAggregation (Monday)", runWeeklyHealthAggregation));
     }
 

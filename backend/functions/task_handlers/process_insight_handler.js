@@ -39,7 +39,9 @@ export async function handleProcessInsight(payload, ctx) {
     });
 
     try {
-        const result = await generateInsightForUserForce(userId, astrologyData, true);
+        // Scheduled work is idempotent: a retry returns the existing date doc
+        // instead of spending another Gemini call and replaying side effects.
+        const result = await generateInsightForUserForce(userId, astrologyData, false);
 
         logger.info("[INSIGHT-WORKER] User insight generated", {
             structuredData: true,

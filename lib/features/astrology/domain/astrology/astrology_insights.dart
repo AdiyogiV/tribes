@@ -8,49 +8,19 @@ import '../astrology_service.dart';
 /// Daily insight streaming, fetching, generation, feedback, and
 /// first-reading / current-times-reading methods for [AstrologyService].
 extension AstrologyInsightsExtension on AstrologyService {
-  /// Stream today's daily insight — queries the MOST RECENT insight.
-  /// This avoids timezone mismatch issues between frontend and backend.
-  /// Uses hash-based deduplication to prevent unnecessary widget rebuilds.
+  /// Stream the backend's IST-keyed insight for today.
+  ///
+  /// Reading "latest" used to show yesterday's card when today's generation
+  /// was missing. The backend keys every daily insight in Asia/Kolkata, so the
+  /// client must use that same calendar contract rather than silently falling
+  /// back to stale content.
   Stream<DailyInsight?> streamTodayInsight(String uid) {
-    String? lastHash;
-    DailyInsight? cached;
-    return firestore
-        .collection('users')
-        .doc(uid)
-        .collection('dailyInsights')
-        .orderBy('generatedAt', descending: true)
-        .limit(1)
-        .snapshots()
-        .handleError((error, stackTrace) {
-      AppLogger.e(
-        'Error in today insight stream',
-        category: LogCategory.database,
-        error: error,
-        stackTrace: stackTrace,
-      );
-    }).map((snapshot) {
-      try {
-        if (snapshot.docs.isEmpty) return null;
-        final doc = snapshot.docs.first;
-        final data = doc.data();
-        final hash = data.toString();
-        if (hash == lastHash && cached != null) return cached;
-        lastHash = hash;
-        cached = DailyInsight.fromMap({
-          ...data,
-          'date': doc.id,
-        });
-        return cached;
-      } catch (e, stackTrace) {
-        AppLogger.e(
-          'Error parsing today insight from stream',
-          category: LogCategory.database,
-          error: e,
-          stackTrace: stackTrace,
-        );
-        return null;
-      }
-    }).distinct();
+    final istNow =
+        DateTime.now().toUtc().add(const Duration(hours: 5, minutes: 30));
+    final date = '${istNow.year.toString().padLeft(4, '0')}-'
+        '${istNow.month.toString().padLeft(2, '0')}-'
+        '${istNow.day.toString().padLeft(2, '0')}';
+    return streamInsightForDate(uid, date);
   }
 
   /// Stream a specific date's insight (for history viewing).
@@ -256,7 +226,8 @@ extension AstrologyInsightsExtension on AstrologyService {
   /// Returns a map with `success`, and on failure a `code` and `message` so
   /// callers can surface the real cloud-function error (e.g. in a snackbar)
   /// instead of a generic INTERNAL.
-  Future<Map<String, dynamic>> generatePerHouseReadings({bool force = false}) async {
+  Future<Map<String, dynamic>> generatePerHouseReadings(
+      {bool force = false}) async {
     final user = currentUser;
     if (user == null) {
       AppLogger.w('Cannot generate per-house readings: no user',
@@ -270,7 +241,10 @@ extension AstrologyInsightsExtension on AstrologyService {
 
       final result = await callWithFunctionsFallback(
         functionName: 'insightGateway',
-        data: <String, dynamic>{'method': 'generatePerHouseNow', 'force': force},
+        data: <String, dynamic>{
+          'method': 'generatePerHouseNow',
+          'force': force
+        },
         options: HttpsCallableOptions(timeout: const Duration(seconds: 75)),
       );
 
@@ -283,9 +257,8 @@ extension AstrologyInsightsExtension on AstrologyService {
         return {
           'success': true,
           'alreadyFresh': data['alreadyFresh'] == true,
-          'houseCount': (data['houses'] is Map)
-              ? (data['houses'] as Map).length
-              : null,
+          'houseCount':
+              (data['houses'] is Map) ? (data['houses'] as Map).length : null,
         };
       }
       AppLogger.w('Per-house readings returned failure',

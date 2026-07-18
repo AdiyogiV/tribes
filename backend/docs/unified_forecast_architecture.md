@@ -1,6 +1,7 @@
 # Unified Forecast Architecture
 
-> **Status:** Design (pre-code). Source of truth for the vibe-wheel / daily-narrative rewrite.
+> **Status:** Core implemented; compatibility cleanup remains. This document records
+> both the target architecture and the remaining migration work.
 > **Decision log:** Grounding = **removed for now** (Pure Unified, no live search).
 > **Supersedes:** the on-phone Daily Vibe (`daily_vibe.dart` 9 presets), the fake
 > `50 + quality×47` alignment, the fuzzy `NakshatraData.findIndex` name→index path,
@@ -17,7 +18,10 @@ own truth. Result: **incoherent** (five slightly different stories), **inaccurat
 (the wheel silently falls back to fake data on any name mismatch — e.g. backend
 `"Moola"` vs Flutter `"Mula"`), and **expensive** (many AI calls/user/day).
 
-We replace the *personal narrative* surface with **one coherent system**.
+We are replacing the *personal narrative* surface with **one coherent system**.
+SENSE/NARRATE/REMEMBER and the shared forecast read-model are live. The separate
+Daily Insight and per-house generators remain compatibility surfaces; Daily Insight
+is now anchored to the unified day's computed alignment but still makes its own AI call.
 
 ---
 
@@ -52,10 +56,11 @@ invents a percentage. This is what keeps it "true Vedic" and auditable.
 ## 3. Data model (3 things; 2 already exist in spirit)
 
 ```
-users/{uid}/
-  person                 # ONE doc: chart + memory + storyline. Single source of "who".
-  forecast/{yyyy-MM}     # narrated horizon: the single read-model for UI/chat/notifs.
-sky/{yyyy-MM-dd}         # GLOBAL (not per-user): computed once, shared by all users.
+users/{uid}
+  .astrologyData                  # chart + dasha (current implementation)
+  memory/profile                  # memory + bounded storyline
+  forecast/{yyyy-MM}              # shared computed/narrated read-model
+global_astro/sky_positions        # global date-keyed positions + panchang
 ```
 
 ### 3.1 `users/{uid}/person`
@@ -153,7 +158,9 @@ CALENDAR:  dasha phase + guidance (from buildDashaContext)
 ```
 
 Token budget: input ~5-8k, output ~3.3k for 30 days. Cap is 65k out / 1M context.
-Trivial. **~1 AI call / user / month** for the entire narrative surface.
+The rolling forecast itself costs **~1 AI call / active user / month**. This is
+not yet the entire narrative cost: Daily Insight remains daily, per-house remains
+cyclical, and first/current-times readings are separate on-demand calls.
 
 ---
 
@@ -192,10 +199,10 @@ A dasha turnover = a natural chapter break.
 | Today | Fate |
 |---|---|
 | `computeDaySignal()` (unused, tested) | **PROMOTE** → the SENSE layer |
-| `daily_astro_insights.js` (per-day) | **REFACTOR** → NARRATE (per horizon) |
+| `daily_astro_insights.js` (per-day) | **IN PROGRESS** — anchored to forecast alignment; still a separate daily AI call |
 | `user_memory.js` | **ABSORB** → memory updates happen inside NARRATE/REMEMBER |
-| `nakshatra_ring_widget.dart` on-phone vibe + fuzzy `findIndex` + fake % | **DELETE** → card reads `forecast` |
-| `daily_vibe.dart` (9 presets) | **DELETE** |
+| `nakshatra_ring_widget.dart` on-phone vibe + fuzzy `findIndex` + fake % | **MOSTLY MIGRATED** — forecast drives number/story; presets remain out-of-window fallback |
+| `daily_vibe.dart` (9 presets) | **DEPRECATE** after every wheel surface has forecast coverage |
 | "today hijack" (insight text under Tara label) | **DELETE** |
 | `first_reading`, `current_times_reading` | **FOLD** → views of the same forecast (onboarding = chapter 1) |
 | `per_house.js` | **KEEP** as specialized compute, but reads `person` (not its own context) |
@@ -207,9 +214,10 @@ A dasha turnover = a natural chapter break.
 
 - **Accurate:** one number engine, canonical indices (never fuzzy strings), no fake
   fallbacks. The known bugs cannot exist — nowhere to hide.
-- **Coherent:** card, chat, notifications, daily reading read the *same* `forecast` +
-  `person`. They cannot contradict — by construction, not discipline.
-- **Efficient:** ~5 AI calls/user/day → ~1/user/month. SENSE is free math.
+- **Coherent target:** card and chat read the shared forecast. Daily Insight is now
+  constrained by the same computed day, but final consolidation is still pending.
+- **Efficient target:** the forecast is ~1 call/user/month and SENSE is free math;
+  legacy Daily Insight and per-house calls still contribute additional cost.
 - **Scalable:** bounded `person` doc, month-keyed forecast, dasha-nested summaries.
   Nothing grows unbounded.
 

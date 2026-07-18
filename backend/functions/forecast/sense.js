@@ -125,31 +125,34 @@ async function writeUserForecast(uid, computedDays) {
     let written = 0;
     for (const [period, days] of byMonth) {
         const ref = db().collection("users").doc(uid).collection("forecast").doc(period);
-        const snap = await ref.get();
-        const existing = snap.exists ? (snap.data().days || []) : [];
+        await db().runTransaction(async (transaction) => {
+            const snap = await transaction.get(ref);
+            const existing = snap.exists ? (snap.data().days || []) : [];
 
-        // Index existing days by date so we keep narrated text.
-        const merged = new Map(existing.map((d) => [d.date, d]));
-        for (const day of days) {
-            const prior = merged.get(day.date) || {};
-            merged.set(day.date, {
-                ...prior, // preserves heading/narrative from NARRATE
-                date: day.date,
-                alignment: day.alignment,
-                tara: day.tara,
-                favorable: day.favorable,
-                unfavorable: day.unfavorable,
-                signals: day.signals,
-            });
-        }
+            // Merge against the transaction's latest snapshot so an overlapping
+            // NARRATE write cannot be silently clobbered by stale read-modify-write.
+            const merged = new Map(existing.map((d) => [d.date, d]));
+            for (const day of days) {
+                const prior = merged.get(day.date) || {};
+                merged.set(day.date, {
+                    ...prior, // preserves heading/narrative from NARRATE
+                    date: day.date,
+                    alignment: day.alignment,
+                    tara: day.tara,
+                    favorable: day.favorable,
+                    unfavorable: day.unfavorable,
+                    signals: day.signals,
+                });
+            }
 
-        const sorted = [...merged.values()].sort((a, b) => a.date.localeCompare(b.date));
-        await ref.set({
-            period,
-            days: sorted,
-            signalVersion: SIGNAL_VERSION,
-            signalsComputedAt: FieldValue.serverTimestamp(),
-        }, { merge: true });
+            const sorted = [...merged.values()].sort((a, b) => a.date.localeCompare(b.date));
+            transaction.set(ref, {
+                period,
+                days: sorted,
+                signalVersion: SIGNAL_VERSION,
+                signalsComputedAt: FieldValue.serverTimestamp(),
+            }, { merge: true });
+        });
         written++;
     }
     return written;

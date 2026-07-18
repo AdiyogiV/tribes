@@ -7,6 +7,9 @@ import { HttpsError } from "firebase-functions/v2/https";
 import { getAuth } from "firebase-admin/auth";
 import { logger } from "./firebase.js";
 
+const AUTH_ACTIVITY_CACHE_MS = 5 * 60 * 1000;
+let authActivityCache = null;
+
 /**
  * Extract and validate authenticated user ID from a Cloud Function request.
  * Throws HttpsError("unauthenticated") if the request lacks valid auth.
@@ -18,9 +21,9 @@ import { logger } from "./firebase.js";
  */
 export function requireAuth(request, context) {
     if (!request.auth) {
-        const msg = context
-            ? `Must be authenticated to ${context}`
-            : "Must be authenticated";
+        const msg = context ?
+            `Must be authenticated to ${context}` :
+            "Must be authenticated";
         throw new HttpsError("unauthenticated", msg);
     }
     return request.auth.uid;
@@ -39,26 +42,40 @@ export function requireAuth(request, context) {
  * @returns {Promise<Set<string>>} Set of recently-active uids.
  */
 export async function getRecentlyActiveUids(days) {
-    const cutoffMs = Date.now() - days * 24 * 60 * 60 * 1000;
-    const active = new Set();
-    let pageToken;
-    let scanned = 0;
-    do {
-        const page = await getAuth().listUsers(1000, pageToken);
-        for (const u of page.users) {
-            scanned++;
-            const last = u.metadata?.lastRefreshTime || u.metadata?.lastSignInTime;
-            if (last && new Date(last).getTime() >= cutoffMs) {
-                active.add(u.uid);
-            }
-        }
-        pageToken = page.pageToken;
-    } while (pageToken);
-    logger.info("getRecentlyActiveUids: scanned auth users", {
+    const now = Date.now();
+    if (!authActivityCache || now - authActivityCache.loadedAt >= AUTH_ACTIVITY_CACHE_MS) {
+        const usersPromise = loadAuthActivity().catch((error) => {
+            authActivityCache = null;
+            throw error;
+        });
+        authActivityCache = { loadedAt: now, usersPromise };
+    }
+
+    const users = await authActivityCache.usersPromise;
+    const cutoffMs = now - days * 24 * 60 * 60 * 1000;
+    const active = new Set(
+        users.filter((user) => user.lastActiveMs >= cutoffMs).map((user) => user.uid),
+    );
+    logger.info("getRecentlyActiveUids: filtered cached auth activity", {
         structuredData: true,
         days,
-        scanned,
+        scanned: users.length,
         active: active.size,
     });
     return active;
+}
+
+async function loadAuthActivity() {
+    const users = [];
+    let pageToken;
+    do {
+        const page = await getAuth().listUsers(1000, pageToken);
+        for (const user of page.users) {
+            const last = user.metadata?.lastRefreshTime || user.metadata?.lastSignInTime;
+            const lastActiveMs = last ? new Date(last).getTime() : 0;
+            users.push({ uid: user.uid, lastActiveMs });
+        }
+        pageToken = page.pageToken;
+    } while (pageToken);
+    return users;
 }

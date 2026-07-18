@@ -19,10 +19,12 @@ import { buildDashaContext } from "../../lib/daily_insight_context.js";
 import { getRecentlyActiveUids } from "../../lib/auth_utils.js";
 import { NARRATE_SYSTEM_PROMPT, buildNarratePrompt } from "../prompts/forecast_narrate.js";
 import { istToday, dayKey, FORECAST_ZONE } from "./forecast_helpers.js";
+import { validateNarratedDays } from "./narration_validation.js";
 
 // Unified taskRouter queue — see backend/functions/task_router.js
 const QUEUE_NAME = "locations/asia-southeast2/functions/taskRouter";
 const ENQUEUE_WINDOW_SECONDS = 3600; // spread across 1h
+const ENQUEUE_LEASE_MS = 2 * 60 * 60 * 1000; // covers stagger + task retries
 
 // How many days ahead a single narrate call covers.
 const NARRATE_HORIZON_DAYS = Number(process.env.NARRATE_HORIZON_DAYS || 30);
@@ -123,45 +125,65 @@ export async function narrateForecastForUser(uid) {
         flavorName: "forecast_narrate",
     });
 
-    const narratedDays = Array.isArray(json?.days) ? json.days : [];
-    if (!narratedDays.length) return { ok: false, reason: "empty-narration" };
+    const validation = validateNarratedDays(json?.days, signals);
+    if (!validation.ok) {
+        throw new Error(`Invalid forecast narration: ${validation.reason}`);
+    }
+    const narratedDays = validation.days;
 
     // Merge headings/narratives back into the month docs by date (preserve the
     // computed alignment/signals). Group narrated days by month.
     const narrativeByDate = new Map(narratedDays.map((d) => [d.date, d]));
     let narrated = 0;
-    let maxNarratedDate = null;
 
-    for (const [mid, data] of monthDocs) {
-        let touched = false;
-        const days = (data.days || []).map((day) => {
-            const n = narrativeByDate.get(day.date);
-            if (!n) return day;
-            touched = true;
-            narrated++;
-            if (!maxNarratedDate || day.date > maxNarratedDate) maxNarratedDate = day.date;
-            return {
-                ...day,
-                heading: n.heading || day.heading || null,
-                narrative: n.narrative || day.narrative || null,
-            };
+    for (const [mid] of monthDocs) {
+        const ref = userRef.collection("forecast").doc(mid);
+        let monthNarrated = 0;
+        await db.runTransaction(async (transaction) => {
+            const latest = await transaction.get(ref);
+            if (!latest.exists) return;
+
+            let touched = false;
+            monthNarrated = 0;
+            const days = (latest.data().days || []).map((day) => {
+                const n = narrativeByDate.get(day.date);
+                if (!n) return day;
+                touched = true;
+                monthNarrated++;
+                return {
+                    ...day,
+                    heading: n.heading,
+                    narrative: n.narrative,
+                };
+            });
+            if (touched) {
+                transaction.set(ref, {
+                    period: mid,
+                    days,
+                    narratedAt: FieldValue.serverTimestamp(),
+                }, { merge: true });
+            }
         });
-        if (touched) {
-            await userRef.collection("forecast").doc(mid).set({
-                period: mid,
-                days,
-                narratedAt: FieldValue.serverTimestamp(),
-            }, { merge: true });
-        }
+        narrated += monthNarrated;
+    }
+    if (narrated !== signals.length) {
+        throw new Error(
+            `Forecast changed during narration: wrote ${narrated}/${signals.length} days`,
+        );
     }
 
     // REMEMBER — fold this chapter into a bounded storyline arc.
     await rememberStoryline(userRef, person.storyline, json.storylineUpdate, dashaContext);
 
     // Cheap gating marker for the enqueue runner (no extra per-user read).
-    await userRef.set({ forecastNarratedThrough: maxNarratedDate }, { merge: true });
+    // Validation guarantees complete, exact coverage, so this marker can never
+    // leap over a missing day merely because the model returned one far date.
+    await userRef.set({
+        forecastNarratedThrough: validation.through,
+        forecastNarrateQueuedUntil: FieldValue.delete(),
+    }, { merge: true });
 
-    logger.info("narrate: done", { uid, narrated, through: maxNarratedDate });
+    logger.info("narrate: done", { uid, narrated, through: validation.through });
     return { ok: true, narrated };
 }
 
@@ -229,8 +251,37 @@ export function narrateRunwayShort(narratedThrough) {
  */
 export async function ensureNarrateFresh(uid, narratedThrough) {
     if (!narrateRunwayShort(narratedThrough)) return false;
-    await enqueueNarrateForUser(uid);
-    return true;
+    if (!await claimNarrateEnqueue(uid)) return false;
+    try {
+        await enqueueNarrateForUser(uid);
+        return true;
+    } catch (error) {
+        await releaseNarrateEnqueue(uid);
+        throw error;
+    }
+}
+
+async function claimNarrateEnqueue(uid) {
+    const ref = db.collection("users").doc(uid);
+    return db.runTransaction(async (transaction) => {
+        const snap = await transaction.get(ref);
+        if (!snap.exists || !narrateRunwayShort(snap.data().forecastNarratedThrough)) {
+            return false;
+        }
+        const queuedUntil = snap.data().forecastNarrateQueuedUntil?.toMillis?.() || 0;
+        if (queuedUntil > Date.now()) return false;
+
+        transaction.set(ref, {
+            forecastNarrateQueuedUntil: new Date(Date.now() + ENQUEUE_LEASE_MS),
+        }, { merge: true });
+        return true;
+    });
+}
+
+async function releaseNarrateEnqueue(uid) {
+    await db.collection("users").doc(uid).set({
+        forecastNarrateQueuedUntil: FieldValue.delete(),
+    }, { merge: true });
 }
 
 /**
@@ -268,8 +319,14 @@ export async function runEnqueueMonthlyNarrate() {
     for (let i = 0; i < total; i++) {
         const delaySeconds = total > 0 ? Math.floor((i / total) * ENQUEUE_WINDOW_SECONDS) : 0;
         try {
-            await enqueueNarrateForUser(candidates[i], delaySeconds);
-            enqueued++;
+            if (!await claimNarrateEnqueue(candidates[i])) continue;
+            try {
+                await enqueueNarrateForUser(candidates[i], delaySeconds);
+                enqueued++;
+            } catch (error) {
+                await releaseNarrateEnqueue(candidates[i]);
+                throw error;
+            }
         } catch (e) {
             logger.warn("narrate enqueue failed", { uid: candidates[i], error: String(e?.message || e) });
         }

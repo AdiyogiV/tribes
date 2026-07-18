@@ -29,7 +29,7 @@ export const todayId = () => DateTime.now().setZone("Asia/Kolkata").toFormat("yy
  * Generate personalized daily astrology insight using AI
  * Uses ALL available data: API + Google Search
  */
-async function generateInsightWithAI(userAstroData, todayAstroData) {
+async function generateInsightWithAI(userAstroData, todayAstroData, forecastDay) {
     // Extract user's core chart data
     const { ascendant: lagna, moonSign, sunSign, nakshatra, currentDasha } = normalizeChart(userAstroData);
     const { mahaDasha, antarDasha, levels } = currentDasha;
@@ -111,7 +111,7 @@ async function generateInsightWithAI(userAstroData, todayAstroData) {
             if (canon && ashtakavarga) {
                 const signIdx = ZODIAC.findIndex((z) => z.toLowerCase() === sign.toLowerCase());
                 if (signIdx >= 0) {
-                    const b = getTransitBinduScore(canon, signIdx, ashtakavarga);
+                    const b = getTransitBinduScore(canon, ZODIAC[signIdx], ashtakavarga);
                     if (b) line += ` [${b.bindus}/8 bindus: ${b.quality}]`;
                 }
             }
@@ -226,6 +226,7 @@ async function generateInsightWithAI(userAstroData, todayAstroData) {
         weakPlanets,
         transitList,
         upcomingEventsText,
+        forecastDay,
     });
 
     // Call Gemini — all context comes from our own computed astronomical data.
@@ -331,153 +332,6 @@ export async function generateInsightForUserForce(userId, userAstroData, forceRe
     return generateNewInsight(userId, userAstroData, insightRef, today, false);
 }
 
-/**
- * Extract predictions from insight sections and save for tracking
- * @param {string} userId - User ID
- * @param {string} insightDate - Date of the insight (yyyy-MM-dd)
- * @param {Array} sections - Processed insight sections
- */
-async function extractAndSavePredictions(userId, insightDate, sections) {
-    const predictionSections = sections.filter((s) =>
-        s.data?.date, // Any section with a date is a prediction
-    );
-
-    if (predictionSections.length === 0) {
-        logger.info("[PREDICTIONS] No predictions to extract", {
-            structuredData: true,
-            userId,
-            insightDate,
-        });
-        return;
-    }
-
-    const predictionsRef = db.collection("users").doc(userId).collection("predictions");
-
-    for (const section of predictionSections) {
-        const data = section.data || {};
-
-        // Parse the target date (try various formats including date ranges)
-        let targetDate = null;
-        if (data.date) {
-            const dateStr = data.date.trim();
-            const currentYear = DateTime.now().year;
-
-            // Handle date RANGES like "December 10-16, 2025" or "Dec 10 - Dec 16"
-            // Extract the START date from a range
-            const rangePatterns = [
-                // "December 10-16, 2025" or "December 10-16"
-                /^([A-Za-z]+)\s+(\d{1,2})\s*[-–]\s*\d{1,2}(?:,?\s*(\d{4}))?$/,
-                // "Dec 10 - Dec 16, 2025"
-                /^([A-Za-z]+)\s+(\d{1,2})\s*[-–]\s*[A-Za-z]+\s+\d{1,2}(?:,?\s*(\d{4}))?$/,
-                // "10-16 December 2025"
-                /^(\d{1,2})\s*[-–]\s*\d{1,2}\s+([A-Za-z]+)(?:\s+(\d{4}))?$/,
-            ];
-
-            let rangeMatch = null;
-            for (const pattern of rangePatterns) {
-                rangeMatch = dateStr.match(pattern);
-                if (rangeMatch) break;
-            }
-
-            if (rangeMatch) {
-                // Extract month/day from range - use the START date
-                let month; let day; let year;
-                if (/^\d/.test(rangeMatch[1])) {
-                    // "10-16 December 2025" format
-                    day = rangeMatch[1];
-                    month = rangeMatch[2];
-                    year = rangeMatch[3] || currentYear;
-                } else {
-                    // "December 10-16, 2025" format
-                    month = rangeMatch[1];
-                    day = rangeMatch[2];
-                    year = rangeMatch[3] || currentYear;
-                }
-
-                // Parse the extracted date
-                const dateToTry = `${month} ${day}, ${year}`;
-                let parsed = DateTime.fromFormat(dateToTry, "MMMM d, yyyy");
-                if (!parsed.isValid) {
-                    parsed = DateTime.fromFormat(dateToTry, "MMM d, yyyy");
-                }
-                if (parsed.isValid) {
-                    if (parsed < DateTime.now()) {
-                        parsed = parsed.plus({ years: 1 });
-                    }
-                    targetDate = parsed.toFormat("yyyy-MM-dd");
-                }
-            }
-
-            // If not a range, try single date formats
-            if (!targetDate) {
-                const formats = [
-                    "MMMM d, yyyy", // December 12, 2025
-                    "MMM d, yyyy", // Dec 12, 2025
-                    "MMM d", // Dec 12
-                    "MMMM d", // December 12
-                    "d MMM", // 12 Dec
-                    "d MMMM", // 12 December
-                    "yyyy-MM-dd", // 2024-12-12
-                ];
-
-                for (const format of formats) {
-                    try {
-                        let parsed = DateTime.fromFormat(dateStr, format);
-                        if (parsed.isValid) {
-                            // If year not in format, assume current or next year
-                            if (!format.includes("yyyy")) {
-                                parsed = parsed.set({ year: currentYear });
-                                // If the date is in the past, assume next year
-                                if (parsed < DateTime.now()) {
-                                    parsed = parsed.plus({ years: 1 });
-                                }
-                            }
-                            targetDate = parsed.toFormat("yyyy-MM-dd");
-                            break;
-                        }
-                    } catch (e) {
-                        // Try next format
-                    }
-                }
-            }
-        }
-
-        if (!targetDate) {
-            logger.warn("[PREDICTIONS] Could not parse target date", {
-                structuredData: true,
-                userId,
-                rawDate: data.date,
-            });
-            continue;
-        }
-
-        // Create prediction document
-        const predictionDoc = {
-            createdAt: FieldValue.serverTimestamp(),
-            targetDate,
-            planet: data.planet || null,
-            event: data.event || null,
-            house: data.house || null,
-            prediction: section.content?.substring(0, 500) || "",
-            title: section.title || "",
-            status: "pending", // pending | validated | expired
-            insightDate,
-            cardIndex: section.sectionIndex || 0,
-        };
-
-        const docRef = await predictionsRef.add(predictionDoc);
-
-        logger.info("[PREDICTIONS] Saved prediction", {
-            structuredData: true,
-            userId,
-            predictionId: docRef.id,
-            targetDate,
-            planet: data.planet,
-            event: data.event,
-        });
-    }
-}
-
 // ═══════════════════════════════════════════════════════════════
 // NOTIFICATION: one "your daily reading is ready" push per day
 // ═══════════════════════════════════════════════════════════════
@@ -495,7 +349,7 @@ async function sendDailyReadyNotification(userId, today, insightData) {
             .collection("notifications")
             .doc(userId)
             .collection("notifications")
-            .doc();
+            .doc(`daily-astro-${today}`);
 
         await notificationRef.set({
             type: "dailyAstroInsight",
@@ -564,7 +418,23 @@ async function generateNewInsight(userId, userAstroData, insightRef, today, skip
 
         // Step 2: Generate insight with AI using computed astronomical data
         const step2Start = Date.now();
-        const structured = await generateInsightWithAI(userAstroData, todayAstroData);
+        // Anchor the daily cards to the same computed day signal used by the
+        // wheel and Aurobhatt. The prose may elaborate; it may not contradict.
+        const forecastSnap = await db
+            .collection("users")
+            .doc(userId)
+            .collection("forecast")
+            .doc(today.slice(0, 7))
+            .get();
+        const forecastDay = forecastSnap.exists ?
+            (forecastSnap.data().days || []).find((day) => day.date === today) || null :
+            null;
+
+        const structured = await generateInsightWithAI(
+            userAstroData,
+            todayAstroData,
+            forecastDay,
+        );
         const step2Duration = Date.now() - step2Start;
 
         // Process sections (one reading, shown together on the dashboard)
@@ -589,6 +459,7 @@ async function generateNewInsight(userId, userAstroData, insightRef, today, skip
                 // TODAY's samvat info (lunar month, vikram year, calendar data)
                 // This is for TODAY's date — distinct from profile.samvatInfo (birth date)
                 todaySamvat: todayAstroData.todaySamvat || null,
+                forecastDay,
             },
             // NEW: Complete context for AI chat reuse
             // This allows chat to have the SAME context used to generate the insight
@@ -615,6 +486,7 @@ async function generateNewInsight(userId, userAstroData, insightRef, today, skip
                     panchang: todayAstroData.panchang,
                     shadBala: userAstroData.shadBala?._analysis || null,
                     muhurat: todayAstroData.muhurat,
+                    forecastDay,
                 },
             },
         };
@@ -636,18 +508,6 @@ async function generateNewInsight(userId, userAstroData, insightRef, today, skip
                 step2_aiGenerationMs: step2Duration,
             },
         });
-
-        // Extract predictions from prediction cards for tracking/validation
-        try {
-            await extractAndSavePredictions(userId, today, processedSections);
-        } catch (predError) {
-            logger.error("[PREDICTIONS] Failed to extract predictions", {
-                structuredData: true,
-                userId,
-                error: String(predError),
-            });
-            // Don't throw - insight saved successfully
-        }
 
         // Send ONE "your daily reading is ready" push (unless cooldown).
         if (!skipNotification) {
@@ -772,6 +632,7 @@ export async function handleGenerateInsightForCurrentUser(request) {
         };
     } catch (error) {
         logger.error("generateInsightForCurrentUser failed", { userId, error: String(error) });
+        if (error instanceof HttpsError) throw error;
         throw new HttpsError("internal", error.message || "Failed to generate insight");
     }
 }
