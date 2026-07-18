@@ -266,7 +266,7 @@ export const BABA_TOOL_SPECS = [
       properties: {
         requestId: { type: "string", description: "Unique id for this intent." },
         fromPhase: { type: "string", description: "Exact workflow phase token." },
-        fromVersion: { type: "integer", description: "Exact workflow version token." },
+        fromVersion: { type: "number", description: "Exact integral workflow version token." },
         acknowledgedPresentationId: {
           type: "string",
           description: "Current presentation id, only on explicit user acknowledgment.",
