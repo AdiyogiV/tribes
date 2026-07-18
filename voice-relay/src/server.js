@@ -160,7 +160,8 @@ wss.on("connection", (ws) => {
             if (ws.bufferedAmount > CONFIG.outboundBufferLimitBytes) return;
             ws.send(buf); // binary TTS chunk
         });
-        session.on("turn_end", () => sendJson({ type: "speaking_done" }));
+        session.on("turn_end", (turn = {}) =>
+            sendJson({ type: "speaking_done", ...turn }));
         // Baba wants to act: forward the tool call so the client can run it.
         session.on("tool_call", (call) => sendJson({ type: "tool_call", ...call }));
         // Barge-in: user cut in while Aurobhatt was speaking. Tell the client to

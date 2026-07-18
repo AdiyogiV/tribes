@@ -253,22 +253,27 @@ export const BABA_TOOL_SPECS = [
   {
     name: "advanceOnboarding",
     description:
-      "During the post-chart REVEAL flow only, move the user to the next step " +
-      "on screen: sign reveal -> first birth reading -> current-times reading " +
-      "-> done (home). Call this to LEAD them forward ONLY after you have " +
-      "FINISHED narrating the current step and they are ready to continue " +
-      "(e.g. they say next, continue, aage, haan). On a successful advance the " +
-      "result carries a `narrate` field: SPEAK that text now — it is the " +
-      "reading (or home-tour) for the step you just entered, and it IS the " +
-      "whole point of the call. Render it faithfully in 2-4 warm sentences; " +
-      "never replace it with a bare transition line, never re-read the signs, " +
-      "never invent your own. If `narrate` says it is still loading, say so and " +
-      "do not fabricate. If it returns advanced:false with blocked:true, the " +
-      "next step is still loading OR you are still speaking: honour the reason, " +
-      "finish presenting, WAIT, and do NOT call advanceOnboarding again until " +
-      "the user nudges you or you have finished speaking - never tell the user " +
-      "you moved on.",
-    inputSchema: { type: "object", properties: {} },
+      "Express ONE user intent to continue the active chart reveal. The app, " +
+      "not you, owns the workflow. Copy fromPhase and fromVersion exactly from " +
+      "state.onScreen.facts.workflow; create one unique requestId. If the user " +
+      "explicitly said next/continue, also copy the current presentationId into " +
+      "acknowledgedPresentationId. Call at most once for that user utterance. " +
+      "status=applied means the app transitioned and `narrate` is the content " +
+      "for the new phase. blocked/rejected/failed mean no transition; do not " +
+      "retry from the tool result or claim it moved.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        requestId: { type: "string", description: "Unique id for this intent." },
+        fromPhase: { type: "string", description: "Exact workflow phase token." },
+        fromVersion: { type: "integer", description: "Exact workflow version token." },
+        acknowledgedPresentationId: {
+          type: "string",
+          description: "Current presentation id, only on explicit user acknowledgment.",
+        },
+      },
+      required: ["requestId", "fromPhase", "fromVersion"],
+    },
   },
   {
     name: "setPhoneNumber",

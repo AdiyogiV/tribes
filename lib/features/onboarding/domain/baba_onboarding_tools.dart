@@ -2,6 +2,7 @@ import 'package:aurogram/core/routing/app_router.dart';
 import 'package:aurogram/features/baba/domain/baba_app_map.dart';
 import 'package:aurogram/features/baba/domain/baba_context.dart';
 import 'package:aurogram/features/baba/domain/baba_tool_registry.dart';
+import 'package:aurogram/features/baba/domain/baba_tool_result.dart';
 
 /// Baba's onboarding tools — the actions he uses to co-author the birth-details
 /// form by voice. The DECLARATIONS live here and are registered globally once
@@ -32,7 +33,7 @@ class BabaOnboardingTools {
   ];
 
   static Future<Map<String, dynamic>> _unavailable(
-          Map<String, dynamic> args) async {
+      Map<String, dynamic> args) async {
     // The set/submit tools only work while the birth-details screen is mounted
     // (that's where their real handlers bind). If Baba (or the user) tries to
     // record a detail from anywhere else, DON'T just fail — open the screen for
@@ -64,14 +65,10 @@ class BabaOnboardingTools {
   /// reveal flow only exists right after a chart is created).
   static Future<Map<String, dynamic>> _advanceUnavailable(
           Map<String, dynamic> args) async =>
-      {
-        'ok': false,
-        'advanced': false,
-        'available': false,
-        'blocked': true,
-        'message': 'Not on the chart-reveal flow, so there is nothing to '
-            'advance right now.',
-      };
+      const BabaToolResult.rejected(
+        reason: 'workflow_not_active',
+        data: {'available': false},
+      ).toJson();
 
   /// The global declarations to register once at app start.
   static List<BabaTool> declarations() => [
@@ -145,17 +142,37 @@ class BabaOnboardingTools {
         ),
         BabaTool(
           name: advanceOnboarding,
-          description: 'During the post-chart REVEAL flow, move the user to the '
-              'next step on screen (sign reveal -> birth reading -> current '
-              'times -> done). Call this to LEAD them forward ONLY after you '
-              'have finished narrating the current step and they are ready to '
-              'continue (e.g. they say "next", "continue", "aage", "haan"). The '
-              'result carries the freshly-settled `state` (the new step and its '
-              'on-screen text) — narrate FROM that, never from memory. If it '
-              'returns advanced:false with blocked:true, the step is not ready '
-              'or you are still speaking: honour the reason, finish presenting, '
-              'and try again — do NOT tell the user you moved on.',
-          parameters: {'type': 'object', 'properties': {}},
+          description: 'Express the user intent to continue the active chart '
+              'reveal. Copy fromPhase and fromVersion exactly from the current '
+              'state.onScreen.facts.workflow and generate one unique requestId. '
+              'The app alone decides whether the transition is applied. A tool '
+              'result continuation may never call this tool again.',
+          parameters: {
+            'type': 'object',
+            'properties': {
+              'requestId': {
+                'type': 'string',
+                'description': 'A unique id for this user continue intent.',
+              },
+              'fromPhase': {
+                'type': 'string',
+                'description':
+                    'Exact workflow phase from the current snapshot.',
+              },
+              'fromVersion': {
+                'type': 'integer',
+                'description':
+                    'Exact workflow version from the current snapshot.',
+              },
+              'acknowledgedPresentationId': {
+                'type': 'string',
+                'description': 'Set to the current presentationId only when the '
+                    'user explicitly says next/continue. This may substitute '
+                    'for interrupted narration.',
+              },
+            },
+            'required': ['requestId', 'fromPhase', 'fromVersion'],
+          },
           defaultHandler: _advanceUnavailable,
         ),
       ];

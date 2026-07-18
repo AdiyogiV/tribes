@@ -119,6 +119,13 @@ class VoiceSessionController extends ChangeNotifier {
   bool _draining = false;
   bool _turnEndPending = false;
 
+  // A workflow presentation is complete only after its audio has actually
+  // drained from the speaker. The relay attaches the presentation id to the
+  // turn boundary; [_finishTurn] emits the durable receipt.
+  final StreamController<String> _presentationCompleted =
+      StreamController<String>.broadcast();
+  String? _pendingPresentationReceiptId;
+
   // Wall-clock playback tracking. The native player buffers up to ~1s of audio
   // (_playerBufferBytes), so "the TTS queue is empty" does NOT mean Aurobhatt
   // has stopped coming out of the speaker — up to a second of his voice is
@@ -206,12 +213,14 @@ class VoiceSessionController extends ChangeNotifier {
   static const Duration _warmStaleAfter = Duration(minutes: 8);
 
   bool get _isWarmStale =>
-      _warmedAt != null && DateTime.now().difference(_warmedAt!) > _warmStaleAfter;
+      _warmedAt != null &&
+      DateTime.now().difference(_warmedAt!) > _warmStaleAfter;
 
   VoiceCallState get state => _state;
   String get userTranscript => _userTranscript;
   String get aryabhattReply => _aryabhattReply;
   String? get errorMessage => _errorMessage;
+  Stream<String> get presentationCompleted => _presentationCompleted.stream;
 
   /// True when a pre-warmed session is connected and fresh enough to adopt on
   /// the next tap (so the caller can skip rebuilding the opening directive — it
@@ -281,8 +290,7 @@ class VoiceSessionController extends ChangeNotifier {
       if (s == VoiceCallState.error) _sessionId = null;
     }
     AppLogger.i('Voice state',
-        category: LogCategory.voice,
-        data: {'from': from.name, 'to': s.name});
+        category: LogCategory.voice, data: {'from': from.name, 'to': s.name});
     notifyListeners();
   }
 
@@ -462,7 +470,10 @@ class VoiceSessionController extends ChangeNotifier {
     _setState(VoiceCallState.connecting);
     AppLogger.i('Voice going live from warm session',
         category: LogCategory.voice,
-        data: {'bufferedChunks': buffered.length, 'ready': greeting.isNotEmpty});
+        data: {
+          'bufferedChunks': buffered.length,
+          'ready': greeting.isNotEmpty
+        });
     try {
       if (!await _recorder.hasPermission()) {
         _fail('Microphone permission denied');
@@ -471,7 +482,8 @@ class VoiceSessionController extends ChangeNotifier {
       await _configureAudioSession();
       await _openPlayer();
     } catch (e, st) {
-      AppLogger.e('Voice go-live failed', category: LogCategory.voice, error: e, stackTrace: st);
+      AppLogger.e('Voice go-live failed',
+          category: LogCategory.voice, error: e, stackTrace: st);
       _fail('Could not start the call: $e');
       return;
     }
@@ -521,7 +533,8 @@ class VoiceSessionController extends ChangeNotifier {
   void _maybeStartMic() {
     if (_disposed || _micStarted || !_live) return;
     if (!_relayReady) return;
-    if (_state == VoiceCallState.error || _state == VoiceCallState.ended) return;
+    if (_state == VoiceCallState.error || _state == VoiceCallState.ended)
+      return;
     _micStarted = true;
     unawaited(_startMic());
   }
@@ -566,7 +579,7 @@ class VoiceSessionController extends ChangeNotifier {
     await _player.startPlayerFromStream(
       codec: Codec.pcm16,
       numChannels: 1,
-sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
+      sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
       interleaved: true,
       // ~340ms of 24kHz PCM16 audio. Generous enough to ride bursts (and the
       // event-loop jank from the parallel connect) without underrunning.
@@ -599,8 +612,7 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
     _channel = WebSocketChannel.connect(Uri.parse(VoiceRelayConfig.relayUrl));
     await _channel!.ready;
     AppLogger.i('Voice socket connected',
-        category: LogCategory.voice,
-        data: {'uid': user.uid});
+        category: LogCategory.voice, data: {'uid': user.uid});
 
     _socketSub = _channel!.stream.listen(
       _onSocketMessage,
@@ -657,16 +669,14 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
       if (tools.isNotEmpty) 'tools': tools,
       if (sendDirective) 'directive': directiveOverride,
     }));
-    AppLogger.i('Voice start frame sent',
-        category: LogCategory.voice,
-        data: {
-          'sessionId': sessionId,
-          'engine': engine.name,
-          'warmResume': _warmResume,
-          'greeted': sendDirective,
-          'micMode': _micMode.name,
-          'tools': tools.length,
-        });
+    AppLogger.i('Voice start frame sent', category: LogCategory.voice, data: {
+      'sessionId': sessionId,
+      'engine': engine.name,
+      'warmResume': _warmResume,
+      'greeted': sendDirective,
+      'micMode': _micMode.name,
+      'tools': tools.length,
+    });
   }
 
   Future<void> _startMic() async {
@@ -745,20 +755,17 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
       return;
     }
     final type = msg['type'];
-    AppLogger.i('Relay control',
-        category: LogCategory.voice,
-        data: {
-          'type': type,
-          if (msg['final'] != null) 'final': msg['final'],
-          // Surface the relay's error detail — otherwise a failed turn shows up
-          // as an opaque {type: error} and we can't diagnose without the
-          // (VPC-blocked) Cloud Run logs.
-          if (msg['message'] != null) 'message': msg['message'],
-          if (msg['text'] != null)
-            'text': (msg['text'] as String?)?.substring(
-                0,
-                ((msg['text'] as String).length).clamp(0, 60)),
-        });
+    AppLogger.i('Relay control', category: LogCategory.voice, data: {
+      'type': type,
+      if (msg['final'] != null) 'final': msg['final'],
+      // Surface the relay's error detail — otherwise a failed turn shows up
+      // as an opaque {type: error} and we can't diagnose without the
+      // (VPC-blocked) Cloud Run logs.
+      if (msg['message'] != null) 'message': msg['message'],
+      if (msg['text'] != null)
+        'text': (msg['text'] as String?)
+            ?.substring(0, ((msg['text'] as String).length).clamp(0, 60)),
+    });
     switch (type) {
       case 'ready':
         // Relay is live. When actually in a call this opens the mic; while
@@ -811,6 +818,8 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
             data: {'queued': _ttsQueue.length, 'draining': _draining});
         _suppressAudio = true;
         _turnEndPending = false;
+        // Interrupted audio is not a completed workflow presentation.
+        _pendingPresentationReceiptId = null;
         _finishTurnTimer?.cancel();
         _flushPlayback();
         if (_state == VoiceCallState.speaking) {
@@ -818,6 +827,10 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
         }
         break;
       case 'speaking_done':
+        final presentationId = msg['presentationId'];
+        if (presentationId is String && presentationId.isNotEmpty) {
+          _pendingPresentationReceiptId = presentationId;
+        }
         // Pre-warm: the greeting turn finished generating — it's fully buffered
         // and the session is armed. Mark the warm session READY for an instant
         // adopt on tap. (No mic re-arm here; that happens when we go live.)
@@ -832,14 +845,12 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
         // Turn complete on the relay — but locally we may still be draining the
         // TTS queue. Only reopen the mic once the audio has actually finished
         // playing, otherwise we'd cut Aurobhatt off mid-sentence.
-        AppLogger.i('Turn done',
-            category: LogCategory.voice,
-            data: {
-              'ttsChunks': _ttsChunks,
-              'ttsBytes': _ttsBytes,
-              'queued': _ttsQueue.length,
-              'draining': _draining,
-            });
+        AppLogger.i('Turn done', category: LogCategory.voice, data: {
+          'ttsChunks': _ttsChunks,
+          'ttsBytes': _ttsBytes,
+          'queued': _ttsQueue.length,
+          'draining': _draining,
+        });
         if (_ttsQueue.isEmpty && !_draining) {
           _scheduleFinishTurn();
         } else {
@@ -869,8 +880,10 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
           _autoHealedStuckSession = true;
           _sessionId = null; // force a fresh, clean-slate session
           _lastEndedCleanly = false; // and a cold open (no warm resume)
-          AppLogger.i('Voice auto-heal: abandoning wedged session, reconnecting',
-              category: LogCategory.voice, data: {'reason': m});
+          AppLogger.i(
+              'Voice auto-heal: abandoning wedged session, reconnecting',
+              category: LogCategory.voice,
+              data: {'reason': m});
           unawaited(_cleanup().then((_) {
             if (_disposed) return;
             _setState(VoiceCallState.idle); // allow start() to run again
@@ -878,9 +891,8 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
           }));
           break;
         }
-        _fail(m == 'unauthorized'
-            ? 'Session expired — please sign in again'
-            : m);
+        _fail(
+            m == 'unauthorized' ? 'Session expired — please sign in again' : m);
         break;
       case 'session_closed':
         if (!_live) {
@@ -1066,6 +1078,11 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
     _userTranscript = '';
     _playbackStartedAt = null;
     _playbackBytesFed = 0;
+    final presentationId = _pendingPresentationReceiptId;
+    _pendingPresentationReceiptId = null;
+    if (presentationId != null && !_presentationCompleted.isClosed) {
+      _presentationCompleted.add(presentationId);
+    }
     // Baba said his goodbye (endCall) and it has now played out - end the call
     // for real instead of reopening the mic.
     if (_endAfterFarewell) {
@@ -1174,7 +1191,8 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
     if (label != null) parts.add('Screen: $label');
     if (s['step'] != null) parts.add('step=${s['step']}');
     final onScreen = s['onScreen'];
-    if (onScreen is Map && (onScreen['headline']?.toString().isNotEmpty ?? false)) {
+    if (onScreen is Map &&
+        (onScreen['headline']?.toString().isNotEmpty ?? false)) {
       parts.add(onScreen['headline'].toString());
     }
     if (s['blockedReason'] != null) parts.add('blocked: ${s['blockedReason']}');
@@ -1198,7 +1216,8 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
     if (_disposed || _screenContextSent) return;
     final ctx = _screenContext;
     if (ctx == null || ctx.isEmpty) return;
-    if (!_relayReady || _channel == null) return; // resent from the 'ready' hook
+    if (!_relayReady || _channel == null)
+      return; // resent from the 'ready' hook
     try {
       _channel!.sink.add(jsonEncode({
         'type': 'context',
@@ -1313,6 +1332,7 @@ sampleRate: VoiceRelayConfig.ttsPlaybackSampleRate,
   @override
   void dispose() {
     _disposed = true;
+    unawaited(_presentationCompleted.close());
     unawaited(_cleanup().whenComplete(_recorder.dispose));
     super.dispose();
   }

@@ -25,6 +25,10 @@ import { EventEmitter } from "node:events";
 import { randomUUID } from "node:crypto";
 import dialogflow from "@google-cloud/dialogflow-cx";
 import { CONFIG, cxApiEndpoint } from "./config.js";
+import {
+    isWorkflowMutation,
+    workflowMutationRejection,
+} from "./workflow_turn_guard.js";
 
 // ── protobuf Struct <-> plain JS ─────────────────────────────────────────
 // CX streaming responses hand back ToolCall.input_parameters as a RAW
@@ -170,6 +174,9 @@ export class CxVoiceSession extends EventEmitter {
         // Whether the LAST tool result was a success (ok !== false). Steers the
         // empty-continuation nudge so it can't cheerily narrate a FAILED action.
         this._lastToolResultOk = true;
+        this._workflowMutationCount = 0;
+        this._syntheticToolResults = [];
+        this._activePresentationId = null;
     }
 
     /** Tag every log line with the session so a call reads as one story. */
@@ -292,6 +299,7 @@ export class CxVoiceSession extends EventEmitter {
         this.configSent = false;
         this._audioClosed = false; // fresh turn: write side is open again
         this._turnSeq += 1;
+        this._workflowMutationCount = 0;
         this._dbg(`turn_open #${this._turnSeq} kind=${this._turnKind} audio=${audioTurn}`);
         this.stream = client.streamingDetectIntent();
 
@@ -431,6 +439,10 @@ export class CxVoiceSession extends EventEmitter {
      */
     async sendToolResponse(functionResponses) {
         if (this.ended) return;
+        functionResponses = [
+            ...(functionResponses || []),
+            ...this._syntheticToolResults.splice(0),
+        ];
         // A result (real or watchdog-synthesized) is arriving — stop the hang timer.
         this._clearToolWatchdog();
         const results = [];
@@ -455,6 +467,13 @@ export class CxVoiceSession extends EventEmitter {
         // Track success so the empty-continuation nudge can't narrate a FAILED
         // action as if it worked (a result is a failure when it says ok:false).
         this._lastToolResultOk = results.every((r) => r.response?.ok !== false);
+        const presentation = results.find((r) =>
+            r.response?.status === "applied" &&
+            typeof r.response?.presentationId === "string"
+        );
+        if (presentation) {
+            this._activePresentationId = presentation.response.presentationId;
+        }
         this.awaitingTool = false;
         this._continueNudged = false; // this action gets a fresh single nudge
         this._retireStream();
@@ -526,6 +545,9 @@ export class CxVoiceSession extends EventEmitter {
 
         const combined = replyTexts.join(" ").trim();
         const hasAudio = !!(dir.outputAudio && dir.outputAudio.length);
+        // Capture before a reply resets the session-level flag below. This is
+        // the authority used by the workflow recursion guard.
+        const userSpokeThisTurn = this._userSpokeSinceReply;
         // DIAGNOSTIC: the single most useful line in the whole call. It tells us,
         // per turn: what KIND of turn produced this response, how many spoken
         // chars it carried, how many tool calls, whether the user actually spoke
@@ -569,11 +591,35 @@ export class CxVoiceSession extends EventEmitter {
 
         // Baba wants to act: emit each call, remember it, and WAIT for results.
         if (toolCalls.length) {
+            let forwarded = 0;
             for (const tc of toolCalls) {
                 const id = randomUUID();
-                this._pending.set(id, { tool: tc.tool, action: tc.action });
                 const name = await toolNameFor(tc.tool, tc.action);
                 const args = structToJs(tc.inputParameters);
+                this._pending.set(id, { tool: tc.tool, action: tc.action });
+                const rejection = workflowMutationRejection(
+                    name,
+                    this._turnKind,
+                    userSpokeThisTurn,
+                    this._workflowMutationCount,
+                );
+                if (rejection) {
+                    this._log(`tool_call_rejected ${name} reason=${rejection} kind=${this._turnKind}`);
+                    this._syntheticToolResults.push({
+                        id,
+                        name,
+                        response: {
+                            status: "rejected",
+                            reason: rejection,
+                            ok: false,
+                            advanced: false,
+                            blocked: false,
+                        },
+                    });
+                    continue;
+                }
+                if (isWorkflowMutation(name)) this._workflowMutationCount += 1;
+                forwarded += 1;
                 // PII-safe: never log raw args (see previewArgs).
                 this._log(`tool_call ${name} args=${previewArgs(name, args)}`);
                 this.emit("tool_call", { id, name, args });
@@ -582,6 +628,11 @@ export class CxVoiceSession extends EventEmitter {
             this._armToolWatchdog(); // never wait forever for a tool_response
             this._dbg(`turn_end #${this._turnSeq} kind=${this._turnKind} reason=toolCall (awaiting result)`);
             this._retireStream(); // hold here; sendToolResponse() resumes us
+            // If every call was rejected locally, continue CX with synthetic
+            // typed results. Nothing reaches Flutter, so no side effect exists.
+            if (forwarded === 0) {
+                queueMicrotask(() => this.sendToolResponse([]));
+            }
             return;
         }
 
@@ -629,7 +680,12 @@ export class CxVoiceSession extends EventEmitter {
             this.emit("audio", Buffer.from(dir.outputAudio));
         }
         this._dbg(`turn_end #${this._turnSeq} kind=${this._turnKind} reason=normal replyChars=${combined.length}`);
-        this.emit("turn_end");
+        this.emit("turn_end", {
+            ...(this._activePresentationId
+                ? { presentationId: this._activePresentationId }
+                : {}),
+        });
+        this._activePresentationId = null;
         this._cycleTurn();
     }
 
