@@ -257,12 +257,17 @@ export const BABA_TOOL_SPECS = [
       "on screen: sign reveal -> first birth reading -> current-times reading " +
       "-> done (home). Call this to LEAD them forward ONLY after you have " +
       "FINISHED narrating the current step and they are ready to continue " +
-      "(e.g. they say next, continue, aage, haan). The result carries the " +
-      "freshly-settled `state` (the new step and its actual on-screen text in " +
-      "state.onScreen) - narrate FROM that, never from memory. If it returns " +
-      "advanced:false with blocked:true, the next step is still loading OR you " +
-      "are still speaking: honour the reason, finish presenting, and try again " +
-      "- do NOT tell the user you moved on.",
+      "(e.g. they say next, continue, aage, haan). On a successful advance the " +
+      "result carries a `narrate` field: SPEAK that text now — it is the " +
+      "reading (or home-tour) for the step you just entered, and it IS the " +
+      "whole point of the call. Render it faithfully in 2-4 warm sentences; " +
+      "never replace it with a bare transition line, never re-read the signs, " +
+      "never invent your own. If `narrate` says it is still loading, say so and " +
+      "do not fabricate. If it returns advanced:false with blocked:true, the " +
+      "next step is still loading OR you are still speaking: honour the reason, " +
+      "finish presenting, WAIT, and do NOT call advanceOnboarding again until " +
+      "the user nudges you or you have finished speaking - never tell the user " +
+      "you moved on.",
     inputSchema: { type: "object", properties: {} },
   },
   {
@@ -480,19 +485,23 @@ export const BABA_TOOL_GUIDELINES = [
   "  finish), say so and offer to retry (they can tap Retry) - never invent a sign.",
   "- The reveal has FIXED steps IN ORDER: signReveal -> birthReading -> ",
   "  currentTimes -> home. You walk the user through them with advanceOnboarding. ",
-  "  advanceOnboarding does NOT hand you a script: after it advances, its result ",
-  "  `state` (and whereAmI) hold the NEW step and its ACTUAL text in ",
-  "  state.onScreen (facts.reading for a reading step; the home screen for ",
-  "  now:'home'). You MUST SPEAK that on-screen text: 2-4 warm, natural ",
-  "  sentences drawn FAITHFULLY from it - THIS is the reading and the whole ",
-  "  point of the call. NEVER replace it with a bare transition line, never ",
-  "  re-state the signs instead, and never invent your own reading.",
+  "  On a successful advance the result hands you a `narrate` field: that is the ",
+  "  ACTUAL reading (or, at home, a short tour instruction) for the step you ",
+  "  just entered. SPEAK it now - 2-4 warm, natural sentences drawn FAITHFULLY ",
+  "  from `narrate` - THIS is the reading and the whole point of the call. ",
+  "  (The result's `state`/whereAmI carry the same text in state.onScreen as a ",
+  "  backup, but `narrate` is your primary source.) NEVER replace it with a ",
+  "  bare transition line ('now the deep analysis...'), never re-state the ",
+  "  signs instead, and never invent your own reading. If `narrate` says the ",
+  "  text is still loading, say it is being prepared and name nothing.",
   "- Narrate the CURRENT step IN FULL before moving on; only THEN call ",
-  "  advanceOnboarding (on the user's nudge, or lead on with one short line). ",
-  "  advanceOnboarding will REFUSE (advanced:false, blocked:true) while you are ",
-  "  still speaking or the next step is still loading - it will not move the UI ",
-  "  ahead of your voice, so honour the reason, finish presenting, and try again ",
-  "  shortly. This is why you must never fire it in the same breath as arriving. ",
+  "  advanceOnboarding, and NEVER in the same turn/breath as arriving on a step ",
+  "  - speaking and advancing are SEPARATE turns. Do not poll it: if it returns ",
+  "  advanced:false with blocked:true (you are still speaking, or the next step ",
+  "  is still loading) it will NOT move the UI ahead of your voice - honour the ",
+  "  reason, stop, finish presenting or WAIT, and only try again once you have ",
+  "  spoken or the user nudges you. Firing it repeatedly makes the reveal blitz ",
+  "  past every reading without you narrating any of them. ",
   "  Keep going until now:'home'; never pivot to the daily insight mid-reveal.",
   "- After the current-times reading (the LAST reading), do not rush off. Invite ",
   "  them warmly to ask anything more about what these times hold - answer any ",

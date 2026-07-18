@@ -276,12 +276,17 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
     );
   }
 
-  /// Baba's "advance the reveal" action. Reframed to be honest and state-driven:
+  /// Baba's "advance the reveal" action. Honest and state-driven:
   ///
-  ///   * It embeds NO narration script. The content Baba should speak lives in
-  ///     the world state (his babaSnapshot above), which the tool-dispatch
-  ///     envelope re-reads and appends AFTER this returns — so he always
-  ///     narrates from the freshly-settled screen, not a baked line.
+  ///   * On a successful advance it returns a `narrate` field carrying the
+  ///     text Baba must SPEAK for the step just entered (the birth reading,
+  ///     the current-times reading, or a home-tour instruction). This is
+  ///     deliberate: the model acts on the RESULT's own fields and treats the
+  ///     appended `state` as background, so narration MUST live in the result
+  ///     or Baba says nothing and just advances again ~1/sec (the runaway
+  ///     reveal loop). Kept in sync with the skip-publish in
+  ///     [_goToReadingPhase]/[_goToCurrentTimesPhase] (viaVoiceResult:true),
+  ///     which rely on this result being the narration channel.
   ///   * It refuses (blocked, without moving the UI) while he is still
   ///     PRESENTING this step (isNarrating) or the step isn't ready. This is
   ///     the root fix for "UI ahead of voice": advancing can no longer outrun
@@ -306,7 +311,19 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
       case OnboardingPhase.signReveal:
         if (_signRevealStep >= 3) {
           _goToReadingPhase(viaVoiceResult: true);
-          return {'ok': true, 'advanced': true, 'now': 'birthReading'};
+          return {
+            'ok': true,
+            'advanced': true,
+            'now': 'birthReading',
+            // Hand the reading text back IN THE RESULT so the model reliably
+            // SPEAKS it. Narration must live here, not only in the appended
+            // `state`: the model acts on the result's own fields and treats
+            // appended state as background, so a bare {advanced:true} gave it
+            // nothing to say and it just advanced again ~1/sec (the runaway
+            // reveal loop). See kennel commit 56ca2f7. Falls back to a
+            // loading line if the reading is still being written.
+            'narrate': _cueText(_firstReadingContent, max: 600),
+          };
         }
         return {
           'ok': true,
@@ -319,7 +336,12 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
             !_isGeneratingReading && (_firstReadingContent?.isNotEmpty ?? false);
         if (ready) {
           _goToCurrentTimesPhase(viaVoiceResult: true);
-          return {'ok': true, 'advanced': true, 'now': 'currentTimes'};
+          return {
+            'ok': true,
+            'advanced': true,
+            'now': 'currentTimes',
+            'narrate': _cueText(_currentTimesReadingContent, max: 600),
+          };
         }
         return {
           'ok': true,
@@ -332,7 +354,19 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
             (_currentTimesReadingContent?.isNotEmpty ?? false);
         if (ready) {
           _finishOnboarding(viaVoiceResult: true);
-          return {'ok': true, 'advanced': true, 'now': 'home'};
+          return {
+            'ok': true,
+            'advanced': true,
+            'now': 'home',
+            // Home is not a reading: hand back a short SPOKEN instruction so
+            // Baba welcomes them in and gives a one-line tour instead of
+            // falling silent (or advancing into the void again).
+            'narrate': 'You have just brought them into their new home in '
+                'Aurogram. In two or three warm sentences, welcome them, point '
+                'out the daily sky wheel and that they can ask you anything '
+                'anytime, then invite them to open today\'s Daily Insight. '
+                'If account=guest, fold in the one-time login nudge here.',
+          };
         }
         return {
           'ok': true,
