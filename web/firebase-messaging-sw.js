@@ -11,7 +11,7 @@ importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-comp
 
 // IMPORTANT: Update this version when deploying new builds to bust the cache
 // Should match the version in pubspec.yaml for consistency
-const CACHE_VERSION = '81';
+const CACHE_VERSION = '82';
 const CACHE_NAME = `aurogram-v${CACHE_VERSION}`;
 
 // Static assets to pre-cache on install
