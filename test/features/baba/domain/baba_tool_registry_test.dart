@@ -66,7 +66,10 @@ void main() {
   test('setUserName rejects an empty name with explicit ok:false', () async {
     registry.registerAll(BabaIdentityTools.declarations());
 
-    final res = await registry.dispatch(BabaIdentityTools.setUserName, {});
+    final res = await registry.dispatch(
+      BabaIdentityTools.setUserName,
+      {'requestId': 'empty-name'},
+    );
 
     expect(res['ok'], false);
     expect(res['saved'], false);
@@ -77,6 +80,65 @@ void main() {
     final res = await registry.dispatch('t_silent', {'x': 1});
     expect(res['ok'], true);
     expect(res['echo'], 1);
+  });
+
+  test('mutation outcomes use canonical status values', () async {
+    registry.register(BabaTool(
+      name: 't_mutation_status',
+      description: 'test',
+      parameters: const {'type': 'object', 'properties': {}},
+      defaultHandler: (_) async => {'ok': false, 'blocked': true},
+      appendsWorldState: false,
+      isMutation: true,
+    ));
+
+    final res = await registry.dispatch('t_mutation_status', {});
+
+    expect(res['status'], 'blocked');
+    expect(res['ok'], false);
+    expect(res['blocked'], true);
+  });
+
+  test('requestId makes concurrent mutation retries idempotent', () async {
+    var executions = 0;
+    registry.register(BabaTool(
+      name: 't_idempotent_mutation',
+      description: 'test',
+      parameters: const {'type': 'object', 'properties': {}},
+      defaultHandler: (_) async {
+        executions++;
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        return {'ok': true};
+      },
+      appendsWorldState: false,
+      isMutation: true,
+      requiresRequestId: true,
+    ));
+
+    final results = await Future.wait([
+      registry.dispatch('t_idempotent_mutation', {'requestId': 'same'}),
+      registry.dispatch('t_idempotent_mutation', {'requestId': 'same'}),
+    ]);
+
+    expect(executions, 1);
+    expect(results.map((result) => result['status']), everyElement('applied'));
+  });
+
+  test('idempotent mutation rejects a missing requestId', () async {
+    registry.register(BabaTool(
+      name: 't_request_id_required',
+      description: 'test',
+      parameters: const {'type': 'object', 'properties': {}},
+      defaultHandler: (_) async => {'ok': true},
+      appendsWorldState: false,
+      isMutation: true,
+      requiresRequestId: true,
+    ));
+
+    final res = await registry.dispatch('t_request_id_required', {});
+
+    expect(res['status'], 'rejected');
+    expect(res['ok'], false);
   });
 
   test('a throwing handler is caught and reported, never left hanging',

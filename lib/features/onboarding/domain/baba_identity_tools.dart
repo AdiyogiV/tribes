@@ -57,6 +57,8 @@ class BabaIdentityTools {
             'required': ['name'],
           },
           defaultHandler: _saveName,
+          isMutation: true,
+          requiresRequestId: true,
         ),
       ];
 }

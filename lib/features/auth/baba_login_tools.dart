@@ -80,6 +80,8 @@ class BabaLoginTools {
             'required': ['phone'],
           },
           defaultHandler: _unavailable,
+          isMutation: true,
+          requiresRequestId: true,
         ),
         BabaTool(
           name: setOtp,
@@ -104,6 +106,8 @@ class BabaLoginTools {
             'required': ['code'],
           },
           defaultHandler: _unavailable,
+          isMutation: true,
+          requiresRequestId: true,
         ),
       ];
 }

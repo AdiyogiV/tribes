@@ -13,6 +13,7 @@ import admin from "firebase-admin";
 import { CONFIG } from "./config.js";
 import { CxVoiceSession } from "./cx_stream.js";
 import { LiveVoiceSession } from "./live_session.js";
+import { withAuthoritativeAccount } from "./auth_directive.js";
 
 // Pick the engine:
 //   "cx"   -> Dialogflow CX streaming (production default; tool-calling +
@@ -67,15 +68,16 @@ function clientSafeError(err) {
 }
 
 /**
- * Verify a Firebase ID token. Returns the decoded uid, or null if the token is
- * missing/invalid. When REQUIRE_AUTH is off (local dev) we skip verification.
+ * Verify a Firebase ID token. Returns decoded claims, or null if the token is
+ * missing/invalid. The claims make auth type authoritative for session facts.
  */
 async function verifyCaller(token) {
-    if (!REQUIRE_AUTH) return token ? "dev-bypass" : "anon-dev";
+    if (!REQUIRE_AUTH) {
+        return { uid: token ? "dev-bypass" : "anon-dev" };
+    }
     if (!token) return null;
     try {
-        const decoded = await admin.auth().verifyIdToken(token);
-        return decoded.uid;
+        return await admin.auth().verifyIdToken(token);
     } catch {
         return null;
     }
@@ -199,18 +201,22 @@ wss.on("connection", (ws) => {
             starting = true;                 // set SYNCHRONOUSLY (race guard)
             clearAuthTimer();
             // Verify the caller before spending any Gen AI credits.
-            verifyCaller(msg.token).then((uid) => {
+            verifyCaller(msg.token).then((caller) => {
                 if (closed) { starting = false; return; }
-                if (!uid) {
+                if (!caller?.uid) {
                     sendJson({ type: "error", message: "unauthorized" });
                     try { ws.close(4401, "unauthorized"); } catch { /* closing */ }
                     starting = false;
                     return;
                 }
+                // Token claims beat a stale pre-warmed client directive. This
+                // is especially important after anonymous -> phone upgrades.
+                const directive = withAuthoritativeAccount(msg.directive, caller);
                 // Bind the session to the user and forward their ID token so
                 // the brain (aiChat) can load their full chart from Firestore.
                 // `engine` (optional) lets the app pick Live vs CX per session.
-                openSession(msg.sessionId || uid, uid, msg.token, msg.engine, msg.tools, msg.directive);
+                openSession(msg.sessionId || caller.uid, caller.uid, msg.token,
+                    msg.engine, msg.tools, directive);
                 starting = false;
             }).catch((e) => {
                 // eslint-disable-next-line no-console

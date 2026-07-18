@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 
 import 'package:flutter/widgets.dart';
 
@@ -21,6 +22,8 @@ class BabaTool {
     required this.parameters,
     required this.defaultHandler,
     this.appendsWorldState = true,
+    this.isMutation = false,
+    this.requiresRequestId = false,
   });
 
   final String name;
@@ -39,12 +42,44 @@ class BabaTool {
   /// stall because the Home dashboard doesn't literally list those signs).
   final bool appendsWorldState;
 
+  /// Whether this tool changes app or user state. Mutation results are always
+  /// normalized to the canonical applied/blocked/rejected/failed envelope.
+  final bool isMutation;
+
+  /// Require a caller-generated key for consequential retryable operations.
+  final bool requiresRequestId;
+
   /// The functionDeclaration handed to Gemini at session start.
-  Map<String, dynamic> get declaration => {
+  Map<String, dynamic> get declaration {
+    if (!requiresRequestId) {
+      return {
         'name': name,
         'description': description,
         'parameters': parameters,
       };
+    }
+    final properties =
+        Map<String, dynamic>.from(parameters['properties'] as Map? ?? const {});
+    properties['requestId'] = {
+      'type': 'string',
+      'description': 'Unique id for this user-requested operation. Reuse the '
+          'same id when retrying the same operation.',
+    };
+    final required = <dynamic>[
+      ...(parameters['required'] as List? ?? const []),
+      if (!(parameters['required'] as List? ?? const []).contains('requestId'))
+        'requestId',
+    ];
+    return {
+      'name': name,
+      'description': description,
+      'parameters': {
+        ...parameters,
+        'properties': properties,
+        'required': required,
+      },
+    };
+  }
 }
 
 /// App-scoped, **whitelisted** catalog of what Baba may do.
@@ -70,6 +105,9 @@ class BabaToolRegistry extends ChangeNotifier {
 
   final Map<String, BabaTool> _tools = {};
   final Map<String, BabaToolHandler> _boundHandlers = {};
+  final LinkedHashMap<String, Future<Map<String, dynamic>>>
+      _idempotentRequests = LinkedHashMap();
+  static const int _maxIdempotentRequests = 100;
 
   // How many tool dispatches are currently in flight (incl. their settle window).
   // Lets other code tell whether a state change was Baba-driven: an action that
@@ -131,9 +169,31 @@ class BabaToolRegistry extends ChangeNotifier {
       return {'ok': false, 'error': 'unknown_tool', 'tool': name};
     }
     final handler = _boundHandlers[name] ?? tool.defaultHandler;
+    final requestId = args['requestId']?.toString().trim();
+    if (tool.requiresRequestId && (requestId == null || requestId.isEmpty)) {
+      final rejected = _normalizeMutationResult({
+        'ok': false,
+        'reason': 'requestId is required for this mutation',
+      }, forcedStatus: 'rejected');
+      return tool.appendsWorldState
+          ? await _withWorldState(rejected)
+          : rejected;
+    }
+
     _dispatchDepth++;
     try {
-      final result = await handler(args).timeout(_handlerTimeout);
+      Future<Map<String, dynamic>> pending;
+      if (tool.requiresRequestId) {
+        final key = '$name:$requestId';
+        pending =
+            _idempotentRequests[key] ??= handler(args).timeout(_handlerTimeout);
+        while (_idempotentRequests.length > _maxIdempotentRequests) {
+          _idempotentRequests.remove(_idempotentRequests.keys.first);
+        }
+      } else {
+        pending = handler(args).timeout(_handlerTimeout);
+      }
+      final result = await pending;
       // `ok` is the ONE field the model reflexively trusts to decide whether an
       // action worked (and whether to tell the user it's done). So it must be
       // truthful: a handler that couldn't perform the action MUST return
@@ -143,22 +203,50 @@ class BabaToolRegistry extends ChangeNotifier {
       // `{'ok': true, ...result}` — that once masked failures as success and
       // made Baba claim the chart was ready when nothing had been saved.
       final ok = result['ok'] as bool? ?? true;
-      final out = {...result, 'ok': ok};
+      final legacy = {...result, 'ok': ok};
+      final out = tool.isMutation ? _normalizeMutationResult(legacy) : legacy;
       // Data reads don't change the screen — narrate the payload straight, no
       // world-state envelope (see [BabaTool.appendsWorldState]).
       return tool.appendsWorldState ? await _withWorldState(out) : out;
     } on TimeoutException {
-      return await _withWorldState({
+      final result = {
         'ok': false,
+        'status': 'failed',
         'error': 'timeout',
         'tool': name,
         'reason': 'the app took too long to respond',
-      });
+      };
+      return await _withWorldState(result);
     } catch (e) {
-      return await _withWorldState({'ok': false, 'error': e.toString(), 'tool': name});
+      return await _withWorldState({
+        'ok': false,
+        'status': 'failed',
+        'error': e.toString(),
+        'tool': name,
+      });
     } finally {
       _dispatchDepth--;
     }
+  }
+
+  Map<String, dynamic> _normalizeMutationResult(
+    Map<String, dynamic> result, {
+    String? forcedStatus,
+  }) {
+    final existing = result['status']?.toString();
+    final status = forcedStatus ??
+        existing ??
+        (result['ok'] == true
+            ? 'applied'
+            : result['blocked'] == true
+                ? 'blocked'
+                : 'failed');
+    return {
+      ...result,
+      'status': status,
+      'ok': status == 'applied',
+      'blocked': status == 'blocked',
+    };
   }
 
   /// The observe-on-every-action envelope: after a handler runs, wait for the UI
@@ -172,7 +260,8 @@ class BabaToolRegistry extends ChangeNotifier {
   ///
   /// A handler that already computed the post-action state (rare) can set
   /// `state`/`settled` itself; we never overwrite an explicit value.
-  Future<Map<String, dynamic>> _withWorldState(Map<String, dynamic> result) async {
+  Future<Map<String, dynamic>> _withWorldState(
+      Map<String, dynamic> result) async {
     await BabaContext.instance.settle();
     final state = BabaContext.instance.worldState();
     final onScreen = state['onScreen'];

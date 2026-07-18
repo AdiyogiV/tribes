@@ -64,6 +64,7 @@ class BabaToolCatalog {
       },
       'required': ['destination'],
     },
+    isMutation: true,
     defaultHandler: (args) async {
       final dest = args['destination'] as String?;
       // "chat" isn't a route — Baba wraps the app, so typing to him happens in
@@ -174,6 +175,7 @@ class BabaToolCatalog {
         'Go back to the previous screen. Use when the user says "go back", '
         '"take me back", or wants to leave the current screen.',
     parameters: const {'type': 'object', 'properties': {}},
+    isMutation: true,
     defaultHandler: (args) async {
       if (appRouter.canPop()) {
         appRouter.pop();
@@ -190,13 +192,13 @@ class BabaToolCatalog {
   /// clipped. Use ONLY when the conversation is genuinely done.
   static final BabaTool _endCall = BabaTool(
     name: 'endCall',
-    description:
-        'End the voice call and say goodbye. Call this ONLY when the '
+    description: 'End the voice call and say goodbye. Call this ONLY when the '
         'conversation is truly finished - the user said bye/goodbye/that is '
         'all, or you have wrapped everything up. Say your short farewell line '
         'in the SAME turn as this call; the goodbye plays fully before the '
         'call disconnects.',
     parameters: const {'type': 'object', 'properties': {}},
+    isMutation: true,
     defaultHandler: (args) async {
       VoiceSessionController().endAfterFarewell();
       return {'ok': true, 'ending': true};

@@ -49,6 +49,8 @@ class BabaMemoryTools {
           'required': ['note'],
         },
         defaultHandler: (args) async => _remember(args),
+        isMutation: true,
+        requiresRequestId: true,
       );
 
   static Future<Map<String, dynamic>> _remember(
@@ -64,8 +66,7 @@ class BabaMemoryTools {
     final topic = args['topic']?.toString().trim();
 
     try {
-      final ref =
-          FirebaseFirestore.instance.doc('users/$uid/memory/profile');
+      final ref = FirebaseFirestore.instance.doc('users/$uid/memory/profile');
       final entry = <String, dynamic>{
         'note': note,
         if (topic != null && topic.isNotEmpty) 'topic': topic,

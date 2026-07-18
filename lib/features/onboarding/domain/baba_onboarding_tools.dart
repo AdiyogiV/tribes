@@ -86,6 +86,8 @@ class BabaOnboardingTools {
             'required': ['year', 'month', 'day'],
           },
           defaultHandler: _unavailable,
+          isMutation: true,
+          requiresRequestId: true,
         ),
         BabaTool(
           name: setBirthTime,
@@ -100,6 +102,8 @@ class BabaOnboardingTools {
             'required': ['hour24', 'minute'],
           },
           defaultHandler: _unavailable,
+          isMutation: true,
+          requiresRequestId: true,
         ),
         BabaTool(
           name: setBirthPlace,
@@ -116,6 +120,8 @@ class BabaOnboardingTools {
             'required': ['city'],
           },
           defaultHandler: _unavailable,
+          isMutation: true,
+          requiresRequestId: true,
         ),
         BabaTool(
           name: setGender,
@@ -132,6 +138,8 @@ class BabaOnboardingTools {
             'required': ['gender'],
           },
           defaultHandler: _unavailable,
+          isMutation: true,
+          requiresRequestId: true,
         ),
         BabaTool(
           name: submitBirthDetails,
@@ -139,6 +147,8 @@ class BabaOnboardingTools {
               'once date, time and place are all set and confirmed.',
           parameters: {'type': 'object', 'properties': {}},
           defaultHandler: _unavailable,
+          isMutation: true,
+          requiresRequestId: true,
         ),
         BabaTool(
           name: advanceOnboarding,
@@ -174,6 +184,7 @@ class BabaOnboardingTools {
             'required': ['requestId', 'fromPhase', 'fromVersion'],
           },
           defaultHandler: _advanceUnavailable,
+          isMutation: true,
         ),
       ];
 }
