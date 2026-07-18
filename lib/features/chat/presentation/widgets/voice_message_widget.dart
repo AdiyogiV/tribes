@@ -186,16 +186,11 @@ class _VoiceMessageWidgetState extends State<VoiceMessageWidget>
             'transcript': widget.transcript,
           });
 
-      AppLogger.i('🎵 Audio player initialized, ready for on-demand loading',
+      AppLogger.i('Voice message player ready for on-demand loading',
           category: LogCategory.media);
-      
-      // Preload audio in background after a short delay for smoother UX
-      // This starts downloading/caching without blocking the UI
-      Future.delayed(const Duration(milliseconds: 300), () {
-        if (mounted) {
-          _preloadAudio();
-        }
-      });
+
+      // Do not preload every mounted message. Long chats otherwise allocate
+      // many native decoders and network buffers before playback is requested.
 
       // Subscribe to streams
       _positionSubscription = player.positionStream.listen((position) {
@@ -493,24 +488,6 @@ class _VoiceMessageWidgetState extends State<VoiceMessageWidget>
     }
   }
   
-  /// Preload audio in background for faster playback
-  Future<void> _preloadAudio() async {
-    final player = _audioPlayer;
-    if (player == null || widget.audioUrl.isEmpty) return;
-    
-    // Don't preload if already loaded
-    if (player.processingState != ProcessingState.idle) return;
-    
-    try {
-      await _loadAudioSource();
-      AppLogger.i('🎵 Audio preloaded successfully', category: LogCategory.media);
-    } catch (e) {
-      // Silently fail preload - will try again on play
-      AppLogger.w('🎵 Preload failed, will load on play', 
-          category: LogCategory.media);
-    }
-  }
-
   String _formatDuration(Duration duration) {
     final minutes = duration.inMinutes;
     final seconds = duration.inSeconds % 60;

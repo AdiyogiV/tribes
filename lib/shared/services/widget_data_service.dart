@@ -45,8 +45,9 @@ class WidgetDataService {
   static const _kIosVedicDate = 'auro_vedicDate';
   static const _kIosSamvatYear = 'auro_samvatYear';
 
-  /// Timestamp of last successful write (avoid redundant writes).
+  /// Fingerprints of the last successful and currently in-flight writes.
   String? _lastWrittenDate;
+  String? _pendingDate;
 
   /// Push the current panchang data to the native widget layer.
   ///
@@ -60,10 +61,6 @@ class WidgetDataService {
           category: LogCategory.general);
       return false;
     }
-
-    AppLogger.i('WidgetDataService: updating with samvat keys',
-        category: LogCategory.general,
-        data: {'keys': samvat.keys.take(15).toList()});
 
     // Build the same display strings the card widgets use.
     final fullVedicDate = VedicTimeUtils.buildFullVedicDate(samvat);
@@ -101,11 +98,13 @@ class WidgetDataService {
 
     // De-duplicate: skip write if the full date string hasn't changed.
     final dateFingerprint = '$fullVedicDate|$numericDate';
-    if (dateFingerprint == _lastWrittenDate) {
-      AppLogger.i('WidgetDataService: skipped (same fingerprint)',
-          category: LogCategory.general);
+    if (dateFingerprint == _lastWrittenDate ||
+        dateFingerprint == _pendingDate) {
       return false;
     }
+    // Claim the fingerprint before the first await. Rebuilds can otherwise
+    // start duplicate preferences and platform-channel writes concurrently.
+    _pendingDate = dateFingerprint;
 
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -169,6 +168,7 @@ class WidgetDataService {
       }
 
       _lastWrittenDate = dateFingerprint;
+      _pendingDate = null;
 
       AppLogger.i('WidgetDataService: wrote panchang to SharedPreferences',
           category: LogCategory.general,
@@ -183,6 +183,7 @@ class WidgetDataService {
 
       return true;
     } catch (e) {
+      if (_pendingDate == dateFingerprint) _pendingDate = null;
       AppLogger.w('WidgetDataService: failed to write widget data: $e',
           category: LogCategory.general,
           data: {'error': e.toString()});

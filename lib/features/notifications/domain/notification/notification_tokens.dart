@@ -187,6 +187,13 @@ extension NotificationTokens on NotificationService {
 
   /// Fetch unread count via aggregation query (no document bodies downloaded).
   void _fetchAndEmitUnreadCount(String uid) {
+    // Pollers can outlive logout/account switching. Never query a stale user's
+    // path with the current token or emit their count into the new session.
+    if (currentUser?.uid != uid) {
+      unreadCountTimer?.cancel();
+      unreadCountTimer = null;
+      return;
+    }
     firestore
         .collection('notifications')
         .doc(uid)
@@ -195,6 +202,7 @@ extension NotificationTokens on NotificationService {
         .count()
         .get()
         .then((snapshot) {
+      if (currentUser?.uid != uid) return;
       final count = snapshot.count ?? 0;
       unreadCountValue = count;
       unreadCountController.add(count);

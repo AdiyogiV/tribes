@@ -181,20 +181,11 @@ class AppBootstrap {
               : const AndroidPlayIntegrityProvider(),
           providerApple: const AppleAppAttestWithDeviceCheckFallbackProvider(),
         );
-        // Use the CACHED token (getToken() — NOT getToken(true)). A forced
-        // refresh on every cold start hammers the Play Integrity / App Check
-        // backoff and can trigger a persistent "Too many attempts" throttle
-        // that then starves Firestore listeners. Let Firestore/Functions fetch
-        // (and refresh) tokens lazily on demand instead.
-        unawaited(FirebaseAppCheck.instance.getToken().then((token) {
-          AppLogger.i('App Check activated',
-              category: LogCategory.general,
-              data: {'hasToken': token != null, 'debug': kDebugMode});
-        }).catchError((e) {
-          AppLogger.w('App Check token fetch failed',
-              category: LogCategory.general,
-              data: {'error': e.toString()});
-        }));
+        // Do not eagerly call getToken(), even without force-refresh. Firebase
+        // consumers fetch lazily, while an eager cold-start exchange can add to
+        // the SDK backoff after a debug-token or Play Integrity rejection.
+        AppLogger.i('App Check activated',
+            category: LogCategory.general, data: {'debug': kDebugMode});
       } catch (e) {
         AppLogger.w('App Check activation failed: $e',
             category: LogCategory.general);
