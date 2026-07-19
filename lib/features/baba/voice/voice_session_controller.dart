@@ -624,7 +624,23 @@ class VoiceSessionController extends ChangeNotifier {
     // Authenticate the caller: the relay rejects sessions without a valid
     // Firebase ID token so randoms can't burn our Gen AI credits.
     final user = FirebaseAuth.instance.currentUser;
-    final token = await user?.getIdToken();
+    String? token;
+    if (user != null) {
+      try {
+        // Refresh claims on every cold socket open. Anonymous accounts can be
+        // upgraded to phone auth while a cached ID token still says
+        // sign_in_provider=anonymous; the relay correctly trusts that claim,
+        // so a stale token made Aurobhatt nudge an already-secured user to log
+        // in. Fall back to the cached valid token only for transient refresh
+        // failures so voice remains available offline-ish.
+        token = await user.getIdToken(true);
+      } catch (e) {
+        AppLogger.w('Voice auth claim refresh failed; using cached token',
+            category: LogCategory.voice,
+            data: {'error': e.runtimeType.toString()});
+        token = await user.getIdToken();
+      }
+    }
     if (user == null || token == null) {
       throw StateError('not-signed-in');
     }
@@ -696,6 +712,7 @@ class VoiceSessionController extends ChangeNotifier {
       'greeted': sendDirective,
       'micMode': _micMode.name,
       'tools': tools.length,
+      'account': user.isAnonymous ? 'guest' : 'secured',
     });
   }
 

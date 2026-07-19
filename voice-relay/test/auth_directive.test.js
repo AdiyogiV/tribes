@@ -9,7 +9,9 @@ test("verified phone auth overrides stale guest session facts", () => {
     { firebase: { sign_in_provider: "phone" } },
   );
 
-  assert.equal(result, "[SESSION FACTS] account=secured | chart=exists");
+  assert.match(result, /^\[SESSION FACTS\] account=secured \| chart=exists/);
+  assert.match(result, /already logged in to a secured account/);
+  assert.match(result, /Never ask, offer, or nudge them to log in/);
 });
 
 test("verified anonymous auth overrides stale secured session facts", () => {
@@ -18,7 +20,19 @@ test("verified anonymous auth overrides stale secured session facts", () => {
     { firebase: { sign_in_provider: "anonymous" } },
   );
 
-  assert.equal(result, "[SESSION FACTS] account=guest");
+  assert.match(result, /^\[SESSION FACTS\] account=guest/);
+  assert.match(result, /anonymous account/);
+});
+
+test("current phone provider beats a stale anonymous token", () => {
+  const result = withAuthoritativeAccount(
+    "[SESSION FACTS] account=guest",
+    { firebase: { sign_in_provider: "anonymous" } },
+    ["phone"],
+  );
+
+  assert.match(result, /^\[SESSION FACTS\] account=secured/);
+  assert.match(result, /already logged in to a secured account/);
 });
 
 test("verified auth appends account when client omitted it", () => {
@@ -27,7 +41,8 @@ test("verified auth appends account when client omitted it", () => {
     { firebase: { sign_in_provider: "google.com" } },
   );
 
-  assert.match(result, /\[VERIFIED AUTH\] account=secured$/);
+  assert.match(result, /\[VERIFIED AUTH\] account=secured/);
+  assert.match(result, /never navigate to login/i);
 });
 
 test("local bypass without provider leaves directive unchanged", () => {

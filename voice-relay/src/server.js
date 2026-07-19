@@ -83,6 +83,20 @@ async function verifyCaller(token) {
     }
 }
 
+/**
+ * Read current providers so an anonymous-to-phone upgrade wins over stale ID
+ * token claims. Best-effort: verified token claims remain the fallback.
+ */
+async function currentProviderIds(uid) {
+    if (!REQUIRE_AUTH || !uid) return [];
+    try {
+        const user = await admin.auth().getUser(uid);
+        return (user.providerData || []).map((provider) => provider.providerId);
+    } catch {
+        return [];
+    }
+}
+
 const server = http.createServer((req, res) => {
     // Health check for Cloud Run.
     if (req.url === "/" || req.url === "/healthz") {
@@ -201,7 +215,7 @@ wss.on("connection", (ws) => {
             starting = true;                 // set SYNCHRONOUSLY (race guard)
             clearAuthTimer();
             // Verify the caller before spending any Gen AI credits.
-            verifyCaller(msg.token).then((caller) => {
+            verifyCaller(msg.token).then(async (caller) => {
                 if (closed) { starting = false; return; }
                 if (!caller?.uid) {
                     sendJson({ type: "error", message: "unauthorized" });
@@ -211,7 +225,11 @@ wss.on("connection", (ws) => {
                 }
                 // Token claims beat a stale pre-warmed client directive. This
                 // is especially important after anonymous -> phone upgrades.
-                const directive = withAuthoritativeAccount(msg.directive, caller);
+                const providerIds = await currentProviderIds(caller.uid);
+                if (closed) { starting = false; return; }
+                const directive = withAuthoritativeAccount(
+                    msg.directive, caller, providerIds,
+                );
                 // Bind the session to the user and forward their ID token so
                 // the brain (aiChat) can load their full chart from Firestore.
                 // `engine` (optional) lets the app pick Live vs CX per session.
