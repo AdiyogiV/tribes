@@ -2,14 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:aurogram/features/astrology/domain/circle_vibes_service.dart';
-import 'package:aurogram/core/theme/app_dimensions.dart';
+import 'package:aurogram/features/astrology/presentation/widgets/circle_flush_card.dart';
 
-/// Your circle, as a chic editorial gallery — housed in a FLUSH PURE-BLACK
-/// card, elevation 0, no border, exactly like the Date and Compatibility
-/// cards (they melt into the background; a bordered gray panel would stick out).
-///
-/// Inside: a small-caps eyebrow and a row of grayscale, rounded-rectangle
-/// portrait thumbnails (no circles — nothing else in the dashboard is round).
+/// Your circle — a flush black card (no border, no rounded corners) holding a
+/// small-caps eyebrow and a row of grayscale, SQUARE portrait thumbnails.
 /// The selected person is full-strength with a Georgia-italic name; the rest
 /// recede.
 class CircleVibeStrip extends StatefulWidget {
@@ -46,32 +42,17 @@ class _CircleVibeStripState extends State<CircleVibeStrip> {
       builder: (context, snapshot) {
         final vibes = snapshot.data ?? const <CircleVibe>[];
         if (vibes.isEmpty) return const SizedBox.shrink();
-        return _buildCard(context, vibes);
-      },
-    );
-  }
 
-  Widget _buildCard(BuildContext context, List<CircleVibe> vibes) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark ? const Color(0xFF000000) : Colors.white;
-    final fgMain = isDark ? Colors.white : Colors.black87;
-    final fgMuted = isDark ? Colors.white54 : Colors.black54;
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final fgMain = isDark ? Colors.white : Colors.black87;
+        final fgMuted = isDark ? Colors.white54 : Colors.black54;
 
-    return SizedBox(
-      width: double.infinity,
-      child: Material(
-        color: cardColor,
-        elevation: isDark ? 0 : 2,
-        shadowColor: Colors.black.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-        clipBehavior: Clip.antiAlias,
-        child: Padding(
+        return CircleFlushCard(
           padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Eyebrow — small-caps, wide-tracked, muted (matches other cards).
               Text(
                 'YOUR CIRCLE',
                 style: TextStyle(
@@ -87,7 +68,6 @@ class _CircleVibeStripState extends State<CircleVibeStrip> {
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   physics: const BouncingScrollPhysics(),
-                  clipBehavior: Clip.none,
                   padding: EdgeInsets.zero,
                   itemCount: vibes.length + 1,
                   separatorBuilder: (_, __) => const SizedBox(width: 18),
@@ -122,14 +102,14 @@ class _CircleVibeStripState extends State<CircleVibeStrip> {
               ),
             ],
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
 
-/// A grayscale, rounded-rectangle portrait thumbnail with a Georgia-italic
-/// name beneath. No circles — it echoes the card's own rounded-rect language.
+/// A grayscale, SQUARE portrait thumbnail (no rounded corners, no border) with
+/// a Georgia-italic name beneath.
 class _PortraitTile extends StatelessWidget {
   const _PortraitTile({
     required this.name,
@@ -149,7 +129,6 @@ class _PortraitTile extends StatelessWidget {
 
   static const double _w = 52;
   static const double _h = 62;
-  static const double _radius = 14;
 
   @override
   Widget build(BuildContext context) {
@@ -166,13 +145,9 @@ class _PortraitTile extends StatelessWidget {
             AnimatedOpacity(
               duration: const Duration(milliseconds: 220),
               opacity: isSelected ? 1.0 : 0.32,
-              child: Container(
+              child: SizedBox(
                 width: _w,
                 height: _h,
-                clipBehavior: Clip.antiAlias,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(_radius),
-                ),
                 child: hasPhoto
                     ? ColorFiltered(
                         // True grayscale — cohesive editorial look.

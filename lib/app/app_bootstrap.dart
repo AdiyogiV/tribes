@@ -8,6 +8,7 @@ import 'package:aurogram/features/onboarding/domain/baba_identity_tools.dart';
 import 'package:aurogram/features/astrology/domain/baba_astrology_tools.dart';
 import 'package:aurogram/features/astrology/domain/baba_cosmic_tools.dart';
 import 'package:aurogram/features/astrology/domain/baba_forecast_tools.dart';
+import 'package:aurogram/features/astrology/domain/baba_circle_tools.dart';
 import 'package:aurogram/features/ayurveda/domain/baba_ayurveda_tools.dart';
 import 'package:aurogram/features/baba/domain/baba_memory_tools.dart';
 import 'package:aurogram/features/baba/domain/baba_tool_registry.dart';
@@ -226,6 +227,10 @@ class AppBootstrap {
       // Personal forecast: the SAME real day-alignments + woven story the wheel
       // shows, so voice + wheel + card never contradict each other.
       BabaToolRegistry.instance.register(BabaForecastTools.declaration());
+      // The user's CIRCLE: friends' vibes + the transit "cosmic weather for the
+      // two of you today" (same data the dashboard's friend cards show), so
+      // Aurobhatt can talk about the bond, not just the user's own sky.
+      BabaToolRegistry.instance.registerAll(BabaCircleTools.declarations());
       BabaToolRegistry.instance.register(BabaMemoryTools.declaration());
       // NOTE: knowledge/RAG is now NATIVE in CX - the 'vedicCanon' Data Store
       // Tool grounds meanings server-side (see voice-relay/tools/

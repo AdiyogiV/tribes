@@ -63,3 +63,33 @@ test("pickTodayVibe returns null when today has no narrated heading", () => {
     assert.equal(pickTodayVibe("f1", { displayName: "Priya" }, [{ date: TODAY, heading: "  " }], TODAY), null);
     assert.equal(pickTodayVibe("f1", { displayName: "Priya" }, [], TODAY), null);
 });
+
+test("pickTodayVibe attaches a `together` block only when paired with charts+sky", () => {
+    const friendDays = [{ date: TODAY, heading: "Quiet Reset", publicNote: "inward day" }];
+    // Full natal chart for the friend lives on userData.astrologyData.
+    const at = (sign) => ({ fullDegree: sign * 30 + 15 });
+    const friendData = {
+        displayName: "Priya",
+        astrologyData: { birthChartData: { output: { Moon: at(2), Venus: at(11), Ascendant: at(0) } } },
+    };
+
+    // No pairing context → no together block (backward compatible).
+    const solo = pickTodayVibe("f1", friendData, friendDays, TODAY);
+    assert.ok(!("together" in solo));
+
+    // Paired with my natal + today's transit → together block present + derived.
+    const parked = {};
+    for (const p of ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu"]) parked[p] = at(1);
+    parked.Jupiter = at(8); // 7th aspect onto both natal Moons (sign 2)
+    const pairCtx = {
+        myNatal: { Moon: at(2), Venus: at(11), Ascendant: at(0) },
+        transit: parked,
+    };
+    const paired = pickTodayVibe("f1", friendData, friendDays, TODAY, pairCtx);
+    assert.equal(typeof paired.together.score, "number");
+    assert.ok(paired.together.score > 50);
+    assert.equal(typeof paired.together.label, "string");
+    // Privacy: the friend's raw chart never leaks into the payload.
+    assert.ok(!("signals" in paired.together));
+    assert.ok(!("natal" in paired.together));
+});

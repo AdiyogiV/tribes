@@ -13,12 +13,21 @@ class CircleVibe {
   final String vibe;
   final String? publicNote;
 
+  /// Transit "cosmic weather for the two of you today" — derived server-side
+  /// from BOTH natal charts vs today's sky. Null when it can't be paired.
+  final TodayTogether? together;
+
+  /// The friend's OWN transit weather today (their energy card), not the bond.
+  final List<EnergyReason> energy;
+
   const CircleVibe({
     required this.uid,
     required this.name,
     this.photo,
     required this.vibe,
     this.publicNote,
+    this.together,
+    this.energy = const [],
   });
 
   factory CircleVibe.fromMap(Map<String, dynamic> m) => CircleVibe(
@@ -27,9 +36,110 @@ class CircleVibe {
         photo: m['photo']?.toString(),
         vibe: m['vibe']?.toString() ?? '',
         publicNote: m['publicNote']?.toString(),
+        together: m['together'] is Map
+            ? TodayTogether.fromMap(Map<String, dynamic>.from(m['together']))
+            : null,
+        energy: (m['energy'] as List?)
+                ?.whereType<Map>()
+                .map((e) => EnergyReason.fromMap(Map<String, dynamic>.from(e)))
+                .toList() ??
+            const [],
       );
 
   bool get isValid => uid.isNotEmpty && vibe.isNotEmpty;
+}
+
+/// The derived, privacy-safe transit synastry-of-the-day for a pair. Every
+/// [connection] reason touches BOTH charts — it's about the bond, not one person.
+class TodayTogether {
+  final int score; // 0-100
+  final String label; // "In Flow", "Aligned", "Steady", "Offset", "Lay Low"
+  final List<TogetherReason> connection; // shared + bridge signals
+
+  const TodayTogether({
+    required this.score,
+    required this.label,
+    this.connection = const [],
+  });
+
+  factory TodayTogether.fromMap(Map<String, dynamic> m) => TodayTogether(
+        score: (m['score'] as num?)?.round() ?? 0,
+        label: m['label']?.toString() ?? '',
+        connection: (m['connection'] as List?)
+                ?.whereType<Map>()
+                .map((e) => TogetherReason.fromMap(Map<String, dynamic>.from(e)))
+                .toList() ??
+            const [],
+      );
+
+  List<TogetherReason> get favorable =>
+      connection.where((r) => r.benefic).toList();
+  List<TogetherReason> get unfavorable =>
+      connection.where((r) => !r.benefic).toList();
+}
+
+/// One CONNECTION signal — a transiting [planet] linking the two charts.
+/// [kind] is "shared" (same karaka lit in both) or "bridge" (your [karakaA] ↔
+/// their [karakaB]). [benefic] = lifts vs tests.
+class TogetherReason {
+  final String planet;
+  final String kind; // "shared" | "bridge"
+  final String karaka; // shared: the common karaka
+  final String karakaA; // bridge: your point
+  final String karakaB; // bridge: their point
+  final bool benefic;
+
+  const TogetherReason({
+    required this.planet,
+    required this.kind,
+    this.karaka = '',
+    this.karakaA = '',
+    this.karakaB = '',
+    required this.benefic,
+  });
+
+  factory TogetherReason.fromMap(Map<String, dynamic> m) => TogetherReason(
+        planet: m['planet']?.toString() ?? '',
+        kind: m['kind']?.toString() ?? 'shared',
+        karaka: m['karaka']?.toString() ?? '',
+        karakaA: m['karakaA']?.toString() ?? '',
+        karakaB: m['karakaB']?.toString() ?? '',
+        benefic: m['benefic'] == true,
+      );
+
+  /// Warm, name-aware phrasing of the bond. [friendName] is the OTHER person.
+  String phrase(String friendName) {
+    if (kind == 'bridge') {
+      return benefic
+          ? '$planet links your $karakaA to $friendName\'s $karakaB'
+          : '$planet strains your $karakaA and $friendName\'s $karakaB';
+    }
+    // shared
+    return benefic
+        ? '$planet blesses the $karaka between you'
+        : '$planet tests the $karaka between you';
+  }
+}
+
+/// One of the friend's OWN transit signals today (for their energy card).
+class EnergyReason {
+  final String planet;
+  final String karaka;
+  final bool benefic;
+
+  const EnergyReason({
+    required this.planet,
+    required this.karaka,
+    required this.benefic,
+  });
+
+  factory EnergyReason.fromMap(Map<String, dynamic> m) => EnergyReason(
+        planet: m['planet']?.toString() ?? '',
+        karaka: m['karaka']?.toString() ?? '',
+        benefic: m['benefic'] == true,
+      );
+
+  String phrase() => benefic ? '$planet favours their $karaka' : '$planet tests their $karaka';
 }
 
 /// "Friends Today" — fetches the vibe word for each mutual-follow friend.

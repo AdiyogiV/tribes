@@ -3,11 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:aurogram/features/astrology/domain/circle_vibes_service.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/compatibility_badge.dart';
+import 'package:aurogram/features/astrology/presentation/widgets/circle_flush_card.dart';
+import 'package:aurogram/features/astrology/presentation/widgets/friend_together_card.dart';
 import 'package:aurogram/features/profile/domain/namaste_service.dart';
-import 'package:aurogram/core/theme/app_dimensions.dart';
 
 /// The in-place friend view — what the dashboard swaps to when you select a
-/// friend in the strip. Two purpose-built sections, NO wheel.
+/// friend in the strip. Friend day card + compatibility + view-profile link.
 class FriendCosmicView extends StatelessWidget {
   const FriendCosmicView({super.key, required this.vibe});
 
@@ -23,6 +24,12 @@ class FriendCosmicView extends StatelessWidget {
       children: [
         FriendDayCard(vibe: vibe),
         const SizedBox(height: 16),
+        // Current (daily transit) cosmic weather for the two of you — shown
+        // above the static synastry badge since this is the "today" reading.
+        if (vibe.together != null) ...[
+          FriendTogetherCard(together: vibe.together!, friendName: vibe.name),
+          const SizedBox(height: 16),
+        ],
         CompatibilityBadge(
           otherUserId: vibe.uid,
           otherUserName: vibe.name,
@@ -48,9 +55,8 @@ class FriendCosmicView extends StatelessWidget {
   }
 }
 
-/// Purpose-built friend day card: pure editorial typography on the shared
-/// dashboard card primitive, so it's a perfect sibling of the Insight and
-/// Date cards. Georgia-italic hero, small-caps eyebrow, arrow-link action.
+/// Purpose-built friend day card: pure editorial typography on the flush card
+/// surface. Georgia-italic hero, small-caps eyebrow, arrow-link action.
 class FriendDayCard extends StatefulWidget {
   const FriendDayCard({super.key, required this.vibe});
 
@@ -101,82 +107,105 @@ class _FriendDayCardState extends State<FriendDayCard> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark ? const Color(0xFF000000) : Colors.white;
     final fgMain = isDark ? Colors.white : Colors.black87;
     final fgMuted = isDark ? Colors.white54 : Colors.black54;
     final hasNote =
         widget.vibe.publicNote != null && widget.vibe.publicNote!.isNotEmpty;
 
-    return SizedBox(
-      width: double.infinity,
-      child: Material(
-        color: cardColor,
-        elevation: isDark ? 0 : 2,
-        shadowColor: Colors.black.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-        clipBehavior: Clip.antiAlias,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 26, 24, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Eyebrow — "PRIYA · TODAY", small-caps, wide-tracked.
-              Text(
-                '${widget.vibe.name.toUpperCase()}  ·  TODAY',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 3.0,
-                  color: fgMuted,
-                ),
-              ),
-              const SizedBox(height: 18),
-              // The hero: the vibe word, Georgia italic — matches Insight/Date.
-              Text(
-                widget.vibe.vibe,
-                style: TextStyle(
-                  fontFamily: 'Georgia',
-                  fontStyle: FontStyle.italic,
-                  fontSize: 34,
-                  height: 1.1,
-                  letterSpacing: -0.5,
-                  color: fgMain,
-                ),
-              ),
-              if (hasNote) ...[
-                const SizedBox(height: 14),
-                Text(
-                  widget.vibe.publicNote!,
-                  style: TextStyle(
-                    fontFamily: 'Georgia',
-                    fontStyle: FontStyle.italic,
-                    fontSize: 14.5,
-                    height: 1.5,
-                    color: fgMuted,
-                  ),
-                ),
-              ],
-              const SizedBox(height: 26),
-              _EnergyLink(
-                sending: _sending,
-                sent: _sent,
-                onTap: _sendNamaste,
-                fgMain: fgMain,
-                fgMuted: fgMuted,
-              ),
-            ],
+    return CircleFlushCard(
+      padding: const EdgeInsets.fromLTRB(24, 26, 24, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Eyebrow — "ABHINAV · TODAY", small-caps, wide-tracked.
+          Text(
+            '${widget.vibe.name.toUpperCase()}  ·  TODAY',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 3.0,
+              color: fgMuted,
+            ),
           ),
-        ),
+          const SizedBox(height: 18),
+          // The hero: the vibe word — matches the user's own Daily Vibe card
+          // heading exactly (uppercase, 16px, w800, wide-tracked).
+          Text(
+            widget.vibe.vibe.toUpperCase(),
+            style: TextStyle(
+              fontSize: 16,
+              height: 1.4,
+              letterSpacing: 3.0,
+              fontWeight: FontWeight.w800,
+              color: fgMain,
+            ),
+          ),
+          if (hasNote) ...[
+            const SizedBox(height: 14),
+            Text(
+              widget.vibe.publicNote!,
+              style: TextStyle(
+                fontFamily: 'Georgia',
+                fontStyle: FontStyle.italic,
+                fontSize: 14.5,
+                height: 1.5,
+                color: fgMuted,
+              ),
+            ),
+          ],
+          // The friend's OWN transit weather today (their personal energy).
+          if (widget.vibe.energy.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            ...widget.vibe.energy.take(3).map((e) => Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 3),
+                        child: Icon(
+                          e.benefic
+                              ? Icons.arrow_upward_rounded
+                              : Icons.arrow_downward_rounded,
+                          size: 12,
+                          color: fgMuted,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          e.phrase(),
+                          style: TextStyle(
+                            fontFamily: 'Georgia',
+                            fontStyle: FontStyle.italic,
+                            fontSize: 14.5,
+                            height: 1.4,
+                            color: fgMuted,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                )),
+          ],
+          const SizedBox(height: 26),
+          _EnergyLink(
+            sending: _sending,
+            sent: _sent,
+            onTap: _sendNamaste,
+            fgMain: fgMain,
+            fgMuted: fgMuted,
+          ),
+        ],
       ),
     );
   }
 }
 
-/// A chic arrow-link action — mirrors the "SEE MORE INSIGHTS →" affordance on
-/// the Insight card. No pill, no icons, purely typographic.
+/// A chic arrow-link action — purely typographic, no pill, no rounded corners.
 class _EnergyLink extends StatelessWidget {
   const _EnergyLink({
     required this.sending,
