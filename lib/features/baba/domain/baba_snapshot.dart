@@ -19,7 +19,7 @@ enum BabaScreenStatus { loading, ready, empty, error }
 ///   * [facts]    — a few citable key -> value pairs (e.g. sunSign: Leo).
 ///   * [items]    — visible item labels, e.g. the section titles on screen.
 ///   * [step]     — stable id of the sub-step WITHIN this screen (e.g.
-///                  'birthReading', 'phoneEntry'), so Baba's awareness is finer
+///                  'reading', 'phoneEntry'), so Baba's awareness is finer
 ///                  than route-level. Null when the screen has no sub-steps.
 ///   * [canProceed] / [blockedReason] — whether Baba can move forward from here
 ///                  right now, and if not, the human reason (he can say it).
@@ -63,7 +63,8 @@ class BabaSnapshot {
         );
 
   /// Convenience: the screen is still loading its content.
-  const BabaSnapshot.loading({String? headline, String? step, String? blockedReason})
+  const BabaSnapshot.loading(
+      {String? headline, String? step, String? blockedReason})
       : this(
           status: BabaScreenStatus.loading,
           headline: headline,
@@ -77,7 +78,8 @@ class BabaSnapshot {
       : this(status: BabaScreenStatus.empty, headline: headline, step: step);
 
   /// Convenience: the screen failed to load its content.
-  const BabaSnapshot.error({String? headline, String? step, String? blockedReason})
+  const BabaSnapshot.error(
+      {String? headline, String? step, String? blockedReason})
       : this(
           status: BabaScreenStatus.error,
           headline: headline,

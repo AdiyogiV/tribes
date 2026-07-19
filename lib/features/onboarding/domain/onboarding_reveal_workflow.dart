@@ -57,8 +57,8 @@ class OnboardingRevealWorkflow {
 
     BabaToolResult result;
     // Phase is the compare-and-swap token. This is sound because the reveal is
-    // STRICTLY LINEAR (signReveal -> birthReading -> currentTimes -> home): a
-    // phase is never revisited, so a matching `fromPhase` uniquely identifies
+    // STRICTLY LINEAR (signReveal -> reading -> home): a phase is never
+    // revisited, so a matching `fromPhase` uniquely identifies
     // the current state. Phase and version always move together, so the version
     // adds no extra safety. `fromVersion` is kept in the signature for
     // back-compat with existing callers but is intentionally NOT gated on: the

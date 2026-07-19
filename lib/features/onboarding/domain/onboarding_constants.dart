@@ -26,13 +26,15 @@ class AnimationTiming {
 }
 
 // ============================================================================
-// ONBOARDING PHASE CONSTANTS (sequential: main flow 0-3, alternate 5-6)
+// ONBOARDING PHASE CONSTANTS (sequential: main flow 0-2, alternate 5-6)
 // ============================================================================
 class OnboardingPhase {
   static const int loading = 0;
   static const int signReveal = 1;
-  static const int birthReading = 2;
-  static const int currentTimes = 3;
+  // The single detailed reading (identity + trajectory + present chapter).
+  // Folded what used to be two steps (birthReading + currentTimes) into one.
+  static const int reading = 2;
+  // 3 (currentTimes) removed — folded into `reading`.
   // 4 (pathChoice) removed — users now land on the home dashboard directly.
   static const int skip = 5;
   static const int retry = 6;

@@ -6,8 +6,7 @@
  * Flutter calls:  functions.httpsCallable('insightGateway').call({ method: '...', ...data })
  *
  * Methods:
- *   - generateFirstReading           [auth]     Generate birth chart first reading
- *   - generateCurrentTimesReading    [auth]     Generate current times reading
+ *   - generateFirstReading           [auth]     Generate the detailed onboarding reading
  *   - clearAstroCaches               [auth]     Clear astro caches (admin)
  *   - generatePerHouseNow            [auth]     Force regenerate per-house readings
  *   - submitInsightFeedback          [auth]     Submit thumbs up/down for insight
@@ -23,7 +22,6 @@ import { geminiApiKey, freeAstrologyApiKey } from "../lib/secrets.js";
 
 // Import handlers
 import { handleGenerateFirstReading } from "../functions/first_reading.js";
-import { handleGenerateCurrentTimesReading } from "../functions/current_times_reading.js";
 import { handleClearAstroCaches } from "../functions/maintenance.js";
 import { handleGeneratePerHouseNow } from "../functions/per_house.js";
 import {
@@ -36,7 +34,6 @@ import {
 const methods = {
     // Auth-required methods
     generateFirstReading: { handler: (req) => handleGenerateFirstReading(req), auth: true },
-    generateCurrentTimesReading: { handler: (req) => handleGenerateCurrentTimesReading(req), auth: true },
     clearAstroCaches: { handler: (req) => handleClearAstroCaches(req), auth: true },
     generatePerHouseNow: { handler: (req) => handleGeneratePerHouseNow(req), auth: true },
     submitInsightFeedback: { handler: (req) => handleSubmitInsightFeedback(req), auth: true },

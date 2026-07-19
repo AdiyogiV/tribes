@@ -11,8 +11,6 @@ class OnboardingProgressSidebar extends StatelessWidget {
   final int signRevealStep;
   final bool hasReading;
   final bool isGeneratingReading;
-  final bool hasCurrentTimesReading;
-  final bool isGeneratingCurrentTimesReading;
 
   const OnboardingProgressSidebar({
     super.key,
@@ -20,8 +18,6 @@ class OnboardingProgressSidebar extends StatelessWidget {
     required this.signRevealStep,
     required this.hasReading,
     required this.isGeneratingReading,
-    required this.hasCurrentTimesReading,
-    required this.isGeneratingCurrentTimesReading,
   });
 
   @override
@@ -54,7 +50,8 @@ class OnboardingProgressSidebar extends StatelessWidget {
               child: Row(
                 children: [
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm),
+                    borderRadius:
+                        BorderRadius.circular(AppDimensions.radiusMdSm),
                     child: Image.asset(
                       'assets/images/icon_transparent.png',
                       height: 32,
@@ -83,7 +80,8 @@ class OnboardingProgressSidebar extends StatelessWidget {
             // Progress steps - matching nav item style
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimensions.paddingLg),
                 children: [
                   _buildStep(
                     context: context,
@@ -110,26 +108,12 @@ class OnboardingProgressSidebar extends StatelessWidget {
                     context: context,
                     icon: Icons.menu_book_outlined,
                     selectedIcon: Icons.menu_book_rounded,
-                    label: 'Birth Reading',
+                    label: 'Your Reading',
                     isActive: currentPhase == 2,
                     isCompleted:
                         currentPhase > 2 || (currentPhase == 2 && hasReading),
                     isGenerating:
                         currentPhase == 2 && isGeneratingReading && !hasReading,
-                    primaryColor: primaryColor,
-                    isDark: isDark,
-                  ),
-                  _buildStep(
-                    context: context,
-                    icon: Icons.schedule_outlined,
-                    selectedIcon: Icons.schedule_rounded,
-                    label: 'Current Times',
-                    isActive: currentPhase == 3,
-                    isCompleted: currentPhase > 3 ||
-                        (currentPhase == 3 && hasCurrentTimesReading),
-                    isGenerating: currentPhase == 3 &&
-                        isGeneratingCurrentTimesReading &&
-                        !hasCurrentTimesReading,
                     primaryColor: primaryColor,
                     isDark: isDark,
                   ),

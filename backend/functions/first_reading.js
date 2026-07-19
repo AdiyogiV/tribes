@@ -1,13 +1,16 @@
 /**
- * First Reading — self-contained Cloud Function logic.
+ * Reading — self-contained Cloud Function logic.
  *
- * A one-time birth-chart reading (~90-110 words markdown): who the person is
- * (identity, personality, core gifts) plus a bold, destiny-flavored closing line.
- * No dates or timed predictions—those live in the current times reading.
+ * ONE detailed onboarding reading (~160-200 words markdown) that merges what
+ * used to be two: who the person is (identity, gifts, shadow, edge), where
+ * they're headed (a bold destiny line), AND the flavour of the life-chapter
+ * they're in right now. The "right now" part is grounded in the Vimshottari
+ * dasha (the active planetary period), which moves over months/years — NOT in
+ * day-to-day transits — so the reading stays true and can be cached permanently.
  *
  * Recipe (one flat pass, no engine): build context -> prompt -> callGemini ->
  * store. Cache: the reading itself on users/{uid}.astrologyData.firstReading
- * (permanent — birth data doesn't change).
+ * (permanent — birth data + the current maha/antar dasha are stable).
  */
 
 import { HttpsError } from "firebase-functions/v2/https";
@@ -122,39 +125,41 @@ function buildPrompt(ctx) {
     const primaryYoga = hasRajYoga ? ctx.rajYogas[0] : null;
 
     return {
-        system: "You are a bold, stylish astrologer who writes short, chic birth-chart readings that read like a fun personality profile someone wants to screenshot. Minimal but diverse—you capture many facets of a person (their superpower, their vibe, their shadow, their edge) in quick, punchy, witty lines. You avoid all jargon. CRITICAL: output valid markdown—**bold** labels, *italics* for nuance, ### for headings, - for bullets. Your text is rendered as markdown; plain text looks flat.",
+        system: "You are a bold, stylish astrologer who writes ONE short, chic, screenshot-worthy reading that captures a whole person AND the chapter of life they're walking through right now. You are minimal but diverse — identity, gifts, shadow, edge, trajectory, and present energy in quick, punchy, witty lines. You avoid ALL jargon. CRITICAL: output valid markdown — **bold** labels, *italics* for nuance, ### for headings, - for bullets. Your text is rendered as markdown; plain text looks flat.",
 
-        user: `Write a short, chic, FUN BIRTH reading for ${ctx.userName || "them"}.
-Capture MANY facets of who they are—not one theme—in quick punchy hits, then close with a bold line about what they're built for. No timing, no dates, no "right now".
+        user: `Write ONE detailed, chic, FUN reading for ${ctx.userName || "them"} — it should feel like the whole picture: who they are, what they're built for, AND the energy of the season of life they're in right now.
 
 THEIR CHART (context only, never name these terms):
 - Sun: ${ctx.sunSign} (core identity)
 - Moon: ${ctx.moonSign} (emotional nature)
 - Rising: ${ctx.ascendant} (how they appear)
 ${hasRajYoga ? `- Special blessing: ${primaryYoga.name || "a powerful alignment for success"}` : ""}
+${ctx.lifePhase ? `- The life-chapter they're in now: ${ctx.lifePhase}` : ""}
 
 RULES:
-1. NO jargon (no "Mahadasha", "Raj Yoga", "celestial bodies", etc.).
-2. Be BOLD, SPECIFIC, playful, and DIVERSE—touch different sides of them so it feels rich, not one-note.
-3. Speak TO them ("You"). Every line earns its place—no filler.
-4. Close with a daring claim about their trajectory/what they're destined for (feels predictive, but NO dates or timing).
+1. NO jargon (no "Mahadasha", "Raj Yoga", "dasha", "celestial bodies", etc.).
+2. Be BOLD, SPECIFIC, playful, and DIVERSE — touch different sides of them so it feels rich, not one-note.
+3. Speak TO them ("You"). Every line earns its place — no filler.
+4. The "right now" section describes the CHAPTER/SEASON they're in (a phase that lasts a good while), NOT this week or a dated prediction. NO specific dates, months, or "this week/today".
+5. Close with a daring claim about their trajectory / what they're destined for.
 
 MARKDOWN (MANDATORY):
 - Bold labels on each bullet.
 - *italics* for one reflective line.
-- Exactly these headings: ### Your Signature, ### Where You're Headed.
+- Exactly these headings: ### Your Signature, ### Right Now, ### Where You're Headed.
 - Short lines. Blank line between blocks.
 
-STRUCTURE (90–110 words):
+STRUCTURE (160-200 words):
 1. Opening: one punchy sentence with a **bold** claim about who they are.
 2. ### Your Signature — a bulleted spread of quick, diverse hits, each a bold label + one fun line, e.g.:
    - **Your superpower:** ...
    - **Your vibe:** ...
    - **Your shadow:** ...
    - **Secret weapon:** ...
-3. ### Where You're Headed — one bold, destiny-flavored line about what they're built for.
+3. ### Right Now — 2-3 lines on the energy of the chapter they're living through: what it's asking of them, what it's ripening in them. Confident and a little daring, but timeless (no dates).
+4. ### Where You're Headed — one bold, destiny-flavored line about what they're built for.
 
-TONE: Confident, stylish, playful, diverse. No jargon. No timing.
+TONE: Confident, stylish, playful, diverse. No jargon. No dates.
 
 OUTPUT: valid markdown only. Write it now:`,
     };
@@ -165,12 +170,14 @@ OUTPUT: valid markdown only. Write it now:`,
  * Exported for astro_sync (called during sync with pre-loaded chart).
  */
 export async function generateFirstReading(uid, userName, astroData) {
+    const { mahaDasha } = normalizeDasha(astroData.currentDasha);
     const ctx = {
         userName: userName || "",
         sunSign: astroData.sunSign || "Unknown",
         moonSign: astroData.moonSign || "Unknown",
         ascendant: astroData.ascendant || astroData.lagna || "Unknown",
         rajYogas: astroData.rajYogas || [],
+        lifePhase: mahaDasha ? DASHA_DESCRIPTIONS[mahaDasha] || null : null,
     };
     const { system, user } = buildPrompt(ctx);
 

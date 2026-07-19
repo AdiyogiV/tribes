@@ -24,12 +24,6 @@ mixin DataPollingMixin<T extends StatefulWidget> on State<T> {
   bool get pollingIsGeneratingReading;
   set pollingIsGeneratingReading(bool value);
 
-  String? get pollingCurrentTimesReadingContent;
-  set pollingCurrentTimesReadingContent(String? value);
-
-  bool get pollingIsGeneratingCurrentTimesReading;
-  set pollingIsGeneratingCurrentTimesReading(bool value);
-
   // ---- polling methods ----
 
   /// Wait for astro data (backend sync to complete).
@@ -119,10 +113,10 @@ mixin DataPollingMixin<T extends StatefulWidget> on State<T> {
     int pollCount = 0;
     bool hasTriggeredGeneration = false;
 
-    while (DateTime.now().difference(startTime) <
-            AnimationTiming.maxPollingWait &&
-        pollingFirstReadingContent == null &&
-        mounted) {
+    while (
+        DateTime.now().difference(startTime) < AnimationTiming.maxPollingWait &&
+            pollingFirstReadingContent == null &&
+            mounted) {
       pollCount++;
       try {
         final userRepo = locator<UserRepository>();
@@ -160,8 +154,7 @@ mixin DataPollingMixin<T extends StatefulWidget> on State<T> {
               final astroService = AstrologyService();
               astroService.generateFirstReading().then((success) {
                 if (success) {
-                  AppLogger.i(
-                      'First reading generation triggered successfully',
+                  AppLogger.i('First reading generation triggered successfully',
                       category: LogCategory.general);
                 } else {
                   AppLogger.w('First reading generation trigger failed',
@@ -237,68 +230,6 @@ mixin DataPollingMixin<T extends StatefulWidget> on State<T> {
     } catch (e) {
       AppLogger.w('Final first reading check error: $e',
           category: LogCategory.general);
-    }
-  }
-
-  /// Poll for current times reading.
-  void pollForCurrentTimesReading() async {
-    AppLogger.i('Polling for current times reading...',
-        category: LogCategory.general);
-
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) {
-      AppLogger.w('No uid for current times reading poll',
-          category: LogCategory.general);
-      return;
-    }
-
-    final startTime = DateTime.now();
-    int pollCount = 0;
-    bool hasTriggeredGeneration = false;
-
-    while (DateTime.now().difference(startTime) <
-            AnimationTiming.maxPollingWait &&
-        pollingCurrentTimesReadingContent == null &&
-        mounted) {
-      pollCount++;
-      try {
-        final content = await AstrologyService().getCurrentTimesReading(uid);
-        if (content != null && content.isNotEmpty) {
-          AppLogger.i('✅ Current times reading found! Poll #$pollCount',
-              category: LogCategory.general);
-          if (mounted) {
-            setState(() {
-              pollingCurrentTimesReadingContent = content;
-              pollingIsGeneratingCurrentTimesReading = false;
-            });
-          }
-          return;
-        }
-
-        if (!hasTriggeredGeneration && pollCount >= 2) {
-          hasTriggeredGeneration = true;
-          AppLogger.i('Triggering current times reading generation...',
-              category: LogCategory.general);
-          AstrologyService().generateCurrentTimesReading().then((success) {
-            if (success) {
-              AppLogger.i('Current times reading generation triggered',
-                  category: LogCategory.general);
-            }
-          }).catchError((e) {
-            AppLogger.w('Current times reading trigger failed: $e',
-                category: LogCategory.general);
-          });
-        }
-      } catch (e) {
-        AppLogger.w('Current times reading poll error: $e',
-            category: LogCategory.general);
-      }
-
-      await Future.delayed(AnimationTiming.pollingInterval);
-    }
-
-    if (mounted && pollingCurrentTimesReadingContent == null) {
-      setState(() => pollingIsGeneratingCurrentTimesReading = false);
     }
   }
 }

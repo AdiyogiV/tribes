@@ -66,8 +66,6 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
   AstrologyProfile? _profile;
   String? _firstReadingContent;
   bool _isGeneratingReading = false;
-  String? _currentTimesReadingContent;
-  bool _isGeneratingCurrentTimesReading = false;
   Map<String, double>? _planetPositions;
 
   late final OnboardingRevealWorkflow _voiceWorkflow;
@@ -96,19 +94,6 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
   bool get pollingIsGeneratingReading => _isGeneratingReading;
   @override
   set pollingIsGeneratingReading(bool v) => _isGeneratingReading = v;
-
-  @override
-  String? get pollingCurrentTimesReadingContent => _currentTimesReadingContent;
-  @override
-  set pollingCurrentTimesReadingContent(String? v) =>
-      _currentTimesReadingContent = v;
-
-  @override
-  bool get pollingIsGeneratingCurrentTimesReading =>
-      _isGeneratingCurrentTimesReading;
-  @override
-  set pollingIsGeneratingCurrentTimesReading(bool v) =>
-      _isGeneratingCurrentTimesReading = v;
 
   // ---- NavigationMixin bridge ----
   @override
@@ -224,7 +209,7 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
               revealed ? null : 'the sun/moon/rising cards are still revealing',
           availableActions: revealed ? const ['advanceOnboarding'] : const [],
         );
-      case OnboardingPhase.birthReading:
+      case OnboardingPhase.reading:
         final ready = !_isGeneratingReading &&
             (_firstReadingContent?.isNotEmpty ?? false);
         final workflow = _voiceWorkflow.snapshot();
@@ -232,10 +217,10 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
             workflow['presentationState'] == 'completed';
         return BabaSnapshot(
           status: ready ? BabaScreenStatus.ready : BabaScreenStatus.loading,
-          step: 'birthReading',
+          step: 'reading',
           headline: ready
-              ? 'Their birth reading is on screen'
-              : 'Their birth reading is still being written',
+              ? 'Their reading is on screen (the final reveal step)'
+              : 'Their reading is still being written',
           facts: {
             'account': account,
             if (ready) 'reading': _cueText(_firstReadingContent, max: 600),
@@ -244,38 +229,9 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
           },
           canProceed: ready && presentationComplete,
           blockedReason: !ready
-              ? 'their birth reading is still being written'
+              ? 'their reading is still being written'
               : !presentationComplete
-                  ? 'their birth reading is still being presented'
-                  : null,
-          availableActions: ready && presentationComplete
-              ? const ['advanceOnboarding']
-              : const [],
-        );
-      case OnboardingPhase.currentTimes:
-        final ready = !_isGeneratingCurrentTimesReading &&
-            (_currentTimesReadingContent?.isNotEmpty ?? false);
-        final workflow = _voiceWorkflow.snapshot();
-        final presentationComplete =
-            workflow['presentationState'] == 'completed';
-        return BabaSnapshot(
-          status: ready ? BabaScreenStatus.ready : BabaScreenStatus.loading,
-          step: 'currentTimes',
-          headline: ready
-              ? 'Their current-times reading is on screen (the final reveal step)'
-              : 'Their current-times reading is still being written',
-          facts: {
-            'account': account,
-            if (ready)
-              'reading': _cueText(_currentTimesReadingContent, max: 600),
-            'uiReady': ready,
-            'workflow': workflow,
-          },
-          canProceed: ready && presentationComplete,
-          blockedReason: !ready
-              ? 'their current-times reading is still being written'
-              : !presentationComplete
-                  ? 'their current-times reading is still being presented'
+                  ? 'their reading is still being presented'
                   : null,
           availableActions: ready && presentationComplete
               ? const ['advanceOnboarding']
@@ -325,13 +281,13 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
   /// Baba's "advance the reveal" action. Honest and state-driven:
   ///
   ///   * On a successful advance it returns a `narrate` field carrying the
-  ///     text Baba must SPEAK for the step just entered (the birth reading,
-  ///     the current-times reading, or a home-tour instruction). This is
+  ///     text Baba must SPEAK for the step just entered (the reading, or a
+  ///     home-tour instruction). This is
   ///     deliberate: the model acts on the RESULT's own fields and treats the
   ///     appended `state` as background, so narration MUST live in the result
   ///     or Baba says nothing and just advances again ~1/sec (the runaway
   ///     reveal loop). Kept in sync with the skip-publish in
-  ///     [_goToReadingPhase]/[_goToCurrentTimesPhase] (viaVoiceResult:true),
+  ///     [_goToReadingPhase] (viaVoiceResult:true),
   ///     which rely on this result being the narration channel.
   ///   * It refuses (blocked, without moving the UI) while he is still
   ///     PRESENTING this step (isNarrating) or the step isn't ready. This is
@@ -366,25 +322,17 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
     late final VoidCallback applyUi;
     switch (_phase) {
       case OnboardingPhase.signReveal:
-        nextPhase = 'birthReading';
+        nextPhase = 'reading';
         uiReady = _signRevealStep >= 3;
         blockedReason = 'sign_cards_still_revealing';
         narration = _cueText(_firstReadingContent, max: 600);
         applyUi = () => _goToReadingPhase(viaVoiceResult: true);
         break;
-      case OnboardingPhase.birthReading:
-        nextPhase = 'currentTimes';
+      case OnboardingPhase.reading:
+        nextPhase = 'home';
         uiReady = !_isGeneratingReading &&
             (_firstReadingContent?.isNotEmpty ?? false);
-        blockedReason = 'birth_reading_still_loading';
-        narration = _cueText(_currentTimesReadingContent, max: 600);
-        applyUi = () => _goToCurrentTimesPhase(viaVoiceResult: true);
-        break;
-      case OnboardingPhase.currentTimes:
-        nextPhase = 'home';
-        uiReady = !_isGeneratingCurrentTimesReading &&
-            (_currentTimesReadingContent?.isNotEmpty ?? false);
-        blockedReason = 'current_times_reading_still_loading';
+        blockedReason = 'reading_still_loading';
         narration = 'Welcome them into their Aurogram home, point out the '
             'daily sky wheel, and invite them to open today\'s Daily Insight.';
         applyUi = () => _finishOnboarding(viaVoiceResult: true);
@@ -555,42 +503,15 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
     AppLogger.i('Moving to reading phase. Has reading: $hasReading',
         category: LogCategory.general);
     setState(() {
-      _phase = OnboardingPhase.birthReading;
+      _phase = OnboardingPhase.reading;
       _isGeneratingReading = !hasReading;
     });
-    _voiceWorkflow.synchronizeManualPhase('birthReading');
-    // Pre-warm the NEXT reading now so its text is ready to hand back in the
-    // advanceOnboarding result when Baba moves on (otherwise current-times
-    // would still be loading at the moment he needs to narrate it).
-    pollForCurrentTimesReading();
+    _voiceWorkflow.synchronizeManualPhase('reading');
     if (!viaVoiceResult) {
       _narrateScreen(
-        '[REVEAL] step=birthReading; account=${_accountFact()}. '
-        'Their birth reading is now on screen; narrate FROM this text, do not '
+        '[REVEAL] step=reading; account=${_accountFact()}. '
+        'Their reading is now on screen; narrate FROM this text, do not '
         'invent: "${_cueText(_firstReadingContent)}"',
-      );
-    }
-  }
-
-  void _goToCurrentTimesPhase({bool viaVoiceResult = false}) {
-    if (!mounted) return;
-    setState(() {
-      _phase = OnboardingPhase.currentTimes;
-      final hasContent = _currentTimesReadingContent != null &&
-          _currentTimesReadingContent!.isNotEmpty;
-      _isGeneratingCurrentTimesReading = !hasContent;
-    });
-    _voiceWorkflow.synchronizeManualPhase('currentTimes');
-    pollForCurrentTimesReading();
-
-    // Facts only: the current-times reading is up, plus whether they're still a
-    // guest. The playbook owns the behaviour (orient them, then — if guest —
-    // the benefits-led login nudge; else advance to home when ready).
-    if (!viaVoiceResult) {
-      _narrateScreen(
-        '[REVEAL] step=currentTimes; account=${_accountFact()}. '
-        'Final reveal step; their current-times reading is on screen. Narrate '
-        'FROM this text, do not invent: "${_cueText(_currentTimesReadingContent)}"',
       );
     }
   }
@@ -649,18 +570,10 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
           continueAction = _goToReadingPhase;
         }
         break;
-      case OnboardingPhase.birthReading:
+      case OnboardingPhase.reading:
         if (!_isGeneratingReading &&
             _firstReadingContent != null &&
             _firstReadingContent!.isNotEmpty) {
-          canContinue = true;
-          continueAction = _goToCurrentTimesPhase;
-        }
-        break;
-      case OnboardingPhase.currentTimes:
-        if (!_isGeneratingCurrentTimesReading &&
-            _currentTimesReadingContent != null &&
-            _currentTimesReadingContent!.isNotEmpty) {
           canContinue = true;
           continueAction = _finishOnboarding;
         }
@@ -699,11 +612,6 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
                         hasReading: _firstReadingContent != null &&
                             _firstReadingContent!.isNotEmpty,
                         isGeneratingReading: _isGeneratingReading,
-                        hasCurrentTimesReading:
-                            _currentTimesReadingContent != null &&
-                                _currentTimesReadingContent!.isNotEmpty,
-                        isGeneratingCurrentTimesReading:
-                            _isGeneratingCurrentTimesReading,
                       ),
                       Expanded(
                         child: Stack(
@@ -788,16 +696,10 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
             );
           },
         );
-      case OnboardingPhase.birthReading:
-        return BirthReadingPhase(
+      case OnboardingPhase.reading:
+        return ReadingPhase(
           readingContent: _firstReadingContent,
           isGenerating: _isGeneratingReading,
-          onContinue: _goToCurrentTimesPhase,
-        );
-      case OnboardingPhase.currentTimes:
-        return CurrentTimesReadingPhase(
-          readingContent: _currentTimesReadingContent,
-          isGenerating: _isGeneratingCurrentTimesReading,
           onContinue: _finishOnboarding,
         );
       case OnboardingPhase.skip:

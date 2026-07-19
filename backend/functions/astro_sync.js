@@ -366,24 +366,11 @@ export async function handleSyncAstroProfile(request) {
             .catch((e) => logger.warn("House interpretations trigger failed", { error: e.message }));
     }
 
-    // After basic sync completes, generate birth + current times readings (independent, can run in parallel)
+    // After basic sync completes, generate the single detailed onboarding
+    // reading (shown during the reveal). The current-times reading was folded
+    // into this one reading, so there's nothing else to generate here.
     const hasFirstReading = mergedAstroData.firstReading?.content || astroData.firstReading?.content;
-    const hasCurrentTimesReading = !!mergedAstroData.currentTimesReading?.content;
     const userName = userData.name || userData.displayName || "";
-
-    // Start current times generation in parallel when missing (no dependency on birth reading)
-    let currentTimesPromise = null;
-    if (mode === "basic" && mergedAstroData.sunSign && !hasCurrentTimesReading) {
-        currentTimesPromise = (async () => {
-            try {
-                const { triggerCurrentTimesReading } = await import("./current_times_reading.js");
-                return triggerCurrentTimesReading(uid, userName, mergedAstroData);
-            } catch (e) {
-                logger.warn("Current times reading generation failed", { error: e.message });
-                return false;
-            }
-        })();
-    }
 
     if (mode === "basic" && mergedAstroData.sunSign && !hasFirstReading) {
         // Generate birth reading (awaited - shown during onboarding)
@@ -409,14 +396,9 @@ export async function handleSyncAstroProfile(request) {
         }
 
         // Standard sync runs in background (not critical for onboarding)
-        logger.info("⬆️ Triggering standard sync upgrade in background", { uid });
+        logger.info("⬆ Triggering standard sync upgrade in background", { uid });
         triggerStandardSync(uid)
             .catch((e) => logger.warn("Standard sync trigger failed", { error: e.message }));
-    }
-
-    // Await current times if we started it in parallel
-    if (currentTimesPromise) {
-        await currentTimesPromise;
     }
 
     // Seed the same unified forecast used by Home, Today, notifications and

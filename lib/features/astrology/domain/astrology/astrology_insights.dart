@@ -116,24 +116,6 @@ extension AstrologyInsightsExtension on AstrologyService {
     }
   }
 
-  /// Get current times reading content for a user (from Firestore).
-  Future<String?> getCurrentTimesReading(String uid) async {
-    try {
-      final doc = await firestore.collection('users').doc(uid).get();
-      if (!doc.exists) return null;
-      final data = doc.data();
-      final astroData = data?['astrologyData'] as Map<String, dynamic>?;
-      final currentTimes =
-          astroData?['currentTimesReading'] as Map<String, dynamic>?;
-      final content = currentTimes?['content']?.toString();
-      return (content != null && content.isNotEmpty) ? content : null;
-    } catch (e) {
-      AppLogger.w('getCurrentTimesReading failed: $e',
-          category: LogCategory.database);
-      return null;
-    }
-  }
-
   /// Force-regenerate the biweekly per-house current-state readings
   /// (powering the per-house popup on the astro details page).
   ///
@@ -212,45 +194,6 @@ extension AstrologyInsightsExtension on AstrologyService {
         'code': 'unknown',
         'message': e.toString(),
       };
-    }
-  }
-
-  /// Generate current times reading for the current user.
-  Future<bool> generateCurrentTimesReading() async {
-    final user = currentUser;
-    if (user == null) {
-      AppLogger.w('Cannot generate current times reading: no user',
-          category: LogCategory.network);
-      return false;
-    }
-
-    try {
-      AppLogger.i('Calling generateCurrentTimesReading cloud function',
-          category: LogCategory.network);
-
-      final result = await callWithFunctionsFallback(
-        functionName: 'insightGateway',
-        data: <String, dynamic>{'method': 'generateCurrentTimesReading'},
-        options: HttpsCallableOptions(timeout: const Duration(seconds: 45)),
-      );
-
-      final data = result.data as Map<String, dynamic>?;
-      if (data != null && data['success'] == true) {
-        AppLogger.i('Current times reading generated',
-            category: LogCategory.network);
-        AstrologyService.clearUserCache(user.uid);
-        return true;
-      } else {
-        AppLogger.w('Current times reading returned failure',
-            category: LogCategory.network, data: {'response': data});
-        return false;
-      }
-    } catch (e, stackTrace) {
-      AppLogger.e('Failed to generate current times reading',
-          category: LogCategory.network,
-          error: e,
-          data: {'stack': stackTrace.toString().substring(0, 400)});
-      return false;
     }
   }
 

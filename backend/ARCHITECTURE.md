@@ -29,8 +29,7 @@ GENERATE (AI)                      lib/gemini.js  (callGemini)
       the ONE place we call Gemini (retries, JSON parsing, telemetry).
       Each reading is one flat self-contained file: gather context -> prompt
       -> callGemini -> validate -> store. No engine, no flavor objects.
-      functions/first_reading.js    one-time birth personality read
-      functions/current_times_reading.js  "where you are now" read
+      functions/first_reading.js    one detailed onboarding reading (identity + trajectory + current chapter)
       functions/forecast/narrate.js rolling continuous forecast story
       functions/per_house.js        12-house Gochara, 14-day cycle (+ scheduler)
       Today/Home/Aurobhatt/notifications read the same forecast document;
