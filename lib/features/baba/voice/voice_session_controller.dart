@@ -14,6 +14,7 @@ import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/features/baba/voice/voice_relay_config.dart';
 import 'package:aurogram/features/baba/voice/voice_engine_pref.dart';
 import 'package:aurogram/features/baba/voice/voice_mic_mode_pref.dart';
+import 'package:aurogram/features/baba/voice/voice_single_flight.dart';
 import 'package:aurogram/features/baba/domain/baba_tool_registry.dart';
 
 /// High-level state of a live voice conversation with Aurobhatt.
@@ -64,6 +65,9 @@ class VoiceSessionController extends ChangeNotifier {
   StreamSubscription? _socketSub;
   StreamSubscription<Uint8List>? _micSub;
   Future<void>? _cleanupFuture;
+  final VoiceSingleFlight _startFlight = VoiceSingleFlight();
+  final VoiceSingleFlight _warmUpFlight = VoiceSingleFlight();
+  int _connectionGeneration = 0;
 
   bool _playerOpen = false;
   bool _disposed = false;
@@ -222,11 +226,10 @@ class VoiceSessionController extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   Stream<String> get presentationCompleted => _presentationCompleted.stream;
 
-  /// True when a pre-warmed session is connected and fresh enough to adopt on
-  /// the next tap (so the caller can skip rebuilding the opening directive — it
-  /// was already built for [warmUp]).
-  bool get hasWarmSession =>
-      (_warming || _warmReady) && _channel != null && !_isWarmStale;
+  /// True when a pre-warmed session is connected or still connecting and fresh
+  /// enough to adopt on the next tap. The caller can therefore skip rebuilding
+  /// the opening directive while warm-up owns the connection attempt.
+  bool get hasWarmSession => (_warming || _warmReady) && !_isWarmStale;
 
   /// Cheap pre-check (no I/O) for whether [warmUp] would actually do anything.
   /// The caller uses this to avoid building the opening directive (a Firestore
@@ -300,8 +303,18 @@ class VoiceSessionController extends ChangeNotifier {
 
   /// Open audio devices, hook up the relay, then open the mic the moment the
   /// relay is ready.
-  Future<void> start() async {
+  Future<void> start() => _startFlight.run(_startOnce);
+
+  Future<void> _startOnce() async {
     if (_disposed) return;
+    // Warm-up may still be fetching auth or opening its socket. Wait for that
+    // single owner instead of discarding it and racing a second _connect().
+    // The old race made both continuations listen to the same single-subscription
+    // WebSocket stream, killing greet-on-open with "already been listened to".
+    if (_warming && _channel == null) {
+      await _warmUpFlight.current;
+      if (_disposed) return;
+    }
     // FAST PATH: a warmed (or still-warming) session is already connected and
     // (usually) holding CX's greeting. Adopt it and go live instantly — play the
     // buffered greeting, then open the mic — instead of a cold connect. This is
@@ -392,6 +405,10 @@ class VoiceSessionController extends ChangeNotifier {
       // mic/start-frame don't depend on the player.
       if (_state != VoiceCallState.connecting) return;
       await Future.wait([_openPlayer(), _connect()]);
+    } on _VoiceConnectionCancelled {
+      // A lifecycle/auth teardown invalidated this attempt while it awaited
+      // token refresh or socket readiness. Cleanup owns the resulting state.
+      return;
     } catch (e, st) {
       AppLogger.e('Voice session start failed',
           category: LogCategory.voice, error: e, stackTrace: st);
@@ -438,7 +455,9 @@ class VoiceSessionController extends ChangeNotifier {
   /// warm session already exists, the user isn't signed in, or a recent call is
   /// still inside the warm-resume window (a quick re-tap should CONTINUE that
   /// conversation, not open a fresh greeting).
-  Future<void> warmUp() async {
+  Future<void> warmUp() => _warmUpFlight.run(_warmUpOnce);
+
+  Future<void> _warmUpOnce() async {
     if (!canWarmUp) return;
 
     _warming = true;
@@ -460,6 +479,8 @@ class VoiceSessionController extends ChangeNotifier {
           category: LogCategory.voice,
           data: {'relay': VoiceRelayConfig.relayUrl});
       await _connect(); // socket + start frame (with directive) → CX greets
+    } on _VoiceConnectionCancelled {
+      return;
     } catch (e) {
       AppLogger.w('Voice warm-up failed (will cold-start on tap)',
           category: LogCategory.voice, data: {'error': '$e'});
@@ -621,6 +642,16 @@ class VoiceSessionController extends ChangeNotifier {
   }
 
   Future<void> _connect() async {
+    // Every await below must still belong to the current connection generation.
+    // Cleanup invalidates the generation so a cancelled warm-up cannot resume
+    // later and overwrite/listen to a newer socket.
+    final attempt = ++_connectionGeneration;
+    void ensureCurrent() {
+      if (_disposed || attempt != _connectionGeneration) {
+        throw const _VoiceConnectionCancelled();
+      }
+    }
+
     // Authenticate the caller: the relay rejects sessions without a valid
     // Firebase ID token so randoms can't burn our Gen AI credits.
     final user = FirebaseAuth.instance.currentUser;
@@ -635,24 +666,40 @@ class VoiceSessionController extends ChangeNotifier {
         // failures so voice remains available offline-ish.
         token = await user.getIdToken(true);
       } catch (e) {
+        ensureCurrent();
         AppLogger.w('Voice auth claim refresh failed; using cached token',
             category: LogCategory.voice,
             data: {'error': e.runtimeType.toString()});
         token = await user.getIdToken();
       }
     }
+    ensureCurrent();
     if (user == null || token == null) {
       throw StateError('not-signed-in');
     }
 
-    _channel = WebSocketChannel.connect(Uri.parse(VoiceRelayConfig.relayUrl));
-    await _channel!.ready;
+    final channel =
+        WebSocketChannel.connect(Uri.parse(VoiceRelayConfig.relayUrl));
+    _channel = channel;
+    try {
+      await channel.ready;
+      ensureCurrent();
+    } catch (_) {
+      if (attempt == _connectionGeneration && !_disposed) rethrow;
+      try {
+        await channel.sink.close();
+      } catch (_) {/* cleanup is best-effort */}
+      throw const _VoiceConnectionCancelled();
+    }
     AppLogger.i('Voice socket connected',
         category: LogCategory.voice, data: {'uid': user.uid});
 
-    _socketSub = _channel!.stream.listen(
+    _socketSub = channel.stream.listen(
       _onSocketMessage,
       onError: (e) {
+        if (attempt != _connectionGeneration || !identical(_channel, channel)) {
+          return;
+        }
         AppLogger.e('Voice socket error',
             category: LogCategory.voice, error: e);
         // A warm-only socket (pre-tap) failing must stay invisible — drop it
@@ -667,6 +714,9 @@ class VoiceSessionController extends ChangeNotifier {
       // session too. Setting `ended` alone left the recorder and audio session
       // live and the mic listener writing into a closed sink.
       onDone: () {
+        if (attempt != _connectionGeneration || !identical(_channel, channel)) {
+          return;
+        }
         final warmOnly = !_live; // a warm socket dropping is NOT a call ending
         unawaited(_cleanup());
         if (warmOnly) return;
@@ -697,7 +747,8 @@ class VoiceSessionController extends ChangeNotifier {
     final sendDirective = !_warmResume &&
         directiveOverride != null &&
         directiveOverride!.isNotEmpty;
-    _channel!.sink.add(jsonEncode({
+    ensureCurrent();
+    channel.sink.add(jsonEncode({
       'type': 'start',
       'token': token,
       'sessionId': sessionId,
@@ -1314,6 +1365,9 @@ class VoiceSessionController extends ChangeNotifier {
   }
 
   Future<void> _cleanupOnce() async {
+    // Invalidate token/socket awaits before touching shared transport fields.
+    // A stale continuation will close its own local channel and stop quietly.
+    _connectionGeneration++;
     // Any warm/live session is being torn down — clear its held state so the
     // next warmUp()/start() begins from a clean slate.
     _warming = false;
@@ -1374,4 +1428,8 @@ class VoiceSessionController extends ChangeNotifier {
     unawaited(_cleanup().whenComplete(_recorder.dispose));
     super.dispose();
   }
+}
+
+class _VoiceConnectionCancelled implements Exception {
+  const _VoiceConnectionCancelled();
 }
