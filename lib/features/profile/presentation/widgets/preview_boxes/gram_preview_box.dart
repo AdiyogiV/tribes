@@ -260,293 +260,81 @@ class _GramPreviewBoxState extends State<GramPreviewBox>
 
   Widget _buildSpacePreview(Map<String, dynamic> spaceData) {
     final String? name = spaceData['name'];
-    final SpaceType? type = spaceData['spaceType'];
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
+    final Color fgColor = isDark ? Colors.white : Colors.black;
+    final Color subtleText = isDark ? const Color(0xFF666666) : const Color(0xFF999999);
+    final Color dividerColor = isDark ? const Color(0xFF222222) : const Color(0xFFEEEEEE);
+
     if (widget.compact) {
-      return SizedBox(
-        height: 42,
-        child: Material(
-          elevation: 0,
-          borderRadius: BorderRadius.zero,
-          clipBehavior: Clip.antiAliasWithSaveLayer,
-          color: Colors.transparent,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
-              SizedBox(
-                width: 42,
-                height: 42,
-                child: GramPicture(
-                  displayPicture: spaceData['displayPicture'],
-                  size: 42.0,
-                  spaceId: spaceData['id'] ?? '',
-                  borderRadius: 0.0,
-                ),
-              ),
-              const SizedBox(width: AppDimensions.spacingMdSm),
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name ?? 'Gram',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.primaryColor,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (type != null)
-                      Row(
-                        children: [
-                          Container(
-                            width: 6,
-                            height: 6,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: getColorFromSpaceType(type),
-                            ),
-                          ),
-                          const SizedBox(width: AppDimensions.spacingXs),
-                          Flexible(
-                            child: Text(
-                              _getSpaceTypeLabel(type),
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: isDark
-                                    ? AppTheme.textSecondaryDarkColor
-                                    : AppTheme.textSecondaryLightColor,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: 14,
-                color: AppTheme.primaryColor.withValues(alpha: 0.5),
-              ),
-            ],
+      return Container(
+        height: 48,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        alignment: Alignment.centerLeft,
+        child: Text(
+          name?.toLowerCase() ?? 'gram',
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w400,
+            color: fgColor,
+            letterSpacing: -0.2,
           ),
+          overflow: TextOverflow.ellipsis,
         ),
       );
     }
 
-    // Full card version
-    final Color barBase = isDark ? AppTheme.cardDarkColor : Colors.white;
-
-    return Padding(
-        padding: EdgeInsets.fromLTRB(AppHeaderStyle.contentHorizontalPadding, 0, AppHeaderStyle.contentHorizontalPadding, AppHeaderStyle.cardVerticalGap),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppHeaderStyle.cardBorderRadius),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 6,
-                offset: const Offset(0, 3),
-              ),
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.06),
-                blurRadius: 3,
-                offset: const Offset(0, 1),
-              ),
-            ],
-          ),
-          child: Material(
-          elevation: 4,
-          color: Colors.transparent,
-          shadowColor: Colors.black.withValues(alpha: 0.04),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppHeaderStyle.cardBorderRadius),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: Container(
-            constraints: const BoxConstraints(minHeight: 70),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppHeaderStyle.cardBorderRadius),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  barBase.withValues(alpha: isDark ? 0.85 : 0.90),
-                  barBase.withValues(alpha: isDark ? 0.80 : 0.85),
-                ],
-              ),
-              border: Border.all(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.10)
-                    : barBase.withValues(alpha: 0.32),
-              ),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: <Widget>[
-                Material(
-                  elevation: 1,
-                  color: isDark ? AppTheme.cardDarkColor : Colors.white,
-                  shape: const CircleBorder(),
-                  clipBehavior: Clip.antiAlias,
-                  child: GramPicture(
-                    displayPicture: spaceData['displayPicture'],
-                    size: 56,
-                    spaceId: spaceData['id'] ?? '',
-                    borderRadius: 28.0,
-                  ),
-                ),
-                const SizedBox(width: AppDimensions.spacingLg),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              name ?? 'Gram',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.primaryColor,
-                                letterSpacing: -0.0,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: AppDimensions.spacingSm),
-                          GramPreviewActions.buildCallButton(
-                            context,
-                            spaceData['id'] as String? ?? '',
-                            spaceData['name'] as String? ?? 'Gram',
-                          ),
-                          if (widget.showChatButton) ...[
-                            GramPreviewActions.buildChatAndLockIcons(
-                              context, spaceData, type, _chatService),
-                          ],
-                        ],
-                      ),
-                      _buildBottomRow(
-                        spaceData['id'] ?? '',
-                        isPublicSpace: type == null || isPublicSpaceType(type),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+    // Super Minimal List Item
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: dividerColor, width: 0.5)),
+      ),
+      child: Row(
+        children: [
+          Text(
+            '#',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w300,
+              color: subtleText.withValues(alpha: 0.5),
             ),
           ),
-        ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              name?.toLowerCase() ?? 'gram',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                color: fgColor,
+                letterSpacing: -0.2,
+              ),
+            ),
+          ),
+          if (widget.lastUpdated != null)
+            _buildLastUpdatedIndicator(subtleText),
+        ],
       ),
     );
   }
 
-  /// Bottom row that only renders when there's actual content (previews or time)
-  Widget _buildBottomRow(String spaceId, {bool isPublicSpace = true}) {
-    if (spaceId.isEmpty) return const SizedBox.shrink();
-
-    final bool hasTime = widget.lastUpdated != null;
-    final user = FirebaseAuth.instance.currentUser;
-    final bool canShowPreviews = user != null || isPublicSpace;
-
-    if (!canShowPreviews) {
-      if (hasTime) {
-        return Padding(
-          padding: const EdgeInsets.only(top: 10),
-          child: Row(
-            children: [
-              const Spacer(),
-              _buildLastUpdatedIndicator(),
-            ],
-          ),
-        );
-      }
-      return const SizedBox.shrink();
-    }
-
-    return FutureBuilder<List<QueryDocumentSnapshot>>(
-      future: _ensurePostPreviewsFuture(spaceId),
-      builder: (context, snapshot) {
-        final docs = snapshot.data ?? const <QueryDocumentSnapshot>[];
-        final bool hasPreviews = docs.isNotEmpty;
-
-        if (!hasTime && !hasPreviews) {
-          return const SizedBox.shrink();
-        }
-
-        return Padding(
-          padding: const EdgeInsets.only(top: 10),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              if (hasPreviews)
-                Flexible(
-                  child: GramPreviewMedia.buildMiniPostStack(
-                    context: context,
-                    rawPosts: docs.map((doc) {
-                      final data = doc.data() as Map<String, dynamic>;
-                      return {
-                        'id': doc.id,
-                        'thumbnail': data['thumbnail'],
-                        'title': data['title'],
-                        'author': data['author'],
-                        'postType': data['postType'] ?? 'video',
-                        'content': data['content'],
-                      };
-                    }).toList(),
-                    gramId: widget.gram,
-                    randomBase: _randomBase,
-                    stableRandomInRange: _stableRandomInRange,
-                  ),
-                ),
-              if (hasPreviews && hasTime) const Spacer(),
-              if (hasTime) _buildLastUpdatedIndicator(),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildLastUpdatedIndicator() {
+  Widget _buildLastUpdatedIndicator([Color? color]) {
     final ts = widget.lastUpdated;
     if (ts == null) return const SizedBox.shrink();
     final DateTime dt = ts.toDate();
-    final Duration diff = DateTime.now().difference(dt);
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
-
-    Color color;
-    if (diff.inMinutes < 60) {
-      color = AppTheme.successColor;
-    } else if (diff.inHours < 24) {
-      color = AppTheme.warningColor;
-    } else {
-      color = isDark
-          ? AppTheme.textSecondaryDarkColor
-          : AppTheme.textSecondaryLightColor;
-    }
-
+    
     return Padding(
-      padding: const EdgeInsets.only(right: 8.0),
+      padding: const EdgeInsets.only(left: 12.0),
       child: Text(
-        TimeDisplay.getCompactTimestamp(dt),
+        TimeDisplay.getCompactTimestamp(dt).toLowerCase(),
         style: TextStyle(
-          fontSize: 11,
+          fontSize: 12,
           color: color,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w400,
         ),
-        textAlign: TextAlign.end,
       ),
     );
   }

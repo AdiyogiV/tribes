@@ -232,8 +232,10 @@ const checkBlockedStatus = async (userId1, userId2) => {
     };
 };
 
-// Helper function to check mutual follow status
-const checkMutualFollow = async (userId1, userId2) => {
+// Helper function to check mutual follow status.
+// Exported so sibling features (e.g. circle_vibes) reuse the ONE canonical
+// mutual-follow gate instead of duplicating the two-direction check.
+export const checkMutualFollow = async (userId1, userId2) => {
     try {
         // Check both directions in parallel
         const [user1FollowsUser2, user2FollowsUser1] = await Promise.all([

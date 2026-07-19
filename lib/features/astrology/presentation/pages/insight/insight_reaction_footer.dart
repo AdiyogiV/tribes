@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:aurogram/core/di/injection.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
-import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/features/astrology/domain/astrology_service.dart';
 import 'package:aurogram/features/astrology/domain/forecast_service.dart';
@@ -12,8 +11,7 @@ import 'package:aurogram/shared/models/astrology_profile.dart';
 import 'package:aurogram/shared/presentation/widgets/feedback/snack_bar_service.dart';
 import 'package:aurogram/shared/services/share/share_service.dart';
 
-/// One action row for the whole daily energy reading, rather than repeated controls
-/// on every guidance fragment.
+/// Ultra-minimal centered icon row for actions, matching DailyInsightCard footer.
 class ForecastReactionFooter extends StatefulWidget {
   final ForecastDay forecast;
   final AstrologyProfile? profile;
@@ -74,44 +72,73 @@ class _ForecastReactionFooterState extends State<ForecastReactionFooter> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final brown = AppTheme.astroBrown(isDark);
+    final fgMuted = isDark ? Colors.white54 : Colors.black54;
 
     return Semantics(
       container: true,
       label: 'Daily energy actions',
-      child: Wrap(
-        spacing: AppDimensions.spacingSm,
-        runSpacing: AppDimensions.spacingSm,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _ActionChip(
-            icon:
-                _isAccurate ? Icons.auto_awesome : Icons.auto_awesome_outlined,
-            label: _isAccurate ? 'Accurate' : 'Feels accurate',
-            selected: _isAccurate,
-            onPressed: _isAccurate ? null : _markAccurate,
-            brown: brown,
+          _buildActionButton(
+            icon: _isAccurate ? Icons.thumb_up : Icons.thumb_up_outlined,
+            isActive: _isAccurate,
+            onTap: _isAccurate ? null : _markAccurate,
+            fgMuted: fgMuted,
+            isDark: isDark,
           ),
-          _ActionChip(
-            icon: _isSaved ? Icons.bookmark : Icons.bookmark_outline,
-            label: _isSaved ? 'Saved' : 'Save',
-            selected: _isSaved,
-            onPressed: _isSaving ? null : _toggleSaved,
-            brown: brown,
+          const SizedBox(width: 24),
+          Text('·', style: TextStyle(fontSize: 12, color: fgMuted.withValues(alpha: 0.3))),
+          const SizedBox(width: 24),
+          _buildActionButton(
+            icon: _isSaved ? Icons.bookmark : Icons.bookmark_border,
+            isActive: _isSaved,
+            onTap: _isSaving ? null : _toggleSaved,
+            fgMuted: fgMuted,
+            isDark: isDark,
           ),
-          _ActionChip(
-            icon: Icons.share_outlined,
-            label: 'Share',
-            selected: false,
-            onPressed: _share,
-            brown: brown,
+          const SizedBox(width: 24),
+          Text('·', style: TextStyle(fontSize: 12, color: fgMuted.withValues(alpha: 0.3))),
+          const SizedBox(width: 24),
+          _buildActionButton(
+            icon: Icons.ios_share,
+            isActive: false,
+            onTap: _share,
+            fgMuted: fgMuted,
+            isDark: isDark,
           ),
         ],
       ),
     );
   }
 
+  Widget _buildActionButton({
+    required IconData icon,
+    required bool isActive,
+    required VoidCallback? onTap,
+    required Color fgMuted,
+    required bool isDark,
+  }) {
+    final activeColor = isDark ? Colors.white : Colors.black;
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap != null ? () {
+        HapticFeedback.lightImpact();
+        onTap();
+      } : null,
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Icon(
+          icon,
+          size: 18,
+          color: isActive ? activeColor : fgMuted,
+        ),
+      ),
+    );
+  }
+
   Future<void> _markAccurate() async {
-    HapticFeedback.lightImpact();
     final success = await _astrologyService.submitInsightFeedback(
       widget.forecast.date,
       date: widget.forecast.date,
@@ -123,9 +150,7 @@ class _ForecastReactionFooterState extends State<ForecastReactionFooter> {
       showCustomSnackBar(
         context,
         message: 'Thanks for the feedback',
-        backgroundColor: AppTheme.astroBrown(
-          Theme.of(context).brightness == Brightness.dark,
-        ),
+        backgroundColor: AppTheme.astroBrown(Theme.of(context).brightness == Brightness.dark),
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
       );
@@ -134,7 +159,6 @@ class _ForecastReactionFooterState extends State<ForecastReactionFooter> {
 
   Future<void> _toggleSaved() async {
     if (widget.uid.isEmpty) return;
-    HapticFeedback.lightImpact();
     final wasSaved = _isSaved;
     setState(() {
       _isSaved = !wasSaved;
@@ -159,16 +183,13 @@ class _ForecastReactionFooterState extends State<ForecastReactionFooter> {
         showCustomSnackBar(
           context,
           message: 'Daily energy saved',
-          backgroundColor: AppTheme.astroBrown(
-            Theme.of(context).brightness == Brightness.dark,
-          ),
+          backgroundColor: AppTheme.astroBrown(Theme.of(context).brightness == Brightness.dark),
           duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
         );
       }
     } catch (error, stackTrace) {
-      AppLogger.e('Failed to save forecast',
-          category: LogCategory.database, error: error, stackTrace: stackTrace);
+      AppLogger.e('Failed to save forecast', category: LogCategory.database, error: error, stackTrace: stackTrace);
       if (mounted) setState(() => _isSaved = wasSaved);
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -176,7 +197,6 @@ class _ForecastReactionFooterState extends State<ForecastReactionFooter> {
   }
 
   void _share() {
-    HapticFeedback.lightImpact();
     ShareService.shareInsight(
       context: context,
       insightId: _documentId,
@@ -191,49 +211,10 @@ class _ForecastReactionFooterState extends State<ForecastReactionFooter> {
   }
 
   String get _shareContent => [
-        if (widget.forecast.narrative?.trim().isNotEmpty == true)
-          widget.forecast.narrative!.trim(),
-        if (widget.forecast.action?.trim().isNotEmpty == true)
-          'Focus: ${widget.forecast.action!.trim()}',
-        if (widget.forecast.caution?.trim().isNotEmpty == true)
-          'Handle gently: ${widget.forecast.caution!.trim()}',
-        if (widget.forecast.timing?.trim().isNotEmpty == true)
-          'Timing: ${widget.forecast.timing!.trim()}',
-        if (widget.forecast.tip?.trim().isNotEmpty == true)
-          'Practical tip: ${widget.forecast.tip!.trim()}',
+        if (widget.forecast.narrative?.trim().isNotEmpty == true) widget.forecast.narrative!.trim(),
+        if (widget.forecast.action?.trim().isNotEmpty == true) 'Focus: ${widget.forecast.action!.trim()}',
+        if (widget.forecast.caution?.trim().isNotEmpty == true) 'Handle gently: ${widget.forecast.caution!.trim()}',
+        if (widget.forecast.timing?.trim().isNotEmpty == true) 'Timing: ${widget.forecast.timing!.trim()}',
+        if (widget.forecast.tip?.trim().isNotEmpty == true) 'Practical tip: ${widget.forecast.tip!.trim()}',
       ].join('\n\n');
-}
-
-class _ActionChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool selected;
-  final VoidCallback? onPressed;
-  final Color brown;
-
-  const _ActionChip({
-    required this.icon,
-    required this.label,
-    required this.selected,
-    required this.onPressed,
-    required this.brown,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ActionChip(
-      avatar: Icon(icon, size: 17, color: brown),
-      label: Text(label),
-      onPressed: onPressed,
-      backgroundColor: brown.withValues(alpha: selected ? 0.12 : 0.06),
-      side: BorderSide(color: brown.withValues(alpha: selected ? 0.35 : 0.18)),
-      labelStyle: TextStyle(
-        color: brown,
-        fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
-      ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-      ),
-    );
-  }
 }

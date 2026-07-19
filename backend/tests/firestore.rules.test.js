@@ -93,6 +93,13 @@ test("DM conversation metadata: only participants can read", async () => {
     await assertFails(getAnonDb().doc("dmConversations/dm_alice_bob").get());
 });
 
+test("DM conversation: existence-check read of a non-existent doc is allowed", async () => {
+    // createDirectMessage() does a get() BEFORE writing to see if the DM exists.
+    // Reading a not-yet-created doc must NOT be permission-denied, otherwise every
+    // brand-new chat breaks. Nothing to leak from a doc that doesn't exist.
+    await assertSucceeds(getAuthedDb("alice").doc("dmConversations/dm_alice_zoe").get());
+});
+
 test("spaceChats DM message: participants read, outsiders denied", async () => {
     await setDoc("spaceChats/m1", { spaceId: "dm_alice_bob", senderId: "alice", content: "hi" });
     await assertSucceeds(getAuthedDb("alice").doc("spaceChats/m1").get());

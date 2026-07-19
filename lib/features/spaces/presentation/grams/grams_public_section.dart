@@ -1,10 +1,8 @@
-import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' show QueryDocumentSnapshot, Timestamp;
 import 'package:flutter/material.dart';
 import 'package:aurogram/features/spaces/presentation/grams/grams_empty_state.dart';
 import 'package:aurogram/shared/services/search_service.dart';
 import 'package:aurogram/core/theme/header_style.dart';
-import 'package:aurogram/shared/presentation/widgets/media/gradient_separator.dart';
 
 /// Discover section divider with label
 class GramsDiscoverDivider extends StatelessWidget {
@@ -12,26 +10,32 @@ class GramsDiscoverDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        const GradientSeparator(
-          padding: EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-        ),
-        Center(
-          child: Text(
-            'discover',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurface
-                      .withValues(alpha: 0.5),
-                  fontWeight: FontWeight.w600,
-                  fontSize: 15,
-                ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 32, 20, 8),
+      child: Row(
+        children: [
+          Text(
+            'PUBLIC',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.2,
+              color: Theme.of(context).brightness == Brightness.dark 
+                  ? const Color(0xFFEEEEEE) 
+                  : const Color(0xFF444444),
+            ),
           ),
-        ),
-        const SizedBox(height: AppDimensions.spacingLg),
-      ],
+          const SizedBox(width: 12),
+          Expanded(
+            child: Container(
+              height: 1,
+              color: Theme.of(context).brightness == Brightness.dark 
+                  ? const Color(0xFF333333) 
+                  : const Color(0xFFEEEEEE),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

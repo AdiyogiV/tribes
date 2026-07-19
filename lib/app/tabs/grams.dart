@@ -287,7 +287,35 @@ class GramsState extends State<Grams> with AutomaticKeepAliveClientMixin {
     return Column(
       children: [
         const SizedBox(height: AppHeaderStyle.contentTopPadding),
-        // User's own grams first
+        // User's own grams grouped with an elegant heading
+        if (sortedDocs.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+            child: Row(
+              children: [
+                Text(
+                  'PRIVATE',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.2,
+                    color: Theme.of(context).brightness == Brightness.dark 
+                        ? const Color(0xFFEEEEEE) 
+                        : const Color(0xFF444444),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Container(
+                    height: 1,
+                    color: Theme.of(context).brightness == Brightness.dark 
+                        ? const Color(0xFF333333) 
+                        : const Color(0xFFEEEEEE),
+                  ),
+                ),
+              ],
+            ),
+          ),
         Wrap(
           children:
               sortedDocs.map((document) => _buildGramItem(document)).toList(),

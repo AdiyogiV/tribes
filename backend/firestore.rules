@@ -242,7 +242,12 @@ service cloud.firestore {
       // for their own conversations and denies everyone else's (previously any
       // signed-in user could read a conversation's metadata + lastMessage
       // preview, which leaks message content).
-      allow read: if isSignedIn() && request.auth.uid in resource.data.participants;
+      // resource == null: the doc doesn't exist yet. createDirectMessage() does an
+      // existence-check get() BEFORE writing, so without this guard reading a
+      // not-yet-created DM throws permission-denied and breaks every new chat.
+      // There's nothing to leak from a non-existent doc.
+      allow read: if resource == null ||
+                     (isSignedIn() && request.auth.uid in resource.data.participants);
       // Create: user must be in participants array
       allow create: if request.auth != null && 
                       request.auth.uid in request.resource.data.participants;

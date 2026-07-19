@@ -15,6 +15,7 @@ import 'package:aurogram/shared/services/share/share_service.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/daily_mandala_card.dart';
+import 'package:aurogram/features/astrology/presentation/widgets/circle_vibe_strip.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/timeline/muhurat_timeline_widget.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cards/cosmic_date_time_card.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cards/cosmic_insight_card.dart';
@@ -568,6 +569,10 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
                 ),
 
                 SizedBox(height: spacing),
+
+                // Friends' vibes today (Co-Star-style social strip).
+                // Hides itself when there are no mutual-follow vibes to show.
+                const CircleVibeStrip(),
 
                 // Mandala first (floats without card)
                 if (_kShowMandala)
