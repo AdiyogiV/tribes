@@ -1,7 +1,6 @@
 import { HttpsError } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions/v2";
 import { Timestamp } from "firebase-admin/firestore";
-import { getFunctions } from "firebase-admin/functions";
 import tzLookup from "tz-lookup";
 import { DateTime } from "luxon";
 
@@ -420,36 +419,24 @@ export async function handleSyncAstroProfile(request) {
         await currentTimesPromise;
     }
 
-    // Enqueue today's daily insight for new users so they get an insight without waiting for 5 AM job or manual load
+    // Seed the same unified forecast used by Home, Today, notifications and
+    // Aurobhatt. New users no longer enter a separate daily-insight pipeline.
     if (mode === "basic" && mergedAstroData.sunSign) {
-        const today = DateTime.now().setZone("Asia/Kolkata").toFormat("yyyy-MM-dd");
-        const todayInsightRef = db.collection("users").doc(uid).collection("dailyInsights").doc(today);
-        const todayInsightSnap = await todayInsightRef.get();
-        if (!todayInsightSnap.exists) {
-            try {
-                const functions = getFunctions();
-                // Unified taskRouter — see backend/functions/task_router.js
-                const queue = functions.taskQueue("locations/asia-southeast2/functions/taskRouter");
-                await queue.enqueue(
-                    {
-                        taskType: "process_insight",
-                        userId: uid,
-                        astrologyData: mergedAstroData,
-                        date: today,
-                    },
-                    { scheduleDelaySeconds: 5 },
-                );
-                logger.info("📬 Enqueued daily insight for new user (post-sync)", {
-                    structuredData: true,
-                    uid,
-                    date: today,
-                });
-            } catch (enqueueErr) {
-                logger.warn("Failed to enqueue daily insight for new user", {
-                    uid,
-                    error: enqueueErr?.message || String(enqueueErr),
-                });
+        try {
+            const { computeForecastForUser } = await import("./forecast/sense.js");
+            const computed = await computeForecastForUser(uid, { astro: mergedAstroData });
+            if (computed.ok) {
+                const { ensureNarrateFresh } = await import("./forecast/narrate.js");
+                const userSnap = await db.collection("users").doc(uid).get();
+                await ensureNarrateFresh(uid, userSnap.data()?.forecastNarratedThrough);
             }
+            logger.info("Seeded unified forecast for new user", {
+                structuredData: true, uid, days: computed.days || 0,
+            });
+        } catch (error) {
+            logger.warn("Failed to seed unified forecast for new user", {
+                uid, error: error?.message || String(error),
+            });
         }
     }
 
@@ -676,7 +663,5 @@ async function triggerPerHouseReadings(uid) {
     }
 }
 
-// NOTE: Daily insight generation is now triggered by FRONTEND as a separate
-// Cloud Function call (generateInsightForCurrentUser). This ensures the insight
-// generation runs as an independent Cloud Function invocation, avoiding the
-// deprioritization issue that occurs with fire-and-forget within the same function.
+// Daily guidance is sourced from users/{uid}/forecast/{yyyy-MM}. Basic sync
+// seeds that read-model above; there is no separate daily-insight invocation.

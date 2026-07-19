@@ -18,6 +18,10 @@ export function validateNarratedDays(rawDays, signals) {
         const date = typeof raw?.date === "string" ? raw.date.trim() : "";
         const heading = typeof raw?.heading === "string" ? raw.heading.trim() : "";
         const narrative = typeof raw?.narrative === "string" ? raw.narrative.trim() : "";
+        const action = typeof raw?.action === "string" ? raw.action.trim() : "";
+        const caution = typeof raw?.caution === "string" ? raw.caution.trim() : "";
+        const tip = typeof raw?.tip === "string" ? raw.tip.trim() : "";
+        const timing = typeof raw?.timing === "string" ? raw.timing.trim() : "";
 
         if (!expected.has(date)) {
             return { ok: false, reason: `unexpected-date:${date || "missing"}`, days: [] };
@@ -28,7 +32,13 @@ export function validateNarratedDays(rawDays, signals) {
         if (!heading || !narrative) {
             return { ok: false, reason: `missing-copy:${date}`, days: [] };
         }
-        byDate.set(date, { date, heading, narrative });
+
+        const day = { date, heading, narrative };
+        if (action) day.action = action;
+        if (caution) day.caution = caution;
+        if (tip) day.tip = tip;
+        if (timing) day.timing = timing;
+        byDate.set(date, day);
     }
 
     const missing = expectedDates.find((date) => !byDate.has(date));

@@ -195,55 +195,22 @@ export const sendPushNotification = onDocumentCreated({
                 break;
             }
             case "dailyAstroInsight": {
-                const cardType = notificationData.cardType || "insight";
-                const cardIndex = notificationData.cardIndex ?? 0;
-                const totalCards = notificationData.totalCards || 1;
-                const cardTitle = notificationData.title || "";
-                const preview = notificationData.preview || "";
-                const sectionData = notificationData.sectionData || {};
-                const houseActivations = notificationData.houseActivations || [];
-                const topActivation = houseActivations.length > 0 ? houseActivations[0] : null;
-
-                logger.info("[FCM] Processing dailyAstroInsight notification", {
-                    structuredData: true,
-                    userId,
-                    notificationId: event.params.notificationId,
-                    cardType,
-                    cardIndex,
-                    totalCards,
-                    cardTitle,
-                    previewLength: preview.length,
-                    hasSectionData: Object.keys(sectionData).length > 0,
-                    hasHouseActivations: houseActivations.length > 0,
-                });
-
-                // Use cardTitle if available, otherwise generic title
-                message.notification.title = cardTitle || "Your Daily Insight";
-
-                // Build notification body from preview
-                if (preview && preview.length > 0) {
-                    message.notification.body = preview.length > 120
-                        ? preview.substring(0, 120) + "..."
-                        : preview;
-                } else {
-                    message.notification.body = "Tap to read your personalized insight";
-                }
-
+                const title = notificationData.title || "Your Daily Insight";
+                const preview = notificationData.preview ||
+                    "Tap to read your personalized forecast";
+                message.notification.title = title;
+                message.notification.body = preview.length > 120 ?
+                    `${preview.substring(0, 120)}...` : preview;
                 message.data.type = "dailyAstroInsight";
                 message.data.insightId = notificationData.insightId || "";
                 message.data.date = notificationData.date || "";
-                message.data.cardType = cardType;
-                message.data.cardIndex = String(cardIndex);
-                message.data.totalCards = String(totalCards);
+                message.data.source = notificationData.source || "forecast";
 
-                logger.info("[FCM] Prepared dailyAstroInsight FCM message", {
+                logger.info("[FCM] Prepared unified forecast notification", {
                     structuredData: true,
                     userId,
                     notificationId: event.params.notificationId,
-                    title: message.notification.title,
-                    bodyPreview: message.notification.body.substring(0, 50) + "...",
-                    cardType,
-                    cardIndex,
+                    title,
                 });
                 break;
             }

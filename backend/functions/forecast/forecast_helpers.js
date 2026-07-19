@@ -21,7 +21,7 @@ import { nakshatraIndex, nakshatraIndexFromDegree } from "../../lib/nakshatras.j
 import { extractAscendantDegree } from "../../lib/astro_helpers.js";
 import { getTransitBinduScore } from "../../lib/vedic_analysis.js";
 
-/** All date keys are IST-anchored to match dailyInsights doc ids. */
+/** All forecast date keys are anchored to the product's IST business day. */
 export const FORECAST_ZONE = "Asia/Kolkata";
 
 /** yyyy-MM-dd for a Luxon DateTime (IST). */

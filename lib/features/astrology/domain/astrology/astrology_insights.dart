@@ -1,9 +1,43 @@
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:geolocator/geolocator.dart';
+import 'package:aurogram/features/astrology/domain/forecast_service.dart';
 import 'package:aurogram/shared/models/daily_insight.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 
 import '../astrology_service.dart';
+
+DailyInsight _dailyInsightFromForecast(ForecastDay day) {
+  final sections = <InsightSection>[
+    InsightSection(
+      title: (day.heading?.isNotEmpty == true ? day.heading! : 'TODAY')
+          .toUpperCase(),
+      content: day.narrative ?? '',
+      data: {'alignment': day.alignment},
+    ),
+    if (day.action?.isNotEmpty == true)
+      InsightSection(title: 'FOCUS', content: day.action!),
+    if (day.caution?.isNotEmpty == true)
+      InsightSection(title: 'HANDLE GENTLY', content: day.caution!),
+    if (day.timing?.isNotEmpty == true)
+      InsightSection(title: 'TIMING', content: day.timing!),
+    if (day.tip?.isNotEmpty == true)
+      InsightSection(title: 'PRACTICAL TIP', content: day.tip!),
+  ].where((section) => section.content.trim().isNotEmpty).toList();
+
+  return DailyInsight(
+    theme: day.heading ?? "Today's Guidance",
+    message: day.narrative ?? '',
+    sections: sections,
+    generatedAt: DateTime.now(),
+    date: DateTime.tryParse(day.date),
+    version: 'forecast-v1',
+    astrologicalData: {
+      'alignment': day.alignment,
+      'tara': day.tara,
+      'favorable': day.favorable,
+      'unfavorable': day.unfavorable,
+    },
+  );
+}
 
 /// Daily insight streaming, fetching, generation, feedback, and
 /// first-reading / current-times-reading methods for [AstrologyService].
@@ -23,140 +57,24 @@ extension AstrologyInsightsExtension on AstrologyService {
     return streamInsightForDate(uid, date);
   }
 
-  /// Stream a specific date's insight (for history viewing).
-  /// Uses hash-based deduplication to prevent unnecessary widget rebuilds.
-  Stream<DailyInsight?> streamInsightForDate(String uid, String date) {
-    String? lastHash;
-    DailyInsight? cached;
-    return firestore
-        .collection('users')
-        .doc(uid)
-        .collection('dailyInsights')
-        .doc(date)
-        .snapshots()
-        .handleError((error, stackTrace) {
-      AppLogger.e(
-        'Error in insight stream for date $date',
-        category: LogCategory.database,
-        error: error,
-        stackTrace: stackTrace,
-      );
-    }).map((doc) {
-      try {
-        if (!doc.exists) return null;
-        final data = doc.data();
-        if (data == null) return null;
-        final hash = data.toString();
-        if (hash == lastHash && cached != null) return cached;
-        lastHash = hash;
-        cached = DailyInsight.fromMap({
-          ...data,
-          'date': doc.id,
-        });
-        return cached;
-      } catch (e, stackTrace) {
-        AppLogger.e(
-          'Error parsing insight for date $date',
-          category: LogCategory.database,
-          error: e,
-          stackTrace: stackTrace,
-        );
-        return null;
-      }
-    }).distinct();
-  }
+  /// Stream a specific date from the unified forecast read-model.
+  ///
+  /// [DailyInsight] remains a compatibility view while older dashboard widgets
+  /// are migrated; there is no separate dailyInsights collection or AI call.
+  Stream<DailyInsight?> streamInsightForDate(String uid, String date) =>
+      ForecastService().streamForecast(uid).map((forecast) {
+        final day = forecast[date];
+        return day == null ? null : _dailyInsightFromForecast(day);
+      }).distinct();
 
-  /// Generate daily insight for the current user.
-  /// Set [forceRegenerate] to true to regenerate even if insight exists today.
+  /// Refresh deterministic forecast signals and enqueue narration only when its
+  /// runway is short. Kept as a compatibility method for onboarding callers.
   Future<Map<String, dynamic>?> generateDailyInsight({
     bool forceRegenerate = false,
   }) async {
-    final user = currentUser;
-    if (user == null) return null;
-
-    // Clear local caches when force regenerating
-    if (forceRegenerate) {
-      AstrologyService.clearUserCache(user.uid);
-      AppLogger.d('Force regenerate: cleared user cache',
-          category: LogCategory.network);
-    }
-
-    try {
-      final callableOptions =
-          HttpsCallableOptions(timeout: const Duration(seconds: 120));
-
-      // Get current location if available (for accurate today's Vedic date)
-      double? currentLat;
-      double? currentLng;
-      try {
-        final last = await Geolocator.getLastKnownPosition();
-        if (last != null) {
-          currentLat = last.latitude;
-          currentLng = last.longitude;
-        } else {
-          final position = await Geolocator.getCurrentPosition(
-            locationSettings: const LocationSettings(
-              accuracy: LocationAccuracy.low,
-              timeLimit: Duration(seconds: 5),
-            ),
-          );
-          currentLat = position.latitude;
-          currentLng = position.longitude;
-        }
-      } catch (e) {
-        AppLogger.w(
-          'Could not get current location for daily insight; falling back to birth location',
-          category: LogCategory.network,
-          data: {'error': e.toString()},
-        );
-      }
-
-      final now = DateTime.now();
-      final offsetHours = now.timeZoneOffset.inMinutes / 60.0;
-      AppLogger.i(
-        'Generating daily insight',
-        category: LogCategory.network,
-        data: {
-          'forceRegenerate': forceRegenerate,
-          'deviceTime': now.toIso8601String(),
-          'timeZoneName': now.timeZoneName,
-          'timeZoneOffsetHours': offsetHours,
-          'hasCurrentLocation': currentLat != null && currentLng != null,
-          'currentLat': currentLat,
-          'currentLng': currentLng,
-        },
-      );
-
-      final result = await callWithFunctionsFallback(
-        functionName: 'insightGateway',
-        data: {
-          'method': 'generateInsightForCurrentUser',
-          'forceRegenerate': forceRegenerate,
-          if (currentLat != null) 'currentLatitude': currentLat,
-          if (currentLng != null) 'currentLongitude': currentLng,
-          'currentTimeZoneOffset': offsetHours,
-        },
-        options: callableOptions,
-      );
-
-      if (result.data is Map) {
-        final map = Map<String, dynamic>.from(result.data as Map);
-        AppLogger.i('Daily insight generated successfully',
-            category: LogCategory.network, data: map);
-        return map;
-      }
-
-      AppLogger.w('Unexpected response from insight generation',
-          category: LogCategory.network,
-          data: {'responseType': result.data.runtimeType.toString()});
-      return null;
-    } catch (e, stackTrace) {
-      AppLogger.e('Failed to generate insight',
-          category: LogCategory.network,
-          error: e,
-          data: {'stack': stackTrace.toString().substring(0, 400)});
-      rethrow;
-    }
+    if (currentUser == null) return null;
+    await ForecastService().ensureComputed();
+    return const {'success': true, 'source': 'forecast'};
   }
 
   /// Generate first reading for the current user.

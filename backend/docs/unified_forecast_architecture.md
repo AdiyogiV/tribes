@@ -1,7 +1,8 @@
 # Unified Forecast Architecture
 
-> **Status:** Core implemented; compatibility cleanup remains. This document records
-> both the target architecture and the remaining migration work.
+> **Status:** Unified daily forecast is implemented. Home, Today, Aurobhatt context,
+> and daily notifications now consume one forecast read-model. Per-house and
+> one-time/current-times readings remain deliberately separate product surfaces.
 > **Decision log:** Grounding = **removed for now** (Pure Unified, no live search).
 > **Supersedes:** the on-phone Daily Vibe (`daily_vibe.dart` 9 presets), the fake
 > `50 + quality×47` alignment, the fuzzy `NakshatraData.findIndex` name→index path,
@@ -19,9 +20,10 @@ own truth. Result: **incoherent** (five slightly different stories), **inaccurat
 `"Moola"` vs Flutter `"Mula"`), and **expensive** (many AI calls/user/day).
 
 We are replacing the *personal narrative* surface with **one coherent system**.
-SENSE/NARRATE/REMEMBER and the shared forecast read-model are live. The separate
-Daily Insight and per-house generators remain compatibility surfaces; Daily Insight
-is now anchored to the unified day's computed alignment but still makes its own AI call.
+SENSE/NARRATE/REMEMBER and the shared forecast read-model are live. The former
+Daily Insight generator has been retired: Flutter adapts the forecast day into the
+existing Today widgets without a second collection or AI call. Per-house readings
+remain a separate chart surface.
 
 ---
 
@@ -107,7 +109,8 @@ global_astro/sky_positions        # global date-keyed positions + panchang
       "favorable": ["Jupiter 5th from Moon (favorable, 6 bindu)"],
       "unfavorable": [],
       "heading": "Momentum, quietly",   // AI — replaces "Restraint Energy"
-      "narrative": "..." }
+      "narrative": "...",
+      "action": "...", "caution": "...", "tip": "...", "timing": "..." }
   ]
 }
 ```
@@ -148,7 +151,8 @@ CALENDAR:  dasha phase + guidance (from buildDashaContext)
 **Output:**
 ```jsonc
 {
-  "days": [ { "date": "2026-07-01", "heading": "≤4 words", "narrative": "1-3 sentences" } ],
+  "days": [ { "date": "2026-07-01", "heading": "≤4 words", "narrative": "1-3 sentences",
+                "action": "...", "caution": "...", "tip": "...", "timing": "..." } ],
   "storylineUpdate": {
     "arc": "new compacted arc paragraph",
     "beatGist": "one-line gist of this chapter for recentBeats",
@@ -158,9 +162,8 @@ CALENDAR:  dasha phase + guidance (from buildDashaContext)
 ```
 
 Token budget: input ~5-8k, output ~3.3k for 30 days. Cap is 65k out / 1M context.
-The rolling forecast itself costs **~1 AI call / active user / month**. This is
-not yet the entire narrative cost: Daily Insight remains daily, per-house remains
-cyclical, and first/current-times readings are separate on-demand calls.
+The rolling daily forecast costs **~1 AI call / active user / month**. Per-house
+remains cyclical, while first/current-times readings are separate on-demand calls.
 
 ---
 
@@ -199,7 +202,7 @@ A dasha turnover = a natural chapter break.
 | Today | Fate |
 |---|---|
 | `computeDaySignal()` (unused, tested) | **PROMOTE** → the SENSE layer |
-| `daily_astro_insights.js` (per-day) | **IN PROGRESS** — anchored to forecast alignment; still a separate daily AI call |
+| `daily_astro_insights.js` (per-day) | **RETIRED** — Today is a compatibility view over `forecast/{yyyy-MM}` |
 | `user_memory.js` | **ABSORB** → memory updates happen inside NARRATE/REMEMBER |
 | `nakshatra_ring_widget.dart` on-phone vibe + fuzzy `findIndex` + fake % | **MOSTLY MIGRATED** — forecast drives number/story; presets remain out-of-window fallback |
 | `daily_vibe.dart` (9 presets) | **DEPRECATE** after every wheel surface has forecast coverage |

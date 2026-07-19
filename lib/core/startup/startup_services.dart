@@ -148,8 +148,7 @@ mixin StartupServicesMixin {
   }
 
   /// Handle incoming call notification tap or action button press.
-  void _handleIncomingCallNotificationTap(String payload,
-      {String? actionId}) {
+  void _handleIncomingCallNotificationTap(String payload, {String? actionId}) {
     final parts = payload.split(':');
     if (parts.length < 6) {
       AppLogger.w('Invalid incoming call payload',
@@ -199,7 +198,10 @@ mixin StartupServicesMixin {
           callService.currentCall?.id == callId) {
         await callService.rejectCall();
       } else {
-        await FirebaseFirestore.instance.collection('calls').doc(callId).update({
+        await FirebaseFirestore.instance
+            .collection('calls')
+            .doc(callId)
+            .update({
           'status': 'rejected',
           'endedAt': FieldValue.serverTimestamp(),
         });
@@ -298,7 +300,10 @@ mixin StartupServicesMixin {
   void _showCallEndedMessage() {
     final context = _navigatorKey?.currentContext;
     if (context != null) {
-      showCustomSnackBar(context, message: 'This call has ended', duration: const Duration(seconds: 2), behavior: SnackBarBehavior.floating);
+      showCustomSnackBar(context,
+          message: 'This call has ended',
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating);
     }
   }
 
@@ -321,7 +326,6 @@ mixin StartupServicesMixin {
   /// Navigate to daily insight page with retry.
   void _navigateToDailyInsight({
     int retryCount = 0,
-    int? cardIndex,
     String? insightDate,
   }) {
     final userId = FirebaseAuth.instance.currentUser?.uid;
@@ -332,7 +336,6 @@ mixin StartupServicesMixin {
         Future.delayed(Duration(milliseconds: 500 * (retryCount + 1)), () {
           _navigateToDailyInsight(
             retryCount: retryCount + 1,
-            cardIndex: cardIndex,
             insightDate: insightDate,
           );
         });
@@ -344,7 +347,6 @@ mixin StartupServicesMixin {
       try {
         appRouter.push(RouteNames.dailyInsight, extra: {
           'uid': userId,
-          'cardIndex': cardIndex,
           'insightDate': insightDate,
         });
       } catch (e, stack) {
@@ -412,8 +414,8 @@ mixin StartupServicesMixin {
       chatNotificationService.initialize();
       chatNotificationService.setNavigatorKey(navigatorKey);
 
-      FirebaseMessaging.onMessage.listen((message) =>
-          _handleForegroundMessage(message, chatNotificationService, navigatorKey));
+      FirebaseMessaging.onMessage.listen((message) => _handleForegroundMessage(
+          message, chatNotificationService, navigatorKey));
 
       FirebaseMessaging.onMessageOpenedApp.listen((message) =>
           _handleMessageTap(message, chatNotificationService, navigatorKey));
@@ -431,8 +433,10 @@ mixin StartupServicesMixin {
   }
 
   /// Handle foreground FCM messages.
-  void _handleForegroundMessage(RemoteMessage message,
-      ChatNotificationService chatService, GlobalKey<NavigatorState> navigatorKey) {
+  void _handleForegroundMessage(
+      RemoteMessage message,
+      ChatNotificationService chatService,
+      GlobalKey<NavigatorState> navigatorKey) {
     final type = message.data['type'];
 
     switch (type) {
@@ -494,8 +498,8 @@ mixin StartupServicesMixin {
           showCupertinoDialog(
             context: navigatorKey.currentContext!,
             builder: (context) => CupertinoAlertDialog(
-              title: Text(
-                  message.notification!.title ?? 'You\'re Now Friends!'),
+              title:
+                  Text(message.notification!.title ?? 'You\'re Now Friends!'),
               content: Text(message.notification!.body ?? ''),
               actions: [
                 if (userId != null) ...[
@@ -580,8 +584,10 @@ mixin StartupServicesMixin {
   }
 
   /// Handle notification tap (background or terminated state).
-  void _handleMessageTap(RemoteMessage message,
-      ChatNotificationService chatService, GlobalKey<NavigatorState> navigatorKey) {
+  void _handleMessageTap(
+      RemoteMessage message,
+      ChatNotificationService chatService,
+      GlobalKey<NavigatorState> navigatorKey) {
     final type = message.data['type'];
 
     if (type == 'chat' || type == 'message') {
@@ -598,8 +604,8 @@ mixin StartupServicesMixin {
   }
 
   /// Handle group call notification tap.
-  void _handleGroupCallNotificationTap(Map<String, dynamic> data,
-      GlobalKey<NavigatorState> navigatorKey,
+  void _handleGroupCallNotificationTap(
+      Map<String, dynamic> data, GlobalKey<NavigatorState> navigatorKey,
       {int retryCount = 0}) {
     final spaceId = data['spaceId'] as String?;
     final spaceName = data['spaceName'] as String? ?? 'Group Call';
@@ -624,8 +630,10 @@ mixin StartupServicesMixin {
   }
 
   /// Handle notification with retry mechanism for cold start.
-  void _handleNotificationWithRetry(RemoteMessage message,
-      ChatNotificationService chatService, GlobalKey<NavigatorState> navigatorKey,
+  void _handleNotificationWithRetry(
+      RemoteMessage message,
+      ChatNotificationService chatService,
+      GlobalKey<NavigatorState> navigatorKey,
       {int attempt = 0}) {
     if (navigatorKey.currentState == null) {
       if (attempt < 15) {
@@ -717,8 +725,7 @@ mixin StartupServicesMixin {
   }
 
   /// Set up deep linking and related services.
-  Future<void> setupDynamicLinks(
-      GlobalKey<NavigatorState> navigatorKey) async {
+  Future<void> setupDynamicLinks(GlobalKey<NavigatorState> navigatorKey) async {
     try {
       await DeepLinkService().initialize();
       await AudioService().initialize();
@@ -737,15 +744,9 @@ mixin StartupServicesMixin {
 
     switch (type) {
       case 'dailyAstroInsight':
-        final cardIndexStr = data['cardIndex'] as String?;
-        final cardIndex =
-            cardIndexStr != null ? int.tryParse(cardIndexStr) : null;
         final insightDate =
             data['date'] as String? ?? data['insightId'] as String?;
-        _navigateToDailyInsight(
-          cardIndex: cardIndex,
-          insightDate: insightDate,
-        );
+        _navigateToDailyInsight(insightDate: insightDate);
         break;
     }
   }

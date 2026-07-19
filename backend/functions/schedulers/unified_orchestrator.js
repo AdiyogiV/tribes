@@ -32,10 +32,10 @@
  * Phase 3: (removed) Mundane/world content generation was archived —
  *   see backend/_archive/. Personal insights no longer depend on it.
  *
- * Phase 4: User Insights (sequential — depends on Phase 2 / 2b)
- *   - generateDailyAstroInsights (enqueues per-user Cloud Tasks)
- *   - enqueuePerHouseReadings    (enqueues per-house Cloud Tasks)
- *   - enqueueMonthlyNarrate      (enqueues forecast-narration Cloud Tasks)
+ * Phase 4: User Forecast (sequential — depends on Phase 2 / 2b)
+ *   - enqueueMonthlyNarrate      (one batched narration when runway is short)
+ *   - dispatchDailyForecastNotifications (one stored-forecast teaser per user)
+ *   - enqueuePerHouseReadings    (legacy chart surface; separate from daily forecast)
  *
  * Phase 5: Health (independent — runs last)
  *   - nightlyHealthAnalysis      (always)
@@ -61,10 +61,10 @@ import { runComputeDaySignals } from "../forecast/sense.js";
 
 // Phase 3 (mundane/world content) archived — see backend/_archive/.
 
-// Phase 4: User insight runners
-import { runGenerateDailyAstroInsights } from "../daily_astro_insights.js";
+// Phase 4: Unified forecast runners
 import { runEnqueuePerHouseReadings } from "../per_house.js";
 import { runEnqueueMonthlyNarrate } from "../forecast/narrate.js";
+import { runDispatchDailyForecastNotifications } from "../forecast/notifications.js";
 
 // Phase 5: Health runners
 import { runNightlyHealthAnalysis, runWeeklyHealthAggregation } from "../ayurveda.js";
@@ -154,10 +154,8 @@ export const unifiedOrchestrator = onSchedule({
     // ── Phase 3: (archived) mundane/world content generation ───────────
     // Removed — personal insights don't depend on it. See backend/_archive/.
 
-    // ── Phase 4: User Insights (sequential — depends on Phase 2) ───────
-    logger.info("Phase 4: User Insights");
-    results.push(await runTask("generateDailyAstroInsights", runGenerateDailyAstroInsights));
-    results.push(await runTask("enqueuePerHouseReadings", runEnqueuePerHouseReadings));
+    // ── Phase 4: Unified forecast (sequential — depends on Phase 2) ────
+    logger.info("Phase 4: Unified Forecast");
     // Forecast NARRATE — enqueues ~1 Gemini call/user/month for users whose
     // narrated window is running low (depends on Phase 2b signals existing).
     if (signalResult.ok) {
@@ -170,6 +168,13 @@ export const unifiedOrchestrator = onSchedule({
             error: "Skipped because computeDaySignals failed",
         });
     }
+    // Notification copy is a view of today's stored forecast. Missing narration
+    // is skipped rather than triggering a second AI system.
+    results.push(await runTask(
+        "dispatchDailyForecastNotifications",
+        runDispatchDailyForecastNotifications,
+    ));
+    results.push(await runTask("enqueuePerHouseReadings", runEnqueuePerHouseReadings));
 
     // ── Phase 5: Health (independent — runs last) ─────────────────────
     logger.info("Phase 5: Health");

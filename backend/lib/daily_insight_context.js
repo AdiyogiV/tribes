@@ -1,8 +1,8 @@
 /**
- * Daily Insight Context — data-gathering helpers for daily insight generation.
+ * Forecast context — reusable Vedic context builders for narrated readings.
  *
- * Extracted from functions/daily_astro_insights.js to reduce that file's size
- * and make these helpers importable by the insights engine if needed.
+ * The unified forecast currently consumes the dasha builder. Other exports are
+ * retained for longer-form reading surfaces that need current transit context.
  *
  * Three main functions:
  *   buildDashaContext()   — dasha phase + recent themes for narrative continuity
@@ -10,7 +10,7 @@
  *   getSearchContext()     — Google Search grounding context for AI enrichment
  */
 
-import { db, logger } from "./firebase.js";
+import { logger } from "./firebase.js";
 // Vertex AI — no API key needed (uses ADC)
 import { DateTime } from "luxon";
 import { runEphemerisFlow } from "../functions/ephemeris.js";
@@ -59,26 +59,6 @@ export async function buildDashaContext(userId, currentDasha) {
         }
     }
 
-    // Fetch recent insights for theme extraction
-    let recentThemes = [];
-    try {
-        const sevenDaysAgo = DateTime.now().minus({ days: 7 });
-        const recentInsights = await db
-            .collection("users")
-            .doc(userId)
-            .collection("dailyInsights")
-            .where("date", ">=", sevenDaysAgo.toFormat("yyyy-MM-dd"))
-            .orderBy("date", "desc")
-            .limit(7)
-            .get();
-
-        recentThemes = recentInsights.docs
-            .map((doc) => doc.data().theme)
-            .filter(Boolean);
-    } catch (e) {
-        logger.warn("Could not fetch recent themes", { error: String(e) });
-    }
-
     return {
         period: mahaDasha && antarDasha ? `${mahaDasha}-${antarDasha}` : mahaDasha || "Unknown",
         mahaDasha,
@@ -87,7 +67,7 @@ export async function buildDashaContext(userId, currentDasha) {
         phase,
         percentComplete,
         daysRemaining,
-        recentThemes: recentThemes.slice(0, 5),
+        recentThemes: [],
         // Phase-specific guidance for AI
         phaseGuidance: phase === "BEGINNING" ?
             "New energies are emerging. Focus on initiating and setting intentions." :

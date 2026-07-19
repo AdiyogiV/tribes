@@ -154,6 +154,10 @@ export async function narrateForecastForUser(uid) {
                     ...day,
                     heading: n.heading,
                     narrative: n.narrative,
+                    action: n.action,
+                    caution: n.caution,
+                    tip: n.tip,
+                    timing: n.timing,
                 };
             });
             if (touched) {

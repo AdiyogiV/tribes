@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:aurogram/shared/models/daily_insight.dart';
 import 'package:aurogram/shared/presentation/widgets/media/common_widgets.dart';
 import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
 import 'package:aurogram/shared/presentation/widgets/flash.dart';
@@ -16,7 +15,8 @@ class InsightSkeleton extends StatelessWidget {
     return ShimmerBox(
       child: SingleChildScrollView(
         physics: const NeverScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
+        padding:
+            const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -29,7 +29,8 @@ class InsightSkeleton extends StatelessWidget {
                   height: 36,
                   decoration: BoxDecoration(
                     color: colors.highlight,
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm),
+                    borderRadius:
+                        BorderRadius.circular(AppDimensions.radiusMdSm),
                   ),
                 ),
                 const SizedBox(width: AppDimensions.spacingMd),
@@ -48,7 +49,8 @@ class InsightSkeleton extends StatelessWidget {
                         height: 12,
                         decoration: BoxDecoration(
                             color: colors.shimmer,
-                            borderRadius: BorderRadius.circular(AppDimensions.radiusSmMd))),
+                            borderRadius: BorderRadius.circular(
+                                AppDimensions.radiusSmMd))),
                   ],
                 ),
               ],
@@ -62,7 +64,8 @@ class InsightSkeleton extends StatelessWidget {
                       padding: const EdgeInsets.all(AppDimensions.paddingXl),
                       decoration: BoxDecoration(
                         color: colors.base,
-                        borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+                        borderRadius:
+                            BorderRadius.circular(AppDimensions.radiusXl),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -74,7 +77,8 @@ class InsightSkeleton extends StatelessWidget {
                                 height: 40,
                                 decoration: BoxDecoration(
                                   color: colors.highlight,
-                                  borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                                  borderRadius: BorderRadius.circular(
+                                      AppDimensions.radiusMd),
                                 ),
                               ),
                               const SizedBox(width: AppDimensions.spacingMd),
@@ -92,8 +96,8 @@ class InsightSkeleton extends StatelessWidget {
                                   height: 28,
                                   decoration: BoxDecoration(
                                       color: colors.shimmer,
-                                      borderRadius:
-                                          BorderRadius.circular(AppDimensions.radiusMdLg))),
+                                      borderRadius: BorderRadius.circular(
+                                          AppDimensions.radiusMdLg))),
                             ],
                           ),
                           const SizedBox(height: AppDimensions.spacingLg),
@@ -205,9 +209,7 @@ class LegacyInsightCard extends StatelessWidget {
   });
 
   Color _cardColor(BuildContext context) {
-    return isDark
-        ? Theme.of(context).colorScheme.surface
-        : Colors.white;
+    return isDark ? Theme.of(context).colorScheme.surface : Colors.white;
   }
 
   @override
@@ -299,9 +301,7 @@ class InsightLoadingCard extends StatelessWidget {
   });
 
   Color _cardColor(BuildContext context) {
-    return isDark
-        ? Theme.of(context).colorScheme.surface
-        : Colors.white;
+    return isDark ? Theme.of(context).colorScheme.surface : Colors.white;
   }
 
   @override
@@ -334,71 +334,6 @@ class InsightLoadingCard extends StatelessWidget {
               fontWeight: FontWeight.w500,
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Generate / Regenerate button for insights.
-class InsightGenerateButton extends StatelessWidget {
-  final DailyInsight? insight;
-  final bool isDark;
-  final Color brown;
-  final bool isGenerating;
-  final VoidCallback onGenerate;
-
-  const InsightGenerateButton({
-    super.key,
-    required this.insight,
-    required this.isDark,
-    required this.brown,
-    required this.isGenerating,
-    required this.onGenerate,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: isGenerating ? null : onGenerate,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: BoxDecoration(
-            border:
-                Border.all(color: brown.withValues(alpha: 0.3), width: 1.5),
-            borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (!isGenerating)
-                Text(
-                  '✦',
-                  style: TextStyle(fontSize: 16, color: brown),
-                ),
-              if (!isGenerating) const SizedBox(width: AppDimensions.spacingMdSm),
-              if (isGenerating)
-                ShimmerText(
-                  text: 'Generating...',
-                  baseColor: brown,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                )
-              else
-                Text(
-                  insight != null ? 'Regenerate' : 'Get Your Insight',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: brown,
-                  ),
-                ),
-            ],
-          ),
         ),
       ),
     );

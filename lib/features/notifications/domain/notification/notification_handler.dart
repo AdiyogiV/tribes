@@ -235,8 +235,7 @@ extension NotificationHandler on NotificationService {
             'incoming_call:$callId:$callerId:$callerName:$callerAvatar:$callType',
       );
 
-      AppLogger.i(
-          'Successfully showed incoming call notification with actions',
+      AppLogger.i('Successfully showed incoming call notification with actions',
           category: LogCategory.general,
           data: {
             'callerName': callerName,
@@ -423,16 +422,12 @@ extension NotificationHandler on NotificationService {
         }
         break;
       case NotificationType.dailyAstroInsight:
-        // Parse cardIndex and insightDate from payload
-        int? cardIndex;
-        String? insightDate;
-        if (parts.length > 1 && parts[1].isNotEmpty) {
-          cardIndex = int.tryParse(parts[1]);
-        }
-        if (parts.length > 2 && parts[2].isNotEmpty) {
-          insightDate = parts[2];
-        }
-        navigateToDailyInsight(cardIndex: cardIndex, insightDate: insightDate);
+        // New notifications open the single Today view. Keep the final payload
+        // segment as a date for compatibility with older local notifications.
+        final insightDate = parts.length > 2 && parts[2].isNotEmpty
+            ? parts[2]
+            : (parts.length > 1 && parts[1].contains('-') ? parts[1] : null);
+        navigateToDailyInsight(insightDate: insightDate);
         break;
       case NotificationType.reply:
       case NotificationType.like:
@@ -560,8 +555,6 @@ extension NotificationHandler on NotificationService {
         if (notification.spaceId != null) parts.add(notification.spaceId!);
         break;
       case NotificationType.dailyAstroInsight:
-        // Include cardIndex and insightId (date) for deep linking
-        parts.add(notification.cardIndex?.toString() ?? '');
         parts.add(notification.insightId ?? notification.date ?? '');
         break;
       case NotificationType.follow:

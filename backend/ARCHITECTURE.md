@@ -33,13 +33,13 @@ GENERATE (AI)                      lib/gemini.js  (callGemini)
       functions/current_times_reading.js  "where you are now" read
       functions/forecast/narrate.js rolling continuous forecast story
       functions/per_house.js        12-house Gochara, 14-day cycle (+ scheduler)
-      functions/daily_astro_insights.js   compatibility daily cards, anchored
-                                          to forecast alignment + one "ready" push
+      Today/Home/Aurobhatt/notifications read the same forecast document;
+      there is no separate daily-card AI generator.
 
 ORCHESTRATE                        functions/schedulers/unified_orchestrator.js
       one nightly cron (4:30 AM IST): refresh sky -> forecast SENSE -> enqueue
-      daily cards / per-house / forecast NARRATE -> health.
-      One "your daily reading is ready" push
+      forecast NARRATE -> dispatch stored-forecast notification -> per-house -> health.
+      One deterministic "your daily reading is ready" push
       per user (functions/notifications.js FCM trigger).
 ```
 
@@ -58,8 +58,8 @@ ORCHESTRATE                        functions/schedulers/unified_orchestrator.js
 | Strength| Strong enough to deliver? | Ashtakavarga + Shadbala | vedic_analysis -> wired into readings |
 
 > Strength is wired: forecast SENSE consumes BAV through a canonical
-> sign-index adapter; daily and per-house transit prompts carry Ashtakavarga
-> bindus (0-8) + quality. Shadbala (strong/weak planets) is in the daily too.
+> sign-index adapter; forecast and per-house transit prompts carry Ashtakavarga
+> bindus (0-8) + quality. Shadbala remains available to longer-form readings.
 >
 > D9 Navamsa is computed + stored (`astrologyData.navamsa`) but intentionally
 > NOT fed into daily/per-house prompts: D9 speaks to long-term *promise*, not

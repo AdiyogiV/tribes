@@ -30,14 +30,13 @@ class _DailyInsightTileState extends State<DailyInsightTile> {
     _isRead = widget.data?['read'] == true;
   }
 
-  String get _cardType => widget.data?['cardType'] as String? ?? 'insight';
   String get _title => widget.data?['title'] as String? ?? 'Daily Insight';
-  String get _preview => widget.data?['preview'] as String? ?? 'Your personalized astrology insight is ready.';
+  String get _preview =>
+      widget.data?['preview'] as String? ??
+      'Your personalized astrology insight is ready.';
   String get _date => widget.data?['date'] as String? ?? '';
-  int get _cardIndex => widget.data?['cardIndex'] as int? ?? 0;
 
-  /// Get icon for insight cards
-  /// Unified icon for all insight cards
+  /// Unified icon for the forecast notification.
   IconData get _cardIcon {
     return Icons.nights_stay_outlined;
   }
@@ -56,7 +55,6 @@ class _DailyInsightTileState extends State<DailyInsightTile> {
       RouteNames.dailyInsight,
       extra: {
         'uid': userId,
-        'cardIndex': _cardIndex,
         'insightDate': _date.isNotEmpty ? _date : null,
       },
     );
@@ -85,7 +83,9 @@ class _DailyInsightTileState extends State<DailyInsightTile> {
         child: InkWell(
           onTap: _navigateToInsight,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingMd),
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.paddingLg,
+                vertical: AppDimensions.paddingMd),
             child: Row(
               children: [
                 // Icon container
@@ -115,7 +115,8 @@ class _DailyInsightTileState extends State<DailyInsightTile> {
                               _title,
                               style: TextStyle(
                                 fontSize: AppTheme.babaTextSize,
-                                fontWeight: _isRead ? FontWeight.w600 : FontWeight.w700,
+                                fontWeight:
+                                    _isRead ? FontWeight.w600 : FontWeight.w700,
                                 color: AppTheme.textColor,
                                 height: 1.3,
                               ),
@@ -150,13 +151,16 @@ class _DailyInsightTileState extends State<DailyInsightTile> {
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
+                              color:
+                                  AppTheme.primaryColor.withValues(alpha: 0.1),
+                              borderRadius:
+                                  BorderRadius.circular(AppDimensions.radiusXs),
                             ),
                             child: Text(
-                              _cardType.toUpperCase(),
+                              'FORECAST',
                               style: TextStyle(
                                 fontSize: AppTheme.babaTextSize,
                                 fontWeight: FontWeight.w600,
@@ -168,14 +172,19 @@ class _DailyInsightTileState extends State<DailyInsightTile> {
                           const SizedBox(width: AppDimensions.spacingSm),
                           Text(
                             '•',
-                            style: TextStyle(fontSize: AppTheme.babaTextSize, color: AppTheme.textSecondaryColor),
+                            style: TextStyle(
+                                fontSize: AppTheme.babaTextSize,
+                                color: AppTheme.textSecondaryColor),
                           ),
                           const SizedBox(width: AppDimensions.spacingSm),
                           Text(
                             widget.data?['timestamp'] != null
                                 ? TimeDisplay.getCompactTimestamp(
-                                    (widget.data!['timestamp'] as Timestamp).toDate())
-                                : _date.isNotEmpty ? _date : 'Today',
+                                    (widget.data!['timestamp'] as Timestamp)
+                                        .toDate())
+                                : _date.isNotEmpty
+                                    ? _date
+                                    : 'Today',
                             style: TextStyle(
                               fontSize: AppTheme.babaTextSize,
                               color: AppTheme.textSecondaryColor,

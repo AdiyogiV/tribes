@@ -15,7 +15,7 @@ import 'package:aurogram/features/astrology/data/utils/astrology_context_builder
 import 'package:aurogram/features/astrology/presentation/widgets/timeline/muhurat_timeline_widget.dart';
 import 'package:aurogram/features/astrology/presentation/pages/insight/insight_widgets.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
-import 'package:aurogram/shared/presentation/widgets/feedback/snack_bar_service.dart';
+import 'package:aurogram/features/astrology/domain/forecast_service.dart';
 import 'package:aurogram/features/baba/domain/baba_snapshot.dart';
 
 class DailyInsightPage extends StatefulWidget {
@@ -24,14 +24,10 @@ class DailyInsightPage extends StatefulWidget {
   /// Optional: specific date to show (for history view). If null, shows today.
   final String? insightDate;
 
-  /// Optional: card index to highlight (for notification deep linking)
-  final int? highlightCardIndex;
-
   const DailyInsightPage({
     super.key,
     required this.uid,
     this.insightDate,
-    this.highlightCardIndex,
   });
 
   @override
@@ -41,7 +37,7 @@ class DailyInsightPage extends StatefulWidget {
 class _DailyInsightPageState extends State<DailyInsightPage>
     with BabaScreenAware<DailyInsightPage> {
   final _astrologyService = AstrologyService();
-  bool _isGeneratingInsight = false;
+  bool _isRefreshingForecast = false;
 
   // ── Baba page awareness ──────────────────────────────────────────────
   // So Baba can answer "what does today's reading say?" from what's actually
@@ -52,13 +48,12 @@ class _DailyInsightPageState extends State<DailyInsightPage>
   @override
   BabaSnapshot babaSnapshot() {
     final insight = _lastInsight;
-    if (_isGeneratingInsight) {
+    if (_isRefreshingForecast) {
       return const BabaSnapshot.loading(
-          headline: "Today's insight is being generated");
+          headline: "Today's forecast is refreshing");
     }
     if (insight == null) {
-      return const BabaSnapshot.empty(
-          headline: 'No insight on screen yet');
+      return const BabaSnapshot.empty(headline: 'No insight on screen yet');
     }
     return BabaSnapshot.ready(
       headline: "Today's insight: ${insight.displayTheme}",
@@ -74,16 +69,15 @@ class _DailyInsightPageState extends State<DailyInsightPage>
   /// The uid to stream against. Falls back to the signed-in user when a caller
   /// (e.g. Baba's navigateTo) opens this page without passing one — an empty
   /// uid makes Firestore throw "document path must be a non-empty string".
-  String get _uid =>
-      widget.uid.isNotEmpty ? widget.uid : (FirebaseAuth.instance.currentUser?.uid ?? '');
+  String get _uid => widget.uid.isNotEmpty
+      ? widget.uid
+      : (FirebaseAuth.instance.currentUser?.uid ?? '');
 
   // AI Chat input controllers
   final TextEditingController _messageController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
 
-  // For scroll-to-card functionality
   final ScrollController _scrollController = ScrollController();
-  final Map<int, GlobalKey> _cardKeys = {};
 
   // Cache profile and insight for context building
   AstrologyProfile? _lastProfile;
@@ -96,12 +90,8 @@ class _DailyInsightPageState extends State<DailyInsightPage>
   void initState() {
     super.initState();
 
-    // If we have a highlight card index, scroll to it after build
-    if (widget.highlightCardIndex != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _scrollToCard(widget.highlightCardIndex!);
-      });
-    }
+    // Self-heal missing/stale forecast data without invoking a second daily AI.
+    _refreshForecast();
 
     // Check notification permissions after a delay (fallback for users who skipped onboarding prompt)
     _checkNotificationPermissions();
@@ -110,8 +100,10 @@ class _DailyInsightPageState extends State<DailyInsightPage>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       FirebaseFunctions.instanceFor(region: 'asia-southeast2')
           .httpsCallable('socialGateway')
-          .call({'method': 'awardAuraAction', 'action': 'daily_insight_view'})
-          .then((_) {}, onError: (_, __) {});
+          .call({
+        'method': 'awardAuraAction',
+        'action': 'daily_insight_view'
+      }).then((_) {}, onError: (_, __) {});
     });
   }
 
@@ -157,8 +149,8 @@ class _DailyInsightPageState extends State<DailyInsightPage>
             ),
             duration: const Duration(seconds: 6),
             behavior: SnackBarBehavior.floating,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusMd)),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppDimensions.radiusMd)),
             margin: const EdgeInsets.all(AppDimensions.paddingLg),
           ),
         )
@@ -174,22 +166,6 @@ class _DailyInsightPageState extends State<DailyInsightPage>
     _focusNode.dispose();
     _scrollController.dispose();
     super.dispose();
-  }
-
-  void _scrollToCard(int index) {
-    Future.delayed(const Duration(milliseconds: 300), () {
-      if (_cardKeys.containsKey(index) && mounted) {
-        final key = _cardKeys[index];
-        if (key?.currentContext != null) {
-          Scrollable.ensureVisible(
-            key!.currentContext!,
-            duration: const Duration(milliseconds: 400),
-            curve: Curves.easeInOut,
-            alignment: 0.3,
-          );
-        }
-      }
-    });
   }
 
   /// Send message with astrology context and push to astro chat page
@@ -217,40 +193,16 @@ class _DailyInsightPageState extends State<DailyInsightPage>
     }
   }
 
-  Future<void> _generateDailyInsight({bool forceRegenerate = false}) async {
-    if (_isGeneratingInsight) return;
-    setState(() => _isGeneratingInsight = true);
-
-    try {
-      final result = await _astrologyService.generateDailyInsight(
-        forceRegenerate: forceRegenerate,
-      );
-      if (!mounted) return;
-
-      if (result != null && result['success'] == true) {
-        // Server short-circuited (already generated today / quota hit). Don't
-        // pretend new wisdom arrived — that's what makes users re-tap a no-op.
-        if (result['rateLimited'] == true) {
-          showCustomSnackBar(context,
-              message: "Today's reading is already in — check back tomorrow",
-              backgroundColor: Colors.amber.shade700);
-        } else {
-          showCustomSnackBar(context, message: 'Wisdom received', backgroundColor: Colors.green.shade600);
-        }
-      } else {
-        throw Exception(result?['error'] ?? 'Unknown error');
-      }
-    } catch (e) {
-      if (!mounted) return;
-      showCustomSnackBar(context, message: 'Failed: ${e.toString().replaceAll("Exception: ", "")}', backgroundColor: Colors.red.shade600);
-    } finally {
-      if (mounted) setState(() => _isGeneratingInsight = false);
-    }
+  Future<void> _refreshForecast() async {
+    if (_isRefreshingForecast || widget.insightDate != null) return;
+    setState(() => _isRefreshingForecast = true);
+    await ForecastService().ensureComputed();
+    if (mounted) setState(() => _isRefreshingForecast = false);
   }
 
   void _openSavedInsights() {
     HapticFeedback.lightImpact();
-    context.push('/astrology/saved/${_uid}');
+    context.push('/astrology/saved/$_uid');
   }
 
   @override
@@ -275,7 +227,8 @@ class _DailyInsightPageState extends State<DailyInsightPage>
                     bottom: false,
                     child: Container(
                       height: 60,
-                      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: AppDimensions.paddingLg),
                       child: Row(
                         children: [
                           SizedBox(
@@ -344,8 +297,7 @@ class _DailyInsightPageState extends State<DailyInsightPage>
                             builder: (context, constraints) {
                               final screenWidth = constraints.maxWidth;
                               final horizontalPadding = screenWidth > 700
-                                  ? ((screenWidth - 600) / 2)
-                                      .clamp(16.0, 200.0)
+                                  ? ((screenWidth - 600) / 2).clamp(16.0, 200.0)
                                   : 16.0;
                               final spacing = screenWidth > 700 ? 16.0 : 12.0;
 
@@ -355,7 +307,8 @@ class _DailyInsightPageState extends State<DailyInsightPage>
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const SizedBox(height: AppDimensions.spacingSm),
+                                    const SizedBox(
+                                        height: AppDimensions.spacingSm),
 
                                     if (insight != null) ...[
                                       if (insight.sections.isNotEmpty)
@@ -365,46 +318,18 @@ class _DailyInsightPageState extends State<DailyInsightPage>
                                             .map((entry) {
                                           final index = entry.key;
                                           final section = entry.value;
-                                          _cardKeys[index] ??= GlobalKey();
-                                          final isHighlighted =
-                                              widget.highlightCardIndex ==
-                                                  index;
                                           return Padding(
                                             padding: EdgeInsets.only(
                                                 bottom: spacing),
-                                            child: AnimatedContainer(
-                                              duration: const Duration(
-                                                  milliseconds: 500),
-                                              key: _cardKeys[index],
-                                              decoration: isHighlighted
-                                                  ? BoxDecoration(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              20),
-                                                      boxShadow: [
-                                                        BoxShadow(
-                                                          color: AppTheme
-                                                              .primaryColor
-                                                              .withValues(alpha: 0.3),
-                                                          blurRadius: 12,
-                                                          spreadRadius: 2,
-                                                        ),
-                                                      ],
-                                                    )
-                                                  : null,
-                                              child: InsightCard(
+                                            child: InsightCard(
+                                              section: section,
+                                              footer: InsightReactionFooter(
                                                 section: section,
-                                                footer:
-                                                    InsightReactionFooter(
-                                                  section: section,
-                                                  profile:
-                                                      profileSnapshot.data,
-                                                  isDark: isDark,
-                                                  cardIndex: index,
-                                                  insightDate:
-                                                      insight.dateString,
-                                                  uid: _uid,
-                                                ),
+                                                profile: profileSnapshot.data,
+                                                isDark: isDark,
+                                                cardIndex: index,
+                                                insightDate: insight.dateString,
+                                                uid: _uid,
                                               ),
                                             ),
                                           );
@@ -418,7 +343,6 @@ class _DailyInsightPageState extends State<DailyInsightPage>
                                             isDark: isDark,
                                             brown: brown,
                                           ),
-
                                         ...insight.sections
                                             .map((section) => Padding(
                                                   padding: EdgeInsets.only(
@@ -432,7 +356,7 @@ class _DailyInsightPageState extends State<DailyInsightPage>
                                                   ),
                                                 )),
                                       ],
-                                    ] else if (_isGeneratingInsight)
+                                    ] else if (_isRefreshingForecast)
                                       InsightLoadingCard(
                                           isDark: isDark, brown: brown)
                                     else
@@ -447,18 +371,6 @@ class _DailyInsightPageState extends State<DailyInsightPage>
                                         muhurat: _lastProfile!.muhurat!,
                                       ),
                                     ],
-
-                                    SizedBox(height: spacing + 4),
-                                    InsightGenerateButton(
-                                      insight: insight,
-                                      isDark: isDark,
-                                      brown: brown,
-                                      isGenerating: _isGeneratingInsight,
-                                      onGenerate: () =>
-                                          _generateDailyInsight(
-                                        forceRegenerate: insight != null,
-                                      ),
-                                    ),
 
                                     const SizedBox(height: 140),
                                   ],

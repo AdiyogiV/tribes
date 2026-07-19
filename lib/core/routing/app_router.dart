@@ -148,7 +148,6 @@ GoRouter createAppRouter(GlobalKey<NavigatorState> navigatorKey) {
           final extra = state.extra as Map<String, dynamic>? ?? {};
           return DailyInsightPage(
             uid: extra['uid'] as String? ?? '',
-            highlightCardIndex: extra['cardIndex'] as int?,
             insightDate: extra['insightDate'] as String?,
           );
         },
@@ -304,9 +303,11 @@ GoRouter createAppRouter(GlobalKey<NavigatorState> navigatorKey) {
         builder: (_, state) {
           final extra = state.extra as Map<String, dynamic>? ?? {};
           return AstroChatPage(
-            astrologyContext: extra['astrologyContext'] as Map<String, dynamic>? ?? {},
+            astrologyContext:
+                extra['astrologyContext'] as Map<String, dynamic>? ?? {},
             initialMessage: extra['initialMessage'] as String?,
-            initialVoiceMessage: extra['initialVoiceMessage'] as InitialVoiceMessage?,
+            initialVoiceMessage:
+                extra['initialVoiceMessage'] as InitialVoiceMessage?,
             chatSource: extra['chatSource'] as String? ?? 'astrology',
           );
         },
@@ -320,7 +321,6 @@ GoRouter createAppRouter(GlobalKey<NavigatorState> navigatorKey) {
           uid: state.pathParameters['uid'] ?? '',
         ),
       ),
-
 
       GoRoute(
         path: RouteNames.prakritiRefinement,
@@ -354,7 +354,8 @@ GoRouter createAppRouter(GlobalKey<NavigatorState> navigatorKey) {
           return AiChatPage(
             conversationId: extra?['conversationId'] as String?,
             initialMessage: extra?['initialMessage'] as String?,
-            initialVoiceResult: extra?['initialVoiceResult'] as AudioInputResult?,
+            initialVoiceResult:
+                extra?['initialVoiceResult'] as AudioInputResult?,
           );
         },
       ),
@@ -365,7 +366,8 @@ GoRouter createAppRouter(GlobalKey<NavigatorState> navigatorKey) {
         builder: (_, state) {
           final extra = state.extra as Map<String, dynamic>?;
           return RecentConversationsPage(
-            onConversationSelected: extra?['onConversationSelected'] as Function(String)?,
+            onConversationSelected:
+                extra?['onConversationSelected'] as Function(String)?,
           );
         },
       ),
@@ -374,7 +376,9 @@ GoRouter createAppRouter(GlobalKey<NavigatorState> navigatorKey) {
       GoRoute(
         path: RouteNames.cosmicDashboard,
         name: 'cosmicDashboard',
-        builder: (_, __) => const Scaffold(body: CosmicDashboard()), // Wraps to provide scaffold if needed, but the original might be fine.
+        builder: (_, __) => const Scaffold(
+            body:
+                CosmicDashboard()), // Wraps to provide scaffold if needed, but the original might be fine.
       ),
       GoRoute(
         path: RouteNames.cosmicMinimal,

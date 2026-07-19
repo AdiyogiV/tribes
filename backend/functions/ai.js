@@ -80,8 +80,8 @@ function buildAyurvedaContext(ayurvedaData) {
 // (concurrency:40 share one Map). TTL kept short so a same-day insight regen or
 // nightly memory refresh still shows up quickly.
 const CONTEXT_CACHE_TTL_MS = 3 * 60 * 1000; // 3 min
-const CONTEXT_CACHE_MAX = 500;              // bound memory on busy instances
-const _contextCache = new Map();           // uid -> { ctx, expires }
+const CONTEXT_CACHE_MAX = 500; // bound memory on busy instances
+const _contextCache = new Map(); // uid -> { ctx, expires }
 
 async function getUserContextCached(uid) {
     const hit = _contextCache.get(uid);
@@ -108,9 +108,8 @@ async function fetchUserContext(uid) {
     const memoryPromise = getUserMemory(uid).catch(() => null);
 
     const monthId = today.slice(0, 7); // yyyy-MM — the forecast doc id
-    const [userSnap, insightSnap, forecastSnap] = await Promise.all([
+    const [userSnap, forecastSnap] = await Promise.all([
         db.doc(`users/${uid}`).get(),
-        db.doc(`users/${uid}/dailyInsights/${today}`).get(),
         db.doc(`users/${uid}/forecast/${monthId}`).get().catch(() => null),
     ]);
 
@@ -148,37 +147,12 @@ async function fetchUserContext(uid) {
     if (!context.ashtakavarga && context.processedPlanets && context.ascendant) {
         try {
             context.ashtakavarga = calculateAshtakavarga(context.processedPlanets, context.ascendant) || null;
-        } catch (_) { /* best-effort: chat works fine without it */ }
+        } catch (_) {/* best-effort: chat works fine without it */}
     }
 
-    // Add daily insight data
-    if (insightSnap.exists) {
-        const insight = insightSnap.data();
-
-        // Cosmic weather and forecasts from the pre-generated insight context
-        if (insight.astroContext?.cosmicWeather) {
-            context.cosmicWeather = insight.astroContext.cosmicWeather;
-        }
-        if (insight.astroContext?.forecasts) {
-            context.forecasts = insight.astroContext.forecasts;
-        }
-
-        // Today's transits, panchang, shad bala for real-time context
-        if (insight.astrologicalData) {
-            context.todayTransits = insight.astrologicalData.transits || null;
-            context.todayPanchang = insight.astrologicalData.panchang || null;
-            context.todayShadBala = insight.astrologicalData.shadBala || null;
-        }
-
-        // Display content (insight message and sections)
-        if (insight.displayMessage) context.dailyInsight = insight.displayMessage;
-        if (insight.displayTheme) context.insightTheme = insight.displayTheme;
-        if (Array.isArray(insight.sections)) context.insightSections = insight.sections;
-    }
-
-    // Fallback grounding for today's panchang. If the per-user daily insight
-    // didn't run (brand-new user, nightly-job starvation past its cap, or a job
-    // failure), context.todayPanchang would be absent and the confident persona
+    // Ground today's panchang from the shared sky document. The retired daily
+    // insight collection is no longer an intermediate context cache.
+    // If it is absent, the confident persona
     // could invent a tithi/nakshatra for "is today auspicious / muhurat"
     // questions. Backfill it from the SHARED global_astro sky doc (same data the
     // voice brain uses) so text and voice agree. Transits stay absent on purpose
@@ -190,7 +164,7 @@ async function fetchUserContext(uid) {
             const p = skyDoc.exists ? (skyDoc.data().panchang || {})[today] : null;
             if (p) {
                 context.todayPanchang = {
-                    tithi: p.name || null,       // global doc stores tithi under `name`
+                    tithi: p.name || null, // global doc stores tithi under `name`
                     paksha: p.paksha || null,
                     nakshatra: p.nakshatra || null,
                     yoga: p.yoga || null,
@@ -198,7 +172,7 @@ async function fetchUserContext(uid) {
                     lunarMonth: p.lunar_month_full_name || p.lunar_month_name || null,
                 };
             }
-        } catch (_) { /* best-effort: chat works without today's panchang */ }
+        } catch (_) {/* best-effort: chat works without today's panchang */}
     }
 
     // Attach ayurveda context
@@ -226,6 +200,10 @@ async function fetchUserContext(uid) {
                     alignment: day.alignment ?? null,
                     heading: day.heading || null,
                     narrative: day.narrative || null,
+                    action: day.action || null,
+                    caution: day.caution || null,
+                    tip: day.tip || null,
+                    timing: day.timing || null,
                 };
             }
         }
@@ -576,11 +554,10 @@ export const aiChat = onRequest(
 
             // Context is fully pre-loaded from Firestore (fetchUserContext):
             //   - birth chart, dasha, planets, yogas, doshas
-            //   - today's transits, panchang, shadBala
-            //   - cosmicWeather + forecasts (already in dailyInsights.astroContext)
-            // No enrichment needed — Gemini interprets all Vedic data natively.
-            // The old enrichAstrologyContext() was redundant (cosmic weather already
-            // in daily insight) and expensive (extra Gemini+search calls per message).
+            //   - today's panchang + unified personal forecast
+            // No enrichment needed — Gemini interprets the supplied Vedic data.
+            // The old enrichment path was redundant and expensive (extra
+            // Gemini/search calls per message).
 
             // Route to Gemini (one unified path for text + audio).
             performanceMetrics.synthesisStart = Date.now();

@@ -27,7 +27,15 @@ VOICE:
 OUTPUT — strict JSON only, no markdown:
 {
   "days": [
-    { "date": "yyyy-MM-dd", "heading": "≤4 words, evocative", "narrative": "1-3 warm sentences that match the day's alignment and reference the arc" }
+    {
+      "date": "yyyy-MM-dd",
+      "heading": "≤4 words, evocative",
+      "narrative": "1-3 warm sentences that match the day's alignment and reference the arc",
+      "action": "one concrete action for the day",
+      "caution": "one practical thing to avoid or handle gently",
+      "tip": "one short, grounded wellbeing or reflection tip",
+      "timing": "short timing guidance grounded only in the supplied signals; say 'Move at your natural pace' when no timing signal exists"
+    }
   ],
   "storylineUpdate": {
     "arc": "the whole journey so far compressed to ONE paragraph (summary-of-summaries), updated with this chapter",
@@ -36,7 +44,7 @@ OUTPUT — strict JSON only, no markdown:
   }
 }
 
-Return a "days" entry for EVERY date given, in order. Keep headings distinct.`;
+Return a "days" entry for EVERY date given, in order. Keep headings distinct. Every daily field is required. Keep action, caution, tip, and timing practical and under 18 words each. Do not invent exact clock times.`;
 
 /**
  * Build the user prompt for NARRATE.

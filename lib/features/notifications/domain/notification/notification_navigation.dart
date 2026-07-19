@@ -19,7 +19,6 @@ extension NotificationNavigation on NotificationService {
         break;
       case NotificationType.dailyAstroInsight:
         navigateToDailyInsight(
-          cardIndex: notification.cardIndex,
           insightDate: notification.insightId ?? notification.date,
         );
         break;
@@ -97,10 +96,7 @@ extension NotificationNavigation on NotificationService {
     chatService.setNavigatorKey(navigatorKey!);
 
     final otherUserId = spaceId.startsWith('dm_')
-        ? spaceId
-            .split('_')
-            .where((id) => id != currentUser?.uid)
-            .firstOrNull
+        ? spaceId.split('_').where((id) => id != currentUser?.uid).firstOrNull
         : null;
 
     appRouter.push(
@@ -114,7 +110,6 @@ extension NotificationNavigation on NotificationService {
 
   void navigateToDailyInsight({
     int attempt = 0,
-    int? cardIndex,
     String? insightDate,
   }) {
     final userId = currentUser?.uid;
@@ -125,7 +120,6 @@ extension NotificationNavigation on NotificationService {
         Future.delayed(Duration(milliseconds: 500 * (attempt + 1)), () {
           navigateToDailyInsight(
             attempt: attempt + 1,
-            cardIndex: cardIndex,
             insightDate: insightDate,
           );
         });
@@ -137,7 +131,6 @@ extension NotificationNavigation on NotificationService {
       RouteNames.dailyInsight,
       extra: {
         'uid': userId,
-        'cardIndex': cardIndex,
         'insightDate': insightDate,
       },
     );

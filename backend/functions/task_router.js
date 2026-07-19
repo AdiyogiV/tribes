@@ -1,7 +1,6 @@
 /**
- * taskRouter — Unified Cloud Tasks worker for the two async jobs:
- *   1. processInsightTask   (was in insight_worker.js)
- *   2. processPerHouseTask  (was in per_house_scheduler.js)
+ * taskRouter — Unified Cloud Tasks worker for forecast narration and
+ * per-house readings.
  *
  * Why merge?
  *   - Each onTaskDispatched export is its own Cloud Run service consuming 1 vCPU
@@ -10,13 +9,8 @@
  *     correct handler.
  *
  * TASK PAYLOADS:
- *   taskType: "process_insight"    — { userId, astrologyData, date }
  *   taskType: "process_per_house"  — { uid }
  *   taskType: "process_narrate"    — { uid }  (monthly forecast narration)
- *
- * BACKWARD-COMPAT: if `taskType` is missing (in-flight task enqueued before this
- * code deployed), the router infers from shape — `astrologyData` => process_insight,
- * otherwise => process_per_house.
  */
 
 import { onTaskDispatched } from "firebase-functions/v2/tasks";
@@ -26,17 +20,8 @@ import { geminiApiKey, freeAstrologyApiKey } from "../lib/secrets.js";
 // Lazy-loaded handler modules — only imported on first use of each task type.
 // This keeps cold start fast for the most common task (card notifications,
 // which doesn't need any of the AI/astrology heavy imports).
-let _processInsightHandler = null;
 let _processPerHouseHandler = null;
 let _processNarrateHandler = null;
-
-async function getProcessInsightHandler() {
-    if (!_processInsightHandler) {
-        const mod = await import("./task_handlers/process_insight_handler.js");
-        _processInsightHandler = mod.handleProcessInsight;
-    }
-    return _processInsightHandler;
-}
 
 async function getProcessPerHouseHandler() {
     if (!_processPerHouseHandler) {
@@ -63,9 +48,8 @@ function resolveTaskType(payload) {
     if (payload?.taskType && typeof payload.taskType === "string") {
         return payload.taskType;
     }
-    // Inference rules (kept in priority order — most specific first):
-    if (payload?.astrologyData !== undefined) return "process_insight";
-    if (payload?.uid !== undefined && payload?.userId === undefined) return "process_per_house";
+    // Backward compatibility for old per-house tasks without a discriminator.
+    if (payload?.uid !== undefined) return "process_per_house";
     return null;
 }
 
@@ -101,10 +85,6 @@ export const taskRouter = onTaskDispatched({
     });
 
     switch (taskType) {
-    case "process_insight": {
-        const handler = await getProcessInsightHandler();
-        return handler(payload, { db, FieldValue, logger });
-    }
     case "process_per_house": {
         const handler = await getProcessPerHouseHandler();
         return handler(payload, { db, FieldValue, logger });

@@ -16,6 +16,10 @@ class ForecastDay {
   final List<String> unfavorable;
   final String? heading; // ≤4 words, AI
   final String? narrative; // 1-3 sentences, AI
+  final String? action; // concrete daily focus
+  final String? caution; // practical restraint
+  final String? tip; // grounded wellbeing/reflection suggestion
+  final String? timing; // non-fabricated timing guidance
 
   const ForecastDay({
     required this.date,
@@ -25,6 +29,10 @@ class ForecastDay {
     this.unfavorable = const [],
     this.heading,
     this.narrative,
+    this.action,
+    this.caution,
+    this.tip,
+    this.timing,
   });
 
   factory ForecastDay.fromMap(Map<String, dynamic> m) {
@@ -38,6 +46,10 @@ class ForecastDay {
       unfavorable: strList(m['unfavorable']),
       heading: m['heading']?.toString(),
       narrative: m['narrative']?.toString(),
+      action: m['action']?.toString(),
+      caution: m['caution']?.toString(),
+      tip: m['tip']?.toString(),
+      timing: m['timing']?.toString(),
     );
   }
 }
