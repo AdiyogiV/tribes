@@ -37,13 +37,24 @@ void main() {
     expect(result.toJson()['presentationId'], 'presentation-1');
   });
 
-  test('rejects a stale phase or version without mutation', () {
-    final result = continueTo(fromVersion: 2);
+  test('rejects a stale PHASE without mutation', () {
+    final result = continueTo(fromPhase: 'birthReading');
 
     expect(result.status, BabaToolStatus.rejected);
     expect(result.reason, 'stale_transition_token');
     expect(workflow.phase, 'signReveal');
     expect(workflow.version, 3);
+  });
+
+  test('tolerates a stale VERSION when the phase still matches', () {
+    // The model often echoes an outdated fromVersion; phase is the real
+    // compare-and-swap token, so a version mismatch alone must NOT reject
+    // (that caused the stale_transition_token loop that killed the call).
+    final result = continueTo(fromVersion: 1);
+
+    expect(result.status, BabaToolStatus.applied);
+    expect(workflow.phase, 'birthReading');
+    expect(workflow.version, 4);
   });
 
   test('repeating a request id is idempotent', () {

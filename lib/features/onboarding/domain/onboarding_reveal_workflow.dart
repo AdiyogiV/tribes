@@ -56,7 +56,21 @@ class OnboardingRevealWorkflow {
     }
 
     BabaToolResult result;
-    if (fromPhase != _phase || fromVersion != _version) {
+    // Phase is the compare-and-swap token. This is sound because the reveal is
+    // STRICTLY LINEAR (signReveal -> birthReading -> currentTimes -> home): a
+    // phase is never revisited, so a matching `fromPhase` uniquely identifies
+    // the current state. Phase and version always move together, so the version
+    // adds no extra safety. `fromVersion` is kept in the signature for
+    // back-compat with existing callers but is intentionally NOT gated on: the
+    // model frequently echoes a STALE version (e.g. it keeps sending
+    // fromVersion:1 after we advanced to v2), and rejecting on that produced a
+    // stale_transition_token loop that eventually killed the call. Exact
+    // retries stay idempotent via [requestId] above.
+    //
+    // INVARIANT: phases must remain monotonic (never re-entered). If backward
+    // navigation is ever added, restore a per-phase generation/version gate here
+    // or a stale request from the first visit could slip through on the second.
+    if (fromPhase != _phase) {
       result = BabaToolResult.rejected(
         reason: 'stale_transition_token',
         data: {'workflow': snapshot()},

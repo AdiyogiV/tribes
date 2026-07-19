@@ -153,7 +153,7 @@ class BabaOnboardingTools {
         BabaTool(
           name: advanceOnboarding,
           description: 'Express the user intent to continue the active chart '
-              'reveal. Copy fromPhase and fromVersion exactly from the current '
+              'reveal. Copy fromPhase exactly from the current '
               'state.onScreen.facts.workflow and generate one unique requestId. '
               'The app alone decides whether the transition is applied. A tool '
               'result continuation may never call this tool again.',
@@ -172,7 +172,8 @@ class BabaOnboardingTools {
               'fromVersion': {
                 'type': 'integer',
                 'description':
-                    'Exact workflow version from the current snapshot.',
+                    'Optional. Workflow version from the current snapshot, if '
+                        'known. The app gates on phase, so this is advisory.',
               },
               'acknowledgedPresentationId': {
                 'type': 'string',
@@ -181,7 +182,7 @@ class BabaOnboardingTools {
                     'for interrupted narration.',
               },
             },
-            'required': ['requestId', 'fromPhase', 'fromVersion'],
+            'required': ['requestId', 'fromPhase'],
           },
           defaultHandler: _advanceUnavailable,
           isMutation: true,

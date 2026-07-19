@@ -345,11 +345,14 @@ class _OnboardingCompleteState extends State<OnboardingComplete>
     }
     final requestId = args['requestId'];
     final fromPhase = args['fromPhase'];
-    final fromVersion = args['fromVersion'];
-    if (requestId is! String ||
-        requestId.isEmpty ||
-        fromPhase is! String ||
-        fromVersion is! int) {
+    // `fromVersion` is advisory only (the workflow gates on phase, which moves
+    // in lockstep with version). Accept a missing/any value so a model that
+    // echoes a stale version can still advance instead of looping on a
+    // stale_transition_token rejection. Fall back to the live version.
+    final rawFromVersion = args['fromVersion'];
+    final fromVersion =
+        rawFromVersion is int ? rawFromVersion : _voiceWorkflow.version;
+    if (requestId is! String || requestId.isEmpty || fromPhase is! String) {
       return BabaToolResult.rejected(
         reason: 'missing_transition_token',
         data: {'workflow': _voiceWorkflow.snapshot()},
