@@ -298,6 +298,8 @@ export class CxVoiceSession extends EventEmitter {
         this._armed = false; // a turn is now live; lazy-open no longer pending
         this.configSent = false;
         this._audioClosed = false; // fresh turn: write side is open again
+        this._spokeThisTurn = false; // no real speech seen in this turn yet
+        this._clearSilenceTimer();
         this._turnSeq += 1;
         this._workflowMutationCount = 0;
         this._dbg(`turn_open #${this._turnSeq} kind=${this._turnKind} audio=${audioTurn}`);
@@ -370,6 +372,7 @@ export class CxVoiceSession extends EventEmitter {
      * stream's eventual end/error can't double-open or surface a spurious error.
      */
     _retireStream() {
+        this._clearSilenceTimer();
         const spent = this.stream;
         this.stream = null;
         this.configSent = false;
@@ -378,6 +381,34 @@ export class CxVoiceSession extends EventEmitter {
             spent.on("error", () => {}); // swallow post-close cancels
             try { spent.end(); } catch { /* already closed */ }
         }
+    }
+
+    /**
+     * Arm (or re-arm) the silence endpoint timer for the live audio turn. Called
+     * on every non-empty interim transcript: while the user keeps producing
+     * words the timer keeps resetting; the moment they pause past the window we
+     * half-close the write side ourselves so CX finalizes and replies, instead
+     * of waiting on the recognizer's slow/unreliable own endpointing.
+     */
+    _armSilenceTimer() {
+        const ms = CONFIG.sttEndpointSilenceMs;
+        if (!ms || ms <= 0) return;
+        this._clearSilenceTimer();
+        this._silenceTimer = setTimeout(() => {
+            this._silenceTimer = null;
+            if (this.ended || this.awaitingTool) return;
+            if (!this._spokeThisTurn) return; // never endpoint a turn with no real speech
+            if (!this._audioTurn || this._audioClosed) return;
+            if (!this.configSent || !this.stream) return;
+            this._log(`stt_endpoint_silence #${this._turnSeq} after ${ms}ms -> half-close`);
+            this._audioClosed = true;
+            try { this.stream.end(); } catch { /* already half-closed */ }
+        }, ms);
+    }
+
+    /** Cancel the silence endpoint timer (final arrived, turn retired, etc.). */
+    _clearSilenceTimer() {
+        if (this._silenceTimer) { clearTimeout(this._silenceTimer); this._silenceTimer = null; }
     }
 
     /** Retire the current stream and ARM a fresh AUDIO turn for next utterance. */
@@ -516,6 +547,18 @@ export class CxVoiceSession extends EventEmitter {
             // The user has genuinely spoken this turn — clears the duplicate
             // reprompt guard so Baba's NEXT reply is allowed even if identical.
             if (isFinal && rr.transcript.trim()) this._userSpokeSinceReply = true;
+            // Server-side silence endpointing: on a real interim (non-final,
+            // non-empty) re-arm the pause timer; on a final, cancel it (the
+            // recognizer beat us to it). See _armSilenceTimer.
+            if (!isFinal) {
+                if (rr.transcript.trim() && this._audioTurn && !this._audioClosed) {
+                    this._spokeThisTurn = true;
+                    this._armSilenceTimer();
+                }
+            } else {
+                this._spokeThisTurn = false;
+                this._clearSilenceTimer();
+            }
             // Chirp/USM recognizers (chirp_2) do NOT honor `singleUtterance`
             // endpointing, so CX never auto-closes the recognizer when the user
             // stops. The client mutes its mic in half-duplex (waitTurn), so no
@@ -694,6 +737,7 @@ export class CxVoiceSession extends EventEmitter {
         this.ended = true;
         this._armed = false;
         this._clearToolWatchdog();
+        this._clearSilenceTimer();
         this._pending.clear();
         try { this.stream?.end(); } catch { /* already closed */ }
         this.stream = null;

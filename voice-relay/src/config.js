@@ -50,6 +50,19 @@ export const CONFIG = {
     // or CX_STT_MODEL="" to fall back to the CX default recognizer.
     sttModel: process.env.CX_STT_MODEL ?? "latest_long",
 
+    // Server-side silence endpointing. The recognizer's own `singleUtterance`
+    // endpointing is unreliable/slow on long-form + code-switched speech (it can
+    // hold a turn open ~8-10s after the user stops, so Baba "keeps listening").
+    // Once REAL speech is seen in an audio turn we (re)arm this timer on each
+    // new interim transcript; if no new transcript arrives within this window we
+    // half-close the recognizer ourselves (identical to a natural final) so CX
+    // finalizes and replies promptly. Only fires AFTER speech, so a purely
+    // silent turn is untouched (it still recovers via the STT audio-timeout).
+    // 0 disables, restoring recognizer-only endpointing. Tuned generously (vs a
+    // snappier ~800ms) because Hindi<->English code-switchers often pause mid-
+    // sentence; too tight would cut them off.
+    sttEndpointSilenceMs: parseInt(process.env.CX_STT_ENDPOINT_SILENCE_MS || "1500", 10),
+
     // Audio formats on the wire. Keep in sync with the Flutter client + README.
     inputSampleRateHertz: parseInt(process.env.IN_SAMPLE_RATE || "16000", 10),
     outputSampleRateHertz: parseInt(process.env.OUT_SAMPLE_RATE || "24000", 10),
