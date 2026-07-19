@@ -50,6 +50,14 @@ class BabaCosmicContent extends StatelessWidget {
   /// alignment % and woven narrative.
   final Map<String, ForecastDay>? forecast;
 
+  /// The circle selector strip, rendered directly BELOW the (common) date card
+  /// and ABOVE the swappable body. Null on surfaces without the selector.
+  final Widget? stripSlot;
+
+  /// When non-null, replaces the whole body BELOW the date card + strip (e.g.
+  /// the friend view). The date card stays common on top for everyone.
+  final Widget? bodyOverride;
+
   const BabaCosmicContent({
     super.key,
     required this.profile,
@@ -67,6 +75,8 @@ class BabaCosmicContent extends StatelessWidget {
     this.sliderRangeDays = 180,
     this.calendarService,
     this.forecast,
+    this.stripSlot,
+    this.bodyOverride,
   });
 
   @override
@@ -325,32 +335,42 @@ class BabaCosmicContent extends StatelessWidget {
               if (isWide) ...[
                 headerWidget,
                 SizedBox(height: spacing),
-                // Time guidance sits right under the date strip.
-                muhuratCard,
-                // Two-column dashboard
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      width: leftColumnWidth,
-                      child: wheelWidget,
-                    ),
-                    SizedBox(width: spacing),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          secondaryCards,
-                          if (desktopInlineCta != null) ...[
-                            desktopInlineCta,
-                            SizedBox(height: spacing),
-                          ],
-                        ],
+                // Circle selector sits right below the common date card.
+                if (stripSlot != null) ...[
+                  stripSlot!,
+                  SizedBox(height: spacing),
+                ],
+                if (bodyOverride != null) ...[
+                  bodyOverride!,
+                  SizedBox(height: 16 + bottomInset),
+                ] else ...[
+                  // Time guidance sits right under the date strip.
+                  muhuratCard,
+                  // Two-column dashboard
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        width: leftColumnWidth,
+                        child: wheelWidget,
                       ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 16 + bottomInset),
+                      SizedBox(width: spacing),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            secondaryCards,
+                            if (desktopInlineCta != null) ...[
+                              desktopInlineCta,
+                              SizedBox(height: spacing),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 16 + bottomInset),
+                ],
               ] else ...[
                 // Single-column stack (mobile + small tablet)
                 // Merged date+Time-Guidance card → sky card → wheel+insight
@@ -361,12 +381,22 @@ class BabaCosmicContent extends StatelessWidget {
                 // Current Sky card (injected into secondaryCards).
                 mergedDateMuhuratCard,
                 SizedBox(height: spacing),
-                secondaryCards,
-                if (mobileCtaBanner != null) ...[
-                  mobileCtaBanner,
+                // Circle selector sits right below the common date card.
+                if (stripSlot != null) ...[
+                  stripSlot!,
                   SizedBox(height: spacing),
                 ],
-                SizedBox(height: 16 + bottomInset),
+                if (bodyOverride != null) ...[
+                  bodyOverride!,
+                  SizedBox(height: 16 + bottomInset),
+                ] else ...[
+                  secondaryCards,
+                  if (mobileCtaBanner != null) ...[
+                    mobileCtaBanner,
+                    SizedBox(height: spacing),
+                  ],
+                  SizedBox(height: 16 + bottomInset),
+                ],
               ],
             ],
           ),

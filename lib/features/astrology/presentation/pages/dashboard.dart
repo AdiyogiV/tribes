@@ -21,6 +21,7 @@ import 'package:aurogram/features/astrology/presentation/pages/baba/baba_desktop
 import 'package:aurogram/features/astrology/presentation/pages/baba/baba_empty_states.dart';
 import 'package:aurogram/features/astrology/presentation/pages/baba/baba_cosmic_content.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/nakshatra_ring_widget.dart';
+import 'package:aurogram/features/astrology/presentation/widgets/circle_dashboard_switcher.dart';
 import 'package:aurogram/features/baba/domain/baba_auth_identity.dart';
 import 'package:aurogram/features/baba/domain/baba_context.dart';
 import 'package:aurogram/features/baba/domain/baba_snapshot.dart';
@@ -555,22 +556,33 @@ class DashboardPageState extends State<DashboardPage>
               stream: _forecastStream,
               builder: (context, forecastSnapshot) {
                 _maybeEnsureForecast(forecastSnapshot);
-                return BabaCosmicContent(
-                  profile: profile,
-                  ayurvedaProfile: ayurvedaSnapshot.data,
-                  forecast: forecastSnapshot.data,
-                  loadingState: _loadingState,
-                  skyService: _skyService,
-                  calendarService: _calendarService,
-                  sliderRangeDays: _sliderRangeDays,
-                  sliderValueNotifier: _sliderValueNotifier,
-                  sliderDateNotifier: _sliderDateNotifier,
-                  onSliderChanged: _onSliderChanged,
-                  onResetToToday: _resetSliderToToday,
-                  onLoadSkyPositions: _loadSkyPositions,
-                  onTriggerCachePopulation: _triggerSkyPositionsCachePopulation,
-                  wheelResetSignal: _wheelResetNotifier,
-                  nakshatraController: _nakshatraController,
+                // In-place "multiplayer" swap. The date card stays common on
+                // top (inside BabaCosmicContent); the strip sits below it; only
+                // the body swaps to a friend's view when one is selected.
+                return CircleDashboardSwitcher(
+                  selfName: _user?.displayName ?? 'You',
+                  selfPhoto: _user?.photoURL,
+                  contentBuilder: (context, {stripSlot, bodyOverride}) =>
+                      BabaCosmicContent(
+                    profile: profile,
+                    ayurvedaProfile: ayurvedaSnapshot.data,
+                    forecast: forecastSnapshot.data,
+                    loadingState: _loadingState,
+                    skyService: _skyService,
+                    calendarService: _calendarService,
+                    sliderRangeDays: _sliderRangeDays,
+                    sliderValueNotifier: _sliderValueNotifier,
+                    sliderDateNotifier: _sliderDateNotifier,
+                    onSliderChanged: _onSliderChanged,
+                    onResetToToday: _resetSliderToToday,
+                    onLoadSkyPositions: _loadSkyPositions,
+                    onTriggerCachePopulation:
+                        _triggerSkyPositionsCachePopulation,
+                    wheelResetSignal: _wheelResetNotifier,
+                    nakshatraController: _nakshatraController,
+                    stripSlot: stripSlot,
+                    bodyOverride: bodyOverride,
+                  ),
                 );
               },
             );

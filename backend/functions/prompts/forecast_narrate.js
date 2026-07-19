@@ -31,6 +31,7 @@ OUTPUT — strict JSON only, no markdown:
       "date": "yyyy-MM-dd",
       "heading": "≤4 words, evocative",
       "narrative": "1-3 warm sentences that match the day's alignment and reference the arc",
+      "publicNote": "≤12 words, THIRD-PERSON, shareable — how this person is doing today, written for a FRIEND to read (use 'they'/their name, NEVER 'you'); must match the alignment; warm, plain, no jargon, no advice",
       "action": "one concrete action for the day",
       "caution": "one practical thing to avoid or handle gently",
       "tip": "one short, grounded wellbeing or reflection tip",
@@ -44,7 +45,7 @@ OUTPUT — strict JSON only, no markdown:
   }
 }
 
-Return a "days" entry for EVERY date given, in order. Keep headings distinct. Every daily field is required. Keep action, caution, tip, and timing practical and under 18 words each. Do not invent exact clock times.`;
+Return a "days" entry for EVERY date given, in order. Keep headings distinct. Every daily field is required. The narrative is PRIVATE (second-person "you", the reader's own diary); the publicNote is PUBLIC (third-person, safe for a friend to see) — they describe the same day but must never be swapped. Keep action, caution, tip, and timing practical and under 18 words each. Do not invent exact clock times.`;
 
 /**
  * Build the user prompt for NARRATE.

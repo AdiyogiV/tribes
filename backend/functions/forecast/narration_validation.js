@@ -18,6 +18,7 @@ export function validateNarratedDays(rawDays, signals) {
         const date = typeof raw?.date === "string" ? raw.date.trim() : "";
         const heading = typeof raw?.heading === "string" ? raw.heading.trim() : "";
         const narrative = typeof raw?.narrative === "string" ? raw.narrative.trim() : "";
+        const publicNote = typeof raw?.publicNote === "string" ? raw.publicNote.trim() : "";
         const action = typeof raw?.action === "string" ? raw.action.trim() : "";
         const caution = typeof raw?.caution === "string" ? raw.caution.trim() : "";
         const tip = typeof raw?.tip === "string" ? raw.tip.trim() : "";
@@ -34,6 +35,10 @@ export function validateNarratedDays(rawDays, signals) {
         }
 
         const day = { date, heading, narrative };
+        // publicNote is optional: a third-person, friend-safe line. If the model
+        // omits it we degrade gracefully (friend card falls back to heading)
+        // rather than rejecting the whole month's narration.
+        if (publicNote) day.publicNote = publicNote;
         if (action) day.action = action;
         if (caution) day.caution = caution;
         if (tip) day.tip = tip;

@@ -24,13 +24,26 @@ test("normalizeFriendIds returns [] for non-array input", () => {
 const TODAY = "2026-07-19";
 const days = [
     { date: "2026-07-18", heading: "Old News" },
-    { date: TODAY, heading: "Quiet Reset", narrative: "SECRET first-person text" },
+    { date: TODAY, heading: "Quiet Reset", narrative: "SECRET first-person text", publicNote: "A quiet, inward day for them" },
 ];
 
-test("pickTodayVibe surfaces only the heading (never the narrative)", () => {
+test("pickTodayVibe surfaces heading + publicNote (never the narrative)", () => {
     const v = pickTodayVibe("f1", { displayName: "Priya", displayPicture: "p.jpg" }, days, TODAY);
-    assert.deepEqual(v, { uid: "f1", name: "Priya", photo: "p.jpg", vibe: "Quiet Reset" });
+    assert.deepEqual(v, {
+        uid: "f1",
+        name: "Priya",
+        photo: "p.jpg",
+        vibe: "Quiet Reset",
+        publicNote: "A quiet, inward day for them",
+    });
     assert.ok(!("narrative" in v));
+});
+
+test("pickTodayVibe returns publicNote null when the model omitted it", () => {
+    const noNote = [{ date: TODAY, heading: "Quiet Reset" }];
+    const v = pickTodayVibe("f1", { displayName: "Priya" }, noNote, TODAY);
+    assert.equal(v.vibe, "Quiet Reset");
+    assert.equal(v.publicNote, null);
 });
 
 test("pickTodayVibe falls back to name then 'Friend', photo null", () => {

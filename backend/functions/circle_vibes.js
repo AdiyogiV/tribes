@@ -57,14 +57,16 @@ export function normalizeFriendIds(currentUserId, friendIds, max = MAX_FRIENDS) 
  *   - there is no narrated heading for today (we show a word or nothing —
  *     never a blank face).
  *
- * Crucially, this only ever surfaces `heading`; the private narrative/action/
- * caution fields are left behind on the server.
+ * Crucially, this only ever surfaces the friend-SAFE fields: the heading and
+ * the third-person `publicNote`. The private first-person `narrative` (and
+ * action/caution/tip) are left behind on the server.
  *
  * @param {string} uid
  * @param {Object} userData         users/{uid} document data
  * @param {Array}  forecastDays     forecast month doc `days` array
  * @param {string} todayKey         yyyy-MM-dd (IST)
- * @returns {{uid:string, name:string, photo:(string|null), vibe:string}|null}
+ * @returns {{uid:string, name:string, photo:(string|null), vibe:string,
+ *            publicNote:(string|null)}|null}
  */
 export function pickTodayVibe(uid, userData, forecastDays, todayKey) {
     const u = userData || {};
@@ -74,11 +76,14 @@ export function pickTodayVibe(uid, userData, forecastDays, todayKey) {
     const vibe = today?.heading?.trim();
     if (!vibe) return null;
 
+    const publicNote = today?.publicNote?.trim();
+
     return {
         uid,
         name: u.displayName || u.name || "Friend",
         photo: u.displayPicture || null,
         vibe,
+        publicNote: publicNote || null,
     };
 }
 

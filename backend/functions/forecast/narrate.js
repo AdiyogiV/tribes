@@ -154,6 +154,7 @@ export async function narrateForecastForUser(uid) {
                     ...day,
                     heading: n.heading,
                     narrative: n.narrative,
+                    publicNote: n.publicNote ?? null,
                     action: n.action,
                     caution: n.caution,
                     tip: n.tip,

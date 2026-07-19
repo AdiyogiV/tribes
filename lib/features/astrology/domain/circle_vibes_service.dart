@@ -11,12 +11,14 @@ class CircleVibe {
   final String name;
   final String? photo;
   final String vibe;
+  final String? publicNote;
 
   const CircleVibe({
     required this.uid,
     required this.name,
     this.photo,
     required this.vibe,
+    this.publicNote,
   });
 
   factory CircleVibe.fromMap(Map<String, dynamic> m) => CircleVibe(
@@ -24,6 +26,7 @@ class CircleVibe {
         name: m['name']?.toString() ?? 'Friend',
         photo: m['photo']?.toString(),
         vibe: m['vibe']?.toString() ?? '',
+        publicNote: m['publicNote']?.toString(),
       );
 
   bool get isValid => uid.isNotEmpty && vibe.isNotEmpty;
@@ -63,6 +66,10 @@ class CircleVibesService {
       final followers = results[1].toSet();
       final mutual =
           following.intersection(followers).take(_maxFriends).toList();
+      AppLogger.i(
+          'CircleVibes: following=${following.length} '
+          'followers=${followers.length} mutual=${mutual.length}',
+          category: LogCategory.general);
       if (mutual.isEmpty) return const [];
 
       final res = await _functions
@@ -70,7 +77,11 @@ class CircleVibesService {
           .call({'method': 'getCircleVibes', 'friendIds': mutual});
 
       final data = res.data;
-      if (data is! Map || data['success'] != true) return const [];
+      if (data is! Map || data['success'] != true) {
+        AppLogger.w('CircleVibes: backend returned non-success: $data',
+            category: LogCategory.general);
+        return const [];
+      }
 
       final rawVibes = (data['vibes'] as List?) ?? const [];
       final vibes = rawVibes
@@ -79,7 +90,9 @@ class CircleVibesService {
           .where((v) => v.isValid)
           .toList();
 
-      AppLogger.d('Circle vibes: ${vibes.length}/${mutual.length} friends',
+      AppLogger.i(
+          'CircleVibes: backend returned ${rawVibes.length} raw, '
+          '${vibes.length} valid vibes',
           category: LogCategory.general);
       return vibes;
     } catch (e) {
