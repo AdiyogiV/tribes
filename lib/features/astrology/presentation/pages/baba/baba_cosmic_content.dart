@@ -6,7 +6,6 @@ import 'package:aurogram/features/astrology/presentation/widgets/timeline/muhura
 import 'package:aurogram/features/astrology/presentation/widgets/cards/cosmic_date_time_card.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/cosmic_dashboard_data.dart';
 import 'package:aurogram/shared/models/astrology_profile.dart';
-import 'package:aurogram/shared/models/daily_insight.dart';
 import 'package:aurogram/shared/models/ayurveda_profile.dart';
 import 'package:aurogram/features/astrology/domain/sky_positions_service.dart';
 import 'package:aurogram/features/astrology/domain/astro_calendar_service.dart';
@@ -22,7 +21,6 @@ import 'package:aurogram/features/astrology/presentation/pages/baba/widgets/baba
 /// Builds the full cosmic dashboard content panel with all cards.
 class BabaCosmicContent extends StatelessWidget {
   final AstrologyProfile? profile;
-  final DailyInsight? insight;
   final AyurvedaProfile? ayurvedaProfile;
   final DashboardLoadingState loadingState;
   final SkyPositionsService skyService;
@@ -55,7 +53,6 @@ class BabaCosmicContent extends StatelessWidget {
   const BabaCosmicContent({
     super.key,
     required this.profile,
-    required this.insight,
     this.ayurvedaProfile,
     required this.loadingState,
     required this.skyService,
@@ -83,7 +80,6 @@ class BabaCosmicContent extends StatelessWidget {
     // Single source of truth for the panchang merge + nakshatra precedence
     // chain (shared with the wheel builder via BabaPanchangResolver).
     final panchang = BabaPanchangResolver.resolve(
-      insight: insight,
       skyService: skyService,
       calendarService: calendarService,
     );
@@ -91,7 +87,7 @@ class BabaCosmicContent extends StatelessWidget {
     final todayNakshatra = panchang.todayNakshatra;
 
     // Push the fully-merged samvat to native home screen widgets.
-    // This is the most complete data source (insight + panchang + samvat).
+    // This is the complete merged panchang/samvat source.
     if (nakshatraSamvat != null) {
       WidgetDataService.instance.updateWidgetData(nakshatraSamvat);
     }
@@ -276,7 +272,6 @@ class BabaCosmicContent extends StatelessWidget {
         // left column, so we don't inject it into the secondary list.
         final secondaryCards = BabaSecondaryCards(
           profile: profile,
-          insight: insight,
           ayurvedaProfile: ayurvedaProfile,
           loadingState: loadingState,
           skyService: skyService,
@@ -390,7 +385,6 @@ class BabaCosmicContent extends StatelessWidget {
       // Re-resolve panchang inside this builder so the wheel sees the
       // freshest data on rebuilds. Same resolver as build() — one source.
       final panchang = BabaPanchangResolver.resolve(
-        insight: insight,
         skyService: skyService,
         calendarService: calendarService,
       );
@@ -405,7 +399,6 @@ class BabaCosmicContent extends StatelessWidget {
         todaySamvat: nakshatraSamvat,
         wheelResetSignal: wheelResetSignal,
         controller: nakshatraController,
-        insight: insight,
         forecast: forecast,
         wheelFirst: wheelFirst,
         onDateChanged: (date) {

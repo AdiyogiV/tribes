@@ -30,7 +30,7 @@ class _DailyInsightTileState extends State<DailyInsightTile> {
     _isRead = widget.data?['read'] == true;
   }
 
-  String get _title => widget.data?['title'] as String? ?? 'Daily Insight';
+  String get _title => widget.data?['title'] as String? ?? 'Daily Forecast';
   String get _preview =>
       widget.data?['preview'] as String? ??
       'Your personalized astrology insight is ready.';

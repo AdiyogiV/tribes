@@ -9,7 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/features/baba/domain/baba_snapshot.dart';
 
-/// Page to display user's saved insights
+/// Page to display the user's saved forecasts and older saved insights.
 class SavedInsightsPage extends StatefulWidget {
   final String uid;
 
@@ -28,7 +28,7 @@ class _SavedInsightsPageState extends State<SavedInsightsPage>
 
   @override
   BabaSnapshot babaSnapshot() => const BabaSnapshot.ready(
-        headline: 'The saved insights the user bookmarked to revisit.',
+        headline: 'The saved forecasts the user bookmarked to revisit.',
       );
 
   @override
@@ -46,7 +46,8 @@ class _SavedInsightsPageState extends State<SavedInsightsPage>
               bottom: false,
               child: Container(
                 height: 60,
-                padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimensions.paddingLg),
                 child: Row(
                   children: [
                     // Back button
@@ -84,7 +85,8 @@ class _SavedInsightsPageState extends State<SavedInsightsPage>
           // Content
           SliverToBoxAdapter(
             child: StreamBuilder<QuerySnapshot>(
-              stream: locator<UserRepository>().collection
+              stream: locator<UserRepository>()
+                  .collection
                   .doc(widget.uid)
                   .collection('savedInsights')
                   .orderBy('savedAt', descending: true)
@@ -105,7 +107,8 @@ class _SavedInsightsPageState extends State<SavedInsightsPage>
                 }
 
                 return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppDimensions.paddingLg),
                   child: Column(
                     children: docs.map((doc) {
                       final data = doc.data() as Map<String, dynamic>;
@@ -161,7 +164,7 @@ class _SavedInsightsPageState extends State<SavedInsightsPage>
           ),
           const SizedBox(height: AppDimensions.spacingLg),
           Text(
-            'No saved insights yet',
+            'No saved forecasts yet',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -170,7 +173,7 @@ class _SavedInsightsPageState extends State<SavedInsightsPage>
           ),
           const SizedBox(height: AppDimensions.spacingSm),
           Text(
-            'Tap Save on any insight card to keep it here',
+            'Tap Save on a daily forecast to keep it here',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,
@@ -196,7 +199,7 @@ class _SavedInsightsPageState extends State<SavedInsightsPage>
           ),
           const SizedBox(height: AppDimensions.spacingLg),
           Text(
-            'Could not load saved insights',
+            'Could not load saved forecasts',
             style: TextStyle(
               fontSize: 16,
               color: brown.withValues(alpha: 0.7),
@@ -214,7 +217,7 @@ class _SavedInsightsPageState extends State<SavedInsightsPage>
     required Color brown,
     required bool isDark,
   }) {
-    final title = data['title'] as String? ?? 'Insight';
+    final title = data['title'] as String? ?? 'Forecast';
     final content = data['content'] as String? ?? '';
     final scheduledFor = data['scheduledFor'] as String?;
     final insightDate = data['insightDate'] as String?;
@@ -317,7 +320,7 @@ class _SavedInsightsPageState extends State<SavedInsightsPage>
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(
-          'Remove saved insight?',
+          'Remove saved forecast?',
           style: TextStyle(color: brown),
         ),
         actions: [
@@ -340,7 +343,8 @@ class _SavedInsightsPageState extends State<SavedInsightsPage>
     );
 
     if (confirmed == true) {
-      await locator<UserRepository>().collection
+      await locator<UserRepository>()
+          .collection
           .doc(widget.uid)
           .collection('savedInsights')
           .doc(docId)
@@ -348,4 +352,3 @@ class _SavedInsightsPageState extends State<SavedInsightsPage>
     }
   }
 }
-

@@ -11,7 +11,6 @@ import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/shared/presentation/responsive/responsive.dart';
 import 'package:aurogram/shared/models/astrology_profile.dart';
 import 'package:aurogram/shared/models/ayurveda_profile.dart';
-import 'package:aurogram/shared/models/daily_insight.dart';
 import 'package:aurogram/features/astrology/domain/astrology_service.dart';
 import 'package:aurogram/features/ayurveda/domain/ayurveda_service.dart';
 import 'package:aurogram/features/astrology/domain/sky_positions_service.dart';
@@ -108,7 +107,6 @@ class DashboardPageState extends State<DashboardPage>
 
   // Cached outside build, but rebound whenever Firebase identity changes.
   Stream<AstrologyProfile?>? _profileStream;
-  Stream<DailyInsight?>? _insightStream;
   Stream<AyurvedaProfile?>? _ayurvedaStream;
   Stream<Map<String, ForecastDay>>? _forecastStream;
 
@@ -189,8 +187,6 @@ class DashboardPageState extends State<DashboardPage>
   void _bindUserStreams(User? user) {
     final uid = user?.uid;
     _profileStream = uid == null ? null : _astrologyService.streamProfile(uid);
-    _insightStream =
-        uid == null ? null : _astrologyService.streamTodayInsight(uid);
     _ayurvedaStream = uid == null ? null : _ayurvedaService.streamProfile(uid);
     _forecastStream = uid == null ? null : _forecastService.streamForecast(uid);
   }
@@ -521,7 +517,6 @@ class DashboardPageState extends State<DashboardPage>
     if (_user == null) {
       return BabaCosmicContent(
         profile: null,
-        insight: null,
         ayurvedaProfile: null,
         loadingState: _loadingState,
         skyService: _skyService,
@@ -542,49 +537,40 @@ class DashboardPageState extends State<DashboardPage>
     return StreamBuilder<AstrologyProfile?>(
       stream: _profileStream,
       builder: (context, profileSnapshot) {
-        return StreamBuilder<DailyInsight?>(
-          stream: _insightStream,
-          builder: (context, insightSnapshot) {
-            return StreamBuilder<AyurvedaProfile?>(
-              stream: _ayurvedaStream,
-              builder: (context, ayurvedaSnapshot) {
-                final profile = profileSnapshot.data;
-                final insight = insightSnapshot.data;
-                final isLoading = profileSnapshot.connectionState ==
-                        ConnectionState.waiting &&
+        return StreamBuilder<AyurvedaProfile?>(
+          stream: _ayurvedaStream,
+          builder: (context, ayurvedaSnapshot) {
+            final profile = profileSnapshot.data;
+            final isLoading =
+                profileSnapshot.connectionState == ConnectionState.waiting &&
                     profile == null;
 
-                if (isLoading) {
-                  final isDark =
-                      Theme.of(context).brightness == Brightness.dark;
-                  return BabaCosmicSkeleton(
-                      isDark: isDark, brown: AppTheme.primaryColor);
-                }
+            if (isLoading) {
+              final isDark = Theme.of(context).brightness == Brightness.dark;
+              return BabaCosmicSkeleton(
+                  isDark: isDark, brown: AppTheme.primaryColor);
+            }
 
-                return StreamBuilder<Map<String, ForecastDay>>(
-                  stream: _forecastStream,
-                  builder: (context, forecastSnapshot) {
-                    _maybeEnsureForecast(forecastSnapshot);
-                    return BabaCosmicContent(
-                      profile: profile,
-                      insight: insight,
-                      ayurvedaProfile: ayurvedaSnapshot.data,
-                      forecast: forecastSnapshot.data,
-                      loadingState: _loadingState,
-                      skyService: _skyService,
-                      calendarService: _calendarService,
-                      sliderRangeDays: _sliderRangeDays,
-                      sliderValueNotifier: _sliderValueNotifier,
-                      sliderDateNotifier: _sliderDateNotifier,
-                      onSliderChanged: _onSliderChanged,
-                      onResetToToday: _resetSliderToToday,
-                      onLoadSkyPositions: _loadSkyPositions,
-                      onTriggerCachePopulation:
-                          _triggerSkyPositionsCachePopulation,
-                      wheelResetSignal: _wheelResetNotifier,
-                      nakshatraController: _nakshatraController,
-                    );
-                  },
+            return StreamBuilder<Map<String, ForecastDay>>(
+              stream: _forecastStream,
+              builder: (context, forecastSnapshot) {
+                _maybeEnsureForecast(forecastSnapshot);
+                return BabaCosmicContent(
+                  profile: profile,
+                  ayurvedaProfile: ayurvedaSnapshot.data,
+                  forecast: forecastSnapshot.data,
+                  loadingState: _loadingState,
+                  skyService: _skyService,
+                  calendarService: _calendarService,
+                  sliderRangeDays: _sliderRangeDays,
+                  sliderValueNotifier: _sliderValueNotifier,
+                  sliderDateNotifier: _sliderDateNotifier,
+                  onSliderChanged: _onSliderChanged,
+                  onResetToToday: _resetSliderToToday,
+                  onLoadSkyPositions: _loadSkyPositions,
+                  onTriggerCachePopulation: _triggerSkyPositionsCachePopulation,
+                  wheelResetSignal: _wheelResetNotifier,
+                  nakshatraController: _nakshatraController,
                 );
               },
             );

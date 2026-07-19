@@ -5,7 +5,6 @@ import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/core/routing/route_names.dart';
 import 'package:aurogram/shared/models/astrology_profile.dart';
-import 'package:aurogram/shared/models/daily_insight.dart';
 import 'package:aurogram/shared/models/ayurveda_profile.dart';
 import 'package:aurogram/features/astrology/domain/sky_positions_service.dart';
 import 'package:aurogram/features/astrology/domain/astro_calendar_service.dart';
@@ -24,7 +23,6 @@ import 'package:aurogram/features/astrology/presentation/pages/baba/widgets/baba
 /// (SizedBox.shrink) when their data is missing.
 class BabaSecondaryCards extends StatelessWidget {
   final AstrologyProfile? profile;
-  final DailyInsight? insight;
   final AyurvedaProfile? ayurvedaProfile;
   final DashboardLoadingState loadingState;
   final SkyPositionsService skyService;
@@ -44,7 +42,6 @@ class BabaSecondaryCards extends StatelessWidget {
   const BabaSecondaryCards({
     super.key,
     required this.profile,
-    required this.insight,
     required this.ayurvedaProfile,
     required this.loadingState,
     required this.skyService,
@@ -63,8 +60,6 @@ class BabaSecondaryCards extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final brown = AppTheme.primaryColor;
-    final insightTransits =
-        insight?.astrologicalData?['transits'] as Map<String, dynamic>?;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -105,13 +100,8 @@ class BabaSecondaryCards extends StatelessWidget {
                   // Position lookup chain:
                   // 1. SkyPositionsService (exact, +/-30 days)
                   // 2. AstroCalendarService (compact, +/-365 days)
-                  // 3. Insight transits (today only, fallback)
                   final skyPositions =
                       skyService.getPositionsForDate(sliderDate);
-                  final today = DateTime.now();
-                  final isSliderToday = sliderDate.year == today.year &&
-                      sliderDate.month == today.month &&
-                      sliderDate.day == today.day;
                   Map<String, dynamic>? positions;
                   if (skyPositions != null && skyPositions.isNotEmpty) {
                     positions = skyPositions;
@@ -119,8 +109,6 @@ class BabaSecondaryCards extends StatelessWidget {
                     positions =
                         calendarService!.getPositionsForDate(sliderDate);
                   }
-                  positions ??= isSliderToday ? insightTransits : null;
-
                   if (positions == null || positions.isEmpty) {
                     return const SizedBox.shrink();
                   }
@@ -163,7 +151,6 @@ class BabaSecondaryCards extends StatelessWidget {
                         isDark,
                       );
                     },
-                    insightText: insight?.displayMessage,
                   );
                 },
               );

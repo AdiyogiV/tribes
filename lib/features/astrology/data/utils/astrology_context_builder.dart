@@ -1,6 +1,7 @@
 import 'package:aurogram/shared/models/astrology_profile.dart';
 import 'package:aurogram/shared/models/ayurveda_profile.dart';
 import 'package:aurogram/shared/models/daily_insight.dart';
+import 'package:aurogram/features/astrology/domain/forecast_service.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 
 /// Builds comprehensive astrology context for AI chat
@@ -13,12 +14,14 @@ class AstrologyContextBuilder {
   static Map<String, dynamic> buildContext({
     AstrologyProfile? profile,
     DailyInsight? insight,
+    ForecastDay? forecast,
     AyurvedaProfile? ayurveda,
   }) {
     // Log detailed info about what data is available
     AppLogger.i('🔮 Building astrology context for chat', data: {
       'hasProfile': profile != null,
       'hasInsight': insight != null,
+      'hasForecast': forecast != null,
       'hasAyurveda': ayurveda?.hasData ?? false,
       // Profile data availability
       'ascendant': profile?.ascendant,
@@ -202,7 +205,24 @@ class AstrologyContextBuilder {
       context['ayurveda'] = ayurvedaContext;
     }
 
-    // === DAILY INSIGHT DATA (includes today's transits!) ===
+    // === UNIFIED DAILY FORECAST ===
+    if (forecast != null) {
+      context['forecast'] = {
+        'date': forecast.date,
+        'heading': forecast.heading,
+        'narrative': forecast.narrative,
+        'alignment': forecast.alignment,
+        'action': forecast.action,
+        'caution': forecast.caution,
+        'timing': forecast.timing,
+        'tip': forecast.tip,
+        'tara': forecast.tara,
+        'favorable': forecast.favorable,
+        'unfavorable': forecast.unfavorable,
+      };
+    }
+
+    // === LEGACY DAILY INSIGHT DATA ===
     if (insight != null) {
       context['dailyInsight'] = insight.displayMessage;
       context['insightTheme'] = insight.displayTheme;

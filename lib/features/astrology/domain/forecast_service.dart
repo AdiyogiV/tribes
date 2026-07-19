@@ -144,16 +144,10 @@ class ForecastService {
   Future<void> ensureComputed() async {
     if (_computeInFlight) return;
     _computeInFlight = true;
-    // [forecast] TEMP diagnostic — remove after device verification.
-    AppLogger.i('[forecast] computeMyForecast: calling',
-        category: LogCategory.database);
     try {
-      final res = await _functions
+      await _functions
           .httpsCallable('astroGateway')
           .call({'method': 'computeMyForecast'});
-      AppLogger.i('[forecast] computeMyForecast: ok',
-          category: LogCategory.database,
-          data: {'result': res.data?.toString()});
     } catch (e) {
       AppLogger.w('[forecast] computeMyForecast: FAILED (non-fatal)',
           category: LogCategory.database, data: {'error': e.toString()});

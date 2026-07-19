@@ -13,8 +13,7 @@ extension NotificationChannels on NotificationService {
   // ── Android Channel IDs ────────────────────────────────────────────────────
   static const String chatChannelId = 'chat_messages';
   static const String chatChannelName = 'Chat Messages';
-  static const String chatChannelDesc =
-      'Notifications for new chat messages';
+  static const String chatChannelDesc = 'Notifications for new chat messages';
 
   static const String socialChannelId = 'social_notifications';
   static const String socialChannelName = 'Social Activity';
@@ -23,13 +22,11 @@ extension NotificationChannels on NotificationService {
 
   static const String gramChannelId = 'gram_notifications';
   static const String gramChannelName = 'Gram Updates';
-  static const String gramChannelDesc =
-      'Invites, requests, and gram updates';
+  static const String gramChannelDesc = 'Invites, requests, and gram updates';
 
   static const String astroChannelId = 'astro_insights';
-  static const String astroChannelName = 'Daily Insights';
-  static const String astroChannelDesc =
-      'Your personalized astrology insights';
+  static const String astroChannelName = 'Daily Forecasts';
+  static const String astroChannelDesc = 'Your personalized astrology insights';
 
   static const String generalChannelId = 'general_notifications';
   static const String generalChannelName = 'General';
@@ -37,8 +34,7 @@ extension NotificationChannels on NotificationService {
 
   static const String callChannelId = 'call_notifications';
   static const String callChannelName = 'Incoming Calls';
-  static const String callChannelDesc =
-      'Voice and video call notifications';
+  static const String callChannelDesc = 'Voice and video call notifications';
 
   static const String groupCallChannelId = 'group_calls';
   static const String groupCallChannelName = 'Group Calls';
@@ -116,8 +112,7 @@ extension NotificationChannels on NotificationService {
     await localNotifications.initialize(
       initSettings,
       onDidReceiveNotificationResponse: handleLocalNotificationTap,
-      onDidReceiveBackgroundNotificationResponse:
-          backgroundNotificationHandler,
+      onDidReceiveBackgroundNotificationResponse: backgroundNotificationHandler,
     );
 
     if (!kIsWeb && PlatformServices.instance.isAndroid) {

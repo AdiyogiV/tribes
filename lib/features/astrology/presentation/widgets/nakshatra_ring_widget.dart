@@ -12,8 +12,6 @@ import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/features/astrology/data/utils/nakshatra_data.dart';
 import 'package:aurogram/features/astrology/data/utils/daily_vibe.dart';
 import 'package:aurogram/features/astrology/domain/forecast_service.dart';
-import 'package:aurogram/core/logging/app_logger.dart';
-import 'package:aurogram/shared/models/daily_insight.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/common/pulsing_dot.dart';
 
 // =============================================================================
@@ -171,12 +169,6 @@ class NakshatraRingWidget extends StatefulWidget {
   /// so external widgets (e.g. the week forecast chips) can animate the wheel.
   final NakshatraWheelController? controller;
 
-  /// Optional AI-generated daily insight. When the wheel is at today and an
-  /// insight is available, the hero card uses [DailyInsight.displayMessage] as
-  /// the narrative (richer than the static vibe template). On other days the
-  /// card falls back to [DailyVibe.narrative].
-  final DailyInsight? insight;
-
   /// The unified forecast: date (yyyy-MM-dd) → computed day. This is the SINGLE
   /// source of the headline alignment % and the woven narrative — real,
   /// server-computed Vedic day-signals (not the old on-phone `50 + quality×47`).
@@ -199,7 +191,6 @@ class NakshatraRingWidget extends StatefulWidget {
     this.onDateChanged,
     this.wheelResetSignal,
     this.controller,
-    this.insight,
     this.forecast,
     this.wheelFirst = false,
   });
@@ -341,24 +332,8 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
 
   /// The unified-forecast day for whatever date the wheel is currently showing,
   /// or null if the forecast hasn't been computed for that date yet.
-  String? _lastLoggedFcKey; // [forecast] TEMP diagnostic dedupe
-  ForecastDay? get _activeForecastDay {
-    final key = ForecastService.dateKey(_displayedDate);
-    final day = widget.forecast?[key];
-    // [forecast] TEMP diagnostic — logs once per displayed date. Remove later.
-    if (key != _lastLoggedFcKey) {
-      _lastLoggedFcKey = key;
-      AppLogger.i('[forecast] wheel day', category: LogCategory.ui, data: {
-        'key': key,
-        'found': day != null,
-        'alignment': day?.alignment,
-        'heading': day?.heading,
-        'hasNarrative': day?.narrative?.isNotEmpty ?? false,
-        'forecastSize': widget.forecast?.length ?? 0,
-      });
-    }
-    return day;
-  }
+  ForecastDay? get _activeForecastDay =>
+      widget.forecast?[ForecastService.dateKey(_displayedDate)];
 
   /// Recompute the scrub window: the contiguous run of days, starting from
   /// today, that have BOTH a real alignment percentage AND a woven narrative.
@@ -1005,7 +980,6 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
     );
     if (vibe == null) return _buildVibeEmptyContent(c, isDark, cardColor);
 
-    final isAtToday = _isAtToday;
     final fday = _activeForecastDay;
     final forecastNarrative = fday?.narrative;
     // Real number present for this day but the woven story hasn't landed yet →
@@ -1016,20 +990,11 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
     if (storyGenerating) {
       return _buildVibeLoadingContent(c);
     }
-    // Narrative priority:
-    //   1. the unified forecast's woven narrative for this date (the story)
-    //   2. today's AI daily insight (when parked on today)
-    //   3. the static Tara vibe template (fallback only for dates outside the
-    //      computed forecast window — genuinely beyond the woven story)
-    final aiMessage = widget.insight?.displayMessage ?? '';
-    final String narrativeText;
-    if (forecastNarrative != null && forecastNarrative.isNotEmpty) {
-      narrativeText = forecastNarrative;
-    } else if (isAtToday && aiMessage.isNotEmpty) {
-      narrativeText = aiMessage;
-    } else {
-      narrativeText = vibe.narrative;
-    }
+    // The unified forecast owns every narrated date. Static Tara guidance is
+    // only a fallback outside the computed forecast window.
+    final narrativeText = forecastNarrative?.isNotEmpty == true
+        ? forecastNarrative!
+        : vibe.narrative;
 
     return Container(
       width: double.infinity,

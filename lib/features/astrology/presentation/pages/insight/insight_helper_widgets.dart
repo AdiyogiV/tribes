@@ -279,9 +279,9 @@ class InsightEmptyState extends StatelessWidget {
         child: EmptyStateWidget(
           icon: Icons.auto_awesome_rounded,
           iconColor: brown,
-          title: 'Your Insight',
+          title: 'Forecast unavailable',
           subtitle:
-              'Tap below to receive your personalized guidance based on your birth chart and current planetary positions.',
+              'Your personalized forecast is not ready yet. Pull down or return shortly to try again.',
           padding: EdgeInsets.zero,
         ),
       ),
@@ -319,7 +319,7 @@ class InsightLoadingCard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Generating Insight',
+              'Preparing forecast',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
@@ -328,7 +328,7 @@ class InsightLoadingCard extends StatelessWidget {
             ),
             const SizedBox(height: AppDimensions.spacingMd),
             ShimmerText(
-              text: 'Reading the stars...',
+              text: 'Reading your sky...',
               baseColor: brown.withValues(alpha: 0.7),
               fontSize: 13,
               fontWeight: FontWeight.w500,

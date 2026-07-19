@@ -2,17 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:aurogram/shared/models/daily_insight.dart';
 import 'package:aurogram/shared/models/astrology_profile.dart';
 import 'package:aurogram/features/astrology/domain/astrology_service.dart';
 import 'package:aurogram/features/notifications/domain/notification_service.dart';
-import 'package:aurogram/features/astrology/presentation/widgets/insight_cards/insight_card.dart';
 import 'package:go_router/go_router.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/astro_chat_input.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/features/astrology/data/utils/astrology_context_builder.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/timeline/muhurat_timeline_widget.dart';
+import 'package:aurogram/features/astrology/presentation/pages/insight/forecast_day_view.dart';
 import 'package:aurogram/features/astrology/presentation/pages/insight/insight_widgets.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/features/astrology/domain/forecast_service.dart';
@@ -47,22 +46,28 @@ class _DailyInsightPageState extends State<DailyInsightPage>
 
   @override
   BabaSnapshot babaSnapshot() {
-    final insight = _lastInsight;
+    final forecast = _lastForecast;
     if (_isRefreshingForecast) {
       return const BabaSnapshot.loading(
           headline: "Today's forecast is refreshing");
     }
-    if (insight == null) {
-      return const BabaSnapshot.empty(headline: 'No insight on screen yet');
+    if (forecast == null) {
+      return const BabaSnapshot.empty(headline: 'No forecast on screen yet');
     }
     return BabaSnapshot.ready(
-      headline: "Today's insight: ${insight.displayTheme}",
+      headline: "Today's forecast: ${forecast.heading ?? 'Daily guidance'}",
       facts: {
-        'date': insight.dateString,
-        'theme': insight.displayTheme,
+        'date': forecast.date,
+        'heading': forecast.heading,
+        'alignment': forecast.alignment,
         'viewingHistory': widget.insightDate != null,
       },
-      items: insight.sections.map((s) => s.title).toList(growable: false),
+      items: [
+        if (forecast.action?.isNotEmpty == true) 'Focus',
+        if (forecast.caution?.isNotEmpty == true) 'Handle gently',
+        if (forecast.timing?.isNotEmpty == true) 'Timing',
+        if (forecast.tip?.isNotEmpty == true) 'Practical tip',
+      ],
     );
   }
 
@@ -79,9 +84,16 @@ class _DailyInsightPageState extends State<DailyInsightPage>
 
   final ScrollController _scrollController = ScrollController();
 
-  // Cache profile and insight for context building
+  // Cache the rendered profile and forecast for Aurobhatt context.
   AstrologyProfile? _lastProfile;
-  DailyInsight? _lastInsight;
+  ForecastDay? _lastForecast;
+
+  String get _forecastDate {
+    if (widget.insightDate != null) return widget.insightDate!;
+    final istNow =
+        DateTime.now().toUtc().add(const Duration(hours: 5, minutes: 30));
+    return ForecastService.dateKey(istNow);
+  }
 
   // Track if notification prompt was shown
   bool _notificationPromptShown = false;
@@ -176,7 +188,7 @@ class _DailyInsightPageState extends State<DailyInsightPage>
     try {
       final astroContext = AstrologyContextBuilder.buildContext(
         profile: _lastProfile,
-        insight: _lastInsight,
+        forecast: _lastForecast,
       );
 
       _messageController.clear();
@@ -242,7 +254,7 @@ class _DailyInsightPageState extends State<DailyInsightPage>
                           ),
                           Expanded(
                             child: Center(
-                              child: Text('insights',
+                              child: Text('forecast',
                                   style: TextStyle(
                                     fontSize: 22,
                                     fontWeight: FontWeight.w900,
@@ -258,7 +270,7 @@ class _DailyInsightPageState extends State<DailyInsightPage>
                                   size: 22, color: brown),
                               onPressed: _openSavedInsights,
                               padding: EdgeInsets.zero,
-                              tooltip: 'Saved insights',
+                              tooltip: 'Saved forecasts',
                             ),
                           ),
                         ],
@@ -275,21 +287,16 @@ class _DailyInsightPageState extends State<DailyInsightPage>
                         _lastProfile = profileSnapshot.data;
                       }
 
-                      return StreamBuilder<DailyInsight?>(
-                        stream: widget.insightDate != null
-                            ? _astrologyService.streamInsightForDate(
-                                _uid, widget.insightDate!)
-                            : _astrologyService.streamTodayInsight(_uid),
-                        builder: (context, insightSnapshot) {
-                          final insight = insightSnapshot.data;
-                          final isLoading = insightSnapshot.connectionState ==
+                      return StreamBuilder<Map<String, ForecastDay>>(
+                        stream: ForecastService().streamForecast(_uid),
+                        builder: (context, forecastSnapshot) {
+                          final forecast =
+                              forecastSnapshot.data?[_forecastDate];
+                          final isLoading = forecastSnapshot.connectionState ==
                               ConnectionState.waiting;
 
-                          if (insight != null) {
-                            _lastInsight = insight;
-                          }
-
-                          if (isLoading && insight == null) {
+                          if (forecast != null) _lastForecast = forecast;
+                          if (isLoading && forecast == null) {
                             return const InsightSkeleton();
                           }
 
@@ -299,79 +306,40 @@ class _DailyInsightPageState extends State<DailyInsightPage>
                               final horizontalPadding = screenWidth > 700
                                   ? ((screenWidth - 600) / 2).clamp(16.0, 200.0)
                                   : 16.0;
-                              final spacing = screenWidth > 700 ? 16.0 : 12.0;
+                              final spacing = screenWidth > 700 ? 20.0 : 16.0;
 
                               return Padding(
                                 padding: EdgeInsets.symmetric(
-                                    horizontal: horizontalPadding),
+                                  horizontal: horizontalPadding,
+                                ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     const SizedBox(
-                                        height: AppDimensions.spacingSm),
-
-                                    if (insight != null) ...[
-                                      if (insight.sections.isNotEmpty)
-                                        ...insight.sections
-                                            .asMap()
-                                            .entries
-                                            .map((entry) {
-                                          final index = entry.key;
-                                          final section = entry.value;
-                                          return Padding(
-                                            padding: EdgeInsets.only(
-                                                bottom: spacing),
-                                            child: InsightCard(
-                                              section: section,
-                                              footer: InsightReactionFooter(
-                                                section: section,
-                                                profile: profileSnapshot.data,
-                                                isDark: isDark,
-                                                cardIndex: index,
-                                                insightDate: insight.dateString,
-                                                uid: _uid,
-                                              ),
-                                            ),
-                                          );
-                                        })
-                                      else ...[
-                                        if (insight.displayTheme.isNotEmpty)
-                                          LegacyInsightCard(
-                                            title: insight.displayTheme
-                                                .toUpperCase(),
-                                            content: insight.displayMessage,
-                                            isDark: isDark,
-                                            brown: brown,
-                                          ),
-                                        ...insight.sections
-                                            .map((section) => Padding(
-                                                  padding: EdgeInsets.only(
-                                                      top: spacing),
-                                                  child: LegacyInsightCard(
-                                                    title: section.title
-                                                        .toUpperCase(),
-                                                    content: section.content,
-                                                    isDark: isDark,
-                                                    brown: brown,
-                                                  ),
-                                                )),
-                                      ],
-                                    ] else if (_isRefreshingForecast)
+                                      height: AppDimensions.spacingSm,
+                                    ),
+                                    if (forecast != null)
+                                      ForecastDayView(
+                                        forecast: forecast,
+                                        profile: profileSnapshot.data,
+                                        uid: _uid,
+                                      )
+                                    else if (_isRefreshingForecast)
                                       InsightLoadingCard(
-                                          isDark: isDark, brown: brown)
+                                        isDark: isDark,
+                                        brown: brown,
+                                      )
                                     else
                                       InsightEmptyState(
-                                          isDark: isDark, brown: brown),
-
-                                    // Muhurat Timeline
-                                    if (_lastProfile != null &&
-                                        _lastProfile!.muhurat != null) ...[
+                                        isDark: isDark,
+                                        brown: brown,
+                                      ),
+                                    if (_lastProfile?.muhurat != null) ...[
                                       SizedBox(height: spacing),
                                       MuhuratTimelineWidget(
                                         muhurat: _lastProfile!.muhurat!,
                                       ),
                                     ],
-
                                     const SizedBox(height: 140),
                                   ],
                                 ),
@@ -396,13 +364,13 @@ class _DailyInsightPageState extends State<DailyInsightPage>
                   messageController: _messageController,
                   focusNode: _focusNode,
                   onSendMessage: _sendMessageWithAstroContext,
-                  hintText: 'Curious about today?',
+                  hintText: 'Ask about this forecast…',
                   enableVoice: true,
                   isEntryPage: true,
                   astrologyContextBuilder: () =>
                       AstrologyContextBuilder.buildContext(
                     profile: _lastProfile,
-                    insight: _lastInsight,
+                    forecast: _lastForecast,
                   ),
                 ),
               ),
