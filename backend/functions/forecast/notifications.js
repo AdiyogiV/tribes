@@ -11,7 +11,7 @@ const ACTIVE_DAYS = Number(process.env.FORECAST_NOTIFICATION_ACTIVE_DAYS || 7);
 const MAX_USERS = Number(process.env.FORECAST_NOTIFICATION_MAX_USERS || 500);
 
 function previewFor(day) {
-    const copy = day?.narrative || day?.action || "Your personal forecast is ready.";
+    const copy = day?.narrative || day?.action || "Your daily energy reading is ready.";
     return String(copy).replace(/[*_#`]/g, "").trim().slice(0, 150);
 }
 

@@ -25,7 +25,7 @@ extension NotificationChannels on NotificationService {
   static const String gramChannelDesc = 'Invites, requests, and gram updates';
 
   static const String astroChannelId = 'astro_insights';
-  static const String astroChannelName = 'Daily Forecasts';
+  static const String astroChannelName = 'Daily Energy';
   static const String astroChannelDesc = 'Your personalized astrology insights';
 
   static const String generalChannelId = 'general_notifications';

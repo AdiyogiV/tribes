@@ -30,13 +30,13 @@ class _DailyInsightTileState extends State<DailyInsightTile> {
     _isRead = widget.data?['read'] == true;
   }
 
-  String get _title => widget.data?['title'] as String? ?? 'Daily Forecast';
+  String get _title => widget.data?['title'] as String? ?? "Today's Energy";
   String get _preview =>
       widget.data?['preview'] as String? ??
-      'Your personalized astrology insight is ready.';
+      "Your daily energy reading is ready.";
   String get _date => widget.data?['date'] as String? ?? '';
 
-  /// Unified icon for the forecast notification.
+  /// Unified icon for the daily energy notification.
   IconData get _cardIcon {
     return Icons.nights_stay_outlined;
   }
@@ -160,7 +160,7 @@ class _DailyInsightTileState extends State<DailyInsightTile> {
                                   BorderRadius.circular(AppDimensions.radiusXs),
                             ),
                             child: Text(
-                              'FORECAST',
+                              'ENERGY',
                               style: TextStyle(
                                 fontSize: AppTheme.babaTextSize,
                                 fontWeight: FontWeight.w600,

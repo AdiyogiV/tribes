@@ -12,7 +12,7 @@ import 'package:aurogram/shared/models/astrology_profile.dart';
 import 'package:aurogram/shared/presentation/widgets/feedback/snack_bar_service.dart';
 import 'package:aurogram/shared/services/share/share_service.dart';
 
-/// One action row for the whole daily forecast, rather than repeated controls
+/// One action row for the whole daily energy reading, rather than repeated controls
 /// on every guidance fragment.
 class ForecastReactionFooter extends StatefulWidget {
   final ForecastDay forecast;
@@ -60,7 +60,7 @@ class _ForecastReactionFooterState extends State<ForecastReactionFooter> {
       final snapshot = await _savedDocument().get();
       if (mounted) setState(() => _isSaved = snapshot.exists);
     } catch (error) {
-      AppLogger.w('Could not read saved forecast state',
+      AppLogger.w('Could not read saved daily energy state',
           category: LogCategory.database, data: {'error': error.toString()});
     }
   }
@@ -78,7 +78,7 @@ class _ForecastReactionFooterState extends State<ForecastReactionFooter> {
 
     return Semantics(
       container: true,
-      label: 'Forecast actions',
+      label: 'Daily energy actions',
       child: Wrap(
         spacing: AppDimensions.spacingSm,
         runSpacing: AppDimensions.spacingSm,
@@ -147,7 +147,7 @@ class _ForecastReactionFooterState extends State<ForecastReactionFooter> {
         await document.delete();
       } else {
         await document.set({
-          'title': widget.forecast.heading ?? 'Daily forecast',
+          'title': widget.forecast.heading ?? 'Daily energy',
           'content': _shareContent,
           'cardType': 'forecast',
           'insightDate': widget.forecast.date,
@@ -158,7 +158,7 @@ class _ForecastReactionFooterState extends State<ForecastReactionFooter> {
       if (mounted && !wasSaved) {
         showCustomSnackBar(
           context,
-          message: 'Forecast saved',
+          message: 'Daily energy saved',
           backgroundColor: AppTheme.astroBrown(
             Theme.of(context).brightness == Brightness.dark,
           ),
@@ -181,7 +181,7 @@ class _ForecastReactionFooterState extends State<ForecastReactionFooter> {
       context: context,
       insightId: _documentId,
       cardType: 'forecast',
-      title: widget.forecast.heading ?? 'Daily forecast',
+      title: widget.forecast.heading ?? 'Daily energy',
       content: _shareContent,
       userName: null,
       moonSign: widget.profile?.moonSign,

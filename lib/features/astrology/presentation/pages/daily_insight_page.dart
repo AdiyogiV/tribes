@@ -49,13 +49,14 @@ class _DailyInsightPageState extends State<DailyInsightPage>
     final forecast = _lastForecast;
     if (_isRefreshingForecast) {
       return const BabaSnapshot.loading(
-          headline: "Today's forecast is refreshing");
+          headline: "Today's energy is refreshing");
     }
     if (forecast == null) {
-      return const BabaSnapshot.empty(headline: 'No forecast on screen yet');
+      return const BabaSnapshot.empty(
+          headline: 'No daily energy on screen yet');
     }
     return BabaSnapshot.ready(
-      headline: "Today's forecast: ${forecast.heading ?? 'Daily guidance'}",
+      headline: "Today's energy: ${forecast.heading ?? 'Daily guidance'}",
       facts: {
         'date': forecast.date,
         'heading': forecast.heading,
@@ -90,10 +91,13 @@ class _DailyInsightPageState extends State<DailyInsightPage>
 
   String get _forecastDate {
     if (widget.insightDate != null) return widget.insightDate!;
-    final istNow =
-        DateTime.now().toUtc().add(const Duration(hours: 5, minutes: 30));
-    return ForecastService.dateKey(istNow);
+    return ForecastService.dateKey(_istNow);
   }
+
+  DateTime get _istNow =>
+      DateTime.now().toUtc().add(const Duration(hours: 5, minutes: 30));
+
+  bool get _isToday => _forecastDate == ForecastService.dateKey(_istNow);
 
   // Track if notification prompt was shown
   bool _notificationPromptShown = false;
@@ -254,7 +258,8 @@ class _DailyInsightPageState extends State<DailyInsightPage>
                           ),
                           Expanded(
                             child: Center(
-                              child: Text('forecast',
+                              child: Text(
+                                  _isToday ? "today's energy" : 'daily energy',
                                   style: TextStyle(
                                     fontSize: 22,
                                     fontWeight: FontWeight.w900,
@@ -270,7 +275,7 @@ class _DailyInsightPageState extends State<DailyInsightPage>
                                   size: 22, color: brown),
                               onPressed: _openSavedInsights,
                               padding: EdgeInsets.zero,
-                              tooltip: 'Saved forecasts',
+                              tooltip: 'Saved daily energies',
                             ),
                           ),
                         ],
@@ -364,7 +369,7 @@ class _DailyInsightPageState extends State<DailyInsightPage>
                   messageController: _messageController,
                   focusNode: _focusNode,
                   onSendMessage: _sendMessageWithAstroContext,
-                  hintText: 'Ask about this forecast…',
+                  hintText: "Ask about today's energy…",
                   enableVoice: true,
                   isEntryPage: true,
                   astrologyContextBuilder: () =>

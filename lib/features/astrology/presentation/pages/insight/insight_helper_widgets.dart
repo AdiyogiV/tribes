@@ -279,9 +279,9 @@ class InsightEmptyState extends StatelessWidget {
         child: EmptyStateWidget(
           icon: Icons.auto_awesome_rounded,
           iconColor: brown,
-          title: 'Forecast unavailable',
+          title: 'Daily energy unavailable',
           subtitle:
-              'Your personalized forecast is not ready yet. Pull down or return shortly to try again.',
+              "Your daily energy reading is not ready yet. Return shortly to try again.",
           padding: EdgeInsets.zero,
         ),
       ),
@@ -319,7 +319,7 @@ class InsightLoadingCard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Preparing forecast',
+              "Preparing today's energy",
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,

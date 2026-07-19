@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/features/astrology/domain/forecast_service.dart';
+import 'package:aurogram/features/astrology/presentation/pages/insight/energy_detail_cards.dart';
 import 'package:aurogram/features/astrology/presentation/pages/insight/insight_reaction_footer.dart';
 import 'package:aurogram/shared/models/astrology_profile.dart';
 
@@ -28,10 +29,18 @@ class ForecastDayView extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _ForecastHero(forecast: forecast, brown: brown),
+        if (forecast.tara?.trim().isNotEmpty == true ||
+            forecast.favorable.isNotEmpty ||
+            forecast.unfavorable.isNotEmpty) ...[
+          const SizedBox(height: AppDimensions.spacingMd),
+          EnergyBreakdownCard(energy: forecast, accent: brown),
+        ],
         if (guidance.isNotEmpty) ...[
           const SizedBox(height: AppDimensions.spacingMd),
           _GuidanceCard(items: guidance, brown: brown),
         ],
+        const SizedBox(height: AppDimensions.spacingMd),
+        EnergyMethodCard(accent: brown),
         const SizedBox(height: AppDimensions.spacingMd),
         ForecastReactionFooter(
           forecast: forecast,
@@ -83,8 +92,10 @@ class _ForecastHero extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final heading = forecast.heading?.trim().isNotEmpty == true
         ? forecast.heading!.trim()
-        : 'Your daily forecast';
+        : "Today's energy";
     final narrative = forecast.narrative?.trim() ?? '';
+    final energyLabel =
+        _isToday(forecast.date) ? "TODAY'S ENERGY" : 'DAILY ENERGY';
 
     return Semantics(
       container: true,
@@ -111,7 +122,7 @@ class _ForecastHero extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _formatDate(forecast.date).toUpperCase(),
+                          '$energyLabel  •  ${_formatDate(forecast.date).toUpperCase()}',
                           style: TextStyle(
                             color: brown,
                             fontSize: 11,
@@ -158,6 +169,12 @@ class _ForecastHero extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  static bool _isToday(String value) {
+    final now =
+        DateTime.now().toUtc().add(const Duration(hours: 5, minutes: 30));
+    return value == ForecastService.dateKey(now);
   }
 
   static String _formatDate(String value) {
@@ -213,7 +230,7 @@ class _AlignmentBadge extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'ALIGNED',
+              'ENERGY',
               style: TextStyle(
                 color: brown,
                 fontSize: 9,

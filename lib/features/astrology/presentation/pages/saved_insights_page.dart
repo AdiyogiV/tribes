@@ -9,7 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/features/baba/domain/baba_snapshot.dart';
 
-/// Page to display the user's saved forecasts and older saved insights.
+/// Page to display the user's saved daily energies and older saved insights.
 class SavedInsightsPage extends StatefulWidget {
   final String uid;
 
@@ -28,7 +28,7 @@ class _SavedInsightsPageState extends State<SavedInsightsPage>
 
   @override
   BabaSnapshot babaSnapshot() => const BabaSnapshot.ready(
-        headline: 'The saved forecasts the user bookmarked to revisit.',
+        headline: 'The saved daily energies the user bookmarked to revisit.',
       );
 
   @override
@@ -164,7 +164,7 @@ class _SavedInsightsPageState extends State<SavedInsightsPage>
           ),
           const SizedBox(height: AppDimensions.spacingLg),
           Text(
-            'No saved forecasts yet',
+            'No saved daily energies yet',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -173,7 +173,7 @@ class _SavedInsightsPageState extends State<SavedInsightsPage>
           ),
           const SizedBox(height: AppDimensions.spacingSm),
           Text(
-            'Tap Save on a daily forecast to keep it here',
+            'Tap Save on a daily energy reading to keep it here',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,
@@ -199,7 +199,7 @@ class _SavedInsightsPageState extends State<SavedInsightsPage>
           ),
           const SizedBox(height: AppDimensions.spacingLg),
           Text(
-            'Could not load saved forecasts',
+            'Could not load saved daily energies',
             style: TextStyle(
               fontSize: 16,
               color: brown.withValues(alpha: 0.7),
@@ -217,7 +217,7 @@ class _SavedInsightsPageState extends State<SavedInsightsPage>
     required Color brown,
     required bool isDark,
   }) {
-    final title = data['title'] as String? ?? 'Forecast';
+    final title = data['title'] as String? ?? 'Daily energy';
     final content = data['content'] as String? ?? '';
     final scheduledFor = data['scheduledFor'] as String?;
     final insightDate = data['insightDate'] as String?;
@@ -320,7 +320,7 @@ class _SavedInsightsPageState extends State<SavedInsightsPage>
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(
-          'Remove saved forecast?',
+          'Remove saved daily energy?',
           style: TextStyle(color: brown),
         ),
         actions: [
