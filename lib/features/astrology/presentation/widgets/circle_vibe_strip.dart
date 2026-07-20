@@ -1,8 +1,10 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:aurogram/features/astrology/domain/circle_vibes_service.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/circle_flush_card.dart';
+import 'package:aurogram/shared/presentation/widgets/avatars/user_avatar.dart';
 
 /// Your circle — a flush black card (no border, no rounded corners) holding a
 /// small-caps eyebrow and a row of grayscale, SQUARE portrait thumbnails.
@@ -29,6 +31,7 @@ class CircleVibeStrip extends StatefulWidget {
 class _CircleVibeStripState extends State<CircleVibeStrip> {
   final _service = CircleVibesService();
   List<CircleVibe> _vibes = const [];
+  final String? _selfUid = FirebaseAuth.instance.currentUser?.uid;
 
   @override
   void initState() {
@@ -43,6 +46,10 @@ class _CircleVibeStripState extends State<CircleVibeStrip> {
     // 2) Refresh from the network; update only if something actually changed.
     final fresh = await _service.fetchCircleVibes();
     if (mounted && fresh.isNotEmpty) setState(() => _vibes = fresh);
+    // 3) Self-heal: if any friend is missing their third-person publicNote
+    // (forecast predates the field), enqueue a one-off re-narration. Guarded
+    // to fire at most once per day; the note shows up on a later fetch.
+    if (fresh.isNotEmpty) await _service.backfillMissingPublicNotes(fresh);
   }
 
   @override
@@ -54,6 +61,14 @@ class _CircleVibeStripState extends State<CircleVibeStrip> {
     final fgMain = isDark ? Colors.white : Colors.black87;
     final fgMuted = isDark ? Colors.white54 : Colors.black54;
 
+    final isWide = kIsWeb && MediaQuery.of(context).size.width >= 820;
+    final eyebrowSize = isWide ? 12.0 : 10.0;
+    final stripHeight = isWide ? 112.0 : 86.0;
+    final photoW = isWide ? 68.0 : 52.0;
+    final photoH = isWide ? 80.0 : 62.0;
+    final tileW = isWide ? 86.0 : 66.0;
+    final nameFontSize = isWide ? 15.0 : 12.0;
+
     return CircleFlushCard(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       child: Column(
@@ -63,7 +78,7 @@ class _CircleVibeStripState extends State<CircleVibeStrip> {
           Text(
             'YOUR CIRCLE',
             style: TextStyle(
-              fontSize: 10,
+              fontSize: eyebrowSize,
               fontWeight: FontWeight.w600,
               letterSpacing: 3.0,
               color: fgMuted,
@@ -71,7 +86,7 @@ class _CircleVibeStripState extends State<CircleVibeStrip> {
           ),
           const SizedBox(height: 12),
           SizedBox(
-            height: 86,
+            height: stripHeight,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               physics: const BouncingScrollPhysics(),
@@ -81,11 +96,16 @@ class _CircleVibeStripState extends State<CircleVibeStrip> {
               itemBuilder: (_, i) {
                 if (i == 0) {
                   return _PortraitTile(
+                    uid: _selfUid,
                     name: 'You',
                     photo: widget.selfPhoto,
                     isSelected: widget.selectedUid == null,
                     fgMain: fgMain,
                     fgMuted: fgMuted,
+                    photoW: photoW,
+                    photoH: photoH,
+                    tileW: tileW,
+                    nameFontSize: nameFontSize,
                     onTap: () {
                           HapticFeedback.selectionClick();
                           widget.onSelect(null);
@@ -94,11 +114,16 @@ class _CircleVibeStripState extends State<CircleVibeStrip> {
                     }
                     final vibe = vibes[i - 1];
                     return _PortraitTile(
+                      uid: vibe.uid,
                       name: vibe.name,
                       photo: vibe.photo,
                       isSelected: widget.selectedUid == vibe.uid,
                       fgMain: fgMain,
                       fgMuted: fgMuted,
+                      photoW: photoW,
+                      photoH: photoH,
+                      tileW: tileW,
+                      nameFontSize: nameFontSize,
                       onTap: () {
                         HapticFeedback.selectionClick();
                         widget.onSelect(vibe);
@@ -117,37 +142,41 @@ class _CircleVibeStripState extends State<CircleVibeStrip> {
 /// a Georgia-italic name beneath.
 class _PortraitTile extends StatelessWidget {
   const _PortraitTile({
+    this.uid,
     required this.name,
     required this.photo,
     required this.isSelected,
     required this.fgMain,
     required this.fgMuted,
     required this.onTap,
+    this.photoW = 52.0,
+    this.photoH = 62.0,
+    this.tileW = 66.0,
+    this.nameFontSize = 12.0,
   });
 
+  final String? uid;
   final String name;
   final String? photo;
   final bool isSelected;
   final Color fgMain;
   final Color fgMuted;
   final VoidCallback onTap;
-
-  static const double _w = 52; // photo size
-  static const double _h = 62;
-  static const double _tileW = 66; // wider than the photo so names don't clip
+  final double photoW;
+  final double photoH;
+  final double tileW;
+  final double nameFontSize;
 
   @override
   Widget build(BuildContext context) {
-    final hasPhoto = photo != null && photo!.isNotEmpty;
-
-    Widget photoWidget = hasPhoto
-        ? CachedNetworkImage(
-            imageUrl: photo!,
-            fit: BoxFit.cover,
-            placeholder: (_, __) => _fallback(),
-            errorWidget: (_, __, ___) => _fallback(),
-          )
-        : _fallback();
+    Widget photoWidget = UserAvatar(
+      userId: uid,
+      imageUrl: photo,
+      size: photoW,
+      borderRadius: BorderRadius.zero,
+      nameInitials: name.trim().isEmpty ? null : name.trim()[0],
+      showBorder: false,
+    );
 
     // Selected = full colour + full strength. Others recede into grayscale.
     if (!isSelected) {
@@ -166,7 +195,7 @@ class _PortraitTile extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: SizedBox(
-        width: _tileW,
+        width: tileW,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -174,8 +203,8 @@ class _PortraitTile extends StatelessWidget {
               duration: const Duration(milliseconds: 220),
               opacity: isSelected ? 1.0 : 0.4,
               child: SizedBox(
-                width: _w,
-                height: _h,
+                width: photoW,
+                height: photoH,
                 child: photoWidget,
               ),
             ),
@@ -188,7 +217,7 @@ class _PortraitTile extends StatelessWidget {
               style: TextStyle(
                 fontFamily: 'Georgia',
                 fontStyle: FontStyle.italic,
-                fontSize: 12,
+                fontSize: nameFontSize,
                 height: 1.0,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                 color: isSelected ? fgMain : fgMuted,
@@ -200,17 +229,4 @@ class _PortraitTile extends StatelessWidget {
     );
   }
 
-  Widget _fallback() => Container(
-        color: fgMain.withValues(alpha: 0.05),
-        alignment: Alignment.center,
-        child: Text(
-          name.trim().isEmpty ? '?' : name.trim()[0].toUpperCase(),
-          style: TextStyle(
-            fontFamily: 'Georgia',
-            fontStyle: FontStyle.italic,
-            fontSize: 22,
-            color: fgMain.withValues(alpha: 0.55),
-          ),
-        ),
-      );
 }

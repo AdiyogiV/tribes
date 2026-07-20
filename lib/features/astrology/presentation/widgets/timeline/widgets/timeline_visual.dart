@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 /// "Modern Axis" timeline.
@@ -27,12 +28,15 @@ class TimelineVisual extends StatelessWidget {
     this.onEventTap,
   });
 
-  static const double _timelineHeight = 84.0;
-  static const double _axisY = 34.0;
-
   double _xForMinute(int minute) => ((minute - startTime) / 60.0) * hourWidth;
 
-  Widget _eventBlock(Map<String, dynamic> event, {required bool isTop}) {
+  Widget _eventBlock(
+    Map<String, dynamic> event, {
+    required bool isTop,
+    required double axisY,
+    required double blockH,
+    required double fontSize,
+  }) {
     final start = event['start'] as int;
     final end = event['end'] as int;
     final color = event['color'] as Color;
@@ -44,7 +48,7 @@ class TimelineVisual extends StatelessWidget {
     final showLabel = width > 35;
 
     // Mathematically precise floating: 4px gap from the axis
-    final top = isTop ? _axisY - 24 : _axisY + 4;
+    final top = isTop ? axisY - blockH - 4 : axisY + 4;
 
     return Positioned(
       left: left,
@@ -53,7 +57,7 @@ class TimelineVisual extends StatelessWidget {
         onTap: onEventTap == null ? null : () => onEventTap!(event),
         child: Container(
           width: width,
-          height: 20,
+          height: blockH,
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.25),
             borderRadius: BorderRadius.circular(4),
@@ -67,7 +71,7 @@ class TimelineVisual extends StatelessWidget {
                   overflow: TextOverflow.clip,
                   softWrap: false,
                   style: TextStyle(
-                    fontSize: 9,
+                    fontSize: fontSize,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.5,
                     color: color,
@@ -81,6 +85,13 @@ class TimelineVisual extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isWide = kIsWeb && MediaQuery.of(context).size.width >= 820;
+    final timelineH = isWide ? 106.0 : 84.0;
+    final axisY = isWide ? 44.0 : 34.0;
+    final blockH = isWide ? 24.0 : 20.0;
+    final eventFontSize = isWide ? 10.5 : 9.0;
+    final hourFontSize = isWide ? 11.0 : 9.5;
+
     final hoursCount = ((endTime - startTime) ~/ 60) + 1;
     final timelineWidth = hoursCount * hourWidth;
 
@@ -96,7 +107,7 @@ class TimelineVisual extends StatelessWidget {
 
     return SizedBox(
       width: timelineWidth,
-      height: _timelineHeight,
+      height: timelineH,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -104,7 +115,7 @@ class TimelineVisual extends StatelessWidget {
           Positioned(
             left: 0,
             right: 0,
-            top: _axisY,
+            top: axisY,
             child: Container(
               height: 1,
               color: ink.withValues(alpha: 0.15),
@@ -118,27 +129,27 @@ class TimelineVisual extends StatelessWidget {
             final hour12 = hourOfDay == 0 ? 12 : (hourOfDay > 12 ? hourOfDay - 12 : hourOfDay);
             final ampm = hourOfDay < 12 ? 'AM' : 'PM';
             final x = index * hourWidth;
-            
+
             return Positioned(
               left: x - 30,
-              top: _axisY - 2,
+              top: axisY - 2,
               child: SizedBox(
                 width: 60,
                 child: Column(
                   children: [
                     // Node on the axis
                     Container(
-                      width: 1, 
-                      height: 5, 
+                      width: 1,
+                      height: 5,
                       color: ink.withValues(alpha: 0.3)
                     ),
-                    const SizedBox(height: 30),
+                    SizedBox(height: axisY - 6),
                     // Text at the bottom
                     Text(
                       '$hour12 $ampm',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 9.5,
+                        fontSize: hourFontSize,
                         fontWeight: FontWeight.w600,
                         color: ink.withValues(alpha: 0.5),
                         letterSpacing: 0.5,
@@ -151,15 +162,15 @@ class TimelineVisual extends StatelessWidget {
           }),
 
           // 3. Floating Modern Blocks
-          ...auspicious.map((e) => _eventBlock(e, isTop: true)),
-          ...inauspicious.map((e) => _eventBlock(e, isTop: false)),
+          ...auspicious.map((e) => _eventBlock(e, isTop: true, axisY: axisY, blockH: blockH, fontSize: eventFontSize)),
+          ...inauspicious.map((e) => _eventBlock(e, isTop: false, axisY: axisY, blockH: blockH, fontSize: eventFontSize)),
 
           // 4. The "Now" Indicator Needle
           if (hasNow) ...[
             // Subtle but visible vertical line
             Positioned(
               left: _xForMinute(currentTimeMinutes!) - 0.5,
-              top: _axisY - 14,
+              top: axisY - 14,
               child: Container(
                 width: 1,
                 height: 28,
@@ -172,7 +183,7 @@ class TimelineVisual extends StatelessWidget {
             // Clean node on the axis
             Positioned(
               left: _xForMinute(currentTimeMinutes!) - 1.5,
-              top: _axisY - 1.0,
+              top: axisY - 1.0,
               child: Container(
                 width: 3,
                 height: 3,

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:aurogram/shared/presentation/widgets/media/common_widgets.dart';
@@ -762,12 +763,19 @@ class _VedicCombinedCardState extends State<VedicCombinedCard> {
     final primaryWhite = (isDark ? Colors.white : const Color(0xFF1A1A1C))
         .withValues(alpha: 0.95);
 
+    // Web-wide: scale up font sizes for readability on desktop.
+    final isWebWide = kIsWeb && MediaQuery.of(context).size.width >= 820;
+    final mainFontSize = isWebWide ? 20.0 : 16.0;
+    final captionFontSize = isWebWide ? 14.0 : 11.0;
+    final padH = isWebWide ? 28.0 : 20.0;
+    final padV = isWebWide ? 22.0 : 16.0;
+
     // Left Column: Classic, chic, editorial (Serif Italic)
     final leftStyle = TextStyle(
       fontFamily: 'Georgia',
       fontStyle: FontStyle.italic,
       color: primaryWhite,
-      fontSize: 16,
+      fontSize: mainFontSize,
       letterSpacing: 0.5,
       height: 1.5,
     );
@@ -775,7 +783,7 @@ class _VedicCombinedCardState extends State<VedicCombinedCard> {
     // Right Column: Clean, modern, precise (Sans-serif Light)
     final rightStyle = TextStyle(
       color: primaryWhite.withValues(alpha: 0.9),
-      fontSize: 16,
+      fontSize: mainFontSize,
       fontWeight: FontWeight.w300,
       letterSpacing: 1.0,
       height: 1.5,
@@ -784,7 +792,7 @@ class _VedicCombinedCardState extends State<VedicCombinedCard> {
     // Bottom Footer Tags
     final bottomStyle = TextStyle(
       color: primaryWhite.withValues(alpha: 0.85),
-      fontSize: 11,
+      fontSize: captionFontSize,
       fontWeight: FontWeight.w600,
       letterSpacing: 1.5,
       height: 1.5,
@@ -796,81 +804,122 @@ class _VedicCombinedCardState extends State<VedicCombinedCard> {
         color: Colors.transparent,
         elevation: 0,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+          padding: EdgeInsets.fromLTRB(padH, padV, padH, padV),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               // LEFT COLUMN (Date Stack)
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (lunarMonth != null) Text(lunarMonth, style: leftStyle),
-                    if (pakshaLine != null) Text(pakshaLine, style: leftStyle),
-                    if (tithiNameOnly != null)
-                      Text(tithiNameOnly, style: leftStyle),
-                    if (vedicNumericDate != null) ...[
-                      const SizedBox(height: 6),
-                      Text(vedicNumericDate.toUpperCase(), style: bottomStyle),
+                child: Builder(builder: (context) {
+                  // On web/desktop, condense month · paksha · tithi onto a
+                  // single line so the card reads horizontally, not as a
+                  // tall stack. Mobile keeps the editorial stacked look.
+                  final oneLine = kIsWeb &&
+                      MediaQuery.of(context).size.width >= 820;
+                  if (oneLine) {
+                    final parts = <String>[
+                      if (lunarMonth != null) lunarMonth,
+                      if (pakshaLine != null) pakshaLine,
+                      if (tithiNameOnly != null) tithiNameOnly,
+                    ];
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (parts.isNotEmpty)
+                          Text(parts.join('  ·  '), style: leftStyle),
+                        if (vedicNumericDate != null) ...[
+                          const SizedBox(height: 6),
+                          Text(vedicNumericDate.toUpperCase(),
+                              style: bottomStyle),
+                        ],
+                      ],
+                    );
+                  }
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (lunarMonth != null) Text(lunarMonth, style: leftStyle),
+                      if (pakshaLine != null) Text(pakshaLine, style: leftStyle),
+                      if (tithiNameOnly != null)
+                        Text(tithiNameOnly, style: leftStyle),
+                      if (vedicNumericDate != null) ...[
+                        const SizedBox(height: 6),
+                        Text(vedicNumericDate.toUpperCase(), style: bottomStyle),
+                      ],
                     ],
-                  ],
-                ),
+                  );
+                }),
               ),
 
               // RIGHT COLUMN (Time Stack)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (showingToday) ...[
-                    Text('$ghati Ghati', style: rightStyle),
-                    Text('${pala.toString().padLeft(2, '0')} Pala',
-                        style: rightStyle),
-                    if (praharName != '') Text(praharName, style: rightStyle),
-                  ],
-                  const SizedBox(height: 6),
-                  if (showingToday)
-                    Text('LIVE',
-                        style: bottomStyle.copyWith(color: primaryWhite))
-                  else ...[
-                    Text(offsetStr,
-                        style: bottomStyle.copyWith(color: primaryWhite)),
+              Builder(builder: (context) {
+                final oneLine =
+                    kIsWeb && MediaQuery.of(context).size.width >= 820;
+                final timeParts = <String>[
+                  '$ghati Ghati',
+                  '${pala.toString().padLeft(2, '0')} Pala',
+                  if (praharName != '') praharName,
+                ];
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (showingToday) ...[
+                      if (oneLine)
+                        Text(timeParts.join('  ·  '), style: rightStyle)
+                      else ...[
+                        Text('$ghati Ghati', style: rightStyle),
+                        Text('${pala.toString().padLeft(2, '0')} Pala',
+                            style: rightStyle),
+                        if (praharName != '')
+                          Text(praharName, style: rightStyle),
+                      ],
+                    ],
                     const SizedBox(height: 6),
-                    GestureDetector(
-                      onTap: () {
-                        HapticFeedback.lightImpact();
-                        widget.onResetToToday?.call();
-                      },
-                      behavior: HitTestBehavior.opaque,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: primaryWhite.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(100),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.replay_rounded,
-                                size: 10, color: primaryWhite),
-                            const SizedBox(width: 4),
-                            Text('TODAY',
-                                style: TextStyle(
-                                  color: primaryWhite,
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 1.5,
-                                )),
-                          ],
+                    if (showingToday)
+                      Text('LIVE',
+                          style: bottomStyle.copyWith(color: primaryWhite))
+                    else ...[
+                      Text(offsetStr,
+                          style: bottomStyle.copyWith(color: primaryWhite)),
+                      const SizedBox(height: 6),
+                      GestureDetector(
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          widget.onResetToToday?.call();
+                        },
+                        behavior: HitTestBehavior.opaque,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: primaryWhite.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(100),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.replay_rounded,
+                                  size: 10, color: primaryWhite),
+                              const SizedBox(width: 4),
+                              Text('TODAY',
+                                  style: TextStyle(
+                                    color: primaryWhite,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 1.5,
+                                  )),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ],
-                ],
-              ),
+                );
+              }),
             ],
           ),
         ),

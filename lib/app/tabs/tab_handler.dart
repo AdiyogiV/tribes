@@ -6,7 +6,7 @@ import 'package:aurogram/features/auth/init_user.dart';
 import 'package:aurogram/features/auth/login.dart';
 import 'package:aurogram/app/tabs/grams.dart';
 import 'package:aurogram/features/astrology/presentation/pages/dashboard.dart';
-import 'package:aurogram/features/astrology/presentation/widgets/nakshatra_ring_widget.dart'
+import 'package:aurogram/features/astrology/presentation/widgets/energy_card.dart'
     show wheelInteractingNotifier;
 import 'package:aurogram/app/tabs/messages.dart';
 import 'package:aurogram/features/profile/presentation/pages/user_profile.dart';

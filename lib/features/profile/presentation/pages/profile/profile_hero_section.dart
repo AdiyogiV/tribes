@@ -142,14 +142,16 @@ class ProfileHeroSection extends StatelessWidget {
                           shape: const CircleBorder(),
                           clipBehavior: Clip.antiAlias,
                           color: Theme.of(context).scaffoldBackgroundColor,
-                          child: SizedBox(
-                            width: avatarSize,
-                            height: avatarSize,
-                            child: Icon(
-                              Icons.person_rounded,
-                              size: avatarSize * 0.5,
-                              color: primaryColor.withValues(alpha: 0.5),
-                            ),
+                          child: UserAvatar(
+                            key: stableKey,
+                            userId: uid,
+                            imageUrl: displayPicture,
+                            size: avatarSize,
+                            borderRadius: BorderRadius.circular(avatarSize / 2),
+                            nameInitials: name.isNotEmpty
+                                ? name.substring(0, 1)
+                                : null,
+                            showBorder: false,
                           ),
                         ),
                 ),

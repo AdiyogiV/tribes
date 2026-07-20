@@ -118,7 +118,7 @@ class CalendarDay {
         : null;
   }
 
-  /// Build a positions map compatible with CosmicSkyChartCard.
+  /// Build a positions map compatible with SkyCard.
   /// Keys are planet names, values have { longitude, sign, signDegree, isRetro }.
   Map<String, dynamic>? get positionsMap {
     if (longitudes == null) return null;
@@ -411,7 +411,7 @@ class AstroCalendarService {
   }
 
   /// Get planet positions for a date (for the sky chart).
-  /// Returns a map compatible with `CosmicSkyChartCard` expectations.
+  /// Returns a map compatible with `SkyCard` expectations.
   Map<String, dynamic>? getPositionsForDate(DateTime date) {
     return getDay(date)?.positionsMap;
   }

@@ -22,7 +22,6 @@ import { geminiApiKey, freeAstrologyApiKey } from "../lib/secrets.js";
 
 // Import handlers
 import { handleGenerateFirstReading } from "../functions/first_reading.js";
-import { handleGenerateCosmicAvatar } from "../functions/cosmic_avatar.js";
 import { handleClearAstroCaches } from "../functions/maintenance.js";
 import { handleGeneratePerHouseNow } from "../functions/per_house.js";
 import {
@@ -35,7 +34,6 @@ import {
 const methods = {
     // Auth-required methods
     generateFirstReading: { handler: (req) => handleGenerateFirstReading(req), auth: true },
-    generateCosmicAvatar: { handler: (req) => handleGenerateCosmicAvatar(req), auth: true },
     clearAstroCaches: { handler: (req) => handleClearAstroCaches(req), auth: true },
     generatePerHouseNow: { handler: (req) => handleGeneratePerHouseNow(req), auth: true },
     submitInsightFeedback: { handler: (req) => handleSubmitInsightFeedback(req), auth: true },

@@ -8,7 +8,7 @@ import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/kundali_house_hit_test.dart';
 
 /// Card widget displaying the current sky chart with optional birth chart overlay
-class CosmicSkyChartCard extends StatelessWidget {
+class SkyCard extends StatelessWidget {
   /// The slider's midpoint value, which represents "today".
   static const double _todaySliderValue = 0.5;
 
@@ -40,7 +40,7 @@ class CosmicSkyChartCard extends StatelessWidget {
   final void Function(int houseNumber, Map<String, dynamic> currentPositions)?
       onHouseTap;
 
-  const CosmicSkyChartCard({
+  const SkyCard({
     super.key,
     required this.currentPositions,
     this.birthChartData,
@@ -66,6 +66,13 @@ class CosmicSkyChartCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppTheme.primaryColor;
+
+    // Web-wide: bump up content text sizes for desktop readability.
+    final isWide = MediaQuery.of(context).size.width >= 820;
+    final contentFontSize = isWide ? 15.0 : 13.0;
+    final sliderLabelSize = isWide ? 10.0 : 8.0;
+    final dateLabelSize = isWide ? 13.0 : 11.0;
+    final resetLabelSize = isWide ? 11.0 : 9.0;
 
     // Calculate positions based on slider
     final positions = _calculatePositions();
@@ -100,7 +107,7 @@ class CosmicSkyChartCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       color: bg,
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -135,14 +142,15 @@ class CosmicSkyChartCard extends StatelessWidget {
           ),
 
           if (insightText != null && insightText!.trim().isNotEmpty) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Text(
               insightText!,
               style: TextStyle(
                 color: fgMuted,
-                fontSize: 15,
+                fontSize: contentFontSize,
                 height: 1.4,
-                fontWeight: FontWeight.w300,
+                fontFamily: 'Georgia',
+                fontStyle: FontStyle.italic,
               ),
             ),
           ],
@@ -196,12 +204,12 @@ class CosmicSkyChartCard extends StatelessWidget {
                     Row(
                       children: [
                         Icon(Icons.chevron_left,
-                            size: 12, color: fgMuted.withValues(alpha: 0.5)),
+                            size: sliderLabelSize + 4, color: fgMuted.withValues(alpha: 0.5)),
                         const SizedBox(width: 4),
                         Text(
                           'PAST',
                           style: TextStyle(
-                            fontSize: 8,
+                            fontSize: sliderLabelSize,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 2.0,
                             color: fgMuted.withValues(alpha: 0.5),
@@ -232,7 +240,7 @@ class CosmicSkyChartCard extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: dateLabelSize,
                             fontWeight: isSliderOnToday
                                 ? FontWeight.w600
                                 : FontWeight.w400,
@@ -249,7 +257,7 @@ class CosmicSkyChartCard extends StatelessWidget {
                         Text(
                           'FUTURE',
                           style: TextStyle(
-                            fontSize: 8,
+                            fontSize: sliderLabelSize,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 2.0,
                             color: fgMuted.withValues(alpha: 0.5),
@@ -257,7 +265,7 @@ class CosmicSkyChartCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Icon(Icons.chevron_right,
-                            size: 12, color: fgMuted.withValues(alpha: 0.5)),
+                            size: sliderLabelSize + 4, color: fgMuted.withValues(alpha: 0.5)),
                       ],
                     ),
                   ],
@@ -310,7 +318,7 @@ class CosmicSkyChartCard extends StatelessWidget {
                             Text(
                               'RETURN TO TODAY',
                               style: TextStyle(
-                                fontSize: 9,
+                                fontSize: resetLabelSize,
                                 fontWeight: FontWeight.w600,
                                 letterSpacing: 2.0,
                                 color: fgMain,

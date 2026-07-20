@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 /// Decorative, slowly auto-rotating Nakshatra wheel image with the same
-/// press-and-hold magnifier as the dashboard's [NakshatraRingWidget] — minus
+/// press-and-hold magnifier as the dashboard's [EnergyCard] — minus
 /// the Tara ring / data dependencies.
 ///
 /// Magnifier behaviour (identical to the dashboard):

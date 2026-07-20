@@ -94,28 +94,38 @@ class BabaDesktopLayoutState extends State<BabaDesktopLayout> {
         ? Colors.white.withValues(alpha: 0.08)
         : Colors.black.withValues(alpha: 0.06);
 
-    // When signed-out the conversation history is empty by design — collapse
-    // the 340px column to a 64px rail so the cosmic content gets the space.
-    // We watch the provider here so the rail expands the moment auth lands.
+    // The conversation-history wall is only meaningful WHILE chatting.
+    // On the dashboard it's dead space, so collapse it to 0 and let it
+    // slide in only when a chat is active (selected convo or inline chat).
+    // This hands the reclaimed ~340px back to the cosmic bento.
     return Consumer<AiChatProvider>(
       builder: (context, provider, _) {
         final isAuthed = provider.isUserAuthenticated;
-        final leftWidth = isAuthed ? 340.0 : 64.0;
+        final inChatMode =
+            _showingInlineChat || _selectedConversationId != null;
+        final double leftWidth =
+            !inChatMode ? 0.0 : (isAuthed ? 340.0 : 64.0);
 
         return Row(
           children: [
-            // Left panel — conversation history (slim rail when signed-out)
+            // Left panel — conversation history. Hidden on the dashboard,
+            // slides in when a conversation is active.
             AnimatedContainer(
               duration: const Duration(milliseconds: 240),
               curve: Curves.easeOutCubic,
               width: leftWidth,
+              clipBehavior: Clip.hardEdge,
               decoration: BoxDecoration(
                 color: isDark ? AppTheme.cardDarkColor : Colors.white,
-                border:
-                    Border(right: BorderSide(color: dividerColor, width: 1)),
+                border: leftWidth == 0
+                    ? null
+                    : Border(
+                        right: BorderSide(color: dividerColor, width: 1)),
               ),
-              child: isAuthed
-                  ? NestedScrollView(
+              child: !inChatMode
+                  ? const SizedBox.shrink()
+                  : isAuthed
+                      ? NestedScrollView(
                       headerSliverBuilder: (context, innerBoxIsScrolled) => [
                         AppHeaderStyle.buildWideLayoutHeaderSliver(
                           context,
@@ -180,7 +190,7 @@ class BabaDesktopLayoutState extends State<BabaDesktopLayout> {
           physics: const BouncingScrollPhysics(
             parent: AlwaysScrollableScrollPhysics(),
           ),
-          padding: const EdgeInsets.only(bottom: 90), // Space for floating input
+          padding: const EdgeInsets.only(top: 28, bottom: 90), // Breathing room + space for floating input
           child: widget.cosmicDashboardBuilder(),
         ),
         if (widget.dashboardInputBuilder != null)

@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:aurogram/features/astrology/domain/sky_positions_service.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
-import 'package:aurogram/core/theme/app_dimensions.dart';
 
-/// Card showing upcoming planetary events (sign changes, retrogrades)
-/// Matches astrology details page card styling
+/// Card showing upcoming planetary events (sign changes, retrogrades).
+///
+/// Styled to match the editorial design language of the Today's Balance and
+/// Current Sky cards: a flat, edge-to-edge surface (night-black / paper-white),
+/// left-aligned content, a two-tone Georgia-italic 32 header, and spaced
+/// uppercase micro-labels for sections.
 class UpcomingEventsCard extends StatelessWidget {
   final Color brown;
   final List<UpcomingEvent> events;
@@ -20,137 +23,172 @@ class UpcomingEventsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final Color cardColor =
-        isDark ? Theme.of(context).colorScheme.surface : Colors.white;
     final c = AppTheme.primaryColor;
 
-    if (events.isEmpty) {
-      return const SizedBox.shrink();
-    }
+    // Editorial palette — identical tokens to BalanceCard / SkyChartCard.
+    final bg = isDark ? const Color(0xFF000000) : Colors.white;
+    final fgMain = isDark ? Colors.white : const Color(0xFF1A1A1C);
+    final fgMuted = isDark ? Colors.white54 : Colors.black54;
+    final fgFaint = isDark ? Colors.white24 : Colors.black26;
 
-    // Filter to show only major planets and limit count
+    if (events.isEmpty) return const SizedBox.shrink();
+
     final majorPlanets = ['Sun', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn'];
     final filteredEvents = events
         .where((e) => majorPlanets.contains(e.planet))
         .take(maxEvents)
         .toList();
 
-    if (filteredEvents.isEmpty) {
-      return const SizedBox.shrink();
-    }
+    if (filteredEvents.isEmpty) return const SizedBox.shrink();
 
-    // Group events by type for cleaner display
-    final transits = filteredEvents.where((e) => e.type == 'sign_ingress').toList();
-    final retrogrades = filteredEvents.where((e) => e.type.contains('retrograde')).toList();
+    final transits =
+        filteredEvents.where((e) => e.type == 'sign_ingress').toList();
+    final retrogrades =
+        filteredEvents.where((e) => e.type.contains('retrograde')).toList();
 
-    return Material(
-      color: cardColor,
-      elevation: 2,
-      shadowColor: Colors.black.withValues(alpha: 0.2),
-      borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(AppDimensions.paddingLg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Header - Title Case, matches astrology details page
-            Text(
-              'Upcoming Transits',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: AppTheme.babaTextSize,
-                fontWeight: FontWeight.w700,
-                color: c,
-              ),
-            ),
-            const SizedBox(height: AppDimensions.spacingMd),
-
-            // Sign Transits
-            if (transits.isNotEmpty) ...[
-              ...transits.take(5).toList().asMap().entries.map((entry) {
-                final isLast = entry.key == transits.take(5).length - 1 && retrogrades.isEmpty;
-                return _buildEventRow(entry.value, c, isDark, isLast: isLast);
-              }),
-            ],
-
-            // Retrogrades
-            if (retrogrades.isNotEmpty) ...[
-              if (transits.isNotEmpty) const SizedBox(height: AppDimensions.spacingMd),
-              if (transits.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: AppDimensions.paddingSm),
-                  child: Text(
-                    'Retrograde Motion',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: AppTheme.babaTextSize,
-                      fontWeight: FontWeight.w600,
-                      color: c.withValues(alpha: 0.5),
-                    ),
+    return Container(
+      width: double.infinity,
+      color: bg,
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Chic editorial header (matches "Current Sky." two-tone style)
+          RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: 'Upcoming ',
+                  style: TextStyle(
+                    fontFamily: 'Georgia',
+                    fontStyle: FontStyle.italic,
+                    color: c,
+                    fontSize: 32,
+                    letterSpacing: -1.2,
                   ),
                 ),
-              ...retrogrades.take(3).toList().asMap().entries.map((entry) {
-                final isLast = entry.key == retrogrades.take(3).length - 1;
-                return _buildEventRow(entry.value, c, isDark, isLast: isLast);
-              }),
-            ],
+                TextSpan(
+                  text: 'Transits.',
+                  style: TextStyle(
+                    fontFamily: 'Georgia',
+                    fontStyle: FontStyle.italic,
+                    color: fgMain,
+                    fontSize: 32,
+                    fontWeight: FontWeight.w300,
+                    letterSpacing: -1.2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Sign changes & retrogrades ahead.',
+            style: TextStyle(
+              color: fgMuted,
+              fontSize: 13,
+              height: 1.4,
+              fontFamily: 'Georgia',
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Sign transits
+          if (transits.isNotEmpty)
+            ...transits.take(5).toList().asMap().entries.map((entry) {
+              final isLast =
+                  entry.key == transits.take(5).length - 1 && retrogrades.isEmpty;
+              return _buildEventRow(
+                  entry.value, c, fgMain, fgMuted, fgFaint,
+                  isLast: isLast);
+            }),
+
+          // Retrogrades
+          if (retrogrades.isNotEmpty) ...[
+            if (transits.isNotEmpty) const SizedBox(height: 20),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Text(
+                'R E T R O G R A D E',
+                style: TextStyle(
+                  color: fgMuted,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 2.0,
+                ),
+              ),
+            ),
+            ...retrogrades.take(3).toList().asMap().entries.map((entry) {
+              final isLast = entry.key == retrogrades.take(3).length - 1;
+              return _buildEventRow(
+                  entry.value, c, fgMain, fgMuted, fgFaint,
+                  isLast: isLast);
+            }),
           ],
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildEventRow(UpcomingEvent event, Color c, bool isDark, {bool isLast = false}) {
+  Widget _buildEventRow(
+    UpcomingEvent event,
+    Color c,
+    Color fgMain,
+    Color fgMuted,
+    Color fgFaint, {
+    bool isLast = false,
+  }) {
     final action = _getEventAction(event);
     final isRetrograde = event.type.contains('retrograde');
-    
+    final actionColor = isRetrograde
+        ? (event.type == 'retrograde_end'
+            ? Colors.green.shade400
+            : Colors.orange.shade400)
+        : fgMuted;
+
     return Padding(
-      padding: EdgeInsets.only(bottom: isLast ? 0 : 10),
+      padding: EdgeInsets.only(bottom: isLast ? 0 : 14),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Planet name
-          SizedBox(
-            width: 90,
-            child: Text(
-              event.planet,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: AppTheme.babaTextSize,
-                fontWeight: FontWeight.w700,
-                color: c,
-              ),
-            ),
-          ),
-
-          // Action (enters sign / goes retrograde / goes direct)
+          // Planet + action (left, editorial)
           Expanded(
-            child: Text(
-              action,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: AppTheme.babaTextSize,
-                fontWeight: FontWeight.w500,
-                color: isRetrograde
-                    ? (event.type == 'retrograde_end'
-                        ? Colors.green.shade600
-                        : Colors.orange.shade600)
-                    : c.withValues(alpha: 0.7),
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  event.planet,
+                  style: TextStyle(
+                    fontFamily: 'Georgia',
+                    fontStyle: FontStyle.italic,
+                    fontSize: 16,
+                    color: fgMain,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  action,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: actionColor,
+                  ),
+                ),
+              ],
             ),
           ),
 
-          // Date
+          // Date (right, spaced uppercase micro-label)
           Text(
-            event.formattedDate,
-            textAlign: TextAlign.center,
+            event.formattedDate.toUpperCase(),
             style: TextStyle(
-              fontSize: AppTheme.babaTextSize,
+              fontSize: 10,
               fontWeight: FontWeight.w600,
-              color: c.withValues(alpha: 0.6),
+              letterSpacing: 1.5,
+              color: fgFaint,
             ),
           ),
         ],

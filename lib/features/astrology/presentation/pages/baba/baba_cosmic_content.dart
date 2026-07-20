@@ -11,11 +11,10 @@ import 'package:aurogram/features/astrology/domain/sky_positions_service.dart';
 import 'package:aurogram/features/astrology/domain/astro_calendar_service.dart';
 import 'package:aurogram/features/astrology/domain/forecast_service.dart';
 import 'package:aurogram/shared/services/widget_data_service.dart';
-import 'package:aurogram/features/astrology/presentation/widgets/nakshatra_ring_widget.dart';
+import 'package:aurogram/features/astrology/presentation/widgets/energy_card.dart';
 import 'package:aurogram/features/astrology/presentation/pages/baba/widgets/baba_panchang_resolver.dart';
 import 'package:aurogram/features/astrology/presentation/pages/baba/widgets/baba_secondary_cards.dart';
 import 'package:aurogram/features/astrology/presentation/pages/baba/widgets/baba_muhurat_placeholder.dart';
-import 'package:aurogram/features/astrology/presentation/pages/baba/widgets/baba_desktop_today_strip.dart';
 import 'package:aurogram/features/astrology/presentation/pages/baba/widgets/baba_signin_cta_banner.dart';
 
 /// Builds the full cosmic dashboard content panel with all cards.
@@ -35,7 +34,7 @@ class BabaCosmicContent extends StatelessWidget {
   /// sky chart — the nakshatra wheel listens and snaps back to today.
   final Listenable? wheelResetSignal;
 
-  /// Live wheel state controller — passed directly to [NakshatraRingWidget]
+  /// Live wheel state controller — passed directly to [EnergyCard]
   /// so independent cards on the page can listen to wheel position changes.
   final NakshatraWheelController? nakshatraController;
 
@@ -84,8 +83,6 @@ class BabaCosmicContent extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final brown = AppTheme.primaryColor;
     final bottomInset = MediaQuery.of(context).padding.bottom;
-
-    final todayPanchang = skyService.getTodayPanchang();
 
     // Single source of truth for the panchang merge + nakshatra precedence
     // chain (shared with the wheel builder via BabaPanchangResolver).
@@ -149,15 +146,10 @@ class BabaCosmicContent extends StatelessWidget {
         //   ≥ 950  → 420 (mid laptop)
         //   ≥ 880  → 380 (narrow laptop, 1280 window with chat history open)
         //   else   → 360 (tightest 2-col — 1024 window with sidebar collapsed)
-        final leftColumnWidth = screenWidth >= 1400
-            ? 520.0
             : screenWidth >= 1100
-                ? 480.0
                 : screenWidth >= 950
-                    ? 420.0
                     : screenWidth >= 880
                         ? 380.0
-                        : 360.0;
 
         // Adaptive content cap: wider on bigger monitors but never blown out.
         // The lower tier doesn't cap — at that width every pixel counts.
@@ -181,41 +173,6 @@ class BabaCosmicContent extends StatelessWidget {
         // visual hero and the guidance text sits beneath it on both mobile
         // and desktop.
         final wheelWidget = _buildWheelWidget(wheelFirst: true);
-
-        // The header — dense strip on desktop, split cards on mobile.
-        // Desktop: single dense strip.
-        // Mobile: VedicTimeCard (clock + Pr·Gh·Pa) + VedicDateCard (month, tithi).
-        final headerWidget = ValueListenableBuilder<DateTime>(
-          valueListenable: sliderDateNotifier,
-          builder: (context, sliderDate, _) {
-            final today = DateTime.now();
-            final isToday = sliderDate.year == today.year &&
-                sliderDate.month == today.month &&
-                sliderDate.day == today.day;
-
-            // Single source of truth: calendarService normalises month
-            // names (e.g. "Jyeshtam" → "Jyeshtha") and covers all dates
-            // including today.  Fall back to the merged samvat only when
-            // calendarService hasn't loaded yet.
-            final dateSamvat =
-                calendarService?.getPanchangForDate(sliderDate) ??
-                    (isToday ? nakshatraSamvat : null);
-
-            if (isWide) {
-              return BabaDesktopTodayStrip(
-                samvat: dateSamvat ?? nakshatraSamvat,
-                todayPanchang: todayPanchang,
-                brown: brown,
-                todayNakshatra: todayNakshatra,
-                selectedDate: isToday ? null : sliderDate,
-                selectedDatePanchang: dateSamvat,
-              );
-            } else {
-              // On mobile the split cards handle everything.
-              return const SizedBox.shrink();
-            }
-          },
-        );
 
         // Mobile: ONE card that MERGES the date/clock row with the Time
         // Guidance timeline below it. Each half renders "embedded" (no inner
@@ -274,12 +231,9 @@ class BabaCosmicContent extends StatelessWidget {
         );
 
         // The bag of secondary cards in their canonical order. Inlined into
-        // a single Column either in the right pane (desktop) or directly
-        // under the wheel (mobile).
-        //
-        // On mobile the wheel + text-insight combo is injected directly
-        // BELOW the Current Sky card. On desktop the wheel lives in its own
-        // left column, so we don't inject it into the secondary list.
+        // a single Column for both mobile and desktop.
+        // We now inject the wheel into the secondary list unconditionally,
+        // so it sits in the same stack as the Sky and Balance cards.
         final secondaryCards = BabaSecondaryCards(
           profile: profile,
           ayurvedaProfile: ayurvedaProfile,
@@ -293,33 +247,12 @@ class BabaCosmicContent extends StatelessWidget {
           onLoadSkyPositions: onLoadSkyPositions,
           onTriggerCachePopulation: onTriggerCachePopulation,
           spacing: spacing,
-          insertBeforeSkyCard: isWide ? null : wheelWidget,
-        );
-
-        // Time-guidance (muhurat) card — sits directly beneath the date card.
-        final muhuratCard = _buildMuhuratCard(
-          cardColor: cardColor,
-          spacing: spacing,
+          insertBeforeSkyCard: wheelWidget,
         );
 
         // The sign-in upsell — only visible when signed-out.
-        //
-        // On desktop the right column is mostly empty for signed-out users
-        // (sky chart / muhurat / events / panchang all require data), so we
-        // promote the CTA into the right column itself (vertical variant) —
-        // this fills the dead space AND surfaces the CTA closer to the wheel.
-        //
-        // On mobile/tablet the single-column layout doesn't have a dead
-        // space problem, so the horizontal banner sits at the bottom as before.
         final isSignedOut = FirebaseAuth.instance.currentUser == null;
-        final desktopInlineCta = isSignedOut && isWide
-            ? BabaSignInCtaBanner(
-                brown: brown,
-                isDark: isDark,
-                horizontal: false,
-              )
-            : null;
-        final mobileCtaBanner = isSignedOut && !isWide
+        final ctaBanner = isSignedOut
             ? BabaSignInCtaBanner(
                 brown: brown,
                 isDark: isDark,
@@ -332,71 +265,23 @@ class BabaCosmicContent extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (isWide) ...[
-                headerWidget,
+              mergedDateMuhuratCard,
+              SizedBox(height: spacing),
+              // Circle selector sits right below the common date card.
+              if (stripSlot != null) ...[
+                stripSlot!,
                 SizedBox(height: spacing),
-                // Circle selector sits right below the common date card.
-                if (stripSlot != null) ...[
-                  stripSlot!,
-                  SizedBox(height: spacing),
-                ],
-                if (bodyOverride != null) ...[
-                  bodyOverride!,
-                  SizedBox(height: 16 + bottomInset),
-                ] else ...[
-                  // Time guidance sits right under the date strip.
-                  muhuratCard,
-                  // Two-column dashboard
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        width: leftColumnWidth,
-                        child: wheelWidget,
-                      ),
-                      SizedBox(width: spacing),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            secondaryCards,
-                            if (desktopInlineCta != null) ...[
-                              desktopInlineCta,
-                              SizedBox(height: spacing),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 16 + bottomInset),
-                ],
+              ],
+              if (bodyOverride != null) ...[
+                bodyOverride!,
+                SizedBox(height: 16 + bottomInset),
               ] else ...[
-                // Single-column stack (mobile + small tablet)
-                // Merged date+Time-Guidance card → sky card → wheel+insight
-                //
-                // The wheel itself uses OverlayPortal internally so its
-                // magnified visual paints ABOVE adjacent cards regardless of
-                // normal Column paint order. It now sits directly below the
-                // Current Sky card (injected into secondaryCards).
-                mergedDateMuhuratCard,
-                SizedBox(height: spacing),
-                // Circle selector sits right below the common date card.
-                if (stripSlot != null) ...[
-                  stripSlot!,
+                secondaryCards,
+                if (ctaBanner != null) ...[
+                  ctaBanner,
                   SizedBox(height: spacing),
                 ],
-                if (bodyOverride != null) ...[
-                  bodyOverride!,
-                  SizedBox(height: 16 + bottomInset),
-                ] else ...[
-                  secondaryCards,
-                  if (mobileCtaBanner != null) ...[
-                    mobileCtaBanner,
-                    SizedBox(height: spacing),
-                  ],
-                  SizedBox(height: 16 + bottomInset),
-                ],
+                SizedBox(height: 16 + bottomInset),
               ],
             ],
           ),
@@ -422,7 +307,7 @@ class BabaCosmicContent extends StatelessWidget {
       final todayNakshatra = panchang.todayNakshatra;
       final birthNakshatra = profile?.moonNakshatra ?? profile?.nakshatra;
       final lagnaNakshatra = profile?.lagnaNakshatra;
-      return NakshatraRingWidget(
+      return EnergyCard(
         todayNakshatra: todayNakshatra,
         birthNakshatra: birthNakshatra,
         lagnaNakshatra: lagnaNakshatra,
@@ -446,46 +331,5 @@ class BabaCosmicContent extends StatelessWidget {
     });
   }
 
-  /// Build the bag of supporting cards in their canonical display order.
-  /// Returned as a flat List so the caller can place them in either a
-  /// single-column stack (mobile) or a right-pane Column (desktop).
-  /// Muhurat / "time guidance" card. Lives directly under the date card.
-  /// Single source of truth: AstroCalendarService muhurat for the selected
-  /// date (the calendar carries muhurat for every day in range).
-  Widget _buildMuhuratCard({
-    required Color cardColor,
-    required double spacing,
-  }) {
-    return ValueListenableBuilder<DateTime>(
-      valueListenable: sliderDateNotifier,
-      builder: (context, sliderDate, _) {
-        final today = DateTime.now();
-        final daysDiff = sliderDate
-            .difference(DateTime(today.year, today.month, today.day))
-            .inDays
-            .abs();
 
-        // One source of truth: the astro calendar carries muhurat for every
-        // day in range, so it serves today and every other date alike.
-        final calMuhurat = calendarService?.getMuhuratForDate(sliderDate);
-        if (calMuhurat != null && calMuhurat.isNotEmpty) {
-          return Padding(
-            padding: EdgeInsets.only(bottom: spacing),
-            child: MuhuratTimelineWidget(muhurat: calMuhurat),
-          );
-        }
-
-        // Loading placeholder only for today window.
-        if (loadingState.isMuhuratLoading &&
-            daysDiff <= 1 &&
-            FirebaseAuth.instance.currentUser != null) {
-          return Padding(
-            padding: EdgeInsets.only(bottom: spacing),
-            child: BabaMuhuratPlaceholder(cardColor: cardColor),
-          );
-        }
-        return const SizedBox.shrink();
-      },
-    );
-  }
 }

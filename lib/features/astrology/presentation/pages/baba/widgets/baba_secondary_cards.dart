@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/core/routing/route_names.dart';
 import 'package:aurogram/shared/models/astrology_profile.dart';
 import 'package:aurogram/shared/models/ayurveda_profile.dart';
 import 'package:aurogram/features/astrology/domain/sky_positions_service.dart';
 import 'package:aurogram/features/astrology/domain/astro_calendar_service.dart';
-import 'package:aurogram/features/astrology/presentation/widgets/cards/upcoming_events_card.dart';
-import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/widgets/cosmic_sky_chart_card.dart';
+import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/widgets/sky_card.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/cosmic_dashboard_data.dart';
-import 'package:aurogram/features/ayurveda/presentation/widgets/dosha_dashboard_card.dart';
+import 'package:aurogram/features/ayurveda/presentation/widgets/balance_card.dart';
 import 'package:aurogram/features/astrology/presentation/pages/baba/widgets/baba_sky_house_dialog.dart';
 
 /// The canonical stack of supporting cards for the cosmic dashboard, in their
@@ -59,60 +57,42 @@ class BabaSecondaryCards extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final brown = AppTheme.primaryColor;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // Wheel + text-insight combo — injected directly ABOVE the Current Sky card on mobile.
-        if (insertBeforeSkyCard != null) ...[
-          insertBeforeSkyCard!,
-          SizedBox(height: spacing),
-        ],
-
-        // Current Balance (Ayurveda Vikriti) — tappable -> Ayurveda Details
-        if (ayurvedaProfile != null && ayurvedaProfile!.prakriti != null) ...[
-          GestureDetector(
+    // Build individual cards (ignoring nulls later)
+    final Widget? balanceCard = (ayurvedaProfile != null && ayurvedaProfile!.prakriti != null)
+        ? GestureDetector(
             onTap: () {
               final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
               context.push('${RouteNames.ayurvedaDetails}/$uid');
             },
-            child: TodaysBalanceCard(
+            child: BalanceCard(
               prakriti: ayurvedaProfile!.prakriti!,
               vikriti: ayurvedaProfile!.vikriti,
               isCalculating: false,
               lastCheckIn: ayurvedaProfile!.lastCheckIn,
               isDark: isDark,
             ),
-          ),
-          SizedBox(height: spacing),
-        ],
+          )
+        : null;
 
-        // Current Sky with optional Birth Chart overlay
-        if (loadingState.isSkyLoaded) ...[
-          ValueListenableBuilder<double>(
+    final Widget? skyCard = loadingState.isSkyLoaded
+        ? ValueListenableBuilder<double>(
             valueListenable: sliderValueNotifier,
             builder: (context, sliderValue, _) {
               return ValueListenableBuilder<DateTime>(
                 valueListenable: sliderDateNotifier,
                 builder: (context, sliderDate, _) {
-                  // Position lookup chain:
-                  // 1. SkyPositionsService (exact, +/-30 days)
-                  // 2. AstroCalendarService (compact, +/-365 days)
-                  final skyPositions =
-                      skyService.getPositionsForDate(sliderDate);
+                  final skyPositions = skyService.getPositionsForDate(sliderDate);
                   Map<String, dynamic>? positions;
                   if (skyPositions != null && skyPositions.isNotEmpty) {
                     positions = skyPositions;
                   } else if (calendarService != null) {
-                    positions =
-                        calendarService!.getPositionsForDate(sliderDate);
+                    positions = calendarService!.getPositionsForDate(sliderDate);
                   }
                   if (positions == null || positions.isEmpty) {
                     return const SizedBox.shrink();
                   }
-                  return CosmicSkyChartCard(
+                  return SkyCard(
                     currentPositions: positions,
                     birthChartData: profile?.birthChartData,
                     isDark: isDark,
@@ -125,20 +105,17 @@ class BabaSecondaryCards extends StatelessWidget {
                     onLoadSkyPositions: onLoadSkyPositions,
                     onTriggerCachePopulation: onTriggerCachePopulation,
                     getPositionsForDate: (date) {
-                      // Try exact sky positions first, then calendar.
                       return skyService.getPositionsForDate(date) ??
                           calendarService?.getPositionsForDate(date);
                     },
                     getInterpolatedPositions: (date) {
-                      // Try interpolated sky positions first, then calendar.
                       final interp = skyService.getInterpolatedPositions(date);
                       if (interp != null && interp.isNotEmpty) return interp;
                       return calendarService?.getPositionsForDate(date);
                     },
                     onExploreBirthChart: profile != null
                         ? () {
-                            final uid =
-                                FirebaseAuth.instance.currentUser?.uid ?? '';
+                            final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
                             context.push('${RouteNames.astrologyDetails}/$uid');
                           }
                         : null,
@@ -155,31 +132,51 @@ class BabaSecondaryCards extends StatelessWidget {
                 },
               );
             },
-          ),
+          )
+        : null;
+
+    final isWide = MediaQuery.of(context).size.width >= 820; // Matches BabaCosmicContent desktopBreak
+
+    if (isWide) {
+      // PREMIUM DESKTOP LAYOUT — insight cards stacked vertically.
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (insertBeforeSkyCard != null) ...[
+            insertBeforeSkyCard!,
+            SizedBox(height: spacing),
+          ],
+          if (balanceCard != null) ...[
+            balanceCard,
+            SizedBox(height: spacing),
+          ],
+          if (skyCard != null) ...[
+            skyCard,
+            SizedBox(height: spacing),
+          ],
+          const SizedBox(height: AppDimensions.spacingSection),
+        ],
+      );
+    }
+
+    // MOBILE LAYOUT (Stack)
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (insertBeforeSkyCard != null) ...[
+          insertBeforeSkyCard!,
           SizedBox(height: spacing),
         ],
-
-        // Upcoming Planetary Events. The card internally filters to major
-        // planets and may return SizedBox.shrink() — only add spacing when
-        // the card will actually render content.
-        if (loadingState.isEventsLoaded &&
-            skyService.hasUpcomingEvents &&
-            skyService.allUpcomingEvents.any((e) => const [
-                  'Sun',
-                  'Mars',
-                  'Mercury',
-                  'Jupiter',
-                  'Venus',
-                  'Saturn',
-                ].contains(e.planet))) ...[
-          UpcomingEventsCard(
-            brown: brown,
-            events: skyService.allUpcomingEvents,
-            maxEvents: 8,
-          ),
+        if (balanceCard != null) ...[
+          balanceCard,
           SizedBox(height: spacing),
         ],
-
+        if (skyCard != null) ...[
+          skyCard,
+          SizedBox(height: spacing),
+        ],
         const SizedBox(height: AppDimensions.spacingSection),
       ],
     );

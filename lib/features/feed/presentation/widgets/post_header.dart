@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
@@ -9,6 +8,7 @@ import 'package:aurogram/core/di/injection.dart';
 import 'package:aurogram/features/profile/domain/user_service.dart';
 import 'package:aurogram/shared/services/batch_data_loader.dart';
 import 'package:aurogram/shared/data/repositories/user_repository.dart';
+import 'package:aurogram/shared/presentation/widgets/avatars/user_avatar.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 
@@ -265,7 +265,6 @@ class _UserAvatar extends StatefulWidget {
 
 class _UserAvatarState extends State<_UserAvatar> {
   String? _photoUrl;
-  bool _loaded = false;
 
   @override
   void initState() {
@@ -286,14 +285,12 @@ class _UserAvatarState extends State<_UserAvatar> {
 
   void _loadAvatar() {
     if (widget.uid == null) {
-      setState(() => _loaded = true);
       return;
     }
 
     // FAST PATH: Use pre-loaded data if available (instant, no async!)
     if (widget.userData != null) {
       _photoUrl = widget.userData!.photoUrl;
-      _loaded = true;
       if (mounted) setState(() {});
       return;
     }
@@ -302,7 +299,6 @@ class _UserAvatarState extends State<_UserAvatar> {
     final cached = _HeaderCache.getCachedUser(widget.uid!);
     if (cached != null) {
       _photoUrl = cached['displayPicture'] as String?;
-      _loaded = true;
       if (mounted) setState(() {});
       return;
     }
@@ -312,7 +308,6 @@ class _UserAvatarState extends State<_UserAvatar> {
       if (mounted) {
         setState(() {
           _photoUrl = data?['displayPicture'] as String?;
-          _loaded = true;
         });
       }
     });
@@ -320,31 +315,16 @@ class _UserAvatarState extends State<_UserAvatar> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.uid == null || !_loaded) {
+    if (widget.uid == null) {
       return _placeholder();
     }
 
-    return Container(
-      width: widget.size,
-      height: widget.size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: AppTheme.primaryColor.withValues(alpha: 0.1),
-      ),
-      child: ClipOval(
-        child: _photoUrl != null && _photoUrl!.isNotEmpty
-            ? CachedNetworkImage(
-                imageUrl: _photoUrl!,
-                fit: BoxFit.cover,
-                width: widget.size,
-                height: widget.size,
-                placeholder: (_, __) => _avatarIcon(),
-                errorWidget: (_, __, ___) => _avatarIcon(),
-                fadeInDuration: const Duration(milliseconds: 150),
-                fadeOutDuration: const Duration(milliseconds: 150),
-              )
-            : _avatarIcon(),
-      ),
+    return UserAvatar(
+      userId: widget.uid,
+      imageUrl: _photoUrl,
+      size: widget.size,
+      borderRadius: BorderRadius.circular(widget.size / 2),
+      showBorder: false,
     );
   }
 

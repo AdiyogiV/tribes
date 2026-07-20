@@ -14,7 +14,7 @@ import 'package:aurogram/features/astrology/presentation/widgets/astro_chat_inpu
 import 'package:aurogram/features/ayurveda/presentation/widgets/ayurveda_details_header.dart';
 import 'package:aurogram/features/ayurveda/presentation/widgets/ayurveda_reset_overlay.dart';
 import 'package:aurogram/features/ayurveda/presentation/widgets/ayurveda_details_skeleton.dart';
-import 'package:aurogram/features/ayurveda/presentation/widgets/dosha_dashboard_card.dart';
+import 'package:aurogram/features/ayurveda/presentation/widgets/balance_card.dart';
 import 'package:aurogram/features/ayurveda/presentation/widgets/consolidated_cards.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/shared/presentation/widgets/feedback/snack_bar_service.dart';
@@ -559,7 +559,7 @@ class _AyurvedaDetailsPageState extends State<AyurvedaDetailsPage>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Card 1: Current Balance (Vikriti) - current state
-              TodaysBalanceCard(
+              BalanceCard(
                 prakriti: prakriti,
                 vikriti: _vikriti,
                 isCalculating: _isCalculatingVikriti,

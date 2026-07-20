@@ -1,6 +1,6 @@
 /// Pure hit-test math for the North Indian kundali diamond layout.
 ///
-/// Both [KundaliChartWidget] (natal) and [CosmicSkyChartCard] (current sky)
+/// Both [KundaliChartWidget] (natal) and [SkyCard] (current sky)
 /// render the same diamond-shaped chart and need to map a tap into a house
 /// number 1..12. This file exists so that math lives in exactly one place.
 library;

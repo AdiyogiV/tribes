@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:aurogram/shared/presentation/responsive/responsive.dart';
-import 'package:aurogram/shared/presentation/widgets/layout/sidebar_navigation.dart';
+import 'package:aurogram/shared/providers/theme_provider.dart';
+import 'package:aurogram/shared/presentation/web/web_style.dart';
+import 'package:aurogram/shared/presentation/web/web_nav_rail.dart';
+import 'package:aurogram/shared/presentation/web/ambient_background.dart';
 
 /// A responsive shell that switches between mobile and wide layouts by width.
 /// - Narrow (e.g. phone, or iPad portrait): Bottom navigation.
@@ -43,30 +47,19 @@ class ResponsiveShell extends StatefulWidget {
 }
 
 class _ResponsiveShellState extends State<ResponsiveShell> {
-  bool _isSidebarCollapsed = false;
-
   @override
   Widget build(BuildContext context) {
     // Use width-based layout on all platforms (web, iOS, Android). When the
     // window is wide enough (e.g. iPad horizontal, desktop), show the wide
-    // layout with sidebar; otherwise show mobile layout with bottom nav.
+    // layout with the floating glass rail; otherwise show mobile layout with
+    // bottom nav. Mobile path is untouched by the web redesign.
     return LayoutBuilder(
       builder: (context, constraints) {
         final bool showSidebar =
             constraints.maxWidth >= Responsive.wideLayoutBreakpoint;
-        // Medium zone where we force-collapse the nav rail by default.
-        // Previously 1400 — common laptop widths (1440–1512) sit *just* above
-        // it, so they used to swing between collapsed and expanded depending
-        // on minor window resizes. Dropping to 1200 means anything past
-        // typical laptop width gets the expanded rail by default.
-        final bool collapseForMedium = constraints.maxWidth < 1200 &&
-            constraints.maxWidth >= Responsive.wideLayoutBreakpoint;
 
         if (showSidebar) {
-          return _buildDesktopLayout(
-            context,
-            forceCollapsed: collapseForMedium,
-          );
+          return _buildDesktopLayout(context);
         } else {
           return widget.mobileBuilder(widget.child);
         }
@@ -74,42 +67,37 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
     );
   }
 
-  Widget _buildDesktopLayout(BuildContext context,
-      {bool forceCollapsed = false}) {
-    // When forceCollapsed due to medium screen, start collapsed but allow user to toggle
-    // - Medium screens (forceCollapsed): default collapsed, user toggle expands it
-    // - Large screens (!forceCollapsed): default expanded, user toggle collapses it
-    final bool isCollapsed = forceCollapsed
-        ? !_isSidebarCollapsed // Inverted: toggle=true means expanded
-        : _isSidebarCollapsed; // Normal: toggle=true means collapsed
-
+  Widget _buildDesktopLayout(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: Row(
-        children: [
-          // Sidebar navigation
-          SidebarNavigation(
-            selectedIndex: widget.selectedIndex,
-            isAuthenticated: widget.isAuthenticated,
-            userId: widget.userId,
-            onTap: widget.onTabChanged,
-            isCollapsed: isCollapsed,
-            // Always allow toggle - user should be able to expand/collapse regardless of screen size
-            onToggleCollapse: () =>
-                setState(() => _isSidebarCollapsed = !_isSidebarCollapsed),
-            tabActionBuilder: widget.tabActionBuilder,
-          ),
-
-          // Main content area
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: Colors.transparent,
+      body: AmbientBackground(
+        child: Stack(
+          children: [
+            // Main content — reserve only the collapsed rail width on the left
+            // so the rail's hover-expand overlays content instead of shoving it.
+            Positioned.fill(
+              child: Padding(
+                padding: const EdgeInsets.only(left: WebStyle.railWidth + 8),
+                child: widget.child,
               ),
-              child: widget.child,
             ),
-          ),
-        ],
+
+            // Floating glass rail overlays on the left edge.
+            Positioned(
+              left: 0,
+              top: 0,
+              bottom: 0,
+              child: WebNavRail(
+                selectedIndex: widget.selectedIndex,
+                isAuthenticated: widget.isAuthenticated,
+                userId: widget.userId,
+                onTap: widget.onTabChanged,
+                onToggleTheme: () =>
+                    context.read<ThemeProvider>().temporaryToggle(),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

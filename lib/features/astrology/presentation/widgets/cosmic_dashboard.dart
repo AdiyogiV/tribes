@@ -22,7 +22,7 @@ import 'package:aurogram/features/astrology/presentation/widgets/cards/cosmic_pa
 import 'package:aurogram/features/astrology/presentation/widgets/cards/cosmic_quick_actions.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cards/upcoming_events_card.dart';
 import 'package:aurogram/shared/presentation/widgets/loaders/skeleton_widgets.dart';
-import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/widgets/cosmic_sky_chart_card.dart';
+import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/widgets/sky_card.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/cosmic_dashboard_data.dart';
 import 'package:aurogram/app/tabs.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
@@ -661,7 +661,7 @@ class _CosmicDashboardState extends State<CosmicDashboard> {
                           if (positions == null || positions.isEmpty) {
                             return const SizedBox.shrink();
                           }
-                          return CosmicSkyChartCard(
+                          return SkyCard(
                             currentPositions: positions,
                             birthChartData: profile?.birthChartData,
                             isDark: isDark,

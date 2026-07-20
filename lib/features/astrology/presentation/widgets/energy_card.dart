@@ -30,11 +30,11 @@ final ValueNotifier<bool> wheelInteractingNotifier = ValueNotifier<bool>(false);
 // Flutter-idiomatic ChangeNotifier (like TabController / ScrollController).
 // The wheel writes public state into it on every nakshatra boundary crossing
 // during drag, so independent cards anywhere on the page can react live —
-// without being nested inside NakshatraRingWidget.
+// without being nested inside EnergyCard.
 //
 // Usage:
 //   final _ctrl = NakshatraWheelController();
-//   NakshatraRingWidget(controller: _ctrl, ...)
+//   EnergyCard(controller: _ctrl, ...)
 //   ListenableBuilder(listenable: _ctrl, builder: ...)
 //   _ctrl.jumpToIndex(nIdx);  // jump wheel from outside
 
@@ -81,7 +81,7 @@ class NakshatraWheelController extends ChangeNotifier {
   bool get isJanmaDay =>
       _birthIndex >= 0 && _todayIndex >= 0 && _birthIndex == _todayIndex;
 
-  // ── Internal API (called by NakshatraRingWidget only) ──────────────────────
+  // ── Internal API (called by EnergyCard only) ──────────────────────
 
   /// Written by the wheel's _onRotation on every boundary crossing.
   void _update({
@@ -143,7 +143,7 @@ class NakshatraWheelController extends ChangeNotifier {
 ///  • Birth ↔ Today connection arc
 ///  • Janma Day golden glow when birth star = today's Moon
 ///  • "Why this vibe?" ⓘ sheet with Tara mechanics + nakshatra details
-class NakshatraRingWidget extends StatefulWidget {
+class EnergyCard extends StatefulWidget {
   final String? todayNakshatra;
   final String? birthNakshatra;
   final String? sunNakshatra;
@@ -181,7 +181,7 @@ class NakshatraRingWidget extends StatefulWidget {
   /// vibe-first order: read the narrative, then look at the wheel beneath.
   final bool wheelFirst;
 
-  const NakshatraRingWidget({
+  const EnergyCard({
     super.key,
     this.todayNakshatra,
     this.birthNakshatra,
@@ -196,10 +196,10 @@ class NakshatraRingWidget extends StatefulWidget {
   });
 
   @override
-  State<NakshatraRingWidget> createState() => _NakshatraRingWidgetState();
+  State<EnergyCard> createState() => _EnergyCardState();
 }
 
-class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
+class _EnergyCardState extends State<EnergyCard>
     with TickerProviderStateMixin {
   // ─── Rotation ──────────────────────────────────────────────────────────────
   // Unbounded controller — value = angle in radians (grows without limit).
@@ -551,7 +551,7 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
   }
 
   @override
-  void didUpdateWidget(NakshatraRingWidget old) {
+  void didUpdateWidget(EnergyCard old) {
     super.didUpdateWidget(old);
     if (old.wheelResetSignal != widget.wheelResetSignal) {
       old.wheelResetSignal?.removeListener(_onExternalResetToToday);
@@ -877,7 +877,8 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
     final c = isDark ? Colors.white : Colors.black87;
     final cardColor = isDark ? Colors.black : Colors.white;
 
-    final vibeContent = _buildDailyVibeContent(c, isDark, cardColor);
+    final isWide = kIsWeb && MediaQuery.of(context).size.width >= 820;
+    final vibeContent = _buildDailyVibeContent(c, isDark, cardColor, isWide);
     final wheel = _buildWheel(c, isDark);
 
     // Header summary: energy label + alignment %.
@@ -907,39 +908,108 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
         mainAxisSize: MainAxisSize.min,
         children: [
           // ── HEADER: Context ──
-          Padding(
-            padding: const EdgeInsets.only(top: 22, bottom: 14),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Prominent: energy label + alignment %.
-                if (headerLabel != null && headerLabel.isNotEmpty)
-                  Text(
-                    headerLabel.toUpperCase(),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 16,
-                      height: 1.4,
-                      letterSpacing: 3.0,
-                      fontWeight: FontWeight.w800,
-                      color: c,
-                    ),
+          Builder(builder: (context) {
+            final webHeader =
+                kIsWeb && MediaQuery.of(context).size.width >= 820;
+            final fgMain = isDark ? Colors.white : const Color(0xFF1A1A1C);
+            final fgMuted = isDark ? Colors.white54 : Colors.black54;
+
+            if (webHeader) {
+              // Editorial header matching Current Sky / Today's Balance:
+              // left-aligned, Georgia italic 32, two-tone, muted subheading.
+              final children = <Widget>[];
+              if (headerLabel != null && headerLabel.isNotEmpty) {
+                final words = headerLabel.trim().split(RegExp(r'\s+'));
+                final last = words.removeLast();
+                final lead = words.isEmpty ? '' : '${words.join(' ')} ';
+                children.add(RichText(
+                  text: TextSpan(
+                    children: [
+                      if (lead.isNotEmpty)
+                        TextSpan(
+                          text: lead,
+                          style: TextStyle(
+                            fontFamily: 'Georgia',
+                            fontStyle: FontStyle.italic,
+                            color: c,
+                            fontSize: 32,
+                            letterSpacing: -1.2,
+                          ),
+                        ),
+                      TextSpan(
+                        text: '$last.',
+                        style: TextStyle(
+                          fontFamily: 'Georgia',
+                          fontStyle: FontStyle.italic,
+                          color: fgMain,
+                          fontSize: 32,
+                          fontWeight: FontWeight.w300,
+                          letterSpacing: -1.2,
+                        ),
+                      ),
+                    ],
                   ),
-                if (headerAlignment != null)
-                  Text(
-                    '$headerAlignment% ALIGNED',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 12,
-                      height: 1.4,
-                      letterSpacing: 3.0,
-                      fontWeight: FontWeight.w800,
-                      color: c,
-                    ),
+                ));
+              }
+              if (headerAlignment != null) {
+                children.add(const SizedBox(height: 8));
+                children.add(Text(
+                  '$headerAlignment% aligned.',
+                  style: TextStyle(
+                    color: fgMuted,
+                    fontSize: webHeader ? 15.0 : 13.0,
+                    height: 1.4,
+                    fontFamily: 'Georgia',
+                    fontStyle: FontStyle.italic,
                   ),
-              ],
-            ),
-          ),
+                ));
+              }
+              return Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 18),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: children,
+                ),
+              );
+            }
+
+            // MOBILE — original centered uppercase header (untouched).
+            return Padding(
+              padding: const EdgeInsets.only(top: 22, bottom: 14),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Prominent: energy label + alignment %.
+                  if (headerLabel != null && headerLabel.isNotEmpty)
+                    Text(
+                      headerLabel.toUpperCase(),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 16,
+                        height: 1.4,
+                        letterSpacing: 3.0,
+                        fontWeight: FontWeight.w800,
+                        color: c,
+                      ),
+                    ),
+                  if (headerAlignment != null)
+                    Text(
+                      '$headerAlignment% ALIGNED',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 12,
+                        height: 1.4,
+                        letterSpacing: 3.0,
+                        fontWeight: FontWeight.w800,
+                        color: c,
+                      ),
+                    ),
+                ],
+              ),
+            );
+          }),
 
           // ── MOON: elegant, on-brand, sits just above the wheel ──
           _buildMoon(c, isDark),
@@ -964,7 +1034,7 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
   // Plain-English guidance derived from today's Tara Bala. Returns content
   // only (no Material) — it now shares the wheel's card. See build().
 
-  Widget _buildDailyVibeContent(Color c, bool isDark, Color cardColor) {
+  Widget _buildDailyVibeContent(Color c, bool isDark, Color cardColor, [bool isWide = false]) {
     // No birth data yet → invite the user to set it up.
     if (_birthIndex < 0) {
       return _buildVibeEmptyContent(c, isDark, cardColor);
@@ -1009,7 +1079,7 @@ class _NakshatraRingWidgetState extends State<NakshatraRingWidget>
             maxLines: 4,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: AppTheme.babaTextSize,
+              fontSize: isWide ? AppTheme.babaTextSize + 2 : AppTheme.babaTextSize,
               fontWeight: FontWeight.w400,
               color: c.withValues(alpha: 0.75),
               height: 1.5,
@@ -1752,7 +1822,7 @@ class _TaraRingPainter extends CustomPainter {
 
   static const int _n = 27;
   static const double _seg = 2 * pi / _n;
-  static const double _ashwiniOffset = _NakshatraRingWidgetState._ashwiniOffset;
+  static const double _ashwiniOffset = _EnergyCardState._ashwiniOffset;
 
   @override
   void paint(Canvas canvas, Size size) {

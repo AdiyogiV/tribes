@@ -20,7 +20,7 @@ import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboar
 import 'package:aurogram/features/astrology/presentation/pages/baba/baba_desktop_layout.dart';
 import 'package:aurogram/features/astrology/presentation/pages/baba/baba_empty_states.dart';
 import 'package:aurogram/features/astrology/presentation/pages/baba/baba_cosmic_content.dart';
-import 'package:aurogram/features/astrology/presentation/widgets/nakshatra_ring_widget.dart';
+import 'package:aurogram/features/astrology/presentation/widgets/energy_card.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/circle_dashboard_switcher.dart';
 import 'package:aurogram/features/baba/domain/baba_auth_identity.dart';
 import 'package:aurogram/features/baba/domain/baba_context.dart';
@@ -598,7 +598,7 @@ class DashboardPageState extends State<DashboardPage>
 // ─────────────────────────────────────────────────────────────────────────────
 //
 // Wraps content in a local Overlay so any OverlayPortal inside (e.g. the
-// NakshatraRingWidget zoom overlay) resolves to this scoped overlay rather
+// EnergyCard zoom overlay) resolves to this scoped overlay rather
 // than the root navigator overlay.  That keeps the magnified wheel above
 // sibling cards without ever rising above the bottom nav bar or FAB.
 

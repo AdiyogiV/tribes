@@ -5,10 +5,15 @@ import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/shared/services/cache_service.dart';
 import 'package:aurogram/core/di/injection.dart';
+import 'package:aurogram/features/astrology/data/utils/yoni_tribe.dart';
 
 /// A widget that displays a user avatar with fallback options
 /// when the primary image is not available
 class UserAvatar extends StatelessWidget {
+  // Slightly reduce saturation for yoni artwork so it reads better at tiny
+  // avatar sizes (e.g., 40-56px circles) without regenerating image assets.
+  static const double _tribeSaturation = 0.9;
+
   /// User identifier for generating consistent fallbacks
   final String? userId;
 
@@ -39,6 +44,12 @@ class UserAvatar extends StatelessWidget {
   /// Whether to enable loading image from Firestore by userId
   final bool loadFromFirestore;
 
+  /// The user's (Moon/Janma) nakshatra name. When provided and no profile
+  /// picture is available, the avatar falls back to the user's yoni tribe
+  /// image instead of plain initials. Spelling variants are handled via
+  /// [YoniTribeData.forNakshatraName].
+  final String? nakshatra;
+
   // Cache expiry duration for user data
   static const Duration _cacheExpiry = Duration(minutes: 30);
 
@@ -60,52 +71,79 @@ class UserAvatar extends StatelessWidget {
     this.placeholder,
     this.errorWidget,
     this.loadFromFirestore = false,
+    this.nakshatra,
   });
 
   @override
   Widget build(BuildContext context) {
-    // If we should load from Firestore and have a userId but no imageUrl
-    if (loadFromFirestore &&
-        userId != null &&
-        (imageUrl == null || imageUrl!.isEmpty)) {
-      return _buildFirestoreAvatar(context);
-    }
-
     final BorderRadius effectiveBorderRadius =
         borderRadius ?? BorderRadius.circular(size / 2);
 
-    // Decide which fallback to use based on available data
-    if (imageUrl == null || imageUrl!.isEmpty) {
-      return _buildFallbackAvatar(context, effectiveBorderRadius);
+    // 1. An explicit image URL always wins.
+    if (imageUrl != null && imageUrl!.isNotEmpty) {
+      return Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          borderRadius: effectiveBorderRadius,
+          border: showBorder
+              ? Border.all(
+                  color: borderColor ?? Theme.of(context).dividerColor,
+                  width: 1.0,
+                )
+              : null,
+        ),
+        child: ClipRRect(
+          borderRadius: effectiveBorderRadius,
+          child: ImageOptimizer.buildOptimizedImage(
+            url: imageUrl!,
+            width: size,
+            height: size,
+            fit: BoxFit.cover,
+            borderRadius: effectiveBorderRadius,
+            placeholder: placeholder ?? _buildLoadingPlaceholder(context),
+            errorWidget: errorWidget ??
+                _buildInitialsAvatar(context, effectiveBorderRadius),
+          ),
+        ),
+      );
     }
 
-    // Build the avatar with the network image
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        borderRadius: effectiveBorderRadius,
-        border: showBorder
-            ? Border.all(
-                color: borderColor ?? Theme.of(context).dividerColor,
-                width: 1.0,
-              )
-            : null,
-      ),
-      child: ClipRRect(
-        borderRadius: effectiveBorderRadius,
-        child: ImageOptimizer.buildOptimizedImage(
-          url: imageUrl!,
-          width: size,
-          height: size,
-          fit: BoxFit.cover,
-          borderRadius: effectiveBorderRadius,
-          placeholder: placeholder ?? _buildLoadingPlaceholder(context),
-          errorWidget: errorWidget ??
-              _buildInitialsAvatar(context, effectiveBorderRadius),
-        ),
-      ),
-    );
+    // 2. No explicit image but we know who this is: look the user up so we can
+    // render their stored picture or, failing that, their yoni-tribe default.
+    // This makes the tribe avatar the automatic default everywhere a userId is
+    // available — no per-call-site wiring needed.
+    if (userId != null && userId!.isNotEmpty) {
+      return _buildFirestoreAvatar(context);
+    }
+
+    // 3. Nothing to look up — static fallback (tribe if a nakshatra was passed
+    // directly, otherwise initials / default icon).
+    return _buildFallbackAvatar(context, effectiveBorderRadius);
+  }
+
+  /// Extract a nakshatra name from a `users/{uid}` document map.
+  ///
+  /// Nakshatra is stored in nested maps, not at the top level:
+  ///   - `astrology.nakshatra`           — public, display-safe mirror
+  ///   - `astrologyData.moonNakshatra`   — authoritative private profile
+  ///   - `astrologyData.nakshatra`       — backward-compat alias
+  /// Returns null when the user has no computed astrology data.
+  static String? _nakshatraFromUserData(Map<String, dynamic> userData) {
+    String? pick(dynamic map, List<String> keys) {
+      if (map is Map) {
+        for (final key in keys) {
+          final value = map[key];
+          if (value is String && value.trim().isNotEmpty) return value;
+        }
+      }
+      return null;
+    }
+
+    return pick(userData['astrology'], const ['nakshatra']) ??
+        pick(userData['astrologyData'],
+            const ['moonNakshatra', 'nakshatra']) ??
+        pick(userData, const ['nakshatra', 'moonNakshatra']);
   }
 
   /// Get user data from centralized CacheService or Firestore
@@ -181,8 +219,17 @@ class UserAvatar extends StatelessWidget {
       key: avatarKey,
       future: future,
       builder: (context, snapshot) {
-        // While loading
+        // While loading: if the caller already gave us a nakshatra or initials,
+        // show that immediately (avoids a blank-box flash in lists). Otherwise
+        // show the shimmer placeholder until the user doc resolves.
         if (snapshot.connectionState == ConnectionState.waiting) {
+          if (nakshatra != null) {
+            final tribe = _buildTribeAvatar(context, effectiveBorderRadius);
+            if (tribe != null) return tribe;
+          }
+          if (nameInitials != null && nameInitials!.isNotEmpty) {
+            return _buildInitialsAvatar(context, effectiveBorderRadius);
+          }
           return _buildLoadingPlaceholder(context);
         }
 
@@ -202,6 +249,17 @@ class UserAvatar extends StatelessWidget {
             : null;
 
         if (pictureUrl == null || pictureUrl.isEmpty) {
+          // Fall back to the yoni tribe image, using the nakshatra passed in or
+          // one stored on the user document.
+          final userNakshatra = nakshatra ?? _nakshatraFromUserData(userData);
+          final tribe = _buildTribeAvatar(
+            context,
+            effectiveBorderRadius,
+            nakshatra: userNakshatra,
+            initials: initials,
+          );
+          if (tribe != null) return tribe;
+
           return _buildInitialsAvatar(
             context,
             effectiveBorderRadius,
@@ -246,6 +304,10 @@ class UserAvatar extends StatelessWidget {
 
   /// Build a fallback avatar when no image URL is provided
   Widget _buildFallbackAvatar(BuildContext context, BorderRadius borderRadius) {
+    // Prefer the user's yoni tribe image when their nakshatra is known.
+    final tribe = _buildTribeAvatar(context, borderRadius);
+    if (tribe != null) return tribe;
+
     // If we have initials, show an avatar with initials
     if (nameInitials != null && nameInitials!.isNotEmpty) {
       return _buildInitialsAvatar(context, borderRadius);
@@ -253,6 +315,76 @@ class UserAvatar extends StatelessWidget {
 
     // Otherwise, show the default user icon
     return _buildDefaultAvatar(context, borderRadius);
+  }
+
+  /// Build a yoni-tribe avatar from a nakshatra, or return null when the
+  /// nakshatra is unknown so callers can fall through to initials/default.
+  /// The image is served publicly from Firebase Storage (`/yoni_tribes/`).
+  Widget? _buildTribeAvatar(
+    BuildContext context,
+    BorderRadius borderRadius, {
+    String? nakshatra,
+    String? initials,
+  }) {
+    final tribe = YoniTribeData.forNakshatraName(nakshatra ?? this.nakshatra);
+    if (tribe == null) return null;
+
+    final image = Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        borderRadius: borderRadius,
+        border: showBorder
+            ? Border.all(
+                color: borderColor ?? Theme.of(context).dividerColor,
+                width: 1.0,
+              )
+            : null,
+      ),
+      child: ClipRRect(
+        borderRadius: borderRadius,
+        child: ImageOptimizer.buildOptimizedImage(
+          url: tribe.imageUrl,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          borderRadius: borderRadius,
+          placeholder: placeholder ?? _buildLoadingPlaceholder(context),
+          errorWidget: _buildInitialsAvatar(
+            context,
+            borderRadius,
+            initials: initials,
+          ),
+        ),
+      ),
+    );
+
+    if (_tribeSaturation >= 0.999) return image;
+    return ColorFiltered(
+      colorFilter: ColorFilter.matrix(_saturationMatrix(_tribeSaturation)),
+      child: image,
+    );
+  }
+
+  static List<double> _saturationMatrix(double s) {
+    const rw = 0.2126;
+    const gw = 0.7152;
+    const bw = 0.0722;
+    final a = (1 - s) * rw + s;
+    final b = (1 - s) * rw;
+    final c = (1 - s) * rw;
+    final d = (1 - s) * gw;
+    final e = (1 - s) * gw + s;
+    final f = (1 - s) * gw;
+    final g = (1 - s) * bw;
+    final h = (1 - s) * bw;
+    final i = (1 - s) * bw + s;
+    return <double>[
+      a, d, g, 0, 0,
+      b, e, h, 0, 0,
+      c, f, i, 0, 0,
+      0, 0, 0, 1, 0,
+    ];
   }
 
   /// Build an avatar with user initials
@@ -393,6 +525,7 @@ class UserAvatar extends StatelessWidget {
     Color? borderColor,
     BorderRadius? borderRadius,
     BoxFit fit = BoxFit.cover,
+    String? nakshatra,
   }) {
     // Use specific key for the avatar based on userId to prevent unnecessary rebuilds
     return UserAvatar(
@@ -403,6 +536,7 @@ class UserAvatar extends StatelessWidget {
       showBorder: showBorder,
       borderColor: borderColor,
       borderRadius: borderRadius,
+      nakshatra: nakshatra,
     );
   }
 

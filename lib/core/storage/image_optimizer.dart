@@ -586,6 +586,7 @@ class ImageOptimizer {
       width: width,
       height: height,
       fit: fit,
+      filterQuality: FilterQuality.medium,
       fadeInDuration: const Duration(milliseconds: 100),
       fadeOutDuration: const Duration(milliseconds: 100),
       placeholderFadeInDuration: const Duration(milliseconds: 100),

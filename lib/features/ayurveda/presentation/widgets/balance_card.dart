@@ -202,10 +202,10 @@ class PrakritiHeroCard extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// TodaysBalanceCard - Your current state (Vikriti)
+// BalanceCard - Your current state (Vikriti)
 // ─────────────────────────────────────────────────────────────────────────────
 
-class TodaysBalanceCard extends StatelessWidget {
+class BalanceCard extends StatelessWidget {
   final PrakritiData prakriti;
   final VikritiData? vikriti;
   final bool isCalculating;
@@ -213,7 +213,7 @@ class TodaysBalanceCard extends StatelessWidget {
   final VoidCallback? onInfo;
   final bool isDark;
 
-  const TodaysBalanceCard({
+  const BalanceCard({
     super.key,
     required this.prakriti,
     this.vikriti,
@@ -230,7 +230,8 @@ class TodaysBalanceCard extends StatelessWidget {
     final fgMain = isDark ? Colors.white : const Color(0xFF1A1A1C);
     final fgMuted = isDark ? Colors.white54 : Colors.black54;
     final fgFaint = isDark ? Colors.white24 : Colors.black26;
-    
+
+    final isWide = MediaQuery.of(context).size.width >= 820;
     final hasVikriti = vikriti != null;
 
     return Container(
@@ -245,7 +246,7 @@ class TodaysBalanceCard extends StatelessWidget {
           else if (!hasVikriti)
             _buildNoDataState(fgMain, fgMuted)
           else
-            _buildVennContent(context, fgMain, fgMuted, fgFaint, bg),
+            _buildVennContent(context, fgMain, fgMuted, fgFaint, bg, isWide),
         ],
       ),
     );
@@ -269,7 +270,7 @@ class TodaysBalanceCard extends StatelessWidget {
     );
   }
 
-  Widget _buildVennContent(BuildContext context, Color fgMain, Color fgMuted, Color fgFaint, Color bg) {
+  Widget _buildVennContent(BuildContext context, Color fgMain, Color fgMuted, Color fgFaint, Color bg, bool isWide) {
     String dominantDosha = 'balanced';
     String doshaDisplay = '';
     String stateTitle = 'Perfectly aligned.';
@@ -351,7 +352,7 @@ class TodaysBalanceCard extends StatelessWidget {
           symptomText,
           style: TextStyle(
             color: fgMuted,
-            fontSize: 13,
+            fontSize: isWide ? 15.0 : 13.0,
             height: 1.4,
             fontFamily: 'Georgia',
             fontStyle: FontStyle.italic,
@@ -387,9 +388,9 @@ class TodaysBalanceCard extends StatelessWidget {
         const SizedBox(height: 8),
 
         // Chic Editorial Tappable Bars
-        _buildChicBar(context, 'Vata', prakriti.vata, vikriti!.vata, getDoshaColor('vata'), fgMain, fgMuted, bg),
-        _buildChicBar(context, 'Pitta', prakriti.pitta, vikriti!.pitta, getDoshaColor('pitta'), fgMain, fgMuted, bg),
-        _buildChicBar(context, 'Kapha', prakriti.kapha, vikriti!.kapha, getDoshaColor('kapha'), fgMain, fgMuted, bg),
+        _buildChicBar(context, 'Vata', prakriti.vata, vikriti!.vata, getDoshaColor('vata'), fgMain, fgMuted, bg, isWide),
+        _buildChicBar(context, 'Pitta', prakriti.pitta, vikriti!.pitta, getDoshaColor('pitta'), fgMain, fgMuted, bg, isWide),
+        _buildChicBar(context, 'Kapha', prakriti.kapha, vikriti!.kapha, getDoshaColor('kapha'), fgMain, fgMuted, bg, isWide),
 
         const SizedBox(height: 24),
 
@@ -398,11 +399,11 @@ class TodaysBalanceCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: _buildTipSection('F O O D', foodTips, fgMain, fgMuted, fgFaint),
+              child: _buildTipSection('F O O D', foodTips, fgMain, fgMuted, fgFaint, isWide),
             ),
             const SizedBox(width: 24),
             Expanded(
-              child: _buildTipSection('P R A C T I C E', doTips, fgMain, fgMuted, fgFaint),
+              child: _buildTipSection('P R A C T I C E', doTips, fgMain, fgMuted, fgFaint, isWide),
             ),
           ],
         ),
@@ -410,7 +411,7 @@ class TodaysBalanceCard extends StatelessWidget {
     );
   }
 
-  Widget _buildTipSection(String header, List<String> items, Color fgMain, Color fgMuted, Color fgFaint) {
+  Widget _buildTipSection(String header, List<String> items, Color fgMain, Color fgMuted, Color fgFaint, bool isWide) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -418,7 +419,7 @@ class TodaysBalanceCard extends StatelessWidget {
           header,
           style: TextStyle(
             color: fgMuted,
-            fontSize: 9,
+            fontSize: isWide ? 11.0 : 9.0,
             fontWeight: FontWeight.w600,
             letterSpacing: 2.0,
           ),
@@ -438,7 +439,7 @@ class TodaysBalanceCard extends StatelessWidget {
                   style: TextStyle(
                     fontFamily: 'Georgia',
                     fontStyle: FontStyle.italic,
-                    fontSize: 10,
+                    fontSize: isWide ? 12.0 : 10.0,
                     color: fgFaint,
                     letterSpacing: 1.0,
                   ),
@@ -451,7 +452,7 @@ class TodaysBalanceCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: fgMain,
-                      fontSize: 13,
+                      fontSize: isWide ? 15.0 : 13.0,
                       fontWeight: FontWeight.w400,
                     ),
                   ),
@@ -464,7 +465,7 @@ class TodaysBalanceCard extends StatelessWidget {
     );
   }
 
-  Widget _buildChicBar(BuildContext context, String name, int baseVal, int curVal, Color col, Color fgMain, Color fgMuted, Color bg) {
+  Widget _buildChicBar(BuildContext context, String name, int baseVal, int curVal, Color col, Color fgMain, Color fgMuted, Color bg, bool isWide) {
     String element = '';
     String function = '';
     if (name.toLowerCase() == 'vata') {
@@ -500,7 +501,7 @@ class TodaysBalanceCard extends StatelessWidget {
                   style: TextStyle(
                     fontFamily: 'Georgia',
                     fontStyle: FontStyle.italic,
-                    fontSize: 20,
+                    fontSize: isWide ? 22.0 : 20.0,
                     color: fgMain.withValues(alpha: 0.9),
                     letterSpacing: 0.5,
                   ),
@@ -511,7 +512,7 @@ class TodaysBalanceCard extends StatelessWidget {
                     shiftStr,
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
-                      fontSize: 12,
+                      fontSize: isWide ? 14.0 : 12.0,
                       color: shiftColor.withValues(alpha: 0.8),
                     ),
                   ),
@@ -521,7 +522,7 @@ class TodaysBalanceCard extends StatelessWidget {
                   '$curVal',
                   style: TextStyle(
                     fontWeight: FontWeight.w400,
-                    fontSize: 14,
+                    fontSize: isWide ? 16.0 : 14.0,
                     letterSpacing: 1.0,
                     color: fgMain.withValues(alpha: 0.9),
                   ),
@@ -532,7 +533,7 @@ class TodaysBalanceCard extends StatelessWidget {
             Text(
               element,
               style: TextStyle(
-                fontSize: 8,
+                fontSize: isWide ? 10.0 : 8.0,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 2.0,
                 color: fgMuted.withValues(alpha: 0.4),
@@ -544,7 +545,7 @@ class TodaysBalanceCard extends StatelessWidget {
               style: TextStyle(
                 fontFamily: 'Georgia',
                 fontStyle: FontStyle.italic,
-                fontSize: 12,
+                fontSize: isWide ? 14.0 : 12.0,
                 color: fgMuted.withValues(alpha: 0.6),
               ),
             ),

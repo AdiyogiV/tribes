@@ -280,6 +280,56 @@
   </div>
 
   <script>
+    // ── Splash dismissal fallback ─────────────────────────────────────────
+    // In RELEASE, build-web.sh patches flutter_bootstrap.js to add the
+    // `flutter-loaded` class (via onEntrypointLoaded) which fades the splash.
+    // But `flutter run -d chrome` (dev) regenerates an UN-patched bootstrap,
+    // so that class is never added and the splash sits on top of a fully
+    // rendered app forever ("stuck on flash screen").
+    //
+    // This fallback lifts the curtain the moment Flutter actually paints its
+    // view element — works in dev AND is a harmless no-op in release, since
+    // classList.add is idempotent. Belt-and-suspenders, no behavior dup.
+    (function () {
+      function isFlutterView(node) {
+        if (!node || node.nodeType !== 1) return false;
+        var tag = node.tagName;
+        return tag === 'FLUTTER-VIEW' || tag === 'FLT-GLASS-PANE'
+          || (node.getElementsByTagName
+              && node.getElementsByTagName('flt-glass-pane').length > 0);
+      }
+
+      function reveal() {
+        document.body.classList.add('flutter-loaded');
+      }
+
+      // If it's somehow already there, reveal immediately.
+      if (document.getElementsByTagName('flt-glass-pane').length > 0
+          || document.getElementsByTagName('flutter-view').length > 0) {
+        reveal();
+        return;
+      }
+
+      var observer = new MutationObserver(function (mutations) {
+        for (var i = 0; i < mutations.length; i++) {
+          var added = mutations[i].addedNodes;
+          for (var j = 0; j < added.length; j++) {
+            if (isFlutterView(added[j])) {
+              reveal();
+              observer.disconnect();
+              return;
+            }
+          }
+        }
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+
+      // Hard safety net: never trap the user behind the splash indefinitely.
+      setTimeout(function () { reveal(); observer.disconnect(); }, 8000);
+    })();
+  </script>
+
+  <script>
     // Register Firebase Messaging SW (push notifications + PWA caching).
     // Runs async — does not block Flutter startup.
     if ('serviceWorker' in navigator) {
