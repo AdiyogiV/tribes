@@ -13,6 +13,7 @@
  *   - submitAnonymousMessage   [public]   Submit an anonymous message
  *   - matchContacts            [auth]     Match phone contacts against user index
  *   - indexUserPhone           [auth]     Index a user's phone for contact matching
+ *   - checkPhoneExists         [auth]     Check if a phone already has an account (login branching)
  *   - createRepost             [auth]     Create a repost of a post
  *   - deleteRepost             [auth]     Delete a repost
  *   - awardAuraAction          [auth]     Award aura for a profile/engagement action
@@ -43,6 +44,7 @@ import {
 
 import {
     handleIndexUserPhone,
+    handleCheckPhoneExists,
 } from "../functions/phone_index.js";
 
 import {
@@ -67,6 +69,7 @@ const methods = {
     rejectFollowRequest: { handler: (req) => handleRejectFollowRequest(req), auth: true },
     matchContacts: { handler: (req) => handleMatchContacts(req), auth: true },
     indexUserPhone: { handler: (req) => handleIndexUserPhone(req), auth: true },
+    checkPhoneExists: { handler: (req) => handleCheckPhoneExists(req), auth: true },
     createRepost: { handler: (req) => handleCreateRepost(req), auth: true },
     deleteRepost: { handler: (req) => handleDeleteRepost(req), auth: true },
     awardAuraAction: { handler: (req) => handleAwardAuraAction(req), auth: true },

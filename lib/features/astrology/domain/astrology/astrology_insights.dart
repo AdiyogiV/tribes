@@ -116,6 +116,48 @@ extension AstrologyInsightsExtension on AstrologyService {
     }
   }
 
+  /// Generate (or fetch the cached) cosmic avatar for the current user.
+  ///
+  /// Returns the Storage download URL, or null on failure. One fated birth:
+  /// pass [force] true only for an explicit re-roll.
+  Future<String?> generateCosmicAvatar({bool force = false}) async {
+    final user = currentUser;
+    if (user == null) {
+      AppLogger.w('Cannot generate cosmic avatar: no user',
+          category: LogCategory.network);
+      return null;
+    }
+
+    try {
+      AppLogger.i('Calling generateCosmicAvatar cloud function',
+          category: LogCategory.network);
+
+      final result = await callWithFunctionsFallback(
+        functionName: 'insightGateway',
+        data: <String, dynamic>{'method': 'generateCosmicAvatar', 'force': force},
+        options: HttpsCallableOptions(timeout: const Duration(seconds: 90)),
+      );
+
+      final data = result.data as Map<String, dynamic>?;
+      if (data != null && data['success'] == true) {
+        final url = (data['data'] as Map?)?['url'] as String?;
+        AppLogger.i('Cosmic avatar ready',
+            category: LogCategory.network, data: {'url': url});
+        AstrologyService.clearUserCache(user.uid);
+        return url;
+      }
+      AppLogger.w('Cosmic avatar generation returned failure',
+          category: LogCategory.network, data: {'response': data});
+      return null;
+    } catch (e, stackTrace) {
+      AppLogger.e('Failed to generate cosmic avatar',
+          category: LogCategory.network,
+          error: e,
+          data: {'stack': stackTrace.toString().substring(0, 400)});
+      return null;
+    }
+  }
+
   /// Force-regenerate the biweekly per-house current-state readings
   /// (powering the per-house popup on the astro details page).
   ///

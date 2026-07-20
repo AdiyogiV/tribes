@@ -1,10 +1,12 @@
 import 'dart:async';
 
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:aurogram/features/auth/auth_service.dart';
+import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/header_style.dart';
 import 'package:aurogram/shared/presentation/responsive/responsive.dart';
@@ -273,6 +275,11 @@ class LoginPageState extends State<LoginPage> {
 
     try {
       if (kIsWeb) {
+        // The link-vs-sign-in decision was already made in _verifyPhoneWeb
+        // (new number → link to preserve guest data; existing number →
+        // sign in), so confirming the code here just completes that operation.
+        // We deliberately do NOT link an already-registered number, because on
+        // web a failed link drops the recovery credential and strands the user.
         await _confirmationResult!.confirm(_otpController.text);
       } else {
         await Provider.of<AuthService>(context, listen: false)
@@ -331,14 +338,50 @@ class LoginPageState extends State<LoginPage> {
     }
   }
 
+  /// Asks the backend whether [phoneNumber] already belongs to an account.
+  ///
+  /// This decides the web sign-in strategy BEFORE the SMS code is consumed (see
+  /// [_verifyPhoneWeb]). On any failure we return `true` ("assume existing"),
+  /// which routes to plain sign-in — that always works. The only cost of a
+  /// false-positive is a brand-new guest not carrying their pre-login data
+  /// over, which is far better than hard-blocking a returning user.
+  Future<bool> _phoneHasExistingAccount(String phoneNumber) async {
+    try {
+      final functions =
+          FirebaseFunctions.instanceFor(region: 'asia-southeast2');
+      final res = await functions.httpsCallable('socialGateway').call({
+        'method': 'checkPhoneExists',
+        'phone': phoneNumber,
+      });
+      final data = res.data;
+      if (data is Map) return data['exists'] == true;
+      return true;
+    } catch (e) {
+      AppLogger.w('checkPhoneExists failed, defaulting to sign-in',
+          category: LogCategory.auth, data: {'error': e.toString()});
+      return true;
+    }
+  }
+
   /// Web-specific phone verification using reCAPTCHA.
   ///
-  /// If the current user is an anonymous GUEST, LINK the phone to that account
-  /// (preserves uid + data). Otherwise sign in normally.
+  /// A web visitor is always an anonymous GUEST. For a NEW number we LINK the
+  /// phone to that guest account so their pre-login data carries over. For a
+  /// number that ALREADY has an account we must NOT link — the link would fail
+  /// with `credential-already-in-use` and, on web, Firebase drops the recovery
+  /// credential (null), stranding the user. So we ask the backend up front and
+  /// sign into the existing account instead. (Native doesn't need this: its
+  /// link failure carries a usable credential — see AuthService.signIn.)
   Future<bool> _verifyPhoneWeb(String phoneNumber) async {
     try {
       final current = FirebaseAuth.instance.currentUser;
-      if (current != null && current.isAnonymous) {
+      final isGuest = current != null && current.isAnonymous;
+
+      // Only LINK when the guest's number is confirmed NEW. Otherwise sign in.
+      final useLinkFlow =
+          isGuest && !(await _phoneHasExistingAccount(phoneNumber));
+
+      if (useLinkFlow) {
         _confirmationResult = await current.linkWithPhoneNumber(phoneNumber);
       } else {
         _confirmationResult = await FirebaseAuth.instance.signInWithPhoneNumber(

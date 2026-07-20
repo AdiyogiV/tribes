@@ -22,6 +22,7 @@ import { checkBlockedDetailed } from "../lib/utils.js";
 import { checkMutualFollow } from "./compatibility.js";
 import { istToday, dayKey, monthKeyOf } from "./forecast/forecast_helpers.js";
 import { computePairTransitSynastry } from "../lib/vedic_pair_transit_synastry.js";
+import { enqueueNarrateForUser } from "./forecast/narrate.js";
 
 /** Cap so one call can't fan out into unbounded Firestore reads. */
 export const MAX_FRIENDS = 30;
@@ -200,4 +201,57 @@ export async function handleGetCircleVibes(request) {
     }));
 
     return { success: true, date: todayKey, vibes: results.filter(Boolean) };
+}
+
+/**
+ * onCall handler (via astroGateway `forceRenarrateCircle`): a one-off backfill
+ * to force re-narration of the caller's circle so freshly-added narration
+ * fields (e.g. the third-person `publicNote`) get written onto forecast days
+ * that were narrated before those fields existed.
+ *
+ * Why re-narration and not a targeted patch: narration is ONE atomic Gemini
+ * call per user that (re)writes the whole horizon; there's no partial rewrite,
+ * and `narrateForecastForUser` runs unconditionally (no runway gate), so
+ * enqueuing a task is all we need.
+ *
+ * Safety / cost: this can ONLY enqueue people the caller can already see vibes
+ * for — self plus mutual-follow, non-blocked friends (same gate as
+ * getCircleVibes). No global fan-out, so no admin role is required.
+ *
+ * @param {import("firebase-functions/v2/https").CallableRequest} request
+ * @returns {Promise<{success:boolean, enqueued:number, uids:string[]}>}
+ */
+export async function handleForceRenarrateCircle(request) {
+    const currentUserId = requireAuth(request, "force renarrate circle");
+    const friendIds = normalizeFriendIds(currentUserId, request.data?.friendIds);
+
+    // Gate each friend exactly like getCircleVibes: mutual-follow + not blocked.
+    const eligibleFriends = (await Promise.all(friendIds.map(async (fid) => {
+        try {
+            const [mutual, block] = await Promise.all([
+                checkMutualFollow(currentUserId, fid),
+                checkBlockedDetailed(db, currentUserId, fid),
+            ]);
+            return mutual && !block.isBlocked ? fid : null;
+        } catch (err) {
+            logger.warn("forceRenarrateCircle: skipping friend", { fid, error: err.message });
+            return null;
+        }
+    }))).filter(Boolean);
+
+    // Always include self so the caller's own card refreshes too.
+    const targets = [...new Set([currentUserId, ...eligibleFriends])];
+
+    let enqueued = 0;
+    for (const uid of targets) {
+        try {
+            await enqueueNarrateForUser(uid);
+            enqueued++;
+        } catch (err) {
+            logger.warn("forceRenarrateCircle: enqueue failed", { uid, error: err.message });
+        }
+    }
+
+    logger.info("forceRenarrateCircle: enqueued", { currentUserId, enqueued, targets });
+    return { success: true, enqueued, uids: targets };
 }

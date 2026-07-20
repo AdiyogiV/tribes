@@ -295,4 +295,41 @@ class CircleVibesService {
       return const [];
     }
   }
+
+  /// One-off backfill: ask the backend to re-narrate the current user's circle
+  /// (self + mutual-follow friends) so newly-added narration fields such as the
+  /// third-person `publicNote` get written onto forecast days that predate them.
+  ///
+  /// Fire-and-forget from the caller's view: narration runs as a background
+  /// Cloud Task, and the strip picks up the result on its next fetch (there's a
+  /// short delay while Gemini runs). Returns how many users were enqueued, or 0
+  /// on any failure (never throws).
+  Future<int> forceRenarrateCircle() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return 0;
+    try {
+      final results = await Future.wait([
+        _follows.getFollowing(uid, limit: 100),
+        _follows.getFollowers(uid, limit: 100),
+      ]);
+      final mutual = results[0]
+          .toSet()
+          .intersection(results[1].toSet())
+          .take(_maxFriends)
+          .toList();
+
+      final res = await _functions.httpsCallable('astroGateway').call(
+          {'method': 'forceRenarrateCircle', 'friendIds': mutual});
+      final data = res.data;
+      final enqueued =
+          data is Map ? (data['enqueued'] as num?)?.toInt() ?? 0 : 0;
+      AppLogger.i('CircleVibes: forceRenarrate enqueued=$enqueued',
+          category: LogCategory.general);
+      return enqueued;
+    } catch (e) {
+      AppLogger.w('Circle force-renarrate failed (non-fatal)',
+          category: LogCategory.general, data: {'error': e.toString()});
+      return 0;
+    }
+  }
 }

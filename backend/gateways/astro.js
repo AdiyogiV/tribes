@@ -17,6 +17,7 @@
  *   - syncAstroProfile        [auth]     Sync/upgrade astro data
  *   - computeMyForecast       [auth]     On-demand forecast signal recompute (no AI)
  *   - getCircleVibes          [auth]     Friends' vibe words for today (Co-Star strip)
+ *   - forceRenarrateCircle    [auth]     One-off: re-narrate self + circle (backfill publicNote)
  *   - invalidateCompCache     [internal] Clear compatibility cache for a user
  */
 
@@ -46,7 +47,7 @@ import {
 } from "../functions/astro_sync.js";
 
 import { handleComputeMyForecast } from "../functions/forecast/sense.js";
-import { handleGetCircleVibes } from "../functions/circle_vibes.js";
+import { handleGetCircleVibes, handleForceRenarrateCircle } from "../functions/circle_vibes.js";
 
 // Method registry — maps method name to handler + auth requirement
 const methods = {
@@ -63,6 +64,7 @@ const methods = {
     syncAstroProfile:       { handler: (req) => handleSyncAstroProfile(req), auth: true },
     computeMyForecast:      { handler: (req) => handleComputeMyForecast(req), auth: true },
     getCircleVibes:         { handler: (req) => handleGetCircleVibes(req), auth: true },
+    forceRenarrateCircle:   { handler: (req) => handleForceRenarrateCircle(req), auth: true },
     invalidateCompCache:    { handler: (req, data) => invalidateCompatibilityCache(data.userId), auth: true },
 };
 
