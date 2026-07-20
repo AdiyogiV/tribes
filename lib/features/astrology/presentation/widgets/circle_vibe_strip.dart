@@ -27,59 +27,66 @@ class CircleVibeStrip extends StatefulWidget {
 }
 
 class _CircleVibeStripState extends State<CircleVibeStrip> {
-  late Future<List<CircleVibe>> _future;
+  final _service = CircleVibesService();
+  List<CircleVibe> _vibes = const [];
 
   @override
   void initState() {
     super.initState();
-    _future = CircleVibesService().fetchCircleVibes();
+    _load();
+  }
+
+  Future<void> _load() async {
+    // 1) Paint instantly from today's cache (stale-while-revalidate).
+    final cached = await _service.cachedVibes();
+    if (mounted && cached.isNotEmpty) setState(() => _vibes = cached);
+    // 2) Refresh from the network; update only if something actually changed.
+    final fresh = await _service.fetchCircleVibes();
+    if (mounted && fresh.isNotEmpty) setState(() => _vibes = fresh);
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<CircleVibe>>(
-      future: _future,
-      builder: (context, snapshot) {
-        final vibes = snapshot.data ?? const <CircleVibe>[];
-        if (vibes.isEmpty) return const SizedBox.shrink();
+    final vibes = _vibes;
+    if (vibes.isEmpty) return const SizedBox.shrink();
 
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-        final fgMain = isDark ? Colors.white : Colors.black87;
-        final fgMuted = isDark ? Colors.white54 : Colors.black54;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fgMain = isDark ? Colors.white : Colors.black87;
+    final fgMuted = isDark ? Colors.white54 : Colors.black54;
 
-        return CircleFlushCard(
-          padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'YOUR CIRCLE',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 3.0,
-                  color: fgMuted,
-                ),
-              ),
-              const SizedBox(height: 18),
-              SizedBox(
-                height: 92,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
-                  padding: EdgeInsets.zero,
-                  itemCount: vibes.length + 1,
-                  separatorBuilder: (_, __) => const SizedBox(width: 18),
-                  itemBuilder: (_, i) {
-                    if (i == 0) {
-                      return _PortraitTile(
-                        name: widget.selfName,
-                        photo: widget.selfPhoto,
-                        isSelected: widget.selectedUid == null,
-                        fgMain: fgMain,
-                        fgMuted: fgMuted,
-                        onTap: () {
+    return CircleFlushCard(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'YOUR CIRCLE',
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 3.0,
+              color: fgMuted,
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 86,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              padding: EdgeInsets.zero,
+              itemCount: vibes.length + 1,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (_, i) {
+                if (i == 0) {
+                  return _PortraitTile(
+                    name: 'You',
+                    photo: widget.selfPhoto,
+                    isSelected: widget.selectedUid == null,
+                    fgMain: fgMain,
+                    fgMuted: fgMuted,
+                    onTap: () {
                           HapticFeedback.selectionClick();
                           widget.onSelect(null);
                         },
@@ -103,8 +110,6 @@ class _CircleVibeStripState extends State<CircleVibeStrip> {
             ],
           ),
         );
-      },
-    );
   }
 }
 
@@ -127,44 +132,51 @@ class _PortraitTile extends StatelessWidget {
   final Color fgMuted;
   final VoidCallback onTap;
 
-  static const double _w = 52;
+  static const double _w = 52; // photo size
   static const double _h = 62;
+  static const double _tileW = 66; // wider than the photo so names don't clip
 
   @override
   Widget build(BuildContext context) {
     final hasPhoto = photo != null && photo!.isNotEmpty;
 
+    Widget photoWidget = hasPhoto
+        ? CachedNetworkImage(
+            imageUrl: photo!,
+            fit: BoxFit.cover,
+            placeholder: (_, __) => _fallback(),
+            errorWidget: (_, __, ___) => _fallback(),
+          )
+        : _fallback();
+
+    // Selected = full colour + full strength. Others recede into grayscale.
+    if (!isSelected) {
+      photoWidget = ColorFiltered(
+        colorFilter: const ColorFilter.matrix([
+          0.2126, 0.7152, 0.0722, 0, 0,
+          0.2126, 0.7152, 0.0722, 0, 0,
+          0.2126, 0.7152, 0.0722, 0, 0,
+          0,      0,      0,      1, 0,
+        ]),
+        child: photoWidget,
+      );
+    }
+
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: SizedBox(
-        width: _w,
+        width: _tileW,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             AnimatedOpacity(
               duration: const Duration(milliseconds: 220),
-              opacity: isSelected ? 1.0 : 0.32,
+              opacity: isSelected ? 1.0 : 0.4,
               child: SizedBox(
                 width: _w,
                 height: _h,
-                child: hasPhoto
-                    ? ColorFiltered(
-                        // True grayscale — cohesive editorial look.
-                        colorFilter: const ColorFilter.matrix([
-                          0.2126, 0.7152, 0.0722, 0, 0,
-                          0.2126, 0.7152, 0.0722, 0, 0,
-                          0.2126, 0.7152, 0.0722, 0, 0,
-                          0,      0,      0,      1, 0,
-                        ]),
-                        child: CachedNetworkImage(
-                          imageUrl: photo!,
-                          fit: BoxFit.cover,
-                          placeholder: (_, __) => _fallback(),
-                          errorWidget: (_, __, ___) => _fallback(),
-                        ),
-                      )
-                    : _fallback(),
+                child: photoWidget,
               ),
             ),
             const SizedBox(height: 8),
@@ -178,6 +190,7 @@ class _PortraitTile extends StatelessWidget {
                 fontStyle: FontStyle.italic,
                 fontSize: 12,
                 height: 1.0,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                 color: isSelected ? fgMain : fgMuted,
               ),
             ),

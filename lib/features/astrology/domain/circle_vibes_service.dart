@@ -1,5 +1,7 @@
 import 'package:cloud_functions/cloud_functions.dart';
+import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/features/profile/domain/follow_service.dart';
 
@@ -47,6 +49,16 @@ class CircleVibe {
       );
 
   bool get isValid => uid.isNotEmpty && vibe.isNotEmpty;
+
+  Map<String, dynamic> toMap() => {
+        'uid': uid,
+        'name': name,
+        if (photo != null) 'photo': photo,
+        'vibe': vibe,
+        if (publicNote != null) 'publicNote': publicNote,
+        if (together != null) 'together': together!.toMap(),
+        if (energy.isNotEmpty) 'energy': energy.map((e) => e.toMap()).toList(),
+      };
 }
 
 /// The derived, privacy-safe transit synastry-of-the-day for a pair. Every
@@ -76,6 +88,12 @@ class TodayTogether {
       connection.where((r) => r.benefic).toList();
   List<TogetherReason> get unfavorable =>
       connection.where((r) => !r.benefic).toList();
+
+  Map<String, dynamic> toMap() => {
+        'score': score,
+        'label': label,
+        'connection': connection.map((r) => r.toMap()).toList(),
+      };
 }
 
 /// One CONNECTION signal — a transiting [planet] linking the two charts.
@@ -119,6 +137,15 @@ class TogetherReason {
         ? '$planet blesses the $karaka between you'
         : '$planet tests the $karaka between you';
   }
+
+  Map<String, dynamic> toMap() => {
+        'planet': planet,
+        'kind': kind,
+        if (karaka.isNotEmpty) 'karaka': karaka,
+        if (karakaA.isNotEmpty) 'karakaA': karakaA,
+        if (karakaB.isNotEmpty) 'karakaB': karakaB,
+        'benefic': benefic,
+      };
 }
 
 /// One of the friend's OWN transit signals today (for their energy card).
@@ -140,6 +167,12 @@ class EnergyReason {
       );
 
   String phrase() => benefic ? '$planet favours their $karaka' : '$planet tests their $karaka';
+
+  Map<String, dynamic> toMap() => {
+        'planet': planet,
+        'karaka': karaka,
+        'benefic': benefic,
+      };
 }
 
 /// "Friends Today" — fetches the vibe word for each mutual-follow friend.
@@ -159,6 +192,44 @@ class CircleVibesService {
 
   /// How many mutual-follows to consider. The backend caps its own fan-out too.
   static const int _maxFriends = 30;
+
+  String _cacheKey(String uid, String dateKey) => 'circle_vibes_${uid}_$dateKey';
+  static String _today() {
+    final n = DateTime.now();
+    return '${n.year}-${n.month.toString().padLeft(2, '0')}-'
+        '${n.day.toString().padLeft(2, '0')}';
+  }
+
+  /// Instantly-available cached vibes for TODAY (stale-while-revalidate), so the
+  /// strip can paint in ~10ms on open instead of waiting ~5s for the network.
+  /// Returns [] when there's no fresh-enough cache.
+  Future<List<CircleVibe>> cachedVibes() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return const [];
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_cacheKey(uid, _today()));
+      if (raw == null || raw.isEmpty) return const [];
+      final list = (jsonDecode(raw) as List)
+          .whereType<Map>()
+          .map((m) => CircleVibe.fromMap(Map<String, dynamic>.from(m)))
+          .where((v) => v.isValid)
+          .toList();
+      return list;
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  Future<void> _cache(String uid, List<CircleVibe> vibes) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final json = jsonEncode(vibes.map((v) => v.toMap()).toList());
+      await prefs.setString(_cacheKey(uid, _today()), json);
+    } catch (_) {
+      // Caching is best-effort; a failure just means no instant paint next time.
+    }
+  }
 
   /// Returns today's vibes for the current user's mutual-follows.
   /// Never throws — returns [] on any failure so the strip just hides itself.
@@ -200,10 +271,23 @@ class CircleVibesService {
           .where((v) => v.isValid)
           .toList();
 
+      // [circle] TEMP diagnostic — is the backend sending together/energy?
+      final withTogether = vibes.where((v) => v.together != null).length;
+      final withEnergy = vibes.where((v) => v.energy.isNotEmpty).length;
+      final firstKeys = rawVibes.isNotEmpty && rawVibes.first is Map
+          ? (rawVibes.first as Map).keys.toList()
+          : const [];
       AppLogger.i(
           'CircleVibes: backend returned ${rawVibes.length} raw, '
           '${vibes.length} valid vibes',
-          category: LogCategory.general);
+          category: LogCategory.general,
+          data: {
+            'withTogether': withTogether,
+            'withEnergy': withEnergy,
+            'firstVibeKeys': firstKeys,
+          });
+      // Persist for instant paint next open (stale-while-revalidate).
+      if (vibes.isNotEmpty) await _cache(uid, vibes);
       return vibes;
     } catch (e) {
       AppLogger.w('Circle vibes fetch failed (non-fatal)',

@@ -150,6 +150,15 @@ export async function handleGetCircleVibes(request) {
             (skySnap.data().positions?.[todayKey] || null) :
             null;
         if (myNatal && transit) pairCtx = { myNatal, transit };
+        // [circle] diagnostic — why is `together` present or absent?
+        logger.info("getCircleVibes: pairing context", {
+            todayKey,
+            hasMyNatal: !!myNatal,
+            myNatalKeys: myNatal ? Object.keys(myNatal).slice(0, 12) : [],
+            hasTransit: !!transit,
+            transitKeys: transit ? Object.keys(transit).slice(0, 12) : [],
+            skyDocExists: skySnap.exists,
+        });
     } catch (err) {
         logger.warn("getCircleVibes: could not load chart/sky for pairing", { error: err.message });
     }
@@ -172,7 +181,17 @@ export async function handleGetCircleVibes(request) {
             if (!userSnap.exists) return null;
 
             const days = fcastSnap.exists ? (fcastSnap.data().days || []) : [];
-            return pickTodayVibe(fid, userSnap.data(), days, todayKey, pairCtx);
+            const vibe = pickTodayVibe(fid, userSnap.data(), days, todayKey, pairCtx);
+            // [circle] diagnostic — per friend, why together present/absent.
+            if (vibe) {
+                logger.info("getCircleVibes: friend vibe", {
+                    fid,
+                    hasFriendNatal: !!userSnap.data().astrologyData?.birthChartData?.output,
+                    hasTogether: !!vibe.together,
+                    togetherScore: vibe.together?.score ?? null,
+                });
+            }
+            return vibe;
         } catch (err) {
             // One flaky friend shouldn't sink the whole strip.
             logger.warn("getCircleVibes: skipping friend", { fid, error: err.message });

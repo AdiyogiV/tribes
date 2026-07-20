@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:aurogram/features/astrology/domain/circle_vibes_service.dart';
-import 'package:aurogram/features/astrology/presentation/widgets/compatibility_badge.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/circle_flush_card.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/friend_together_card.dart';
 import 'package:aurogram/features/profile/domain/namaste_service.dart';
@@ -24,18 +23,11 @@ class FriendCosmicView extends StatelessWidget {
       children: [
         FriendDayCard(vibe: vibe),
         const SizedBox(height: 16),
-        // Current (daily transit) cosmic weather for the two of you — shown
-        // above the static synastry badge since this is the "today" reading.
+        // Current (daily transit) cosmic weather for the two of you.
         if (vibe.together != null) ...[
           FriendTogetherCard(together: vibe.together!, friendName: vibe.name),
           const SizedBox(height: 16),
         ],
-        CompatibilityBadge(
-          otherUserId: vibe.uid,
-          otherUserName: vibe.name,
-          otherUserPhotoUrl: vibe.photo,
-        ),
-        const SizedBox(height: 12),
         Center(
           child: TextButton(
             onPressed: () => context.push('/user/${vibe.uid}'),
@@ -223,7 +215,7 @@ class _EnergyLink extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String label = 'SEND ENERGY';
+    String label = 'SEND NAMASTE ENERGY';
     IconData icon = Icons.arrow_forward_rounded;
     if (sending) {
       label = 'SENDING';
