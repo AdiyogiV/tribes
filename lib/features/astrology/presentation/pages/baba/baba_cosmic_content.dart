@@ -135,21 +135,6 @@ class BabaCosmicContent extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final screenWidth = constraints.maxWidth;
-        final isWide = screenWidth >= desktopBreak;
-
-        // Adaptive left-column width — narrower panes get a snugger wheel
-        // column so the right column has enough room to be useful.
-        //
-        // Breakpoints calibrated against the cosmic *pane* width (not window):
-        //   ≥ 1400 → 520 (large desktop, 1500+ Chrome window)
-        //   ≥ 1100 → 480 (real-laptop desktop, ~1500 Chrome with chat rail)
-        //   ≥ 950  → 420 (mid laptop)
-        //   ≥ 880  → 380 (narrow laptop, 1280 window with chat history open)
-        //   else   → 360 (tightest 2-col — 1024 window with sidebar collapsed)
-            : screenWidth >= 1100
-                : screenWidth >= 950
-                    : screenWidth >= 880
-                        ? 380.0
 
         // Adaptive content cap: wider on bigger monitors but never blown out.
         // The lower tier doesn't cap — at that width every pixel counts.
