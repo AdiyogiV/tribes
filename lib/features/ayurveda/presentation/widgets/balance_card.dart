@@ -5,6 +5,7 @@ import 'package:aurogram/shared/models/ayurveda_profile.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/features/ayurveda/presentation/widgets/ayurveda_theme.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
+import 'package:aurogram/shared/presentation/responsive/adaptive_card_body.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PrakritiHeroCard - Your permanent constitution
@@ -305,9 +306,12 @@ class BalanceCard extends StatelessWidget {
       }
     }
     
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+    return AdaptiveCardBody(
+      visualFirst: true, // orb is the hero on mobile
+      header: (wide) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
         // Heading
         doshaDisplay.isEmpty 
           ? Text(
@@ -352,17 +356,17 @@ class BalanceCard extends StatelessWidget {
           symptomText,
           style: TextStyle(
             color: fgMuted,
-            fontSize: isWide ? 15.0 : 13.0,
+            fontSize: wide ? 15.0 : 13.0,
             height: 1.4,
             fontFamily: 'Georgia',
             fontStyle: FontStyle.italic,
           ),
         ),
-        
-        const SizedBox(height: 24),
+        ],
+      ),
 
-        // Single Unified Wavy Orb + Venn Diagram Graphic
-        Center(
+      // Single Unified Wavy Orb + Venn Diagram Graphic
+      visual: (wide) => Center(
           child: SizedBox(
             width: 260,
             height: 260,
@@ -384,13 +388,14 @@ class BalanceCard extends StatelessWidget {
             ),
           ),
         ),
-
-        const SizedBox(height: 8),
-
+      info: (wide) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
         // Chic Editorial Tappable Bars
-        _buildChicBar(context, 'Vata', prakriti.vata, vikriti!.vata, getDoshaColor('vata'), fgMain, fgMuted, bg, isWide),
-        _buildChicBar(context, 'Pitta', prakriti.pitta, vikriti!.pitta, getDoshaColor('pitta'), fgMain, fgMuted, bg, isWide),
-        _buildChicBar(context, 'Kapha', prakriti.kapha, vikriti!.kapha, getDoshaColor('kapha'), fgMain, fgMuted, bg, isWide),
+        _buildChicBar(context, 'Vata', prakriti.vata, vikriti!.vata, getDoshaColor('vata'), fgMain, fgMuted, bg, wide),
+        _buildChicBar(context, 'Pitta', prakriti.pitta, vikriti!.pitta, getDoshaColor('pitta'), fgMain, fgMuted, bg, wide),
+        _buildChicBar(context, 'Kapha', prakriti.kapha, vikriti!.kapha, getDoshaColor('kapha'), fgMain, fgMuted, bg, wide),
 
         const SizedBox(height: 24),
 
@@ -399,15 +404,16 @@ class BalanceCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: _buildTipSection('F O O D', foodTips, fgMain, fgMuted, fgFaint, isWide),
+              child: _buildTipSection('F O O D', foodTips, fgMain, fgMuted, fgFaint, wide),
             ),
             const SizedBox(width: 24),
             Expanded(
-              child: _buildTipSection('P R A C T I C E', doTips, fgMain, fgMuted, fgFaint, isWide),
+              child: _buildTipSection('P R A C T I C E', doTips, fgMain, fgMuted, fgFaint, wide),
             ),
           ],
         ),
-      ],
+        ],
+      ),
     );
   }
 

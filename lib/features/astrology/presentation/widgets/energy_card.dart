@@ -9,6 +9,7 @@ import 'package:aurogram/features/astrology/presentation/widgets/cards/vedic_tim
 import 'package:flutter/services.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
+import 'package:aurogram/shared/presentation/responsive/adaptive_card_body.dart';
 import 'package:aurogram/features/astrology/data/utils/nakshatra_data.dart';
 import 'package:aurogram/features/astrology/data/utils/daily_vibe.dart';
 import 'package:aurogram/features/astrology/domain/forecast_service.dart';
@@ -877,10 +878,7 @@ class _EnergyCardState extends State<EnergyCard>
     final c = isDark ? Colors.white : Colors.black87;
     final cardColor = isDark ? Colors.black : Colors.white;
 
-    final isWide = kIsWeb && MediaQuery.of(context).size.width >= 820;
-    final vibeContent = _buildDailyVibeContent(c, isDark, cardColor, isWide);
     final wheel = _buildWheel(c, isDark);
-
     // Header summary: energy label + alignment %.
     // The % is the REAL server-computed Vedic day-signal (Gochara + Ashtakavarga
     // + Vedha + Tara/Chandra Bala + Panchang) for the shown date. The label
@@ -904,126 +902,131 @@ class _EnergyCardState extends State<EnergyCard>
     return Material(
       color: cardColor,
       elevation: 0,
+      child: AdaptiveCardBody(
+        visualFirst: true, // wheel is the hero on mobile
+        header: (wide) => _energyHeaderSection(
+          wide: wide,
+          c: c,
+          isDark: isDark,
+          headerLabel: headerLabel,
+          headerAlignment: headerAlignment,
+        ),
+        info: (wide) => _buildDailyVibeContent(c, isDark, cardColor, wide),
+        visual: (wide) => Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildMoon(c, isDark),
+            wheel,
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Editorial header (wide) or centered uppercase header (mobile). Extracted
+  // so both layouts share one source.
+  Widget _energyHeaderSection({
+    required bool wide,
+    required Color c,
+    required bool isDark,
+    required String? headerLabel,
+    required int? headerAlignment,
+  }) {
+    final webHeader = wide;
+    final fgMain = isDark ? Colors.white : const Color(0xFF1A1A1C);
+    final fgMuted = isDark ? Colors.white54 : Colors.black54;
+
+    if (webHeader) {
+      // Editorial header matching Current Sky / Today's Balance:
+      // left-aligned, Georgia italic 32, two-tone, muted subheading.
+      final children = <Widget>[];
+      if (headerLabel != null && headerLabel.isNotEmpty) {
+        final words = headerLabel.trim().split(RegExp(r'\s+'));
+        final last = words.removeLast();
+        final lead = words.isEmpty ? '' : '${words.join(' ')} ';
+        children.add(RichText(
+          text: TextSpan(
+            children: [
+              if (lead.isNotEmpty)
+                TextSpan(
+                  text: lead,
+                  style: TextStyle(
+                    fontFamily: 'Georgia',
+                    fontStyle: FontStyle.italic,
+                    color: c,
+                    fontSize: 32,
+                    letterSpacing: -1.2,
+                  ),
+                ),
+              TextSpan(
+                text: '$last.',
+                style: TextStyle(
+                  fontFamily: 'Georgia',
+                  fontStyle: FontStyle.italic,
+                  color: fgMain,
+                  fontSize: 32,
+                  fontWeight: FontWeight.w300,
+                  letterSpacing: -1.2,
+                ),
+              ),
+            ],
+          ),
+        ));
+      }
+      if (headerAlignment != null) {
+        children.add(const SizedBox(height: 8));
+        children.add(Text(
+          '$headerAlignment% aligned.',
+          style: TextStyle(
+            color: fgMuted,
+            fontSize: 15.0,
+            height: 1.4,
+            fontFamily: 'Georgia',
+            fontStyle: FontStyle.italic,
+          ),
+        ));
+      }
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 18),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: children,
+        ),
+      );
+    }
+
+    // MOBILE — original centered uppercase header (untouched).
+    return Padding(
+      padding: const EdgeInsets.only(top: 22, bottom: 14),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // ── HEADER: Context ──
-          Builder(builder: (context) {
-            final webHeader =
-                kIsWeb && MediaQuery.of(context).size.width >= 820;
-            final fgMain = isDark ? Colors.white : const Color(0xFF1A1A1C);
-            final fgMuted = isDark ? Colors.white54 : Colors.black54;
-
-            if (webHeader) {
-              // Editorial header matching Current Sky / Today's Balance:
-              // left-aligned, Georgia italic 32, two-tone, muted subheading.
-              final children = <Widget>[];
-              if (headerLabel != null && headerLabel.isNotEmpty) {
-                final words = headerLabel.trim().split(RegExp(r'\s+'));
-                final last = words.removeLast();
-                final lead = words.isEmpty ? '' : '${words.join(' ')} ';
-                children.add(RichText(
-                  text: TextSpan(
-                    children: [
-                      if (lead.isNotEmpty)
-                        TextSpan(
-                          text: lead,
-                          style: TextStyle(
-                            fontFamily: 'Georgia',
-                            fontStyle: FontStyle.italic,
-                            color: c,
-                            fontSize: 32,
-                            letterSpacing: -1.2,
-                          ),
-                        ),
-                      TextSpan(
-                        text: '$last.',
-                        style: TextStyle(
-                          fontFamily: 'Georgia',
-                          fontStyle: FontStyle.italic,
-                          color: fgMain,
-                          fontSize: 32,
-                          fontWeight: FontWeight.w300,
-                          letterSpacing: -1.2,
-                        ),
-                      ),
-                    ],
-                  ),
-                ));
-              }
-              if (headerAlignment != null) {
-                children.add(const SizedBox(height: 8));
-                children.add(Text(
-                  '$headerAlignment% aligned.',
-                  style: TextStyle(
-                    color: fgMuted,
-                    fontSize: webHeader ? 15.0 : 13.0,
-                    height: 1.4,
-                    fontFamily: 'Georgia',
-                    fontStyle: FontStyle.italic,
-                  ),
-                ));
-              }
-              return Container(
-                width: double.infinity,
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 18),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: children,
-                ),
-              );
-            }
-
-            // MOBILE — original centered uppercase header (untouched).
-            return Padding(
-              padding: const EdgeInsets.only(top: 22, bottom: 14),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Prominent: energy label + alignment %.
-                  if (headerLabel != null && headerLabel.isNotEmpty)
-                    Text(
-                      headerLabel.toUpperCase(),
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 16,
-                        height: 1.4,
-                        letterSpacing: 3.0,
-                        fontWeight: FontWeight.w800,
-                        color: c,
-                      ),
-                    ),
-                  if (headerAlignment != null)
-                    Text(
-                      '$headerAlignment% ALIGNED',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 12,
-                        height: 1.4,
-                        letterSpacing: 3.0,
-                        fontWeight: FontWeight.w800,
-                        color: c,
-                      ),
-                    ),
-                ],
+          if (headerLabel != null && headerLabel.isNotEmpty)
+            Text(
+              headerLabel.toUpperCase(),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                height: 1.4,
+                letterSpacing: 3.0,
+                fontWeight: FontWeight.w800,
+                color: c,
               ),
-            );
-          }),
-
-          // ── MOON: elegant, on-brand, sits just above the wheel ──
-          _buildMoon(c, isDark),
-
-          // ── WHEEL AREA ──
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppDimensions.paddingXs,
             ),
-            child: wheel,
-          ),
-
-          // ── VIBE CONTENT ──
-          vibeContent,
+          if (headerAlignment != null)
+            Text(
+              '$headerAlignment% ALIGNED',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                height: 1.4,
+                letterSpacing: 3.0,
+                fontWeight: FontWeight.w800,
+                color: c,
+              ),
+            ),
         ],
       ),
     );

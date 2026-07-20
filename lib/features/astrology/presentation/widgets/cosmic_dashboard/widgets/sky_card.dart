@@ -6,6 +6,7 @@ import 'package:aurogram/features/astrology/data/utils/sky_connection.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/chic_kundali_chart.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/kundali_house_hit_test.dart';
+import 'package:aurogram/shared/presentation/responsive/adaptive_card_body.dart';
 
 /// Card widget displaying the current sky chart with optional birth chart overlay
 class SkyCard extends StatelessWidget {
@@ -108,10 +109,12 @@ class SkyCard extends StatelessWidget {
       width: double.infinity,
       color: bg,
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
+      child: AdaptiveCardBody(
+        visualFirst: true, // chart is the hero on mobile
+        header: (wide) => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
           // Chic Editorial Header
           RichText(
             text: TextSpan(
@@ -154,9 +157,12 @@ class SkyCard extends StatelessWidget {
               ),
             ),
           ],
-
-          const SizedBox(height: 32), // Breathing room
-
+          ],
+        ),
+        visual: (wide) => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
           // Chart with overlay
           _buildChart(
             context,
@@ -174,9 +180,12 @@ class SkyCard extends StatelessWidget {
             const SizedBox(height: 20),
             Center(child: _buildLegend(context, c)),
           ],
-
-          const SizedBox(height: 32),
-
+          ],
+        ),
+        info: (wide) => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
           // The Chic Typographic Date Stepper & Progress Bar
           // Placed in a massive invisible container so the scrub area is huge
           GestureDetector(
@@ -380,7 +389,8 @@ class SkyCard extends StatelessWidget {
               ),
             ),
           ],
-        ],
+          ],
+        ),
       ),
     );
   }
