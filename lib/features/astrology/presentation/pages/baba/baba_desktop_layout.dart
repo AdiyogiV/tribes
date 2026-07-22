@@ -20,14 +20,14 @@ import 'package:aurogram/features/ai_chat/domain/ai_chat_provider.dart';
 /// 2. Inline AiChatPage for a selected conversation
 /// 3. Inline AiChatPage for a new chat (from floating input send)
 class BabaDesktopLayout extends StatefulWidget {
-  final Widget Function() cosmicDashboardBuilder;
+  final Widget Function() dashboardContentBuilder;
 
   /// Builder for the floating chat input bar (same as mobile dashboard input)
   final Widget Function()? dashboardInputBuilder;
 
   const BabaDesktopLayout({
     super.key,
-    required this.cosmicDashboardBuilder,
+    required this.dashboardContentBuilder,
     this.dashboardInputBuilder,
   });
 
@@ -191,7 +191,7 @@ class BabaDesktopLayoutState extends State<BabaDesktopLayout> {
             parent: AlwaysScrollableScrollPhysics(),
           ),
           padding: const EdgeInsets.only(top: 28, bottom: 90), // Breathing room + space for floating input
-          child: widget.cosmicDashboardBuilder(),
+          child: widget.dashboardContentBuilder(),
         ),
         if (widget.dashboardInputBuilder != null)
           Positioned(

@@ -16,7 +16,7 @@ import 'package:aurogram/features/ayurveda/domain/ayurveda_service.dart';
 import 'package:aurogram/features/astrology/domain/sky_positions_service.dart';
 import 'package:aurogram/features/astrology/domain/astro_calendar_service.dart';
 import 'package:aurogram/features/astrology/domain/forecast_service.dart';
-import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/cosmic_dashboard_data.dart';
+import 'package:aurogram/features/astrology/presentation/widgets/dashboard/dashboard_load_state.dart';
 import 'package:aurogram/features/astrology/presentation/pages/baba/baba_desktop_layout.dart';
 import 'package:aurogram/features/astrology/presentation/pages/baba/baba_empty_states.dart';
 import 'package:aurogram/features/astrology/presentation/pages/baba/baba_cosmic_content.dart';
@@ -439,7 +439,7 @@ class DashboardPageState extends State<DashboardPage>
         backgroundColor: Colors.transparent,
         body: BabaDesktopLayout(
           key: _desktopLayoutKey,
-          cosmicDashboardBuilder: _buildCosmicDashboardContent,
+          dashboardContentBuilder: _buildDashboardContent,
           // No inline input builder: Baba is now the one app-wide overlay
           // (voice blob + floating chat) and floats over desktop too.
         ),
@@ -475,7 +475,7 @@ class DashboardPageState extends State<DashboardPage>
                 child: Column(
                   children: [
                     _LocalOverlayScope(
-                      child: _buildCosmicDashboardContent(),
+                      child: _buildDashboardContent(),
                     ),
                     // Fixed tail so the last card clears the bottom nav bar and
                     // Baba's floating blob.
@@ -511,7 +511,7 @@ class DashboardPageState extends State<DashboardPage>
   // Cosmic Dashboard
   // ─────────────────────────────────────────────────────────────
 
-  Widget _buildCosmicDashboardContent() {
+  Widget _buildDashboardContent() {
     // Logged-out users: show global content (sky chart, muhurat, panchang,
     // events) with null profile/insight/ayurveda — the content widget's
     // existing `if` guards naturally hide personal sections.

@@ -1,5 +1,5 @@
 /// Chart utilities for Vedic astrology chart rendering
-/// Extracted from cosmic_dashboard.dart for reusability and cleaner code
+/// Chart geometry helpers shared across the astrology dashboard widgets.
 library;
 
 import 'package:aurogram/core/logging/app_logger.dart';

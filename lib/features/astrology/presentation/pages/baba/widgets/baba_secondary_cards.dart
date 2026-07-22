@@ -7,8 +7,8 @@ import 'package:aurogram/shared/models/astrology_profile.dart';
 import 'package:aurogram/shared/models/ayurveda_profile.dart';
 import 'package:aurogram/features/astrology/domain/sky_positions_service.dart';
 import 'package:aurogram/features/astrology/domain/astro_calendar_service.dart';
-import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/widgets/sky_card.dart';
-import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard/cosmic_dashboard_data.dart';
+import 'package:aurogram/features/astrology/presentation/widgets/dashboard/sky_card.dart';
+import 'package:aurogram/features/astrology/presentation/widgets/dashboard/dashboard_load_state.dart';
 import 'package:aurogram/features/ayurveda/presentation/widgets/balance_card.dart';
 import 'package:aurogram/features/astrology/presentation/pages/baba/widgets/baba_sky_house_dialog.dart';
 
