@@ -7,8 +7,8 @@ import 'package:aurogram/core/theme/app_theme.dart';
 /// `820` literal sprinkled through the tree.
 const double kDashboardDesktopBreak = 820.0;
 
-/// Corner radius for the floating dashboard cards.
-const double kDashboardCardRadius = 28.0;
+/// Corner radius for the dashboard cards. 0 = square corners (no rounding).
+const double kDashboardCardRadius = 0.0;
 
 /// Generous, consistent inner padding for the dashboard cards.
 const EdgeInsets kDashboardCardPadding =
