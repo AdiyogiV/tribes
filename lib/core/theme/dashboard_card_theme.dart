@@ -202,3 +202,83 @@ class EditorialCardHeader extends StatelessWidget {
     );
   }
 }
+
+/// A single editorial "tip column": a spaced-caps eyebrow header over a
+/// numbered (01, 02, …) list of short items in the dashboard's serif style.
+/// Used for Balance's *FOOD / PRACTICE* and Energy's *FAVOR / AVOID* lists so
+/// they share one implementation (was hand-rolled once inside Balance).
+class EditorialTipColumn extends StatelessWidget {
+  const EditorialTipColumn({
+    super.key,
+    required this.header,
+    required this.items,
+    required this.palette,
+    required this.isWide,
+    this.headerColor,
+  });
+
+  /// Spaced-caps label, e.g. 'F O O D' or 'F A V O R'.
+  final String header;
+  final List<String> items;
+  final DashboardCardPalette palette;
+  final bool isWide;
+
+  /// Optional tint for the eyebrow header (defaults to [palette.fgMuted]).
+  final Color? headerColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          header,
+          style: TextStyle(
+            color: headerColor ?? palette.fgMuted,
+            fontSize: isWide ? 11.0 : 9.0,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 2.0,
+          ),
+        ),
+        const SizedBox(height: 16),
+        ...items.asMap().entries.map((entry) {
+          final idx = entry.key + 1;
+          final text = entry.value;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  idx < 10 ? '0$idx' : '$idx',
+                  style: TextStyle(
+                    fontFamily: 'Georgia',
+                    fontStyle: FontStyle.italic,
+                    fontSize: isWide ? 12.0 : 10.0,
+                    color: palette.fgFaint,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    text,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: palette.fgMain,
+                      fontSize: isWide ? 15.0 : 13.0,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+      ],
+    );
+  }
+}

@@ -232,7 +232,6 @@ class BalanceCard extends StatelessWidget {
     final bg = palette.surface;
     final fgMain = palette.fgMain;
     final fgMuted = palette.fgMuted;
-    final fgFaint = palette.fgFaint;
 
     final isWide = MediaQuery.of(context).size.width >= kDashboardDesktopBreak;
     final hasVikriti = vikriti != null;
@@ -246,7 +245,7 @@ class BalanceCard extends StatelessWidget {
           else if (!hasVikriti)
             _buildNoDataState(fgMain, fgMuted)
           else
-            _buildVennContent(context, fgMain, fgMuted, fgFaint, bg, isWide),
+            _buildVennContent(context, fgMain, fgMuted, bg, isWide),
         ],
       ),
     );
@@ -274,7 +273,7 @@ class BalanceCard extends StatelessWidget {
     );
   }
 
-  Widget _buildVennContent(BuildContext context, Color fgMain, Color fgMuted, Color fgFaint, Color bg, bool isWide) {
+  Widget _buildVennContent(BuildContext context, Color fgMain, Color fgMuted, Color bg, bool isWide) {
     final palette = DashboardCardPalette.forBrightness(isDark);
     String dominantDosha = 'balanced';
     String doshaDisplay = '';
@@ -367,70 +366,24 @@ class BalanceCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: _buildTipSection('F O O D', foodTips, fgMain, fgMuted, fgFaint, wide),
+              child: EditorialTipColumn(
+                  header: 'F O O D',
+                  items: foodTips,
+                  palette: palette,
+                  isWide: wide),
             ),
             const SizedBox(width: 24),
             Expanded(
-              child: _buildTipSection('P R A C T I C E', doTips, fgMain, fgMuted, fgFaint, wide),
+              child: EditorialTipColumn(
+                  header: 'P R A C T I C E',
+                  items: doTips,
+                  palette: palette,
+                  isWide: wide),
             ),
           ],
         ),
         ],
       ),
-    );
-  }
-
-  Widget _buildTipSection(String header, List<String> items, Color fgMain, Color fgMuted, Color fgFaint, bool isWide) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          header,
-          style: TextStyle(
-            color: fgMuted,
-            fontSize: isWide ? 11.0 : 9.0,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 2.0,
-          ),
-        ),
-        const SizedBox(height: 16),
-        ...items.asMap().entries.map((entry) {
-          final idx = entry.key + 1;
-          final text = entry.value;
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12.0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              children: [
-                Text(
-                  '0$idx',
-                  style: TextStyle(
-                    fontFamily: 'Georgia',
-                    fontStyle: FontStyle.italic,
-                    fontSize: isWide ? 12.0 : 10.0,
-                    color: fgFaint,
-                    letterSpacing: 1.0,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    text,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: fgMain,
-                      fontSize: isWide ? 15.0 : 13.0,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        }),
-      ],
     );
   }
 

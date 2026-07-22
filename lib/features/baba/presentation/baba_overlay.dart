@@ -53,6 +53,7 @@ class _BabaOverlayState extends State<BabaOverlay>
   String? _shownError;
   late BabaAuthIdentity _authIdentity;
   StreamSubscription<User?>? _authSubscription;
+  Timer? _warmUpTimer; // web: deferred pre-warm so it doesn't fight page load
 
   // Auto-activation (opt-in "greet me on open"). We fire it at most ONCE per
   // app launch and only on the home screen. On web a browser gesture is
@@ -93,8 +94,21 @@ class _BabaOverlayState extends State<BabaOverlay>
     _context.addListener(_maybeAutoStart);
     // Pre-warm the call in the background so the FIRST tap is instant (no
     // "connecting…" wait). Best-effort; re-warmed on resume below.
+    //
+    // On WEB we DEFER the warm-up: opening the relay WebSocket during the
+    // initial load window competes with the dashboard's data fetches AND the
+    // relay is usually cold on web, so the eager socket just fails (~1.6s
+    // wasted) with zero instant-tap benefit. Deferring until the app has
+    // settled keeps the load path clean; a tap before then simply cold-starts
+    // (already handled). Mobile stays eager — its relay warm pays off.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _warmUp();
+      if (kIsWeb) {
+        _warmUpTimer = Timer(const Duration(seconds: 6), () {
+          if (mounted) _warmUp();
+        });
+      } else {
+        _warmUp();
+      }
       _maybeAutoStart();
     });
   }
@@ -130,6 +144,7 @@ class _BabaOverlayState extends State<BabaOverlay>
     WidgetsBinding.instance.removeObserver(this);
     _voice.removeListener(_onVoiceChanged);
     _authSubscription?.cancel();
+    _warmUpTimer?.cancel();
     _context.removeListener(_maybeAutoStart);
     _pulse.dispose();
     // NOTE: never dispose _voice — it's the app-scoped singleton.

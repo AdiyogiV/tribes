@@ -1065,6 +1065,8 @@ class _EnergyCardState extends State<EnergyCard>
         ? forecastNarrative!
         : vibe.narrative;
 
+    final palette = DashboardCardPalette.forBrightness(isDark);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingSm),
@@ -1086,6 +1088,34 @@ class _EnergyCardState extends State<EnergyCard>
             ),
           ),
           const SizedBox(height: AppDimensions.spacingXs),
+
+          // Do / Avoid — same editorial two-column list as the Balance card.
+          // Driven by the Tara's own goodFor / avoid guidance.
+          if (vibe.goodFor.isNotEmpty || vibe.avoid.isNotEmpty) ...[
+            const SizedBox(height: 24),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: EditorialTipColumn(
+                    header: 'F A V O R',
+                    items: vibe.goodFor,
+                    palette: palette,
+                    isWide: isWide,
+                  ),
+                ),
+                const SizedBox(width: 24),
+                Expanded(
+                  child: EditorialTipColumn(
+                    header: 'A V O I D',
+                    items: vibe.avoid,
+                    palette: palette,
+                    isWide: isWide,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
