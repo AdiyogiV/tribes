@@ -179,7 +179,7 @@ class _BabaChatPanelState extends State<BabaChatPanel>
       child: Row(
         children: [
           // Grab handle + brand.
-          Image.asset('assets/images/aurobhatt.png',
+          Image.asset('assets/images/aurobhatt.webp',
               width: 26, height: 26, fit: BoxFit.contain),
           const SizedBox(width: 8),
           Text(

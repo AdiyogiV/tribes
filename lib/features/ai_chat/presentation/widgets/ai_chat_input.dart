@@ -114,7 +114,7 @@ class AiChatInputState extends State<AiChatInput>
             height: 44,
             child: Center(
               child: Image.asset(
-                'assets/images/aurobhatt.png',
+                'assets/images/aurobhatt.webp',
                 width: 36,
                 height: 36,
                 fit: BoxFit.contain,

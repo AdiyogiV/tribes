@@ -27,7 +27,7 @@ const STATIC_ASSETS = [
   '/icons/Icon-maskable-192.png',
   '/icons/Icon-maskable-512.png',
   '/icons/icon_transparent.png',
-  '/assets/images/aurobhatt.png',
+  '/assets/images/aurobhatt.webp',
   '/favicon.png',
 ];
 

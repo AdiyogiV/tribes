@@ -432,7 +432,7 @@ class AiChatPageState extends State<AiChatPage> with WidgetsBindingObserver {
                           ),
                           const SizedBox(width: 4),
                           Image.asset(
-                            'assets/images/aurobhatt.png',
+                            'assets/images/aurobhatt.webp',
                             width: 28,
                             height: 28,
                             fit: BoxFit.contain,
@@ -512,7 +512,7 @@ class AiChatPageState extends State<AiChatPage> with WidgetsBindingObserver {
                     children: [
                       const SizedBox(width: 16),
                       Image.asset(
-                        'assets/images/aurobhatt.png',
+                        'assets/images/aurobhatt.webp',
                         width: 28,
                         height: 28,
                         fit: BoxFit.contain,

@@ -45,11 +45,11 @@ class YoniTribe {
   String get imageUrl =>
       'https://firebasestorage.googleapis.com/v0/b/'
       'ty-dev-516d7.appspot.com/o/'
-      'yoni_tribes%2F$animal.png?alt=media';
+      'yoni_tribes%2F$animal.webp?alt=media';
 
   /// Local asset path (only valid if assets/yoni/ is bundled — not recommended
   /// for production due to image size; use [imageUrl] instead).
-  String get localAsset => 'assets/yoni/$animal.png';
+  String get localAsset => 'assets/yoni/$animal.webp';
 
   @override
   String toString() => 'YoniTribe($displayName)';

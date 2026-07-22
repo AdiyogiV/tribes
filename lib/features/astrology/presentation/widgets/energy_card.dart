@@ -986,14 +986,10 @@ class _EnergyCardState extends State<EnergyCard>
           ),
         ));
       }
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.fromLTRB(24, 24, 24, 18),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: children,
-        ),
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: children,
       );
     }
 
@@ -1071,7 +1067,7 @@ class _EnergyCardState extends State<EnergyCard>
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(AppDimensions.paddingLg),
+      padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingSm),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -1100,7 +1096,7 @@ class _EnergyCardState extends State<EnergyCard>
   Widget _buildVibeLoadingContent(Color c) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(AppDimensions.paddingLg),
+      padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingSm),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -1136,7 +1132,7 @@ class _EnergyCardState extends State<EnergyCard>
     final todayInfo = NakshatraData.getInfo(_todayIndex);
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(AppDimensions.paddingLg),
+      padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingSm),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

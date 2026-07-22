@@ -101,7 +101,7 @@ class BabaBlob extends StatelessWidget {
                   height: iconSize,
                   alignment: Alignment.bottomCenter,
                   child: Image.asset(
-                    'assets/images/aurobhatt.png',
+                    'assets/images/aurobhatt.webp',
                     fit: BoxFit.fitWidth,
                     cacheWidth:
                         (iconSize * MediaQuery.devicePixelRatioOf(context))
