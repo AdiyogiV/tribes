@@ -193,61 +193,6 @@ class InsightRichText extends StatelessWidget {
   }
 }
 
-/// Single card style for legacy insight cards.
-class LegacyInsightCard extends StatelessWidget {
-  final String title;
-  final String content;
-  final bool isDark;
-  final Color brown;
-
-  const LegacyInsightCard({
-    super.key,
-    required this.title,
-    required this.content,
-    required this.isDark,
-    required this.brown,
-  });
-
-  Color _cardColor(BuildContext context) {
-    return isDark ? Theme.of(context).colorScheme.surface : Colors.white;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final hasContent = content.isNotEmpty;
-
-    return Material(
-      color: _cardColor(context),
-      elevation: 2,
-      shadowColor: Colors.black.withValues(alpha: 0.2),
-      borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(AppDimensions.paddingLg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: brown,
-                letterSpacing: 0.5,
-              ),
-            ),
-            if (hasContent) ...[
-              const SizedBox(height: AppDimensions.spacingMd),
-              InsightRichText(text: content, isDark: isDark, brown: brown),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 /// Empty state card shown when no insight is available.
 ///
 /// NOTE: This wraps [EmptyStateWidget] inside a Material card to match the

@@ -6,11 +6,9 @@ import 'package:aurogram/shared/models/astrology_profile.dart';
 import 'package:aurogram/features/astrology/domain/astrology_service.dart';
 import 'package:aurogram/features/notifications/domain/notification_service.dart';
 import 'package:go_router/go_router.dart';
-import 'package:aurogram/core/logging/app_logger.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/timeline/muhurat_timeline_widget.dart';
 import 'package:aurogram/features/astrology/presentation/pages/insight/forecast_day_view.dart';
 import 'package:aurogram/features/astrology/presentation/pages/insight/insight_widgets.dart';
-import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/features/astrology/domain/forecast_service.dart';
 import 'package:aurogram/features/baba/domain/baba_snapshot.dart';
 
