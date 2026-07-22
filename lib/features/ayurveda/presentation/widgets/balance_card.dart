@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:aurogram/shared/models/ayurveda_profile.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
+import 'package:aurogram/core/theme/dashboard_card_theme.dart';
 import 'package:aurogram/features/ayurveda/presentation/widgets/ayurveda_theme.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/shared/presentation/responsive/adaptive_card_body.dart';
@@ -226,13 +227,14 @@ class BalanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Theme-aware minimal card: night-black in dark, clean white in light.
-    final bg = isDark ? const Color(0xFF000000) : Colors.white;
-    final fgMain = isDark ? Colors.white : const Color(0xFF1A1A1C);
-    final fgMuted = isDark ? Colors.white54 : Colors.black54;
-    final fgFaint = isDark ? Colors.white24 : Colors.black26;
+    // Shared dashboard-card palette (night-black in dark, clean white in light).
+    final palette = DashboardCardPalette.forBrightness(isDark);
+    final bg = palette.surface;
+    final fgMain = palette.fgMain;
+    final fgMuted = palette.fgMuted;
+    final fgFaint = palette.fgFaint;
 
-    final isWide = MediaQuery.of(context).size.width >= 820;
+    final isWide = MediaQuery.of(context).size.width >= kDashboardDesktopBreak;
     final hasVikriti = vikriti != null;
 
     return Container(
@@ -261,17 +263,22 @@ class BalanceCard extends StatelessWidget {
   }
 
   Widget _buildNoDataState(Color fgMain, Color fgMuted) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onInfo,
-      child: Text(
-        'Unrecorded.\nTap to log your state.',
-        style: TextStyle(color: fgMain, fontSize: 24, fontFamily: 'Georgia', fontStyle: FontStyle.italic, height: 1.4),
+    return Semantics(
+      button: true,
+      label: 'Log your current state',
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onInfo,
+        child: Text(
+          'Unrecorded.\nTap to log your state.',
+          style: TextStyle(color: fgMain, fontSize: 24, fontFamily: 'Georgia', fontStyle: FontStyle.italic, height: 1.4),
+        ),
       ),
     );
   }
 
   Widget _buildVennContent(BuildContext context, Color fgMain, Color fgMuted, Color fgFaint, Color bg, bool isWide) {
+    final palette = DashboardCardPalette.forBrightness(isDark);
     String dominantDosha = 'balanced';
     String doshaDisplay = '';
     String stateTitle = 'Perfectly aligned.';
@@ -308,61 +315,13 @@ class BalanceCard extends StatelessWidget {
     
     return AdaptiveCardBody(
       visualFirst: true, // orb is the hero on mobile
-      header: (wide) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-        // Heading
-        doshaDisplay.isEmpty 
-          ? Text(
-              stateTitle,
-              style: TextStyle(
-                fontFamily: 'Georgia',
-                fontSize: 32,
-                fontStyle: FontStyle.italic,
-                color: fgMain,
-                letterSpacing: -1.2,
-              ),
-            )
-          : RichText(
-              text: TextSpan(
-                children: [
-                  TextSpan(
-                    text: doshaDisplay,
-                    style: TextStyle(
-                      fontFamily: 'Georgia',
-                      fontStyle: FontStyle.italic,
-                      color: getDoshaColor(dominantDosha),
-                      fontSize: 32,
-                      letterSpacing: -1.2,
-                    ),
-                  ),
-                  TextSpan(
-                    text: stateTitle,
-                    style: TextStyle(
-                      color: fgMain,
-                      fontSize: 32,
-                      fontWeight: FontWeight.w300,
-                      letterSpacing: -1.2,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-        
-        const SizedBox(height: 8),
-        
-        Text(
-          symptomText,
-          style: TextStyle(
-            color: fgMuted,
-            fontSize: wide ? 15.0 : 13.0,
-            height: 1.4,
-            fontFamily: 'Georgia',
-            fontStyle: FontStyle.italic,
-          ),
-        ),
-        ],
+      header: (wide) => EditorialCardHeader(
+        palette: palette,
+        leading: doshaDisplay,
+        leadingColor: getDoshaColor(dominantDosha),
+        trailing: stateTitle,
+        subtitle: symptomText,
+        subtitleSize: wide ? 15.0 : 13.0,
       ),
 
       // Single Unified Wavy Orb + Venn Diagram Graphic

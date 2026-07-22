@@ -5,6 +5,7 @@ import 'package:aurogram/features/astrology/data/utils/chart_utils.dart';
 import 'package:aurogram/features/astrology/data/utils/sky_connection.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/chic_kundali_chart.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
+import 'package:aurogram/core/theme/dashboard_card_theme.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/kundali_house_hit_test.dart';
 import 'package:aurogram/shared/presentation/responsive/adaptive_card_body.dart';
 
@@ -66,10 +67,11 @@ class SkyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = AppTheme.primaryColor;
+    final palette = DashboardCardPalette.forBrightness(isDark);
+    final c = palette.accent;
 
     // Web-wide: bump up content text sizes for desktop readability.
-    final isWide = MediaQuery.of(context).size.width >= 820;
+    final isWide = MediaQuery.of(context).size.width >= kDashboardDesktopBreak;
     final contentFontSize = isWide ? 15.0 : 13.0;
     final sliderLabelSize = isWide ? 10.0 : 8.0;
     final dateLabelSize = isWide ? 13.0 : 11.0;
@@ -99,11 +101,10 @@ class SkyCard extends StatelessWidget {
         : null;
     final hasBirthChart = birthHouses != null && birthLabels != null;
 
-    // Theme-aware surface + text. Dark = stark night-sky black; light = clean
-    // white paper with near-black ink.
-    final bg = isDark ? const Color(0xFF000000) : Colors.white;
-    final fgMain = isDark ? Colors.white : const Color(0xFF1A1A1C);
-    final fgMuted = isDark ? Colors.white54 : Colors.black54;
+    // Theme-aware surface + text (shared dashboard palette).
+    final bg = palette.surface;
+    final fgMain = palette.fgMain;
+    final fgMuted = palette.fgMuted;
 
     return Container(
       width: double.infinity,
@@ -111,53 +112,12 @@ class SkyCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
       child: AdaptiveCardBody(
         visualFirst: true, // chart is the hero on mobile
-        header: (wide) => Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-          // Chic Editorial Header
-          RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: isSliderOnToday ? 'Current ' : 'Time ',
-                  style: TextStyle(
-                    fontFamily: 'Georgia',
-                    fontStyle: FontStyle.italic,
-                    color: c,
-                    fontSize: 32,
-                    letterSpacing: -1.2,
-                  ),
-                ),
-                TextSpan(
-                  text: isSliderOnToday ? 'Sky.' : 'Travel.',
-                  style: TextStyle(
-                    fontFamily: 'Georgia',
-                    fontStyle: FontStyle.italic,
-                    color: fgMain,
-                    fontSize: 32,
-                    fontWeight: FontWeight.w300,
-                    letterSpacing: -1.2,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          if (insightText != null && insightText!.trim().isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(
-              insightText!,
-              style: TextStyle(
-                color: fgMuted,
-                fontSize: contentFontSize,
-                height: 1.4,
-                fontFamily: 'Georgia',
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          ],
-          ],
+        header: (wide) => EditorialCardHeader(
+          palette: palette,
+          leading: isSliderOnToday ? 'Current ' : 'Time ',
+          trailing: isSliderOnToday ? 'Sky.' : 'Travel.',
+          subtitle: insightText,
+          subtitleSize: contentFontSize,
         ),
         visual: (wide) => Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -188,7 +148,12 @@ class SkyCard extends StatelessWidget {
           children: [
           // The Chic Typographic Date Stepper & Progress Bar
           // Placed in a massive invisible container so the scrub area is huge
-          GestureDetector(
+          Semantics(
+            slider: true,
+            label: 'Sky date',
+            value: isSliderOnToday ? 'Today' : dateStr,
+            hint: 'Swipe left for the past, right for the future',
+            child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onHorizontalDragUpdate: skyDataLoaded
                 ? (details) {
@@ -213,7 +178,7 @@ class SkyCard extends StatelessWidget {
                     Row(
                       children: [
                         Icon(Icons.chevron_left,
-                            size: sliderLabelSize + 4, color: fgMuted.withValues(alpha: 0.5)),
+                            size: sliderLabelSize + 4, color: fgMuted),
                         const SizedBox(width: 4),
                         Text(
                           'PAST',
@@ -221,7 +186,7 @@ class SkyCard extends StatelessWidget {
                             fontSize: sliderLabelSize,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 2.0,
-                            color: fgMuted.withValues(alpha: 0.5),
+                            color: fgMuted,
                           ),
                         ),
                       ],
@@ -269,12 +234,12 @@ class SkyCard extends StatelessWidget {
                             fontSize: sliderLabelSize,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 2.0,
-                            color: fgMuted.withValues(alpha: 0.5),
+                            color: fgMuted,
                           ),
                         ),
                         const SizedBox(width: 4),
                         Icon(Icons.chevron_right,
-                            size: sliderLabelSize + 4, color: fgMuted.withValues(alpha: 0.5)),
+                            size: sliderLabelSize + 4, color: fgMuted),
                       ],
                     ),
                   ],
@@ -299,6 +264,7 @@ class SkyCard extends StatelessWidget {
             ),
             ),
           ),
+          ),
 
           // Contextual Reset Button (on its own line)
           const SizedBox(height: 8),
@@ -309,7 +275,10 @@ class SkyCard extends StatelessWidget {
               child: isSliderOnToday
                   ? const SizedBox.shrink()
                   : Center(
-                      child: GestureDetector(
+                      child: Semantics(
+                        button: true,
+                        label: 'Return to today',
+                        child: GestureDetector(
                         behavior: HitTestBehavior.opaque,
                         onTap: () {
                           HapticFeedback.lightImpact();
@@ -336,6 +305,7 @@ class SkyCard extends StatelessWidget {
                           ],
                         ),
                       ),
+                      ),
                     ),
             ),
           ),
@@ -348,7 +318,7 @@ class SkyCard extends StatelessWidget {
                 skyDataLoading ? 'Aligning the spheres...' : 'Data unavailable',
                 style: TextStyle(
                   fontSize: 10,
-                  color: fgMuted.withValues(alpha: 0.6),
+                  color: fgMuted,
                   fontStyle: FontStyle.italic,
                 ),
               ),
@@ -359,7 +329,10 @@ class SkyCard extends StatelessWidget {
           if (onExploreBirthChart != null && !hasBirthChart) ...[
             const SizedBox(height: 32),
             Center(
-              child: GestureDetector(
+              child: Semantics(
+                button: true,
+                label: 'Add birth details',
+                child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: () {
                   HapticFeedback.lightImpact();
@@ -386,6 +359,7 @@ class SkyCard extends StatelessWidget {
                     ),
                   ],
                 ),
+              ),
               ),
             ),
           ],

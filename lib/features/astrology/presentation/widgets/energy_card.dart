@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:aurogram/core/theme/dashboard_card_theme.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cards/vedic_time_utils.dart';
 import 'package:flutter/services.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
@@ -933,8 +934,9 @@ class _EnergyCardState extends State<EnergyCard>
     required int? headerAlignment,
   }) {
     final webHeader = wide;
-    final fgMain = isDark ? Colors.white : const Color(0xFF1A1A1C);
-    final fgMuted = isDark ? Colors.white54 : Colors.black54;
+    final palette = DashboardCardPalette.forBrightness(isDark);
+    final fgMain = palette.fgMain;
+    final fgMuted = palette.fgMuted;
 
     if (webHeader) {
       // Editorial header matching Current Sky / Today's Balance:
