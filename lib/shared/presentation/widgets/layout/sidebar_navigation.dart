@@ -5,7 +5,6 @@ import 'package:aurogram/shared/presentation/widgets/avatars/user_avatar.dart';
 import 'package:aurogram/core/di/injection.dart';
 import 'package:aurogram/features/auth/auth_service.dart';
 import 'package:go_router/go_router.dart';
-import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 
 /// Desktop sidebar navigation for web/tablet
@@ -164,27 +163,24 @@ class _SidebarNavigationState extends State<SidebarNavigation>
   Widget _buildHeader(bool isDark) {
     final iconSize = widget.isCollapsed ? 44.0 : 52.0;
 
-    // Logo widget - tappable to open Cosmic Dashboard
-    Widget logoWidget = GestureDetector(
-      onTap: () => CosmicDashboard.show(context),
-      child: Container(
-        width: iconSize,
-        height: iconSize,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-          child: Image.asset(
-            'assets/images/icon_transparent.png',
-            width: iconSize,
-            height: iconSize,
-            fit: BoxFit.contain,
-            errorBuilder: (_, __, ___) => Icon(
-              Icons.auto_awesome,
-              color: AppTheme.primaryColor,
-              size: widget.isCollapsed ? 28 : 32,
-            ),
+    // Logo widget - purely decorative (no tap action)
+    Widget logoWidget = Container(
+      width: iconSize,
+      height: iconSize,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        child: Image.asset(
+          'assets/images/icon_transparent.png',
+          width: iconSize,
+          height: iconSize,
+          fit: BoxFit.contain,
+          errorBuilder: (_, __, ___) => Icon(
+            Icons.auto_awesome,
+            color: AppTheme.primaryColor,
+            size: widget.isCollapsed ? 28 : 32,
           ),
         ),
       ),
@@ -192,7 +188,7 @@ class _SidebarNavigationState extends State<SidebarNavigation>
     // Show tooltip on web (useful for mouse hover)
     if (kIsWeb) {
       logoWidget = Tooltip(
-        message: 'Open Cosmic Dashboard',
+        message: 'aurogram',
         child: logoWidget,
       );
     }

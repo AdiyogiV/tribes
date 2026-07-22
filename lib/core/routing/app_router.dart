@@ -15,7 +15,6 @@ import 'package:aurogram/features/ayurveda/presentation/pages/prakriti_refinemen
 import 'package:aurogram/features/ayurveda/presentation/pages/vikriti_checkin_page.dart';
 import 'package:aurogram/features/ai_chat/presentation/pages/ai_chat_page.dart';
 import 'package:aurogram/features/ai_chat/presentation/pages/recent_conversations_page.dart';
-import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard.dart';
 import 'package:aurogram/features/feed/presentation/pages/thread_view.dart';
 import 'package:aurogram/features/spaces/presentation/pages/space_screen.dart';
 import 'package:aurogram/features/spaces/presentation/pages/space_chat_screen.dart';
@@ -54,8 +53,6 @@ import 'package:aurogram/features/spaces/presentation/widgets/tiles/video_player
 import 'package:aurogram/features/astrology/presentation/pages/saved_insights_page.dart';
 import 'package:aurogram/features/astrology/presentation/pages/compatibility_details_page.dart';
 import 'package:aurogram/features/onboarding/presentation/pages/onboarding_complete.dart';
-import 'package:aurogram/features/astrology/presentation/pages/minimal_dashboard.dart';
-import 'package:aurogram/features/astrology/presentation/pages/melooha_dashboard.dart';
 
 /// Global app router instance — set once during app startup.
 ///
@@ -370,25 +367,6 @@ GoRouter createAppRouter(GlobalKey<NavigatorState> navigatorKey) {
                 extra?['onConversationSelected'] as Function(String)?,
           );
         },
-      ),
-
-      // ── Cosmic Dashboard ─────────────────────────────────────────────
-      GoRoute(
-        path: RouteNames.cosmicDashboard,
-        name: 'cosmicDashboard',
-        builder: (_, __) => const Scaffold(
-            body:
-                CosmicDashboard()), // Wraps to provide scaffold if needed, but the original might be fine.
-      ),
-      GoRoute(
-        path: RouteNames.cosmicMinimal,
-        name: 'cosmicMinimal',
-        builder: (_, __) => const MinimalDashboardPage(),
-      ),
-      GoRoute(
-        path: RouteNames.cosmicWeekly,
-        name: 'cosmicWeekly',
-        builder: (_, __) => const MeloohaDashboardPage(),
       ),
 
       // ── Notifications ──────────────────────────────────────────────────

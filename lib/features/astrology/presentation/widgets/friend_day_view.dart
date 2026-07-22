@@ -62,6 +62,41 @@ class _FriendDayCardState extends State<FriendDayCard> {
   bool _sending = false;
   bool _sent = false;
 
+  @override
+  void initState() {
+    super.initState();
+    _syncSentState();
+  }
+
+  @override
+  void didUpdateWidget(FriendDayCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // The dashboard swaps friends IN PLACE (see CircleDashboardSwitcher), so
+    // Flutter reuses this same State object across friends — there's no key.
+    // Reset per-friend state on a friend change so one friend's "sent" flag
+    // never bleeds into another's card, then re-seed from the real quota.
+    if (oldWidget.vibe.uid != widget.vibe.uid) {
+      setState(() {
+        _sending = false;
+        _sent = false;
+      });
+      _syncSentState();
+    }
+  }
+
+  /// Seed the "already sent today" indicator from the backend-backed quota
+  /// (cached ~5min, so switching friends doesn't spam the network) so the card
+  /// reflects reality — a friend you already greeted today shows ENERGY SENT.
+  Future<void> _syncSentState() async {
+    final uid = widget.vibe.uid;
+    final quota = await NamasteService().getQuota();
+    // Guard against a friend switch racing an in-flight quota fetch.
+    if (!mounted || uid != widget.vibe.uid) return;
+    if (quota.hasSentTo(uid) && !_sent) {
+      setState(() => _sent = true);
+    }
+  }
+
   Future<void> _sendNamaste() async {
     if (_sending || _sent) return;
     setState(() => _sending = true);

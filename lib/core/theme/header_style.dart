@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/theme_helper.dart';
 import 'package:aurogram/shared/presentation/widgets/flash.dart';
-import 'package:aurogram/features/astrology/presentation/widgets/cosmic_dashboard.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 
 /// Header background style options
@@ -133,34 +132,19 @@ class AppHeaderStyle {
   /// Universal header content widget that all tabs should use for perfect consistency
   /// [leadingWidget] - Optional widget to show instead of app icon (e.g., back button)
   /// [isRefreshing] - When true, the title text will shimmer to indicate refresh in progress
-  /// [enableLogoTap] - When true, tapping the logo opens the Cosmic Dashboard (default: true)
   static Widget buildUniversalHeaderContent({
     required String title,
     Widget? actionButton,
     Widget? leadingWidget,
     bool isRefreshing = false,
-    bool enableLogoTap = true,
   }) {
-    // Build the logo widget (no shimmer - stays normal)
-    // Wrapped in Builder to get context for CosmicDashboard
-    Widget logoWidget = Builder(
-      builder: (context) {
-        final logo = SizedBox(
-          height: 56,
-          child: Image.asset(
-            'assets/images/icon_transparent.png',
-            fit: BoxFit.contain,
-          ),
-        );
-
-        if (!enableLogoTap) return logo;
-
-        return GestureDetector(
-          onTap: () => CosmicDashboard.show(context),
-          behavior: HitTestBehavior.opaque,
-          child: logo,
-        );
-      },
+    // Build the logo widget (no shimmer - stays normal). Decorative only.
+    Widget logoWidget = SizedBox(
+      height: 56,
+      child: Image.asset(
+        'assets/images/icon_transparent.png',
+        fit: BoxFit.contain,
+      ),
     );
 
     // Title - shimmer when refreshing, normal text otherwise

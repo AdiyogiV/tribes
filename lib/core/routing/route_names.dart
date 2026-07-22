@@ -38,11 +38,6 @@ class RouteNames {
   static const aiChat = '/ai/chat';
   static const recentConversations = '/ai/conversations';
 
-  // ── Cosmic Dashboard ────────────────────────────────────────────────
-  static const cosmicDashboard = '/cosmic/dashboard';
-  static const cosmicMinimal = '/cosmic/minimal';
-  static const cosmicWeekly = '/cosmic/weekly';
-
   // ── Calling ──────────────────────────────────────────────────────────
   static const callScreen = '/call';
   static const incomingCall = '/call/incoming';

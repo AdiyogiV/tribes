@@ -340,34 +340,4 @@ class CircleVibesService {
       return 0;
     }
   }
-
-  String _renarrateGuardKey(String uid) =>
-      'circle_renarrate_${uid}_${_today()}';
-
-  /// Self-heal: if any freshly-fetched friend is missing their third-person
-  /// [CircleVibe.publicNote], their forecast predates the field — enqueue a
-  /// one-off re-narration so it gets written. Guarded to fire at most ONCE per
-  /// user per day (SharedPreferences flag) so a permanently-null note (e.g. a
-  /// friend whose day genuinely has no note) can't spam the backend.
-  ///
-  /// Fire-and-forget: the note appears on a later fetch once Gemini finishes.
-  Future<void> backfillMissingPublicNotes(List<CircleVibe> vibes) async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
-    final anyMissing = vibes
-        .any((v) => v.publicNote == null || v.publicNote!.isEmpty);
-    if (!anyMissing) return;
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final key = _renarrateGuardKey(uid);
-      if (prefs.getBool(key) == true) return; // already tried today
-      await prefs.setBool(key, true);
-      AppLogger.i('CircleVibes: publicNote missing — enqueuing backfill',
-          category: LogCategory.general);
-      await forceRenarrateCircle();
-    } catch (e) {
-      AppLogger.w('Circle backfill guard failed (non-fatal)',
-          category: LogCategory.general, data: {'error': e.toString()});
-    }
-  }
 }

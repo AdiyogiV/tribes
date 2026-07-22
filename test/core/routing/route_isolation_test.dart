@@ -176,7 +176,6 @@ List<String> _allRouteNameValues() {
     RouteNames.ayurvedaCheckin,
     RouteNames.aiChat,
     RouteNames.recentConversations,
-    RouteNames.cosmicDashboard,
     RouteNames.callScreen,
     RouteNames.incomingCall,
     RouteNames.groupCall,

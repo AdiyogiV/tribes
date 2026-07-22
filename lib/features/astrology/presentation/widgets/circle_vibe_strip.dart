@@ -46,10 +46,6 @@ class _CircleVibeStripState extends State<CircleVibeStrip> {
     // 2) Refresh from the network; update only if something actually changed.
     final fresh = await _service.fetchCircleVibes();
     if (mounted && fresh.isNotEmpty) setState(() => _vibes = fresh);
-    // 3) Self-heal: if any friend is missing their third-person publicNote
-    // (forecast predates the field), enqueue a one-off re-narration. Guarded
-    // to fire at most once per day; the note shows up on a later fetch.
-    if (fresh.isNotEmpty) await _service.backfillMissingPublicNotes(fresh);
   }
 
   @override

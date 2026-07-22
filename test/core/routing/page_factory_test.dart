@@ -36,7 +36,6 @@ void main() {
       RouteNames.astrologyDetails,
       RouteNames.astrologySetup,
       RouteNames.astroChatPage,
-      RouteNames.cosmicDashboard,
       // Ayurveda
       RouteNames.ayurvedaDetails,
       RouteNames.ayurvedaCheckin,
