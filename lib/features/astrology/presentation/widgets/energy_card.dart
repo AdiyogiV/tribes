@@ -1178,7 +1178,7 @@ class _EnergyCardState extends State<EnergyCard>
   /// Maximum wheel diameter on wide layouts. The wheel is decorative — past
   /// ~480px it stops feeling like a piece of UI and starts feeling like a
   /// poster. Keep it tight on desktop and center it within the available width.
-  static const double _maxWheelDiameter = 480.0;
+  static const double _maxWheelDiameter = kDashboardVisualSize;
 
   Widget _buildWheel(Color c, bool isDark) {
     return SizedBox(

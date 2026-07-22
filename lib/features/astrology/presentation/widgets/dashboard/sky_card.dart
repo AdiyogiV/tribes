@@ -440,8 +440,8 @@ class SkyCard extends StatelessWidget {
         final availableWidth = constraints.maxWidth.isFinite
             ? constraints.maxWidth
             : MediaQuery.of(context).size.width - 32;
-        // Cap chart size for web - max 500px keeps it readable
-        final chartWidth = availableWidth.clamp(200.0, 500.0);
+        // Cap chart size so it matches the other cards' hero visuals.
+        final chartWidth = availableWidth.clamp(200.0, kDashboardVisualSize);
         const padding = 12.0;
         final innerSize = chartWidth - (padding * 2);
         const baseScale = 1.0;

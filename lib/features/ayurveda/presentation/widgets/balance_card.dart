@@ -322,28 +322,35 @@ class BalanceCard extends StatelessWidget {
       ),
 
       // Single Unified Wavy Orb + Venn Diagram Graphic
-      visual: (wide) => Center(
-          child: SizedBox(
-            width: 260,
-            height: 260,
-            child: CustomPaint(
-              painter: _UnifiedTrifectaPainter(
-                baseVata: prakriti.vata,
-                curVata: vikriti!.vata,
-                colorVata: getDoshaColor('vata'),
-                basePitta: prakriti.pitta,
-                curPitta: vikriti!.pitta,
-                colorPitta: getDoshaColor('pitta'),
-                baseKapha: prakriti.kapha,
-                curKapha: vikriti!.kapha,
-                colorKapha: getDoshaColor('kapha'),
-                fgMain: fgMain,
-                fgMuted: fgMuted,
-                accent: getDoshaColor(dominantDosha),
+      visual: (wide) => LayoutBuilder(
+        builder: (context, constraints) {
+          final size = constraints.maxWidth.isFinite
+              ? constraints.maxWidth.clamp(0.0, kDashboardVisualSize)
+              : kDashboardVisualSize;
+          return Center(
+            child: SizedBox(
+              width: size,
+              height: size,
+              child: CustomPaint(
+                painter: _UnifiedTrifectaPainter(
+                  baseVata: prakriti.vata,
+                  curVata: vikriti!.vata,
+                  colorVata: getDoshaColor('vata'),
+                  basePitta: prakriti.pitta,
+                  curPitta: vikriti!.pitta,
+                  colorPitta: getDoshaColor('pitta'),
+                  baseKapha: prakriti.kapha,
+                  curKapha: vikriti!.kapha,
+                  colorKapha: getDoshaColor('kapha'),
+                  fgMain: fgMain,
+                  fgMuted: fgMuted,
+                  accent: getDoshaColor(dominantDosha),
+                ),
               ),
             ),
-          ),
-        ),
+          );
+        },
+      ),
       info: (wide) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
