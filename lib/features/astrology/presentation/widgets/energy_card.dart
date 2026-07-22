@@ -1072,11 +1072,12 @@ class _EnergyCardState extends State<EnergyCard>
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Narrative
+          // Narrative. On web (wide) there's room to breathe, so show the
+          // full reading; on mobile keep it clamped with an ellipsis.
           Text(
             narrativeText,
-            maxLines: 4,
-            overflow: TextOverflow.ellipsis,
+            maxLines: isWide ? null : 4,
+            overflow: isWide ? TextOverflow.visible : TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: isWide ? AppTheme.babaTextSize + 2 : AppTheme.babaTextSize,
               fontWeight: FontWeight.w400,
