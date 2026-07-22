@@ -7,7 +7,7 @@ import 'package:aurogram/core/theme/header_style.dart';
 import 'package:aurogram/features/chat/domain/chat_dialogs.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/features/ai_chat/presentation/pages/ai_chat_page.dart';
-import 'package:aurogram/features/astrology/presentation/pages/baba/baba_empty_states.dart';
+import 'package:aurogram/features/astrology/presentation/pages/dashboard/dashboard_empty_states.dart';
 import 'package:aurogram/shared/services/media/audio_input_models.dart';
 import 'package:intl/intl.dart';
 import 'package:aurogram/features/ai_chat/domain/ai_chat_provider.dart';
@@ -19,23 +19,23 @@ import 'package:aurogram/features/ai_chat/domain/ai_chat_provider.dart';
 /// 1. Cosmic dashboard with floating input (default / after "+")
 /// 2. Inline AiChatPage for a selected conversation
 /// 3. Inline AiChatPage for a new chat (from floating input send)
-class BabaDesktopLayout extends StatefulWidget {
+class AstroDashboardDesktopLayout extends StatefulWidget {
   final Widget Function() dashboardContentBuilder;
 
   /// Builder for the floating chat input bar (same as mobile dashboard input)
   final Widget Function()? dashboardInputBuilder;
 
-  const BabaDesktopLayout({
+  const AstroDashboardDesktopLayout({
     super.key,
     required this.dashboardContentBuilder,
     this.dashboardInputBuilder,
   });
 
   @override
-  BabaDesktopLayoutState createState() => BabaDesktopLayoutState();
+  AstroDashboardDesktopLayoutState createState() => AstroDashboardDesktopLayoutState();
 }
 
-class BabaDesktopLayoutState extends State<BabaDesktopLayout> {
+class AstroDashboardDesktopLayoutState extends State<AstroDashboardDesktopLayout> {
   String? _selectedConversationId;
 
   // New chat state — when user sends from floating input

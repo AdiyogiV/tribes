@@ -10,7 +10,7 @@ import 'package:aurogram/features/astrology/domain/astro_calendar_service.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/dashboard/sky_card.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/dashboard/dashboard_load_state.dart';
 import 'package:aurogram/features/ayurveda/presentation/widgets/balance_card.dart';
-import 'package:aurogram/features/astrology/presentation/pages/baba/widgets/baba_sky_house_dialog.dart';
+import 'package:aurogram/features/astrology/presentation/pages/dashboard/widgets/sky_house_dialog.dart';
 
 /// The canonical stack of supporting cards for the cosmic dashboard, in their
 /// single source-of-truth display order: Current Sky -> (wheel) -> Upcoming
@@ -19,7 +19,7 @@ import 'package:aurogram/features/astrology/presentation/pages/baba/widgets/baba
 /// Rendered as a [Column] so the same instance can be dropped into either the
 /// single-column mobile stack or the desktop right pane. Cards self-hide
 /// (SizedBox.shrink) when their data is missing.
-class BabaSecondaryCards extends StatelessWidget {
+class AstroDashboardCards extends StatelessWidget {
   final AstrologyProfile? profile;
   final AyurvedaProfile? ayurvedaProfile;
   final DashboardLoadingState loadingState;
@@ -37,7 +37,7 @@ class BabaSecondaryCards extends StatelessWidget {
   /// on mobile (null on desktop, where the wheel lives in its own column).
   final Widget? insertBeforeSkyCard;
 
-  const BabaSecondaryCards({
+  const AstroDashboardCards({
     super.key,
     required this.profile,
     required this.ayurvedaProfile,
@@ -135,7 +135,7 @@ class BabaSecondaryCards extends StatelessWidget {
           )
         : null;
 
-    final isWide = MediaQuery.of(context).size.width >= 820; // Matches BabaCosmicContent desktopBreak
+    final isWide = MediaQuery.of(context).size.width >= 820; // Matches AstroDashboardContent desktopBreak
 
     if (isWide) {
       // PREMIUM DESKTOP LAYOUT — insight cards stacked vertically.

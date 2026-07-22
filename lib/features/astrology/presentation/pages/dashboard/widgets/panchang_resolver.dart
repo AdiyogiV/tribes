@@ -2,11 +2,11 @@ import 'package:aurogram/features/astrology/domain/astro_calendar_service.dart';
 import 'package:aurogram/features/astrology/domain/sky_positions_service.dart';
 
 /// Today's merged panchang/samvat data for the dashboard and wheel.
-class BabaPanchang {
+class ResolvedPanchang {
   final Map<String, dynamic> mergedSamvat;
   final String? todayNakshatra;
 
-  const BabaPanchang(this.mergedSamvat, this.todayNakshatra);
+  const ResolvedPanchang(this.mergedSamvat, this.todayNakshatra);
 
   Map<String, dynamic>? get nakshatraSamvat =>
       mergedSamvat.isNotEmpty ? mergedSamvat : null;
@@ -14,10 +14,10 @@ class BabaPanchang {
 
 /// Keeps global sky/calendar data as the single panchang source. The old daily
 /// insight adapter no longer contributes data to this calculation.
-class BabaPanchangResolver {
-  const BabaPanchangResolver._();
+class PanchangResolver {
+  const PanchangResolver._();
 
-  static BabaPanchang resolve({
+  static ResolvedPanchang resolve({
     required SkyPositionsService skyService,
     required AstroCalendarService? calendarService,
   }) {
@@ -51,7 +51,7 @@ class BabaPanchangResolver {
       todayNakshatra = calendarService?.getDay(DateTime.now())?.nakshatraName;
     }
 
-    return BabaPanchang(mergedSamvat, todayNakshatra);
+    return ResolvedPanchang(mergedSamvat, todayNakshatra);
   }
 
   static String? extractNakshatraName(dynamic value) {

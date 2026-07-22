@@ -15,12 +15,12 @@ import 'package:aurogram/core/routing/route_names.dart';
 ///     in a single row — fills the dashboard width like a footer banner.
 ///   * vertical   (mobile):  icon + headline + benefits stacked + full-width
 ///     button — a closing prompt at the bottom of the scroll.
-class BabaSignInCtaBanner extends StatelessWidget {
+class DashboardSignInBanner extends StatelessWidget {
   final Color brown;
   final bool isDark;
   final bool horizontal;
 
-  const BabaSignInCtaBanner({
+  const DashboardSignInBanner({
     super.key,
     required this.brown,
     required this.isDark,
@@ -253,7 +253,7 @@ class BabaSignInCtaBanner extends StatelessWidget {
   }
 }
 
-/// Small pill used inside [BabaSignInCtaBanner] benefits row.
+/// Small pill used inside [DashboardSignInBanner] benefits row.
 class _CtaBenefitChip extends StatelessWidget {
   final IconData icon;
   final String label;

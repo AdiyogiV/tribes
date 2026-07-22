@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:aurogram/shared/presentation/widgets/media/common_widgets.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/header_style.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
@@ -139,11 +138,11 @@ class BabaHistorySkeleton extends StatelessWidget {
 }
 
 /// Skeleton loader for the full cosmic dashboard while profile data is loading.
-class BabaCosmicSkeleton extends StatelessWidget {
+class AstroDashboardSkeleton extends StatelessWidget {
   final bool isDark;
   final Color brown;
 
-  const BabaCosmicSkeleton({
+  const AstroDashboardSkeleton({
     super.key,
     required this.isDark,
     required this.brown,
@@ -187,52 +186,6 @@ class BabaCosmicSkeleton extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Muhurat loading placeholder card.
-class BabaMuhuratPlaceholder extends StatelessWidget {
-  final bool isDark;
-  final Color brown;
-  final Color cardColor;
-
-  const BabaMuhuratPlaceholder({
-    super.key,
-    required this.isDark,
-    required this.brown,
-    required this.cardColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final c = AppTheme.primaryColor;
-    return Material(
-      color: cardColor,
-      elevation: 2,
-      shadowColor: Colors.black.withValues(alpha: 0.2),
-      borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-      child: Padding(
-        padding: const EdgeInsets.all(AppDimensions.paddingLg),
-        child: Row(
-          children: [
-            AppLoadingIndicator(
-              size: 16,
-              strokeWidth: 2,
-              color: c.withValues(alpha: 0.6),
-            ),
-            const SizedBox(width: AppDimensions.spacingMd),
-            Text(
-              'Loading time guidance...',
-              style: TextStyle(
-                fontSize: AppTheme.babaTextSize,
-                fontWeight: FontWeight.w500,
-                color: c.withValues(alpha: 0.7),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

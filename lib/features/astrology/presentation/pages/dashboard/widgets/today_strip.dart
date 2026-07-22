@@ -14,7 +14,7 @@ import 'package:aurogram/features/astrology/presentation/widgets/cards/vedic_tim
 /// TITHI, MASA, NAKSHATRA), skipping any without data. Date-derived cells
 /// (VAAR, MOON, weekday) always render so even signed-out users get a rich
 /// strip. The live VEDIC clock ticks every 15s and only shows for "now".
-class BabaDesktopTodayStrip extends StatefulWidget {
+class AstroTodayStrip extends StatefulWidget {
   final Map<String, dynamic>? samvat;
   final Map<String, dynamic>? todayPanchang;
   final Color brown;
@@ -33,7 +33,7 @@ class BabaDesktopTodayStrip extends StatefulWidget {
   /// Used for TITHI, NAKSHATRA cells when showing a non-today date.
   final Map<String, dynamic>? selectedDatePanchang;
 
-  const BabaDesktopTodayStrip({
+  const AstroTodayStrip({
     super.key,
     required this.samvat,
     required this.todayPanchang,
@@ -44,11 +44,11 @@ class BabaDesktopTodayStrip extends StatefulWidget {
   });
 
   @override
-  State<BabaDesktopTodayStrip> createState() =>
-      _BabaDesktopTodayStripState();
+  State<AstroTodayStrip> createState() =>
+      _AstroTodayStripState();
 }
 
-class _BabaDesktopTodayStripState extends State<BabaDesktopTodayStrip> {
+class _AstroTodayStripState extends State<AstroTodayStrip> {
   Timer? _timer;
   DateTime _now = DateTime.now();
 
@@ -322,7 +322,7 @@ class _BabaDesktopTodayStripState extends State<BabaDesktopTodayStrip> {
   }
 }
 
-/// Small two-line cell used inside [BabaDesktopTodayStrip]. Upper line is
+/// Small two-line cell used inside [AstroTodayStrip]. Upper line is
 /// the label (small, low-opacity, letter-spaced); lower line is the value
 /// (regular weight, full opacity, single-line ellipsised).
 class _StripCell extends StatelessWidget {

@@ -17,9 +17,9 @@ import 'package:aurogram/features/astrology/domain/sky_positions_service.dart';
 import 'package:aurogram/features/astrology/domain/astro_calendar_service.dart';
 import 'package:aurogram/features/astrology/domain/forecast_service.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/dashboard/dashboard_load_state.dart';
-import 'package:aurogram/features/astrology/presentation/pages/baba/baba_desktop_layout.dart';
-import 'package:aurogram/features/astrology/presentation/pages/baba/baba_empty_states.dart';
-import 'package:aurogram/features/astrology/presentation/pages/baba/baba_cosmic_content.dart';
+import 'package:aurogram/features/astrology/presentation/pages/dashboard/dashboard_desktop_layout.dart';
+import 'package:aurogram/features/astrology/presentation/pages/dashboard/dashboard_empty_states.dart';
+import 'package:aurogram/features/astrology/presentation/pages/dashboard/dashboard_content.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/energy_card.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/circle_dashboard_switcher.dart';
 import 'package:aurogram/features/baba/domain/baba_auth_identity.dart';
@@ -139,7 +139,7 @@ class DashboardPageState extends State<DashboardPage>
   DashboardLoadingState _loadingState = const DashboardLoadingState();
 
   // Key for desktop layout — allows parent to trigger inline chat
-  final _desktopLayoutKey = GlobalKey<BabaDesktopLayoutState>();
+  final _desktopLayoutKey = GlobalKey<AstroDashboardDesktopLayoutState>();
 
   @override
   void initState() {
@@ -437,7 +437,7 @@ class DashboardPageState extends State<DashboardPage>
       return Scaffold(
         extendBody: true,
         backgroundColor: Colors.transparent,
-        body: BabaDesktopLayout(
+        body: AstroDashboardDesktopLayout(
           key: _desktopLayoutKey,
           dashboardContentBuilder: _buildDashboardContent,
           // No inline input builder: Baba is now the one app-wide overlay
@@ -516,7 +516,7 @@ class DashboardPageState extends State<DashboardPage>
     // events) with null profile/insight/ayurveda — the content widget's
     // existing `if` guards naturally hide personal sections.
     if (_user == null) {
-      return BabaCosmicContent(
+      return AstroDashboardContent(
         profile: null,
         ayurvedaProfile: null,
         loadingState: _loadingState,
@@ -548,7 +548,7 @@ class DashboardPageState extends State<DashboardPage>
 
             if (isLoading) {
               final isDark = Theme.of(context).brightness == Brightness.dark;
-              return BabaCosmicSkeleton(
+              return AstroDashboardSkeleton(
                   isDark: isDark, brown: AppTheme.primaryColor);
             }
 
@@ -557,13 +557,13 @@ class DashboardPageState extends State<DashboardPage>
               builder: (context, forecastSnapshot) {
                 _maybeEnsureForecast(forecastSnapshot);
                 // In-place "multiplayer" swap. The date card stays common on
-                // top (inside BabaCosmicContent); the strip sits below it; only
+                // top (inside AstroDashboardContent); the strip sits below it; only
                 // the body swaps to a friend's view when one is selected.
                 return CircleDashboardSwitcher(
                   selfName: _user?.displayName ?? 'You',
                   selfPhoto: _user?.photoURL,
                   contentBuilder: (context, {stripSlot, bodyOverride}) =>
-                      BabaCosmicContent(
+                      AstroDashboardContent(
                     profile: profile,
                     ayurvedaProfile: ayurvedaSnapshot.data,
                     forecast: forecastSnapshot.data,

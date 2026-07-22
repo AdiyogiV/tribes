@@ -52,7 +52,7 @@ class WidgetDataService {
   /// Push the current panchang data to the native widget layer.
   ///
   /// [samvat] is the merged samvat/panchang map (same shape as
-  /// `nakshatraSamvat` in BabaCosmicContent).
+  /// `nakshatraSamvat` in AstroDashboardContent).
   ///
   /// Returns `true` if data was actually written (i.e. it changed).
   Future<bool> updateWidgetData(Map<String, dynamic>? samvat) async {

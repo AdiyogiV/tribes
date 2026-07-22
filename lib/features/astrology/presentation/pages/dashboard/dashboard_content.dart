@@ -12,13 +12,13 @@ import 'package:aurogram/features/astrology/domain/astro_calendar_service.dart';
 import 'package:aurogram/features/astrology/domain/forecast_service.dart';
 import 'package:aurogram/shared/services/widget_data_service.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/energy_card.dart';
-import 'package:aurogram/features/astrology/presentation/pages/baba/widgets/baba_panchang_resolver.dart';
-import 'package:aurogram/features/astrology/presentation/pages/baba/widgets/baba_secondary_cards.dart';
-import 'package:aurogram/features/astrology/presentation/pages/baba/widgets/baba_muhurat_placeholder.dart';
-import 'package:aurogram/features/astrology/presentation/pages/baba/widgets/baba_signin_cta_banner.dart';
+import 'package:aurogram/features/astrology/presentation/pages/dashboard/widgets/panchang_resolver.dart';
+import 'package:aurogram/features/astrology/presentation/pages/dashboard/widgets/dashboard_cards.dart';
+import 'package:aurogram/features/astrology/presentation/pages/dashboard/widgets/muhurat_placeholder.dart';
+import 'package:aurogram/features/astrology/presentation/pages/dashboard/widgets/signin_cta_banner.dart';
 
 /// Builds the full cosmic dashboard content panel with all cards.
-class BabaCosmicContent extends StatelessWidget {
+class AstroDashboardContent extends StatelessWidget {
   final AstrologyProfile? profile;
   final AyurvedaProfile? ayurvedaProfile;
   final DashboardLoadingState loadingState;
@@ -57,7 +57,7 @@ class BabaCosmicContent extends StatelessWidget {
   /// the friend view). The date card stays common on top for everyone.
   final Widget? bodyOverride;
 
-  const BabaCosmicContent({
+  const AstroDashboardContent({
     super.key,
     required this.profile,
     this.ayurvedaProfile,
@@ -85,8 +85,8 @@ class BabaCosmicContent extends StatelessWidget {
     final bottomInset = MediaQuery.of(context).padding.bottom;
 
     // Single source of truth for the panchang merge + nakshatra precedence
-    // chain (shared with the wheel builder via BabaPanchangResolver).
-    final panchang = BabaPanchangResolver.resolve(
+    // chain (shared with the wheel builder via PanchangResolver).
+    final panchang = PanchangResolver.resolve(
       skyService: skyService,
       calendarService: calendarService,
     );
@@ -206,7 +206,7 @@ class BabaCosmicContent extends StatelessWidget {
                   if (hasMuhurat) ...[
                     MuhuratTimelineWidget(muhurat: calMuhurat, embedded: true),
                   ] else if (showLoading) ...[
-                    BabaMuhuratPlaceholder(
+                    MuhuratPlaceholder(
                         cardColor: cardColor, embedded: true),
                   ],
                 ],
@@ -219,7 +219,7 @@ class BabaCosmicContent extends StatelessWidget {
         // a single Column for both mobile and desktop.
         // We now inject the wheel into the secondary list unconditionally,
         // so it sits in the same stack as the Sky and Balance cards.
-        final secondaryCards = BabaSecondaryCards(
+        final secondaryCards = AstroDashboardCards(
           profile: profile,
           ayurvedaProfile: ayurvedaProfile,
           loadingState: loadingState,
@@ -238,7 +238,7 @@ class BabaCosmicContent extends StatelessWidget {
         // The sign-in upsell — only visible when signed-out.
         final isSignedOut = FirebaseAuth.instance.currentUser == null;
         final ctaBanner = isSignedOut
-            ? BabaSignInCtaBanner(
+            ? DashboardSignInBanner(
                 brown: brown,
                 isDark: isDark,
                 horizontal: false,
@@ -284,7 +284,7 @@ class BabaCosmicContent extends StatelessWidget {
     return Builder(builder: (context) {
       // Re-resolve panchang inside this builder so the wheel sees the
       // freshest data on rebuilds. Same resolver as build() — one source.
-      final panchang = BabaPanchangResolver.resolve(
+      final panchang = PanchangResolver.resolve(
         skyService: skyService,
         calendarService: calendarService,
       );
