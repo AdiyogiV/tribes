@@ -7,6 +7,13 @@ import 'package:aurogram/core/theme/app_theme.dart';
 /// `820` literal sprinkled through the tree.
 const double kDashboardDesktopBreak = 820.0;
 
+/// Corner radius for the floating dashboard cards.
+const double kDashboardCardRadius = 28.0;
+
+/// Generous, consistent inner padding for the dashboard cards.
+const EdgeInsets kDashboardCardPadding =
+    EdgeInsets.symmetric(horizontal: 28, vertical: 30);
+
 /// The shared palette for the three home-dashboard cards (Energy, Balance,
 /// Current Sky). These cards all share one look: a stark surface (night-black
 /// in dark, clean white in light) with a small ramp of foreground tones.
@@ -49,6 +56,54 @@ class DashboardCardPalette {
 
   /// The accent (gold/brown) used for the leading word of editorial titles.
   Color get accent => AppTheme.primaryColor;
+}
+
+/// The shared "chrome" for the three home-dashboard cards: a floating panel
+/// with soft rounded corners, a hairline edge, a gentle shadow, and generous
+/// interior padding. Centralising it means all three cards read as one elegant
+/// set instead of flat full-bleed bands, and there's a single place to tune the
+/// premium look.
+class DashboardCard extends StatelessWidget {
+  const DashboardCard({
+    super.key,
+    required this.child,
+    this.padding = kDashboardCardPadding,
+  });
+
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final palette = DashboardCardPalette.forBrightness(isDark);
+
+    return Container(
+      width: double.infinity,
+      padding: padding,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: palette.surface,
+        borderRadius: BorderRadius.circular(kDashboardCardRadius),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : Colors.black.withValues(alpha: 0.06),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.45)
+                : Colors.black.withValues(alpha: 0.07),
+            blurRadius: 28,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
 }
 
 /// The editorial two-tone title shared by every dashboard card, e.g.

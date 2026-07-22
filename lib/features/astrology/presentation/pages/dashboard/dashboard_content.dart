@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
+import 'package:aurogram/core/theme/dashboard_card_theme.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/timeline/muhurat_timeline_widget.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/cards/cosmic_date_time_card.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/dashboard/dashboard_load_state.dart';
@@ -149,7 +150,7 @@ class AstroDashboardContent extends StatelessWidget {
         final outerPadding = screenWidth > maxContentWidth
             ? (screenWidth - maxContentWidth) / 2
             : 16.0;
-        final spacing = screenWidth > 700 ? 16.0 : 12.0;
+        final spacing = screenWidth > 700 ? 20.0 : 16.0;
 
         // Build the canonical wheel widget once — same instance is used in
         // both layouts so wheel state (controller, animations) is preserved
@@ -188,9 +189,8 @@ class AstroDashboardContent extends StatelessWidget {
                 daysDiff <= 1 &&
                 FirebaseAuth.instance.currentUser != null;
 
-            return Material(
-              color: cardColor,
-              elevation: 0,
+            return DashboardCard(
+              padding: EdgeInsets.zero,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,

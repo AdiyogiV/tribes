@@ -237,10 +237,7 @@ class BalanceCard extends StatelessWidget {
     final isWide = MediaQuery.of(context).size.width >= kDashboardDesktopBreak;
     final hasVikriti = vikriti != null;
 
-    return Container(
-      width: double.infinity,
-      color: bg,
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+    return DashboardCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

@@ -101,15 +101,12 @@ class SkyCard extends StatelessWidget {
         : null;
     final hasBirthChart = birthHouses != null && birthLabels != null;
 
-    // Theme-aware surface + text (shared dashboard palette).
-    final bg = palette.surface;
+    // Theme-aware text (shared dashboard palette). Surface + padding are
+    // provided by the DashboardCard wrapper.
     final fgMain = palette.fgMain;
     final fgMuted = palette.fgMuted;
 
-    return Container(
-      width: double.infinity,
-      color: bg,
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+    return DashboardCard(
       child: AdaptiveCardBody(
         visualFirst: true, // chart is the hero on mobile
         header: (wide) => EditorialCardHeader(

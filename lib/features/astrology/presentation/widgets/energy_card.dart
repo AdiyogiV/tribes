@@ -900,9 +900,7 @@ class _EnergyCardState extends State<EnergyCard>
         ? fday.heading!
         : (headerStoryGenerating ? 'READING YOUR SKY' : headerVibe?.label);
 
-    return Material(
-      color: cardColor,
-      elevation: 0,
+    return DashboardCard(
       child: AdaptiveCardBody(
         visualFirst: true, // wheel is the hero on mobile
         header: (wide) => _energyHeaderSection(
