@@ -562,6 +562,7 @@ class _AyurvedaDetailsPageState extends State<AyurvedaDetailsPage>
               BalanceCard(
                 prakriti: prakriti,
                 vikriti: _vikriti,
+                aiGuidance: _profile?.aiGuidance,
                 isCalculating: _isCalculatingVikriti,
                 lastCheckIn: _profile?.lastCheckIn,
                 onInfo: () => _showAyurvedaInfoDialog(

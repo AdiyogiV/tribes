@@ -35,9 +35,17 @@ OUTPUT — strict JSON only, no markdown:
       "action": "one concrete action for the day",
       "caution": "one practical thing to avoid or handle gently",
       "tip": "one short, grounded wellbeing or reflection tip",
-      "timing": "short timing guidance grounded only in the supplied signals; say 'Move at your natural pace' when no timing signal exists"
+      "timing": "short timing guidance grounded only in the supplied signals; say 'Move at your natural pace' when no timing signal exists",
+      "goodFor": ["2-4 word phrase", "..."],
+      "avoid": ["2-4 word phrase", "..."]
     }
   ],
+  "ayurvedaGuidance": {
+    "vata":     { "focus": "one line: what this state needs", "food": ["2-4 word item", "..."], "practice": ["2-4 word item", "..."] },
+    "pitta":    { "focus": "...", "food": ["..."], "practice": ["..."] },
+    "kapha":    { "focus": "...", "food": ["..."], "practice": ["..."] },
+    "balanced": { "focus": "...", "food": ["..."], "practice": ["..."] }
+  },
   "storylineUpdate": {
     "arc": "the whole journey so far compressed to ONE paragraph (summary-of-summaries), updated with this chapter",
     "beatGist": "one line capturing the gist of the period just narrated",
@@ -45,7 +53,11 @@ OUTPUT — strict JSON only, no markdown:
   }
 }
 
-Return a "days" entry for EVERY date given, in order. Keep headings distinct. Every daily field is required. The narrative is PRIVATE (second-person "you", the reader's own diary); the publicNote is PUBLIC (third-person, safe for a friend to see) — they describe the same day but must never be swapped. Keep action, caution, tip, and timing practical and under 18 words each. Do not invent exact clock times.`;
+DO / AVOID (per day): goodFor and avoid are short editorial lists (2-3 items each) of what the DAY favors and what to ease off, grounded ONLY in that day's alignment and supplied signals. High alignment → expansive favors; low → restorative, protective. No jargon, no clock times.
+
+AYURVEDA GUIDANCE: You are also given the person's Ayurvedic constitution (Prakriti — fixed baseline) and their CURRENT dosha state (Vikriti). Write practical do-guidance for EACH possible current-imbalance state (vata / pitta / kapha aggravated, and balanced). The classical rule is OPPOSITES: pacify the aggravated dosha with opposite qualities (cool a hot Pitta, ground an erratic Vata, enliven a heavy Kapha). Personalize to THIS person's Prakriti as context — the same imbalance lands differently on different constitutions. 'food' = 2-3 dietary favors; 'practice' = 2-3 lifestyle/movement/mind practices; 'focus' = one warm line naming what that state needs. Write about the guidance itself — real, concrete food and practice — never about where the data came from. Plain language, no Sanskrit, no clock times.
+
+Return a "days" entry for EVERY date given, in order. Keep headings distinct. Every daily field is required (including goodFor and avoid). The narrative is PRIVATE (second-person "you", the reader's own diary); the publicNote is PUBLIC (third-person, safe for a friend to see) — they describe the same day but must never be swapped. Keep action, caution, tip, and timing practical and under 18 words each. Do not invent exact clock times. Include "ayurvedaGuidance" with all four buckets ONLY when Ayurveda context is provided below; otherwise omit it entirely.`;
 
 /**
  * Build the user prompt for NARRATE.
@@ -54,9 +66,10 @@ Return a "days" entry for EVERY date given, in order. Keep headings distinct. Ev
  * @param {Object} args.person   { chartSummary, rollingSummary, threads[], storyline }
  * @param {Array}  args.signals  [{date, alignment, tara, favorable[], unfavorable[]}]
  * @param {Object} args.dashaContext  from buildDashaContext()
+ * @param {Object} [args.ayurveda]  { prakriti, vikriti, vulnerabilities } (optional)
  * @returns {string}
  */
-export function buildNarratePrompt({ person, signals, dashaContext }) {
+export function buildNarratePrompt({ person, signals, dashaContext, ayurveda }) {
     const p = person || {};
     const storyline = p.storyline || {};
     const threads = (p.threads || []).filter(Boolean);
@@ -87,14 +100,40 @@ export function buildNarratePrompt({ person, signals, dashaContext }) {
         return `${d.date}  alignment=${d.alignment}/100  tara=${d.tara || "-"}${fav}${unfav}`;
     }).join("\n");
 
+    const ayurvedaBlock = buildAyurvedaBlock(ayurveda);
+
     return `PERSON
 ${chartLine}
 ${memoryBlock || "(no memory yet — write a fresh, welcoming arc)"}
 
 ${dashaBlock}
-
+${ayurvedaBlock ? `\n${ayurvedaBlock}\n` : ""}
 DAY SIGNALS (ground truth — one line per day; write a matching narrative for each):
 ${signalLines}
 
 Write the continuous forecast now. Output strict JSON per the schema.`;
+}
+
+/**
+ * Build the optional AYURVEDA context block. Returns "" when there is no
+ * constitution data (the model then omits ayurvedaGuidance entirely).
+ */
+function buildAyurvedaBlock(ayurveda) {
+    if (!ayurveda || !ayurveda.prakriti) return "";
+    const pk = ayurveda.prakriti;
+    const vk = ayurveda.vikriti;
+    const vuln = ayurveda.vulnerabilities;
+
+    const lines = ["AYURVEDA (constitution context for ayurvedaGuidance):"];
+    lines.push(`PRAKRITI (fixed baseline): ${pk.type || pk.dominant || "?"} — Vata ${pk.vata ?? "?"}%, Pitta ${pk.pitta ?? "?"}%, Kapha ${pk.kapha ?? "?"}%`);
+
+    if (vk) {
+        const imb = (vk.imbalances || [])
+            .map((i) => `${i.dosha} +${i.shift}% (${i.severity})`).join(", ");
+        lines.push(`VIKRITI (current state): Vata ${vk.vata ?? "?"}%, Pitta ${vk.pitta ?? "?"}%, Kapha ${vk.kapha ?? "?"}% — ${vk.balanced ? "balanced" : `aggravated: ${imb || "mild drift"}`}`);
+    }
+    if (Array.isArray(vuln) && vuln.length) {
+        lines.push(`HEALTH TENDENCIES: ${vuln.slice(0, 3).map((v) => v.description || v).join("; ")}.`);
+    }
+    return lines.join("\n");
 }

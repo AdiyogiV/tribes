@@ -355,8 +355,13 @@ export async function handleCalculateCurrentVikriti(request) {
             );
         }
 
+        const trend = await computeNadiTrend(uid);
         const vikriti = await computeVikritiFromUserData(
-            astroData, ayurvedaData.prakriti, { symptoms },
+            astroData, ayurvedaData.prakriti, {
+                symptoms,
+                nadiTrend: trend?.nadiTrend,
+                healthWeight: trend?.healthWeight,
+            },
         );
 
         return vikriti;
@@ -375,6 +380,84 @@ export async function handleCalculateCurrentVikriti(request) {
 // ============================================================================
 
 /**
+ * Compute a smoothed biosignal (Nadi) dosha trend for a user, plus a
+ * confidence-scaled "healthWeight" that decides how strongly MEASURED data
+ * owns the current vikriti number.
+ *
+ * Classical basis: Nadi Pariksha is taken over several settled mornings, so
+ * we average recent readings rather than trusting one noisy day. When the
+ * reading is rich + recent, health is the ground truth (weight → 1). When
+ * sparse / stale / absent, weight → 0 and astrology is the fallback.
+ *
+ * @param {string} uid
+ * @param {object|null} [currentNadi] - freshly computed nadi for today (optional)
+ * @returns {Promise<{nadiTrend:object, healthWeight:number}|null>}
+ */
+async function computeNadiTrend(uid, currentNadi = null) {
+    try {
+        const snap = await db.collection("users").doc(uid)
+            .collection("healthSnapshots")
+            .orderBy("updatedAt", "desc")
+            .limit(7)
+            .get();
+
+        // Gather engineNadi vectors (newest first), plus today's if provided.
+        const readings = [];
+        let newestMs = 0;
+        if (currentNadi && currentNadi.vata != null) {
+            readings.push({
+                vata: currentNadi.vata, pitta: currentNadi.pitta, kapha: currentNadi.kapha,
+                confidence: currentNadi.confidence ?? 0.5,
+            });
+            newestMs = Date.now();
+        }
+        for (const doc of snap.docs) {
+            const d = doc.data();
+            const nd = d.engineNadi;
+            if (!nd || nd.vata == null) continue;
+            const ts = d.updatedAt?.toMillis ? d.updatedAt.toMillis() : null;
+            if (ts && ts > newestMs) newestMs = ts;
+            readings.push({
+                vata: nd.vata, pitta: nd.pitta, kapha: nd.kapha,
+                confidence: nd.confidence ?? 0.5,
+            });
+        }
+
+        if (readings.length === 0) return null;
+
+        // Trailing mean of the dosha vector (equal-weight; simple + robust).
+        let v = 0, p = 0, k = 0, conf = 0;
+        for (const r of readings) {
+            v += r.vata; p += r.pitta; k += r.kapha; conf += r.confidence ?? 0.5;
+        }
+        const count = readings.length;
+        const total = (v + p + k) || 1;
+        const nadiTrend = { vata: v / total, pitta: p / total, kapha: k / total };
+        const meanConfidence = conf / count;
+
+        // Recency: how fresh is the newest reading?
+        const recencyDays = newestMs ? (Date.now() - newestMs) / 86400000 : 99;
+        const recencyFactor =
+            recencyDays <= 1 ? 1.0 :
+            recencyDays <= 3 ? 0.7 :
+            recencyDays <= 7 ? 0.3 : 0.0;
+
+        // Coverage: more readings → more trustworthy (caps at 3).
+        const coverageFactor = Math.min(count / 3, 1);
+
+        // Health owns the number when reading is rich + recent + confident.
+        // Cap at 1.0 (fully dominant — measured present is ground truth).
+        const healthWeight = Math.max(0, Math.min(1,
+            meanConfidence * coverageFactor * recencyFactor));
+
+        return { nadiTrend, healthWeight };
+    } catch (e) {
+        logger.warn(`computeNadiTrend failed for ${uid}`, { error: e?.message || String(e) });
+        return null;
+    }
+}
+
+/**
  * Compute Vikriti from user's astrology + ayurveda data.
  * Assembles dasha, transits, tarabala, chandrabala, ashtakavarga inputs
  * and calls calculateVikriti.
@@ -387,7 +470,7 @@ export async function handleCalculateCurrentVikriti(request) {
 async function computeVikritiFromUserData(astroData, prakriti, options = {}) {
     if (!prakriti || !astroData) return null;
 
-    const { symptoms } = options;
+    const { symptoms, nadiTrend, healthWeight } = options;
 
     // Extract current dasha planet
     let currentDashaPlanet = null;
@@ -534,6 +617,8 @@ async function computeVikritiFromUserData(astroData, prakriti, options = {}) {
         tarabala,
         chandrabala,
         transitBinduScores,
+        nadiTrend,
+        healthWeight,
     });
 }
 
@@ -1320,7 +1405,13 @@ export const onHealthSnapshotWrite = onDocumentWritten({
         // to visit the Ayurveda Details page.
         const astroData = userData.astrologyData;
         try {
-            const vikriti = await computeVikritiFromUserData(astroData, prakriti);
+            // Biosignal trend (this snapshot + recent) so MEASURED body state
+            // is the ground truth for the current vikriti number.
+            const trend = await computeNadiTrend(userId, nadiResult);
+            const vikriti = await computeVikritiFromUserData(astroData, prakriti, {
+                nadiTrend: trend?.nadiTrend,
+                healthWeight: trend?.healthWeight,
+            });
             if (vikriti) {
                 userUpdate["ayurvedaData.vikriti"] = {
                     vata: vikriti.dosha.vata,

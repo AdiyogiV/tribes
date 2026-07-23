@@ -22,7 +22,7 @@ import { checkBlockedDetailed } from "../lib/utils.js";
 import { checkMutualFollow } from "./compatibility.js";
 import { istToday, dayKey, monthKeyOf } from "./forecast/forecast_helpers.js";
 import { computePairTransitSynastry } from "../lib/vedic_pair_transit_synastry.js";
-import { enqueueNarrateForUser } from "./forecast/narrate.js";
+import { ensureNarrateSchemaFresh, enqueueNarrateForUser } from "./forecast/narrate.js";
 
 /** Cap so one call can't fan out into unbounded Firestore reads. */
 export const MAX_FRIENDS = 30;
@@ -164,6 +164,7 @@ export async function handleGetCircleVibes(request) {
         logger.warn("getCircleVibes: could not load chart/sky for pairing", { error: err.message });
     }
 
+    const renarrateTargets = new Set();
     const results = await Promise.all(ids.map(async (fid) => {
         try {
             // Gate first (cheap-ish, and lets us skip the profile/forecast reads
@@ -183,6 +184,7 @@ export async function handleGetCircleVibes(request) {
 
             const days = fcastSnap.exists ? (fcastSnap.data().days || []) : [];
             const vibe = pickTodayVibe(fid, userSnap.data(), days, todayKey, pairCtx);
+            if (vibe && !vibe.publicNote) renarrateTargets.add(fid);
             // [circle] diagnostic — per friend, why together present/absent.
             if (vibe) {
                 logger.info("getCircleVibes: friend vibe", {
@@ -190,6 +192,7 @@ export async function handleGetCircleVibes(request) {
                     hasFriendNatal: !!userSnap.data().astrologyData?.birthChartData?.output,
                     hasTogether: !!vibe.together,
                     togetherScore: vibe.together?.score ?? null,
+                    hasPublicNote: !!vibe.publicNote,
                 });
             }
             return vibe;
@@ -199,6 +202,21 @@ export async function handleGetCircleVibes(request) {
             return null;
         }
     }));
+
+    // Self-heal stale narrations (missing newer fields like publicNote).
+    // Capped by per-user enqueue lease + schema cooldown in narrate.js.
+    if (renarrateTargets.size) {
+        await Promise.allSettled([...renarrateTargets].map(async (uid) => {
+            try {
+                await ensureNarrateSchemaFresh(uid);
+            } catch (err) {
+                logger.warn("getCircleVibes: schema refresh enqueue failed", {
+                    uid,
+                    error: err.message,
+                });
+            }
+        }));
+    }
 
     return { success: true, date: todayKey, vibes: results.filter(Boolean) };
 }
@@ -245,7 +263,7 @@ export async function handleForceRenarrateCircle(request) {
     let enqueued = 0;
     for (const uid of targets) {
         try {
-            await enqueueNarrateForUser(uid);
+            await ensureNarrateSchemaFresh(uid);
             enqueued++;
         } catch (err) {
             logger.warn("forceRenarrateCircle: enqueue failed", { uid, error: err.message });

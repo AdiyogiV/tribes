@@ -530,6 +530,13 @@ export function calculateVikriti({
     tarabala,
     chandrabala,
     transitBinduScores,
+    // Biosignal fusion (digital Nadi Pariksha). When present + reliable,
+    // MEASURED body state is the ground truth for the CURRENT dosha vector;
+    // the astrological computation becomes the fallback/forecast basis.
+    // nadiTrend: { vata, pitta, kapha } as 0-1 proportions (sum ≈ 1).
+    // healthWeight: 0..1 confidence-scaled dominance of measured data.
+    nadiTrend,
+    healthWeight = 0,
 }) {
     // Start with Prakriti as base
     const vikriti = { 
@@ -730,15 +737,46 @@ export function calculateVikriti({
         }
     }
     
-    // Normalize to percentages
-    const total = vikriti.vata + vikriti.pitta + vikriti.kapha;
-    const vikritiPercentages = {
-        vata: Math.round((vikriti.vata / total) * 100),
-        pitta: Math.round((vikriti.pitta / total) * 100),
-        kapha: Math.round((vikriti.kapha / total) * 100),
+    // Astrological (predictive) percentages — raw, before biosignal fusion.
+    const astroTotal = vikriti.vata + vikriti.pitta + vikriti.kapha;
+    const astroPct = {
+        vata: (vikriti.vata / astroTotal) * 100,
+        pitta: (vikriti.pitta / astroTotal) * 100,
+        kapha: (vikriti.kapha / astroTotal) * 100,
     };
-    
-    // Ensure sum is 100
+
+    // === Biosignal fusion: MEASURED present is the ground truth ===
+    // Classical basis: vikriti is diagnosed by Nadi/Ashtavidha Pariksha
+    // (direct examination), not by chart. When the watch gives a reliable
+    // reading we let it own the number; astrology only fills the gap.
+    const w = Math.max(0, Math.min(1, healthWeight || 0));
+    let fusedPct = astroPct;
+
+    if (nadiTrend && w > 0) {
+        const nadiPct = {
+            vata: (nadiTrend.vata || 0) * 100,
+            pitta: (nadiTrend.pitta || 0) * 100,
+            kapha: (nadiTrend.kapha || 0) * 100,
+        };
+        fusedPct = {
+            vata: w * nadiPct.vata + (1 - w) * astroPct.vata,
+            pitta: w * nadiPct.pitta + (1 - w) * astroPct.pitta,
+            kapha: w * nadiPct.kapha + (1 - w) * astroPct.kapha,
+        };
+        factors.push({
+            source: "biosignal",
+            description: `Nadi Pariksha (watch): measured dosha state (weight ${Math.round(w * 100)}%)`,
+            dosha: Object.entries(nadiPct).reduce((a, b) => a[1] > b[1] ? a : b)[0],
+            strength: Math.round(w * 20),
+        });
+    }
+
+    // Normalize fused vector to integer percentages summing to 100
+    const vikritiPercentages = {
+        vata: Math.round(fusedPct.vata),
+        pitta: Math.round(fusedPct.pitta),
+        kapha: Math.round(fusedPct.kapha),
+    };
     const sum = vikritiPercentages.vata + vikritiPercentages.pitta + vikritiPercentages.kapha;
     if (sum !== 100) {
         const maxDosha = Object.entries(vikritiPercentages).reduce((a, b) => a[1] > b[1] ? a : b)[0];

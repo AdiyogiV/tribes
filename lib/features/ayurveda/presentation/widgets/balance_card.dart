@@ -210,6 +210,7 @@ class PrakritiHeroCard extends StatelessWidget {
 class BalanceCard extends StatelessWidget {
   final PrakritiData prakriti;
   final VikritiData? vikriti;
+  final AyurvedaGuidance? aiGuidance;
   final bool isCalculating;
   final DateTime? lastCheckIn;
   final VoidCallback? onInfo;
@@ -219,6 +220,7 @@ class BalanceCard extends StatelessWidget {
     super.key,
     required this.prakriti,
     this.vikriti,
+    this.aiGuidance,
     required this.isCalculating,
     this.lastCheckIn,
     this.onInfo,
@@ -279,35 +281,30 @@ class BalanceCard extends StatelessWidget {
     String doshaDisplay = '';
     String stateTitle = 'Perfectly aligned.';
     String symptomText = 'Your mind and body are in natural harmony.';
-    List<String> foodTips = ['Follow natural diet', 'Favor fresh produce'];
-    List<String> doTips = ['Maintain routines', 'Observe daily balance'];
 
     if (vikriti!.imbalances.isNotEmpty) {
       final sorted = List<DoshaImbalance>.from(vikriti!.imbalances)
         ..sort((a, b) => b.shift.compareTo(a.shift)); // Sort by highest positive shift
       final top = sorted.first;
       dominantDosha = top.dosha.toLowerCase();
-      
+
       // If there's any notable positive shift, or the model isn't explicitly balanced
       if (top.shift > 0 || !vikriti!.isBalanced) {
         doshaDisplay = '${dominantDosha[0].toUpperCase()}${dominantDosha.substring(1)}';
         stateTitle = ' elevated.';
-        
-        if (dominantDosha == 'vata') {
-          symptomText = 'You may feel scattered, restless, or experience dry skin and variable digestion.';
-          foodTips = ['Warm, moist meals', 'Root vegetables', 'Heavy grains', 'Warm teas'];
-          doTips = ['Gentle yoga', 'Oil massage', 'Strict routine'];
-        } else if (dominantDosha == 'pitta') {
-          symptomText = 'You may experience increased body heat, intensity, or irritability today.';
-          foodTips = ['Cooling foods', 'Sweet fruits', 'Leafy greens', 'Coconut'];
-          doTips = ['Moonlight walks', 'Swimming', 'Avoid midday sun'];
-        } else if (dominantDosha == 'kapha') {
-          symptomText = 'You may feel heavy, sluggish, or prone to holding onto water and emotions.';
-          foodTips = ['Light, warm dishes', 'Spicy flavors', 'Clear broths', 'Bitter greens'];
-          doTips = ['Vigorous exercise', 'Dry brushing', 'Early rising'];
-        }
       }
     }
+
+    // Do-guidance is AI-generated (monthly forecast call), keyed to the CURRENT
+    // dosha state. No hardcoded per-dosha advice — when the AI bucket hasn't
+    // landed yet we simply omit the tip columns (honest, never faked).
+    final guidance = aiGuidance?.forState(dominantDosha);
+    final foodTips = guidance?.food ?? const <String>[];
+    final doTips = guidance?.practice ?? const <String>[];
+    if (guidance != null && guidance.focus.isNotEmpty) {
+      symptomText = guidance.focus;
+    }
+    final hasTips = foodTips.isNotEmpty || doTips.isNotEmpty;
     
     return AdaptiveCardBody(
       visualFirst: true, // orb is the hero on mobile
@@ -361,27 +358,29 @@ class BalanceCard extends StatelessWidget {
 
         const SizedBox(height: 24),
 
-        // Utility: Tips (Two columns with ghosted serifs)
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: EditorialTipColumn(
-                  header: 'F O O D',
-                  items: foodTips,
-                  palette: palette,
-                  isWide: wide),
-            ),
-            const SizedBox(width: 24),
-            Expanded(
-              child: EditorialTipColumn(
-                  header: 'P R A C T I C E',
-                  items: doTips,
-                  palette: palette,
-                  isWide: wide),
-            ),
-          ],
-        ),
+        // Utility: Tips (Two columns with ghosted serifs). AI-generated, keyed
+        // to the current dosha state; omitted entirely until the AI lands.
+        if (hasTips)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: EditorialTipColumn(
+                    header: 'F O O D',
+                    items: foodTips,
+                    palette: palette,
+                    isWide: wide),
+              ),
+              const SizedBox(width: 24),
+              Expanded(
+                child: EditorialTipColumn(
+                    header: 'P R A C T I C E',
+                    items: doTips,
+                    palette: palette,
+                    isWide: wide),
+              ),
+            ],
+          ),
         ],
       ),
     );

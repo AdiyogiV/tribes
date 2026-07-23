@@ -138,6 +138,8 @@ class _FriendDayCardState extends State<FriendDayCard> {
     final fgMuted = isDark ? Colors.white54 : Colors.black54;
     final hasNote =
         widget.vibe.publicNote != null && widget.vibe.publicNote!.isNotEmpty;
+    final friendNote =
+        hasNote ? widget.vibe.publicNote! : '${widget.vibe.name} is in a ${widget.vibe.vibe.toLowerCase()} phase today.';
 
     return CircleFlushCard(
       padding: const EdgeInsets.fromLTRB(24, 26, 24, 24),
@@ -170,19 +172,17 @@ class _FriendDayCardState extends State<FriendDayCard> {
               color: fgMain,
             ),
           ),
-          if (hasNote) ...[
-            const SizedBox(height: 14),
-            Text(
-              widget.vibe.publicNote!,
-              style: TextStyle(
-                fontFamily: 'Georgia',
-                fontStyle: FontStyle.italic,
-                fontSize: 14.5,
-                height: 1.5,
-                color: fgMuted,
-              ),
+          const SizedBox(height: 14),
+          Text(
+            friendNote,
+            style: TextStyle(
+              fontFamily: 'Georgia',
+              fontStyle: FontStyle.italic,
+              fontSize: 14.5,
+              height: 1.5,
+              color: fgMuted,
             ),
-          ],
+          ),
           // The friend's OWN transit weather today (their personal energy).
           if (widget.vibe.energy.isNotEmpty) ...[
             const SizedBox(height: 16),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:aurogram/core/theme/dashboard_card_theme.dart';
 
 /// Shared layout for the cosmic dashboard cards (Energy, Sky, Balance).
 ///
@@ -86,7 +87,20 @@ class AdaptiveCardBody extends StatelessWidget {
             children: [
               Expanded(flex: infoFlex, child: leftColumn),
               SizedBox(width: columnGap),
-              Expanded(flex: visualFlex, child: visual(true)),
+              // Pin the hero visual to the right edge of its column and cap it
+              // at the shared visual size — on wide screens this keeps the wheel
+              // large and flush-right instead of centred with a big right gap.
+              Expanded(
+                flex: visualFlex,
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: ConstrainedBox(
+                    constraints:
+                        const BoxConstraints(maxWidth: kDashboardVisualSize),
+                    child: visual(true),
+                  ),
+                ),
+              ),
             ],
           );
 

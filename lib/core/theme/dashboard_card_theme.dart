@@ -18,7 +18,7 @@ const EdgeInsets kDashboardCardPadding =
 /// nakshatra wheel, the dosha orb, and the sky chart. Keeping one cap makes
 /// all three visuals read as the same size instead of the wheel dwarfing the
 /// orb. Each visual sizes to `min(availableWidth, kDashboardVisualSize)`.
-const double kDashboardVisualSize = 300.0;
+const double kDashboardVisualSize = 400.0;
 
 /// The shared palette for the three home-dashboard cards (Energy, Balance,
 /// Current Sky). These cards all share one look: a stark surface (night-black

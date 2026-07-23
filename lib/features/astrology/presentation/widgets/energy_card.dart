@@ -12,7 +12,6 @@ import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/shared/presentation/responsive/adaptive_card_body.dart';
 import 'package:aurogram/features/astrology/data/utils/nakshatra_data.dart';
-import 'package:aurogram/features/astrology/data/utils/daily_vibe.dart';
 import 'package:aurogram/features/astrology/domain/forecast_service.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/common/pulsing_dot.dart';
 
@@ -883,22 +882,17 @@ class _EnergyCardState extends State<EnergyCard>
     // Header summary: energy label + alignment %.
     // The % is the REAL server-computed Vedic day-signal (Gochara + Ashtakavarga
     // + Vedha + Tara/Chandra Bala + Panchang) for the shown date. The label
-    // prefers the AI-narrated heading; the static Tara vibe is a soft fallback
-    // for the label text only (never for the number).
+    // is the AI-narrated heading (or an honest loading label while it lands).
     final fday = _activeForecastDay;
-    final headerVibe = DailyVibe.forUser(
-      birthIndex: _birthIndex,
-      todayIndex: _activeIndex,
-    );
     final headerAlignment = fday?.alignment; // null → no % shown (no fake)
     // Story still generating: real number present, woven text not yet. Show an
-    // honest loading label — never the static template dressed as the reading.
+    // honest loading label — never a static template dressed as the reading.
     final headerStoryGenerating = _birthIndex >= 0 &&
         headerAlignment != null &&
         !(fday?.narrative?.isNotEmpty ?? false);
     final headerLabel = (fday?.heading != null && fday!.heading!.isNotEmpty)
         ? fday.heading!
-        : (headerStoryGenerating ? 'READING YOUR SKY' : headerVibe?.label);
+        : (headerStoryGenerating ? 'READING YOUR SKY' : null);
 
     return DashboardCard(
       child: AdaptiveCardBody(
@@ -1043,29 +1037,25 @@ class _EnergyCardState extends State<EnergyCard>
     // dragging the wheel becomes a "what does <other day> look like?"
     // exploration affordance.
     final activeIdx = _activeIndex;
-    final vibe = DailyVibe.forUser(
-      birthIndex: _birthIndex,
-      todayIndex: activeIdx,
-    );
-    if (vibe == null) return _buildVibeEmptyContent(c, isDark, cardColor);
+    if (activeIdx < 0) return _buildVibeEmptyContent(c, isDark, cardColor);
 
     final fday = _activeForecastDay;
     final forecastNarrative = fday?.narrative;
-    // Real number present for this day but the woven story hasn't landed yet →
-    // show an honest loading state (the ensure call is generating it), NOT the
-    // static template pretending to be the reading.
-    final storyGenerating =
-        fday?.alignment != null && !(forecastNarrative?.isNotEmpty ?? false);
-    if (storyGenerating) {
+    // The unified forecast is the ONLY source of the reading. If the woven
+    // story for this day hasn't landed yet (generating, or the wheel is
+    // dragged outside the narrated window), show an honest loading state —
+    // never a static template pretending to be the reading.
+    if (!(forecastNarrative?.isNotEmpty ?? false)) {
       return _buildVibeLoadingContent(c);
     }
-    // The unified forecast owns every narrated date. Static Tara guidance is
-    // only a fallback outside the computed forecast window.
-    final narrativeText = forecastNarrative?.isNotEmpty == true
-        ? forecastNarrative!
-        : vibe.narrative;
+    final narrativeText = forecastNarrative!;
 
     final palette = DashboardCardPalette.forBrightness(isDark);
+
+    // Do / Avoid — same editorial two-column list as the Balance card.
+    // Driven entirely by the AI forecast day (grounded in the day's signals).
+    final goodFor = fday?.goodFor ?? const <String>[];
+    final avoid = fday?.avoid ?? const <String>[];
 
     return Container(
       width: double.infinity,
@@ -1090,8 +1080,8 @@ class _EnergyCardState extends State<EnergyCard>
           const SizedBox(height: AppDimensions.spacingXs),
 
           // Do / Avoid — same editorial two-column list as the Balance card.
-          // Driven by the Tara's own goodFor / avoid guidance.
-          if (vibe.goodFor.isNotEmpty || vibe.avoid.isNotEmpty) ...[
+          // Driven by the AI forecast day's goodFor / avoid guidance.
+          if (goodFor.isNotEmpty || avoid.isNotEmpty) ...[
             const SizedBox(height: 24),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1099,7 +1089,7 @@ class _EnergyCardState extends State<EnergyCard>
                 Expanded(
                   child: EditorialTipColumn(
                     header: 'F A V O R',
-                    items: vibe.goodFor,
+                    items: goodFor,
                     palette: palette,
                     isWide: isWide,
                   ),
@@ -1108,7 +1098,7 @@ class _EnergyCardState extends State<EnergyCard>
                 Expanded(
                   child: EditorialTipColumn(
                     header: 'A V O I D',
-                    items: vibe.avoid,
+                    items: avoid,
                     palette: palette,
                     isWide: isWide,
                   ),

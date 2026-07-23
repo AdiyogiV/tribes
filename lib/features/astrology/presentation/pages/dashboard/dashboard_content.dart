@@ -28,6 +28,10 @@ class AstroDashboardContent extends StatelessWidget {
   final ValueNotifier<DateTime> sliderDateNotifier;
   final ValueChanged<double> onSliderChanged;
   final VoidCallback onResetToToday;
+
+  /// Steps the sky date by whole days (−1 / +1) — drives the Sky card's
+  /// PREV/NEXT chevrons.
+  final void Function(int deltaDays)? onStepDays;
   final Future<void> Function({bool isRetry}) onLoadSkyPositions;
   final Future<void> Function() onTriggerCachePopulation;
 
@@ -68,6 +72,7 @@ class AstroDashboardContent extends StatelessWidget {
     required this.sliderDateNotifier,
     required this.onSliderChanged,
     required this.onResetToToday,
+    this.onStepDays,
     required this.onLoadSkyPositions,
     required this.onTriggerCachePopulation,
     this.wheelResetSignal,
@@ -229,6 +234,7 @@ class AstroDashboardContent extends StatelessWidget {
           sliderDateNotifier: sliderDateNotifier,
           onSliderChanged: onSliderChanged,
           onResetToToday: onResetToToday,
+          onStepDays: onStepDays,
           onLoadSkyPositions: onLoadSkyPositions,
           onTriggerCachePopulation: onTriggerCachePopulation,
           spacing: spacing,

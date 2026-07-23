@@ -29,6 +29,10 @@ class AstroDashboardCards extends StatelessWidget {
   final ValueNotifier<DateTime> sliderDateNotifier;
   final ValueChanged<double> onSliderChanged;
   final VoidCallback onResetToToday;
+
+  /// Steps the sky date by whole days (−1 / +1) — drives the Sky card's
+  /// PREV/NEXT chevrons.
+  final void Function(int deltaDays)? onStepDays;
   final Future<void> Function({bool isRetry}) onLoadSkyPositions;
   final Future<void> Function() onTriggerCachePopulation;
   final double spacing;
@@ -48,6 +52,7 @@ class AstroDashboardCards extends StatelessWidget {
     required this.sliderDateNotifier,
     required this.onSliderChanged,
     required this.onResetToToday,
+    this.onStepDays,
     required this.onLoadSkyPositions,
     required this.onTriggerCachePopulation,
     required this.spacing,
@@ -68,6 +73,7 @@ class AstroDashboardCards extends StatelessWidget {
             child: BalanceCard(
               prakriti: ayurvedaProfile!.prakriti!,
               vikriti: ayurvedaProfile!.vikriti,
+              aiGuidance: ayurvedaProfile!.aiGuidance,
               isCalculating: false,
               lastCheckIn: ayurvedaProfile!.lastCheckIn,
               isDark: isDark,
@@ -102,6 +108,7 @@ class AstroDashboardCards extends StatelessWidget {
                     skyDataLoading: loadingState.isSkyLoading,
                     onSliderChanged: onSliderChanged,
                     onResetToToday: onResetToToday,
+                    onStepDays: onStepDays,
                     onLoadSkyPositions: onLoadSkyPositions,
                     onTriggerCachePopulation: onTriggerCachePopulation,
                     getPositionsForDate: (date) {
@@ -128,6 +135,10 @@ class AstroDashboardCards extends StatelessWidget {
                         isDark,
                       );
                     },
+                    buildGocharaHouses: (positions) =>
+                        buildRankedGocharaHouses(profile, positions),
+                    onGocharaHouseTap: (info) =>
+                        showHouseDetails(context, info, isDark),
                   );
                 },
               );

@@ -27,6 +27,10 @@ class AyurvedaProfile {
   // Vikriti - Current State (calculated from user's last check-in)
   final VikritiData? vikriti;
 
+  // AI do-guidance buckets (per dosha state), written by the monthly
+  // forecast NARRATE call. The card picks the bucket matching current vikriti.
+  final AyurvedaGuidance? aiGuidance;
+
   // User-reported data
   final List<Map<String, dynamic>>? checkInHistory;
   final Map<String, dynamic>? lastSymptoms;
@@ -45,6 +49,7 @@ class AyurvedaProfile {
     this.manasPrakriti,
     this.healthVulnerabilities,
     this.vikriti,
+    this.aiGuidance,
     this.checkInHistory,
     this.lastSymptoms,
     this.lastCheckIn,
@@ -84,6 +89,9 @@ class AyurvedaProfile {
           : null,
       vikriti: map['vikriti'] != null
           ? VikritiData.fromMap(Map<String, dynamic>.from(map['vikriti']))
+          : null,
+      aiGuidance: map['aiGuidance'] != null
+          ? AyurvedaGuidance.fromMap(Map<String, dynamic>.from(map['aiGuidance']))
           : null,
       checkInHistory: map['checkInHistory'] != null
           ? List<Map<String, dynamic>>.from((map['checkInHistory'] as List)
@@ -360,6 +368,55 @@ class VikritieFactor {
       favorable: map['favorable'],
       dignityMultiplier: map['dignityMultiplier']?.toDouble(),
       bindus: map['bindus'],
+    );
+  }
+}
+
+/// AI-generated Ayurvedic do-guidance, keyed by which dosha state is current.
+/// Written by the monthly forecast NARRATE call (one AI call/user/month).
+/// The Balance card reads the bucket matching the user's current Vikriti.
+class AyurvedaGuidance {
+  final Map<String, DoshaGuidance> buckets; // 'vata'|'pitta'|'kapha'|'balanced'
+
+  const AyurvedaGuidance({this.buckets = const {}});
+
+  /// Guidance for a given dosha state, falling back to the balanced bucket.
+  DoshaGuidance? forState(String dosha) =>
+      buckets[dosha.toLowerCase()] ?? buckets['balanced'];
+
+  factory AyurvedaGuidance.fromMap(Map<String, dynamic> map) {
+    final buckets = <String, DoshaGuidance>{};
+    for (final key in const ['vata', 'pitta', 'kapha', 'balanced']) {
+      final b = map[key];
+      if (b is Map) {
+        buckets[key] = DoshaGuidance.fromMap(Map<String, dynamic>.from(b));
+      }
+    }
+    return AyurvedaGuidance(buckets: buckets);
+  }
+}
+
+/// One dosha state's do-guidance: what this state needs + food/practice favors.
+class DoshaGuidance {
+  final String focus; // one warm line naming what this state needs
+  final List<String> food; // FOOD column favors
+  final List<String> practice; // PRACTICE column favors
+
+  const DoshaGuidance({
+    this.focus = '',
+    this.food = const [],
+    this.practice = const [],
+  });
+
+  bool get isEmpty => food.isEmpty && practice.isEmpty && focus.isEmpty;
+
+  factory DoshaGuidance.fromMap(Map<String, dynamic> map) {
+    List<String> strList(dynamic v) =>
+        (v as List?)?.map((e) => e.toString()).toList() ?? const [];
+    return DoshaGuidance(
+      focus: map['focus']?.toString() ?? '',
+      food: strList(map['food']),
+      practice: strList(map['practice']),
     );
   }
 }

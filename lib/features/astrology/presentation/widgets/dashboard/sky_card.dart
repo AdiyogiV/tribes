@@ -7,6 +7,8 @@ import 'package:aurogram/features/astrology/presentation/widgets/chic_kundali_ch
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/dashboard_card_theme.dart';
 import 'package:aurogram/features/astrology/presentation/widgets/kundali_house_hit_test.dart';
+import 'package:aurogram/features/astrology/presentation/widgets/dashboard/sky_gochara_list.dart';
+import 'package:aurogram/features/astrology/presentation/widgets/dialogs/house_details_dialog.dart';
 import 'package:aurogram/shared/presentation/responsive/adaptive_card_body.dart';
 
 /// Card widget displaying the current sky chart with optional birth chart overlay
@@ -24,6 +26,10 @@ class SkyCard extends StatelessWidget {
   final bool skyDataLoading;
   final ValueChanged<double> onSliderChanged;
   final VoidCallback onResetToToday;
+
+  /// Steps the displayed sky date by whole days (−1 / +1). Drives the
+  /// chevron buttons — the primary, click-friendly control on web.
+  final void Function(int deltaDays)? onStepDays;
   final VoidCallback? onLoadSkyPositions;
   final VoidCallback? onTriggerCachePopulation;
   final Map<String, dynamic>? Function(DateTime) getPositionsForDate;
@@ -42,6 +48,14 @@ class SkyCard extends StatelessWidget {
   final void Function(int houseNumber, Map<String, dynamic> currentPositions)?
       onHouseTap;
 
+  /// Builds the ranked list of currently-transited houses for the given
+  /// resolved positions. Supplied by the parent (which holds the profile).
+  final List<HouseInfo> Function(Map<String, dynamic> positions)?
+      buildGocharaHouses;
+
+  /// Fired when a row in the gochara list is tapped — opens the house reading.
+  final void Function(HouseInfo info)? onGocharaHouseTap;
+
   const SkyCard({
     super.key,
     required this.currentPositions,
@@ -53,12 +67,15 @@ class SkyCard extends StatelessWidget {
     required this.skyDataLoading,
     required this.onSliderChanged,
     required this.onResetToToday,
+    this.onStepDays,
     this.onLoadSkyPositions,
     this.onTriggerCachePopulation,
     required this.getPositionsForDate,
     required this.getInterpolatedPositions,
     this.onExploreBirthChart,
     this.onHouseTap,
+    this.buildGocharaHouses,
+    this.onGocharaHouseTap,
     this.insightText,
   });
 
@@ -100,6 +117,10 @@ class SkyCard extends StatelessWidget {
         ? ChartUtils.getZodiacLabels(birthChartData!)
         : null;
     final hasBirthChart = birthHouses != null && birthLabels != null;
+
+    // Ranked list of currently-transited houses (Gochara) for the info column.
+    final gocharaHouses =
+        buildGocharaHouses?.call(positions) ?? const <HouseInfo>[];
 
     // Theme-aware text (shared dashboard palette). Surface + padding are
     // provided by the DashboardCard wrapper.
@@ -171,22 +192,20 @@ class SkyCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // PAST
-                    Row(
-                      children: [
-                        Icon(Icons.chevron_left,
-                            size: sliderLabelSize + 4, color: fgMuted),
-                        const SizedBox(width: 4),
-                        Text(
-                          'PAST',
-                          style: TextStyle(
-                            fontSize: sliderLabelSize,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 2.0,
-                            color: fgMuted,
-                          ),
-                        ),
-                      ],
+                    // PREVIOUS DAY (tappable — primary control on web)
+                    _dayStepButton(
+                      icon: Icons.chevron_left,
+                      label: 'PREV',
+                      leading: true,
+                      fontSize: sliderLabelSize,
+                      color: fgMain,
+                      tooltip: 'Previous day',
+                      onTap: (onStepDays == null || !skyDataLoaded)
+                          ? null
+                          : () {
+                              HapticFeedback.selectionClick();
+                              onStepDays!(-1);
+                            },
                     ),
 
                     // CENTER DATE
@@ -222,22 +241,20 @@ class SkyCard extends StatelessWidget {
                       ),
                     ),
 
-                    // FUTURE
-                    Row(
-                      children: [
-                        Text(
-                          'FUTURE',
-                          style: TextStyle(
-                            fontSize: sliderLabelSize,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 2.0,
-                            color: fgMuted,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Icon(Icons.chevron_right,
-                            size: sliderLabelSize + 4, color: fgMuted),
-                      ],
+                    // NEXT DAY (tappable — primary control on web)
+                    _dayStepButton(
+                      icon: Icons.chevron_right,
+                      label: 'NEXT',
+                      leading: false,
+                      fontSize: sliderLabelSize,
+                      color: fgMain,
+                      tooltip: 'Next day',
+                      onTap: (onStepDays == null || !skyDataLoaded)
+                          ? null
+                          : () {
+                              HapticFeedback.selectionClick();
+                              onStepDays!(1);
+                            },
                     ),
                   ],
                 ),
@@ -264,9 +281,9 @@ class SkyCard extends StatelessWidget {
           ),
 
           // Contextual Reset Button (on its own line)
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           SizedBox(
-            height: 20, // fixed height to prevent layout jump
+            height: 34, // fixed height to prevent layout jump
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
               child: isSliderOnToday
@@ -275,33 +292,47 @@ class SkyCard extends StatelessWidget {
                       child: Semantics(
                         button: true,
                         label: 'Return to today',
-                        child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          onResetToToday();
-                        },
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.replay_circle_filled_rounded,
-                              size: 14,
-                              color: fgMain,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              'RETURN TO TODAY',
-                              style: TextStyle(
-                                fontSize: resetLabelSize,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 2.0,
-                                color: fgMain,
+                        child: MouseRegion(
+                          cursor: SystemMouseCursors.click,
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () {
+                              HapticFeedback.lightImpact();
+                              onResetToToday();
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 8),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: fgMain.withValues(alpha: 0.35),
+                                  width: 1,
+                                ),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.today_outlined,
+                                    size: 14,
+                                    color: fgMain,
+                                  ),
+                                  const SizedBox(width: 7),
+                                  Text(
+                                    'BACK TO TODAY',
+                                    style: TextStyle(
+                                      fontSize: resetLabelSize,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 2.0,
+                                      color: fgMain,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ],
+                          ),
                         ),
-                      ),
                       ),
                     ),
             ),
@@ -319,6 +350,17 @@ class SkyCard extends StatelessWidget {
                   fontStyle: FontStyle.italic,
                 ),
               ),
+            ),
+          ],
+
+          // Gochara list — currently-transited houses, ranked, tappable.
+          if (skyDataLoaded && hasBirthChart && gocharaHouses.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            SkyGocharaList(
+              houses: gocharaHouses,
+              palette: palette,
+              isWide: isWide,
+              onTapHouse: (info) => onGocharaHouseTap?.call(info),
             ),
           ],
 
@@ -361,6 +403,57 @@ class SkyCard extends StatelessWidget {
             ),
           ],
           ],
+        ),
+      ),
+    );
+  }
+
+  /// A tappable day-step control (‹ PREV / NEXT ›). Real button with a hover
+  /// cursor + tooltip — the primary way to move the sky date on web, replacing
+  /// the undiscoverable drag-only affordance. Dims when disabled.
+  Widget _dayStepButton({
+    required IconData icon,
+    required String label,
+    required bool leading,
+    required double fontSize,
+    required Color color,
+    required String tooltip,
+    VoidCallback? onTap,
+  }) {
+    final enabled = onTap != null;
+    final tint = enabled ? color : color.withValues(alpha: 0.35);
+    final iconWidget = Icon(icon, size: fontSize + 6, color: tint);
+    final textWidget = Text(
+      label,
+      style: TextStyle(
+        fontSize: fontSize,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 2.0,
+        color: tint,
+      ),
+    );
+    return Semantics(
+      button: true,
+      label: tooltip,
+      child: MouseRegion(
+        cursor:
+            enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
+        child: Tooltip(
+          message: tooltip,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onTap,
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(vertical: 8.0, horizontal: 6.0),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: leading
+                    ? [iconWidget, const SizedBox(width: 4), textWidget]
+                    : [textWidget, const SizedBox(width: 4), iconWidget],
+              ),
+            ),
+          ),
         ),
       ),
     );

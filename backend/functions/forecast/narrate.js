@@ -33,6 +33,12 @@ const NARRATE_MIN_LEAD_DAYS = Number(process.env.NARRATE_MIN_LEAD_DAYS || 7);
 // Only narrate for users active in the last N days.
 const NARRATE_ACTIVE_DAYS = Number(process.env.NARRATE_ACTIVE_DAYS || 7);
 const MAX_USERS_PER_RUN = Number(process.env.NARRATE_MAX_USERS || 250);
+const NARRATE_SCHEMA_REQUEUE_COOLDOWN_MS = Number(
+    process.env.NARRATE_SCHEMA_REQUEUE_COOLDOWN_MS || (12 * 60 * 60 * 1000),
+);
+
+// Bump when the narrated day-shape changes (new required fields, etc).
+export const FORECAST_NARRATION_SCHEMA_VERSION = 2;
 
 // Storyline bounds (kept bounded forever — same discipline as user_memory).
 const RECENT_BEATS_CAP = 4;
@@ -73,6 +79,15 @@ export async function narrateForecastForUser(uid) {
     if (!userSnap.exists) return { ok: false, reason: "no-user" };
     const astro = userSnap.data().astrologyData;
     if (!astro) return { ok: false, reason: "no-chart" };
+
+    // Ayurveda context (optional) — lets the ONE call also write per-state
+    // do-guidance. Vikriti is already health-fused upstream (measured wins).
+    const ayurvedaData = userSnap.data().ayurvedaData || {};
+    const ayurveda = ayurvedaData.prakriti ? {
+        prakriti: ayurvedaData.prakriti,
+        vikriti: ayurvedaData.vikriti,
+        vulnerabilities: ayurvedaData.healthVulnerabilities,
+    } : null;
 
     const todayKey = dayKey(istToday());
     const endKey = dayKey(istToday().plus({ days: NARRATE_HORIZON_DAYS }));
@@ -117,9 +132,14 @@ export async function narrateForecastForUser(uid) {
     // The one AI call.
     const { json } = await callGemini({
         systemPrompt: NARRATE_SYSTEM_PROMPT,
-        userPrompt: buildNarratePrompt({ person, signals, dashaContext }),
+        userPrompt: buildNarratePrompt({ person, signals, dashaContext, ayurveda }),
         temperature: 0.9,
-        maxOutputTokens: 8192,
+        // 30-day horizon × rich per-day fields (heading, narrative, publicNote,
+        // action/caution/tip/timing, goodFor/avoid) + 4 ayurveda buckets +
+        // storyline. A truncated response fails JSON parse → whole month lost,
+        // so keep generous headroom (gemini-2.5-flash caps at 65536; billed on
+        // ACTUAL output tokens, so a higher cap is free unless used).
+        maxOutputTokens: 16384,
         expectJson: true,
         googleSearch: false,
         flavorName: "forecast_narrate",
@@ -159,6 +179,8 @@ export async function narrateForecastForUser(uid) {
                     caution: n.caution,
                     tip: n.tip,
                     timing: n.timing,
+                    goodFor: n.goodFor ?? [],
+                    avoid: n.avoid ?? [],
                 };
             });
             if (touched) {
@@ -180,13 +202,55 @@ export async function narrateForecastForUser(uid) {
     // REMEMBER — fold this chapter into a bounded storyline arc.
     await rememberStoryline(userRef, person.storyline, json.storylineUpdate, dashaContext);
 
+    // Persist the per-state Ayurveda do-guidance (buckets) so the Balance card
+    // can show AI guidance matching the user's CURRENT dosha with no new call.
+    if (ayurveda && json.ayurvedaGuidance && typeof json.ayurvedaGuidance === "object") {
+        const g = json.ayurvedaGuidance;
+        const clean = (b) => b && typeof b === "object" ? {
+            focus: typeof b.focus === "string" ? b.focus : "",
+            food: Array.isArray(b.food) ? b.food.slice(0, 4).map(String) : [],
+            practice: Array.isArray(b.practice) ? b.practice.slice(0, 4).map(String) : [],
+        } : null;
+        const buckets = {};
+        for (const key of ["vata", "pitta", "kapha", "balanced"]) {
+            const c = clean(g[key]);
+            if (c) buckets[key] = c;
+        }
+        if (Object.keys(buckets).length) {
+            await userRef.set({
+                ayurvedaData: {
+                    aiGuidance: {
+                        ...buckets,
+                        updatedAt: FieldValue.serverTimestamp(),
+                    },
+                },
+            }, { merge: true });
+        }
+    }
+
     // Cheap gating marker for the enqueue runner (no extra per-user read).
     // Validation guarantees complete, exact coverage, so this marker can never
     // leap over a missing day merely because the model returned one far date.
     await userRef.set({
         forecastNarratedThrough: validation.through,
+        forecastNarrationSchemaVersion: FORECAST_NARRATION_SCHEMA_VERSION,
         forecastNarrateQueuedUntil: FieldValue.delete(),
     }, { merge: true });
+
+    // Coherence: refresh the per-house Gochara readings on the SAME trigger as
+    // the monthly story (and over the same horizon), so the Sky card's house
+    // headlines never drift from the forecast. Best-effort and isolated — a
+    // house failure must never fail the (already-persisted) forecast. Dynamic
+    // import avoids a heavy module load on the narrate cold path until needed.
+    try {
+        const { generatePerHouse } = await import("../per_house.js");
+        await generatePerHouse(uid, todayKey, endKey);
+        logger.info("narrate: per-house readings refreshed", { uid });
+    } catch (e) {
+        logger.warn("narrate: per-house refresh failed (non-fatal)", {
+            uid, error: e?.message,
+        });
+    }
 
     logger.info("narrate: done", { uid, narrated, through: validation.through });
     return { ok: true, narrated };
@@ -266,19 +330,54 @@ export async function ensureNarrateFresh(uid, narratedThrough) {
     }
 }
 
-async function claimNarrateEnqueue(uid) {
+/**
+ * Ensure narration even when runway is healthy but schema is stale/missing.
+ * Used by circle surfaces so older docs self-heal without one-off scripts.
+ */
+export async function ensureNarrateSchemaFresh(uid, requiredVersion = FORECAST_NARRATION_SCHEMA_VERSION) {
+    if (!await claimNarrateEnqueue(uid, { requiredVersion })) return false;
+    try {
+        await enqueueNarrateForUser(uid);
+        return true;
+    } catch (error) {
+        await releaseNarrateEnqueue(uid);
+        throw error;
+    }
+}
+
+function narrationSchemaStale(userData, requiredVersion) {
+    const currentVersion = Number(userData?.forecastNarrationSchemaVersion || 0);
+    return currentVersion < requiredVersion;
+}
+
+async function claimNarrateEnqueue(uid, options = {}) {
+    const requiredVersion = Number(options.requiredVersion || 0);
     const ref = db.collection("users").doc(uid);
     return db.runTransaction(async (transaction) => {
         const snap = await transaction.get(ref);
-        if (!snap.exists || !narrateRunwayShort(snap.data().forecastNarratedThrough)) {
-            return false;
+        if (!snap.exists) return false;
+
+        const data = snap.data() || {};
+        const runwayDue = narrateRunwayShort(data.forecastNarratedThrough);
+        const schemaDue = requiredVersion > 0 && narrationSchemaStale(data, requiredVersion);
+        if (!runwayDue && !schemaDue) return false;
+
+        const now = Date.now();
+        if (schemaDue && !runwayDue) {
+            const schemaQueuedAt = data.forecastNarrateSchemaQueuedAt?.toMillis?.() || 0;
+            if (schemaQueuedAt && (now - schemaQueuedAt) < NARRATE_SCHEMA_REQUEUE_COOLDOWN_MS) {
+                return false;
+            }
         }
-        const queuedUntil = snap.data().forecastNarrateQueuedUntil?.toMillis?.() || 0;
+
+        const queuedUntil = data.forecastNarrateQueuedUntil?.toMillis?.() || 0;
         if (queuedUntil > Date.now()) return false;
 
-        transaction.set(ref, {
+        const update = {
             forecastNarrateQueuedUntil: new Date(Date.now() + ENQUEUE_LEASE_MS),
-        }, { merge: true });
+        };
+        if (schemaDue) update.forecastNarrateSchemaQueuedAt = new Date(now);
+        transaction.set(ref, update, { merge: true });
         return true;
     });
 }

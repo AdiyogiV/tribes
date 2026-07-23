@@ -23,6 +23,13 @@ export function validateNarratedDays(rawDays, signals) {
         const caution = typeof raw?.caution === "string" ? raw.caution.trim() : "";
         const tip = typeof raw?.tip === "string" ? raw.tip.trim() : "";
         const timing = typeof raw?.timing === "string" ? raw.timing.trim() : "";
+        // goodFor / avoid: short editorial lists for the FAVOR/AVOID columns.
+        // Coerced to string arrays; tolerated-empty (card degrades gracefully).
+        const toList = (v) => Array.isArray(v)
+            ? v.map((x) => String(x).trim()).filter(Boolean).slice(0, 4)
+            : [];
+        const goodFor = toList(raw?.goodFor);
+        const avoid = toList(raw?.avoid);
 
         if (!expected.has(date)) {
             return { ok: false, reason: `unexpected-date:${date || "missing"}`, days: [] };
@@ -43,6 +50,8 @@ export function validateNarratedDays(rawDays, signals) {
         if (caution) day.caution = caution;
         if (tip) day.tip = tip;
         if (timing) day.timing = timing;
+        if (goodFor.length) day.goodFor = goodFor;
+        if (avoid.length) day.avoid = avoid;
         byDate.set(date, day);
     }
 

@@ -390,6 +390,21 @@ class DashboardPageState extends State<DashboardPage>
     _wheelResetNotifier.value++;
   }
 
+  /// Step the displayed sky date by whole days (−1 / +1), clamped to the
+  /// slider range. Drives the Sky card's PREV/NEXT chevron buttons — the
+  /// click-friendly control that makes date-scrubbing usable on web.
+  void _stepSliderByDays(int delta) {
+    final today = DateTime.now();
+    final t0 = DateTime(today.year, today.month, today.day);
+    final base = _sliderDateNotifier.value;
+    final current = DateTime(base.year, base.month, base.day);
+    final off = (current.difference(t0).inDays + delta)
+        .clamp(-_sliderRangeDays, _sliderRangeDays);
+    _sliderDateNotifier.value = t0.add(Duration(days: off));
+    _sliderValueNotifier.value =
+        (0.5 + off / (2 * _sliderRangeDays)).clamp(0.0, 1.0);
+  }
+
   // ─────────────────────────────────────────────────────────────
   // Scroll-to-hide bottom bar (mirrors Feed's approach)
   // ─────────────────────────────────────────────────────────────
@@ -527,6 +542,7 @@ class DashboardPageState extends State<DashboardPage>
         sliderDateNotifier: _sliderDateNotifier,
         onSliderChanged: _onSliderChanged,
         onResetToToday: _resetSliderToToday,
+        onStepDays: _stepSliderByDays,
         onLoadSkyPositions: _loadSkyPositions,
         onTriggerCachePopulation: _triggerSkyPositionsCachePopulation,
         wheelResetSignal: _wheelResetNotifier,
@@ -575,6 +591,7 @@ class DashboardPageState extends State<DashboardPage>
                     sliderDateNotifier: _sliderDateNotifier,
                     onSliderChanged: _onSliderChanged,
                     onResetToToday: _resetSliderToToday,
+                    onStepDays: _stepSliderByDays,
                     onLoadSkyPositions: _loadSkyPositions,
                     onTriggerCachePopulation:
                         _triggerSkyPositionsCachePopulation,

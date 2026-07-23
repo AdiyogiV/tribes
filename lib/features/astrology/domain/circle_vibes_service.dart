@@ -192,8 +192,10 @@ class CircleVibesService {
 
   /// How many mutual-follows to consider. The backend caps its own fan-out too.
   static const int _maxFriends = 30;
+  static const Duration _schemaHealCooldown = Duration(hours: 12);
 
   String _cacheKey(String uid, String dateKey) => 'circle_vibes_${uid}_$dateKey';
+  String _healKey(String uid) => 'circle_vibes_heal_$uid';
   static String _today() {
     final n = DateTime.now();
     return '${n.year}-${n.month.toString().padLeft(2, '0')}-'
@@ -228,6 +230,27 @@ class CircleVibesService {
       await prefs.setString(_cacheKey(uid, _today()), json);
     } catch (_) {
       // Caching is best-effort; a failure just means no instant paint next time.
+    }
+  }
+
+  Future<void> _maybeTriggerSchemaHeal({
+    required String uid,
+    required int totalVibes,
+    required int withPublicNote,
+  }) async {
+    if (totalVibes == 0 || withPublicNote == totalVibes) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final last = prefs.getInt(_healKey(uid)) ?? 0;
+      if (now - last < _schemaHealCooldown.inMilliseconds) return;
+      await prefs.setInt(_healKey(uid), now);
+      final enqueued = await forceRenarrateCircle();
+      AppLogger.i('CircleVibes: schema-heal triggered, enqueued=$enqueued',
+          category: LogCategory.general);
+    } catch (e) {
+      AppLogger.w('CircleVibes: schema-heal trigger failed (non-fatal)',
+          category: LogCategory.general, data: {'error': e.toString()});
     }
   }
 
@@ -294,6 +317,11 @@ class CircleVibesService {
             'withEnergy': withEnergy,
             'firstVibeKeys': firstKeys,
           });
+      await _maybeTriggerSchemaHeal(
+        uid: uid,
+        totalVibes: vibes.length,
+        withPublicNote: withPublicNote,
+      );
       // Persist for instant paint next open (stale-while-revalidate).
       if (vibes.isNotEmpty) await _cache(uid, vibes);
       return vibes;

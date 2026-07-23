@@ -21,6 +21,8 @@ class ForecastDay {
   final String? caution; // practical restraint
   final String? tip; // grounded wellbeing/reflection suggestion
   final String? timing; // non-fabricated timing guidance
+  final List<String> goodFor; // FAVOR column — AI, grounded in the day's signals
+  final List<String> avoid; // AVOID column — AI, grounded in the day's signals
 
   const ForecastDay({
     required this.date,
@@ -35,6 +37,8 @@ class ForecastDay {
     this.caution,
     this.tip,
     this.timing,
+    this.goodFor = const [],
+    this.avoid = const [],
   });
 
   factory ForecastDay.fromMap(Map<String, dynamic> m) {
@@ -53,6 +57,8 @@ class ForecastDay {
       caution: m['caution']?.toString(),
       tip: m['tip']?.toString(),
       timing: m['timing']?.toString(),
+      goodFor: strList(m['goodFor']),
+      avoid: strList(m['avoid']),
     );
   }
 }

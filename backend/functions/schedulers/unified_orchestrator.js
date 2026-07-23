@@ -62,7 +62,6 @@ import { runComputeDaySignals } from "../forecast/sense.js";
 // Phase 3 (mundane/world content) archived — see backend/_archive/.
 
 // Phase 4: Unified forecast runners
-import { runEnqueuePerHouseReadings } from "../per_house.js";
 import { runEnqueueMonthlyNarrate } from "../forecast/narrate.js";
 import { runDispatchDailyForecastNotifications } from "../forecast/notifications.js";
 
@@ -174,7 +173,10 @@ export const unifiedOrchestrator = onSchedule({
         "dispatchDailyForecastNotifications",
         runDispatchDailyForecastNotifications,
     ));
-    results.push(await runTask("enqueuePerHouseReadings", runEnqueuePerHouseReadings));
+    // NOTE: per-house Gochara readings are no longer enqueued on a separate
+    // 14-day cycle. They now refresh in lockstep with the monthly narrate (see
+    // forecast/narrate.js), so the Sky card's house headlines stay coherent
+    // with the forecast and there's a single generation trigger.
 
     // ── Phase 5: Health (independent — runs last) ─────────────────────
     logger.info("Phase 5: Health");
