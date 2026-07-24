@@ -118,10 +118,10 @@ class GuestHeroCard extends StatelessWidget {
         
         EditorialCardHeader(
           leading: "Time, sky, pulse. ",
-          trailing: 'A framework for self.',
+          trailing: 'Attuned to you.',
           palette: palette,
           leadingColor: palette.fgMain,
-          titleSize: isWide ? 46 : 36,
+          titleSize: isWide ? 38 : 30,
         ),
         const SizedBox(height: AppDimensions.spacingLg),
         
