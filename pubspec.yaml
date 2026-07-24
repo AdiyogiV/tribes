@@ -5,8 +5,8 @@ description: Aurogram - Social Platform with Astrology Insights
 publish_to: "none"
 
 # Versioning
-version: 72.0.0+72
-versionCode: 72
+version: 73.0.0+73
+versionCode: 73
 # Minimum Flutter SDK version requirement
 environment:
   sdk: ">=3.0.0 <4.0.0" # Dart 3.0+ required for records syntax

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:aurogram/features/astrology/presentation/pages/dashboard/widgets/guest/guest_hero_card.dart';
+import 'package:aurogram/features/astrology/presentation/pages/dashboard/widgets/guest/guest_entry_card.dart';
 import 'package:aurogram/features/astrology/presentation/pages/dashboard/widgets/guest/guest_feature_cards.dart';
-import 'package:aurogram/features/astrology/presentation/pages/dashboard/widgets/guest/guest_world_card.dart';
 import 'package:aurogram/features/astrology/presentation/pages/dashboard/widgets/guest/guest_collective_card.dart';
 import 'package:aurogram/features/astrology/presentation/pages/dashboard/widgets/guest/guest_footer.dart';
 
@@ -25,13 +25,13 @@ class DashboardGuestExperience extends StatelessWidget {
           children: [
             GuestHeroCard(isDark: isDark, isWide: isWide),
             const SizedBox(height: 16),
+            GuestEntryCard(isDark: isDark, isWide: isWide),
+            const SizedBox(height: 16),
             GuestFeatureCards(isDark: isDark),
             const SizedBox(height: 16),
-            GuestWorldCard(isDark: isDark),
-            const SizedBox(height: 16),
             GuestCollectiveCard(isDark: isDark, isWide: isWide),
-            SizedBox(height: spacing + 8),
-            const GuestFooter(),
+            SizedBox(height: spacing + 128),
+            GuestFooter(isDark: isDark, isWide: isWide),
           ],
         );
       },

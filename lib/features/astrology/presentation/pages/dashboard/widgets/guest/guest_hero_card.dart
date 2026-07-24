@@ -22,7 +22,7 @@ class GuestHeroCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = DashboardCardPalette.forBrightness(isDark);
-    
+
     return DashboardCard(
       padding: EdgeInsets.zero,
       child: Stack(
@@ -62,40 +62,20 @@ class GuestHeroCard extends StatelessWidget {
             ),
           ),
 
-          // 2. A soft legibility wash on the text side only. It reaches full
-          //    transparency well before the wheel's core, so there is no
-          //    perceptible edge between the two.
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                  colors: [
-                    palette.surface,
-                    palette.surface.withValues(alpha: 0.55),
-                    Colors.transparent,
-                  ],
-                  stops: const [0.0, 0.5, 0.85],
-                ),
-              ),
-            ),
-          ),
-          
-          // 3. The Content
+          // 2. The Content
           Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: 32.0,
               vertical: 48.0,
             ),
-            child: isWide 
-              ? Row(
-                  children: [
-                    Expanded(flex: 7, child: _text(context, palette)),
-                    const Expanded(flex: 3, child: SizedBox.shrink()),
-                  ],
-                )
-              : _text(context, palette),
+            child: isWide
+                ? Row(
+                    children: [
+                      Expanded(flex: 7, child: _text(context, palette)),
+                      const Expanded(flex: 3, child: SizedBox.shrink()),
+                    ],
+                  )
+                : _text(context, palette),
           ),
         ],
       ),
@@ -109,13 +89,13 @@ class GuestHeroCard extends StatelessWidget {
       children: [
         _BrandRow(isDark: isDark),
         const SizedBox(height: 64),
-        
+
         const GuestEyebrow(
           text: "THE LIVING ALMANAC",
           color: kGuestSaffron,
         ),
         const SizedBox(height: AppDimensions.spacingMd),
-        
+
         EditorialCardHeader(
           leading: "Time, sky, pulse. ",
           trailing: 'Attuned to you.',
@@ -124,7 +104,7 @@ class GuestHeroCard extends StatelessWidget {
           titleSize: isWide ? 38 : 30,
         ),
         const SizedBox(height: AppDimensions.spacingLg),
-        
+
         Text(
           'A unified system of ancient wisdom translated for the modern world. '
           'Discover your elemental nature and move in rhythm with the universe.',
@@ -136,17 +116,12 @@ class GuestHeroCard extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 48),
-        
-        // Solid, sharp, minimal CTA
-        Row(
-          children: [
-            GuestPrimaryCta(
-              label: 'Enter the almanac',
-              icon: Icons.arrow_forward_rounded,
-              isDark: isDark,
-              onTap: () => _toLogin(context),
-            ),
-          ],
+
+        GuestPrimaryCta(
+          label: 'Join the almanac',
+          icon: Icons.arrow_forward_rounded,
+          isDark: isDark,
+          onTap: () => _toLogin(context),
         ),
       ],
     );
