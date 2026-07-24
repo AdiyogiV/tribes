@@ -31,13 +31,14 @@ class _GuestCollectiveCardState extends State<GuestCollectiveCard> {
     } catch (_) {/* rules / offline — degrade gracefully */}
 
     try {
-      // Pull a GENEROUS pool of users who actually have a display picture set.
-      // `isGreaterThan: ''` excludes missing/empty fields. We over-fetch because
-      // some DPs are HEIC/HEVC photos that this device simply cannot decode —
-      // those get dropped by the decode check below, so we need spares.
+      // Latest-joined users first (users are stamped with `timestamp` at
+      // registration). We over-fetch because many won't have a photo and some
+      // DPs are HEIC/HEVC that this device can't decode — both get dropped
+      // below, so we need a generous pool to still fill the wall with the most
+      // recent members who DO have a working DP.
       final snap = await FirestoreRefs.users
-          .where('displayPicture', isGreaterThan: '')
-          .limit(80)
+          .orderBy('timestamp', descending: true)
+          .limit(160)
           .get();
       for (final doc in snap.docs) {
         final data = doc.data() as Map<String, dynamic>?;
