@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
@@ -24,16 +22,13 @@ class _GuestCollectiveCardState extends State<GuestCollectiveCard> {
   Future<_CollectiveData> _fetch() async {
     int? count;
     final candidates = <String>[];
+    final seen = <String>{};
 
     try {
       final countSnap = await FirestoreRefs.users.count().get();
       count = countSnap.count;
     } catch (_) {/* rules / offline — degrade gracefully */}
 
-    // Collect candidate DPs, latest-joined first, deduped. We over-fetch on
-    // purpose: many users have no photo and some DPs are HEIC/HEVC that this
-    // device can't decode — both get dropped later, so we need spares.
-    final seen = <String>{};
     void addFrom(Iterable<dynamic> docs) {
       for (final doc in docs) {
         final data = doc.data() as Map<String, dynamic>?;
@@ -44,80 +39,37 @@ class _GuestCollectiveCardState extends State<GuestCollectiveCard> {
       }
     }
 
-    // 1. Latest-joined members that have a DP (users are stamped with
-    //    `timestamp` at registration).
+    // Latest-joined members that have a DP. We fetch a SMALL pool with a few
+    // spares (target + buffer) — not hundreds — to keep Firestore reads and
+    // memory tiny. We do NOT pre-download or decode-test here: that blocked the
+    // card for seconds and caused bitmap/GC storms. Instead each tile renders
+    // immediately and self-heals to an animal if its photo can't decode.
     try {
       final latest = await FirestoreRefs.users
           .orderBy('timestamp', descending: true)
-          .limit(160)
+          .limit(_poolSize)
           .get();
       addFrom(latest.docs);
     } catch (_) {/* ignore */}
 
-    // 2. Backfill with ANY users that have a DP — covers older accounts created
-    //    before the `timestamp` field existed (which orderBy(timestamp) skips),
-    //    so the wall stays full of real photos, not animals, when the newest
-    //    signups happen to be photo-less.
-    try {
-      final withDp = await FirestoreRefs.users
-          .where('displayPicture', isGreaterThan: '')
-          .limit(80)
-          .get();
-      addFrom(withDp.docs);
-    } catch (_) {/* ignore */}
-
-    // Keep ONLY the DPs that actually decode on this device. Anything the
-    // platform image decoder rejects (unsupported HEIC/HEVC/corrupt) is
-    // discarded so it's never rendered as a blank tile. Validating also warms
-    // the image cache, so the subsequent render is instant.
-    final working = await _decodableUrls(candidates, want: _DpWall.target);
-
-    return _CollectiveData(count: count, dpUrls: working);
-  }
-
-  /// Returns up to [want] urls from [urls] that successfully decode into an
-  /// image on this device, preserving the original order.
-  Future<List<String>> _decodableUrls(
-    List<String> urls, {
-    required int want,
-  }) async {
-    final results = await Future.wait(urls.map(_canDecode));
-    final ok = <String>[];
-    for (var i = 0; i < urls.length; i++) {
-      if (results[i]) {
-        ok.add(urls[i]);
-        if (ok.length >= want) break;
-      }
-    }
-    return ok;
-  }
-
-  /// Attempts to resolve [url] into a decoded frame. Completes false on any
-  /// decode/network error or after a timeout — mirrors the exact decode path
-  /// the avatar will use, so a pass here guarantees the tile won't be blank.
-  Future<bool> _canDecode(String url) {
-    final completer = Completer<bool>();
-    final stream = NetworkImage(url).resolve(ImageConfiguration.empty);
-    late final ImageStreamListener listener;
-    void done(bool ok) {
-      if (!completer.isCompleted) completer.complete(ok);
-      stream.removeListener(listener);
+    // Only if the newest signups are photo-less do we backfill with older
+    // accounts that have a DP (these predate the `timestamp` field).
+    if (candidates.length < _DpWall.target) {
+      try {
+        final withDp = await FirestoreRefs.users
+            .where('displayPicture', isGreaterThan: '')
+            .limit(_poolSize)
+            .get();
+        addFrom(withDp.docs);
+      } catch (_) {/* ignore */}
     }
 
-    listener = ImageStreamListener(
-      (info, _) => done(true),
-      onError: (_, __) => done(false),
-    );
-    stream.addListener(listener);
-    return completer.future.timeout(
-      const Duration(seconds: 8),
-      onTimeout: () {
-        stream.removeListener(listener);
-        return false;
-      },
-    );
+    return _CollectiveData(count: count, dpUrls: candidates);
   }
 
+  /// Small candidate pool: the target wall size plus a handful of spares so a
+  /// few un-decodable photos can be swapped for animals without a re-query.
+  static const _poolSize = 40;
   @override
   Widget build(BuildContext context) {
     final palette = DashboardCardPalette.forBrightness(widget.isDark);
@@ -256,27 +208,32 @@ class _DpWall extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Compose the final url list: real DPs first, animal DPs as filler.
-    final urls = <String>[...dpUrls.take(target)];
-    if (urls.length < target) {
-      final animals = YoniTribeData.all;
-      var i = 0;
-      while (urls.length < target) {
-        urls.add(guestAnimalUrl(animals[i % animals.length].animal));
-        i++;
-      }
+    final animals = YoniTribeData.all;
+
+    // Build the tile list: real DPs first (each with an animal fallback so a
+    // photo that fails to decode self-heals instead of going blank), then pure
+    // animal tiles fill any remainder so the wall always looks populated.
+    final tiles = <_Tile>[];
+    for (final url in dpUrls.take(target)) {
+      final animal = animals[tiles.length % animals.length].animal;
+      tiles.add(_Tile(url: url, fallbackUrl: guestAnimalUrl(animal)));
+    }
+    while (tiles.length < target) {
+      final animal = animals[tiles.length % animals.length].animal;
+      tiles.add(_Tile(url: guestAnimalUrl(animal)));
     }
 
     return Wrap(
       alignment: WrapAlignment.center,
       runSpacing: 10,
       children: [
-        for (final url in urls)
+        for (final tile in tiles)
           Align(
             widthFactor: 0.74, // tight overlap
             alignment: Alignment.centerLeft,
             child: GuestUrlAvatar(
-              url: url,
+              url: tile.url,
+              fallbackUrl: tile.fallbackUrl,
               size: _size,
               isDark: isDark,
               borderWidth: 2,
@@ -286,4 +243,10 @@ class _DpWall extends StatelessWidget {
       ],
     );
   }
+}
+
+class _Tile {
+  const _Tile({required this.url, this.fallbackUrl});
+  final String url;
+  final String? fallbackUrl;
 }

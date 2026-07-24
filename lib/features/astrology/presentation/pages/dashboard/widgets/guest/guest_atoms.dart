@@ -33,6 +33,7 @@ class GuestUrlAvatar extends StatelessWidget {
     required this.isDark,
     this.borderWidth = 2.5,
     this.square = false,
+    this.fallbackUrl,
   });
 
   final String url;
@@ -40,6 +41,12 @@ class GuestUrlAvatar extends StatelessWidget {
   final bool isDark;
   final double borderWidth;
   final bool square;
+
+  /// Optional image shown if [url] fails to load/decode (e.g. HEIC/HEVC photos
+  /// some devices can't handle). Animal (yoni) urls always decode, so passing
+  /// one here lets a broken DP self-heal to an animal instead of a blank tile
+  /// — no upfront download or decode-test needed.
+  final String? fallbackUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -63,13 +70,19 @@ class GuestUrlAvatar extends StatelessWidget {
         ],
       ),
       child: ImageOptimizer.buildOptimizedImage(
-        // Use the same cached/decoded pipeline as the rest of the app so DPs
-        // that Flutter's raw Image.network can't decode (HEIC/odd webp on some
-        // Android devices) still render correctly instead of showing blank.
+        // Same cached/decoded pipeline as the rest of the app.
         url: url,
         width: size,
         height: size,
         fit: BoxFit.cover,
+        errorWidget: fallbackUrl == null
+            ? null
+            : ImageOptimizer.buildOptimizedImage(
+                url: fallbackUrl!,
+                width: size,
+                height: size,
+                fit: BoxFit.cover,
+              ),
       ),
     );
   }
