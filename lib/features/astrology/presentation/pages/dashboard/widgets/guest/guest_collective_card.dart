@@ -30,24 +30,41 @@ class _GuestCollectiveCardState extends State<GuestCollectiveCard> {
       count = countSnap.count;
     } catch (_) {/* rules / offline — degrade gracefully */}
 
-    try {
-      // Latest-joined users first (users are stamped with `timestamp` at
-      // registration). We over-fetch because many won't have a photo and some
-      // DPs are HEIC/HEVC that this device can't decode — both get dropped
-      // below, so we need a generous pool to still fill the wall with the most
-      // recent members who DO have a working DP.
-      final snap = await FirestoreRefs.users
-          .orderBy('timestamp', descending: true)
-          .limit(160)
-          .get();
-      for (final doc in snap.docs) {
+    // Collect candidate DPs, latest-joined first, deduped. We over-fetch on
+    // purpose: many users have no photo and some DPs are HEIC/HEVC that this
+    // device can't decode — both get dropped later, so we need spares.
+    final seen = <String>{};
+    void addFrom(Iterable<dynamic> docs) {
+      for (final doc in docs) {
         final data = doc.data() as Map<String, dynamic>?;
         final pic = data?['displayPicture'] as String?;
-        if (pic != null && pic.startsWith('http')) {
+        if (pic != null && pic.startsWith('http') && seen.add(pic)) {
           candidates.add(pic);
         }
       }
-    } catch (_) {/* ignore — fall back to animal DPs below */}
+    }
+
+    // 1. Latest-joined members that have a DP (users are stamped with
+    //    `timestamp` at registration).
+    try {
+      final latest = await FirestoreRefs.users
+          .orderBy('timestamp', descending: true)
+          .limit(160)
+          .get();
+      addFrom(latest.docs);
+    } catch (_) {/* ignore */}
+
+    // 2. Backfill with ANY users that have a DP — covers older accounts created
+    //    before the `timestamp` field existed (which orderBy(timestamp) skips),
+    //    so the wall stays full of real photos, not animals, when the newest
+    //    signups happen to be photo-less.
+    try {
+      final withDp = await FirestoreRefs.users
+          .where('displayPicture', isGreaterThan: '')
+          .limit(80)
+          .get();
+      addFrom(withDp.docs);
+    } catch (_) {/* ignore */}
 
     // Keep ONLY the DPs that actually decode on this device. Anything the
     // platform image decoder rejects (unsupported HEIC/HEVC/corrupt) is
