@@ -29,7 +29,7 @@ class DashboardGuestExperience extends StatelessWidget {
             const SizedBox(height: 16),
             GuestWorldCard(isDark: isDark),
             const SizedBox(height: 16),
-            GuestCollectiveCard(isDark: isDark),
+            GuestCollectiveCard(isDark: isDark, isWide: isWide),
             SizedBox(height: spacing + 8),
             const GuestFooter(),
           ],

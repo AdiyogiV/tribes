@@ -8,9 +8,14 @@ import 'package:aurogram/features/astrology/presentation/pages/dashboard/widgets
 
 /// Live social proof: the REAL member count first, then a wall of real DPs.
 class GuestCollectiveCard extends StatefulWidget {
-  const GuestCollectiveCard({super.key, required this.isDark});
+  const GuestCollectiveCard({
+    super.key,
+    required this.isDark,
+    required this.isWide,
+  });
 
   final bool isDark;
+  final bool isWide;
 
   @override
   State<GuestCollectiveCard> createState() => _GuestCollectiveCardState();
@@ -54,7 +59,7 @@ class _GuestCollectiveCardState extends State<GuestCollectiveCard> {
 
     // Only if the newest signups are photo-less do we backfill with older
     // accounts that have a DP (these predate the `timestamp` field).
-    if (candidates.length < _DpWall.target) {
+    if (candidates.length < _DpWall.maxTarget) {
       try {
         final withDp = await FirestoreRefs.users
             .where('displayPicture', isGreaterThan: '')
@@ -75,51 +80,83 @@ class _GuestCollectiveCardState extends State<GuestCollectiveCard> {
     final palette = DashboardCardPalette.forBrightness(widget.isDark);
 
     return DashboardCard(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 52),
+      padding: EdgeInsets.zero,
       child: FutureBuilder<_CollectiveData>(
         future: _data,
         builder: (context, snap) {
           final data = snap.data;
           final loading = snap.connectionState == ConnectionState.waiting;
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
+
+          final textSection = Column(
+            crossAxisAlignment: widget.isWide
+                ? CrossAxisAlignment.start
+                : CrossAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
-              GuestEyebrow(text: 'THE COLLECTIVE', color: palette.fgMuted),
-              const SizedBox(height: 28),
-
-              // 1. The number FIRST.
+              GuestEyebrow(text: 'THE COLLECTIVE', color: palette.accent),
+              const SizedBox(height: 24),
               _CountHeadline(
                 count: data?.count,
                 loading: loading,
                 palette: palette,
+                isWide: widget.isWide,
               ),
-              const SizedBox(height: 14),
-
-              // 2. Improved supporting copy.
+              const SizedBox(height: 16),
               ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 420),
                 child: Text(
                   'Real people, real charts — a living collective growing every '
                   'day. Your spirit is already waiting among them.',
-                  textAlign: TextAlign.center,
+                  textAlign: widget.isWide ? TextAlign.left : TextAlign.center,
                   style: TextStyle(
                     color: palette.fgMuted,
-                    fontSize: AppTheme.babaTextSize,
+                    fontSize: AppTheme.babaTextSize + 1,
                     height: 1.55,
+                    letterSpacing: -0.2,
                   ),
                 ),
               ),
-              const SizedBox(height: 40),
-
-              // 3. The DP wall — real users first, animals as fallback filler.
-              _DpWall(
-                isDark: widget.isDark,
-                dpUrls: data?.dpUrls ?? const [],
-                totalCount: data?.count,
-              ),
             ],
           );
+
+          final avatarSection = _DpWall(
+            isDark: widget.isDark,
+            dpUrls: data?.dpUrls ?? const [],
+            totalCount: data?.count,
+            isWide: widget.isWide,
+          );
+
+          if (widget.isWide) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 64),
+              child: Row(
+                children: [
+                  Expanded(flex: 5, child: textSection),
+                  const SizedBox(width: 48),
+                  Expanded(
+                    flex: 5,
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: avatarSection,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          } else {
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 52),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  textSection,
+                  const SizedBox(height: 48),
+                  avatarSection,
+                ],
+              ),
+            );
+          }
         },
       ),
     );
@@ -137,18 +174,21 @@ class _CountHeadline extends StatelessWidget {
     required this.count,
     required this.loading,
     required this.palette,
+    required this.isWide,
   });
 
   final int? count;
   final bool loading;
   final DashboardCardPalette palette;
+  final bool isWide;
 
   @override
   Widget build(BuildContext context) {
     if (loading) {
       return SizedBox(
         height: 56,
-        child: Center(
+        child: Align(
+          alignment: isWide ? Alignment.centerLeft : Alignment.center,
           child: SizedBox(
             height: 20,
             width: 20,
@@ -160,41 +200,21 @@ class _CountHeadline extends StatelessWidget {
     }
 
     if (count == null || count! <= 0) {
-      return Text(
-        'A growing collective',
-        style: TextStyle(
-          fontFamily: 'Georgia',
-          fontStyle: FontStyle.italic,
-          fontSize: 30,
-          color: palette.fgMain,
-        ),
+      return EditorialCardHeader(
+        leading: "Growing ",
+        trailing: "collective.",
+        palette: palette,
+        titleSize: isWide ? 44 : 36,
       );
     }
 
-    return Column(
-      children: [
-        Text(
-          NumberFormat.decimalPattern().format(count),
-          style: TextStyle(
-            fontFamily: 'Georgia',
-            fontSize: 52,
-            fontWeight: FontWeight.w400,
-            color: palette.fgMain,
-            height: 1.0,
-            letterSpacing: -1.0,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'MEMBERS AND COUNTING',
-          style: TextStyle(
-            color: palette.fgMuted,
-            fontSize: 10,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 2.5,
-          ),
-        ),
-      ],
+    return EditorialCardHeader(
+      leading: "${NumberFormat.decimalPattern().format(count)} ",
+      trailing: "members.",
+      palette: palette,
+      titleSize: isWide ? 52 : 44,
+      subtitle: "AND COUNTING",
+      subtitleSize: 10,
     );
   }
 }
@@ -206,17 +226,21 @@ class _DpWall extends StatelessWidget {
     required this.isDark,
     required this.dpUrls,
     required this.totalCount,
+    required this.isWide,
   });
 
   final bool isDark;
   final List<String> dpUrls;
   final int? totalCount;
+  final bool isWide;
 
-  static const target = 10; // show 10 avatars, then a "+N more" pill
-  static const _size = 40.0;
+  static const maxTarget = 15;
 
   @override
   Widget build(BuildContext context) {
+    final target = isWide ? maxTarget : 10;
+    final size = isWide ? 48.0 : 40.0;
+
     final animals = YoniTribeData.all;
 
     // Build up to [target] tiles: real DPs first (each with an animal fallback
@@ -237,27 +261,27 @@ class _DpWall extends StatelessWidget {
         (totalCount != null && totalCount! > target) ? totalCount! - target : 0;
 
     return Wrap(
-      alignment: WrapAlignment.center,
+      alignment: isWide ? WrapAlignment.end : WrapAlignment.center,
       crossAxisAlignment: WrapCrossAlignment.center,
-      runSpacing: 10,
+      runSpacing: 12,
       children: [
         for (final tile in tiles)
           Align(
-            widthFactor: 0.74, // tight overlap
+            widthFactor: 0.72, // tight overlap
             alignment: Alignment.centerLeft,
             child: GuestUrlAvatar(
               url: tile.url,
               fallbackUrl: tile.fallbackUrl,
-              size: _size,
+              size: size,
               isDark: isDark,
-              borderWidth: 2,
-              square: true,
+              borderWidth: 2.5,
+              square: false, // Made them circle for a more premium organic look
             ),
           ),
         if (remaining > 0)
           Padding(
-            padding: const EdgeInsets.only(left: 12),
-            child: _MorePill(count: remaining, isDark: isDark),
+            padding: const EdgeInsets.only(left: 16),
+            child: _MorePill(count: remaining, isDark: isDark, height: size),
           ),
       ],
     );
@@ -266,21 +290,26 @@ class _DpWall extends StatelessWidget {
 
 /// A "+N more" chip shown after the avatar row.
 class _MorePill extends StatelessWidget {
-  const _MorePill({required this.count, required this.isDark});
+  const _MorePill({
+    required this.count,
+    required this.isDark,
+    required this.height,
+  });
 
   final int count;
   final bool isDark;
+  final double height;
 
   @override
   Widget build(BuildContext context) {
     final fg = isDark ? Colors.white : Colors.black87;
     return Container(
-      height: 40,
-      padding: const EdgeInsets.symmetric(horizontal: 14),
+      height: height,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(height / 2),
         border: Border.all(
           color: isDark ? Colors.white24 : Colors.black.withValues(alpha: 0.12),
         ),
@@ -289,7 +318,7 @@ class _MorePill extends StatelessWidget {
         '+${NumberFormat.decimalPattern().format(count)} more',
         style: TextStyle(
           color: fg,
-          fontSize: 13,
+          fontSize: height > 40 ? 14 : 13,
           fontWeight: FontWeight.w600,
         ),
       ),

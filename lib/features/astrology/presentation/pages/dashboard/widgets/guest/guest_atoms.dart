@@ -154,15 +154,18 @@ class GuestPrimaryCta extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fgMain = isDark ? Colors.white : Colors.black;
-    final bgMain = isDark ? Colors.black : Colors.white;
+    // Outlined, not filled: a crisp hairline outline (white in dark mode,
+    // near-black in light mode) with matching text/icon. Reads refined and
+    // minimal instead of a heavy solid slab.
+    final fg = isDark ? Colors.white : const Color(0xFF1A1A1C);
 
     return InkWell(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 32),
         decoration: BoxDecoration(
-          color: fgMain,
+          color: Colors.transparent,
+          border: Border.all(color: fg, width: 1.3),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -171,14 +174,14 @@ class GuestPrimaryCta extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                color: bgMain,
+                color: fg,
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 1.0,
               ),
             ),
             const SizedBox(width: 12),
-            Icon(icon, size: 16, color: bgMain),
+            Icon(icon, size: 16, color: fg),
           ],
         ),
       ),
