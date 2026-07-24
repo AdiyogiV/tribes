@@ -14,6 +14,61 @@ Color get kGuestAyurveda => AppTheme.emeraldGreen;
 Color get kGuestCircles => AppTheme.skyBlue;
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Animal (yoni) avatars — user DPs, served from Firebase Storage
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Public Firebase Storage URL for a yoni animal avatar.
+String guestAnimalUrl(String animal) =>
+    'https://firebasestorage.googleapis.com/v0/b/ty-dev-516d7.appspot.com/o/'
+    'yoni_tribes%2F$animal.webp?alt=media';
+
+/// A circular animal avatar (a user's assigned DP). Shared by every guest
+/// surface so the look stays consistent.
+class GuestAnimalAvatar extends StatelessWidget {
+  const GuestAnimalAvatar({
+    super.key,
+    required this.animal,
+    required this.size,
+    required this.isDark,
+    this.borderWidth = 2.5,
+  });
+
+  final String animal;
+  final double size;
+  final bool isDark;
+  final double borderWidth;
+
+  @override
+  Widget build(BuildContext context) {
+    // Border matches the card surface so overlapping avatars read as separate.
+    final borderColor = isDark ? const Color(0xFF000000) : Colors.white;
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: isDark ? Colors.white10 : Colors.black12,
+        border: Border.all(color: borderColor, width: borderWidth),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.10),
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: ClipOval(
+        child: Image.network(
+          guestAnimalUrl(animal),
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => const SizedBox(),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Small atoms
 // ─────────────────────────────────────────────────────────────────────────────
 
