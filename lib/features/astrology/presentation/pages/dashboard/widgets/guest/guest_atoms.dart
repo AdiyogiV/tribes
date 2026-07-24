@@ -56,32 +56,28 @@ class GuestPrimaryCta extends StatelessWidget {
     
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(100),
+      borderRadius: BorderRadius.circular(8),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 36),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(100),
-          border: Border.all(
-            color: palette.fgMain.withValues(alpha: 0.2),
-            width: 1.0,
-          ),
-          color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.02),
+          borderRadius: BorderRadius.circular(8),
+          color: palette.fgMain,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              label.toUpperCase(),
+              label,
               style: TextStyle(
-                color: palette.fgMain,
-                fontSize: 12,
+                color: palette.surface,
+                fontSize: 15,
                 fontWeight: FontWeight.w600,
-                letterSpacing: 2.0,
+                letterSpacing: 0.5,
               ),
             ),
-            const SizedBox(width: 16),
-            Icon(icon, size: 16, color: palette.fgMain),
+            const SizedBox(width: 8),
+            Icon(icon, size: 18, color: palette.surface),
           ],
         ),
       ),
