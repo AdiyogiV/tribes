@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
+import 'package:aurogram/core/storage/image_optimizer.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Palette
@@ -61,10 +62,14 @@ class GuestUrlAvatar extends StatelessWidget {
           ),
         ],
       ),
-      child: Image.network(
-        url,
+      child: ImageOptimizer.buildOptimizedImage(
+        // Use the same cached/decoded pipeline as the rest of the app so DPs
+        // that Flutter's raw Image.network can't decode (HEIC/odd webp on some
+        // Android devices) still render correctly instead of showing blank.
+        url: url,
+        width: size,
+        height: size,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => const SizedBox(),
       ),
     );
   }
