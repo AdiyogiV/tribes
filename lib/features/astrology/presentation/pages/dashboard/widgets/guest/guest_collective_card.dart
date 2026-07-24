@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
@@ -21,7 +23,7 @@ class _GuestCollectiveCardState extends State<GuestCollectiveCard> {
 
   Future<_CollectiveData> _fetch() async {
     int? count;
-    final dpUrls = <String>[];
+    final candidates = <String>[];
 
     try {
       final countSnap = await FirestoreRefs.users.count().get();
@@ -29,24 +31,73 @@ class _GuestCollectiveCardState extends State<GuestCollectiveCard> {
     } catch (_) {/* rules / offline — degrade gracefully */}
 
     try {
-      // Only users who actually have a display picture set. `isGreaterThan: ''`
-      // returns docs whose displayPicture is a non-empty string and excludes
-      // missing/empty fields — so we surface REAL DPs, not the first 40 users
-      // (most of whom have no photo and would fall back to animals).
+      // Pull a GENEROUS pool of users who actually have a display picture set.
+      // `isGreaterThan: ''` excludes missing/empty fields. We over-fetch because
+      // some DPs are HEIC/HEVC photos that this device simply cannot decode —
+      // those get dropped by the decode check below, so we need spares.
       final snap = await FirestoreRefs.users
           .where('displayPicture', isGreaterThan: '')
-          .limit(24)
+          .limit(80)
           .get();
       for (final doc in snap.docs) {
         final data = doc.data() as Map<String, dynamic>?;
         final pic = data?['displayPicture'] as String?;
         if (pic != null && pic.startsWith('http')) {
-          dpUrls.add(pic);
+          candidates.add(pic);
         }
       }
     } catch (_) {/* ignore — fall back to animal DPs below */}
 
-    return _CollectiveData(count: count, dpUrls: dpUrls);
+    // Keep ONLY the DPs that actually decode on this device. Anything the
+    // platform image decoder rejects (unsupported HEIC/HEVC/corrupt) is
+    // discarded so it's never rendered as a blank tile. Validating also warms
+    // the image cache, so the subsequent render is instant.
+    final working = await _decodableUrls(candidates, want: _DpWall.target);
+
+    return _CollectiveData(count: count, dpUrls: working);
+  }
+
+  /// Returns up to [want] urls from [urls] that successfully decode into an
+  /// image on this device, preserving the original order.
+  Future<List<String>> _decodableUrls(
+    List<String> urls, {
+    required int want,
+  }) async {
+    final results = await Future.wait(urls.map(_canDecode));
+    final ok = <String>[];
+    for (var i = 0; i < urls.length; i++) {
+      if (results[i]) {
+        ok.add(urls[i]);
+        if (ok.length >= want) break;
+      }
+    }
+    return ok;
+  }
+
+  /// Attempts to resolve [url] into a decoded frame. Completes false on any
+  /// decode/network error or after a timeout — mirrors the exact decode path
+  /// the avatar will use, so a pass here guarantees the tile won't be blank.
+  Future<bool> _canDecode(String url) {
+    final completer = Completer<bool>();
+    final stream = NetworkImage(url).resolve(ImageConfiguration.empty);
+    late final ImageStreamListener listener;
+    void done(bool ok) {
+      if (!completer.isCompleted) completer.complete(ok);
+      stream.removeListener(listener);
+    }
+
+    listener = ImageStreamListener(
+      (info, _) => done(true),
+      onError: (_, __) => done(false),
+    );
+    stream.addListener(listener);
+    return completer.future.timeout(
+      const Duration(seconds: 8),
+      onTimeout: () {
+        stream.removeListener(listener);
+        return false;
+      },
+    );
   }
 
   @override
@@ -182,17 +233,17 @@ class _DpWall extends StatelessWidget {
   final bool isDark;
   final List<String> dpUrls;
 
-  static const _target = 21; // 3 rows of 7-ish when wrapped
+  static const target = 21; // 3 rows of 7-ish when wrapped
   static const _size = 40.0;
 
   @override
   Widget build(BuildContext context) {
     // Compose the final url list: real DPs first, animal DPs as filler.
-    final urls = <String>[...dpUrls.take(_target)];
-    if (urls.length < _target) {
+    final urls = <String>[...dpUrls.take(target)];
+    if (urls.length < target) {
       final animals = YoniTribeData.all;
       var i = 0;
-      while (urls.length < _target) {
+      while (urls.length < target) {
         urls.add(guestAnimalUrl(animals[i % animals.length].animal));
         i++;
       }
