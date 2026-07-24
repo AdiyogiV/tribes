@@ -4,8 +4,10 @@ import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/core/theme/dashboard_card_theme.dart';
 import 'package:aurogram/features/astrology/presentation/pages/dashboard/widgets/guest/guest_atoms.dart';
 
-/// The core pitch: A deeply editorial, abstract representation of the sciences.
-/// Removes the literal "app feature" boxes and uses staggered typographic manifesto.
+// ─────────────────────────────────────────────────────────────────────────────
+// The unified system
+// ─────────────────────────────────────────────────────────────────────────────
+
 class GuestPillarsCard extends StatelessWidget {
   const GuestPillarsCard({super.key, required this.isDark, required this.isWide});
 
@@ -23,19 +25,19 @@ class GuestPillarsCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           GuestEyebrow(
-              text: 'THE UNIFIED SYSTEM', color: palette.fgMuted),
+              text: 'THE FRAMEWORK', color: palette.fgMuted),
           const SizedBox(height: AppDimensions.spacingSm),
           Text(
-            'A framework for living.',
+            'Alignment, rhythm, and balance.',
             style: TextStyle(
               fontFamily: 'Georgia',
               fontStyle: FontStyle.italic,
               color: palette.fgMain,
-              fontSize: 28,
+              fontSize: 26,
               letterSpacing: -0.5,
             ),
           ),
-          const SizedBox(height: 64),
+          const SizedBox(height: 56),
           
           if (isWide)
             Row(
@@ -44,7 +46,7 @@ class GuestPillarsCard extends StatelessWidget {
                 Expanded(child: _buildEditorialBlock(
                   number: '01',
                   title: 'Alignment',
-                  description: 'The celestial geometry of your birth, decoded. Map your elemental nature and understand the cosmic architecture that shapes you.',
+                  description: 'The celestial geometry of your birth, decoded. Map your elemental nature and understand the architecture that shapes you.',
                   palette: palette,
                 )),
                 const SizedBox(width: 48),
@@ -70,17 +72,17 @@ class GuestPillarsCard extends StatelessWidget {
                 _buildEditorialBlock(
                   number: '01',
                   title: 'Alignment',
-                  description: 'The celestial geometry of your birth, decoded. Map your elemental nature and understand the cosmic architecture that shapes you.',
+                  description: 'The celestial geometry of your birth, decoded. Map your elemental nature and understand the architecture that shapes you.',
                   palette: palette,
                 ),
-                const SizedBox(height: 56),
+                const SizedBox(height: 48),
                 _buildEditorialBlock(
                   number: '02',
                   title: 'Rhythm',
                   description: 'Sacred timing and the movement of the luminaries. Move with the day’s energy, knowing exactly when to act and when to rest.',
                   palette: palette,
                 ),
-                const SizedBox(height: 56),
+                const SizedBox(height: 48),
                 _buildEditorialBlock(
                   number: '03',
                   title: 'Balance',
@@ -111,7 +113,7 @@ class GuestPillarsCard extends StatelessWidget {
               style: TextStyle(
                 fontFamily: 'Georgia',
                 fontStyle: FontStyle.italic,
-                fontSize: 18,
+                fontSize: 16,
                 color: palette.fgFaint,
               ),
             ),
@@ -124,18 +126,18 @@ class GuestPillarsCard extends StatelessWidget {
                     title,
                     style: TextStyle(
                       fontFamily: 'Georgia',
-                      fontSize: 22,
+                      fontSize: 20,
                       fontWeight: FontWeight.w400,
                       color: palette.fgMain,
-                      letterSpacing: -0.3,
+                      letterSpacing: -0.2,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   Text(
                     description,
                     style: TextStyle(
-                      fontSize: AppTheme.babaTextSize,
-                      height: 1.6,
+                      fontSize: AppTheme.babaTextSize - 1,
+                      height: 1.5,
                       color: palette.fgMuted,
                     ),
                   ),
@@ -150,12 +152,12 @@ class GuestPillarsCard extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Companions (Baba + Circles)
+// The Collective
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// The "you're never alone" card: the AI guide + community.
-class GuestCompanionsCard extends StatelessWidget {
-  const GuestCompanionsCard(
+/// The social/animal motif card.
+class GuestCollectiveCard extends StatelessWidget {
+  const GuestCollectiveCard(
       {super.key, required this.isDark, required this.isWide});
 
   final bool isDark;
@@ -164,91 +166,94 @@ class GuestCompanionsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = DashboardCardPalette.forBrightness(isDark);
-    
-    final baba = _buildCompanion(
-      title: 'A Guided Practice',
-      description: 'A voice-first intelligence that knows your chart, decodes the sky, and answers your deepest questions.',
-      palette: palette,
-    );
-    
-    final circles = _buildCompanion(
-      title: 'Shared Journeys',
-      description: 'A private space to see how the cosmos moves the people you care about, together.',
-      palette: palette,
-    );
 
     return DashboardCard(
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
-          GuestEyebrow(
-              text: 'THE EXPERIENCE', color: palette.fgMuted),
+          GuestEyebrow(text: 'THE COLLECTIVE', color: palette.fgMuted),
           const SizedBox(height: AppDimensions.spacingLg),
-          if (isWide)
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: baba),
-                Container(
-                  width: 1,
-                  height: 80,
-                  color: palette.fgFaint.withValues(alpha: 0.2),
-                  margin: const EdgeInsets.symmetric(horizontal: 48),
-                ),
-                Expanded(child: circles),
-              ],
-            )
-          else
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                baba,
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 32),
-                  child: Divider(
-                    height: 1,
-                    thickness: 1,
-                    color: palette.fgFaint.withValues(alpha: 0.2),
-                  ),
-                ),
-                circles,
-              ],
+          
+          Text(
+            'A living network of seekers navigating their day.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: 'Georgia',
+              color: palette.fgMain,
+              fontSize: 24,
+              fontStyle: FontStyle.italic,
+              letterSpacing: -0.3,
             ),
+          ),
+          const SizedBox(height: AppDimensions.spacingSm),
+          Text(
+            'Join over thousands exploring their cosmic nature.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: palette.fgMuted,
+              fontSize: AppTheme.babaTextSize,
+            ),
+          ),
+          const SizedBox(height: 48),
+
+          // The Menagerie: A chic, spaced typographic list of spirit animals
+          Wrap(
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 24,
+            runSpacing: 24,
+            children: const [
+              _AnimalNode(label: 'TIGER'),
+              _DotNode(),
+              _AnimalNode(label: 'SERPENT'),
+              _DotNode(),
+              _AnimalNode(label: 'ELEPHANT'),
+              _DotNode(),
+              _AnimalNode(label: 'HORSE'),
+              _DotNode(),
+              _AnimalNode(label: 'MONKEY'),
+            ],
+          ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildCompanion({
-    required String title,
-    required String description,
-    required DashboardCardPalette palette,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontFamily: 'Georgia',
-            color: palette.fgMain,
-            fontSize: 20,
-            fontWeight: FontWeight.w400,
-            letterSpacing: -0.2,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          description,
-          style: TextStyle(
-            color: palette.fgMuted,
-            fontSize: AppTheme.babaTextSize,
-            height: 1.5,
-          ),
-        ),
-      ],
+class _AnimalNode extends StatelessWidget {
+  final String label;
+  const _AnimalNode({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fg = isDark ? Colors.white70 : Colors.black87;
+    return Text(
+      label,
+      style: TextStyle(
+        color: fg,
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 3.0,
+      ),
+    );
+  }
+}
+
+class _DotNode extends StatelessWidget {
+  const _DotNode();
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      width: 4,
+      height: 4,
+      decoration: BoxDecoration(
+        color: isDark ? Colors.white24 : Colors.black26,
+        shape: BoxShape.circle,
+      ),
     );
   }
 }

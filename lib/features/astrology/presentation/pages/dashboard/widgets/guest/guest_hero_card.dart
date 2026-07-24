@@ -6,6 +6,7 @@ import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/core/theme/dashboard_card_theme.dart';
 import 'package:aurogram/core/routing/route_names.dart';
 import 'package:aurogram/features/astrology/presentation/pages/dashboard/widgets/guest/guest_atoms.dart';
+import 'package:aurogram/features/astrology/presentation/widgets/rotating_nakshatra_wheel.dart';
 
 class GuestHeroCard extends StatelessWidget {
   const GuestHeroCard({super.key, required this.isDark, required this.isWide});
@@ -26,17 +27,40 @@ class GuestHeroCard extends StatelessWidget {
       padding: EdgeInsets.zero,
       child: Stack(
         children: [
-          // The Abstract Astrolabe (Art Direction)
-          // Pushed off the top right edge to create dramatic negative space
+          // 1. The Authentic Wheel (Editorial Art Direction)
+          // Clipped and faded into the background. Pushed right and slightly up.
           Positioned(
-            top: isWide ? -80 : -40,
-            right: isWide ? -80 : -40,
-            child: GuestMandalaMark(
-              size: isWide ? 500 : 320,
-              isDark: isDark,
+            top: isWide ? -100 : -50,
+            right: isWide ? -180 : -100,
+            child: Opacity(
+              opacity: isDark ? 0.4 : 0.15, // Subtle watermark effect
+              child: IgnorePointer(
+                child: RotatingNakshatraWheel(
+                  size: isWide ? 600 : 400,
+                  animate: true,
+                  enableZoom: false,
+                ),
+              ),
             ),
           ),
           
+          // Gradient to fade the wheel softly into the left side text
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    palette.surface,
+                    palette.surface.withValues(alpha: 0.8),
+                    Colors.transparent,
+                  ],
+                  stops: const [0.0, 0.4, 1.0],
+                ),
+              ),
+            ),
+          ),
+          
+          // 2. The Content
           Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: 32.0,
@@ -45,8 +69,8 @@ class GuestHeroCard extends StatelessWidget {
             child: isWide 
               ? Row(
                   children: [
-                    Expanded(flex: 7, child: _text(context, palette)),
-                    const Expanded(flex: 3, child: SizedBox.shrink()),
+                    Expanded(flex: 6, child: _text(context, palette)),
+                    const Expanded(flex: 4, child: SizedBox.shrink()),
                   ],
                 )
               : _text(context, palette),
@@ -70,13 +94,13 @@ class GuestHeroCard extends StatelessWidget {
         ),
         const SizedBox(height: AppDimensions.spacingMd),
         
-        // Abstract, global, chic headline
+        // Refined, perfectly scaled chic headline
         EditorialCardHeader(
           leading: "Time, sky, ",
           trailing: 'and self.',
           palette: palette,
           leadingColor: palette.fgMain,
-          titleSize: isWide ? 54 : 42,
+          titleSize: isWide ? 44 : 36,
         ),
         const SizedBox(height: AppDimensions.spacingLg),
         
@@ -85,49 +109,25 @@ class GuestHeroCard extends StatelessWidget {
           'Discover your elemental nature and move in rhythm with the universe.',
           style: TextStyle(
             color: palette.fgMuted,
-            fontSize: AppTheme.babaTextSize + 2,
+            fontSize: AppTheme.babaTextSize + 1,
             height: 1.5,
             letterSpacing: -0.2,
           ),
         ),
-        const SizedBox(height: AppDimensions.spacingHero),
+        const SizedBox(height: AppDimensions.spacingLargeSection),
         
-        SizedBox(
-          width: isWide ? 320 : double.infinity,
-          child: GuestPrimaryCta(
-            label: 'Enter the almanac',
-            icon: Icons.auto_awesome_rounded,
-            color: kGuestSaffron,
-            onTap: () => _toLogin(context),
-          ),
-        ),
-        const SizedBox(height: AppDimensions.spacingLg),
-        
-        SizedBox(
-          width: isWide ? 320 : double.infinity,
-          child: Align(
-            alignment: Alignment.center,
-            child: TextButton(
-              onPressed: () => _toLogin(context),
-              style: TextButton.styleFrom(
-                foregroundColor: palette.fgMuted,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                textStyle: const TextStyle(
-                  fontFamily: 'Georgia',
-                  fontStyle: FontStyle.italic,
-                  fontSize: 16,
-                ),
-              ),
-              child: const Text('Already with us? Sign in.'),
-            ),
-          ),
+        // Single, elegant CTA (covers both signup and login)
+        GuestPrimaryCta(
+          label: 'Enter the almanac',
+          icon: Icons.arrow_forward_rounded,
+          isDark: isDark,
+          onTap: () => _toLogin(context),
         ),
       ],
     );
   }
 }
 
-/// A clean, minimalist wordmark without explicit symbols.
 class _BrandRow extends StatelessWidget {
   const _BrandRow({required this.isDark});
 
@@ -140,9 +140,9 @@ class _BrandRow extends StatelessWidget {
       'A U R O G R A M',
       style: TextStyle(
         color: fg,
-        fontSize: 14,
-        fontWeight: FontWeight.w700,
-        letterSpacing: 4.0,
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 6.0,
       ),
     );
   }

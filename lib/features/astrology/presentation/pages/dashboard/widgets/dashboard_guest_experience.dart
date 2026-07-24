@@ -13,7 +13,7 @@ import 'package:aurogram/features/astrology/presentation/pages/dashboard/widgets
 ///
 ///   1. [GuestHeroCard]         — brand + positioning + primary CTA + sign-in.
 ///   2. [GuestPillarsCard]      — the three timeless sciences (the core pitch).
-///   3. [GuestCompanionsCard]   — Baba (AI guide) + Circles (community).
+///   3. [GuestCollectiveCard]   — the menagerie and community elements.
 ///   4. [GuestMadeInIndiaFooter] — trust cues + "Made with love in India".
 ///
 /// The common Vedic date card still sits ABOVE this (owned by
@@ -42,7 +42,7 @@ class DashboardGuestExperience extends StatelessWidget {
             SizedBox(height: spacing),
             GuestPillarsCard(isDark: isDark, isWide: isWide),
             SizedBox(height: spacing),
-            GuestCompanionsCard(isDark: isDark, isWide: isWide),
+            GuestCollectiveCard(isDark: isDark, isWide: isWide),
             SizedBox(height: spacing + 8),
             const GuestMadeInIndiaFooter(),
           ],
