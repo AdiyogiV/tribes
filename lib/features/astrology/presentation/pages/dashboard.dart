@@ -527,10 +527,14 @@ class DashboardPageState extends State<DashboardPage>
   // ─────────────────────────────────────────────────────────────
 
   Widget _buildDashboardContent() {
-    // Logged-out users: show global content (sky chart, muhurat, panchang,
-    // events) with null profile/insight/ayurveda — the content widget's
-    // existing `if` guards naturally hide personal sections.
-    if (_user == null) {
+    // Guests (no user OR an anonymous auto-signed-in user) never have a saved
+    // profile, so the personal astrology cards would just spin on a null
+    // forecast and show an empty sky. Route them to the dedicated welcome /
+    // onboarding body instead. NOTE: the app auto-signs-in anonymously
+    // (AuthService.signInAnonymouslyIfNeeded), so `currentUser` is almost
+    // never null for a visitor — `isAnonymous` is the real guest signal.
+    final isGuest = _user == null || _user!.isAnonymous;
+    if (isGuest) {
       return AstroDashboardContent(
         profile: null,
         ayurvedaProfile: null,

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:aurogram/shared/models/dm_conversation.dart';
-import 'package:aurogram/shared/models/space_types.dart';
 import 'package:aurogram/shared/models/contact_match.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/shared/presentation/widgets/avatars/user_avatar.dart';
@@ -17,6 +15,7 @@ typedef NamasteContactSendCallback = Future<void> Function(ContactMatch contact)
 typedef InviteContactCallback = Future<void> Function(ContactMatch contact);
 typedef UserNameBuilder = Widget Function(String userId);
 
+/// Clean, minimalistic card with NO custom bottom borders or margins.
 class MessagesUnifiedCard extends StatelessWidget {
   final String? userId;
   final DmConversation? conversation;
@@ -66,10 +65,6 @@ class MessagesUnifiedCard extends StatelessWidget {
   Widget build(BuildContext context) {
     if (conversation == null) return const SizedBox.shrink();
 
-    // DmConversation doesn't have unread count directly without joining with other data in this model, 
-    // so we'll omit the strong bolding for simplicity in this minimal card.
-    final hasUnread = false; 
-    
     final timeStr = _formatTime(conversation!.lastActivity);
     final previewText = _buildLastMessageTextWithoutTime(conversation!);
     
@@ -80,35 +75,19 @@ class MessagesUnifiedCard extends StatelessWidget {
 
     return InkWell(
       onTap: () => onCardTap(conversation: conversation),
-      borderRadius: BorderRadius.circular(20),
-      highlightColor: Colors.transparent,
-      splashColor: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.03),
+      // Solid highlight color with no corner radius for true flush items
+      highlightColor: isDark ? Colors.white.withOpacity(0.04) : Colors.black.withOpacity(0.04),
+      splashColor: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.08),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        margin: const EdgeInsets.only(bottom: 4),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          color: hasUnread 
-              ? (isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF5F5F5)) 
-              : Colors.transparent,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         child: Row(
           children: [
-            Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: [
-                  if (hasUnread) 
-                    BoxShadow(color: AppTheme.primaryColor.withOpacity(0.3), blurRadius: 12)
-                ],
-              ),
-              child: UserAvatar(
-                userId: targetUserId,
-                size: 48,
-                showBorder: false,
-              ),
+            UserAvatar(
+              userId: targetUserId,
+              size: 40,
+              showBorder: false,
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -118,53 +97,34 @@ class MessagesUnifiedCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Expanded(
-                        child: buildUserNameWidget(targetUserId),
+                        child: DefaultTextStyle(
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.white : Colors.black,
+                          ),
+                          child: buildUserNameWidget(targetUserId),
+                        ),
                       ),
                       if (timeStr.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(left: 8.0),
-                          child: Text(
-                            timeStr,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: hasUnread ? FontWeight.w600 : FontWeight.w400,
-                              color: hasUnread 
-                                  ? (isDark ? Colors.white : Colors.black) 
-                                  : (isDark ? Colors.white38 : Colors.black38),
-                            ),
+                        Text(
+                          timeStr,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isDark ? Colors.white38 : Colors.black38,
                           ),
                         ),
                     ],
                   ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          previewText,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: hasUnread ? FontWeight.w600 : FontWeight.w400,
-                            color: hasUnread 
-                                ? (isDark ? Colors.white70 : Colors.black87) 
-                                : (isDark ? Colors.white54 : Colors.black54),
-                            letterSpacing: -0.2,
-                          ),
-                        ),
-                      ),
-                      if (hasUnread)
-                        Container(
-                          width: 8,
-                          height: 8,
-                          margin: const EdgeInsets.only(left: 8),
-                          decoration: BoxDecoration(
-                            color: AppTheme.primaryColor,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                    ],
+                  const SizedBox(height: 2),
+                  Text(
+                    previewText,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: isDark ? Colors.white54 : Colors.black54,
+                    ),
                   ),
                 ],
               ),

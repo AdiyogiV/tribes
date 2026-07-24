@@ -483,6 +483,16 @@ class _MessagesPageState extends State<MessagesPage>
   }
 
   /// Build desktop master-detail layout with conversation list on left and chat on right
+  Widget _buildRequestsDesktopWidget() {
+    return MessagesRequestsSliverContent(
+      conversationsStream: _conversationsStream,
+      currentUserId: _currentUser?.uid,
+      cachedConversations: _cachedConversations,
+      onAccept: _acceptRequestInline,
+      onDecline: _declineRequestInline,
+    );
+  }
+
   Widget _buildDesktopLayout() {
     return MessagesDesktopLayout(
       messagesListWidget: _buildMessagesList(),
@@ -494,6 +504,7 @@ class _MessagesPageState extends State<MessagesPage>
       searchController: _searchController,
       searchFocusNode: _searchFocusNode,
       onSearchChanged: _onSearchChanged,
+      tabChipsWidget: _buildTabChips(),
     );
   }
 
@@ -624,18 +635,23 @@ class _MessagesPageState extends State<MessagesPage>
     }
 
     final showSearch = _selectedTab == _MessagesTab.chats && !isWideLayout;
-    if (isWideLayout && _selectedTab == _MessagesTab.chats) {
+    if (isWideLayout) {
       return Scaffold(
         extendBody: true,
         backgroundColor: Colors.transparent,
-        body: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-              child: _buildTabChips(),
-            ),
-            Expanded(child: _buildDesktopLayout()),
-          ],
+        body: MessagesDesktopLayout(
+          messagesListWidget: _selectedTab == _MessagesTab.chats
+              ? _buildMessagesList()
+              : _buildRequestsDesktopWidget(),
+          selectedConversationId: _selectedConversationId,
+          selectedSpace: _selectedSpace,
+          selectedOtherUserId: _selectedOtherUserId,
+          isRefreshing: _isRefreshing,
+          onRefresh: _handleRefresh,
+          searchController: _searchController,
+          searchFocusNode: _searchFocusNode,
+          onSearchChanged: _onSearchChanged,
+          tabChipsWidget: _buildTabChips(),
         ),
       );
     }

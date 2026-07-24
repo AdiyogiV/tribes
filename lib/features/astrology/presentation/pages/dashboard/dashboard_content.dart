@@ -16,7 +16,7 @@ import 'package:aurogram/features/astrology/presentation/widgets/energy_card.dar
 import 'package:aurogram/features/astrology/presentation/pages/dashboard/widgets/panchang_resolver.dart';
 import 'package:aurogram/features/astrology/presentation/pages/dashboard/widgets/dashboard_cards.dart';
 import 'package:aurogram/features/astrology/presentation/pages/dashboard/widgets/muhurat_placeholder.dart';
-import 'package:aurogram/features/astrology/presentation/pages/dashboard/widgets/signin_cta_banner.dart';
+import 'package:aurogram/features/astrology/presentation/pages/dashboard/widgets/dashboard_guest_experience.dart';
 
 /// Builds the full cosmic dashboard content panel with all cards.
 class AstroDashboardContent extends StatelessWidget {
@@ -241,13 +241,18 @@ class AstroDashboardContent extends StatelessWidget {
           insertBeforeSkyCard: wheelWidget,
         );
 
-        // The sign-in upsell — only visible when signed-out.
-        final isSignedOut = FirebaseAuth.instance.currentUser == null;
-        final ctaBanner = isSignedOut
-            ? DashboardSignInBanner(
-                brown: brown,
+        // Signed-out visitors get a dedicated welcome/onboarding body instead
+        // of the personal astrology cards (which would just spin on a null
+        // forecast + show an empty sky). The common date card stays on top.
+        // The app auto-signs-in anonymously, so a "guest" is a null OR an
+        // anonymous user — `isAnonymous` is the real signal, not `== null`.
+        final currentUser = FirebaseAuth.instance.currentUser;
+        final isSignedOut =
+            currentUser == null || currentUser.isAnonymous;
+        final guestExperience = isSignedOut
+            ? DashboardGuestExperience(
                 isDark: isDark,
-                horizontal: false,
+                spacing: spacing,
               )
             : null;
 
@@ -266,12 +271,11 @@ class AstroDashboardContent extends StatelessWidget {
               if (bodyOverride != null) ...[
                 bodyOverride!,
                 SizedBox(height: 16 + bottomInset),
+              ] else if (guestExperience != null) ...[
+                guestExperience,
+                SizedBox(height: 16 + bottomInset),
               ] else ...[
                 secondaryCards,
-                if (ctaBanner != null) ...[
-                  ctaBanner,
-                  SizedBox(height: spacing),
-                ],
                 SizedBox(height: 16 + bottomInset),
               ],
             ],

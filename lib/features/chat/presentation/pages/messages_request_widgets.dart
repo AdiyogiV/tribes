@@ -24,31 +24,76 @@ class MessagesTabChips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final Color cardColor =
-        isDark ? Theme.of(context).colorScheme.surface : Colors.white;
-
-    return Row(
-      children: [
-        Expanded(
-          child: _MessagesTabChip(
-            label: 'Chats',
-            count: chatCount,
-            selected: selectedIndex == 0,
-            onSelected: () => onTabChanged(0),
-            cardColor: cardColor,
+    
+    // Completely minimalistic text-based tab buttons
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      padding: const EdgeInsets.all(4),
+      child: Row(
+        children: [
+          Expanded(
+            child: GestureDetector(
+              onTap: () => onTabChanged(0),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                decoration: BoxDecoration(
+                  color: selectedIndex == 0 
+                      ? (isDark ? const Color(0xFF2A2A2A) : Colors.white) 
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(6),
+                  boxShadow: selectedIndex == 0 ? [
+                    BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4, offset: const Offset(0, 1))
+                  ] : null,
+                ),
+                child: Center(
+                  child: Text(
+                    chatCount > 0 ? 'Chats $chatCount' : 'Chats',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: selectedIndex == 0 ? FontWeight.w600 : FontWeight.w500,
+                      color: selectedIndex == 0 
+                          ? (isDark ? Colors.white : Colors.black)
+                          : (isDark ? Colors.white54 : Colors.black54),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
-        ),
-        const SizedBox(width: AppDimensions.spacingMd),
-        Expanded(
-          child: _MessagesTabChip(
-            label: 'Requests',
-            count: pendingCount,
-            selected: selectedIndex == 1,
-            onSelected: () => onTabChanged(1),
-            cardColor: cardColor,
+          Expanded(
+            child: GestureDetector(
+              onTap: () => onTabChanged(1),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                decoration: BoxDecoration(
+                  color: selectedIndex == 1 
+                      ? (isDark ? const Color(0xFF2A2A2A) : Colors.white) 
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(6),
+                  boxShadow: selectedIndex == 1 ? [
+                    BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4, offset: const Offset(0, 1))
+                  ] : null,
+                ),
+                child: Center(
+                  child: Text(
+                    pendingCount > 0 ? 'Requests $pendingCount' : 'Requests',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: selectedIndex == 1 ? FontWeight.w600 : FontWeight.w500,
+                      color: selectedIndex == 1 
+                          ? (isDark ? Colors.white : Colors.black)
+                          : (isDark ? Colors.white54 : Colors.black54),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -375,4 +420,3 @@ class MessagesRequestsSliverContent extends StatelessWidget {
     );
   }
 }
-

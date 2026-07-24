@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 54;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -23,6 +23,7 @@
 		83190CEEFC39C975BDA7B154 /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 988CB635266D640262D6930F /* Pods_Runner.framework */; };
 		8A05399C0348231ED7902E77 /* LocalCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCB31F9E1137016E741C3752 /* LocalCache.swift */; };
 		8FFF93114D5D44DC2C679333 /* AuroWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCA260669A555FE61EA6C8EE /* AuroWatchApp.swift */; };
+		90211C8A5F9D4307B4A88321 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1013531FABA1CF6BE6CBBAF3 /* Assets.xcassets */; };
 		91C94EE74DD273C4757B0A42 /* AuroWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 058455B42F88E40400EDD664 /* AuroWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		92CFEB783A7FF77CC4F9595A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D135A5024408438A11E58CB8 /* ContentView.swift */; };
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
@@ -197,7 +198,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		058456972F8903C400EDD664 /* Exceptions for "AuroWatch Widget" folder in "AuroWatch WidgetExtension" target */ = {
+		058456972F8903C400EDD664 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -207,18 +208,7 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		0584568B2F8903C200EDD664 /* AuroWatch Widget */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				058456972F8903C400EDD664 /* Exceptions for "AuroWatch Widget" folder in "AuroWatch WidgetExtension" target */,
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = "AuroWatch Widget";
-			sourceTree = "<group>";
-		};
+		0584568B2F8903C200EDD664 /* AuroWatch Widget */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (058456972F8903C400EDD664 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = "AuroWatch Widget"; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -660,6 +650,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				90211C8A5F9D4307B4A88321 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -701,9 +692,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -752,9 +747,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -955,6 +954,7 @@
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "AuroWatch Watch App/Info.plist";
+				INFOPLIST_KEY_CFBundleIconName = AppIcon;
 				INFOPLIST_KEY_CFBundleDisplayName = Aurogram;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Aurogram reads heart rate and HRV data to provide Vedic pulse (Nadi) analysis and Ayurvedic health insights personalized to your body's rhythms.";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
@@ -1007,6 +1007,7 @@
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "AuroWatch Watch App/Info.plist";
+				INFOPLIST_KEY_CFBundleIconName = AppIcon;
 				INFOPLIST_KEY_CFBundleDisplayName = Aurogram;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Aurogram reads heart rate and HRV data to provide Vedic pulse (Nadi) analysis and Ayurvedic health insights personalized to your body's rhythms.";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
@@ -1056,6 +1057,7 @@
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "AuroWatch Watch App/Info.plist";
+				INFOPLIST_KEY_CFBundleIconName = AppIcon;
 				INFOPLIST_KEY_CFBundleDisplayName = Aurogram;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Aurogram reads heart rate and HRV data to provide Vedic pulse (Nadi) analysis and Ayurvedic health insights personalized to your body's rhythms.";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
@@ -1285,11 +1287,11 @@
 				CODE_SIGN_ENTITLEMENTS = Runner/Release.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 71;
+				CURRENT_PROJECT_VERSION = 72;
 				DEVELOPMENT_TEAM = 6CF95PPRR7;
 				ENABLE_BITCODE = NO;
-				FLUTTER_BUILD_NAME = 71.0.0;
-				FLUTTER_BUILD_NUMBER = 71;
+				FLUTTER_BUILD_NAME = 72.0.0;
+				FLUTTER_BUILD_NUMBER = 72;
 				INFOPLIST_FILE = Runner/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Aurogram;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
@@ -1298,7 +1300,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 71.0.0;
+				MARKETING_VERSION = 72.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.canay.dhaara;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1504,11 +1506,11 @@
 				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 71;
+				CURRENT_PROJECT_VERSION = 72;
 				DEVELOPMENT_TEAM = 6CF95PPRR7;
 				ENABLE_BITCODE = NO;
-				FLUTTER_BUILD_NAME = 71.0.0;
-				FLUTTER_BUILD_NUMBER = 71;
+				FLUTTER_BUILD_NAME = 72.0.0;
+				FLUTTER_BUILD_NUMBER = 72;
 				INFOPLIST_FILE = Runner/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Aurogram;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
@@ -1517,7 +1519,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 71.0.0;
+				MARKETING_VERSION = 72.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.canay.dhaara;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1543,11 +1545,11 @@
 				CODE_SIGN_ENTITLEMENTS = Runner/Release.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 71;
+				CURRENT_PROJECT_VERSION = 72;
 				DEVELOPMENT_TEAM = 6CF95PPRR7;
 				ENABLE_BITCODE = NO;
-				FLUTTER_BUILD_NAME = 71.0.0;
-				FLUTTER_BUILD_NUMBER = 71;
+				FLUTTER_BUILD_NAME = 72.0.0;
+				FLUTTER_BUILD_NUMBER = 72;
 				INFOPLIST_FILE = Runner/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Aurogram;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
@@ -1556,7 +1558,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 71.0.0;
+				MARKETING_VERSION = 72.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.canay.dhaara;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
