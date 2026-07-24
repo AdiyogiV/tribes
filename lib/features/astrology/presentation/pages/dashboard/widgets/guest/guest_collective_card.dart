@@ -49,11 +49,8 @@ class GuestCollectiveCard extends StatelessWidget {
           const SizedBox(height: 48),
 
           // The Menagerie: A chic overlapping row of animal avatars
-          const SizedBox(
-            height: 64,
-            child: Center(
-              child: _AnimalOverlapRow(),
-            ),
+          const Center(
+            child: _AnimalOverlapRow(),
           ),
         ],
       ),
@@ -76,35 +73,38 @@ class _AnimalOverlapRow extends StatelessWidget {
 
     return Wrap(
       alignment: WrapAlignment.center,
-      spacing: -16, // overlap
       runSpacing: 16,
       children: List.generate(_animals.length, (index) {
         final animal = _animals[index];
         final url = 'https://firebasestorage.googleapis.com/v0/b/ty-dev-516d7.appspot.com/o/yoni_tribes%2F$animal.webp?alt=media';
         
-        return Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: borderColor,
-              width: 2.5,
-            ),
-            color: isDark ? Colors.white10 : Colors.black12,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 6,
-                offset: const Offset(0, 3),
+        return Align(
+          widthFactor: 0.75,
+          alignment: Alignment.centerLeft,
+          child: Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: borderColor,
+                width: 2.5,
               ),
-            ],
-          ),
-          child: ClipOval(
-            child: Image.network(
-              url,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => const SizedBox(),
+              color: isDark ? Colors.white10 : Colors.black12,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 6,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: ClipOval(
+              child: Image.network(
+                url,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const SizedBox(),
+              ),
             ),
           ),
         );
