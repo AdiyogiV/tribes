@@ -29,12 +29,18 @@ class _GuestCollectiveCardState extends State<GuestCollectiveCard> {
     } catch (_) {/* rules / offline — degrade gracefully */}
 
     try {
-      // Real display pictures, freshest first where possible.
-      final snap = await FirestoreRefs.users.limit(40).get();
+      // Only users who actually have a display picture set. `isGreaterThan: ''`
+      // returns docs whose displayPicture is a non-empty string and excludes
+      // missing/empty fields — so we surface REAL DPs, not the first 40 users
+      // (most of whom have no photo and would fall back to animals).
+      final snap = await FirestoreRefs.users
+          .where('displayPicture', isGreaterThan: '')
+          .limit(24)
+          .get();
       for (final doc in snap.docs) {
         final data = doc.data() as Map<String, dynamic>?;
         final pic = data?['displayPicture'] as String?;
-        if (pic != null && pic.isNotEmpty && pic.startsWith('http')) {
+        if (pic != null && pic.startsWith('http')) {
           dpUrls.add(pic);
         }
       }
