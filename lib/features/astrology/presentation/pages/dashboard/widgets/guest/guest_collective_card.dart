@@ -69,7 +69,7 @@ class _GuestCollectiveCardState extends State<GuestCollectiveCard> {
 
   /// Small candidate pool: the target wall size plus a handful of spares so a
   /// few un-decodable photos can be swapped for animals without a re-query.
-  static const _poolSize = 40;
+  static const _poolSize = 20;
   @override
   Widget build(BuildContext context) {
     final palette = DashboardCardPalette.forBrightness(widget.isDark);
@@ -113,7 +113,11 @@ class _GuestCollectiveCardState extends State<GuestCollectiveCard> {
               const SizedBox(height: 40),
 
               // 3. The DP wall — real users first, animals as fallback filler.
-              _DpWall(isDark: widget.isDark, dpUrls: data?.dpUrls ?? const []),
+              _DpWall(
+                isDark: widget.isDark,
+                dpUrls: data?.dpUrls ?? const [],
+                totalCount: data?.count,
+              ),
             ],
           );
         },
@@ -198,21 +202,26 @@ class _CountHeadline extends StatelessWidget {
 /// A dense wall of small square DP avatars — real users first, then animal
 /// DPs to fill out the grid so it always looks populated.
 class _DpWall extends StatelessWidget {
-  const _DpWall({required this.isDark, required this.dpUrls});
+  const _DpWall({
+    required this.isDark,
+    required this.dpUrls,
+    required this.totalCount,
+  });
 
   final bool isDark;
   final List<String> dpUrls;
+  final int? totalCount;
 
-  static const target = 21; // 3 rows of 7-ish when wrapped
+  static const target = 10; // show 10 avatars, then a "+N more" pill
   static const _size = 40.0;
 
   @override
   Widget build(BuildContext context) {
     final animals = YoniTribeData.all;
 
-    // Build the tile list: real DPs first (each with an animal fallback so a
-    // photo that fails to decode self-heals instead of going blank), then pure
-    // animal tiles fill any remainder so the wall always looks populated.
+    // Build up to [target] tiles: real DPs first (each with an animal fallback
+    // so a photo that fails to decode self-heals instead of going blank), then
+    // pure animal tiles fill any remainder so the row always looks populated.
     final tiles = <_Tile>[];
     for (final url in dpUrls.take(target)) {
       final animal = animals[tiles.length % animals.length].animal;
@@ -223,8 +232,13 @@ class _DpWall extends StatelessWidget {
       tiles.add(_Tile(url: guestAnimalUrl(animal)));
     }
 
+    // "+N more" where N is everyone beyond the avatars we show.
+    final remaining =
+        (totalCount != null && totalCount! > target) ? totalCount! - target : 0;
+
     return Wrap(
       alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
       runSpacing: 10,
       children: [
         for (final tile in tiles)
@@ -240,7 +254,45 @@ class _DpWall extends StatelessWidget {
               square: true,
             ),
           ),
+        if (remaining > 0)
+          Padding(
+            padding: const EdgeInsets.only(left: 12),
+            child: _MorePill(count: remaining, isDark: isDark),
+          ),
       ],
+    );
+  }
+}
+
+/// A "+N more" chip shown after the avatar row.
+class _MorePill extends StatelessWidget {
+  const _MorePill({required this.count, required this.isDark});
+
+  final int count;
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    final fg = isDark ? Colors.white : Colors.black87;
+    return Container(
+      height: 40,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark ? Colors.white24 : Colors.black.withValues(alpha: 0.12),
+        ),
+      ),
+      child: Text(
+        '+${NumberFormat.decimalPattern().format(count)} more',
+        style: TextStyle(
+          color: fg,
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 }
