@@ -22,8 +22,55 @@ String guestAnimalUrl(String animal) =>
     'https://firebasestorage.googleapis.com/v0/b/ty-dev-516d7.appspot.com/o/'
     'yoni_tribes%2F$animal.webp?alt=media';
 
-/// A circular animal avatar (a user's assigned DP). Shared by every guest
-/// surface so the look stays consistent.
+/// A network-image avatar (a user's DP). Supports circle or rounded-square.
+/// Shared by every guest surface so the look stays consistent.
+class GuestUrlAvatar extends StatelessWidget {
+  const GuestUrlAvatar({
+    super.key,
+    required this.url,
+    required this.size,
+    required this.isDark,
+    this.borderWidth = 2.5,
+    this.square = false,
+  });
+
+  final String url;
+  final double size;
+  final bool isDark;
+  final double borderWidth;
+  final bool square;
+
+  @override
+  Widget build(BuildContext context) {
+    // Border matches the card surface so overlapping avatars read as separate.
+    final borderColor = isDark ? const Color(0xFF000000) : Colors.white;
+    return Container(
+      width: size,
+      height: size,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        shape: square ? BoxShape.rectangle : BoxShape.circle,
+        borderRadius: square ? BorderRadius.circular(size * 0.24) : null,
+        color: isDark ? Colors.white10 : Colors.black12,
+        border: Border.all(color: borderColor, width: borderWidth),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.10),
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Image.network(
+        url,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => const SizedBox(),
+      ),
+    );
+  }
+}
+
+/// A circular animal (yoni) avatar — convenience wrapper over [GuestUrlAvatar].
 class GuestAnimalAvatar extends StatelessWidget {
   const GuestAnimalAvatar({
     super.key,
@@ -40,30 +87,11 @@ class GuestAnimalAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Border matches the card surface so overlapping avatars read as separate.
-    final borderColor = isDark ? const Color(0xFF000000) : Colors.white;
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: isDark ? Colors.white10 : Colors.black12,
-        border: Border.all(color: borderColor, width: borderWidth),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.10),
-            blurRadius: 6,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: ClipOval(
-        child: Image.network(
-          guestAnimalUrl(animal),
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => const SizedBox(),
-        ),
-      ),
+    return GuestUrlAvatar(
+      url: guestAnimalUrl(animal),
+      size: size,
+      isDark: isDark,
+      borderWidth: borderWidth,
     );
   }
 }
@@ -110,7 +138,7 @@ class GuestPrimaryCta extends StatelessWidget {
   Widget build(BuildContext context) {
     final fgMain = isDark ? Colors.white : Colors.black;
     final bgMain = isDark ? Colors.black : Colors.white;
-    
+
     return InkWell(
       onTap: onTap,
       child: Container(
@@ -144,7 +172,7 @@ class GuestPrimaryCta extends StatelessWidget {
 // Celestial Astrolabe (Abstract mark)
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// The deeply abstract, elegant orbital model (restored).
+/// The deeply abstract, elegant orbital model.
 class GuestMandalaMark extends StatelessWidget {
   const GuestMandalaMark({super.key, required this.size, required this.isDark});
 
@@ -173,59 +201,56 @@ class _AstrolabePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = size.center(Offset.zero);
     final maxR = size.shortestSide / 2;
-    
+
     final lineBase = isDark ? Colors.white : Colors.black;
     final thinLine = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.5
       ..color = lineBase.withValues(alpha: 0.08);
-      
+
     final thickLine = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0
       ..color = lineBase.withValues(alpha: 0.15);
 
-    // Outer boundary
     canvas.drawCircle(center, maxR * 0.9, thinLine);
     canvas.drawCircle(center, maxR * 0.88, thinLine);
 
-    // Intersecting orbital planes
     canvas.save();
     canvas.translate(center.dx, center.dy);
-    
-    // Plane 1
+
     canvas.rotate(math.pi / 6);
     canvas.drawOval(
-      Rect.fromCenter(center: Offset.zero, width: maxR * 1.7, height: maxR * 0.4), 
-      thickLine
-    );
-    
-    // Plane 2
+        Rect.fromCenter(
+            center: Offset.zero, width: maxR * 1.7, height: maxR * 0.4),
+        thickLine);
+
     canvas.rotate(math.pi / 3);
     canvas.drawOval(
-      Rect.fromCenter(center: Offset.zero, width: maxR * 1.6, height: maxR * 0.2), 
-      thinLine
-    );
-    
-    // Plane 3
+        Rect.fromCenter(
+            center: Offset.zero, width: maxR * 1.6, height: maxR * 0.2),
+        thinLine);
+
     canvas.rotate(math.pi / 3);
     canvas.drawOval(
-      Rect.fromCenter(center: Offset.zero, width: maxR * 1.8, height: maxR * 0.6), 
-      thickLine
-    );
-    
+        Rect.fromCenter(
+            center: Offset.zero, width: maxR * 1.8, height: maxR * 0.6),
+        thickLine);
+
     canvas.restore();
 
-    // Celestial nodes (Planets/Intersections)
     final nodeGlow = Paint()
       ..color = kGuestSaffron.withValues(alpha: 0.1)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 16);
-      
+
     final nodeSolid = Paint()
-      ..color = isDark ? Colors.white.withValues(alpha: 0.8) : Colors.black.withValues(alpha: 0.8);
+      ..color = isDark
+          ? Colors.white.withValues(alpha: 0.8)
+          : Colors.black.withValues(alpha: 0.8);
 
     void drawNode(double angle, double distance, double r) {
-      final p = center + Offset(math.cos(angle), math.sin(angle)) * (maxR * distance);
+      final p =
+          center + Offset(math.cos(angle), math.sin(angle)) * (maxR * distance);
       canvas.drawCircle(p, r * 4, nodeGlow);
       canvas.drawCircle(p, r, nodeSolid);
     }
@@ -235,7 +260,6 @@ class _AstrolabePainter extends CustomPainter {
     drawNode(math.pi * 0.8, 0.4, 3.0);
     drawNode(math.pi * 1.2, 0.85, 2.0);
 
-    // Central anchor
     canvas.drawCircle(center, 4.0, nodeSolid);
     canvas.drawCircle(center, maxR * 0.15, thinLine);
   }

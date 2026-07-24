@@ -3,13 +3,10 @@ import 'package:intl/intl.dart';
 import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/dashboard_card_theme.dart';
 import 'package:aurogram/shared/data/firebase/firestore_refs.dart';
+import 'package:aurogram/features/astrology/data/utils/yoni_tribe.dart';
 import 'package:aurogram/features/astrology/presentation/pages/dashboard/widgets/guest/guest_atoms.dart';
 
-/// The closing "collective" card — honest, live social proof.
-///
-/// Shows the REAL number of members on the app (a Firestore aggregate count of
-/// the `users` collection, fetched at build) alongside a small stack of animal
-/// DP avatars. No fabricated figures.
+/// Live social proof: the REAL member count first, then a wall of real DPs.
 class GuestCollectiveCard extends StatefulWidget {
   const GuestCollectiveCard({super.key, required this.isDark});
 
@@ -20,26 +17,30 @@ class GuestCollectiveCard extends StatefulWidget {
 }
 
 class _GuestCollectiveCardState extends State<GuestCollectiveCard> {
-  // A handful of DP avatars to hint at real people (kept short + curated).
-  static const _sampleAvatars = [
-    'tiger',
-    'peacock',
-    'elephant',
-    'cobra',
-    'eagle',
-    'stag',
-  ];
+  late final Future<_CollectiveData> _data = _fetch();
 
-  late final Future<int?> _memberCount = _fetchMemberCount();
+  Future<_CollectiveData> _fetch() async {
+    int? count;
+    final dpUrls = <String>[];
 
-  Future<int?> _fetchMemberCount() async {
     try {
-      final snap = await FirestoreRefs.users.count().get();
-      return snap.count;
-    } catch (_) {
-      // Rules / offline / permission — degrade gracefully to no number.
-      return null;
-    }
+      final countSnap = await FirestoreRefs.users.count().get();
+      count = countSnap.count;
+    } catch (_) {/* rules / offline — degrade gracefully */}
+
+    try {
+      // Real display pictures, freshest first where possible.
+      final snap = await FirestoreRefs.users.limit(40).get();
+      for (final doc in snap.docs) {
+        final data = doc.data() as Map<String, dynamic>?;
+        final pic = data?['displayPicture'] as String?;
+        if (pic != null && pic.isNotEmpty && pic.startsWith('http')) {
+          dpUrls.add(pic);
+        }
+      }
+    } catch (_) {/* ignore — fall back to animal DPs below */}
+
+    return _CollectiveData(count: count, dpUrls: dpUrls);
   }
 
   @override
@@ -48,37 +49,60 @@ class _GuestCollectiveCardState extends State<GuestCollectiveCard> {
 
     return DashboardCard(
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 52),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          GuestEyebrow(text: 'THE COLLECTIVE', color: palette.fgMuted),
-          const SizedBox(height: 28),
+      child: FutureBuilder<_CollectiveData>(
+        future: _data,
+        builder: (context, snap) {
+          final data = snap.data;
+          final loading = snap.connectionState == ConnectionState.waiting;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              GuestEyebrow(text: 'THE COLLECTIVE', color: palette.fgMuted),
+              const SizedBox(height: 28),
 
-          // Overlapping stack of real DP avatars.
-          _AvatarStack(isDark: widget.isDark, animals: _sampleAvatars),
-          const SizedBox(height: 32),
-
-          // The live number.
-          FutureBuilder<int?>(
-            future: _memberCount,
-            builder: (context, snap) {
-              final count = snap.data;
-              return _CountBlock(
-                count: count,
-                loading: snap.connectionState == ConnectionState.waiting,
+              // 1. The number FIRST.
+              _CountHeadline(
+                count: data?.count,
+                loading: loading,
                 palette: palette,
-              );
-            },
-          ),
-        ],
+              ),
+              const SizedBox(height: 14),
+
+              // 2. Improved supporting copy.
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: Text(
+                  'Real people, real charts — a living collective growing every '
+                  'day. Your spirit is already waiting among them.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: palette.fgMuted,
+                    fontSize: AppTheme.babaTextSize,
+                    height: 1.55,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 40),
+
+              // 3. The DP wall — real users first, animals as fallback filler.
+              _DpWall(isDark: widget.isDark, dpUrls: data?.dpUrls ?? const []),
+            ],
+          );
+        },
       ),
     );
   }
 }
 
-class _CountBlock extends StatelessWidget {
-  const _CountBlock({
+class _CollectiveData {
+  const _CollectiveData({required this.count, required this.dpUrls});
+  final int? count;
+  final List<String> dpUrls;
+}
+
+class _CountHeadline extends StatelessWidget {
+  const _CountHeadline({
     required this.count,
     required this.loading,
     required this.palette,
@@ -90,42 +114,27 @@ class _CountBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Headline number (or a graceful fallback when the count is unavailable).
-    final Widget headline;
     if (loading) {
-      headline = SizedBox(
-        height: 40,
-        width: 40,
+      return SizedBox(
+        height: 56,
         child: Center(
           child: SizedBox(
-            height: 18,
-            width: 18,
+            height: 20,
+            width: 20,
             child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: palette.fgFaint,
-            ),
+                strokeWidth: 2, color: palette.fgFaint),
           ),
         ),
       );
-    } else if (count != null && count! > 0) {
-      headline = Text(
-        NumberFormat.decimalPattern().format(count),
-        style: TextStyle(
-          fontFamily: 'Georgia',
-          fontSize: 44,
-          fontWeight: FontWeight.w400,
-          color: palette.fgMain,
-          height: 1.0,
-          letterSpacing: -0.5,
-        ),
-      );
-    } else {
-      headline = Text(
+    }
+
+    if (count == null || count! <= 0) {
+      return Text(
         'A growing collective',
         style: TextStyle(
           fontFamily: 'Georgia',
           fontStyle: FontStyle.italic,
-          fontSize: 28,
+          fontSize: 30,
           color: palette.fgMain,
         ),
       );
@@ -133,17 +142,25 @@ class _CountBlock extends StatelessWidget {
 
     return Column(
       children: [
-        headline,
-        const SizedBox(height: 10),
         Text(
-          count != null && count! > 0
-              ? 'souls reading the sky on Aurogram'
-              : 'reading the sky on Aurogram',
-          textAlign: TextAlign.center,
+          NumberFormat.decimalPattern().format(count),
+          style: TextStyle(
+            fontFamily: 'Georgia',
+            fontSize: 52,
+            fontWeight: FontWeight.w400,
+            color: palette.fgMain,
+            height: 1.0,
+            letterSpacing: -1.0,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'MEMBERS AND COUNTING',
           style: TextStyle(
             color: palette.fgMuted,
-            fontSize: AppTheme.babaTextSize,
-            height: 1.5,
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 2.5,
           ),
         ),
       ],
@@ -151,25 +168,44 @@ class _CountBlock extends StatelessWidget {
   }
 }
 
-/// A tight overlapping row of DP avatars.
-class _AvatarStack extends StatelessWidget {
-  const _AvatarStack({required this.isDark, required this.animals});
+/// A dense wall of small square DP avatars — real users first, then animal
+/// DPs to fill out the grid so it always looks populated.
+class _DpWall extends StatelessWidget {
+  const _DpWall({required this.isDark, required this.dpUrls});
 
   final bool isDark;
-  final List<String> animals;
+  final List<String> dpUrls;
+
+  static const _target = 21; // 3 rows of 7-ish when wrapped
+  static const _size = 40.0;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
+    // Compose the final url list: real DPs first, animal DPs as filler.
+    final urls = <String>[...dpUrls.take(_target)];
+    if (urls.length < _target) {
+      final animals = YoniTribeData.all;
+      var i = 0;
+      while (urls.length < _target) {
+        urls.add(guestAnimalUrl(animals[i % animals.length].animal));
+        i++;
+      }
+    }
+
+    return Wrap(
+      alignment: WrapAlignment.center,
+      runSpacing: 10,
       children: [
-        for (final animal in animals)
+        for (final url in urls)
           Align(
-            widthFactor: 0.68, // overlap by ~32%
-            child: GuestAnimalAvatar(
-              animal: animal,
-              size: 48,
+            widthFactor: 0.74, // tight overlap
+            alignment: Alignment.centerLeft,
+            child: GuestUrlAvatar(
+              url: url,
+              size: _size,
               isDark: isDark,
+              borderWidth: 2,
+              square: true,
             ),
           ),
       ],
