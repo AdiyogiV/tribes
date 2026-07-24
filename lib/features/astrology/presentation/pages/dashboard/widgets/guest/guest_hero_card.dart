@@ -28,40 +28,61 @@ class GuestHeroCard extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // 1. The Authentic Wheel
-          // Brought back, scaled massively, and faded as an elegant watermark.
+          // 1. The Authentic Wheel, dissolved into the card.
+          //
+          // Instead of laying an opaque gradient rectangle ON TOP of the wheel
+          // (which left a hard visible seam), we fade the WHEEL ITSELF at its
+          // edges with a radial ShaderMask (dstIn). The wheel melts organically
+          // into the surface on every side — a true watermark, no band.
           Positioned(
-            top: isWide ? -100 : -50,
-            right: isWide ? -180 : -100,
-            child: Opacity(
-              opacity: isDark ? 0.35 : 0.15, 
-              child: IgnorePointer(
-                child: RotatingNakshatraWheel(
-                  size: isWide ? 640 : 400,
-                  animate: true,
-                  enableZoom: false,
+            top: isWide ? -120 : -70,
+            right: isWide ? -160 : -120,
+            child: IgnorePointer(
+              child: Opacity(
+                opacity: isDark ? 0.30 : 0.12,
+                child: ShaderMask(
+                  blendMode: BlendMode.dstIn,
+                  shaderCallback: (rect) => const RadialGradient(
+                    center: Alignment.center,
+                    radius: 0.5,
+                    colors: [
+                      Colors.white,
+                      Colors.white,
+                      Colors.transparent,
+                    ],
+                    stops: [0.0, 0.45, 0.95],
+                  ).createShader(rect),
+                  child: RotatingNakshatraWheel(
+                    size: isWide ? 620 : 420,
+                    animate: true,
+                    enableZoom: false,
+                  ),
                 ),
               ),
             ),
           ),
-          
-          // Gradient fade so the text pops over the wheel lines
+
+          // 2. A soft legibility wash on the text side only. It reaches full
+          //    transparency well before the wheel's core, so there is no
+          //    perceptible edge between the two.
           Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
                   colors: [
                     palette.surface,
-                    palette.surface.withValues(alpha: 0.85),
+                    palette.surface.withValues(alpha: 0.55),
                     Colors.transparent,
                   ],
-                  stops: const [0.0, 0.45, 1.0],
+                  stops: const [0.0, 0.5, 0.85],
                 ),
               ),
             ),
           ),
           
-          // 2. The Content
+          // 3. The Content
           Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: 32.0,
@@ -96,11 +117,11 @@ class GuestHeroCard extends StatelessWidget {
         const SizedBox(height: AppDimensions.spacingMd),
         
         EditorialCardHeader(
-          leading: "Time, sky, ",
-          trailing: 'and self.',
+          leading: "Time, sky, pulse. ",
+          trailing: 'A framework for self.',
           palette: palette,
           leadingColor: palette.fgMain,
-          titleSize: isWide ? 48 : 38,
+          titleSize: isWide ? 46 : 36,
         ),
         const SizedBox(height: AppDimensions.spacingLg),
         
