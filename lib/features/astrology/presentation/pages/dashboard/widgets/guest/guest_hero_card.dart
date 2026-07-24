@@ -89,15 +89,15 @@ class GuestHeroCard extends StatelessWidget {
         const SizedBox(height: AppDimensions.spacingHero),
         
         const GuestEyebrow(
-          text: 'THE VEDIC SCIENCES',
+          text: 'THE COSMIC ARCHITECTURE',
           color: kGuestSaffron,
         ),
         const SizedBox(height: AppDimensions.spacingMd),
         
         // Refined, perfectly scaled chic headline
         EditorialCardHeader(
-          leading: "Time, sky, ",
-          trailing: 'and self.',
+          leading: "A dialogue with ",
+          trailing: 'the sky.',
           palette: palette,
           leadingColor: palette.fgMain,
           titleSize: isWide ? 44 : 36,
@@ -105,8 +105,8 @@ class GuestHeroCard extends StatelessWidget {
         const SizedBox(height: AppDimensions.spacingLg),
         
         Text(
-          'A unified system of ancient wisdom, translated for the modern world. '
-          'Discover your elemental nature and move in rhythm with the universe.',
+          'Uncover the subtle mechanics of your nature. A living almanac that '
+          'translates the silent language of the stars into the rhythm of your day.',
           style: TextStyle(
             color: palette.fgMuted,
             fontSize: AppTheme.babaTextSize + 1,
@@ -118,7 +118,7 @@ class GuestHeroCard extends StatelessWidget {
         
         // Single, elegant CTA (covers both signup and login)
         GuestPrimaryCta(
-          label: 'Enter the almanac',
+          label: 'Enter the sanctuary',
           icon: Icons.arrow_forward_rounded,
           isDark: isDark,
           onTap: () => _toLogin(context),

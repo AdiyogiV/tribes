@@ -25,10 +25,10 @@ class GuestPillarsCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           GuestEyebrow(
-              text: 'THE FRAMEWORK', color: palette.fgMuted),
+              text: 'THE SCIENCES', color: palette.fgMuted),
           const SizedBox(height: AppDimensions.spacingSm),
           Text(
-            'Alignment, rhythm, and balance.',
+            'A geometry of the self.',
             style: TextStyle(
               fontFamily: 'Georgia',
               fontStyle: FontStyle.italic,
@@ -45,22 +45,22 @@ class GuestPillarsCard extends StatelessWidget {
               children: [
                 Expanded(child: _buildEditorialBlock(
                   number: '01',
-                  title: 'Alignment',
-                  description: 'The celestial geometry of your birth, decoded. Map your elemental nature and understand the architecture that shapes you.',
+                  title: 'The Blueprint',
+                  description: 'The sky at your exact moment of origin. We decode your planetary geometry to reveal the latent forces shaping your narrative.',
                   palette: palette,
                 )),
                 const SizedBox(width: 48),
                 Expanded(child: _buildEditorialBlock(
                   number: '02',
-                  title: 'Rhythm',
-                  description: 'Sacred timing and the movement of the luminaries. Move with the day’s energy, knowing exactly when to act and when to rest.',
+                  title: 'The Pulse',
+                  description: 'Time is not merely measured, but felt. Sync with the lunar phases and solar transits to move effortlessly with the day\u2019s current.',
                   palette: palette,
                 )),
                 const SizedBox(width: 48),
                 Expanded(child: _buildEditorialBlock(
                   number: '03',
-                  title: 'Balance',
-                  description: 'Harmonize your inner constitution. A daily practice bridging mind and body through the timeless lens of Ayurveda.',
+                  title: 'The Equilibrium',
+                  description: 'The ancient study of inner harmony. Discover your elemental constitution and cultivate a quiet resonance between mind and vessel.',
                   palette: palette,
                 )),
               ],
@@ -71,22 +71,22 @@ class GuestPillarsCard extends StatelessWidget {
               children: [
                 _buildEditorialBlock(
                   number: '01',
-                  title: 'Alignment',
-                  description: 'The celestial geometry of your birth, decoded. Map your elemental nature and understand the architecture that shapes you.',
+                  title: 'The Blueprint',
+                  description: 'The sky at your exact moment of origin. We decode your planetary geometry to reveal the latent forces shaping your narrative.',
                   palette: palette,
                 ),
                 const SizedBox(height: 48),
                 _buildEditorialBlock(
                   number: '02',
-                  title: 'Rhythm',
-                  description: 'Sacred timing and the movement of the luminaries. Move with the day’s energy, knowing exactly when to act and when to rest.',
+                  title: 'The Pulse',
+                  description: 'Time is not merely measured, but felt. Sync with the lunar phases and solar transits to move effortlessly with the day\u2019s current.',
                   palette: palette,
                 ),
                 const SizedBox(height: 48),
                 _buildEditorialBlock(
                   number: '03',
-                  title: 'Balance',
-                  description: 'Harmonize your inner constitution. A daily practice bridging mind and body through the timeless lens of Ayurveda.',
+                  title: 'The Equilibrium',
+                  description: 'The ancient study of inner harmony. Discover your elemental constitution and cultivate a quiet resonance between mind and vessel.',
                   palette: palette,
                 ),
               ],
@@ -177,7 +177,7 @@ class GuestCollectiveCard extends StatelessWidget {
           const SizedBox(height: AppDimensions.spacingLg),
           
           Text(
-            'A living network of seekers navigating their day.',
+            'A constellation of seekers.',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: 'Georgia',
@@ -189,7 +189,7 @@ class GuestCollectiveCard extends StatelessWidget {
           ),
           const SizedBox(height: AppDimensions.spacingSm),
           Text(
-            'Join over thousands exploring their cosmic nature.',
+            'Join over 150,000 members moving in sync with the cosmos.',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: palette.fgMuted,
@@ -198,23 +198,12 @@ class GuestCollectiveCard extends StatelessWidget {
           ),
           const SizedBox(height: 48),
 
-          // The Menagerie: A chic, spaced typographic list of spirit animals
-          Wrap(
-            alignment: WrapAlignment.center,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: 24,
-            runSpacing: 24,
-            children: const [
-              _AnimalNode(label: 'TIGER'),
-              _DotNode(),
-              _AnimalNode(label: 'SERPENT'),
-              _DotNode(),
-              _AnimalNode(label: 'ELEPHANT'),
-              _DotNode(),
-              _AnimalNode(label: 'HORSE'),
-              _DotNode(),
-              _AnimalNode(label: 'MONKEY'),
-            ],
+          // The Menagerie: A chic overlapping row of animal avatars
+          SizedBox(
+            height: 64,
+            child: Center(
+              child: _AnimalOverlapRow(),
+            ),
           ),
         ],
       ),
@@ -222,38 +211,60 @@ class GuestCollectiveCard extends StatelessWidget {
   }
 }
 
-class _AnimalNode extends StatelessWidget {
-  final String label;
-  const _AnimalNode({required this.label});
+class _AnimalOverlapRow extends StatelessWidget {
+  const _AnimalOverlapRow();
+
+  static const _animals = [
+    'assets/yoni/tiger.webp',
+    'assets/yoni/cobra.webp',
+    'assets/yoni/elephant.webp',
+    'assets/yoni/horse.webp',
+    'assets/yoni/monkey.webp',
+    'assets/yoni/peacock.webp',
+  ];
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final fg = isDark ? Colors.white70 : Colors.black87;
-    return Text(
-      label,
-      style: TextStyle(
-        color: fg,
-        fontSize: 12,
-        fontWeight: FontWeight.w600,
-        letterSpacing: 3.0,
-      ),
-    );
-  }
-}
+    final borderColor = isDark ? const Color(0xFF1A1A1A) : Colors.white;
 
-class _DotNode extends StatelessWidget {
-  const _DotNode();
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      width: 4,
-      height: 4,
-      decoration: BoxDecoration(
-        color: isDark ? Colors.white24 : Colors.black26,
-        shape: BoxShape.circle,
-      ),
+    return Stack(
+      clipBehavior: Clip.none,
+      alignment: Alignment.center,
+      children: [
+        // Create an implicit width container for the stack
+        SizedBox(width: (_animals.length * 40.0) + 24),
+        ...List.generate(_animals.length, (index) {
+          final leftOffset = index * 40.0;
+          return Positioned(
+            left: leftOffset,
+            child: Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: borderColor,
+                  width: 3,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ClipOval(
+                child: Image.asset(
+                  _animals[index],
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          );
+        }),
+      ],
     );
   }
 }
