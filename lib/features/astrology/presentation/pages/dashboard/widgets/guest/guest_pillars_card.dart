@@ -4,160 +4,145 @@ import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/core/theme/dashboard_card_theme.dart';
 import 'package:aurogram/features/astrology/presentation/pages/dashboard/widgets/guest/guest_atoms.dart';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// The three pillars
-// ─────────────────────────────────────────────────────────────────────────────
-
-@immutable
-class _Pillar {
-  const _Pillar(
-      this.icon, this.color, this.name, this.sanskrit, this.description);
-  final IconData icon;
-  final Color color;
-  final String name;
-  final String sanskrit;
-  final String description;
-}
-
-/// The core pitch: Aurogram's three timeless sciences.
+/// The core pitch: A deeply editorial, abstract representation of the sciences.
+/// Removes the literal "app feature" boxes and uses staggered typographic manifesto.
 class GuestPillarsCard extends StatelessWidget {
   const GuestPillarsCard({super.key, required this.isDark, required this.isWide});
 
   final bool isDark;
   final bool isWide;
 
-  List<_Pillar> get _pillars => [
-        _Pillar(Icons.wb_sunny_rounded, kGuestHaldi, 'Panchang', 'पञ्चाङ्ग',
-            'The sacred Hindu calendar — tithi, nakshatra and the day\u2019s muhurat, live.'),
-        _Pillar(Icons.auto_awesome_rounded, kGuestJyotish, 'Jyotish', 'ज्योतिष',
-            'Your Vedic birth chart decoded, and how today\u2019s planets move you.'),
-        _Pillar(Icons.spa_rounded, kGuestAyurveda, 'Ayurveda', 'आयुर्वेद',
-            'Your dosha constitution and daily balance for body and mind.'),
-      ];
-
   @override
   Widget build(BuildContext context) {
     final palette = DashboardCardPalette.forBrightness(isDark);
     
     return DashboardCard(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 36),
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
           GuestEyebrow(
-              text: 'THREE TIMELESS SCIENCES', color: palette.fgMuted),
+              text: 'THE UNIFIED SYSTEM', color: palette.fgMuted),
           const SizedBox(height: AppDimensions.spacingSm),
           Text(
-            'Rooted in the Vedas. Built for today.',
+            'A framework for living.',
             style: TextStyle(
               fontFamily: 'Georgia',
               fontStyle: FontStyle.italic,
               color: palette.fgMain,
-              fontSize: 26,
+              fontSize: 28,
               letterSpacing: -0.5,
             ),
           ),
-          const SizedBox(height: AppDimensions.spacingLargeSection),
+          const SizedBox(height: 64),
           
           if (isWide)
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                for (var i = 0; i < _pillars.length; i++) ...[
-                  Expanded(
-                    child: _PillarTile(pillar: _pillars[i], palette: palette),
-                  ),
-                  if (i != _pillars.length - 1)
-                    Container(
-                      width: 1,
-                      height: 120, // fixed height for editorial vertical divider
-                      color: palette.fgFaint.withValues(alpha: 0.1),
-                      margin: const EdgeInsets.symmetric(horizontal: 24),
-                    ),
-                ],
+                Expanded(child: _buildEditorialBlock(
+                  number: '01',
+                  title: 'Alignment',
+                  description: 'The celestial geometry of your birth, decoded. Map your elemental nature and understand the cosmic architecture that shapes you.',
+                  palette: palette,
+                )),
+                const SizedBox(width: 48),
+                Expanded(child: _buildEditorialBlock(
+                  number: '02',
+                  title: 'Rhythm',
+                  description: 'Sacred timing and the movement of the luminaries. Move with the day’s energy, knowing exactly when to act and when to rest.',
+                  palette: palette,
+                )),
+                const SizedBox(width: 48),
+                Expanded(child: _buildEditorialBlock(
+                  number: '03',
+                  title: 'Balance',
+                  description: 'Harmonize your inner constitution. A daily practice bridging mind and body through the timeless lens of Ayurveda.',
+                  palette: palette,
+                )),
               ],
             )
           else
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
               children: [
-                for (var i = 0; i < _pillars.length; i++) ...[
-                  _PillarTile(pillar: _pillars[i], palette: palette),
-                  if (i != _pillars.length - 1)
-                    Divider(
-                      height: 48,
-                      thickness: 1,
-                      color: palette.fgFaint.withValues(alpha: 0.1),
-                    ),
-                ],
+                _buildEditorialBlock(
+                  number: '01',
+                  title: 'Alignment',
+                  description: 'The celestial geometry of your birth, decoded. Map your elemental nature and understand the cosmic architecture that shapes you.',
+                  palette: palette,
+                ),
+                const SizedBox(height: 56),
+                _buildEditorialBlock(
+                  number: '02',
+                  title: 'Rhythm',
+                  description: 'Sacred timing and the movement of the luminaries. Move with the day’s energy, knowing exactly when to act and when to rest.',
+                  palette: palette,
+                ),
+                const SizedBox(height: 56),
+                _buildEditorialBlock(
+                  number: '03',
+                  title: 'Balance',
+                  description: 'Harmonize your inner constitution. A daily practice bridging mind and body through the timeless lens of Ayurveda.',
+                  palette: palette,
+                ),
               ],
             ),
         ],
       ),
     );
   }
-}
 
-class _PillarTile extends StatelessWidget {
-  const _PillarTile({
-    required this.pillar,
-    required this.palette,
-  });
-
-  final _Pillar pillar;
-  final DashboardCardPalette palette;
-
-  @override
-  Widget build(BuildContext context) {
-    // Stark, chic layout: Icon left, content right.
-    return Row(
+  Widget _buildEditorialBlock({
+    required String number,
+    required String title,
+    required String description,
+    required DashboardCardPalette palette,
+  }) {
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(pillar.icon, size: 28, color: pillar.color),
-        const SizedBox(width: AppDimensions.spacingLg),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              number,
+              style: TextStyle(
+                fontFamily: 'Georgia',
+                fontStyle: FontStyle.italic,
+                fontSize: 18,
+                color: palette.fgFaint,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    pillar.name,
+                    title,
                     style: TextStyle(
                       fontFamily: 'Georgia',
+                      fontSize: 22,
+                      fontWeight: FontWeight.w400,
                       color: palette.fgMain,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w500,
                       letterSpacing: -0.3,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(height: 16),
                   Text(
-                    pillar.sanskrit,
+                    description,
                     style: TextStyle(
-                      color: pillar.color.withValues(alpha: 0.8),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
+                      fontSize: AppTheme.babaTextSize,
+                      height: 1.6,
+                      color: palette.fgMuted,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: AppDimensions.spacingSm),
-              Text(
-                pillar.description,
-                style: TextStyle(
-                  color: palette.fgMuted,
-                  fontSize: AppTheme.babaTextSize,
-                  height: 1.5,
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ],
     );
@@ -179,29 +164,27 @@ class GuestCompanionsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = DashboardCardPalette.forBrightness(isDark);
-    final baba = _Companion(
-      icon: Icons.self_improvement_rounded,
-      color: kGuestSaffron,
-      title: 'Baba, your guide',
-      subtitle: 'A voice-first AI pandit who reads your chart and answers.',
+    
+    final baba = _buildCompanion(
+      title: 'A Guided Practice',
+      description: 'A voice-first intelligence that knows your chart, decodes the sky, and answers your deepest questions.',
       palette: palette,
     );
-    final circles = _Companion(
-      icon: Icons.groups_rounded,
-      color: kGuestCircles,
-      title: 'Your circles',
-      subtitle: 'See how the sky moves your people — together.',
+    
+    final circles = _buildCompanion(
+      title: 'Shared Journeys',
+      description: 'A private space to see how the cosmos moves the people you care about, together.',
       palette: palette,
     );
 
     return DashboardCard(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 36),
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
           GuestEyebrow(
-              text: 'AND YOU\u2019RE NEVER ALONE', color: palette.fgMuted),
+              text: 'THE EXPERIENCE', color: palette.fgMuted),
           const SizedBox(height: AppDimensions.spacingLg),
           if (isWide)
             Row(
@@ -210,21 +193,25 @@ class GuestCompanionsCard extends StatelessWidget {
                 Expanded(child: baba),
                 Container(
                   width: 1,
-                  height: 60,
-                  color: palette.fgFaint.withValues(alpha: 0.1),
-                  margin: const EdgeInsets.symmetric(horizontal: 24),
+                  height: 80,
+                  color: palette.fgFaint.withValues(alpha: 0.2),
+                  margin: const EdgeInsets.symmetric(horizontal: 48),
                 ),
                 Expanded(child: circles),
               ],
             )
           else
             Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 baba,
-                Divider(
-                  height: 48,
-                  thickness: 1,
-                  color: palette.fgFaint.withValues(alpha: 0.1),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 32),
+                  child: Divider(
+                    height: 1,
+                    thickness: 1,
+                    color: palette.fgFaint.withValues(alpha: 0.2),
+                  ),
                 ),
                 circles,
               ],
@@ -233,55 +220,32 @@ class GuestCompanionsCard extends StatelessWidget {
       ),
     );
   }
-}
 
-class _Companion extends StatelessWidget {
-  const _Companion({
-    required this.icon,
-    required this.color,
-    required this.title,
-    required this.subtitle,
-    required this.palette,
-  });
-
-  final IconData icon;
-  final Color color;
-  final String title;
-  final String subtitle;
-  final DashboardCardPalette palette;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
+  Widget _buildCompanion({
+    required String title,
+    required String description,
+    required DashboardCardPalette palette,
+  }) {
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 24, color: color),
-        const SizedBox(width: AppDimensions.spacingLg),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  fontFamily: 'Georgia',
-                  color: palette.fgMain,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: -0.2,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  color: palette.fgMuted,
-                  fontSize: AppTheme.babaTextSize,
-                  height: 1.45,
-                ),
-              ),
-            ],
+        Text(
+          title,
+          style: TextStyle(
+            fontFamily: 'Georgia',
+            color: palette.fgMain,
+            fontSize: 20,
+            fontWeight: FontWeight.w400,
+            letterSpacing: -0.2,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          description,
+          style: TextStyle(
+            color: palette.fgMuted,
+            fontSize: AppTheme.babaTextSize,
+            height: 1.5,
           ),
         ),
       ],
