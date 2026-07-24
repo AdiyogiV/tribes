@@ -38,37 +38,43 @@ class GuestPillarsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = DashboardCardPalette.forBrightness(isDark);
-    return GuestCard(
-      isDark: isDark,
+    
+    return DashboardCard(
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 36),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
           GuestEyebrow(
               text: 'THREE TIMELESS SCIENCES', color: palette.fgMuted),
-          const SizedBox(height: AppDimensions.spacingXs),
+          const SizedBox(height: AppDimensions.spacingSm),
           Text(
             'Rooted in the Vedas. Built for today.',
             style: TextStyle(
               fontFamily: 'Georgia',
               fontStyle: FontStyle.italic,
               color: palette.fgMain,
-              fontSize: 22,
+              fontSize: 26,
               letterSpacing: -0.5,
             ),
           ),
-          const SizedBox(height: AppDimensions.spacingXl),
+          const SizedBox(height: AppDimensions.spacingLargeSection),
+          
           if (isWide)
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 for (var i = 0; i < _pillars.length; i++) ...[
                   Expanded(
-                    child: _PillarTile(
-                        pillar: _pillars[i], palette: palette, stacked: true),
+                    child: _PillarTile(pillar: _pillars[i], palette: palette),
                   ),
                   if (i != _pillars.length - 1)
-                    const SizedBox(width: AppDimensions.spacingXl),
+                    Container(
+                      width: 1,
+                      height: 120, // fixed height for editorial vertical divider
+                      color: palette.fgFaint.withValues(alpha: 0.1),
+                      margin: const EdgeInsets.symmetric(horizontal: 24),
+                    ),
                 ],
               ],
             )
@@ -78,10 +84,13 @@ class GuestPillarsCard extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 for (var i = 0; i < _pillars.length; i++) ...[
-                  _PillarTile(
-                      pillar: _pillars[i], palette: palette, stacked: false),
+                  _PillarTile(pillar: _pillars[i], palette: palette),
                   if (i != _pillars.length - 1)
-                    const SizedBox(height: AppDimensions.spacingXl),
+                    Divider(
+                      height: 48,
+                      thickness: 1,
+                      color: palette.fgFaint.withValues(alpha: 0.1),
+                    ),
                 ],
               ],
             ),
@@ -95,90 +104,58 @@ class _PillarTile extends StatelessWidget {
   const _PillarTile({
     required this.pillar,
     required this.palette,
-    required this.stacked,
   });
 
   final _Pillar pillar;
   final DashboardCardPalette palette;
 
-  /// Wide layout stacks icon-above-text; mobile is a horizontal row.
-  final bool stacked;
-
   @override
   Widget build(BuildContext context) {
-    final badge = Container(
-      width: 46,
-      height: 46,
-      decoration: BoxDecoration(
-        color: pillar.color.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-      ),
-      child: Icon(pillar.icon, size: 24, color: pillar.color),
-    );
-
-    final title = Row(
-      crossAxisAlignment: CrossAxisAlignment.baseline,
-      textBaseline: TextBaseline.alphabetic,
-      children: [
-        Flexible(
-          child: Text(
-            pillar.name,
-            style: TextStyle(
-              fontFamily: 'Georgia',
-              color: palette.fgMain,
-              fontSize: 18,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-        const SizedBox(width: 6),
-        Text(
-          pillar.sanskrit,
-          style: TextStyle(
-            color: pillar.color,
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    );
-
-    final desc = Text(
-      pillar.description,
-      style: TextStyle(
-        color: palette.fgMuted,
-        fontSize: AppTheme.babaTextSize - 1,
-        height: 1.45,
-      ),
-    );
-
-    if (stacked) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          badge,
-          const SizedBox(height: AppDimensions.spacingLg),
-          title,
-          const SizedBox(height: AppDimensions.spacingSm),
-          desc,
-        ],
-      );
-    }
-
+    // Stark, chic layout: Icon left, content right.
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        badge,
+        Icon(pillar.icon, size: 28, color: pillar.color),
         const SizedBox(width: AppDimensions.spacingLg),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              title,
-              const SizedBox(height: AppDimensions.spacingXs),
-              desc,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text(
+                    pillar.name,
+                    style: TextStyle(
+                      fontFamily: 'Georgia',
+                      color: palette.fgMain,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    pillar.sanskrit,
+                    style: TextStyle(
+                      color: pillar.color.withValues(alpha: 0.8),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppDimensions.spacingSm),
+              Text(
+                pillar.description,
+                style: TextStyle(
+                  color: palette.fgMuted,
+                  fontSize: AppTheme.babaTextSize,
+                  height: 1.5,
+                ),
+              ),
             ],
           ),
         ),
@@ -217,21 +194,26 @@ class GuestCompanionsCard extends StatelessWidget {
       palette: palette,
     );
 
-    return GuestCard(
-      isDark: isDark,
+    return DashboardCard(
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 36),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
           GuestEyebrow(
               text: 'AND YOU\u2019RE NEVER ALONE', color: palette.fgMuted),
-          const SizedBox(height: AppDimensions.spacingXl),
+          const SizedBox(height: AppDimensions.spacingLg),
           if (isWide)
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(child: baba),
-                const SizedBox(width: AppDimensions.spacingXl),
+                Container(
+                  width: 1,
+                  height: 60,
+                  color: palette.fgFaint.withValues(alpha: 0.1),
+                  margin: const EdgeInsets.symmetric(horizontal: 24),
+                ),
                 Expanded(child: circles),
               ],
             )
@@ -239,7 +221,11 @@ class GuestCompanionsCard extends StatelessWidget {
             Column(
               children: [
                 baba,
-                const SizedBox(height: AppDimensions.spacingXl),
+                Divider(
+                  height: 48,
+                  thickness: 1,
+                  color: palette.fgFaint.withValues(alpha: 0.1),
+                ),
                 circles,
               ],
             ),
@@ -269,15 +255,7 @@ class _Companion extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.14),
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-          ),
-          child: Icon(icon, size: 22, color: color),
-        ),
+        Icon(icon, size: 24, color: color),
         const SizedBox(width: AppDimensions.spacingLg),
         Expanded(
           child: Column(
@@ -289,16 +267,17 @@ class _Companion extends StatelessWidget {
                 style: TextStyle(
                   fontFamily: 'Georgia',
                   color: palette.fgMain,
-                  fontSize: 17,
+                  fontSize: 18,
                   fontWeight: FontWeight.w500,
+                  letterSpacing: -0.2,
                 ),
               ),
-              const SizedBox(height: AppDimensions.spacingXs),
+              const SizedBox(height: 4),
               Text(
                 subtitle,
                 style: TextStyle(
                   color: palette.fgMuted,
-                  fontSize: AppTheme.babaTextSize - 1,
+                  fontSize: AppTheme.babaTextSize,
                   height: 1.45,
                 ),
               ),

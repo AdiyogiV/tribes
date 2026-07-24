@@ -1,86 +1,91 @@
 import 'package:flutter/material.dart';
-import 'package:aurogram/core/theme/app_theme.dart';
 import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/features/astrology/presentation/pages/dashboard/widgets/guest/guest_atoms.dart';
 
-/// Closing footer for the guest page: a row of trust cues, a slim tricolour
-/// rule and a "Made with (heart) in India" line.
+/// Closing footer for the guest page: a refined, minimal imprint.
 class GuestMadeInIndiaFooter extends StatelessWidget {
   const GuestMadeInIndiaFooter({super.key});
-
-  static const _cues = <(IconData, String)>[
-    (Icons.verified_outlined, 'Authentic Vedic'),
-    (Icons.lock_outline_rounded, 'Private'),
-    (Icons.bolt_outlined, 'Free to start'),
-  ];
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final muted = isDark ? Colors.white54 : Colors.black54;
-    final faint = isDark ? Colors.white38 : Colors.black38;
 
-    return Column(
-      children: [
-        Wrap(
-          alignment: WrapAlignment.center,
-          spacing: AppDimensions.spacingXl,
-          runSpacing: AppDimensions.spacingSm,
-          children: [
-            for (final (icon, label) in _cues)
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(icon, size: 15, color: muted),
-                  const SizedBox(width: AppDimensions.spacingSm),
-                  Text(
-                    label,
-                    style: TextStyle(
-                      color: muted,
-                      fontSize: AppTheme.babaTextSize - 2,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-                ],
-              ),
-          ],
-        ),
-        const SizedBox(height: AppDimensions.spacingXl),
-        // A slim tricolour rule — a quiet nod to the flag.
-        Container(
-          width: 54,
-          height: 3,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
-            gradient: const LinearGradient(
-              colors: [
-                Color(0xFFFF9933), // saffron
-                Color(0xFFEFEFEF), // white
-                Color(0xFF138808), // green
-              ],
+    return Padding(
+      padding: const EdgeInsets.only(top: AppDimensions.spacingXl, bottom: AppDimensions.spacingXxl),
+      child: Column(
+        children: [
+          Text(
+            'PRIVATE  ·  FREE TO START  ·  AUTHENTIC VEDIC',
+            style: TextStyle(
+              color: muted,
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 2.0,
             ),
           ),
-        ),
-        const SizedBox(height: AppDimensions.spacingMd),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.max,
-          children: [
-            Text(
-              'Made with ',
-              style:
-                  TextStyle(color: faint, fontSize: AppTheme.babaTextSize - 1),
-            ),
-            const Icon(Icons.favorite, size: 13, color: kGuestSaffron),
-            Text(
-              ' in India',
-              style:
-                  TextStyle(color: faint, fontSize: AppTheme.babaTextSize - 1),
-            ),
-          ],
-        ),
-      ],
+          const SizedBox(height: AppDimensions.spacingLg),
+          
+          // An ultra-minimal tricolor dot sequence instead of a bar
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _Dot(color: const Color(0xFFFF9933)), // saffron
+              const SizedBox(width: 6),
+              _Dot(color: muted.withValues(alpha: 0.3)), // center (white/grey)
+              const SizedBox(width: 6),
+              _Dot(color: const Color(0xFF138808)), // green
+            ],
+          ),
+          
+          const SizedBox(height: AppDimensions.spacingLg),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                'Made with ',
+                style: TextStyle(
+                  color: muted, 
+                  fontFamily: 'Georgia',
+                  fontStyle: FontStyle.italic,
+                  fontSize: 14,
+                ),
+              ),
+              const Padding(
+                padding: EdgeInsets.only(top: 2),
+                child: Icon(Icons.favorite, size: 14, color: kGuestSaffron),
+              ),
+              Text(
+                ' in India',
+                style: TextStyle(
+                  color: muted, 
+                  fontFamily: 'Georgia',
+                  fontStyle: FontStyle.italic,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Dot extends StatelessWidget {
+  final Color color;
+  const _Dot({required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 4,
+      height: 4,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+      ),
     );
   }
 }

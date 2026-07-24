@@ -7,8 +7,6 @@ import 'package:aurogram/core/theme/dashboard_card_theme.dart';
 import 'package:aurogram/core/routing/route_names.dart';
 import 'package:aurogram/features/astrology/presentation/pages/dashboard/widgets/guest/guest_atoms.dart';
 
-/// The guest hero: brand mark, Indic positioning, the pitch, the primary CTA
-/// and a quiet sign-in link. Two-column with a mandala mark on wide panes.
 class GuestHeroCard extends StatelessWidget {
   const GuestHeroCard({super.key, required this.isDark, required this.isWide});
 
@@ -23,25 +21,40 @@ class GuestHeroCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = DashboardCardPalette.forBrightness(isDark);
-    return GuestCard(
-      isDark: isDark,
-      tint: kGuestSaffron,
-      padding: EdgeInsets.all(isWide ? 34 : 26),
-      child: isWide
-          ? Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(flex: 6, child: _text(context, palette)),
-                const SizedBox(width: AppDimensions.spacingSection),
-                Expanded(
-                  flex: 4,
-                  child: Center(
-                    child: GuestMandalaMark(size: 210, isDark: isDark),
-                  ),
-                ),
-              ],
-            )
-          : _text(context, palette),
+    
+    return DashboardCard(
+      padding: EdgeInsets.zero, // We handle padding inside the stack
+      child: Stack(
+        children: [
+          // 1. The Bleeding Mandala (Art Direction)
+          // Pushed off the top right edge to create dramatic negative space
+          // and a true editorial magazine feel.
+          Positioned(
+            top: isWide ? -60 : -40,
+            right: isWide ? -60 : -40,
+            child: GuestMandalaMark(
+              size: isWide ? 420 : 280,
+              isDark: isDark,
+            ),
+          ),
+          
+          // 2. The Content
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 32.0,
+              vertical: 40.0,
+            ),
+            child: isWide 
+              ? Row(
+                  children: [
+                    Expanded(flex: 6, child: _text(context, palette)),
+                    const Expanded(flex: 4, child: SizedBox.shrink()), // Space for mandala
+                  ],
+                )
+              : _text(context, palette),
+          ),
+        ],
+      ),
     );
   }
 
@@ -51,31 +64,37 @@ class GuestHeroCard extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         _BrandRow(isDark: isDark),
-        const SizedBox(height: AppDimensions.spacingXl),
+        const SizedBox(height: AppDimensions.spacingLargeSection),
+        
         const GuestEyebrow(
           text: 'PANCHANG · JYOTISH · AYURVEDA',
           color: kGuestSaffron,
         ),
         const SizedBox(height: AppDimensions.spacingMd),
+        
+        // Massive editorial typography
         EditorialCardHeader(
           leading: "India's living",
           trailing: ' almanac.',
           palette: palette,
           leadingColor: palette.fgMain,
-          titleSize: isWide ? 40 : 33,
+          titleSize: isWide ? 48 : 38,
         ),
         const SizedBox(height: AppDimensions.spacingLg),
+        
         Text(
           'The timeless Indian sciences of time, sky and self — reunited in '
           'one modern app, and tuned to you. Add your birth details and watch '
           'today align around you.',
           style: TextStyle(
             color: palette.fgMuted,
-            fontSize: AppTheme.babaTextSize,
-            height: 1.55,
+            fontSize: AppTheme.babaTextSize + 1,
+            height: 1.5,
+            letterSpacing: -0.2,
           ),
         ),
-        const SizedBox(height: AppDimensions.spacingXl),
+        const SizedBox(height: AppDimensions.spacingLargeSection),
+        
         GuestPrimaryCta(
           label: 'Create your free profile',
           icon: Icons.auto_awesome_rounded,
@@ -83,19 +102,21 @@ class GuestHeroCard extends StatelessWidget {
           onTap: () => _toLogin(context),
         ),
         const SizedBox(height: AppDimensions.spacingMd),
+        
         Align(
-          alignment: isWide ? Alignment.centerLeft : Alignment.center,
+          alignment: Alignment.center,
           child: TextButton(
             onPressed: () => _toLogin(context),
             style: TextButton.styleFrom(
               foregroundColor: palette.fgMuted,
-              padding: EdgeInsets.zero,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               textStyle: const TextStyle(
-                fontSize: AppTheme.babaTextSize,
-                fontWeight: FontWeight.w600,
+                fontFamily: 'Georgia',
+                fontStyle: FontStyle.italic,
+                fontSize: 16,
               ),
             ),
-            child: const Text('Already with us?  Sign in'),
+            child: const Text('Already with us? Sign in.'),
           ),
         ),
       ],
@@ -103,7 +124,7 @@ class GuestHeroCard extends StatelessWidget {
   }
 }
 
-/// The Aurogram wordmark with a devanagari seal.
+/// The Aurogram wordmark with a minimal devanagari seal.
 class _BrandRow extends StatelessWidget {
   const _BrandRow({required this.isDark});
 
@@ -116,24 +137,22 @@ class _BrandRow extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 34,
-          height: 34,
+          width: 32,
+          height: 32,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [kGuestSaffron, kGuestHaldi],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+            border: Border.all(
+              color: kGuestSaffron.withValues(alpha: 0.3),
+              width: 1.5,
             ),
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMdSm),
+            borderRadius: BorderRadius.circular(4),
           ),
           child: const Text(
             'ॐ',
             style: TextStyle(
-              color: Colors.white,
+              color: kGuestSaffron,
               fontSize: 18,
               height: 1.0,
-              fontWeight: FontWeight.w600,
             ),
           ),
         ),
@@ -142,7 +161,7 @@ class _BrandRow extends StatelessWidget {
           'aurogram',
           style: TextStyle(
             color: fg,
-            fontSize: 20,
+            fontSize: 22,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.5,
           ),
