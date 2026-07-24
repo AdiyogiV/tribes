@@ -90,7 +90,7 @@ class GuestHeroCard extends StatelessWidget {
         const SizedBox(height: 64),
         
         const GuestEyebrow(
-          text: "INDIA'S LIVING ALMANAC",
+          text: "THE LIVING ALMANAC",
           color: kGuestSaffron,
         ),
         const SizedBox(height: AppDimensions.spacingMd),

@@ -3,8 +3,8 @@ import 'package:aurogram/core/theme/app_dimensions.dart';
 import 'package:aurogram/features/astrology/presentation/pages/dashboard/widgets/guest/guest_atoms.dart';
 
 /// Closing footer for the guest page: a refined, minimal imprint.
-class GuestMadeInIndiaFooter extends StatelessWidget {
-  const GuestMadeInIndiaFooter({super.key});
+class GuestFooter extends StatelessWidget {
+  const GuestFooter({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +57,7 @@ class GuestMadeInIndiaFooter extends StatelessWidget {
                 child: Icon(Icons.favorite, size: 14, color: kGuestSaffron),
               ),
               Text(
-                ' in India',
+                ' for the world',
                 style: TextStyle(
                   color: muted, 
                   fontFamily: 'Georgia',

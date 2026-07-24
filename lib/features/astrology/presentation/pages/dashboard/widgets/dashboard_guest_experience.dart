@@ -28,7 +28,7 @@ class DashboardGuestExperience extends StatelessWidget {
             const SizedBox(height: 16),
             GuestCollectiveCard(isDark: isDark),
             SizedBox(height: spacing + 8),
-            const GuestMadeInIndiaFooter(),
+            const GuestFooter(),
           ],
         );
       },
